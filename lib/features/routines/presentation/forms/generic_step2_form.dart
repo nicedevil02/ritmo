@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/routines/presentation/planner_controller.dart';
+import 'package:ritmo/features/routines/presentation/widgets/planner_advanced_section.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_timeline_picker.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_weekdays_picker.dart';
 
@@ -397,145 +398,7 @@ class GenericStep2Form extends StatelessWidget {
               const SizedBox(height: 12),
 
               // 4. Advanced Settings Card
-              Container(
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: colors.border.withValues(alpha: 0.05),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        controller.isAdvancedExpanded = !controller.isAdvancedExpanded;
-                        controller.notifyListeners();
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'تنظیمات پیشرفته',
-                              style: TextStyle(
-                                fontFamily: 'Vazirmatn',
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: colors.textSecondary,
-                              ),
-                            ),
-                            Icon(
-                              controller.isAdvancedExpanded
-                                  ? Icons.keyboard_arrow_up_rounded
-                                  : Icons.keyboard_arrow_down_rounded,
-                              size: 20,
-                              color: colors.textSecondary,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (controller.isAdvancedExpanded)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Description field
-                            TextFormField(
-                              initialValue: controller.description,
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
-                              decoration: InputDecoration(
-                                labelText: 'توضیحات یا یادداشت‌ها',
-                                labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                              onChanged: (val) => controller.description = val,
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Priority dropdown
-                            DropdownButtonFormField<double>(
-                              initialValue: controller.priority,
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
-                              decoration: InputDecoration(
-                                labelText: 'اولویت',
-                                labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                              items: const [
-                                DropdownMenuItem(value: 0.5, child: Text('پایین ⚠️')),
-                                DropdownMenuItem(value: 1.0, child: Text('متوسط ⚠️⚠️')),
-                                DropdownMenuItem(value: 1.5, child: Text('بالا ⚠️⚠️⚠️')),
-                              ],
-                              onChanged: (val) {
-                                if (val != null) {
-                                  controller.priority = val;
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Energy Rule / Adaptive Behavior
-                            DropdownButtonFormField<String>(
-                              initialValue: controller.energyRule,
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
-                              decoration: InputDecoration(
-                                labelText: 'قانون مدیریت انرژی هوشمند (نقشه راه)',
-                                labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                              items: const [
-                                DropdownMenuItem(value: 'NONE', child: Text('پایبندی بدون قید و شرط 🎯')),
-                                DropdownMenuItem(value: 'SKIP', child: Text('پرش در صورت خستگی شدید 💤')),
-                                DropdownMenuItem(value: 'OFFER_LIGHT', child: Text('کاهش خودکار به نسخه سبک ⚡')),
-                                DropdownMenuItem(value: 'HIGH_ENERGY_ONLY', child: Text('فقط هنگام انرژی بالا 🔥')),
-                              ],
-                              onChanged: (val) {
-                                if (val != null) {
-                                  controller.energyRule = val;
-                                  controller.notifyListeners();
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Zone (Realm) selection dropdown
-                            DropdownButtonFormField<String?>(
-                              initialValue: controller.selectedZoneId,
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
-                              decoration: InputDecoration(
-                                labelText: 'زون مربوطه (Realm)',
-                                labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                              items: [
-                                const DropdownMenuItem<String?>(child: Text('بدون زون (عمومی)')),
-                                ...controller.availableZones.map((z) {
-                                  return DropdownMenuItem<String?>(
-                                    value: z['id'] as String,
-                                    child: Text('${z['emoji'] ?? '🌐'} ${z['name'] ?? ''}'),
-                                  );
-                                }),
-                              ],
-                              onChanged: (val) {
-                                controller.selectedZoneId = val;
-                                controller.notifyListeners();
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+              PlannerAdvancedSection(controller: controller),
             ],
           ),
         );

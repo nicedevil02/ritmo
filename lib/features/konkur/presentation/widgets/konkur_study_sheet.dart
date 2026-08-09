@@ -6,6 +6,9 @@ import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
 import 'package:ritmo/features/konkur/logic/konkur_review_policy.dart';
 import 'package:ritmo/features/konkur/models/konkur_models.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_formatters.dart';
+import 'package:ritmo/features/notes/presentation/widgets/module_note_field.dart';
+import 'package:ritmo/features/notes/logic/promote_to_note.dart';
+
 
 class KonkurStudySheet extends StatefulWidget {
   const KonkurStudySheet({
@@ -46,7 +49,9 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
   final _correctController = TextEditingController(text: '0');
   final _wrongController = TextEditingController(text: '0');
   final _blankController = TextEditingController(text: '0');
+  final _noteController = TextEditingController();
   double _netPercent = 0;
+
 
   // Mastery promotion on save
   MasteryLevel? _promotedMastery;
@@ -188,7 +193,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
       testsCorrect: _currentMode == 'TEST' ? correct : 0,
       testsWrong: _currentMode == 'TEST' ? wrong : 0,
       testsBlank: _currentMode == 'TEST' ? blank : 0,
-      note: 'ثبت خودکار از تایمر کنکور ritmo',
+      note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
       createdAt: DateTime.now().millisecondsSinceEpoch,
       sessionOutcome: _selectedOutcome,
     );
@@ -568,8 +573,24 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
               }).toList(),
             ),
           ],
+          const SizedBox(height: 16),
+          ModuleNoteField(
+            controller: _noteController,
+            hintFa: 'چی یاد گرفتی؟ کجا گیر کردی؟',
+            onPromote: () {
+              if (_selectedSubject != null && _noteController.text.trim().isNotEmpty) {
+                NotePromoter.instance.promote(
+                  context: context,
+                  module: 'study',
+                  entityId: _selectedSubject!.id,
+                  text: _noteController.text,
+                );
+              }
+            },
+          ),
           const SizedBox(height: 28),
           // Save Button
+
           ElevatedButton(
             onPressed: _secondsElapsed > 0 ? _saveSession : null,
             style: ElevatedButton.styleFrom(

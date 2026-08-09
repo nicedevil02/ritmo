@@ -13,6 +13,8 @@ import 'package:ritmo/features/courses/presentation/widgets/course_formatters.da
 import 'package:ritmo/features/courses/presentation/widgets/create_course_sheet.dart';
 import 'package:ritmo/features/courses/presentation/widgets/segmented_visual_journey_track.dart';
 import 'package:ritmo/features/courses/presentation/widgets/study_timer_sheet.dart';
+import 'package:ritmo/features/notes/presentation/widgets/module_note_history.dart';
+
 
 class CourseDetailScreen extends StatefulWidget {
 
@@ -33,6 +35,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   Map<String, dynamic>? _linkedGoal;
   final double _linkedGoalProgress = 0;
+  final Set<String> _resolvedQuestionIds = {};
+
 
   @override
   void initState() {
@@ -621,12 +625,176 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 },
               ),
               const SizedBox(height: 20),
+              _buildDebriefsSection(colors),
+              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _buildDebriefsSection(RitmoColors colors) {
+    final takeaways = _sessions.where((s) => s.keyTakeaway != null && s.keyTakeaway!.trim().isNotEmpty).toList();
+    final questions = _sessions.where((s) => s.openQuestion != null && s.openQuestion!.trim().isNotEmpty).toList();
+    final freeNotes = _sessions.where((s) => s.note != null && s.note!.trim().isNotEmpty).toList();
+
+    if (takeaways.isEmpty && questions.isEmpty && freeNotes.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colors.card.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colors.border.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '💡 برداشت‌های من از دوره',
+              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'هنوز برداشتی ثبت نکرده‌ای. پس از هر جلسه، نکته‌های کلیدی و سوالات باز خود را ثبت کن.',
+              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '💡 برداشت‌های من از این دوره',
+            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          ),
+          const SizedBox(height: 12),
+
+          // 1. Key takeaways
+          if (takeaways.isNotEmpty) ...[
+            Text(
+              '💡 نکته‌های کلیدی (${toPersianDigits(takeaways.length)})',
+              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary),
+            ),
+            const SizedBox(height: 6),
+            ...takeaways.map((s) => Padding(
+              padding: const EdgeInsets.only(bottom: 6, right: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('• ', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
+                  Expanded(
+                    child: Text(
+                      '${s.keyTakeaway!} (جلسه ${toPersianDigits(s.sessionNumber)})',
+                      textDirection: TextDirection.rtl,
+                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+            const SizedBox(height: 12),
+          ],
+
+          // 2. Open questions (with resolved checkbox)
+          if (questions.isNotEmpty) ...[
+            Text(
+              '❓ سؤال‌های باز (${toPersianDigits(questions.length)})',
+              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.warning),
+            ),
+            const SizedBox(height: 6),
+            ...questions.map((s) {
+              final isResolved = _resolvedQuestionIds.contains(s.id);
+              return Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isResolved ? colors.success.withValues(alpha: 0.1) : colors.warning.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: isResolved,
+                      activeColor: colors.success,
+                      onChanged: (val) {
+                        setState(() {
+                          if (val == true) {
+                            _resolvedQuestionIds.add(s.id);
+                          } else {
+                            _resolvedQuestionIds.remove(s.id);
+                          }
+                        });
+                      },
+                    ),
+                    Expanded(
+                      child: Text(
+                        '${s.openQuestion!} (جلسه ${toPersianDigits(s.sessionNumber)})',
+                        textDirection: TextDirection.rtl,
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 12,
+                          color: isResolved ? colors.textSecondary : colors.textPrimary,
+                          decoration: isResolved ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                    ),
+                    if (isResolved)
+                      Text(
+                        'حل شد ✓',
+                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.success, fontWeight: FontWeight.bold),
+                      ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 12),
+          ],
+
+          // 3. Free study notes
+          if (freeNotes.isNotEmpty) ...[
+            Text(
+              '📝 یادداشت‌های آزاد (${toPersianDigits(freeNotes.length)})',
+              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.textSecondary),
+            ),
+            const SizedBox(height: 6),
+            ...freeNotes.map((s) => Padding(
+              padding: const EdgeInsets.only(bottom: 6, right: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('📝 ', style: TextStyle(fontSize: 11)),
+                  Expanded(
+                    child: Text(
+                      '${s.note!} (جلسه ${toPersianDigits(s.sessionNumber)})',
+                      textDirection: TextDirection.rtl,
+                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
+
+          const SizedBox(height: 8),
+          ModuleNoteHistorySection(module: 'courses', entityId: _course.id),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildConfigItem(String title, String value, RitmoColors colors) {
     return Row(

@@ -174,6 +174,53 @@ class SimpleReminderForm extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // 0. Title Field Input (عنوان یادآور)
+              TextFormField(
+                initialValue: controller.title,
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'عنوان یادآور *',
+                  labelStyle: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: colors.primary,
+                  ),
+                  hintText: 'مثلاً: پرداخت قسط وام، آلارم پرواز، تماس با دکتر...',
+                  hintStyle: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 12.5,
+                    color: colors.textSecondary.withValues(alpha: 0.4),
+                  ),
+                  prefixIcon: Icon(Icons.edit_note_rounded, size: 22, color: colors.primary),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF16192E).withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.85),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: colors.border.withValues(alpha: 0.15)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: colors.border.withValues(alpha: 0.15)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: colors.primary, width: 1.8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+                onChanged: (val) {
+                  controller.title = val;
+                  controller.inputController.text = val;
+                },
+              ),
+              const SizedBox(height: 16),
+
               // Date & Time Picker Container
               Container(
                 padding: const EdgeInsets.all(16),

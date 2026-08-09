@@ -6,6 +6,8 @@ import 'package:ritmo/features/study/domain/study_models.dart';
 import 'package:ritmo/features/study/domain/study_stats.dart';
 import 'package:ritmo/features/study/presentation/widgets/bulk_topics_sheet.dart';
 import 'package:ritmo/features/study/presentation/widgets/session_timer_sheet.dart';
+import 'package:ritmo/features/notes/presentation/widgets/module_note_history.dart';
+
 import 'package:uuid/uuid.dart';
 
 class SubjectDetailScreen extends StatefulWidget {
@@ -184,11 +186,16 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                         return _buildTopicTile(topic);
                       },
                     ),
+                  const SizedBox(height: 24),
+                  Text('یادداشت‌های این درس', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                  const SizedBox(height: 8),
+                  ModuleNoteHistorySection(module: 'study', entityId: widget.subject.id),
                 ],
               ),
       ),
     );
   }
+
 
   Widget _buildTopicTile(StudyTopic topic) {
     final colors = context.colors;

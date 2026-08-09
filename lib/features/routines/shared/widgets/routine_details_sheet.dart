@@ -181,24 +181,44 @@ class RoutineDetailsSheet extends StatelessWidget {
                   else ...[
                     const Text('آخرین انجام‌ها:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
                     const SizedBox(height: 8),
-                    SizedBox(
-                      height: 100,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 180),
                       child: ListView.builder(
                         shrinkWrap: true,
-                        itemCount: completions.length > 3 ? 3 : completions.length,
+                        itemCount: completions.length > 5 ? 5 : completions.length,
                         itemBuilder: (context, index) {
                           final c = completions[index];
                           final date = c['completionDate'] as String;
                           final time = DateTime.fromMillisecondsSinceEpoch(c['completionTime'] as int);
                           final timeStr = PersianDigits.convert('${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}');
                           final type = c['resultType'] as String == 'LIGHT' ? 'نسخه سبک' : 'نسخه کامل';
+                          final noteText = (c['note'] as String?)?.trim();
+
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(_formatJalaliDateWithWeekday(date), style: TextStyle(fontSize: 12, color: textColor, fontFamily: 'Vazirmatn')),
-                                Text('$timeStr ($type)', style: TextStyle(fontSize: 12, color: subtitleColor, fontFamily: 'Vazirmatn')),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(_formatJalaliDateWithWeekday(date), style: TextStyle(fontSize: 12, color: textColor, fontFamily: 'Vazirmatn')),
+                                    Text('$timeStr ($type)', style: TextStyle(fontSize: 12, color: subtitleColor, fontFamily: 'Vazirmatn')),
+                                  ],
+                                ),
+                                if (noteText != null && noteText.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2, right: 8),
+                                    child: Text(
+                                      '📝 $noteText',
+                                      textDirection: TextDirection.rtl,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontFamily: 'Vazirmatn',
+                                        color: subtitleColor.withValues(alpha: 0.9),
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                           );
@@ -206,6 +226,7 @@ class RoutineDetailsSheet extends StatelessWidget {
                       ),
                     ),
                   ],
+
                   if (hasCompletionOnTargetDate) ...[
                     const SizedBox(height: 12),
                     OutlinedButton.icon(

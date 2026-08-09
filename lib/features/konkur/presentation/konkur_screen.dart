@@ -1,4 +1,3 @@
-import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/analytics/assistant_engine.dart';
@@ -15,7 +14,7 @@ import 'package:ritmo/core/ux/ritmo_skeleton.dart';
 import 'package:ritmo/features/konkur/logic/konkur_planner.dart';
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
 import 'package:ritmo/features/konkur/models/konkur_models.dart';
-import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
+import 'package:ritmo/features/konkur/presentation/widgets/ai_konkur_assistant_sheet.dart'; // Will be created in K15
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_budget_section.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_exams_section.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_field_picker_sheet.dart';

@@ -280,7 +280,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
   void _handleTimerExpiry() {
     switch (state.status) {
       case SSWorkoutSessionStatus.preparing:
-        _startExercising();
+        _startCountdown();
       case SSWorkoutSessionStatus.countdown:
         _startExercising();
       case SSWorkoutSessionStatus.exercising:
@@ -300,9 +300,9 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
     state = state.copyWith(
       status: SSWorkoutSessionStatus.preparing,
       isResting: false,
-      timerTotalSeconds: 3,
-      timerRemainingSeconds: 3,
-      timerTargetTimestamp: DateTime.now().millisecondsSinceEpoch + 3000,
+      timerTotalSeconds: 5,
+      timerRemainingSeconds: 5,
+      timerTargetTimestamp: DateTime.now().millisecondsSinceEpoch + 5000,
     );
     _saveSessionToPreferences();
   }
@@ -583,10 +583,6 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
               SSExerciseChecklistEntry.fromMap(Map<String, dynamic>.from(item as Map))).toList();
           
           final savedStatusIdx = prefs.getInt('ss_active_session_status') ?? 0;
-          var restoredStatus = SSWorkoutSessionStatus.values[savedStatusIdx];
-          if (restoredStatus == SSWorkoutSessionStatus.preparing || restoredStatus == SSWorkoutSessionStatus.countdown) {
-            restoredStatus = SSWorkoutSessionStatus.exercising;
-          }
           final targetTimestamp = prefs.getInt('ss_active_session_target_timestamp') ?? 0;
           final elapsed = prefs.getInt('ss_active_session_elapsed') ?? 0;
           final isPaused = prefs.getBool('ss_active_session_paused') ?? false;
@@ -596,7 +592,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
             exercises: restoredList,
             currentExerciseIndex: prefs.getInt('ss_active_session_index') ?? 0,
             startedAt: prefs.getInt('ss_active_session_started_at') ?? DateTime.now().millisecondsSinceEpoch,
-            status: restoredStatus,
+            status: SSWorkoutSessionStatus.values[savedStatusIdx],
             timerTargetTimestamp: targetTimestamp,
             isTimerPaused: isPaused,
             elapsedSeconds: elapsed,
@@ -721,10 +717,10 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
         sessionId: newSessionId,
         exercises: list,
         startedAt: now,
-        status: SSWorkoutSessionStatus.exercising,
-        timerTotalSeconds: 0,
-        timerRemainingSeconds: 0,
-        timerTargetTimestamp: 0,
+        status: SSWorkoutSessionStatus.preparing,
+        timerTotalSeconds: 5,
+        timerRemainingSeconds: 5,
+        timerTargetTimestamp: now + 5000,
         isLoading: false,
       );
       await _saveSessionToPreferences();
@@ -786,53 +782,40 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
       }
 
       await db.transaction((txn) async {
-        await txn.insert(
-          'ss_workout_session_log',
-          {
-            'id': state.sessionId,
-            'planId': state.planId,
-            'startedAt': state.startedAt,
-            'finishedAt': finishedAt,
-            'durationSeconds': durationSec,
-            'completedExercisesCount': completedCount,
-            'totalExercisesCount': state.exercises.length,
-            'overallFeeling': overallFeeling != null ? _feelingStr(overallFeeling) : null,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await txn.insert('ss_workout_session_log', {
+          'id': state.sessionId,
+          'planId': state.planId,
+          'startedAt': state.startedAt,
+          'finishedAt': finishedAt,
+          'durationSeconds': durationSec,
+          'completedExercisesCount': completedCount,
+          'totalExercisesCount': state.exercises.length,
+          'overallFeeling': overallFeeling != null ? _feelingStr(overallFeeling) : null,
+        });
         
-        for (var exIdx = 0; exIdx < state.exercises.length; exIdx++) {
-          final entry = state.exercises[exIdx];
+        for (final entry in state.exercises) {
           if (entry.feeling != null) {
-            await txn.insert(
-              'ss_exercise_feeling_log',
-              {
-                'id': 'feel_${state.sessionId}_${exIdx}_${entry.exercise.id}_${DateTime.now().millisecondsSinceEpoch}',
-                'sessionLogId': state.sessionId,
-                'exerciseId': entry.exercise.id,
-                'feeling': _feelingStr(entry.feeling!),
-                'loggedAt': DateTime.now().millisecondsSinceEpoch,
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
+            await txn.insert('ss_exercise_feeling_log', {
+              'id': 'feel_${state.sessionId}_${entry.exercise.id}_${DateTime.now().millisecondsSinceEpoch}',
+              'sessionLogId': state.sessionId,
+              'exerciseId': entry.exercise.id,
+              'feeling': _feelingStr(entry.feeling!),
+              'loggedAt': DateTime.now().millisecondsSinceEpoch,
+            });
           }
 
           var setIdx = 1;
           for (final setRow in entry.setRows) {
-            final setId = 'set_${state.sessionId}_${exIdx}_${entry.exercise.id}_$setIdx';
-            await txn.insert(
-              'ss_workout_set_log',
-              {
-                'id': setId,
-                'session_id': state.sessionId,
-                'exercise_id': entry.exercise.id,
-                'set_index': setIdx,
-                'weight': setRow.weight,
-                'reps': setRow.reps,
-                'feeling': entry.feeling != null ? _feelingStr(entry.feeling!) : null,
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
+            final setId = 'set_${state.sessionId}_${entry.exercise.id}_$setIdx';
+            await txn.insert('ss_workout_set_log', {
+              'id': setId,
+              'session_id': state.sessionId,
+              'exercise_id': entry.exercise.id,
+              'set_index': setIdx,
+              'weight': setRow.weight,
+              'reps': setRow.reps,
+              'feeling': entry.feeling != null ? _feelingStr(entry.feeling!) : null,
+            });
             setIdx++;
           }
         }

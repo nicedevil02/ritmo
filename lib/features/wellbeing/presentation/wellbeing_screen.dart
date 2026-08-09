@@ -1,4 +1,3 @@
-import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -28,7 +27,7 @@ import 'package:ritmo/features/sleep/models/sleep_models.dart';
 import 'package:ritmo/features/sleep/presentation/widgets/sleep_log_sheet.dart';
 import 'package:ritmo/features/sleep/presentation/widgets/sleep_target_sheet.dart';
 import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet.dart';
-import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
+import 'package:ritmo/features/wellbeing/presentation/widgets/ai_wellbeing_assistant_sheet.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/frictionless_mood_bar.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_explanation_sheet.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_pulse_chart.dart';

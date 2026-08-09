@@ -1,4 +1,3 @@
-import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +10,7 @@ import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
-import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
+import 'package:ritmo/features/worship/presentation/widgets/ai_worship_assistant_sheet.dart';
 import 'package:ritmo/features/worship/presentation/widgets/lunar_month_grid.dart';
 import 'package:ritmo/features/worship/presentation/widgets/mustahab_section.dart';
 import 'package:ritmo/features/worship/presentation/widgets/night_prayer_card.dart';
@@ -126,7 +125,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) {
-        return const AssistantSheet(persona: PersonaRegistry.instance.getPersona('worship')!);
+        return const AiWorshipAssistantSheet();
       },
     );
   }

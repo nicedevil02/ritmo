@@ -98,18 +98,18 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       final today = DateTime.now();
 
       // 1. Fetch total session count
-      final totalSessionsResult = await db.rawQuery('SELECT COUNT(*) as count FROM ss_workout_session_log WHERE finishedAt IS NOT NULL');
+      final totalSessionsResult = await db.rawQuery("SELECT COUNT(*) as count FROM workout_logs WHERE sourceModule = 'ss_prescription'");
       final totalSessions = Sqflite.firstIntValue(totalSessionsResult) ?? 0;
 
       // 2. Fetch total duration in minutes
-      final totalMinutesResult = await db.rawQuery('SELECT SUM(durationSeconds) as total FROM ss_workout_session_log WHERE finishedAt IS NOT NULL');
-      final totalMinutes = ((Sqflite.firstIntValue(totalMinutesResult) ?? 0) / 60).round();
+      final totalMinutesResult = await db.rawQuery("SELECT SUM(durationMinutes) as total FROM workout_logs WHERE sourceModule = 'ss_prescription'");
+      final totalMinutes = (Sqflite.firstIntValue(totalMinutesResult) ?? 0);
 
       // 3. Fetch all completed session logs
       final allLogs = await db.query(
-        'ss_workout_session_log',
-        where: 'finishedAt IS NOT NULL',
-        orderBy: 'startedAt ASC',
+        'workout_logs',
+        where: "sourceModule = 'ss_prescription'",
+        orderBy: 'loggedAt ASC',
       );
 
       // 4. Calculate total calories using MET table logic
@@ -117,15 +117,21 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       final weightVal = await MovementLoadCalculator.getUserWeightKg(db);
 
       for (final log in allLogs) {
-        final logId = log['id'].toString();
-        final durationSec = log['durationSeconds'] as int? ?? 0;
-        final durationMins = (durationSec / 60).round();
-        final avgMet = await MovementLoadCalculator.metForSsSession(db, logId);
-        totalCalories += MovementLoadCalculator.calories(
-          met: avgMet,
-          weightKg: weightVal,
-          durationMinutes: durationMins,
-        );
+        // WorkoutLogs has pre-calculated calories in caloriesKcal if using the central repository.
+        // If not, we can calculate it manually or just use the field if it exists.
+        final cal = log['caloriesKcal'] as double?;
+        if (cal != null && cal > 0) {
+          totalCalories += cal;
+        } else {
+          // Fallback manual calc
+          final durationMins = log['durationMinutes'] as int? ?? 0;
+          final met = 5.0; // Moderate default for sports
+          totalCalories += MovementLoadCalculator.calories(
+            met: met,
+            weightKg: weightVal,
+            durationMinutes: durationMins,
+          );
+        }
       }
 
       // 5. Calculate streak
@@ -133,7 +139,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       var maxStreak = 0;
       if (allLogs.isNotEmpty) {
         final dates = allLogs.map((l) {
-          final dt = DateTime.fromMillisecondsSinceEpoch(l['startedAt']! as int);
+          final dt = DateTime.fromMillisecondsSinceEpoch(l['loggedAt']! as int);
           return DateTime(dt.year, dt.month, dt.day);
         }).toSet().toList();
         
@@ -166,8 +172,8 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       // 6. Fetch weekly dots
       final last7DaysStart = today.subtract(const Duration(days: 7)).millisecondsSinceEpoch;
       final recentLogs = await db.query(
-        'ss_workout_session_log',
-        where: 'startedAt >= ? AND finishedAt IS NOT NULL',
+        'workout_logs',
+        where: "loggedAt >= ? AND sourceModule = 'ss_prescription'",
         whereArgs: [last7DaysStart],
       );
 
@@ -175,7 +181,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
         final date = today.subtract(Duration(days: i));
         final start = DateTime(date.year, date.month, date.day).millisecondsSinceEpoch;
         final end = DateTime(date.year, date.month, date.day, 23, 59, 59).millisecondsSinceEpoch;
-        return recentLogs.any((log) => (log['startedAt']! as int) >= start && (log['startedAt']! as int) <= end);
+        return recentLogs.any((log) => (log['loggedAt']! as int) >= start && (log['loggedAt']! as int) <= end);
       });
 
       // 7. Calculate weekly minutes for chart (Saturday to Friday)
@@ -188,10 +194,10 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
         final start = DateTime(targetDate.year, targetDate.month, targetDate.day).millisecondsSinceEpoch;
         final end = DateTime(targetDate.year, targetDate.month, targetDate.day, 23, 59, 59).millisecondsSinceEpoch;
         
-        final targetLogs = allLogs.where((log) => (log['startedAt']! as int) >= start && (log['startedAt']! as int) <= end);
+        final targetLogs = allLogs.where((log) => (log['loggedAt']! as int) >= start && (log['loggedAt']! as int) <= end);
         double mins = 0;
         for (final l in targetLogs) {
-          mins += (l['durationSeconds'] as int? ?? 0) / 60.0;
+          mins += (l['durationMinutes'] as int? ?? 0).toDouble();
         }
         return mins;
       });
@@ -215,12 +221,12 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       // 10. Load month continuity percent
       final startOfMonth = DateTime(today.year, today.month).millisecondsSinceEpoch;
       final monthLogs = await db.query(
-        'ss_workout_session_log',
-        where: 'startedAt >= ? AND finishedAt IS NOT NULL',
+        'workout_logs',
+        where: "loggedAt >= ? AND sourceModule = 'ss_prescription'",
         whereArgs: [startOfMonth],
       );
       final monthDaysCount = monthLogs.map((l) {
-        final dt = DateTime.fromMillisecondsSinceEpoch(l['startedAt']! as int);
+        final dt = DateTime.fromMillisecondsSinceEpoch(l['loggedAt']! as int);
         return '${dt.year}-${dt.month}-${dt.day}';
       }).toSet().length;
       final totalDaysInMonth = today.difference(DateTime(today.year, today.month)).inDays + 1;
@@ -228,7 +234,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
 
       // 11. Completed Dates
       final completedDatesList = allLogs.map((l) {
-        final dt = DateTime.fromMillisecondsSinceEpoch(l['startedAt']! as int);
+        final dt = DateTime.fromMillisecondsSinceEpoch(l['loggedAt']! as int);
         return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
       }).toSet().toList();
 

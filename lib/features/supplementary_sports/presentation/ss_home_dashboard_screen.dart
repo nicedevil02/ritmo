@@ -18,8 +18,11 @@ import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_lottie_player.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_muscle_image_resolver.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_ai_coach_sheet.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_log_session_sheet.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_recovery_card.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_prescription_repository.dart';
+import 'package:ritmo/features/supplementary_sports/data/repositories/ss_program_builder.dart';
 import 'package:ritmo/features/supplementary_sports/domain/prescription/session_prescription.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_session_summary_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1252,18 +1255,13 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 prescription: pres,
                 usesExternalApp: usesExternal,
                 onStart: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SSSessionSummaryScreen(
-                        sessionId: pres.id,
-                        completedCount: 1,
-                        totalCount: 1,
-                        durationSeconds: pres.targetMinutes * 60,
-                      ),
-                    ),
-                  ).then((_) {
-                    if (mounted) _loadDashboardData();
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => SsLogSessionSheet(prescription: pres),
+                  ).then((val) {
+                    if (val == true && mounted) _loadDashboardData();
                   });
                 },
                 onCantToday: _showCantTodayBottomSheet,

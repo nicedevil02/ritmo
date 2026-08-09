@@ -9,7 +9,9 @@ import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_plan_generator.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_prescription_repository.dart';
 import 'package:ritmo/features/supplementary_sports/domain/prescription/session_prescription.dart';
+import 'package:ritmo/features/supplementary_sports/domain/ss_program_calendar.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_exercise_library_screen.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/ss_program_settings_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_plan_day_detail_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/bottom_sheet_container.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/primary_button.dart';
@@ -47,12 +49,30 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
 
   Future<void> _loadSelectedWeekAndPlan() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      setState(() {
-        _selectedWeek = prefs.getInt('ss_active_week') ?? 1;
-      });
+      final db = await DatabaseHelper.instance.database;
+      final profiles = await db.query('ss_user_profile', where: 'id = ?', whereArgs: ['default']);
+      if (profiles.isNotEmpty) {
+        final profileMap = profiles.first;
+        final startStr = profileMap['programStartDate'] as String?;
+        if (startStr != null) {
+          final startDt = DateTime.parse(startStr);
+          final cycleWeek = SsProgramCalendar.cycleWeekFor(DateTime.now(), programStart: startDt);
+          setState(() {
+            _selectedWeek = cycleWeek;
+          });
+        }
+      }
     } catch (_) {}
     await _loadWeeklyPlan();
+  }
+
+  void _openProgramSettingsModal() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SsProgramSettingsScreen()),
+    ).then((_) {
+      if (mounted) _loadWeeklyPlan();
+    });
   }
 
   String? _userGender;
@@ -620,16 +640,16 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              // AI Shortcut Button
+              // Settings Button
               TextButton.icon(
-                icon: const Icon(Icons.android, size: 18),
+                icon: const Icon(Icons.settings, size: 18),
                 label: const Text(
-                  'این هفته رو سبک‌تر/سنگین‌تر کن',
+                  'تنظیمات برنامه',
                   style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
                 ),
-                onPressed: () => widget.onNavigateToTab(1), // AI Coach tab
+                onPressed: _openProgramSettingsModal,
                 style: TextButton.styleFrom(
-                  foregroundColor: SupplementarySportsTheme.getSuccessColor(context),
+                  foregroundColor: SupplementarySportsTheme.getPrimaryColor(context),
                 ),
               ),
             ],
@@ -665,16 +685,12 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                 final isDark = theme.brightness == Brightness.dark;
 
                 return GestureDetector(
-                  onTap: () async {
+                  onTap: () {
                     if (_selectedWeek == weekNum) return;
                     setState(() {
                       _selectedWeek = weekNum;
                     });
-                    try {
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setInt('ss_active_week', weekNum);
-                    } catch (_) {}
-                    await _loadWeeklyPlan();
+                    _loadWeeklyPlan();
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 250),
@@ -784,8 +800,8 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
             children: [
               Expanded(
                 child: PrimaryButton(
-                  label: 'بازسازی کامل هفته',
-                  onPressed: _regenerateWeeklyPlan,
+                  label: 'تغییر تنظیمات و بازسازی',
+                  onPressed: _openProgramSettingsModal,
                 ),
               ),
               const SizedBox(width: SupplementarySportsTheme.spacing12),

@@ -3,6 +3,8 @@ import 'package:ritmo/core/domain/commands/param_spec.dart';
 import 'package:ritmo/core/domain/commands/command_plan.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_prescription_repository.dart';
 import 'package:ritmo/features/supplementary_sports/domain/prescription/session_prescription.dart';
+import 'package:ritmo/features/supplementary_sports/domain/ss_session_completion_gateway.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
 import 'package:sqflite/sqflite.dart';
 
 String _genId() => DateTime.now().microsecondsSinceEpoch.toString();
@@ -58,21 +60,27 @@ class SportsMarkDoneCommand extends RitmoCommand {
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final date = ctx.payload['dateStr']?.toString() ??
         DateTime.now().toIso8601String().split('T').first;
+    final mins = ctx.payload['durationMinutes'] as int? ?? 45;
 
     final pres = await SsPrescriptionRepository.instance.getPrescriptionForDate(date);
+    String? logId;
     if (pres != null) {
-      await SsPrescriptionRepository.instance.savePrescription(
-        pres.copyWith(
-          status: PrescriptionStatus.done,
-          updatedAt: DateTime.now().millisecondsSinceEpoch,
-        ),
+      logId = await SsSessionCompletionGateway.completeSession(
+        dateIso: date,
+        actualMinutes: mins,
+        actualRpe: 6, // Default to moderate for basic command
       );
     }
 
     return CommandResult.ok(
       commandId: id,
       outputData: {'date': date},
-      inverseData: {'date': date, 'prevStatus': pres?.status.code ?? 'PLANNED'},
+      inverseData: {
+        'date': date,
+        'prevStatus': pres?.status.code ?? 'PLANNED',
+        'prevLogId': pres?.workoutLogId,
+        'newLogId': logId,
+      },
     );
   }
 
@@ -81,6 +89,8 @@ class SportsMarkDoneCommand extends RitmoCommand {
       AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
     final date = inverseData['date']?.toString();
     final prevStatus = inverseData['prevStatus']?.toString() ?? 'PLANNED';
+    final prevLogId = inverseData['prevLogId']?.toString();
+    final newLogId = inverseData['newLogId']?.toString();
     if (date == null) return null;
 
     final pres = await SsPrescriptionRepository.instance.getPrescriptionForDate(date);
@@ -88,10 +98,17 @@ class SportsMarkDoneCommand extends RitmoCommand {
       await SsPrescriptionRepository.instance.savePrescription(
         pres.copyWith(
           status: PrescriptionStatus.fromCode(prevStatus),
+          workoutLogId: prevLogId,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         ),
       );
     }
+
+    // Clean up the movement log created by the gateway
+    if (newLogId != null) {
+      await MovementRepository.instance.deleteEvent(newLogId);
+    }
+
     return CommandResult.ok(commandId: id);
   }
 }

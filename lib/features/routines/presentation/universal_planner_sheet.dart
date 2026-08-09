@@ -90,19 +90,12 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
       },
     );
     _controller.init();
+    _initSheetOpeners();
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Wire up the medical sheet opener here so `context` is always current
+  void _initSheetOpeners() {
     _controller.setMedicalSheetOpener(([prefillData]) {
+      if (!mounted) return;
       MedicationFormSheet.show(
         context,
         prefillData: prefillData ?? _controller.tempMedicationData,
@@ -114,6 +107,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
     });
 
     _controller.setWorshipSheetOpener(({prefill}) {
+      if (!mounted) return;
       showModalBottomSheet(
         context: context,
         backgroundColor: Colors.transparent,
@@ -140,6 +134,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
     });
 
     _controller.setCourseSheetOpener(({initialValues}) {
+      if (!mounted) return;
       showModalBottomSheet(
         context: context,
         backgroundColor: Colors.transparent,
@@ -157,6 +152,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
     });
 
     _controller.setGoalSheetOpener(({templateData}) {
+      if (!mounted) return;
       showModalBottomSheet(
         context: context,
         backgroundColor: Colors.transparent,
@@ -176,6 +172,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
     });
 
     _controller.setSportsLogSheetOpener(({durationMinutes}) {
+      if (!mounted) return;
       showMovementLogSheet(
         context,
         presetDurationMinutes: durationMinutes,
@@ -187,6 +184,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
     });
 
     _controller.setEventSheetOpener(() {
+      if (!mounted) return;
       DedicatedBuilderSheet.show(
         context: context,
         title: '✨ ثبت رویداد جدید',
@@ -201,6 +199,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
     });
 
     _controller.setReminderSheetOpener(() {
+      if (!mounted) return;
       DedicatedBuilderSheet.show(
         context: context,
         title: '✨ ثبت یادآور جدید',
@@ -215,6 +214,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
     });
 
     _controller.setReflectionSheetOpener(() {
+      if (!mounted) return;
       DedicatedBuilderSheet.show(
         context: context,
         title: '✨ ثبت یادداشت و بازتاب',
@@ -229,6 +229,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
     });
 
     _controller.setGenericSheetOpener(() {
+      if (!mounted) return;
       DedicatedBuilderSheet.show(
         context: context,
         title: '✨ ساخت روتین عمومی',
@@ -243,6 +244,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
     });
 
     _controller.setSportsScreenOpener(() {
+      if (!mounted) return;
       final nav = Navigator.of(context);
       nav.push(
         MaterialPageRoute(builder: (context) => const SSHomeDashboardScreen()),
@@ -251,7 +253,17 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
         if (mounted) nav.pop();
       });
     });
+  }
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -399,6 +411,22 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
                                               color: Colors.white,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.2),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              '⏰ ${_controller.getTimeToStartLabel()}',
+                                              style: const TextStyle(
+                                                fontFamily: 'Vazirmatn',
+                                                fontSize: 12,
+                                                color: Colors.white,
+                                              ),
                                             ),
                                           ),
                                           const SizedBox(height: 8),

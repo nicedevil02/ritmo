@@ -448,31 +448,89 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
     }
     
     if (conflict == null) return const SizedBox.shrink();
-    
+
+    final nextFreeSlot = widget.controller.suggestedTimeSlots.isNotEmpty
+        ? widget.controller.suggestedTimeSlots.first
+        : null;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.red.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.red.withValues(alpha: 0.15)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.red.withValues(alpha: 0.25), width: 1.2),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 16),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                '⚠️ تداخل با «${conflict.title}» (${toPersianDigits(conflict.timeStr)})',
-                style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 12,
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
+            Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '⚠️ تداخل زمانی با «${conflict.title}» (${toPersianDigits(conflict.timeStr)})',
+                    style: const TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 12,
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (nextFreeSlot != null) ...[
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  final parts = nextFreeSlot.split(':');
+                  final hour = int.parse(parts[0]);
+                  final minute = int.parse(parts[1]);
+                  widget.controller.setTime(TimeOfDay(hour: hour, minute: minute));
+                  if (_hourScrollController.hasClients) {
+                    _hourScrollController.animateToItem(
+                      hour,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                    );
+                  }
+                  if (_minuteScrollController.hasClients) {
+                    _minuteScrollController.animateToItem(
+                      minute,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                    );
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade600,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.auto_fix_high_rounded, color: Colors.white, size: 14),
+                      const SizedBox(width: 6),
+                      Text(
+                        'انتقال هوشمند به زمان آزاد (${toPersianDigits(nextFreeSlot)})',
+                        style: const TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),

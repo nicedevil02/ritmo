@@ -206,6 +206,64 @@ class PlannerController extends ChangeNotifier {
     _loadQuickSaveHintStatus();
     loadOccupancyForDate(selectedDate);
     loadFrequentStations();
+    if (!isEditing && inputController.text.isEmpty) {
+      _loadDraft();
+    }
+  }
+
+  Future<void> _loadDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final draft = prefs.getString('planner_draft_text');
+      if (draft != null && draft.isNotEmpty) {
+        inputController.text = draft;
+        rawInputText = draft;
+        _executeNLPParse(draft);
+      }
+    } catch (e) {
+      debugPrint('Error loading draft: $e');
+    }
+  }
+
+  Future<void> _saveDraft() async {
+    if (isEditing) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (rawInputText.trim().isNotEmpty) {
+        await prefs.setString('planner_draft_text', rawInputText.trim());
+      } else {
+        await prefs.remove('planner_draft_text');
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _clearDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('planner_draft_text');
+    } catch (_) {}
+  }
+
+  String getTimeToStartLabel() {
+    final now = DateTime.now();
+    final target = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+    if (target.isBefore(now)) return 'تاریخ و زمان گذشته است';
+    final diff = target.difference(now);
+    final hours = diff.inHours;
+    final mins = diff.inMinutes % 60;
+    if (hours > 0) {
+      return '$hours ساعت و $mins دقیقه تا شروع';
+    } else if (mins > 0) {
+      return '$mins دقیقه تا شروع';
+    } else {
+      return 'هم‌اکنون زمان شروع است';
+    }
   }
 
   Future<void> _loadZones() async {
@@ -387,6 +445,7 @@ class PlannerController extends ChangeNotifier {
       return;
     }
 
+    hasManuallySelectedCategory = true;
     selectedCategory = cat;
     if (type != null) {
       itemType = type;
@@ -740,6 +799,7 @@ class PlannerController extends ChangeNotifier {
 
   void onInputTextChanged(String text, {bool immediate = false}) {
     rawInputText = text;
+    _saveDraft();
     
     // Estimate word count to show AI action
     final wordCount = text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
@@ -1329,10 +1389,12 @@ class PlannerController extends ChangeNotifier {
       await strategy.save(saveCtx, context);
 
       showSuccessAnim = true;
+      _clearDraft();
       notifyListeners();
 
       _saveTimer?.cancel();
       _saveTimer = Timer(const Duration(milliseconds: 1400), () {
+        isSaving = false;
         onSaved();
         if (context.mounted) {
           Navigator.pop(context);

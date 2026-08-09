@@ -205,43 +205,158 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
             ),
           ),
           
-          // Entity Chips
-          if (widget.controller.isTimeParsed ||
-              widget.controller.isRecurrenceParsed ||
-              widget.controller.isDurationParsed) ...[
+          // Live NLP Preview Card (P2) & Quick-Save Action (P1)
+          if (widget.controller.title.trim().isNotEmpty &&
+              (widget.controller.isTimeParsed ||
+                  widget.controller.isRecurrenceParsed ||
+                  widget.controller.isDurationParsed)) ...[
             const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (widget.controller.isTimeParsed)
-                  _buildChip(
-                    label: _getTimeDateChipLabel(),
-                    onDelete: () {
-                      HapticFeedback.lightImpact();
-                      widget.controller.removeParsedEntity('time');
-                    },
-                    context: context,
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF16192E).withValues(alpha: 0.75)
+                    : Colors.white.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.3),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  )
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: colors.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.auto_awesome_rounded,
+                            size: 16, color: colors.primary),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.controller.title,
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: colors.goldAccent.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'پیش‌نمایش زنده ✨',
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: colors.goldAccent,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                if (widget.controller.isRecurrenceParsed)
-                  _buildChip(
-                    label: _getRecurrenceChipLabel(),
-                    onDelete: () {
-                      HapticFeedback.lightImpact();
-                      widget.controller.removeParsedEntity('recurrence');
-                    },
-                    context: context,
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (widget.controller.isTimeParsed)
+                        _buildChip(
+                          label: _getTimeDateChipLabel(),
+                          onDelete: () {
+                            HapticFeedback.lightImpact();
+                            widget.controller.removeParsedEntity('time');
+                          },
+                          context: context,
+                        ),
+                      if (widget.controller.isRecurrenceParsed)
+                        _buildChip(
+                          label: _getRecurrenceChipLabel(),
+                          onDelete: () {
+                            HapticFeedback.lightImpact();
+                            widget.controller.removeParsedEntity('recurrence');
+                          },
+                          context: context,
+                        ),
+                      if (widget.controller.isDurationParsed)
+                        _buildChip(
+                          label: _getDurationChipLabel(),
+                          onDelete: () {
+                            HapticFeedback.lightImpact();
+                            widget.controller.removeParsedEntity('duration');
+                          },
+                          context: context,
+                        ),
+                    ],
                   ),
-                if (widget.controller.isDurationParsed)
-                  _buildChip(
-                    label: _getDurationChipLabel(),
-                    onDelete: () {
-                      HapticFeedback.lightImpact();
-                      widget.controller.removeParsedEntity('duration');
+                  const SizedBox(height: 12),
+                  // Slide-to-Save Quick Action
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      widget.controller.save(context);
                     },
-                    context: context,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            colors.primary,
+                            colors.primary.withValues(alpha: 0.85),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.primary.withValues(alpha: 0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.flash_on_rounded,
+                              color: Colors.white, size: 16),
+                          SizedBox(width: 6),
+                          Text(
+                            'ثبت سریع با همین اطلاعات ⚡',
+                            style: TextStyle(
+                              fontFamily: 'Vazirmatn',
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-              ],
+                ],
+              ),
             ),
           ],
           
@@ -267,35 +382,6 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
                   backgroundColor: const Color(0xff8B5CF6).withValues(alpha: 0.08),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-              ),
-            ),
-          ],
-
-          // Quick Save Hint
-          if (showQuickSaveHint) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: colors.goldAccent.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: colors.goldAccent.withValues(alpha: 0.15)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.lightbulb_outline_rounded, color: colors.goldAccent, size: 14),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '💡 می‌توانید از دکمه «ذخیره سریع» برای ثبت فوری بدون طی کردن بقیه مراحل استفاده کنید.',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 11,
-                        color: colors.goldAccent,
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
           ],

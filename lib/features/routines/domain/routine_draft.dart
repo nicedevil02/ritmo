@@ -91,13 +91,16 @@ class RoutineDraft {
         }
       } else if (schedType == 'EVERY_N_DAYS') {
         final intervalHours = scheduleRow['intervalHours'] as int? ?? 24;
-        recurrence = IntervalRecurrence(days: (intervalHours / 24).round());
+        final safeHours = intervalHours > 0 ? intervalHours : 24;
+        recurrence = IntervalRecurrence(days: (safeHours / 24).round());
       } else if (schedType == 'ONCE') {
         final startDateStr = scheduleRow['startDate'] as String? ?? '';
         final parsedDate = DateTime.tryParse(startDateStr) ?? DateTime.now();
         recurrence = OnceRecurrence(date: parsedDate);
       }
     }
+
+    final rawDuration = routineRow['targetDurationMinutes'] as int?;
 
     return RoutineDraft(
       id: routineRow['id'] as String?,
@@ -106,7 +109,8 @@ class RoutineDraft {
       category: catName,
       customCategoryId: routineRow['customCategoryId'] as String?,
       itemType: itemType,
-      targetDurationMinutes: routineRow['targetDurationMinutes'] as int? ?? 30,
+      targetDurationMinutes: rawDuration ?? 30,
+      hasExplicitDuration: rawDuration != null && rawDuration > 0,
       lightDurationMinutes: routineRow['lightDurationMinutes'] as int?,
       minimalDurationMinutes: routineRow['minimalDurationMinutes'] as int?,
       timeOfDay: timeOfDay,

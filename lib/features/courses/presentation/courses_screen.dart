@@ -1,3 +1,5 @@
+import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +18,6 @@ import 'package:ritmo/features/courses/models/course_models.dart';
 import 'package:ritmo/features/courses/presentation/course_detail_screen.dart';
 import 'package:ritmo/features/courses/presentation/widgets/course_formatters.dart';
 import 'package:ritmo/features/courses/presentation/widgets/active_courses_section.dart';
-import 'package:ritmo/features/courses/presentation/widgets/ai_courses_assistant_sheet.dart';
 import 'package:ritmo/features/courses/presentation/widgets/ai_syllabus_sheet.dart';
 import 'package:ritmo/features/courses/presentation/widgets/completed_courses_section.dart';
 import 'package:ritmo/features/courses/presentation/widgets/courses_weekly_hero.dart';
@@ -113,13 +114,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
         context: context,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
-        builder: (context) => AiCoursesAssistantSheet(
-          activeCourses: _activeCourses,
-          onScheduleSuggested: (suggestedData) {
-            Navigator.pop(context);
-            _openAiSyllabusSheetWithData(suggestedData);
-          },
-        ),
+        builder: (context) => AssistantSheet(persona: PersonaRegistry.instance.getPersona('courses')!),
       ),
     );
   }

@@ -1,3 +1,5 @@
+import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:ritmo/core/modules/module_gate.dart';
@@ -22,7 +24,6 @@ import 'package:ritmo/features/cycle/presentation/widgets/cycle_trends_section.d
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_correlation_section.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_sos_section.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_pregnancy_mode.dart';
-import 'package:ritmo/features/cycle/presentation/widgets/ai_cycle_assistant_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
@@ -106,11 +107,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => AiCycleAssistantSheet(
-            engineOutput: _engineOutput,
-            dayLogs: _dayLogs,
-            settings: _settings,
-          ),
+          builder: (context) => AssistantSheet(persona: PersonaRegistry.instance.getPersona('cycle')!),
         );
       },
     );

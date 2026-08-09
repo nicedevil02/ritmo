@@ -1,3 +1,5 @@
+import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/analytics/assistant_engine.dart';
@@ -403,12 +405,7 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return AiKonkurAssistantSheet(
-          subjects: _subjects,
-          topics: _topics,
-          perSubjectTrend: _engineOutput?.perSubjectTrend ?? {},
-          onRefresh: _loadAllData,
-        );
+        return AssistantSheet(persona: PersonaRegistry.instance.getPersona('konkur')!);
       },
     );
   }

@@ -1,3 +1,5 @@
+import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
@@ -17,7 +19,6 @@ import 'package:ritmo/features/health/presentation/pages/monitoring_page.dart';
 import 'package:ritmo/features/health/presentation/pages/records_page.dart';
 import 'package:ritmo/features/health/presentation/pages/visits_page.dart';
 // Import sheets
-import 'package:ritmo/features/health/presentation/widgets/ai_health_assistant_sheet.dart';
 
 class HealthScreen extends StatefulWidget {
   const HealthScreen({super.key});
@@ -373,7 +374,7 @@ class _HealthScreenState extends State<HealthScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => const Directionality(
         textDirection: TextDirection.rtl,
-        child: AiHealthAssistantSheet(),
+        child: AssistantSheet(persona: PersonaRegistry.instance.getPersona('health')!),
       ),
     );
   }

@@ -94,9 +94,13 @@ class AssistantHandoffCommand extends RitmoCommand {
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final target = ctx.payload['personaId']?.toString() ?? '';
+    bool carry = ctx.payload['carryHistory'] ?? true;
+    if (ctx.personaId == 'cycle' || target == 'cycle') {
+      carry = false;
+    }
     return CommandResult.ok(commandId: id, outputData: {
       'personaId': target,
-      'carryHistory': ctx.payload['carryHistory'] ?? true,
+      'carryHistory': carry,
     });
   }
 

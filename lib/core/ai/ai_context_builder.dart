@@ -93,6 +93,7 @@ class AIContextBuilder {
   static Future<Map<String, dynamic>> buildContext({
     required String query,
     required ConsentProfile consent,
+    String? personaId,
   }) async {
     final cleanQuery = query.toLowerCase().trim();
 
@@ -121,14 +122,16 @@ class AIContextBuilder {
       'dose', 'dosage', 'medicine', 'medication', 'medical', 'prescription', 'health',
       'دارو', 'دوز', 'قرص', 'آمپول', 'نسخه', 'پزشکی', 'پزشک', 'سلامت', 'بیماری', 'درمان'
     ];
-    for (final kw in medicalKeywords) {
-      if (cleanQuery.contains(kw)) {
-        return {
-          'query': query,
-          'relevant_data': {},
-          'user_state': {'status': 'out_of_scope', 'reason': 'medical_safety'},
-          'scope': 'narrow'
-        };
+    if (personaId != 'health') {
+      for (final kw in medicalKeywords) {
+        if (cleanQuery.contains(kw)) {
+          return {
+            'query': query,
+            'relevant_data': {},
+            'user_state': {'status': 'out_of_scope', 'reason': 'medical_safety'},
+            'scope': 'narrow'
+          };
+        }
       }
     }
 

@@ -1,5 +1,6 @@
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
 
 class PersonaGate {
   static Future<Set<DataDomain>> readableDomains(String personaId) async {
@@ -27,7 +28,10 @@ class PersonaGate {
       readable.add(DataDomain.medical);
     }
     // reflection
-    if (isEnabled('ai_domain_reflection_read', false)) {
+    final persona = PersonaRegistry.instance.getPersona(personaId);
+    if (persona != null &&
+        persona.reads.contains(DataDomain.reflection) &&
+        isEnabled('ai_domain_reflection_read', false)) {
       readable.add(DataDomain.reflection);
     }
 
@@ -65,7 +69,7 @@ class PersonaGate {
       readable.add(DataDomain.energy);
     }
 
-    return readable;
+    return readable.intersection(persona?.reads ?? const <DataDomain>{});
   }
 
   static Future<bool> canWriteDomain(String personaId, Set<DataDomain> touches) async {

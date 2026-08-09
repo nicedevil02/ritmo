@@ -49,7 +49,7 @@ class PersonaRegistry {
       displayName: 'دستیار معنوی و عبادات',
       systemPromptKey: 'system_prompt_worship',
       reads: {DataDomain.worship, DataDomain.routines},
-      commandIds: {'worship.create', 'worship.delete', 'app.openPage', 'setting.update'},
+      commandIds: {'worship.create', 'worship.delete', 'app.openPage', 'setting.update', 'assistant.handoff'},
       handoffHint: 'جهت تنظیم خواب یا اهداف می‌توانید به دستیار خواب یا اهداف منتقل شوید.',
     ));
 
@@ -58,7 +58,7 @@ class PersonaRegistry {
       displayName: 'دستیار برنامه‌ریزی کنکور',
       systemPromptKey: 'system_prompt_konkur',
       reads: {DataDomain.konkur, DataDomain.routines},
-      commandIds: {'konkur.createTopic', 'app.openPage'},
+      commandIds: {'konkur.createTopic', 'app.openPage', 'assistant.handoff', 'study.addTopic', 'study.setSubjectPriority', 'study.planSession', 'study.logSession', 'study.logMockResult', 'study.generateWeeklyPlan', 'study.setExamDate', 'study.setDailyBudget'},
     ));
 
     register(AssistantPersona(
@@ -66,7 +66,7 @@ class PersonaRegistry {
       displayName: 'دستیار دوره‌ها و دروس',
       systemPromptKey: 'system_prompt_courses',
       reads: {DataDomain.courses, DataDomain.routines},
-      commandIds: {'course.create', 'app.openPage'},
+      commandIds: {'course.create', 'app.openPage', 'assistant.handoff', 'course.setWeeklyTarget', 'course.logSession', 'course.resplitSessions', 'course.archive'},
     ));
 
     register(AssistantPersona(
@@ -74,7 +74,7 @@ class PersonaRegistry {
       displayName: 'مربی هوشمند ورزشی',
       systemPromptKey: 'system_prompt_sports',
       reads: {DataDomain.sports, DataDomain.energy, DataDomain.routines},
-      commandIds: {'app.openPage'},
+      commandIds: {'app.openPage', 'assistant.handoff', 'sports.setTrainingDays', 'sports.setSessionMinutes', 'sports.setFocus', 'sports.setRestDay', 'sports.lockDay', 'sports.swapExercise', 'sports.adjustIntensity', 'sports.logSession', 'sports.generateProgram', 'sports.setQuietMode'},
     ));
 
     register(AssistantPersona(
@@ -82,7 +82,7 @@ class PersonaRegistry {
       displayName: 'دستیار حال و تعادل',
       systemPromptKey: 'system_prompt_wellbeing',
       reads: {DataDomain.energy, DataDomain.sleep, DataDomain.reflection, DataDomain.routines},
-      commandIds: {'energy.log', 'sleep.log', 'reflection.log', 'app.openPage'},
+      commandIds: {'energy.log', 'sleep.log', 'reflection.log', 'app.openPage', 'assistant.handoff'},
     ));
 
     register(AssistantPersona(
@@ -90,7 +90,7 @@ class PersonaRegistry {
       displayName: 'دستیار اهداف و برنامه‌ها',
       systemPromptKey: 'system_prompt_goals',
       reads: {DataDomain.goals, DataDomain.routines},
-      commandIds: {'goal.create', 'goal.edit', 'goal.completeStep', 'app.openPage'},
+      commandIds: {'goal.create', 'goal.edit', 'goal.completeStep', 'app.openPage', 'assistant.handoff', 'goal.decompose', 'goal.archive'},
     ));
 
     register(AssistantPersona(
@@ -98,7 +98,7 @@ class PersonaRegistry {
       displayName: 'دستیار تنظیم خواب',
       systemPromptKey: 'system_prompt_sleep',
       reads: {DataDomain.sleep, DataDomain.energy},
-      commandIds: {'sleep.log', 'app.openPage'},
+      commandIds: {'sleep.log', 'app.openPage', 'assistant.handoff', 'sleep.setTargetWindow', 'sleep.logDiagnostic'},
     ));
 
     register(AssistantPersona(
@@ -106,7 +106,7 @@ class PersonaRegistry {
       displayName: 'دستیار خودارزیابی و بازتاب',
       systemPromptKey: 'system_prompt_reflection',
       reads: {DataDomain.reflection, DataDomain.energy},
-      commandIds: {'reflection.log', 'app.openPage'},
+      commandIds: {'reflection.log', 'app.openPage', 'assistant.handoff'},
     ));
 
     register(AssistantPersona(
@@ -114,7 +114,7 @@ class PersonaRegistry {
       displayName: 'دستیار بهداشت چرخه بدنی',
       systemPromptKey: 'system_prompt_cycle',
       reads: {DataDomain.cycle, DataDomain.energy, DataDomain.routines},
-      commandIds: {'app.openPage', 'energy.log'},
+      commandIds: {'app.openPage', 'energy.log', 'assistant.handoff'},
     ));
 
     register(AssistantPersona(
@@ -122,7 +122,7 @@ class PersonaRegistry {
       displayName: 'دستیار هوشمند سلامت',
       systemPromptKey: 'system_prompt_health',
       reads: {DataDomain.medical, DataDomain.energy, DataDomain.routines},
-      commandIds: {'app.openPage', 'setting.update'},
+      commandIds: {'app.openPage', 'setting.update', 'assistant.handoff', 'health.logAdherence', 'health.logVital', 'health.scheduleTest'},
     ));
   }
 }

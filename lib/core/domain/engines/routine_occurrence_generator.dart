@@ -209,6 +209,17 @@ class RoutineOccurrenceGenerator {
       );
       if (sched.isEmpty) continue;
 
+      // Derive the earliest possible date for this routine from its createdAt
+      final createdAtMs = rMap['createdAt'] as int? ?? 0;
+      final routineCreatedDate = createdAtMs > 0
+          ? DateTime.fromMillisecondsSinceEpoch(createdAtMs)
+          : today; // If missing, default to today (safe: no past backfill)
+      final routineFloor = DateTime(
+        routineCreatedDate.year,
+        routineCreatedDate.month,
+        routineCreatedDate.day,
+      );
+
       RecurrenceRule rule;
       if (sched['recurrenceRule'] != null &&
           (sched['recurrenceRule']! as String).isNotEmpty) {
@@ -217,11 +228,13 @@ class RoutineOccurrenceGenerator {
         rule = RecurrenceRule.fromMap(decoded);
       } else {
         // Build fallback RecurrenceRule from daysOfWeek / timeOfDay
+        // Use routineFloor as startDate to prevent generating past overdue items
         final daysStr = sched['daysOfWeek'] as String? ?? '6,7,1,2,3,4,5';
         final days =
             daysStr.split(',').map((d) => int.tryParse(d.trim()) ?? 1).toList();
         rule = RecurrenceRule(
           weekdays: days,
+          startDate: routineFloor,
           reminderTimes:
               sched['timeOfDay'] != null
                   ? [sched['timeOfDay']! as String]
@@ -232,6 +245,10 @@ class RoutineOccurrenceGenerator {
       // Backfill past 30 days and generate future 30 days
       for (var i = -30; i < 30; i++) {
         final targetDate = today.add(Duration(days: i));
+
+        // Hard floor: never generate occurrences before the routine existed
+        if (targetDate.isBefore(routineFloor)) continue;
+
         final dateStr = targetDate.toIso8601String().substring(0, 10);
 
         if (shouldOccurOnDate(targetDate, rule)) {

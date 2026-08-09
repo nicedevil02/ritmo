@@ -11,6 +11,7 @@ import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/services/central_inbox_service.dart';
 import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/utils/snapshot_helper.dart';
+import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/features/onboarding/logic/day_arc_inferencer.dart';
 import 'package:ritmo/features/onboarding/logic/onboarding_draft.dart';
 import 'package:ritmo/features/onboarding/logic/onboarding_gate.dart';
@@ -229,12 +230,19 @@ class OnboardingController extends ChangeNotifier {
               'updatedAt': nowMs,
             };
 
+            final rule = RecurrenceRule(
+              startDate: DateTime.now(),
+              weekdays: const [1, 2, 3, 4, 5, 6, 7],
+              reminderTimes: [t.defaultTime],
+            );
+
             final scheduleData = {
               'id': 'sched_$rId',
               'routineId': rId,
               'scheduleType': 'DAILY',
               'timeOfDay': t.defaultTime,
               'daysOfWeek': '1,2,3,4,5,6,7',
+              'recurrenceRule': jsonEncode(rule.toMap()),
               'createdAt': nowMs,
               'updatedAt': nowMs,
             };

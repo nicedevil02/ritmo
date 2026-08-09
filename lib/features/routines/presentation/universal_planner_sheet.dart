@@ -555,8 +555,14 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
         if (_controller.itemType == 'REFLECT') {
           return ReflectionStep2Form(controller: _controller);
         }
+        if (_controller.itemType == 'REMINDER') {
+          return SimpleReminderForm(controller: _controller);
+        }
         return GenericStep2Form(controller: _controller);
       default:
+        if (_controller.itemType == 'REMINDER') {
+          return SimpleReminderForm(controller: _controller);
+        }
         return GenericStep2Form(controller: _controller);
     }
   }

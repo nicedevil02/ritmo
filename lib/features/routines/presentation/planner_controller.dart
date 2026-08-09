@@ -603,25 +603,8 @@ class PlannerController extends ChangeNotifier {
       }
     }
 
-    if (itemType == 'EVENT') {
-      if (openEventSheet != null) {
-        openEventSheet!();
-        return true;
-      }
-    }
-
-    if (itemType == 'REMINDER') {
-      if (openReminderSheet != null) {
-        openReminderSheet!();
-        return true;
-      }
-    }
-
-    if (itemType == 'REFLECT') {
-      if (openReflectionSheet != null) {
-        openReflectionSheet!();
-        return true;
-      }
+    if (itemType == 'EVENT' || itemType == 'REMINDER' || itemType == 'REFLECT') {
+      return false;
     }
 
     if (openGenericSheet != null) {

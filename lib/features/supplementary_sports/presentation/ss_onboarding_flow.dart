@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -10,6 +11,7 @@ import 'package:ritmo/features/supplementary_sports/data/repositories/ss_plan_ge
 import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/primary_button.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_lottie_player.dart';
+import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -22,10 +24,10 @@ class SSOnboardingFlow extends StatefulWidget {
 
 class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
   int _currentStep = 1;
-  final int _totalSteps = 8;
   late final PageController _pageController;
 
   // Selected Values
+  bool _simplifiedMode = false;
   String _selectedGender = 'MALE';
   double _heightCm = 175;
   double _weightKg = 70;
@@ -40,6 +42,18 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
 
   bool _isGeneratingPlan = false;
   int _generationStage = 0; // 0 to 4
+
+  List<int> get _activeSteps {
+    if (_simplifiedMode) {
+      // 0: Mode, 1: BMI, 2: Goal, 8: DurationAndDays
+      return [0, 1, 2, 8];
+    } else {
+      // 0: Mode, 1: BMI, 2: Goal, 3: Exp, 4: Loc, 5: Focus, 6: Equip, 7: Limits, 8: Duration
+      return [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    }
+  }
+
+  int get _totalSteps => _activeSteps.length;
 
   @override
   void initState() {
@@ -71,6 +85,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       if (savedStep != null && savedStep > 0 && savedStep <= _totalSteps) {
         setState(() {
           _currentStep = savedStep;
+          _simplifiedMode = prefs.getBool('ss_onboarding_simplified_mode') ?? false;
           _heightCm = prefs.getDouble('ss_onboarding_height') ?? 175;
           _weightKg = prefs.getDouble('ss_onboarding_weight') ?? 70;
 
@@ -151,6 +166,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('ss_onboarding_step', _currentStep);
+      await prefs.setBool('ss_onboarding_simplified_mode', _simplifiedMode);
       await prefs.setDouble('ss_onboarding_height', _heightCm);
       await prefs.setDouble('ss_onboarding_weight', _weightKg);
       if (_selectedGoal != null) {
@@ -263,13 +279,8 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         updatedAt: now,
       );
 
-      // Ensure columns exist on legacy databases
-      try {
-        await db.execute('ALTER TABLE ss_user_profile ADD COLUMN programStartDate TEXT;');
-      } catch (_) {}
-      try {
-        await db.execute('ALTER TABLE ss_user_profile ADD COLUMN deloadEveryNWeeks INTEGER DEFAULT 4;');
-      } catch (_) {}
+      // Ensure all profile columns exist on legacy databases
+      await SupplementarySportsTables.ensureUserProfileSchema(db);
 
       // Save Profile
       await db.insert(
@@ -286,6 +297,9 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       } catch (_) {}
+
+      // Apply selected detail mode
+      await SportsDetailMode.setEnabled(!_simplifiedMode);
 
       // Interactive 4-week generation with stage updates
       setState(() => _generationStage = 1);
@@ -328,8 +342,10 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
     }
   }
 
-  Widget _buildStepContent(int step) {
-    switch (step) {
+  Widget _buildStepContent(int stepId) {
+    switch (stepId) {
+      case 0:
+        return _buildStep1Mode();
       case 1:
         return _buildStep2Bmi();
       case 2:
@@ -349,6 +365,140 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       default:
         return Container();
     }
+  }
+
+  Widget _buildStep1Mode() {
+    final colors = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Center(
+          child: SSLottiePlayer.forExercise(
+            category: 'GENERAL',
+            width: 200,
+            height: 200,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'چگونه می‌خواهید ورزش کنید؟',
+          style: TextStyle(
+            fontFamily: 'Vazirmatn',
+            color: colors.textPrimary,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'شما می‌توانید برنامه را بر اساس نیازتان ساده یا بسیار دقیق کنید.',
+          style: TextStyle(
+            fontFamily: 'Vazirmatn',
+            color: colors.textSecondary,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _buildSelectableCard(
+          title: 'حالت پیشرفته (دقیق)',
+          subtitle: 'شامل انیمیشن‌های سه‌بعدی، تعداد ست و تکرار دقیق و زمان‌های استراحت.',
+          icon: Icons.fitness_center_rounded,
+          isSelected: !_simplifiedMode,
+          onTap: () {
+            setState(() {
+              _simplifiedMode = false;
+              _saveStateToPreferences();
+            });
+          },
+          colors: colors,
+        ),
+        const SizedBox(height: 12),
+        _buildSelectableCard(
+          title: 'حالت ساده (بدون دردسر)',
+          subtitle: 'فقط تیک زدن روزهای ورزش بدون درگیری با جزئیات و تعداد حرکات.',
+          icon: Icons.check_circle_outline_rounded,
+          isSelected: _simplifiedMode,
+          onTap: () {
+            setState(() {
+              _simplifiedMode = true;
+              _saveStateToPreferences();
+            });
+          },
+          colors: colors,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectableCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required RitmoColors colors,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        RitmoHaptics.selection();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.primary.withValues(alpha: 0.12) : colors.card,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? colors.primary : colors.border,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isSelected ? colors.primary.withValues(alpha: 0.2) : colors.surface,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? colors.primary : colors.textSecondary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 16,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      color: isSelected ? colors.primary : colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 13,
+                      color: colors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -419,7 +569,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                   itemBuilder: (context, index) {
                     return SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                      child: _buildStepContent(index + 1),
+                      child: _buildStepContent(_activeSteps[index]),
                     );
                   },
                 ),
@@ -439,15 +589,18 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
   }
 
   bool _isStepValid() {
-    switch (_currentStep) {
+    final stepId = _activeSteps[_currentStep - 1];
+    switch (stepId) {
+      case 0:
+        return true; // Mode
       case 1:
-        return true;
+        return true; // BMI
       case 2:
         return _selectedGoal != null;
       case 3:
         return _selectedLevel != null;
       case 4:
-        return true;
+        return true; // Location
       case 5:
         return _selectedFocusAreas.isNotEmpty;
       case 6:
@@ -455,7 +608,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       case 7:
         return _selectedLimitations.isNotEmpty;
       case 8:
-        return true;
+        return true; // Duration & Days
       default:
         return true;
     }
@@ -563,66 +716,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
             RitmoHaptics.selection();
             setState(() => _weightKg = val);
           },
-        ),
-        const SizedBox(height: 16),
-        Text('جنسیت:', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  RitmoHaptics.selection();
-                  setState(() => _selectedGender = 'FEMALE');
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: _selectedGender == 'FEMALE' ? colors.primary : colors.card,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _selectedGender == 'FEMALE' ? colors.primary : colors.border),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '👩‍🦰 خانم',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontWeight: FontWeight.bold,
-                        color: _selectedGender == 'FEMALE' ? Colors.white : colors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  RitmoHaptics.selection();
-                  setState(() => _selectedGender = 'MALE');
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: _selectedGender == 'MALE' ? colors.primary : colors.card,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _selectedGender == 'MALE' ? colors.primary : colors.border),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '👨 آقا',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontWeight: FontWeight.bold,
-                        color: _selectedGender == 'MALE' ? Colors.white : colors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ],
     );

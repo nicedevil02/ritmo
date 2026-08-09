@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -14,9 +16,36 @@ import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_attachment.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_step.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_step_list.dart';
+import 'package:ritmo/core/platform/alarm_platform.dart';
+import 'package:ritmo/core/di/service_locator.dart';
+import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+class ReminderPreset {
+  final String Function(DateTime resolved) label;
+  final DateTime? Function(DateTime now) resolve;
+  const ReminderPreset({required this.resolve, required this.label});
+}
+
+final _reminderPresets = <ReminderPreset>[
+  ReminderPreset(
+    resolve: (now) {
+      final t = DateTime(now.year, now.month, now.day, 21, 0);
+      return t.isAfter(now) ? t : null;
+    },
+    label: (t) => 'امشب ${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}'.toPersianDigits(),
+  ),
+  ReminderPreset(
+    resolve: (now) => DateTime(now.year, now.month, now.day, 9, 0).add(const Duration(days: 1)),
+    label: (t) => 'فردا صبح ${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}'.toPersianDigits(),
+  ),
+  ReminderPreset(
+    resolve: (now) => DateTime(now.year, now.month, now.day, 9, 0).add(const Duration(days: 7)),
+    label: (t) => 'هفته بعد',
+  ),
+];
 
 class TaskDetailSheet extends StatefulWidget {
   const TaskDetailSheet({
@@ -71,9 +100,32 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
 
   @override
   void dispose() {
+    _savePendingChanges();
     _titleController.dispose();
     _noteController.dispose();
     super.dispose();
+  }
+
+  void _savePendingChanges() {
+    bool changed = false;
+    SimpleTask updated = _task;
+
+    final newTitle = _titleController.text.trim();
+    if (newTitle.isNotEmpty && newTitle != _task.title) {
+      updated = updated.copyWith(title: newTitle);
+      changed = true;
+    }
+
+    final newNote = _noteController.text.trim();
+    if (newNote != (_task.note ?? '')) {
+      updated = updated.copyWith(note: newNote);
+      changed = true;
+    }
+
+    if (changed) {
+      SimpleTaskRepository.instance.updateTask(updated);
+      widget.onTaskUpdated();
+    }
   }
 
   Future<void> _loadData() async {
@@ -121,7 +173,6 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
       _task = _task.copyWith(
         isImportant: newStar,
         importantAt: newStar ? DateTime.now() : null,
-        clearImportantAt: !newStar,
       );
     });
     widget.onTaskUpdated();
@@ -136,20 +187,45 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     widget.onTaskUpdated();
   }
 
+  Timer? _noteDebounce;
+
   Future<void> _saveNote() async {
-    final newNote = _noteController.text.trim();
-    if (newNote == (_task.note ?? '')) return;
-    final updated = _task.copyWith(note: newNote.isEmpty ? null : newNote);
-    await SimpleTaskRepository.instance.updateTask(updated);
-    setState(() => _task = updated);
-    widget.onTaskUpdated();
+    if (_noteDebounce?.isActive ?? false) _noteDebounce!.cancel();
+    
+    // We still want to update the UI immediately for _buildNoteWithLinks
+    setState(() {});
+    
+    _noteDebounce = Timer(const Duration(milliseconds: 500), () async {
+      final newNote = _noteController.text.trim();
+      if (newNote == (_task.note ?? '')) return;
+      final updated = _task.copyWith(note: newNote.isEmpty ? null : newNote);
+      await SimpleTaskRepository.instance.updateTask(updated);
+      if (mounted) {
+        setState(() => _task = updated);
+        widget.onTaskUpdated();
+      }
+    });
   }
 
-  Future<void> _setQuickReminder(Duration offset, String label) async {
-    final now = DateTime.now();
-    final targetMs = now.add(offset).millisecondsSinceEpoch;
+  Future<void> _setQuickReminder(DateTime at, String label) async {
     final reminderId = 'rem_${_task.id}';
 
+    // 1) اطمینان از مجوز
+    if (!await sl<AlarmPlatform>().checkExactAlarmPermission()) {
+      final granted = await sl<AlarmPlatform>().requestExactAlarmPermission();
+      if (!granted) {
+        if (mounted) {
+          RitmoToast.show(context, 'مجوز یادآور داده نشد', icon: CupertinoIcons.exclamationmark_triangle);
+        }
+        return;
+      }
+    }
+
+    // 2) لغو یادآور قبلی (idempotent)
+    await sl<AlarmPlatform>().cancelAlarm(reminderId);
+
+    // 3) نوشتن در DB
+    final targetMs = at.millisecondsSinceEpoch;
     await SimpleTaskRepository.instance.addPendingReminder(
       reminderId: reminderId,
       title: 'یادآور کار: ${_task.title}',
@@ -162,6 +238,15 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     await SimpleTaskRepository.instance.updateTask(updated);
     setState(() => _task = updated);
     widget.onTaskUpdated();
+
+    // 4) زمان‌بندی واقعی
+    await sl<AlarmPlatform>().scheduleExactAlarm(
+      id: reminderId,
+      timeMsUTC: targetMs,
+      title: _task.title,
+      isEssential: false,
+    );
+    await AlarmSchedulerService.scheduleNextAlarms();
 
     if (mounted) {
       RitmoToast.show(context, 'یادآور برای $label تنظیم شد', icon: CupertinoIcons.bell);
@@ -216,7 +301,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
             'حذف کار؟',
             style: TextStyle(
               color: context.colors.medicalRed,
-              fontFamily: 'Vazirmatn',
+              
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -225,7 +310,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
             'کار «${_task.title}» حذف شود؟',
             style: TextStyle(
               color: context.colors.textSecondary,
-              fontFamily: 'Vazirmatn',
+              
               fontSize: 13,
               height: 1.5,
             ),
@@ -237,7 +322,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx, true),
-              child: Text('حذف', style: TextStyle(color: context.colors.medicalRed, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+              child: Text('حذف', style: TextStyle(color: context.colors.medicalRed, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -245,24 +330,18 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
       if (confirm != true) return;
     }
 
-    final taskSnapshot = _task;
-    final stepsSnapshot = List<TaskStep>.from(_steps);
-
-    await SimpleTaskRepository.instance.delete(_task.id);
+    final taskSnapshot = await SimpleTaskRepository.instance.delete(_task.id);
     if (mounted) Navigator.pop(context);
     widget.onTaskDeleted();
 
-    if (mounted) {
+    if (mounted && taskSnapshot != null) {
       RitmoToast.show(
         context,
-        'کار «${taskSnapshot.title}» حذف شد',
+        'کار «${taskSnapshot.task.title}» حذف شد',
         icon: CupertinoIcons.trash,
         actionLabel: 'برگردان',
         onAction: () async {
           await SimpleTaskRepository.instance.restoreTask(taskSnapshot);
-          for (final s in stepsSnapshot) {
-            await TaskStepRepository.instance.add(taskId: s.taskId, title: s.title);
-          }
           widget.onTaskUpdated();
         },
       );
@@ -282,7 +361,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     if (matches.isEmpty) {
       return Text(
         noteText,
-        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary, height: 1.5),
+        style: TextStyle(fontSize: 13, color: colors.textPrimary, height: 1.5),
       );
     }
 
@@ -300,6 +379,15 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
       spans.add(TextSpan(
         text: url,
         style: TextStyle(color: colors.primary, decoration: TextDecoration.underline),
+        recognizer: TapGestureRecognizer()
+          ..onTap = () async {
+            var urlStr = url;
+            if (!urlStr.startsWith('http')) urlStr = 'https://$urlStr';
+            final uri = Uri.tryParse(urlStr);
+            if (uri != null) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          },
       ));
       lastMatchEnd = match.end;
     }
@@ -311,29 +399,32 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
       ));
     }
 
-    return InkWell(
-      onTap: () async {
-        for (final match in matches) {
-          var urlStr = match.group(0)!;
-          if (!urlStr.startsWith('http')) urlStr = 'https://$urlStr';
-          final uri = Uri.tryParse(urlStr);
-          if (uri != null) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-            break;
-          }
-        }
-      },
-      child: RichText(
-        text: TextSpan(
-          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, height: 1.5),
-          children: spans,
-        ),
+    return SelectableText.rich(
+      TextSpan(
+        style: TextStyle(fontSize: 13, height: 1.5, color: colors.textPrimary),
+        children: spans,
       ),
     );
   }
 
+  List<Widget> _buildReminderChips(DateTime now) {
+    final chips = <Widget>[];
+    for (final preset in _reminderPresets) {
+      final t = preset.resolve(now);
+      if (t == null) continue;
+      chips.add(
+        ActionChip(
+          label: Text(preset.label(t), style: const TextStyle(fontSize: 11)),
+          onPressed: () => _setQuickReminder(t, preset.label(t)),
+        ),
+      );
+    }
+    return chips;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
     final colors = context.colors;
 
     return DraggableScrollableSheet(
@@ -343,9 +434,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
       expand: false,
       snap: true,
       builder: (context, scrollController) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Container(
+        return Container(
             decoration: BoxDecoration(
               color: colors.card,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -385,7 +474,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                             child: TextField(
                               controller: _titleController,
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
+                                
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: _task.isDone ? colors.textTertiary : colors.textPrimary,
@@ -414,7 +503,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                       Text(
                         'زیرگام‌ها',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
+                          
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -432,7 +521,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                       Text(
                         'یادآور',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
+                          
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -442,17 +531,12 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                       Wrap(
                         spacing: 8,
                         children: [
+                          ..._buildReminderChips(now),
                           ActionChip(
-                            label: const Text('امشب ۲۱:۰۰', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
-                            onPressed: () => _setQuickReminder(const Duration(hours: 4), 'امشب ۲۱:۰۰'),
-                          ),
-                          ActionChip(
-                            label: const Text('فردا صبح ۰۹:۰۰', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
-                            onPressed: () => _setQuickReminder(const Duration(days: 1), 'فردا صبح ۰۹:۰۰'),
-                          ),
-                          ActionChip(
-                            label: const Text('هفته بعد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
-                            onPressed: () => _setQuickReminder(const Duration(days: 7), 'هفته بعد'),
+                            label: const Text('زمان دلخواه...', style: TextStyle(fontSize: 11)),
+                            onPressed: () {
+                              // TODO: Implement custom time picker (P4 UX)
+                            },
                           ),
                         ],
                       ),
@@ -462,7 +546,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                       Text(
                         'یادداشت',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
+                          
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -472,10 +556,10 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                       TextField(
                         controller: _noteController,
                         maxLines: 3,
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
+                        style: TextStyle(fontSize: 13, color: colors.textPrimary),
                         decoration: InputDecoration(
                           hintText: 'توضیحات و لینک‌های مرتبط...',
-                          hintStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textTertiary),
+                          hintStyle: TextStyle(fontSize: 12, color: colors.textTertiary),
                           filled: true,
                           fillColor: colors.surfaceSunken,
                           border: OutlineInputBorder(
@@ -498,7 +582,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                           Text(
                             'پیوست‌ها (${PersianDigits.toPersian(_attachments.length)})',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
+                              
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -507,7 +591,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                           TextButton.icon(
                             onPressed: _pickAttachment,
                             icon: const Icon(CupertinoIcons.paperclip, size: 16),
-                            label: const Text('+ افزودن فایل', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                            label: const Text('+ افزودن فایل', style: TextStyle(fontSize: 11)),
                           ),
                         ],
                       ),
@@ -522,8 +606,8 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                             return ListTile(
                               dense: true,
                               leading: const Icon(CupertinoIcons.doc_fill),
-                              title: Text(att.fileName, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textPrimary)),
-                              subtitle: Text('${PersianDigits.toPersian(sizeKb)} KB', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary)),
+                              title: Text(att.fileName, style: TextStyle(fontSize: 12, color: colors.textPrimary)),
+                              subtitle: Text('${PersianDigits.toPersian(sizeKb)} KB', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
                               trailing: IconButton(
                                 icon: Icon(CupertinoIcons.trash, color: colors.medicalRed, size: 18),
                                 onPressed: () => _deleteAttachment(att),
@@ -536,12 +620,12 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                       // 6. Timestamp Footer
                       Text(
                         'ساخته‌شده: ${_formatShamsiDate(_task.createdAt)}',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textTertiary),
+                        style: TextStyle(fontSize: 11, color: colors.textTertiary),
                       ),
                       if (_task.doneAt != null)
                         Text(
                           'انجام‌شده: ${_formatShamsiDate(_task.doneAt!)}',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.success),
+                          style: TextStyle(fontSize: 11, color: colors.success),
                         ),
                       const SizedBox(height: 20),
 
@@ -555,12 +639,11 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                         ),
                         onPressed: _confirmAndDeleteTask,
                         icon: const Icon(CupertinoIcons.trash, size: 18),
-                        label: const Text('حذف کار', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                        label: const Text('حذف کار', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
-          ),
-        );
+          );
       },
     );
   }

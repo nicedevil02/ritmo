@@ -16,6 +16,8 @@ import 'package:ritmo/features/worship/presentation/widgets/mustahab_section.dar
 import 'package:ritmo/features/worship/presentation/widgets/night_prayer_card.dart';
 import 'package:ritmo/features/worship/presentation/widgets/obligatory_prayers_section.dart';
 import 'package:ritmo/features/worship/presentation/widgets/prayer_arc_hero.dart';
+import 'package:ritmo/features/worship/presentation/widgets/prayer_sheet.dart';
+import 'package:ritmo/features/worship/domain/prayer_target.dart';
 import 'package:ritmo/features/worship/presentation/widgets/prayer_city_picker.dart';
 import 'package:ritmo/features/worship/presentation/widgets/qibla_compass_sheet.dart';
 import 'package:ritmo/features/worship/presentation/widgets/quran_dhikr_section.dart';
@@ -210,10 +212,19 @@ class _WorshipScreenState extends State<WorshipScreen> {
                   PrayerArcHero(
                     day: _worshipDay!,
                     onPracticeToggle: (practiceId, isDone) async {
+                      String group = 'FAJR';
+                      if (practiceId.contains('dhuhr') || practiceId.contains('asr')) group = 'DHUHR_ASR';
+                      if (practiceId.contains('maghrib') || practiceId.contains('isha')) group = 'MAGHRIB_ISHA';
+                      
                       if (isDone) {
-                        await WorshipEngine.instance.logDone(practiceId: practiceId, date: DateTime.now());
+                        final target = await PrayerTarget.fromGroupKey(group, DateTime.now());
+                        if (!context.mounted) return;
+                        await PrayerSheet.show(context, target);
                       } else {
-                        await WorshipEngine.instance.logSkip(practiceId: practiceId, date: DateTime.now());
+                        final target = await PrayerTarget.fromGroupKey(group, DateTime.now());
+                        for (final pId in target.practiceIds) {
+                          await WorshipEngine.instance.clearLog(practiceId: pId, date: DateTime.now());
+                        }
                       }
                       _onDataChanged();
                     },

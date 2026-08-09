@@ -11,6 +11,9 @@ import 'package:ritmo/features/worship/logic/prayer_times.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:ritmo/core/domain/completion/completion_gateway.dart';
+import 'package:ritmo/core/domain/completion/completion_request.dart';
+import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
 
 export 'package:ritmo/features/worship/logic/prayer_times.dart';
 
@@ -682,7 +685,6 @@ class WorshipEngine {
       final todayStr = _ds(now);
       final isToday = dateStr == todayStr;
 
-      String? qualityWindow;
       if (practiceType == 'PRAYER' && practice != null) {
         final times = await _prayerTimesFromDb(db, date);
         final subType = practice.subType ?? '';
@@ -694,7 +696,19 @@ class WorshipEngine {
         }
 
         final actualTime = isToday ? now : date;
-        qualityWindow = _qualityWindow(subType, times, actualTime);
+        final quality = _qualityWindow(subType, times, actualTime);
+        
+        final gatewayOutcome = await CompletionGateway.instance.submit(PrayerCompletion(
+          prayerKey: practiceId,
+          dateStr: dateStr,
+          mode: quality,
+        ));
+        
+        if (gatewayOutcome.isSuccess) {
+           return WorshipLogOk(gatewayOutcome.undoToken ?? '');
+        } else {
+           return WorshipLogFailed(gatewayOutcome.errorMessage ?? '');
+        }
       }
 
       final completionRow = <String, dynamic>{
@@ -710,20 +724,11 @@ class WorshipEngine {
       };
 
       await db.transaction((txn) async {
-        try {
-          final rowWithQuality = Map<String, dynamic>.from(completionRow)..['qualityWindow'] = qualityWindow;
-          await txn.insert(
-            'worship_completions',
-            rowWithQuality,
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-        } catch (_) {
-          await txn.insert(
-            'worship_completions',
-            completionRow,
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-        }
+        await txn.insert(
+          'worship_completions',
+          completionRow,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
 
         // Write dailyDone as a write-only cache (never read in business logic)
         await txn.update(

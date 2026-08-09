@@ -16,7 +16,8 @@ class WorshipTables {
           autoCreated INTEGER NOT NULL DEFAULT 0,
           isArchived INTEGER NOT NULL DEFAULT 0,
           createdAt INTEGER NOT NULL,
-          updatedAt INTEGER NOT NULL
+          updatedAt INTEGER NOT NULL,
+          userDisabledAt TEXT
       );
     ''');
     await db.execute('CREATE INDEX index_worship_debts_debtType ON worship_debts(debtType);');
@@ -38,7 +39,10 @@ class WorshipTables {
           start_date TEXT,
           end_date TEXT,
           type TEXT DEFAULT 'custom',
-          is_active INTEGER DEFAULT 1
+          is_active INTEGER DEFAULT 1,
+          recurrence TEXT,
+          dayList TEXT,
+          hijriMonth INTEGER
       );
     ''');
     await db.execute('CREATE INDEX index_worship_seasons_startDate ON worship_seasons(startDate);');
@@ -69,7 +73,8 @@ class WorshipTables {
           reminderDaysOfWeek TEXT,
           reminderTimes TEXT,
           createdAt INTEGER NOT NULL,
-          updatedAt INTEGER NOT NULL
+          updatedAt INTEGER NOT NULL,
+          userDisabledAt TEXT
       );
     ''');
     await db.execute('CREATE INDEX idx_wp_type ON worship_practices(practiceType);');
@@ -101,10 +106,27 @@ class WorshipTables {
           reason TEXT,
           loggedAt INTEGER NOT NULL,
           createdAt INTEGER NOT NULL,
+          qualityWindow TEXT,
+          quality TEXT,
           UNIQUE(practiceId, dateStr)
       );
     ''');
     await db.execute('CREATE INDEX idx_worship_completions_date ON worship_completions(dateStr);');
     await db.execute('CREATE INDEX idx_worship_completions_practice ON worship_completions(practiceId, dateStr);');
+
+    // 24. worship_day_context (V67 table)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS worship_day_context (
+        date TEXT PRIMARY KEY,
+        isTraveller INTEGER NOT NULL DEFAULT 0,
+        fastingExempt INTEGER NOT NULL DEFAULT 0,
+        prayerExempt INTEGER NOT NULL DEFAULT 0,
+        reason TEXT,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      );
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_worship_day_context_date ON worship_day_context(date);');
   }
 }
+

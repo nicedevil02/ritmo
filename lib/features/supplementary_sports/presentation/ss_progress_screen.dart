@@ -7,6 +7,8 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_session_models.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
+import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/bottom_sheet_container.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/continuity_bar.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/empty_state_view.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_lottie_player.dart';
@@ -41,6 +43,7 @@ class SSProgressLoaded extends SSProgressUiState {
     required this.weeklyMinutes,
     required this.weightLogs,
     required this.completedDates,
+    required this.isDetailMode,
   });
   final int streakDays;
   final int streakRecord;
@@ -54,6 +57,7 @@ class SSProgressLoaded extends SSProgressUiState {
   final List<double> weeklyMinutes;
   final List<Map<String, dynamic>> weightLogs;
   final List<String> completedDates;
+  final bool isDetailMode;
 }
 
 class SSProgressScreen extends StatefulWidget {
@@ -240,23 +244,26 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
 
       // 12. Ready to progress exercises
       final readyList = <ExerciseReadyForIncrease>[];
-      final exFeelingSummary = await db.rawQuery('''
-        SELECT f.exerciseId, e.name, COUNT(*) as total,
-               SUM(CASE WHEN f.feeling = 'EASY' THEN 1 ELSE 0 END) as easyCount
-        FROM ss_exercise_feeling_log f
-        JOIN ss_exercise e ON f.exerciseId = e.id
-        GROUP BY f.exerciseId
-      ''');
+      final isDetailMode = await SportsDetailMode.isEnabled();
+      if (isDetailMode) {
+        final exFeelingSummary = await db.rawQuery('''
+          SELECT f.exerciseId, e.name, COUNT(*) as total,
+                 SUM(CASE WHEN f.feeling = 'EASY' THEN 1 ELSE 0 END) as easyCount
+          FROM ss_exercise_feeling_log f
+          JOIN ss_exercise e ON f.exerciseId = e.id
+          GROUP BY f.exerciseId
+        ''');
 
-      for (final row in exFeelingSummary) {
-        final total = row['total'] as int? ?? 0;
-        final easyCount = row['easyCount'] as int? ?? 0;
-        if (total >= 4 && easyCount / total >= 0.7) {
-          readyList.add(ExerciseReadyForIncrease(
-            exerciseId: row['exerciseId'].toString(),
-            exerciseName: row['name'].toString(),
-            consecutiveEasyWeeks: (total / 2).round(),
-          ));
+        for (final row in exFeelingSummary) {
+          final total = row['total'] as int? ?? 0;
+          final easyCount = row['easyCount'] as int? ?? 0;
+          if (total >= 4 && easyCount / total >= 0.7) {
+            readyList.add(ExerciseReadyForIncrease(
+              exerciseId: row['exerciseId'].toString(),
+              exerciseName: row['name'].toString(),
+              consecutiveEasyWeeks: (total / 2).round(),
+            ));
+          }
         }
       }
 
@@ -274,6 +281,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
           weeklyMinutes: weeklyMins,
           weightLogs: weightLogs,
           completedDates: completedDatesList,
+          isDetailMode: isDetailMode,
         );
         _isLoading = false;
       });
@@ -421,7 +429,8 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
         exercisesReadyToProgress: final readyList,
         weeklyMinutes: final weeklyMinutes,
         weightLogs: final weightLogs,
-        completedDates: final completedDates
+        completedDates: final completedDates,
+        isDetailMode: final isDetailMode
       ):
         return Scaffold(
           backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFFAFAF8),
@@ -497,15 +506,17 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                     const SizedBox(height: 20),
 
                     // ReadyToProgressList
-                    Text(
-                      'حرکات آماده برای افزایش شدت ⚡',
-                      style: SupplementarySportsTheme.h2.copyWith(
-                        color: SupplementarySportsTheme.getTextPrimary(context),
-                        fontWeight: FontWeight.bold,
+                    if (isDetailMode) ...[
+                      Text(
+                        'حرکات آماده برای افزایش شدت ⚡',
+                        style: SupplementarySportsTheme.h2.copyWith(
+                          color: SupplementarySportsTheme.getTextPrimary(context),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildReadyToProgressList(readyList),
+                      const SizedBox(height: 12),
+                      _buildReadyToProgressList(readyList),
+                    ],
                   ],
                 ),
               ),

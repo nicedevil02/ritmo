@@ -59,6 +59,11 @@ Map<TaskBucket, List<SimpleTask>> groupTasks(List<SimpleTask> tasks, {required D
       if (a.isImportant != b.isImportant) {
         return a.isImportant ? -1 : 1;
       }
+      if (a.dueDate != b.dueDate) {
+        if (a.dueDate == null) return 1;
+        if (b.dueDate == null) return -1;
+        return a.dueDate!.compareTo(b.dueDate!);
+      }
       if (a.dueTime != b.dueTime) {
         if (a.dueTime == null) return 1;
         if (b.dueTime == null) return -1;

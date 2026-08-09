@@ -19,6 +19,8 @@ class TaskStepRepository {
     return rows.map((r) => TaskStep.fromMap(r)).toList();
   }
 
+  Future<List<TaskStep>> getForTask(String taskId) => forTask(taskId);
+
   Future<TaskStep> add({required String taskId, required String title}) async {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) {

@@ -35,7 +35,7 @@ class MigrationV76SimpleMode extends Migration {
 
     // 2. Default app_settings
     final defaults = {
-      'app_mode': 'SIMPLE',
+      'app_mode': 'FULL',
       'simple_tasks_seen_hint': 'false',
       'snooze_quota_enabled': 'false',
       'identity_gender_asked': 'false',

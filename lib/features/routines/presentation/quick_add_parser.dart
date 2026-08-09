@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class QuickAddResult {
-
   QuickAddResult({
     required this.title,
     required this.itemType,
@@ -14,9 +13,9 @@ class QuickAddResult {
     this.targetDurationMinutes,
   });
   final String title;
-  final String itemType; // 'ROUTINE' | 'REMINDER' | 'TASK'
+  final String itemType;
   final TimeOfDay? timeOfDay;
-  final String recurrenceType; // 'EVERY_DAY' | 'WORKDAYS' | 'CUSTOM_DAYS' | 'INTERVAL_HOURS' | 'INTERVAL_DAYS' | 'MONTHLY'
+  final String recurrenceType;
   final int? intervalDays;
   final int? intervalHours;
   final Set<int>? weekdays;
@@ -38,173 +37,238 @@ class QuickAddParser {
     return result;
   }
 
+  static int _adjustHour(int hour, String? modifier) {
+    if (modifier == null) return hour;
+    modifier = modifier.trim();
+    if (modifier == 'صبح' || modifier == 'بامداد') {
+      return hour == 12 ? 0 : hour;
+    } else if (modifier == 'ظهر') {
+      return hour == 12 ? 12 : hour + 12; // Usually 1-3 PM is after noon
+    } else if (modifier == 'عصر' || modifier == 'بعد از ظهر' || modifier == 'بعدازظهر') {
+      return hour < 12 ? hour + 12 : hour;
+    } else if (modifier == 'شب') {
+      if (hour >= 1 && hour <= 4) return hour; // Bamdad
+      if (hour >= 5 && hour < 12) return hour + 12;
+      if (hour == 12) return 0; // Midnight
+    }
+    return hour;
+  }
+
   static QuickAddResult parse(String rawText) {
+    // 1. Normalize
     final text = _normalizeDigits(rawText);
+    
     var itemType = 'ROUTINE';
     TimeOfDay? timeOfDay;
     var recurrenceType = 'EVERY_DAY';
     int? intervalDays;
     int? intervalHours;
     Set<int>? weekdays;
+    int? daysOffset;
     int? targetDurationMinutes;
 
-    // Parse Duration
-    if (RegExp(r'یک\s*ساعت\s*و\s*نیم').hasMatch(text) || RegExp(r'1\s*ساعت\s*و\s*نیم').hasMatch(text)) {
-      targetDurationMinutes = 90;
-    } else if (RegExp(r'یک\s*ساعت').hasMatch(text) || RegExp(r'1\s*ساعت').hasMatch(text)) {
-      targetDurationMinutes = 60;
-    } else if (RegExp(r'نیم\s*ساعت').hasMatch(text)) {
-      targetDurationMinutes = 30;
-    } else if (RegExp(r'یه\s*ربع').hasMatch(text)) {
-      targetDurationMinutes = 15;
-    } else {
-      final hourHalfRegex = RegExp(r'(?<!هر\s*)(\d+)\s*ساعت\s*و\s*نیم');
-      final hourHalfMatch = hourHalfRegex.firstMatch(text);
-      if (hourHalfMatch != null) {
-        final h = int.tryParse(hourHalfMatch.group(1)!);
-        if (h != null) {
-          targetDurationMinutes = h * 60 + 30;
-        }
-      } else {
-        final hourRegex = RegExp(r'(?<!هر\s*)(\d+)\s*ساعت');
-        final hourMatch = hourRegex.firstMatch(text);
-        if (hourMatch != null) {
-          final h = int.tryParse(hourMatch.group(1)!);
-          if (h != null) {
-            targetDurationMinutes = h * 60;
-          }
-        } else {
-          final minRegex = RegExp(r'(\d+)\s*دقیقه');
-          final minMatch = minRegex.firstMatch(text);
-          if (minMatch != null) {
-            final m = int.tryParse(minMatch.group(1)!);
-            if (m != null) {
-              targetDurationMinutes = m;
-            }
-          }
-        }
+    final spansToRemove = <({int start, int end})>[];
+
+    // Helper to add span securely
+    void addSpan(Match m) {
+      spansToRemove.add((start: m.start, end: m.end));
+    }
+
+    // 2. Parse Duration
+    final durationRegexes = [
+      RegExp(r'(?:یک|1)\s*ساعت\s*و\s*نیم'),
+      RegExp(r'(?:یک|1)\s*ساعت'),
+      RegExp(r'نیم\s*ساعت'),
+      RegExp(r'یه\s*ربع'),
+      RegExp(r'(?<!هر\s*)(\d+)\s*ساعت\s*و\s*نیم'),
+      RegExp(r'(?<!هر\s*)(\d+)\s*ساعت'),
+      RegExp(r'(\d+)\s*دقیقه')
+    ];
+
+    for (int i = 0; i < durationRegexes.length; i++) {
+      final m = durationRegexes[i].firstMatch(text);
+      if (m != null) {
+        if (i == 0) targetDurationMinutes = 90;
+        else if (i == 1) targetDurationMinutes = 60;
+        else if (i == 2) targetDurationMinutes = 30;
+        else if (i == 3) targetDurationMinutes = 15;
+        else if (i == 4) targetDurationMinutes = int.parse(m.group(1)!) * 60 + 30;
+        else if (i == 5) targetDurationMinutes = int.parse(m.group(1)!) * 60;
+        else if (i == 6) targetDurationMinutes = int.parse(m.group(1)!);
+        
+        addSpan(m);
+        break; // Only parse one duration
       }
     }
 
-    // 1. Parse Item Type & Days Offset
-    int? daysOffset;
-    if (text.contains('پس فردا') || text.contains('پس‌فردا')) {
-      daysOffset = 2;
-    } else if (text.contains('فردا')) {
-      daysOffset = 1;
-    } else if (text.contains('امروز') || text.contains('امشب')) {
-      daysOffset = 0;
+    final dateKeywords = {
+      'پس فردا': 2, 'پس‌فردا': 2,
+      'فردا': 1,
+      'امروز': 0, 'امشب': 0
+    };
+    
+    for (final e in dateKeywords.entries) {
+      final m = RegExp('(?<![\\p{L}\\p{N}])${e.key}(?![\\p{L}\\p{N}])', unicode: true).firstMatch(text);
+      if (m != null) {
+        daysOffset = e.value;
+        addSpan(m);
+        break;
+      }
     }
 
-    if (text.contains('فردا') || text.contains('امروز') || text.contains('امشب') || text.contains('یکبار') || text.contains('تسک') || text.contains('کار') || text.contains('وظیفه')) {
+    final taskKeywords = ['فردا', 'امروز', 'امشب', 'یکبار', 'تسک', 'کار', 'وظیفه'];
+    final reminderKeywords = ['یادآور', 'اعلان', 'هشدار', 'زنگ'];
+
+    if (taskKeywords.any((k) => RegExp('(?<![\\p{L}\\p{N}])$k(?![\\p{L}\\p{N}])', unicode: true).hasMatch(text))) {
       itemType = 'TASK';
-    } else if (text.contains('یادآور') || text.contains('اعلان') || text.contains('هشدار') || text.contains('زنگ')) {
+    } else if (reminderKeywords.any((k) => RegExp('(?<![\\p{L}\\p{N}])$k(?![\\p{L}\\p{N}])', unicode: true).hasMatch(text))) {
       itemType = 'REMINDER';
     }
 
-    // 2. Parse Time
-    int? parsedHour;
-    int? parsedMinute;
-
-    // Try matching HH:MM or HH و MM
-    final timeColonRegex = RegExp(r'(?:ساعت\s+)?(\d{1,2})[:و](\d{2})');
-    final timeColonMatch = timeColonRegex.firstMatch(text);
-    if (timeColonMatch != null) {
-      parsedHour = int.tryParse(timeColonMatch.group(1)!);
-      parsedMinute = int.tryParse(timeColonMatch.group(2)!);
+    // 4. Parse Time (anchored!)
+    const modRegexStr = r'(?:صبح|بامداد|ظهر|عصر|شب|بعد\s*از\s*ظهر|بعدازظهر)';
+    
+    // Check Format 1: HH:MM or HH٪MM
+    final timeColonRegex = RegExp(r'(?:ساعت\s+)?(\d{1,2})\s*[:٪]\s*(\d{2})');
+    final mColon = timeColonRegex.firstMatch(text);
+    
+    if (mColon != null) {
+      final h = int.parse(mColon.group(1)!);
+      final m = int.parse(mColon.group(2)!);
+      
+      final modRegexAfter = RegExp('^\\s*$modRegexStr');
+      final modRegexBefore = RegExp('$modRegexStr\\s*(?:ساعت\\s*)?\$');
+      
+      final modMatchAfter = modRegexAfter.firstMatch(text.substring(mColon.end));
+      final modMatchBefore = modRegexBefore.firstMatch(text.substring(0, mColon.start));
+      
+      String? modifier;
+      var start = mColon.start;
+      var end = mColon.end;
+      
+      if (modMatchAfter != null) {
+        modifier = modMatchAfter.group(1);
+        end += modMatchAfter.end;
+      } else if (modMatchBefore != null) {
+        modifier = modMatchBefore.group(1);
+        start = modMatchBefore.start;
+      }
+      
+      timeOfDay = TimeOfDay(hour: _adjustHour(h, modifier), minute: m);
+      spansToRemove.add((start: start, end: end));
     } else {
-      // Try matching HH نیم (e.g., 9 و نیم, ساعت 9 نیم)
-      final timeHalfRegex = RegExp(r'(?:ساعت\s+)?(\d{1,2})\s*(?:و\s*)?نیم');
-      final timeHalfMatch = timeHalfRegex.firstMatch(text);
-      if (timeHalfMatch != null) {
-        parsedHour = int.tryParse(timeHalfMatch.group(1)!);
-        parsedMinute = 30;
-      } else {
-        // Try matching standalone hour followed by period indicator or preceded by ساعت
-        final timeWordRegex = RegExp(r'(?:ساعت\s+(\d{1,2}))|(\d{1,2})\s*(?:صبح|عصر|شب|ظهر|بعد\s*از\s*ظهر)');
-        final timeWordMatch = timeWordRegex.firstMatch(text);
-        if (timeWordMatch != null) {
-          final hrStr = timeWordMatch.group(1) ?? timeWordMatch.group(2);
-          parsedHour = int.tryParse(hrStr!);
-          parsedMinute = 0;
+      // Check Format 2: Text time (e.g. ساعت 5, 5 عصر, عصر 5)
+      // Matches an optional modifier, optional ساعت, the hour, optional نیم, and optional modifier
+      final timeTextRegex = RegExp('(?:($modRegexStr)\\s+)?(?:ساعت\\s+)?(\\d{1,2})(?:\\s*(?:و\\s*)?نیم)?(?:\\s+($modRegexStr))?');
+      final mText = timeTextRegex.firstMatch(text);
+      if (mText != null) {
+        // BUT we need to make sure we don't just match a random digit as time if it doesn't have 'ساعت' or a modifier!
+        final modBefore = mText.group(1);
+        final hourStr = mText.group(2)!;
+        final modAfter = mText.group(3);
+        final hasSaaat = text.substring(mText.start, mText.end).contains('ساعت');
+        final hasNim = text.substring(mText.start, mText.end).contains('نیم');
+        
+        if (modBefore != null || modAfter != null || hasSaaat || hasNim) {
+          final h = int.parse(hourStr);
+          final m = hasNim ? 30 : 0;
+          timeOfDay = TimeOfDay(hour: _adjustHour(h, modBefore ?? modAfter), minute: m);
+          addSpan(mText);
         }
       }
     }
 
-    if (parsedHour != null) {
-      final pmRegex = RegExp(r'(عصر|شب|بعد\s*از\s*ظهر|بعدازظهر|غروب)');
-      if (pmRegex.hasMatch(text) && parsedHour < 12) {
-        parsedHour += 12;
-      }
-      final amRegex = RegExp('(صبح|بامداد)');
-      if (amRegex.hasMatch(text) && parsedHour == 12) {
-        parsedHour = 0;
-      }
-      timeOfDay = TimeOfDay(hour: parsedHour, minute: parsedMinute ?? 0);
-    }
-
-    // 3. Parse Recurrence
+    // 5. Parse Recurrence
     if (text.contains('هر روز') || text.contains('روزانه')) {
       recurrenceType = 'EVERY_DAY';
+      for (final m in RegExp(r'(?<![\p{L}\p{N}])(?:هر روز|روزانه)(?![\p{L}\p{N}])', unicode: true).allMatches(text)) addSpan(m);
     } else if (text.contains('روزهای کاری') || text.contains('شنبه تا چهارشنبه')) {
       recurrenceType = 'WORKDAYS';
+      for (final m in RegExp(r'(?<![\p{L}\p{N}])(?:روزهای کاری|شنبه تا چهارشنبه)(?![\p{L}\p{N}])', unicode: true).allMatches(text)) addSpan(m);
     } else if (text.contains('آخر هفته') || text.contains('پنجشنبه و جمعه') || text.contains('پنج‌شنبه و جمعه')) {
       recurrenceType = 'CUSTOM_DAYS';
       weekdays = {4, 5};
+      for (final m in RegExp(r'(?<![\p{L}\p{N}])(?:آخر هفته|پنجشنبه و جمعه|پنج‌شنبه و جمعه)(?![\p{L}\p{N}])', unicode: true).allMatches(text)) addSpan(m);
     } else {
-      // Match "هر X روز"
       final intervalDaysRegex = RegExp(r'هر\s+(\d+)\s+روز');
-      final intervalDaysMatch = intervalDaysRegex.firstMatch(text);
-      if (intervalDaysMatch != null) {
+      final mDays = intervalDaysRegex.firstMatch(text);
+      if (mDays != null) {
         recurrenceType = 'INTERVAL_DAYS';
-        intervalDays = int.tryParse(intervalDaysMatch.group(1)!);
+        intervalDays = int.parse(mDays.group(1)!);
+        addSpan(mDays);
       } else {
-        // Match "هر X ساعت"
         final intervalHoursRegex = RegExp(r'هر\s+(\d+)\s+ساعت');
-        final intervalHoursMatch = intervalHoursRegex.firstMatch(text);
-        if (intervalHoursMatch != null) {
+        final mHours = intervalHoursRegex.firstMatch(text);
+        if (mHours != null) {
           recurrenceType = 'INTERVAL_HOURS';
-          intervalHours = int.tryParse(intervalHoursMatch.group(1)!);
+          intervalHours = int.parse(mHours.group(1)!);
+          addSpan(mHours);
         }
       }
     }
 
-    // Match weekdays if not already custom/workdays
     if (recurrenceType == 'EVERY_DAY') {
       final detectedDays = <int>{};
       final dayMap = {
-        'شنبه': 6,
-        'یکشنبه': 7,
-        'یک‌شنبه': 7,
-        'دوشنبه': 1,
-        'سه شنبه': 2,
-        'سه‌شنبه': 2,
-        'چهارشنبه': 3,
-        'پنجشنبه': 4,
-        'پنج‌شنبه': 4,
-        'جمعه': 5,
+        'شنبه': 6, 'یکشنبه': 7, 'یک‌شنبه': 7, 'دوشنبه': 1, 'سه شنبه': 2, 'سه‌شنبه': 2,
+        'چهارشنبه': 3, 'پنجشنبه': 4, 'پنج‌شنبه': 4, 'جمعه': 5,
       };
-      dayMap.forEach((key, val) {
-        if (text.contains(key)) {
-          detectedDays.add(val);
+      for (final e in dayMap.entries) {
+        final m = RegExp('(?<![\\p{L}\\p{N}])${e.key}(?![\\p{L}\\p{N}])', unicode: true).firstMatch(text);
+        if (m != null) {
+          detectedDays.add(e.value);
+          addSpan(m);
         }
-      });
+      }
       if (detectedDays.isNotEmpty) {
         recurrenceType = 'CUSTOM_DAYS';
         weekdays = detectedDays;
       }
     }
 
-    final cleanT = cleanTitle(
-      rawText,
-      cleanTime: timeOfDay != null,
-      cleanRecurrence: recurrenceType != 'EVERY_DAY' || (weekdays != null && weekdays.isNotEmpty),
-      cleanDuration: targetDurationMinutes != null,
-      cleanDate: daysOffset != null,
-    );
+    if (timeOfDay != null || daysOffset != null || recurrenceType != 'EVERY_DAY' || weekdays != null || targetDurationMinutes != null) {
+      final extraKeywords = ['ساعت', 'صبح', 'عصر', 'شب', 'ظهر', 'بامداد', 'یادآور', 'اعلان', 'کار', 'وظیفه', 'هشدار', 'ثبت', 'ایجاد', 'افزودن'];
+      for (final word in extraKeywords) {
+        for (final m in RegExp('(?<![\\p{L}\\p{N}])$word(?![\\p{L}\\p{N}])', unicode: true).allMatches(text)) {
+          addSpan(m);
+        }
+      }
+    }
+
+    // Clean title using spans
+    spansToRemove.sort((a, b) => b.start.compareTo(a.start));
+    
+    // Resolve overlaps
+    final mergedSpans = <({int start, int end})>[];
+    for (final s in spansToRemove) {
+      if (mergedSpans.isEmpty) {
+        mergedSpans.add(s);
+      } else {
+        final last = mergedSpans.last;
+        if (s.end >= last.start) {
+          // Overlap, merge
+          mergedSpans[mergedSpans.length - 1] = (
+            start: s.start < last.start ? s.start : last.start,
+            end: s.end > last.end ? s.end : last.end
+          );
+        } else {
+          mergedSpans.add(s);
+        }
+      }
+    }
+
+    var clean = text;
+    for (final s in mergedSpans) {
+      clean = clean.replaceRange(s.start, s.end, ' ');
+    }
+    
+    clean = clean.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (clean.isEmpty) {
+      clean = text.trim();
+    }
 
     return QuickAddResult(
-      title: cleanT,
+      title: clean,
       itemType: itemType,
       timeOfDay: timeOfDay,
       recurrenceType: recurrenceType,
@@ -217,62 +281,12 @@ class QuickAddParser {
   }
 
   static String cleanTitle(
-    String rawText, {
-    required bool cleanTime,
-    required bool cleanRecurrence,
-    required bool cleanDuration,
-    required bool cleanDate,
+    String text, {
+    bool cleanTime = true,
+    bool cleanRecurrence = true,
+    bool cleanDuration = true,
+    bool cleanDate = true,
   }) {
-    final text = _normalizeDigits(rawText);
-    var clean = rawText;
-
-    if (cleanTime) {
-      final timeColonRegex = RegExp(r'(?:ساعت\s+)?(\d{1,2})[:و](\d{2})');
-      final timeColonMatch = timeColonRegex.firstMatch(text);
-      if (timeColonMatch != null) {
-        clean = clean.replaceAll(timeColonMatch.group(0)!, '');
-      }
-      final timeHalfRegex = RegExp(r'(?:ساعت\s+)?([۰-۹\d]{1,2})\s*(?:و\s*)?نیم');
-      clean = clean.replaceAll(timeHalfRegex, '');
-
-      final hourRegex = RegExp(r'(?:ساعت\s+)?([۰-۹\d]{1,2})\s*(?:صبح|عصر|شب|ظهر|بعد\s*از\s*ظهر)?');
-      clean = clean.replaceAll(hourRegex, '');
-    }
-
-    if (cleanDuration) {
-      clean = clean.replaceAll(RegExp(r'یک\s*ساعت\s*و\s*نیم'), '');
-      clean = clean.replaceAll(RegExp(r'یک\s*ساعت'), '');
-      clean = clean.replaceAll(RegExp(r'نیم\s*ساعت'), '');
-      clean = clean.replaceAll(RegExp(r'یه\s*ربع'), '');
-      clean = clean.replaceAll(RegExp(r'(?<!هر\s*)([۰-۹٠-٩\d]+)\s*ساعت\s*و\s*نیم'), '');
-      clean = clean.replaceAll(RegExp(r'(?<!هر\s*)([۰-۹٠-٩\d]+)\s*ساعت'), '');
-      clean = clean.replaceAll(RegExp(r'([۰-۹٠-٩\d]+)\s*دقیقه'), '');
-    }
-
-    final wordsToRemove = <String>[];
-    if (cleanDate) {
-      wordsToRemove.addAll(['فردا', 'امروز', 'امشب', 'پس فردا', 'پس‌فردا']);
-    }
-    if (cleanRecurrence) {
-      wordsToRemove.addAll([
-        'هر روز', 'روزانه', 'هر', 'روزهای کاری', 'شنبه تا چهارشنبه', 'آخر هفته', 'پنجشنبه و جمعه', 'پنج‌شنبه و جمعه',
-        'شنبه', 'یکشنبه', 'یک‌شنبه', 'دوشنبه', 'سه شنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'پنج‌شنبه', 'جمعه', 'روال'
-      ]);
-    }
-
-    if (cleanTime || cleanDate || cleanRecurrence) {
-      wordsToRemove.addAll(['ساعت', 'صبح', 'عصر', 'شب', 'ظهر', 'بامداد', 'یادآور', 'اعلان', 'کار', 'وظیفه', 'هشدار', 'ثبت', 'ایجاد', 'افزودن']);
-    }
-
-    for (final word in wordsToRemove) {
-      clean = clean.replaceAll(RegExp('\\b$word\\b|\\s+$word\\s+|^$word\\s+|\\s+$word\$'), ' ');
-      clean = clean.replaceAll(word, ' ');
-    }
-
-    clean = clean.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (clean.isEmpty) {
-      clean = rawText.trim();
-    }
-    return clean;
+    return parse(text).title;
   }
 }

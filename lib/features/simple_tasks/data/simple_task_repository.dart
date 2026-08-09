@@ -1,5 +1,6 @@
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart';
@@ -8,40 +9,27 @@ import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_bucket.dart';
 import 'package:ritmo/features/simple_tasks/logic/task_bucketing.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:ritmo/features/simple_tasks/domain/task_step.dart';
+import 'package:ritmo/features/simple_tasks/domain/task_attachment.dart';
+
+class TaskSnapshot {
+  final SimpleTask task;
+  final List<TaskStep> steps;
+  final List<TaskAttachment> attachments;
+  
+  TaskSnapshot({
+    required this.task,
+    required this.steps,
+    required this.attachments,
+  });
+}
 
 class SimpleTaskRepository {
   SimpleTaskRepository._();
   static final SimpleTaskRepository instance = SimpleTaskRepository._();
 
   Future<Database> get _db async {
-    final db = await DatabaseHelper.instance.database;
-    await _ensureTable(db);
-    return db;
-  }
-
-  Future<void> _ensureTable(Database db) async {
-    try {
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS simple_tasks (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            note TEXT,
-            isDone INTEGER NOT NULL DEFAULT 0,
-            doneAt INTEGER,
-            dueDate TEXT,
-            dueTime TEXT,
-            reminderAtMs INTEGER,
-            reminderId TEXT,
-            linkedRoutineId TEXT,
-            orderIndex INTEGER NOT NULL DEFAULT 0,
-            origin TEXT NOT NULL DEFAULT 'SIMPLE',
-            isImportant INTEGER NOT NULL DEFAULT 0,
-            importantAt INTEGER,
-            createdAt INTEGER NOT NULL,
-            updatedAt INTEGER NOT NULL
-        );
-      ''');
-    } catch (_) {}
+    return await DatabaseHelper.instance.database;
   }
 
   /// Returns active tasks due today OR overdue past tasks (isDone = 0 AND dueDate <= todayIso)
@@ -55,7 +43,8 @@ class SimpleTaskRepository {
         orderBy: 'orderIndex ASC, createdAt ASC',
       );
       return rows.map((m) => SimpleTask.fromMap(m)).toList();
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.error('SimpleTaskRepository', 'Error loading today tasks', e, st);
       return [];
     }
   }
@@ -71,7 +60,8 @@ class SimpleTaskRepository {
         orderBy: 'dueDate ASC, orderIndex ASC',
       );
       return rows.map((m) => SimpleTask.fromMap(m)).toList();
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.error('SimpleTaskRepository', 'Error loading upcoming tasks', e, st);
       return [];
     }
   }
@@ -86,7 +76,8 @@ class SimpleTaskRepository {
         orderBy: 'orderIndex ASC, createdAt ASC',
       );
       return rows.map((m) => SimpleTask.fromMap(m)).toList();
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.error('SimpleTaskRepository', 'Error loading someday tasks', e, st);
       return [];
     }
   }
@@ -106,7 +97,8 @@ class SimpleTaskRepository {
         orderBy: 'doneAt DESC, updatedAt DESC',
       );
       return rows.map((m) => SimpleTask.fromMap(m)).toList();
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.error('SimpleTaskRepository', 'Error loading doneToday tasks', e, st);
       return [];
     }
   }
@@ -121,13 +113,14 @@ class SimpleTaskRepository {
 
       final rows = await db.query(
         'simple_tasks',
-        where: 'isDone = 0 OR (dueDate = ? OR (doneAt >= ? AND doneAt < ?))',
-        whereArgs: [todayIso, startOfDayMs, endOfDayMs],
+        where: 'isDone = 0 OR (isDone = 1 AND doneAt >= ? AND doneAt < ?)',
+        whereArgs: [startOfDayMs, endOfDayMs],
       );
 
       final tasks = rows.map((m) => SimpleTask.fromMap(m)).toList();
       return groupTasks(tasks, now: dt);
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.error('SimpleTaskRepository', 'Error loading buckets', e, st);
       return {};
     }
   }
@@ -200,6 +193,17 @@ class SimpleTaskRepository {
       try {
         await sl<AlarmPlatform>().cancelAlarm(task.reminderId!);
       } catch (_) {}
+    } else if (!done && task.reminderId != null && task.reminderAtMs != null) {
+      if (task.reminderAtMs! > nowMs) {
+        try {
+          await sl<AlarmPlatform>().scheduleExactAlarm(
+            id: task.reminderId!,
+            timeMsUTC: task.reminderAtMs!,
+            title: task.title,
+            isEssential: false,
+          );
+        } catch (_) {}
+      }
     }
 
     await db.update(
@@ -233,7 +237,8 @@ class SimpleTaskRepository {
       final rows = await db.query('simple_tasks', where: 'id = ?', whereArgs: [id], limit: 1);
       if (rows.isEmpty) return null;
       return SimpleTask.fromMap(rows.first);
-    } catch (e) {
+    } catch (e, st) {
+      RitmoLog.error('SimpleTaskRepository', 'Error getting task by id: $id', e, st);
       return null;
     }
   }
@@ -263,17 +268,43 @@ class SimpleTaskRepository {
   }
 
   /// Restore a deleted task (for undo)
-  Future<void> restoreTask(SimpleTask task) async {
+  Future<void> restoreTask(TaskSnapshot snapshot) async {
     final db = await _db;
-    await db.insert('simple_tasks', task.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert('simple_tasks', snapshot.task.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    
+    // Restore steps
+    for (final step in snapshot.steps) {
+      await db.insert('task_steps', step.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    
+    // Restore attachments
+    for (final att in snapshot.attachments) {
+      await db.insert('task_attachments', att.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    
+    // Reschedule alarm if needed
+    if (!snapshot.task.isDone && snapshot.task.reminderId != null && snapshot.task.reminderAtMs != null) {
+      if (snapshot.task.reminderAtMs! > DateTime.now().millisecondsSinceEpoch) {
+        try {
+          await sl<AlarmPlatform>().scheduleExactAlarm(
+            id: snapshot.task.reminderId!,
+            timeMsUTC: snapshot.task.reminderAtMs!,
+            title: snapshot.task.title,
+            isEssential: false,
+          );
+        } catch (_) {}
+      }
+    }
   }
 
   /// Delete task + steps + attachments + cancel alarm
-  Future<void> delete(String id) async {
+  Future<TaskSnapshot?> delete(String id) async {
     final db = await _db;
     final rows = await db.query('simple_tasks', where: 'id = ?', whereArgs: [id], limit: 1);
+    SimpleTask? task;
+    
     if (rows.isNotEmpty) {
-      final task = SimpleTask.fromMap(rows.first);
+      task = SimpleTask.fromMap(rows.first);
       if (task.reminderId != null && task.reminderId!.isNotEmpty) {
         try {
           await sl<AlarmPlatform>().cancelAlarm(task.reminderId!);
@@ -281,9 +312,20 @@ class SimpleTaskRepository {
       }
     }
 
+    if (task == null) return null;
+
+    final steps = await TaskStepRepository.instance.getForTask(id);
+    final attachments = await TaskAttachmentRepository.instance.getForTask(id);
+
     await TaskStepRepository.instance.deleteForTask(id);
     await TaskAttachmentRepository.instance.deleteForTask(id);
     await db.delete('simple_tasks', where: 'id = ?', whereArgs: [id]);
+    
+    return TaskSnapshot(
+      task: task,
+      steps: steps,
+      attachments: attachments,
+    );
   }
 
   /// Reorder tasks by ordered list of IDs
@@ -327,7 +369,7 @@ class SimpleTaskRepository {
     final rows = await db.rawQuery('''
       SELECT DISTINCT t.* FROM simple_tasks t
       LEFT JOIN task_steps s ON s.taskId = t.id
-      WHERE t.title LIKE ? OR t.note LIKE ? OR s.title LIKE ?
+      WHERE t.titleNormalized LIKE ? OR t.note LIKE ? OR s.title LIKE ?
       ORDER BY t.isDone ASC, t.isImportant DESC, t.updatedAt DESC
       LIMIT 20
     ''', [q, q, q]);

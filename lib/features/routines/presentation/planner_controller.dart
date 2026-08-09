@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
@@ -36,11 +37,13 @@ class PlannerController extends ChangeNotifier {
     required this.onSaved,
     required this.onPageChanged,
     this.prefilledTime,
+    this.prefilledTitle,
   });
   final Map<String, dynamic>? routineToEdit;
   final VoidCallback onSaved;
   final void Function(int) onPageChanged;
   final TimeOfDay? prefilledTime;
+  final String? prefilledTitle;
 
   bool moduleReligionEnabled = true;
   bool moduleMedicineEnabled = false;
@@ -190,6 +193,13 @@ class PlannerController extends ChangeNotifier {
     } else if (prefilledTime != null) {
       selectedTime = prefilledTime!;
     }
+    
+    if (prefilledTitle != null && prefilledTitle!.isNotEmpty) {
+      rawInputText = prefilledTitle!;
+      inputController.text = prefilledTitle!;
+      _executeNLPParse(prefilledTitle!);
+    }
+    
     _loadOtherRoutinesForDate();
     _loadModuleSettings();
     _loadZones();
@@ -215,15 +225,15 @@ class PlannerController extends ChangeNotifier {
       final settings = await db.query('app_settings');
       final settingsMap = {for (final s in settings) s['key']! as String: s['value']! as String};
       
-      moduleReligionEnabled = settingsMap['module_religion_enabled'] == 'true';
-      moduleMedicineEnabled = settingsMap['module_medicine_enabled'] == 'true';
-      moduleCycleEnabled = settingsMap['module_cycle_enabled'] == 'true';
-      moduleCoursesEnabled = settingsMap['module_courses_enabled'] == 'true';
-      moduleKonkurEnabled = settingsMap['module_study_enabled'] == 'true';
-      moduleGoalsEnabled = settingsMap['module_goals_enabled'] == 'true';
-      moduleSportsEnabled = settingsMap['module_sports_enabled'] == 'true';
-      moduleEnergyEnabled = settingsMap['module_energy_enabled'] == 'true';
-      moduleSleepEnabled = settingsMap['module_sleep_enabled'] == 'true';
+      moduleReligionEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled');
+      moduleMedicineEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_medicine_enabled');
+      moduleCycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
+      moduleCoursesEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_courses_enabled');
+      moduleKonkurEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_study_enabled');
+      moduleGoalsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_goals_enabled');
+      moduleSportsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sports_enabled');
+      moduleEnergyEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_energy_enabled');
+      moduleSleepEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sleep_enabled');
       
       notifyListeners();
     } catch (e) {

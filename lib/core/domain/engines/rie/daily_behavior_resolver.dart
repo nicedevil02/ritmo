@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/models/daily_behavior.dart';
 
 class DailyBehaviorResolver {
@@ -132,7 +133,7 @@ class DailyBehaviorResolver {
     }
 
     // 5. WORSHIP (if religion module is enabled and a worship season is active)
-    if (activeSeasonTitle != null && settings['module_religion_enabled'] == 'true' && maxSeason != null) {
+    if (activeSeasonTitle != null && ModuleGate.instance.isEnabledFrom(settings, 'module_religion_enabled') && maxSeason != null) {
       var behavior = 'NORMAL';
       final behaviorRaw = maxSeason['behaviorJson'] as String?;
       if (behaviorRaw != null && behaviorRaw.isNotEmpty) {

@@ -1,3 +1,4 @@
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -34,7 +35,7 @@ class StudySettingsRepository {
     final rows = await db.query('app_settings', where: "key LIKE 'study_%' OR key = 'module_study_enabled'");
     final map = {for (final r in rows) r['key'] as String: r['value'] as String};
 
-    final moduleEnabled = map['module_study_enabled'] == 'true';
+    final moduleEnabled = ModuleGate.instance.isEnabledFrom(map, 'module_study_enabled');
     final konkurMode = map['study_konkur_mode'] == 'true';
     final konkurSetupDone = map['study_konkur_setup_done'] == 'true';
     final dailyTargetMinutes = int.tryParse(map['study_daily_target_minutes'] ?? '90') ?? 90;

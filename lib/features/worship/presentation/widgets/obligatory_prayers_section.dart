@@ -10,6 +10,8 @@ import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart' hide toPersianDigits;
 import 'package:ritmo/features/worship/presentation/widgets/prayer_agenda_card.dart';
+import 'package:ritmo/features/worship/presentation/widgets/prayer_sheet.dart';
+import 'package:ritmo/features/worship/domain/prayer_target.dart';
 
 class ObligatoryPrayersSection extends StatefulWidget {
   const ObligatoryPrayersSection({
@@ -125,14 +127,26 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
     final targetDate = widget.date ?? DateTime.now();
     final dateStr = targetDate.toIso8601String().substring(0, 10);
 
+    if (isDone) {
+      // Show PrayerSheet for done
+      final target = await PrayerTarget.fromGroupKey(groupKey, targetDate);
+      if (mounted) {
+        await PrayerSheet.show(context, target);
+      }
+      WorshipEngine.instance.invalidate(date: targetDate);
+      await _loadWorshipData();
+      widget.onChanged();
+      return;
+    }
+
     setState(() {
-      _optimisticState[groupKey] = isDone;
+      _optimisticState[groupKey] = false;
     });
 
     try {
       await AgendaActionHandler.instance.togglePrayer(
         group: groupKey,
-        isDone: isDone,
+        isDone: false,
         dateStr: dateStr,
       );
 
@@ -146,10 +160,7 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
       widget.onChanged();
 
       if (mounted) {
-        RitmoToast.show(
-          context,
-          isDone ? 'نماز با موفقیت ثبت شد.' : 'ثبت نماز لغو شد.',
-        );
+        RitmoToast.show(context, 'ثبت نماز لغو شد.');
       }
     } catch (e) {
       debugPrint('Error toggling prayer group: $e');
@@ -456,7 +467,7 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
           // Dhuhr & Asr Row
           if (dhuhrPractices.isNotEmpty)
             PrayerAgendaCard(
-              title: asrState != null ? 'نماز ظهر و عصر (مجزا)' : 'نماز ظهر و عصر',
+              title: 'نماز ظهر و عصر',
               timeStr: 'اذان ظهر ${_formatTime(times.dhuhr)}',
               isDone: dhuhrDone,
               isSkipped: dhuhrSkipped,
@@ -484,7 +495,7 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
           // Maghrib & Isha Row
           if (maghribPractices.isNotEmpty)
             PrayerAgendaCard(
-              title: ishaState != null ? 'نماز مغرب و عشا (مجزا)' : 'نماز مغرب و عشا',
+              title: 'نماز مغرب و عشا',
               timeStr: 'اذان مغرب ${_formatTime(times.maghrib)}',
               isDone: maghribDone,
               isSkipped: maghribSkipped,

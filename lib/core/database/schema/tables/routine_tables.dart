@@ -113,6 +113,7 @@ class RoutineTables {
           date TEXT NOT NULL,
           scheduled_time TEXT,
           status TEXT NOT NULL DEFAULT 'pending',
+          ownerModule TEXT,
           PRIMARY KEY (routine_id, date),
           FOREIGN KEY(routine_id) REFERENCES routines(id) ON DELETE CASCADE
       );

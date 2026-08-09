@@ -7,6 +7,9 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
+import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
+import 'package:ritmo/features/worship/presentation/widgets/prayer_agenda_card.dart';
+import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/presentation/widgets/worship_reminder_settings_sheet.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -25,6 +28,7 @@ class MustahabSection extends StatefulWidget {
 class _MustahabSectionState extends State<MustahabSection> {
   bool _isLoading = true;
   List<WorshipPractice> _activeMustahabs = [];
+  Map<String, WorshipDayStatus> _statuses = {};
   String _todayStr = '';
 
   @override
@@ -55,9 +59,11 @@ class _MustahabSectionState extends State<MustahabSection> {
 
       // Daily reset is handled centrally in EndOfDaySweep
 
+      final statuses = await WorshipCompletionRepository.instance.statusForDate(_todayStr);
       if (mounted) {
         setState(() {
           _activeMustahabs = list;
+          _statuses = statuses;
           _isLoading = false;
         });
       }
@@ -77,18 +83,12 @@ class _MustahabSectionState extends State<MustahabSection> {
       final db = await DatabaseHelper.instance.database;
       final nowMs = DateTime.now().millisecondsSinceEpoch;
 
-      final updated = practice.copyWith(
-        dailyDone: isDone ? 1 : 0,
-        dailyDoneDate: _todayStr,
-        updatedAt: nowMs,
-      );
-
-      await db.update(
-        'worship_practices',
-        updated.toMap(),
-        where: 'id = ?',
-        whereArgs: [practice.id],
-      );
+      final targetDate = DateTime.parse(_todayStr);
+      if (isDone) {
+        await WorshipEngine.instance.logDone(practiceId: practice.id, date: targetDate);
+      } else {
+        await WorshipEngine.instance.clearLog(practiceId: practice.id, date: targetDate);
+      }
 
       await _loadMustahabs();
       widget.onChanged();
@@ -204,19 +204,9 @@ class _MustahabSectionState extends State<MustahabSection> {
       }
     }
 
-    // Mark as completed/skipped for today (set dailyDone to 1) so it doesn't show as undone and hides the controls.
-    final db = await DatabaseHelper.instance.database;
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    await db.update(
-      'worship_practices',
-      {
-        'dailyDone': 1,
-        'dailyDoneDate': _todayStr,
-        'updatedAt': nowMs,
-      },
-      where: 'id = ?',
-      whereArgs: [practice.id],
-    );
+    // Mark as skipped for today
+    final targetDate = DateTime.parse(_todayStr);
+    await WorshipEngine.instance.logSkip(practiceId: practice.id, date: targetDate, addToQada: addToQada ?? false);
 
     await _loadMustahabs();
     widget.onChanged();
@@ -336,70 +326,24 @@ class _MustahabSectionState extends State<MustahabSection> {
                 separatorBuilder: (context, index) => Divider(color: colors.border, height: 16),
                 itemBuilder: (context, index) {
                   final practice = _activeMustahabs[index];
-                  final isDone = practice.dailyDone >= 1;
+                  final status = _statuses[practice.id];
+                  final isDone = status?.isDone == true;
+                  final isSkipped = status?.isSkipped == true;
 
-                  return Row(
-                    children: [
-                      // Checkbox
-                      Transform.scale(
-                        scale: 1.05,
-                        child: Checkbox(
-                          value: isDone,
-                          onChanged: (val) {
-                            if (val != null) {
-                              _toggleDone(practice, val);
-                            }
-                          },
-                          activeColor: const Color(0xffD4A843),
-                          checkColor: Colors.white,
-                          side: BorderSide(color: colors.textSecondary.withValues(alpha: 0.3), width: 1.5),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-
-                      // Text
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              practice.title,
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.bold,
-                                color: isDone ? colors.cardSubtitle : colors.cardTitle,
-                                decoration: isDone ? TextDecoration.lineThrough : null,
-                                fontFamily: 'Vazirmatn',
-                              ),
-                            ),
-                            if (practice.notes != null && practice.notes!.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                toPersianDigits(practice.notes!),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: colors.textSecondary,
-                                  fontFamily: 'Vazirmatn',
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-
-                      // Skip Button
-                      if (practice.allowQada && !isDone)
-                        IconButton(
-                          icon: Icon(
-                            CupertinoIcons.clear_circled,
-                            color: colors.textSecondary.withValues(alpha: 0.6),
-                            size: 18,
-                          ),
-                          tooltip: 'رد کردن و ثبت قضا',
-                          onPressed: () => _skipPracticeAndPromptQada(practice),
-                        ),
-                    ],
+                  return PrayerAgendaCard(
+                    title: practice.title,
+                    timeStr: practice.notes ?? 'مستحب',
+                    isDone: isDone,
+                    isSkipped: isSkipped,
+                    isSnoozed: false, // We can wire this up later if needed
+                    deferCount: 0,
+                    hasReminder: practice.reminderEnabled,
+                    disableControls: false,
+                    isExpiringSoon: false,
+                    isExpired: false,
+                    isExempt: false,
+                    onToggle: (val) => _toggleDone(practice, val),
+                    onSkip: practice.allowQada ? () => _skipPracticeAndPromptQada(practice) : null,
                   );
                 },
               ),

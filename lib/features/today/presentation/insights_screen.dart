@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/ai/ai_briefing_service.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/ai_shared_rules.dart';
@@ -160,7 +161,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       final unlockedDB = await DatabaseHelper.instance.getUnlockedMilestones();
       final unlockedMap = {for (final m in unlockedDB) m['id'] as String: m['unlockedAt'] as int};
 
-      _isCycleModuleEnabled = settingsMap['module_cycle_enabled'] == 'true';
+      _isCycleModuleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
       _isFemale = CyclePrivacyGuard.isVisible(settingsMap);
       _currentStreak = int.tryParse(settingsMap['current_streak'] ?? '0') ?? 0;
       _longestStreak = int.tryParse(settingsMap['longest_streak'] ?? '0') ?? 0;

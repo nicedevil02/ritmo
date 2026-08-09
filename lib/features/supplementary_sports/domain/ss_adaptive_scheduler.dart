@@ -11,7 +11,7 @@ class SSAdaptiveScheduler {
     final profile = await SSProfileRepository.instance.getProfile();
     if (profile == null) return;
 
-    final currentWk = SSProgramCalendar.currentWeek(profile.programStartDate, today);
+    final currentWk = SsProgramCalendar.currentWeek(profile.programStartDate, today);
     final nextWk = currentWk + 1;
 
     final check = await db.query(

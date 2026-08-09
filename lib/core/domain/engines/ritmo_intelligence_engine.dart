@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' hide Category;
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/engine_enums.dart';
 import 'package:ritmo/core/domain/engines/rie/context_resolver.dart';
@@ -161,13 +162,13 @@ class RitmoIntelligenceEngine {
   ) {
     switch (category) {
       case Category.religious:
-        return settings['module_religion_enabled'] == 'true';
+        return ModuleGate.instance.isEnabledFrom(settings, 'module_religion_enabled');
       case Category.medical:
-        return settings['module_medicine_enabled'] == 'true';
+        return ModuleGate.instance.isEnabledFrom(settings, 'module_medicine_enabled');
       case Category.learning:
-        return settings['module_courses_enabled'] == 'true';
+        return ModuleGate.instance.isEnabledFrom(settings, 'module_courses_enabled');
       case Category.konkur:
-        return settings['module_study_enabled'] == 'true';
+        return ModuleGate.instance.isEnabledFrom(settings, 'module_study_enabled');
       case Category.fitness:
       case Category.work:
       case Category.personal:

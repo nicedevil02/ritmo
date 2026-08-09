@@ -16,6 +16,8 @@ import 'package:ritmo/features/routines/shared/widgets/routine_details_sheet.dar
 import 'package:ritmo/features/routines/shared/widgets/routine_niyyah_sheet.dart';
 import 'package:ritmo/features/today/presentation/active_timer_overlay.dart';
 import 'package:ritmo/features/worship/presentation/widgets/prayer_agenda_card.dart';
+import 'package:ritmo/features/worship/presentation/widgets/prayer_sheet.dart';
+import 'package:ritmo/features/worship/domain/prayer_target.dart';
 
 abstract class AgendaTileRenderer {
   const AgendaTileRenderer();
@@ -109,9 +111,20 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
         } else if (item.id.contains('wp_maghrib') || item.sourceId == 'wp_maghrib') {
           group = 'MAGHRIB_ISHA';
         }
+
+        if (val) {
+          final targetDate = DateTime.tryParse(item.dateStr) ?? DateTime.now();
+          final target = await PrayerTarget.fromGroupKey(group, targetDate);
+          if (context.mounted) {
+            await PrayerSheet.show(context, target);
+          }
+          onChanged();
+          return;
+        }
+
         await AgendaActionHandler.instance.togglePrayer(
           group: group,
-          isDone: val,
+          isDone: false,
           dateStr: item.dateStr,
         );
         onChanged();

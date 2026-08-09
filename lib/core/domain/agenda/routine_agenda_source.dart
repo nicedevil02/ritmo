@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/engines/routine_occurrence_generator.dart';
 import 'package:ritmo/core/domain/models.dart';
@@ -89,9 +90,9 @@ class RoutineAgendaSource {
       avgDurations: avgDurations,
       categoryAvgDurations: categoryAvgDurations,
       activeModules: {
-        'religion': settingsMap['module_religion_enabled'] == 'true',
-        'medicine': settingsMap['module_medicine_enabled'] == 'true',
-        'courses': settingsMap['module_courses_enabled'] == 'true',
+        'religion': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled'),
+        'medicine': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_medicine_enabled'),
+        'courses': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_courses_enabled'),
       },
     );
   }
@@ -99,9 +100,7 @@ class RoutineAgendaSource {
   static String _dateStr(DateTime dt) => dt.toIso8601String().substring(0, 10);
 
   bool _isCategoryModuleEnabled(String category) {
-    if (category == 'religious' && !(activeModules['religion'] ?? false)) {
-      return false;
-    }
+    // Removed hardcoded 'religious' check for routines
     if (category == 'medical' && !(activeModules['medicine'] ?? false)) {
       return false;
     }

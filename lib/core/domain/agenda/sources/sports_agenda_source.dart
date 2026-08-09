@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' hide Category;
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:sqflite/sqflite.dart';
@@ -17,8 +18,8 @@ class SportsAgendaSource {
     Database db,
     Map<String, String> settingsMap,
   ) async {
-    final sportsEnabled = settingsMap['module_sports_enabled'] == 'true' ||
-        settingsMap['module_supplementary_sports_enabled'] == 'true';
+    final sportsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sports_enabled') ||
+        ModuleGate.instance.isEnabledFrom(settingsMap, 'module_supplementary_sports_enabled');
 
     if (!sportsEnabled) {
       return SportsAgendaSource(sportsPlansByDay: const {}, sportsEnabled: false);

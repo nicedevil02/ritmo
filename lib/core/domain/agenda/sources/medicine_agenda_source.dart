@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' hide Category;
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:sqflite/sqflite.dart';
@@ -17,7 +18,7 @@ class MedicineAgendaSource {
     Database db,
     Map<String, String> settingsMap,
   ) async {
-    final medicineEnabled = settingsMap['module_medicine_enabled'] == 'true';
+    final medicineEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_medicine_enabled');
     if (!medicineEnabled) {
       return MedicineAgendaSource(medicineLogsByDate: const {}, medicineEnabled: false);
     }

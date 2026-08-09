@@ -12,6 +12,7 @@ import 'package:ritmo/features/supplementary_sports/movement/data/movement_repos
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_event.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
+import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
 
 /// Single gateway entry point for all completion and state-change requests across Ritmo.
@@ -182,11 +183,13 @@ class CompletionGateway {
   }
 
   Future<CompletionOutcome> _handlePrayerCompletion(PrayerCompletion req) async {
-    final resultType = req.mode == 'QADA' ? 'QADA_ADDED' : 'DONE';
+    final quality = PrayerLogQuality.fromCode(req.mode);
+    final resultType = quality == PrayerLogQuality.qada ? 'QADA_ADDED' : 'DONE';
     final recordId = await WorshipCompletionRepository.instance.logDone(
       practiceId: req.prayerKey,
       dateStr: req.dateStr,
       practiceType: 'PRAYER',
+      quality: quality,
       countDone: 1,
       countTarget: 1,
     );

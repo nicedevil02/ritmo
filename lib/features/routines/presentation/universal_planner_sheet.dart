@@ -36,16 +36,19 @@ class UniversalPlannerSheet extends StatefulWidget {
     this.onSaved,
     this.routineToEdit,
     this.prefilledTime,
+    this.prefilledTitle,
   });
   final Map<String, dynamic>? routineToEdit;
   final VoidCallback? onSaved;
   final TimeOfDay? prefilledTime;
+  final String? prefilledTitle;
 
   static Future<T?> show<T>({
     required BuildContext context,
     Map<String, dynamic>? routineToEdit,
     VoidCallback? onSaved,
     TimeOfDay? prefilledTime,
+    String? prefilledTitle,
   }) {
     return showModalBottomSheet<T>(
       context: context,
@@ -55,6 +58,7 @@ class UniversalPlannerSheet extends StatefulWidget {
         routineToEdit: routineToEdit,
         onSaved: onSaved,
         prefilledTime: prefilledTime,
+        prefilledTitle: prefilledTitle,
       ),
     );
   }
@@ -74,6 +78,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
       routineToEdit: widget.routineToEdit,
       onSaved: widget.onSaved ?? () {},
       prefilledTime: widget.prefilledTime,
+      prefilledTitle: widget.prefilledTitle,
       onPageChanged: (pageIndex) {
         if (_pageController.hasClients) {
           _pageController.animateToPage(

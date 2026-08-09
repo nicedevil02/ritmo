@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/analytics/courses_engine.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:ritmo/core/services/premium_service.dart';
@@ -57,7 +58,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
     });
 
     try {
-      _coursesEnabled = await ModuleManagementService.instance.isModuleEnabled('module_courses_enabled');
+      _coursesEnabled = ModuleGate.instance.isEnabled('module_courses_enabled');
 
       // 1. Fetch real dynamic energy level today (Fixes D-8)
       _currentEnergyLevel = await CoursesRepository.instance.getCurrentEnergyLevel();

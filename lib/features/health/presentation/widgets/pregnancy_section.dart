@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
@@ -107,7 +108,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
       final settings = await db.query('app_settings');
       final settingsMap = {for (final s in settings) s['key']! as String: s['value']! as String};
       
-      final pregnancyEnabled = settingsMap['module_pregnancy_enabled'] == 'true';
+      final pregnancyEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_pregnancy_enabled');
       final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
       final shouldShow = isFemale && pregnancyEnabled;
 

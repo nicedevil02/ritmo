@@ -8,9 +8,9 @@ class AppModeService {
   AppModeService._();
   static final AppModeService instance = AppModeService._();
 
-  final ValueNotifier<AppMode> notifier = ValueNotifier(AppMode.simple);
+  final ValueNotifier<AppMode> notifier = ValueNotifier(AppMode.full);
 
-  AppMode _current = AppMode.simple;
+  AppMode _current = AppMode.full;
 
   Future<void> load() async {
     try {
@@ -21,18 +21,18 @@ class AppModeService {
         limit: 1,
       );
       if (rows.isNotEmpty) {
-        final val = rows.first['value'] as String?;
-        if (val == 'FULL') {
-          _current = AppMode.full;
-        } else {
+        final val = (rows.first['value'] as String?)?.toUpperCase();
+        if (val == 'SIMPLE') {
           _current = AppMode.simple;
+        } else {
+          _current = AppMode.full;
         }
       } else {
-        _current = AppMode.simple;
+        _current = AppMode.full;
       }
       notifier.value = _current;
     } catch (e) {
-      _current = AppMode.simple;
+      _current = AppMode.full;
       notifier.value = _current;
     }
   }

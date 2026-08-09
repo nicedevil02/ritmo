@@ -10,6 +10,9 @@ import 'package:ritmo/features/assistant/models/assistant_models.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_exercise_model.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_plan_generator.dart';
+import 'package:ritmo/features/supplementary_sports/data/repositories/ss_prescription_repository.dart';
+import 'package:ritmo/features/supplementary_sports/domain/prescription/session_prescription.dart';
+import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/bottom_sheet_container.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/empty_state_view.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/primary_button.dart';
@@ -26,9 +29,11 @@ class SSPlanDayDetailScreen extends StatefulWidget {
     super.key,
     required this.dayOfWeek,
     required this.dayName,
+    this.dateIso,
   });
   final int dayOfWeek;
   final String dayName;
+  final String? dateIso;
 
   @override
   State<SSPlanDayDetailScreen> createState() => _SSPlanDayDetailScreenState();
@@ -39,6 +44,8 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
   String? _planId;
   List<PlanExerciseDetail> _exercises = [];
   SSInlineAiSuggestion? _aiSuggestion;
+  SessionPrescription? _prescription;
+  bool _isDetailMode = false;
 
   @override
   void initState() {
@@ -53,6 +60,17 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
 
     try {
       final db = await DatabaseHelper.instance.database;
+
+      _isDetailMode = await SportsDetailMode.isEnabled();
+      if (!_isDetailMode && widget.dateIso != null) {
+        _prescription = await SsPrescriptionRepository.instance.getPrescriptionForDate(widget.dateIso!);
+        if (_prescription != null) {
+          setState(() {
+            _isLoading = false;
+          });
+          return; // Skip loading legacy plans
+        }
+      }
 
       // 1. Load plan for this day
       final plans = await db.query(
@@ -526,7 +544,7 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
       );
     }
 
-    if (_planId == null) {
+    if (_planId == null && _prescription == null) {
       return Scaffold(
         backgroundColor: colors.background,
         appBar: AppBar(
@@ -537,10 +555,25 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
         body: Directionality(
           textDirection: TextDirection.rtl,
           child: EmptyStateView(
-            message: 'برای روز ${widget.dayName} هیچ برنامه تمرینی فعال نشده است.',
-            actionLabel: 'ایجاد برنامه برای امروز',
-            onAction: _createDefaultPlan,
+            message: 'برای روز ${widget.dayName} هیچ برنامه‌ای فعال نشده است.',
+            actionLabel: 'بازگشت',
+            onAction: () => Navigator.pop(context),
           ),
+        ),
+      );
+    }
+
+    if (!_isDetailMode && _prescription != null) {
+      return Scaffold(
+        backgroundColor: colors.background,
+        appBar: AppBar(
+          backgroundColor: colors.surface,
+          title: Text('نسخه تمرینی ${widget.dayName}', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary)),
+          centerTitle: true,
+        ),
+        body: Directionality(
+          textDirection: TextDirection.rtl,
+          child: _buildPrescriptionView(context),
         ),
       );
     }
@@ -608,6 +641,134 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPrescriptionView(BuildContext context) {
+    if (_prescription == null) return const SizedBox();
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: SupplementarySportsTheme.spacing24,
+        vertical: SupplementarySportsTheme.spacing24,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: context.colors.surfaceSunken,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.colors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _prescription!.headlineFa,
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: context.colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(Icons.timer_outlined, color: context.colors.textSecondary, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      toPersianDigits('${_prescription!.targetMinutes} دقیقه'),
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        color: context.colors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(Icons.fitness_center_outlined, color: context.colors.textSecondary, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _prescription!.focusCodes.isNotEmpty ? _prescription!.focusCodes.join(' و ') : '',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          color: context.colors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(Icons.speed_outlined, color: context.colors.textSecondary, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'شدت: ${_prescription!.intensityTier.labelFa}',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        color: context.colors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (_prescription!.coachNoteFa != null) ...[
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: context.colors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: context.colors.primary.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.tips_and_updates_outlined, color: context.colors.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'توصیه مربی',
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontWeight: FontWeight.bold,
+                            color: context.colors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _prescription!.coachNoteFa!,
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            color: context.colors.textPrimary,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

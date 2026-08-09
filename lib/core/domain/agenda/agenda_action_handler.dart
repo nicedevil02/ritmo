@@ -308,16 +308,19 @@ class AgendaActionHandler {
           }
         }
       } else if (item.domain == AgendaDomain.mustahab) {
-        await txn.update(
-          'worship_practices',
-          {
-            'dailyDone': isDone ? 1 : 0,
-            'dailyDoneDate': item.dateStr,
-            'updatedAt': nowMs,
-          },
-          where: 'id = ?',
-          whereArgs: [item.sourceId],
-        );
+        if (isDone) {
+          final date = DateTime.tryParse(item.dateStr) ?? DateTime.now();
+          await WorshipEngine.instance.logDone(
+            practiceId: item.sourceId,
+            date: date,
+          );
+        } else {
+          final date = DateTime.tryParse(item.dateStr) ?? DateTime.now();
+          await WorshipEngine.instance.clearLog(
+            practiceId: item.sourceId,
+            date: date,
+          );
+        }
       }
     });
 

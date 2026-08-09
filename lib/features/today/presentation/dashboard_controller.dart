@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart'; // برای CupertinoIcons
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/ai/ai_briefing_service.dart';
 import 'package:ritmo/core/analytics/energy_analytics_engine.dart';
 import 'package:ritmo/core/analytics/reflection_engine.dart';
@@ -410,7 +411,7 @@ class DashboardController {
       final actZoneName = activeZoneName ?? 'خارج از قلمرو';
 
       // 4. Load Worship Debts if module enabled
-      if (settingsMap['module_religion_enabled'] == 'true') {
+      if (ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled')) {
         final worshipDebtsRaw = await db.query('worship_debts', where: 'isArchived = 0');
         worshipDebts = worshipDebtsRaw.map(Map<String, dynamic>.from).toList();
         
@@ -488,7 +489,7 @@ class DashboardController {
     String fa(Object v) => toPersianDigits(v.toString());
 
     // خواب — آخرین لاگ از bedtime_diagnostics
-    if (s['module_sleep_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_sleep_enabled')) {
       final rows = await db.query('bedtime_diagnostics', orderBy: 'date DESC', limit: 1);
       if (rows.isNotEmpty) {
         final log = SleepLog.fromMap(rows.first);
@@ -512,7 +513,7 @@ class DashboardController {
     }
 
     // ورزش — جلسات و دقایق این هفته از workout_logs
-    if (s['module_sports_enabled'] == 'true' || s['module_supplementary_sports_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_sports_enabled') || ModuleGate.instance.isEnabledFrom(s, 'module_supplementary_sports_enabled')) {
       final weekAgo = DateTime.now().subtract(const Duration(days: 7)).millisecondsSinceEpoch;
       final rows = await db.query('workout_logs', where: 'loggedAt >= ?', whereArgs: [weekAgo]);
       final sessions = rows.length;
@@ -526,7 +527,7 @@ class DashboardController {
     }
 
     // انرژی و مود — از فیلدهای از قبل محاسبهشدهی کنترلر
-    if (s['module_energy_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_energy_enabled')) {
       out.add(DashboardModuleSummary(
         moduleId: 'energy', title: 'انرژی و مود',
         icon: CupertinoIcons.bolt_fill, accentColor: const Color(0xffEC4899),
@@ -536,7 +537,7 @@ class DashboardController {
     }
 
     // دارو — پایبندی امروز از medicationRoutines + medicationCompletionsToday
-    if (s['module_medicine_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_medicine_enabled')) {
       final totalDoses = medicationRoutines.fold<int>(
           0, (a, r) => a + (((r['maxDosesPerDay'] as int?) ?? 1) <= 0 ? 1 : ((r['maxDosesPerDay'] as int?) ?? 1)));
       final taken = medicationCompletionsToday.values.fold<int>(0, (a, c) => a + c);
@@ -551,7 +552,7 @@ class DashboardController {
     }
 
     // عبادت — تعداد قضاها از worshipDebts (نماز بعدی از prayerTimes اختیاری است)
-    if (s['module_religion_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_religion_enabled')) {
       final debts = worshipDebts.length;
       
       // استخراج نماز بعدی از prayerTimes
@@ -625,7 +626,7 @@ class DashboardController {
     }
 
     // اهداف — گامهای امروز از todaysGoalSteps
-    if (s['module_goals_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_goals_enabled')) {
       final total = todaysGoalSteps.length;
       final done = todaysGoalSteps.where((g) =>
           g['isCompleted'] == 1 || g['isCompleted'] == true || g['completedAt'] != null).length;
@@ -639,7 +640,7 @@ class DashboardController {
     }
 
     // دورهها — جلسات مطالعهی امروز
-    if (s['module_courses_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_courses_enabled')) {
       out.add(DashboardModuleSummary(
         moduleId: 'courses', title: 'دورهها',
         icon: CupertinoIcons.book_fill, accentColor: const Color(0xff3B82F6),
@@ -649,7 +650,7 @@ class DashboardController {
     }
 
     // درس و مطالعه — مباحث امروز
-    if (s['module_study_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_study_enabled')) {
       out.add(DashboardModuleSummary(
         moduleId: 'konkur', title: 'درس و مطالعه',
         icon: CupertinoIcons.book_fill, accentColor: const Color(0xff8B5CF6),
@@ -740,7 +741,7 @@ class DashboardController {
               Map<String, dynamic>.from(i.meta['session'] as Map)))
           .toList();
       if (todaysCourseSessions.isNotEmpty &&
-          settingsMap['module_courses_enabled'] == 'true') {
+          ModuleGate.instance.isEnabledFrom(settingsMap, 'module_courses_enabled')) {
         allCourses = await CoursesRepository.instance.getActiveCourses();
       } else {
         allCourses = [];
@@ -766,7 +767,7 @@ class DashboardController {
       // Cycle: the Home cycle widget needs the full engine output, which the
       // agenda only summarizes — compute it here under the same gates.
       final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-      final cycleEnabled = settingsMap['module_cycle_enabled'] == 'true';
+      final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
       final dashboardConsent = settingsMap['cycle_consent_dashboard'] == 'true';
       final setupDone = settingsMap['cycle_setup_done'] == 'true';
       if (isFemale && cycleEnabled && dashboardConsent && setupDone) {

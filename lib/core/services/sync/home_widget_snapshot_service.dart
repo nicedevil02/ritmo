@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
@@ -84,7 +85,7 @@ class HomeWidgetSnapshotService {
         };
 
     // خواب
-    if (s['module_sleep_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_sleep_enabled')) {
       try {
         final rows = await db.query('bedtime_diagnostics', orderBy: 'date DESC', limit: 1);
         if (rows.isNotEmpty) {
@@ -102,7 +103,7 @@ class HomeWidgetSnapshotService {
     }
 
     // ورزش
-    if (s['module_sports_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_sports_enabled')) {
       try {
         final weekAgo = now.subtract(const Duration(days: 7)).millisecondsSinceEpoch;
         final rows = await db.query('workout_logs', where: 'loggedAt >= ?', whereArgs: [weekAgo]);
@@ -115,7 +116,7 @@ class HomeWidgetSnapshotService {
     }
 
     // انرژی و مود — از سطح انرژیِ resolved
-    if (s['module_energy_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_energy_enabled')) {
       final en = resolvedEnergy.name.toLowerCase();
       final label = en == 'low' ? 'کم' : en == 'high' ? 'زیاد' : 'متوسط';
       final pct = en == 'low' ? 30 : en == 'high' ? 90 : 65;
@@ -123,7 +124,7 @@ class HomeWidgetSnapshotService {
     }
 
     // دارو — پایبندی امروز
-    if (s['module_medicine_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_medicine_enabled')) {
       try {
         final medRoutines = routinesResult
             .where((r) => (r['category'] as String?)?.toLowerCase() == 'medical')
@@ -146,7 +147,7 @@ class HomeWidgetSnapshotService {
     }
 
     // عبادت — قضاها + نماز بعدی (best-effort)
-    if (s['module_religion_enabled'] == 'true') {
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_religion_enabled')) {
       try {
         final debtsRows = await db.query('worship_debts', where: 'isArchived = 0');
         final debts = debtsRows.length;
@@ -166,7 +167,7 @@ class HomeWidgetSnapshotService {
     }
 
     // چرخه — فاز فعلی (هم‌شرط با داشبورد)
-    if (s['module_cycle_enabled'] == 'true' &&
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_cycle_enabled') &&
         s['cycle_consent_dashboard'] == 'true' &&
         s['cycle_setup_done'] == 'true') {
       try {
@@ -187,9 +188,9 @@ class HomeWidgetSnapshotService {
     }
 
     // اهداف / دوره‌ها / کنکور — از اجندای مشترکِ امروز
-    final goalsEnabled = s['module_goals_enabled'] == 'true';
-    final coursesEnabled = s['module_courses_enabled'] == 'true';
-    final konkurEnabled = s['module_study_enabled'] == 'true';
+    final goalsEnabled = ModuleGate.instance.isEnabledFrom(s, 'module_goals_enabled');
+    final coursesEnabled = ModuleGate.instance.isEnabledFrom(s, 'module_courses_enabled');
+    final konkurEnabled = ModuleGate.instance.isEnabledFrom(s, 'module_study_enabled');
     if (goalsEnabled || coursesEnabled || konkurEnabled) {
       try {
         final dayAgenda = await DayAgendaService.instance.agendaForDate(

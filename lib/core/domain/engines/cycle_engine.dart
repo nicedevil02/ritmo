@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/settings/settings_flags.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
@@ -95,7 +96,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     final now = DateTime(input.now.year, input.now.month, input.now.day);
 
     final isFemale = CyclePrivacyGuard.isVisible(appSettings);
-    final cycleEnabled = appSettings['module_cycle_enabled'] == 'true';
+    final cycleEnabled = ModuleGate.instance.isEnabledFrom(appSettings, 'module_cycle_enabled');
 
     if (!isFemale || !cycleEnabled) {
       return _emptyOutput(now);

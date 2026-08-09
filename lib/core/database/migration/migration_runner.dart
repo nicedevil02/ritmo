@@ -22,7 +22,8 @@ import 'package:ritmo/core/database/migration/migrations/migration_v80_ai_openco
 import 'package:ritmo/core/database/migration/migrations/migration_v81_agent_layer.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v82_sports_prescription.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v83_calendar_upgrade.dart';
-
+import 'package:ritmo/core/database/migration/migrations/migration_v84_module_ownership.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v85_simple_tasks_title_normalized.dart';
 class MigrationRunner {
   static final List<Migration> _migrations = [
     MigrationV2(),
@@ -107,6 +108,8 @@ class MigrationRunner {
     MigrationV81AgentLayer(),
     MigrationV82SportsPrescription(),
     MigrationV83CalendarUpgrade(), // Prompt 067: day_marks table + calendar default settings
+    MigrationV84(),
+    MigrationV85(),
   ];
 
   static Future<void> run(Database db, int oldVersion, int newVersion) async {

@@ -3,6 +3,7 @@ import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
 
 class WorshipDayStatus {
   const WorshipDayStatus({
@@ -98,6 +99,7 @@ class WorshipCompletionRepository {
     required String practiceId,
     required String dateStr,
     required String practiceType,
+    PrayerLogQuality? quality,
     int countDone = 1,
     int? countTarget,
   }) async {
@@ -105,20 +107,27 @@ class WorshipCompletionRepository {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final recordId = 'wc_${practiceId}_$dateStr';
 
+    final resolvedResultType = quality == PrayerLogQuality.qada ? 'QADA_ADDED' : 'DONE';
+    
     await db.transaction((txn) async {
+      final row = <String, dynamic>{
+        'id': recordId,
+        'practiceId': practiceId,
+        'dateStr': dateStr,
+        'practiceType': practiceType,
+        'resultType': resolvedResultType,
+        'countDone': countDone,
+        'countTarget': countTarget,
+        'loggedAt': nowMs,
+        'createdAt': nowMs,
+      };
+      if (quality != null) {
+        row['quality'] = quality.code;
+      }
+      
       await txn.insert(
         'worship_completions',
-        {
-          'id': recordId,
-          'practiceId': practiceId,
-          'dateStr': dateStr,
-          'practiceType': practiceType,
-          'resultType': 'DONE',
-          'countDone': countDone,
-          'countTarget': countTarget,
-          'loggedAt': nowMs,
-          'createdAt': nowMs,
-        },
+        row,
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 

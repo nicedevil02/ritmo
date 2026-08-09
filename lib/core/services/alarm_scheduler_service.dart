@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
@@ -229,7 +230,7 @@ class AlarmSchedulerService {
 
     // Schedule private cycle reminders if gender is FEMALE and consent is granted
     final cycleConsentReminders = settingsMap['cycle_consent_reminders'] == 'true';
-    final cycleModuleEnabled = settingsMap['module_cycle_enabled'] == 'true';
+    final cycleModuleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
 
     if (isFemale && cycleModuleEnabled && cycleConsentReminders) {

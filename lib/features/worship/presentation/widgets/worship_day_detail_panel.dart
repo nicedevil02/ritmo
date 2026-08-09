@@ -241,10 +241,8 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
   Widget _buildObligatoryPrayersCard(BuildContext context, RitmoColors colors) {
     final prayers = [
       {'key': 'FAJR', 'label': 'صبح'},
-      {'key': 'DHUHR', 'label': 'ظهر'},
-      {'key': 'ASR', 'label': 'عصر'},
-      {'key': 'MAGHRIB', 'label': 'مغرب'},
-      {'key': 'ISHA', 'label': 'عشا'},
+      {'key': 'DHUHR_ASR', 'label': 'ظهر و عصر'},
+      {'key': 'MAGHRIB_ISHA', 'label': 'مغرب و عشا'},
     ];
 
     final practiceMap = <String, WorshipPracticeState>{};
@@ -300,7 +298,19 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
             children: prayers.map((p) {
               final pKey = p['key']!;
               final pLabel = p['label']!;
-              final st = practiceMap[pKey];
+              
+              WorshipPracticeState? st;
+              if (pKey == 'DHUHR_ASR') {
+                final d = practiceMap['DHUHR'];
+                final a = practiceMap['ASR'];
+                st = (d != null && d.isDone) ? d : (a != null && a.isDone) ? a : (d ?? a);
+              } else if (pKey == 'MAGHRIB_ISHA') {
+                final m = practiceMap['MAGHRIB'];
+                final i = practiceMap['ISHA'];
+                st = (m != null && m.isDone) ? m : (i != null && i.isDone) ? i : (m ?? i);
+              } else {
+                st = practiceMap[pKey];
+              }
 
               final isDone = st?.isDone ?? false;
               final resultType = st?.resultType;
@@ -342,16 +352,26 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                   onTap: () async {
                     if (st != null && !isFuture) {
                       unawaited(HapticFeedback.lightImpact());
-                      if (isDone) {
-                        await WorshipEngine.instance.logSkip(
-                          practiceId: st.practice.id,
-                          date: widget.selectedDay.dateTime,
-                        );
-                      } else {
-                        await WorshipEngine.instance.logDone(
-                          practiceId: st.practice.id,
-                          date: widget.selectedDay.dateTime,
-                        );
+                      
+                      List<String> targetIds = [st.practice.id];
+                      if (pKey == 'DHUHR_ASR') {
+                        targetIds = ['wp_dhuhr', 'wp_asr'];
+                      } else if (pKey == 'MAGHRIB_ISHA') {
+                        targetIds = ['wp_maghrib', 'wp_isha'];
+                      }
+                      
+                      for (final id in targetIds) {
+                        if (isDone) {
+                          await WorshipEngine.instance.clearLog(
+                            practiceId: id,
+                            date: widget.selectedDay.dateTime,
+                          );
+                        } else {
+                          await WorshipEngine.instance.logDone(
+                            practiceId: id,
+                            date: widget.selectedDay.dateTime,
+                          );
+                        }
                       }
                       unawaited(_loadDayData());
                     }

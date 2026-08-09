@@ -638,19 +638,50 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     }
 
     if (_exercises.isEmpty) {
+      final colors = context.colors;
       return Scaffold(
-        backgroundColor: const Color(0xFF0B0F19),
+        backgroundColor: colors.background,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: colors.surface,
+          elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-            onPressed: _onClosePressed,
+            icon: Icon(Icons.arrow_back, color: colors.textPrimary),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'تمرین ورزشی',
+            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontWeight: FontWeight.bold),
           ),
         ),
-        body: const Center(
-          child: Text(
-            'هیچ حرکتی برای این برنامه یافت نشد.',
-            style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.fitness_center_outlined, size: 64, color: colors.textSecondary),
+                const SizedBox(height: 16),
+                Text(
+                  'تمرینی برای این روز آماده نشده است.',
+                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, color: colors.textPrimary, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'می‌توانید از بخش «برنامه» حرکات تمرینی جدیدی اضافه کنید.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('بازگشت به داشبورد', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                ),
+              ],
+            ),
           ),
         ),
       );

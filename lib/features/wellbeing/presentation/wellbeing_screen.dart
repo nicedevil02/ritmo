@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/analytics/energy_analytics_engine.dart';
 import 'package:ritmo/core/analytics/life_balance_engine.dart';
 import 'package:ritmo/core/analytics/mood_engine.dart';
@@ -144,8 +145,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
       // H-03: Combined Parallel DB Queries & Module Checks
       final dbResults = await Future.wait([
-        ModuleManagementService.instance.isModuleEnabled('module_energy_enabled').catchError((_) => false),
-        ModuleManagementService.instance.isModuleEnabled('module_sleep_enabled').catchError((_) => false),
+        Future.value(ModuleGate.instance.isEnabled('module_energy_enabled')),
+        Future.value(ModuleGate.instance.isEnabled('module_sleep_enabled')),
         db.query('app_settings', where: "key LIKE 'sleep_target_%'").catchError((_) => <Map<String, dynamic>>[]),
         db.query('energy_logs', where: 'loggedAt >= ?', whereArgs: [horizonMs], orderBy: 'loggedAt DESC', limit: 200).catchError((_) => <Map<String, dynamic>>[]),
         db.query('mood_logs', where: 'loggedAt >= ?', whereArgs: [horizonMs], orderBy: 'loggedAt DESC', limit: 200).catchError((_) => <Map<String, dynamic>>[]),

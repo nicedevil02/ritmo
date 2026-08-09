@@ -67,6 +67,8 @@ class SystemTables {
           createdAt INTEGER NOT NULL,
           updatedAt INTEGER NOT NULL,
           snoozeUntil INTEGER,
+          nativeScheduled INTEGER DEFAULT 0,
+          ownerModule TEXT,
           FOREIGN KEY(routineId) REFERENCES routines(id) ON DELETE CASCADE,
           FOREIGN KEY(scheduleId) REFERENCES routine_schedules(id) ON DELETE CASCADE,
           FOREIGN KEY(courseSessionId) REFERENCES course_sessions(id) ON DELETE CASCADE
@@ -93,6 +95,14 @@ class SystemTables {
           calculationMethod TEXT NOT NULL DEFAULT 'TEHRAN_GEOPHYSICS',
           ihtiyatMinutes INTEGER NOT NULL DEFAULT 10,
           computedAt INTEGER NOT NULL,
+          fajrIso TEXT,
+          sunriseIso TEXT,
+          dhuhrIso TEXT,
+          asrIso TEXT,
+          maghribIso TEXT,
+          sunsetIso TEXT,
+          ishaIso TEXT,
+          midnightShariIso TEXT,
           PRIMARY KEY (date, cityId),
           FOREIGN KEY(cityId) REFERENCES iran_cities(id) ON DELETE CASCADE
       );

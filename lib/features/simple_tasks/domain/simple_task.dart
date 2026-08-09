@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:ritmo/core/utils/persian_text.dart';
 
 class SimpleTask {
   final String id;
@@ -68,6 +69,7 @@ class SimpleTask {
     return {
       'id': id,
       'title': title,
+      'titleNormalized': normalizeFa(title),
       'note': note,
       'isDone': isDone ? 1 : 0,
       'doneAt': doneAt?.millisecondsSinceEpoch,
@@ -88,40 +90,44 @@ class SimpleTask {
   SimpleTask copyWith({
     String? id,
     String? title,
-    String? note,
+    Object? note = _unset,
     bool? isDone,
-    DateTime? doneAt,
-    String? dueDate,
-    String? dueTime,
-    int? reminderAtMs,
-    String? reminderId,
-    String? linkedRoutineId,
+    Object? doneAt = _unset,
+    Object? dueDate = _unset,
+    Object? dueTime = _unset,
+    Object? reminderAtMs = _unset,
+    Object? reminderId = _unset,
+    Object? linkedRoutineId = _unset,
     int? orderIndex,
     String? origin,
     bool? isImportant,
-    bool clearDueDate = false,
-    bool clearImportantAt = false,
-    DateTime? importantAt,
+    Object? importantAt = _unset,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
     return SimpleTask(
       id: id ?? this.id,
       title: title ?? this.title,
-      note: note ?? this.note,
+      note: identical(note, _unset) ? this.note : note as String?,
       isDone: isDone ?? this.isDone,
-      doneAt: doneAt ?? this.doneAt,
-      dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
-      dueTime: dueTime ?? this.dueTime,
-      reminderAtMs: reminderAtMs ?? this.reminderAtMs,
-      reminderId: reminderId ?? this.reminderId,
-      linkedRoutineId: linkedRoutineId ?? this.linkedRoutineId,
+      doneAt: identical(doneAt, _unset) ? this.doneAt : doneAt as DateTime?,
+      dueDate: identical(dueDate, _unset) ? this.dueDate : dueDate as String?,
+      dueTime: identical(dueTime, _unset) ? this.dueTime : dueTime as String?,
+      reminderAtMs: identical(reminderAtMs, _unset) ? this.reminderAtMs : reminderAtMs as int?,
+      reminderId: identical(reminderId, _unset) ? this.reminderId : reminderId as String?,
+      linkedRoutineId: identical(linkedRoutineId, _unset) ? this.linkedRoutineId : linkedRoutineId as String?,
       orderIndex: orderIndex ?? this.orderIndex,
       origin: origin ?? this.origin,
       isImportant: isImportant ?? this.isImportant,
-      importantAt: clearImportantAt ? null : (importantAt ?? this.importantAt),
+      importantAt: identical(importantAt, _unset) ? this.importantAt : importantAt as DateTime?,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
+
+class _Unset {
+  const _Unset();
+}
+
+const Object _unset = _Unset();

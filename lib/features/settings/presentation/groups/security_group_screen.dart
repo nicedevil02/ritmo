@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -176,7 +177,7 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
     final colors = context.colors;
     final isCycleVisible = CyclePrivacyGuard.isVisible({
       'user_gender': SettingsService.instance.get<String>('user_gender'),
-      'module_cycle_enabled': SettingsService.instance.get<bool>('module_cycle_enabled') ? 'true' : 'false',
+      'module_cycle_enabled': ModuleGate.instance.isEnabled('module_cycle_enabled') ? 'true' : 'false',
     });
 
     final timeoutLabels = {

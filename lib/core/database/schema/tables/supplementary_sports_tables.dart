@@ -172,18 +172,17 @@ class SupplementarySportsTables {
         neighborFriendly INTEGER DEFAULT 0,
         programStartDate TEXT,
         deloadEveryNWeeks INTEGER DEFAULT 4,
+        trainingDays TEXT,
+        splitPattern TEXT DEFAULT 'AUTO',
+        defaultIntensity TEXT DEFAULT 'MODERATE',
+        usesExternalApp INTEGER DEFAULT 0,
         createdAt INTEGER NOT NULL,
         updatedAt INTEGER NOT NULL
       );
     ''');
 
-    // Ensure columns exist on existing databases
-    try {
-      await db.execute('ALTER TABLE ss_user_profile ADD COLUMN programStartDate TEXT;');
-    } catch (_) {}
-    try {
-      await db.execute('ALTER TABLE ss_user_profile ADD COLUMN deloadEveryNWeeks INTEGER DEFAULT 4;');
-    } catch (_) {}
+    await ensureUserProfileSchema(db);
+    await ensurePrescriptionTables(db);
 
     // 9. ss_decision_log
     await db.execute('''
@@ -259,4 +258,100 @@ class SupplementarySportsTables {
       'ON ss_workout_set_log(session_id);',
     );
   }
+
+  /// Ensures all 21 columns of ss_user_profile exist on existing legacy databases safely.
+  static Future<void> ensureUserProfileSchema(DatabaseExecutor db) async {
+    final alterStatements = [
+      "ALTER TABLE ss_user_profile ADD COLUMN programStartDate TEXT;",
+      "ALTER TABLE ss_user_profile ADD COLUMN deloadEveryNWeeks INTEGER DEFAULT 4;",
+      "ALTER TABLE ss_user_profile ADD COLUMN trainingDays TEXT;",
+      "ALTER TABLE ss_user_profile ADD COLUMN splitPattern TEXT DEFAULT 'AUTO';",
+      "ALTER TABLE ss_user_profile ADD COLUMN defaultIntensity TEXT DEFAULT 'MODERATE';",
+      "ALTER TABLE ss_user_profile ADD COLUMN usesExternalApp INTEGER DEFAULT 0;",
+    ];
+
+    for (final statement in alterStatements) {
+      try {
+        await db.execute(statement);
+      } catch (_) {}
+    }
+  }
+
+  /// Ensures prescription tables exist on SQLite database safely.
+  static Future<void> ensurePrescriptionTables(DatabaseExecutor db) async {
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS ss_session_prescription (
+          id TEXT PRIMARY KEY,
+          dateIso TEXT NOT NULL,
+          cycleWeek INTEGER NOT NULL,
+          slotType TEXT NOT NULL,
+          focusCodes TEXT NOT NULL,
+          targetMinutes INTEGER NOT NULL,
+          intensityTier TEXT NOT NULL,
+          targetRpe INTEGER,
+          headlineFa TEXT NOT NULL,
+          coachNoteFa TEXT,
+          source TEXT NOT NULL,
+          isLocked INTEGER NOT NULL DEFAULT 0,
+          status TEXT NOT NULL DEFAULT 'PLANNED',
+          movedToDateIso TEXT,
+          legacyPlanId TEXT,
+          workoutLogId TEXT,
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL
+        );
+      ''');
+
+      await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_prescription_date ON ss_session_prescription(dateIso);',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_ss_prescription_status ON ss_session_prescription(status, dateIso);',
+      );
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS ss_muscle_group (
+          code TEXT PRIMARY KEY,
+          titleFa TEXT NOT NULL,
+          region TEXT NOT NULL,
+          emoji TEXT,
+          sortOrder INTEGER NOT NULL
+        );
+      ''');
+
+      final muscleGroups = [
+        ['CHEST', 'سینه', 'UPPER', '🫁', 1],
+        ['SHOULDER', 'سرشانه', 'UPPER', '🎯', 2],
+        ['BICEPS', 'جلوبازو', 'UPPER', '💪', 3],
+        ['TRICEPS', 'پشت‌بازو', 'UPPER', '🦾', 4],
+        ['BACK', 'زیربغل و پشت', 'UPPER', '🪽', 5],
+        ['CORE', 'شکم و مرکز', 'CORE', '🎽', 6],
+        ['QUADS_GLUTES', 'ران و باسن', 'LOWER', '🦵', 7],
+        ['HAMSTRINGS', 'پشت ران', 'LOWER', '🦿', 8],
+        ['CALVES', 'ساق پا', 'LOWER', '🎯', 9],
+        ['CARDIO', 'هوازی', 'CARDIO', '🫀', 10],
+        ['MOBILITY', 'تحرک و کشش', 'MOBILITY', '🧘', 11],
+        ['FULL_BODY', 'کل بدن', 'FULL', '🔥', 12],
+      ];
+
+      for (final m in muscleGroups) {
+        try {
+          await db.insert(
+            'ss_muscle_group',
+            {
+              'code': m[0],
+              'titleFa': m[1],
+              'region': m[2],
+              'emoji': m[3],
+              'sortOrder': m[4],
+            },
+            conflictAlgorithm: ConflictAlgorithm.ignore,
+          );
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
 }
+
+

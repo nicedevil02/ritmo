@@ -86,8 +86,7 @@ class SsProgramDiffSheet extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: PrimaryButton(
-                      label: 'تایید و اعمال',
-                      color: sportsAccent,
+                      label: 'تایید و جایگزینی',
                       onPressed: () => Navigator.pop(context, true),
                     ),
                   ),

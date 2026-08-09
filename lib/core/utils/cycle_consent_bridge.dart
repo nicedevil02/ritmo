@@ -1,3 +1,4 @@
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
@@ -12,7 +13,7 @@ class CycleConsentBridge {
     final settingsMap = {for (final s in settingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
 
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-    final cycleEnabled = settingsMap['module_cycle_enabled'] == 'true';
+    final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
     final pregnancyMode = settingsMap['cycle_pregnancy_mode'] == 'true';
 
     if (!isFemale || !cycleEnabled || pregnancyMode) {
@@ -59,7 +60,7 @@ class CycleConsentBridge {
     final settingsMap = {for (final s in settingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
 
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-    final cycleEnabled = settingsMap['module_cycle_enabled'] == 'true';
+    final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
     final energyConsent = settingsMap['cycle_consent_energy'] == 'true';
 
     return isFemale && cycleEnabled && energyConsent;
@@ -84,7 +85,7 @@ class CycleConsentBridge {
     final settingsMap = {for (final s in settingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
 
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-    final cycleEnabled = settingsMap['module_cycle_enabled'] == 'true';
+    final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
     if (!isFemale || !cycleEnabled) return null;
 
     final menstruating = await isUserMenstruating();

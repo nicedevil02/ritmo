@@ -34,6 +34,8 @@ class TaskAttachmentRepository {
     return rows.map((r) => TaskAttachment.fromMap(r)).toList();
   }
 
+  Future<List<TaskAttachment>> getForTask(String taskId) => forTask(taskId);
+
   Future<TaskAttachment> add({
     required String taskId,
     required File sourceFile,

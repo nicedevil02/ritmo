@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/ai_response_processor.dart';
 import 'package:ritmo/core/ai/ai_shared_rules.dart';
@@ -484,7 +485,7 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
       final settingsMap = {for (final s in settingsList) s['key']! as String: s['value']! as String};
 
       final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-      final cycleEnabled = settingsMap['module_cycle_enabled'] == 'true';
+      final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
       final energyConsent = settingsMap['cycle_consent_energy'] == 'true';
       final setupDone = settingsMap['cycle_setup_done'] == 'true';
 

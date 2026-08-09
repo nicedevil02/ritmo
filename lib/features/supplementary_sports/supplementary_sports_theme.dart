@@ -60,6 +60,7 @@ class SupplementarySportsTheme {
   static Color getWarningColor(BuildContext context) => context.colors.warning;
   static Color getDangerColor(BuildContext context) => context.colors.error;
   static Color getSportsAccent(BuildContext context) => context.modules.sports;
+  static Color getPrimaryColor(BuildContext context) => context.modules.sports;
 
   // --- Typography ---
   static const String fontFamily = 'Vazirmatn';

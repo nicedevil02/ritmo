@@ -86,6 +86,7 @@ class _TaskStepListState extends State<TaskStepList> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: widget.steps.length,
+            // ignore: deprecated_member_use
             onReorder: _onReorder,
             itemBuilder: (context, index) {
               final step = widget.steps[index];
@@ -113,7 +114,7 @@ class _TaskStepListState extends State<TaskStepList> {
                   title: Text(
                     step.title,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
+                      
                       fontSize: 12.5,
                       color: step.isCompleted ? colors.textTertiary : colors.textPrimary,
                       decoration: step.isCompleted ? TextDecoration.lineThrough : null,
@@ -134,10 +135,10 @@ class _TaskStepListState extends State<TaskStepList> {
         TextField(
           controller: _addController,
           focusNode: _addFocusNode,
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5, color: colors.textPrimary),
+          style: TextStyle(fontSize: 12.5, color: colors.textPrimary),
           decoration: InputDecoration(
             hintText: '+ افزودن زیرگام تازه...',
-            hintStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textTertiary),
+            hintStyle: TextStyle(fontSize: 12, color: colors.textTertiary),
             filled: true,
             fillColor: colors.surfaceSunken,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

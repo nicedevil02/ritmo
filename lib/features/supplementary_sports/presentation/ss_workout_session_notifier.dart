@@ -607,13 +607,48 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
       final newSessionId = 'session_${state.planId}_$now';
 
       final db = await DatabaseHelper.instance.database;
-      final crossRefs = await db.rawQuery('''
+      var crossRefs = await db.rawQuery('''
         SELECT c.*, e.name, e.category, e.equipment, e.instructions, e.changeSides, e.repsDouble, e.repsHint, e.impact, e.noisy, e.durationSeconds
         FROM ss_workout_exercise_crossref c
         JOIN ss_exercise e ON c.exerciseId = e.id
         WHERE c.planId = ?
         ORDER BY c.orderIndex ASC
       ''', [state.planId]);
+
+      if (crossRefs.isEmpty) {
+        // Fallback 1: Query any crossRefs in database
+        crossRefs = await db.rawQuery('''
+          SELECT c.*, e.name, e.category, e.equipment, e.instructions, e.changeSides, e.repsDouble, e.repsHint, e.impact, e.noisy, e.durationSeconds
+          FROM ss_workout_exercise_crossref c
+          JOIN ss_exercise e ON c.exerciseId = e.id
+          ORDER BY c.orderIndex ASC
+          LIMIT 6
+        ''');
+      }
+
+      if (crossRefs.isEmpty) {
+        // Fallback 2: Query directly from ss_exercise
+        final exercisesRaw = await db.query('ss_exercise', limit: 6);
+        if (exercisesRaw.isNotEmpty) {
+          crossRefs = exercisesRaw.map((e) => {
+            'exerciseId': e['id'],
+            'targetSets': 3,
+            'targetReps': 10,
+            'targetWeight': 0.0,
+            'orderIndex': 0,
+            'name': e['name'],
+            'category': e['category'],
+            'equipment': e['equipment'],
+            'instructions': e['instructions'],
+            'changeSides': e['changeSides'],
+            'repsDouble': e['repsDouble'],
+            'repsHint': e['repsHint'],
+            'impact': e['impact'],
+            'noisy': e['noisy'],
+            'durationSeconds': e['durationSeconds'],
+          }).toList();
+        }
+      }
 
       final sessionSettings = await SSSessionSettings.load();
       final restOverride = prefs.getInt('ss_tired_rest_override');

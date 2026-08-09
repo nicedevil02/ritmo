@@ -45,6 +45,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
   late AnimationController _pulseController;
   Timer? _tickerTimer;
   String _persianCityName = 'تهران';
+  bool _showAsrIsha = false;
   DateTime _now = DateTime.now();
 
   @override
@@ -56,7 +57,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
       duration: const Duration(seconds: 45),
     )..repeat();
 
-    _loadCityPersianName();
+    _loadSettings();
 
     _tickerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
@@ -70,8 +71,8 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
   @override
   void didUpdateWidget(PrayerArcHero oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.day.times.cityId != widget.day.times.cityId) {
-      _loadCityPersianName();
+    if (oldWidget.day != widget.day) {
+      _loadSettings();
     }
   }
 
@@ -82,32 +83,43 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
     super.dispose();
   }
 
-  Future<void> _loadCityPersianName() async {
+  Future<void> _loadSettings() async {
     try {
       final db = await DatabaseHelper.instance.database;
+      
+      // Load Asr/Isha setting
+      final settingsList = await db.query('app_settings', where: 'key = ?', whereArgs: ['show_asr_isha_prayers'], limit: 1);
+      final bool showAsrIsha = settingsList.isNotEmpty && settingsList.first['value'] == 'true';
+      
       final cityId = widget.day.times.cityId;
-      if (cityId.isEmpty) {
-        if (mounted) setState(() => _persianCityName = 'تهران');
-        return;
-      }
-      final rows = await db.query(
-        'iran_cities',
-        columns: ['city'],
-        where: 'id = ?',
-        whereArgs: [cityId],
-        limit: 1,
-      );
-      if (rows.isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            _persianCityName = rows.first['city'] as String? ?? 'تهران';
-          });
+      String cityName = 'تهران';
+      
+      if (cityId.isNotEmpty) {
+        final rows = await db.query(
+          'iran_cities',
+          columns: ['city'],
+          where: 'id = ?',
+          whereArgs: [cityId],
+          limit: 1,
+        );
+        if (rows.isNotEmpty) {
+          cityName = rows.first['city'] as String? ?? 'تهران';
         }
-      } else {
-        if (mounted) setState(() => _persianCityName = 'تهران');
+      }
+      
+      if (mounted) {
+        setState(() {
+          _persianCityName = cityName;
+          _showAsrIsha = showAsrIsha;
+        });
       }
     } catch (_) {
-      if (mounted) setState(() => _persianCityName = 'تهران');
+      if (mounted) {
+        setState(() {
+          _persianCityName = 'تهران';
+          _showAsrIsha = false;
+        });
+      }
     }
   }
 
@@ -298,6 +310,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                             orbitRadius: orbitRadius,
                             innerRadius: innerRadius,
                             sphereDiameter: sphereDiameter,
+                            showAsrIsha: _showAsrIsha,
                           );
 
                           return AnimatedBuilder(
@@ -735,6 +748,7 @@ List<_ResolvedNode> _computeBaseRelaxedNodes({
   required double orbitRadius,
   required double innerRadius,
   required double sphereDiameter,
+  required bool showAsrIsha,
 }) {
   final dhuhrFrac = times.dhuhr.hour + times.dhuhr.minute / 60.0;
 
@@ -748,6 +762,10 @@ List<_ResolvedNode> _computeBaseRelaxedNodes({
     _AnchorData('ISHA', 'عشا', 'عش', times.isha, true),
     _AnchorData('MIDNIGHT_SHARI', 'نیمه‌شب', 'ن', times.midnightShari, false),
   ];
+  
+  if (!showAsrIsha) {
+    anchors.removeWhere((a) => a.key == 'ASR' || a.key == 'ISHA');
+  }
 
   final rawNodes = <_ResolvedNode>[];
 

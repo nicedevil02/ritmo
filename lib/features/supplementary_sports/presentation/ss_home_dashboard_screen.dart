@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_movement_tab_screen.dart';
@@ -21,9 +22,11 @@ import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_ai_c
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_log_session_sheet.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_recovery_card.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
+import 'package:ritmo/features/supplementary_sports/data/repositories/ss_plan_generator.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_prescription_repository.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_program_builder.dart';
 import 'package:ritmo/features/supplementary_sports/domain/prescription/session_prescription.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/ss_exercise_library_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_session_summary_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -111,19 +114,22 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
       SSPlanOverviewScreen(
         onNavigateToTab: _navigateToTab,
       ),
+      SSMovementTabScreen(
+        onNavigateToTab: _navigateToTab,
+      ),
       SSProgressScreen(onNavigateToTab: _navigateToTab),
     ];
   }
 
   void _onTabSelected(int index) {
     setState(() {
-      _selectedIndex = index.clamp(0, 2);
+      _selectedIndex = index.clamp(0, 3);
     });
   }
 
   void _navigateToTab(int index) {
     setState(() {
-      _selectedIndex = index.clamp(0, 2);
+      _selectedIndex = index.clamp(0, 3);
     });
   }
 
@@ -141,7 +147,7 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
   Widget _buildSegmentedControl(BuildContext context) {
     final colors = context.colors;
     final sportsAccent = context.modules.sports;
-    final labels = ['امروز', 'برنامه', 'روند'];
+    final labels = ['امروز', 'برنامه', 'حرکت', 'روند'];
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -153,7 +159,7 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
       ),
       child: Row(
         textDirection: TextDirection.rtl,
-        children: List.generate(3, (index) {
+        children: List.generate(4, (index) {
           final isSelected = _selectedIndex == index;
           return Expanded(
             child: GestureDetector(
@@ -183,6 +189,17 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
     );
   }
 
+  void _openAiCoach() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return const SSAiCoachSheet();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -206,7 +223,13 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
           centerTitle: false,
           actions: [
             IconButton(
+              icon: const Icon(CupertinoIcons.sparkles, color: Color(0xFFF59E0B)),
+              tooltip: 'مربی هوشمند AI',
+              onPressed: _openAiCoach,
+            ),
+            IconButton(
               icon: Icon(Icons.settings_outlined, color: colors.textPrimary),
+              tooltip: 'تنظیمات',
               onPressed: _openSettingsModal,
             ),
           ],
@@ -513,7 +536,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
   int? _nextWorkoutMinutes;
   String? _nextWorkoutDayName;
   int? _nextDayOfWeek;
-  String _username = 'بهمن';
   String? _userGender;
   String? _unfinishedActivePlanId;
 
@@ -763,21 +785,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
 
     try {
       final db = await DatabaseHelper.instance.database;
+      await SupplementarySportsTables.ensureUserProfileSchema(db);
+      await SupplementarySportsTables.ensurePrescriptionTables(db);
       final today = DateTime.now();
       final dayOfWeek = _getFarsiDayOfWeek(today);
-
-      // Fetch username
-      try {
-        final nameQuery = await db.query('app_settings', where: 'key = ?', whereArgs: ['user_name']);
-        if (nameQuery.isNotEmpty && nameQuery.first['value'] != null) {
-          _username = nameQuery.first['value'].toString();
-        } else {
-          final profileRows = await db.query('profile', limit: 1);
-          if (profileRows.isNotEmpty && profileRows.first['name'] != null) {
-            _username = profileRows.first['name'].toString();
-          }
-        }
-      } catch (_) {}
 
       // Fetch gender robustly from all storage options
       try {
@@ -936,9 +947,12 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
       } catch (_) {}
 
       if (todayPres == null) {
-        final existingCount = Sqflite.firstIntValue(
-          await db.rawQuery('SELECT COUNT(*) FROM ss_session_prescription')
-        ) ?? 0;
+        int existingCount = 0;
+        try {
+          existingCount = Sqflite.firstIntValue(
+            await db.rawQuery('SELECT COUNT(*) FROM ss_session_prescription')
+          ) ?? 0;
+        } catch (_) {}
 
         if (existingCount == 0) {
           final prof = userProfile ?? SsUserProfile(
@@ -1446,113 +1460,14 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTopHeader(),
-          const SizedBox(height: 16),
           if (_unfinishedActivePlanId != null) ...[
             _buildUnfinishedSessionBanner(),
+            const SizedBox(height: 12),
           ],
           child,
           const SizedBox(height: 32),
         ],
       ),
-    );
-  }
-
-  // ─── 1. TOP HEADER (سلام بهمن 👋) ──────────────────────────────
-  Widget _buildTopHeader() {
-    return Row(
-      textDirection: TextDirection.rtl,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // User Greeting & Avatar
-        Row(
-          textDirection: TextDirection.rtl,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                color: const Color(0xFF1E293B),
-              ),
-              child: const Center(
-                child: Icon(CupertinoIcons.person_crop_circle_fill, size: 36, color: Colors.white70),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              textDirection: TextDirection.rtl,
-              children: [
-                Row(
-                  textDirection: TextDirection.rtl,
-                  children: [
-                    Text(
-                      'سلام $_username',
-                      style: const TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 19,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text('👋', style: TextStyle(fontSize: 18)),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'آماده‌ای یک روز عالی بسازی؟',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 12,
-                    color: Colors.white54,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-
-        // Action Buttons: Settings Gear + AI Sparkles
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Settings Gear Button
-            InkWell(
-              onTap: _openSettingsModal,
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF334155)),
-                ),
-                child: const Icon(Icons.settings_outlined, color: Colors.white70, size: 20),
-              ),
-            ),
-            const SizedBox(width: 8),
-            // AI Sparkles Button
-            InkWell(
-              onTap: _openAiCoach,
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
-                ),
-                child: const Icon(CupertinoIcons.sparkles, color: Color(0xFFF59E0B), size: 20),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 

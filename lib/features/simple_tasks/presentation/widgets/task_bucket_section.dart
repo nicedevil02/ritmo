@@ -39,42 +39,41 @@ class TaskBucketSection extends StatelessWidget {
     final titleColor = isOverdue ? colors.warning : colors.textPrimary;
     final countStr = PersianDigits.toPersian(tasks.length);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return SliverMainAxisGroup(
+      slivers: [
         // Bucket Header
-        InkWell(
-          onTap: onToggleExpand,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            child: Row(
-              children: [
-                Icon(
-                  isExpanded ? CupertinoIcons.chevron_down : CupertinoIcons.chevron_left,
-                  size: 16,
-                  color: colors.textSecondary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${bucket.labelFa} ($countStr)',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: titleColor,
+        SliverToBoxAdapter(
+          child: InkWell(
+            onTap: onToggleExpand,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    isExpanded ? CupertinoIcons.chevron_down : CupertinoIcons.chevron_left,
+                    size: 16,
+                    color: colors.textSecondary,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Text(
+                    '${bucket.labelFa} ($countStr)',
+                    style: TextStyle(
+                      
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: titleColor,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
 
         // Bucket Items
         if (isExpanded)
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+          SliverList.builder(
             itemCount: tasks.length,
             itemBuilder: (context, index) {
               final task = tasks[index];
@@ -91,7 +90,8 @@ class TaskBucketSection extends StatelessWidget {
               );
             },
           ),
-        const SizedBox(height: 12),
+          
+        const SliverToBoxAdapter(child: SizedBox(height: 12)),
       ],
     );
   }
@@ -141,7 +141,7 @@ class _TaskCardItem extends StatelessWidget {
         title: Text(
           task.title,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
+            
             fontSize: 13.5,
             fontWeight: FontWeight.w600,
             color: task.isDone ? colors.textTertiary : colors.textPrimary,
@@ -173,12 +173,12 @@ class _TaskCardItem extends StatelessWidget {
     if (hasSteps) {
       parts.add(Text(
         '${PersianDigits.toPersian(info.$1)} از ${PersianDigits.toPersian(info.$2)}',
-        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10.5, color: colors.textSecondary),
+        style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
       ));
     } else if (hasDueTime) {
       parts.add(Text(
-        PersianDigits.toPersian(dueTime!),
-        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10.5, color: colors.primary),
+        PersianDigits.toPersian(dueTime),
+        style: TextStyle(fontSize: 10.5, color: colors.primary),
       ));
     }
 
@@ -188,7 +188,7 @@ class _TaskCardItem extends StatelessWidget {
       parts.add(const SizedBox(width: 2));
       parts.add(Text(
         PersianDigits.toPersian(attachmentCount),
-        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10.5, color: colors.textSecondary),
+        style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
       ));
     }
 

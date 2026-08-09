@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/modules/module_registry.dart';
+import 'package:ritmo/core/modules/module_deactivation_service.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -37,20 +39,26 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
   }
 
   Future<void> _toggleModule(ModuleDescriptor mod, bool val) async {
-    if (mod.key == 'module_medicine_enabled' && !val) {
-      final confirmed = await _showMedicineWarningDialog();
+    if (!val) {
+      final confirmed = await _showDeactivationWarningDialog(mod.titleFa);
       if (!confirmed) return;
+      
+      setState(() {
+        _moduleStates[mod.key] = val;
+      });
+      await ModuleDeactivationService.deactivate(mod.key);
+      await SettingsService.instance.set(mod.key, val);
+    } else {
+      setState(() {
+        _moduleStates[mod.key] = val;
+      });
+      await ModuleManagementService.instance.setModuleEnabled(mod.key, val);
+      await ModuleGate.instance.refresh();
+      await SettingsService.instance.set(mod.key, val);
     }
-
-    setState(() {
-      _moduleStates[mod.key] = val;
-    });
-
-    await ModuleManagementService.instance.setModuleEnabled(mod.key, val);
-    await SettingsService.instance.set(mod.key, val);
   }
 
-  Future<bool> _showMedicineWarningDialog() async {
+  Future<bool> _showDeactivationWarningDialog(String title) async {
     final colors = context.colors;
     final result = await showDialog<bool>(
       context: context,
@@ -58,11 +66,11 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
         backgroundColor: colors.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          'هشدار پزشکی و دارویی',
+          'خاموش کردن ماژول',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
         ),
         content: Text(
-          'با غیرفعال کردن ماژول دارو، کلیه یادآوری‌های مصرف دارو لغو می‌شوند. آیا از قطع یادآوری‌های دارویی اطمینان دارید؟',
+          'با خاموش کردن ماژول «$title»، تمامی دیتاهای محلی آن (مثل یادآورها، گزارش‌ها و ...) حذف می‌شوند. آیا ادامه می‌دهید؟',
           style: TextStyle(fontSize: 13, color: colors.textSecondary, height: 1.4),
         ),
         actions: [
@@ -72,7 +80,7 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('غیرفعال کن', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
+            child: Text('خاموش کن', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

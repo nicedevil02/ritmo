@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -28,6 +29,7 @@ class SSProfileRepository {
   /// Saves profile to database and updates cache.
   Future<void> saveProfile(SsUserProfile profile, {DatabaseExecutor? executor}) async {
     final db = executor ?? await DatabaseHelper.instance.database;
+    await SupplementarySportsTables.ensureUserProfileSchema(db);
     await db.insert(
       'ss_user_profile',
       profile.toMap(),

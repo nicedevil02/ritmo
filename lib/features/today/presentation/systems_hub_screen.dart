@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/systems_hub_logic.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
@@ -160,18 +161,18 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       _settingsMap = <String, String>{for (final s in settings) s['key']! as String: s['value']! as String};
 
       // 2. Map module enable flags
-      _religionEnabled = _settingsMap['module_religion_enabled'] == 'true';
-      _medicineEnabled = _settingsMap['module_medicine_enabled'] == 'true';
-      _cycleEnabled = _settingsMap['module_cycle_enabled'] == 'true';
-      _coursesEnabled = _settingsMap['module_courses_enabled'] == 'true';
-      _konkurEnabled = _settingsMap['module_study_enabled'] == 'true';
-      _goalsEnabled = _settingsMap['module_goals_enabled'] == 'true';
-      _assistantEnabled = _settingsMap['module_assistant_enabled'] == 'true';
-      _sportsEnabled = _settingsMap['module_sports_enabled'] == 'true';
-      _supplementarySportsEnabled = _settingsMap['module_supplementary_sports_enabled'] == 'true';
-      _energyEnabled = _settingsMap['module_energy_enabled'] == 'true';
-      _sleepEnabled = _settingsMap['module_sleep_enabled'] == 'true';
-      _progressiveHabitsEnabled = _settingsMap['module_progressive_habits_enabled'] == 'true';
+      _religionEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_religion_enabled');
+      _medicineEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_medicine_enabled');
+      _cycleEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_cycle_enabled');
+      _coursesEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_courses_enabled');
+      _konkurEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_study_enabled');
+      _goalsEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_goals_enabled');
+      _assistantEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_assistant_enabled');
+      _sportsEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_sports_enabled');
+      _supplementarySportsEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_supplementary_sports_enabled');
+      _energyEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_energy_enabled');
+      _sleepEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_sleep_enabled');
+      _progressiveHabitsEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_progressive_habits_enabled');
 
 
       // 3. Load konkur subjects to determine status (active vs setupRequired)

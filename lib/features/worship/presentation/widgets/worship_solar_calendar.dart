@@ -112,12 +112,6 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
     if (widget.onDaySelected != null) {
       widget.onDaySelected!(day);
     }
-    WorshipDayDetailSheet.present(
-      context,
-      selectedDay: day,
-      qamariNightText: widget.qamariNightText,
-      onOpenTasbih: widget.onOpenTasbih,
-    );
   }
 
   @override

@@ -8,6 +8,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
+import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_onboarding_flow.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/primary_button.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_lottie_player.dart';
@@ -82,15 +83,13 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
         _isLoading = false;
       });
 
-      // Load detail mode from app_settings
-      try {
-        final dmRows = await db.query('app_settings', where: 'key = ?', whereArgs: ['sports_detail_mode']);
-        if (dmRows.isNotEmpty) {
-          setState(() {
-            _detailMode = dmRows.first['value'] == 'true';
-          });
-        }
-      } catch (_) {}
+      // Load detail mode via SportsDetailMode helper
+      final isDetail = await SportsDetailMode.isEnabled();
+      if (mounted) {
+        setState(() {
+          _detailMode = isDetail;
+        });
+      }
     } catch (e) {
       debugPrint('Error loading settings: $e');
       setState(() {
@@ -544,33 +543,29 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
         ),
         const SizedBox(height: SupplementarySportsTheme.spacing32),
 
-        // Section: Program Settings (new v82)
-        _buildSectionTitle('تنظیمات برنامه'),
+        // Section: Program Settings (Simple / Advanced mode)
+        _buildSectionTitle('حالت کاربری ورزش'),
         const SizedBox(height: SupplementarySportsTheme.spacing12),
         _buildGlassCard(
           isDark: isDark,
           child: Column(
             children: [
               SwitchListTile(
-                title: const Text('حالت جزئی (ست / تکرار)', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500)),
+                title: Text(
+                  _detailMode ? 'حالت پیشرفته (دقیق با ست و تکرار)' : 'حالت ساده (خلاصه و تیک سریع)',
+                  style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                ),
                 subtitle: Text(
                   _detailMode
-                    ? 'برنامه ورزشی با تعداد ست و تکرار نمایش داده می‌شود'
-                    : 'برنامه ورزشی با مدت زمان و عضلات هدف نمایش داده می‌شود',
-                  style: TextStyle(fontFamily: 'Vazirmatn', color: SupplementarySportsTheme.getTextSecondary(context)),
+                    ? 'برنامه ورزشی شامل انیمیشن حرکات، تعداد ست، تکرار و وزنه به صورت کامل نمایش داده می‌شود.'
+                    : 'برنامه به صورت خلاصه و با امکان تیک زدن سریع روزانه بدون درگیری با جزئیات ست نمایش داده می‌شود.',
+                  style: TextStyle(fontFamily: 'Vazirmatn', color: SupplementarySportsTheme.getTextSecondary(context), height: 1.4),
                 ),
                 value: _detailMode,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: (val) async {
                   setState(() => _detailMode = val);
-                  try {
-                    final db = await DatabaseHelper.instance.database;
-                    await db.insert(
-                      'app_settings',
-                      {'key': 'sports_detail_mode', 'value': val ? 'true' : 'false', 'updatedAt': DateTime.now().millisecondsSinceEpoch},
-                      conflictAlgorithm: ConflictAlgorithm.replace,
-                    );
-                  } catch (_) {}
+                  await SportsDetailMode.setEnabled(val);
                 },
               ),
             ],

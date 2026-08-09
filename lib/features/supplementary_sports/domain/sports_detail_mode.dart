@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SportsDetailMode {
+  static final ValueNotifier<bool> notifier = ValueNotifier(false);
+
   static Future<bool> isEnabled() async {
     try {
       final db = await DatabaseHelper.instance.database;
@@ -12,7 +15,9 @@ class SportsDetailMode {
         limit: 1,
       );
       if (rows.isEmpty) return false;
-      return rows.first['value'] == 'true';
+      final value = rows.first['value'] == 'true';
+      notifier.value = value;
+      return value;
     } catch (_) {
       return false;
     }
@@ -30,6 +35,7 @@ class SportsDetailMode {
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
+      notifier.value = enabled;
     } catch (_) {}
   }
 }

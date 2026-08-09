@@ -20,7 +20,7 @@ class SsSessionCompletionGateway {
     final prescription = await repo.getPrescriptionForDate(dateIso);
     if (prescription == null) return null;
 
-    final logId = RitmoIdFactory.uuid();
+    final logId = RitmoIdFactory.workoutLog();
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     // 1. Mark prescription as DONE and link it
@@ -33,11 +33,11 @@ class SsSessionCompletionGateway {
     await repo.savePrescriptionsBulk([updatedPrescription]);
 
     // 2. Map RPE to MovementIntensity
-    MovementIntensity intensity = MovementIntensity.moderate;
+    MovementIntensity intensity = MovementIntensity.medium;
     if (actualRpe <= 5) {
-      intensity = MovementIntensity.light;
+      intensity = MovementIntensity.low;
     } else if (actualRpe >= 8) {
-      intensity = MovementIntensity.vigorous;
+      intensity = MovementIntensity.high;
     }
 
     // 3. Map SlotType to an appropriate MovementKind code
@@ -69,7 +69,7 @@ class SsSessionCompletionGateway {
       intensity: intensity,
       loggedAt: nowMs,
       sourceModule: 'ss_prescription',
-      notes: customNote ?? prescription.headlineFa,
+      note: customNote ?? prescription.headlineFa,
     );
 
     // 5. Log it to `workout_logs` so it shows up in heatmap and MET budget

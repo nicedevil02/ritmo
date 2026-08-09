@@ -1,3 +1,4 @@
+import 'package:ritmo/core/modules/module_gate.dart';
 /// Represents a normalized sleep / rest window block for timeline presentation.
 class SleepWindowBlock {
   const SleepWindowBlock({
@@ -44,7 +45,7 @@ class SleepWindowResolver {
     Map<String, String> settingsMap, {
     String defaultLabel = 'پنجره خواب',
   }) {
-    final isEnabled = settingsMap['module_sleep_enabled'] == 'true';
+    final isEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sleep_enabled');
     final bedtime = settingsMap['sleep_target_bedtime'];
     final wakeTime = settingsMap['sleep_target_wake'];
 

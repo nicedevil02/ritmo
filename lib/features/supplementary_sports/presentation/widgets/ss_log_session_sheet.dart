@@ -211,7 +211,6 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
                 label: 'ثبت تمرین',
                 isLoading: _isSaving,
                 onPressed: _save,
-                color: sportsAccent,
               ),
             ],
           ),

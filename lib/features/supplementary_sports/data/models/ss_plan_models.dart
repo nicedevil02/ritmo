@@ -100,11 +100,13 @@ class PlanDaySummary {
     required this.dayName,
     required this.muscleGroups,
     required this.status,
+    this.dateIso,
   });
   final String id;
   final String dayName; // شنبه، یکشنبه، ...
   final String muscleGroups; // پا، سینه، ...
   final DayStatus status;
+  final String? dateIso;
 }
 
 class PlanVersionHistory {

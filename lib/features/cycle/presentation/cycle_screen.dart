@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'dart:convert';
 import 'dart:ui';
@@ -1243,7 +1244,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   }
 
   Widget _buildSegmentedTabs(RitmoColors colors) {
-    final showWorship = _settings['module_religion_enabled'] == 'true';
+    final showWorship = ModuleGate.instance.isEnabledFrom(_settings, 'module_religion_enabled');
     final activeThemeColor = _getActivePhaseColor();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

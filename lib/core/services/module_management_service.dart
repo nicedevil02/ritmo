@@ -3,6 +3,8 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/modules/module_registry.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
+import 'package:ritmo/core/platform/alarm_platform.dart';
+import 'package:ritmo/core/di/service_locator.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Central Single Source of Truth for Module Activation & Synchronization in Ritmo.
@@ -285,6 +287,15 @@ class ModuleManagementService {
     final rows = await txn.query('routines', columns: ['id'], where: 'category = ?', whereArgs: [category]);
     for (final row in rows) {
       final rId = row['id'] as String;
+      
+      final pendingRows = await txn.query('pending_reminders', columns: ['id'], where: 'routineId = ?', whereArgs: [rId]);
+      for (final pRow in pendingRows) {
+        final pid = pRow['id'] as String;
+        try {
+          await sl<AlarmPlatform>().cancelAlarm(pid);
+        } catch (_) {}
+      }
+
       await txn.delete('pending_reminders', where: 'routineId = ?', whereArgs: [rId]);
       await txn.delete('routine_occurrences', where: 'routine_id = ?', whereArgs: [rId]);
       await txn.delete('routine_completions', where: 'routineId = ?', whereArgs: [rId]);

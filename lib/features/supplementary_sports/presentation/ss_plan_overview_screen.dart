@@ -224,6 +224,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                 dayName: dayName,
                 muscleGroups: headline,
                 status: status,
+                dateIso: p['dateIso'] as String?,
               ),
             );
           }
@@ -658,97 +659,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
           _build28DaysTimelineCalendar(),
           const SizedBox(height: SupplementarySportsTheme.spacing16),
 
-          // Monthly Week Selection Chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            reverse: true, // RTL feel
-            child: Row(
-              textDirection: TextDirection.rtl,
-              children: List.generate(4, (index) {
-                final weekNum = index + 1;
-                final isSelected = _selectedWeek == weekNum;
-                
-                var weekTitle = 'هفته ۱';
-                var weekSubtitle = 'شروع و تکنیک';
-                if (weekNum == 2) {
-                  weekTitle = 'هفته ۲';
-                  weekSubtitle = 'حجم و تکرار';
-                } else if (weekNum == 3) {
-                  weekTitle = 'هفته ۳';
-                  weekSubtitle = 'قدرت و شدت';
-                } else if (weekNum == 4) {
-                  weekTitle = 'هفته ۴';
-                  weekSubtitle = 'ریکاوری سبک';
-                }
-
-                final theme = Theme.of(context);
-                final isDark = theme.brightness == Brightness.dark;
-
-                return GestureDetector(
-                  onTap: () {
-                    if (_selectedWeek == weekNum) return;
-                    setState(() {
-                      _selectedWeek = weekNum;
-                    });
-                    _loadWeeklyPlan();
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? const LinearGradient(
-                              colors: [Color(0xFF2E7D5B), Color(0xFF1B5E20)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isSelected ? null : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isSelected
-                            ? Colors.transparent
-                            : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.06)),
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: const Color(0xFF2E7D5B).withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              )
-                            ]
-                          : [],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          weekTitle,
-                          style: TextStyle(
-                            fontFamily: 'Vazirmatn',
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : (isDark ? Colors.white.withValues(alpha: 0.9) : Colors.black87),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          weekSubtitle,
-                          style: TextStyle(
-                            fontFamily: 'Vazirmatn',
-                            fontSize: 10,
-                            color: isSelected ? Colors.white70 : (isDark ? Colors.white38 : Colors.black45),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
+          // Monthly Week Selection Chips Removed
           const SizedBox(height: SupplementarySportsTheme.spacing16),
 
           // Days List
@@ -870,6 +781,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
               builder: (context) => SSPlanDayDetailScreen(
                 dayOfWeek: dayIndex,
                 dayName: day.dayName,
+                dateIso: day.dateIso,
               ),
             ),
           ).then((_) => _loadWeeklyPlan());

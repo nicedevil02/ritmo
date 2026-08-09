@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/ai/ai_briefing_service.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
@@ -618,7 +619,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     userName: _settingsMap['user_name'] ?? 'کاربر',
                     avatarPath: _settingsMap['user_avatar_path'],
                     isAssistantActive:
-                        _settingsMap['module_assistant_enabled'] == 'true',
+                        ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_assistant_enabled'),
                     unreadInboxCount: _unreadInboxCount,
                     onAvatarTap: _showMoreSheet,
                     onBellTap: () {
@@ -773,7 +774,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
       );
     }
 
-    if (_settingsMap['module_medicine_enabled'] == 'true' && _needCheckin) {
+    if (ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_medicine_enabled') && _needCheckin) {
       return NextActionHeroData(
         type: HeroPriorityType.medicalSafety,
         title: 'بررسی ایمنی دارویی و مصرف امروز',

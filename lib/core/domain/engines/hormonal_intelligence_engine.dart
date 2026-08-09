@@ -1,3 +1,4 @@
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/engines/engine_enums.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
@@ -60,7 +61,7 @@ class HormonalIntelligenceEngine {
     required Map<String, String> appSettings,
     required DateTime now,
   }) async {
-    final cycleEnabled = appSettings['module_cycle_enabled'] == 'true';
+    final cycleEnabled = ModuleGate.instance.isEnabledFrom(appSettings, 'module_cycle_enabled');
     final isFemale = CyclePrivacyGuard.isVisible(appSettings);
 
     if (!cycleEnabled || !isFemale) {

@@ -431,7 +431,7 @@ class _ReviewTile extends StatelessWidget {
                     if (item.domain == AgendaDomain.task) {
                       final task = await SimpleTaskRepository.instance.getById(item.sourceId);
                       if (task != null) {
-                        await SimpleTaskRepository.instance.updateTask(task.copyWith(clearDueDate: true));
+                        await SimpleTaskRepository.instance.updateTask(task.copyWith(dueDate: null));
                       }
                     }
                     DayAgendaService.instance.invalidateDate(dateStr);

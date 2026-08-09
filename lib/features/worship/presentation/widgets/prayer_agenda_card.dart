@@ -64,7 +64,14 @@ class PrayerAgendaCard extends StatelessWidget {
 
     final actualDisable = disableControls || isSkipped || isExempt;
 
-    return Container(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: actualDisable ? null : () {
+          if (onToggle != null) onToggle!(!isDone);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
       margin: const EdgeInsets.symmetric(vertical: 3),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
@@ -199,43 +206,6 @@ class PrayerAgendaCard extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Action Buttons
-              if (!isDone && !isSkipped && !isExempt && !disableControls) ...[
-                // Snooze Button
-                Semantics(
-                  label: 'تعویق یادآور',
-                  button: true,
-                  child: IconButton(
-                    constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                    icon: Icon(
-                      isSnoozed ? CupertinoIcons.timer_fill : CupertinoIcons.timer,
-                      color: deferCount >= 2
-                          ? colors.textTertiary.withValues(alpha: 0.3)
-                          : (isSnoozed ? colors.accent : colors.textSecondary),
-                      size: 19,
-                    ),
-                    tooltip: deferCount >= 2 ? 'حداکثر تعویق' : 'تعویق',
-                    onPressed: deferCount >= 2 ? null : onSnooze,
-                  ),
-                ),
-
-                // Skip Button
-                Semantics(
-                  label: 'رد کردن و افزودن به قضا',
-                  button: true,
-                  child: IconButton(
-                    constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                    icon: Icon(
-                      CupertinoIcons.clear_circled,
-                      color: isExpired ? colors.error : colors.textSecondary,
-                      size: 19,
-                    ),
-                    tooltip: 'رد کردن و افزودن به قضا',
-                    onPressed: onSkip,
-                  ),
-                ),
-              ],
             ],
           ),
 
@@ -262,29 +232,14 @@ class PrayerAgendaCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (onLogAsQada != null)
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.accent,
-                        foregroundColor: colors.textPrimary,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      ),
-                      onPressed: onLogAsQada,
-                      child: const Text(
-                        'خواندم (قضا)',
-                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
-                      ),
-                    ),
                 ],
               ),
             ),
           ],
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 }

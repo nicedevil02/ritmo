@@ -72,12 +72,14 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
       final db = await DatabaseHelper.instance.database;
       
       // Update profile
-      final updatedProfile = {
-        'trainingDays': jsonEncode(_trainingDays),
-        'splitPattern': _splitPattern,
-        'defaultIntensity': _defaultIntensity,
-        'updatedAt': DateTime.now().millisecondsSinceEpoch,
-      };
+      final newProfile = _profile!.copyWith(
+        trainingDays: _trainingDays.toList(),
+        splitPattern: _splitPattern,
+        defaultIntensity: _defaultIntensity,
+      );
+
+      final updatedProfile = newProfile.toMap();
+      updatedProfile['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
 
       await db.update(
         'ss_user_profile',
@@ -86,11 +88,12 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
         whereArgs: ['default'],
       );
 
-      // Trigger rebuild
+      // Trigger rebuild starting from tomorrow
       await SsProgramBuilder.apply(
         ProgramBuildRequest(
-          rebuildFuture: true,
-          clearUnfinishedPast: false,
+          fromDate: DateTime.now().add(const Duration(days: 1)),
+          profile: newProfile,
+          respectLocks: false, // We want to clear unfinished past/future
         ),
       );
 
@@ -166,10 +169,10 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
               ),
               const SizedBox(height: 32),
 
-              Text('الگوی تقسیم عضلات (Split)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+              const Text('الگوی تقسیم عضلات (Split)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _splitPattern,
+                initialValue: _splitPattern,
                 dropdownColor: colors.surfaceSunken,
                 decoration: InputDecoration(
                   filled: true,
@@ -177,7 +180,7 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
                 style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
-                items: [
+                items: const [
                   DropdownMenuItem(value: 'AUTO', child: Text('هوشمند (پیشنهادی ریتمو)')),
                   DropdownMenuItem(value: 'FULL_BODY', child: Text('فول بادی (تمام بدن)')),
                   DropdownMenuItem(value: 'UPPER_LOWER', child: Text('بالاتنه / پایین‌تنه')),
@@ -189,10 +192,10 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
               ),
               const SizedBox(height: 32),
 
-              Text('شدت پیش‌فرض (Intensity)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+              const Text('شدت پیش‌فرض (Intensity)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _defaultIntensity,
+                initialValue: _defaultIntensity,
                 dropdownColor: colors.surfaceSunken,
                 decoration: InputDecoration(
                   filled: true,
@@ -200,7 +203,7 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
                 style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
-                items: [
+                items: const [
                   DropdownMenuItem(value: 'LIGHT', child: Text('سبک (ریکاوری بیشتر)')),
                   DropdownMenuItem(value: 'MODERATE', child: Text('متوسط (تعادل استاندارد)')),
                   DropdownMenuItem(value: 'HARD', child: Text('سنگین (تمرکز بر حجم)')),
@@ -214,7 +217,6 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
 
               PrimaryButton(
                 label: 'ذخیره و بازسازی تقویم',
-                color: sportsAccent,
                 onPressed: _saveAndRebuild,
               ),
             ],

@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/engine_enums.dart';
 import 'package:ritmo/core/domain/engines/hormonal_intelligence_engine.dart';
@@ -63,7 +64,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
     final db = await DatabaseHelper.instance.database;
     final settingsList = await db.query('app_settings');
     _settings = {for (final s in settingsList) s['key']! as String: s['value']! as String};
-    _cycleModuleEnabled = _settings['module_cycle_enabled'] == 'true';
+    _cycleModuleEnabled = ModuleGate.instance.isEnabledFrom(_settings, 'module_cycle_enabled');
     
     _output = await HormonalIntelligenceEngine.evaluate(
       db: db,

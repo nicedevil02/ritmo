@@ -126,7 +126,7 @@ class _BackupScreenState extends State<BackupScreen> {
         'weekly_backup_task',
         'weekly_backup_task',
         frequency: const Duration(days: 7),
-        existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
         constraints: Constraints(
           networkType: NetworkType.connected,
           requiresBatteryNotLow: true,

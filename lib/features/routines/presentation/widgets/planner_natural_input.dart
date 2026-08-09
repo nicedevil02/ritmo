@@ -131,12 +131,6 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final showQuickSaveHint = widget.controller.currentPage == 0 &&
-        !widget.controller.isEditing &&
-        widget.controller.title.trim().isNotEmpty &&
-        (widget.controller.isTimeParsed || widget.controller.prefilledTime != null) &&
-        !widget.controller.quickSaveHintDismissed;
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Column(

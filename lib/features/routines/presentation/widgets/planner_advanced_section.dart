@@ -37,6 +37,11 @@ class PlannerAdvancedSection extends StatelessWidget {
               color: isSelected ? Colors.white : colors.textSecondary,
             ),
           ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCogSegment(String? value, String label, RitmoColors colors) {
     final isSelected = controller.cognitiveLoad == value;
     return GestureDetector(

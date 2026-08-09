@@ -1389,7 +1389,7 @@ class PlannerController extends ChangeNotifier {
       await strategy.save(saveCtx, context);
 
       showSuccessAnim = true;
-      _clearDraft();
+      await _clearDraft();
       notifyListeners();
 
       _saveTimer?.cancel();

@@ -12,6 +12,7 @@ import 'package:ritmo/features/routines/presentation/forms/course_step2_form.dar
 import 'package:ritmo/features/routines/presentation/forms/generic_step2_form.dart';
 import 'package:ritmo/features/routines/presentation/forms/goal_step2_form.dart';
 import 'package:ritmo/features/routines/presentation/forms/reflection_step2_form.dart';
+import 'package:ritmo/features/routines/presentation/forms/simple_reminder_form.dart';
 // Step 2 Subsystem Forms
 import 'package:ritmo/features/routines/presentation/forms/sports_step2_form.dart';
 // Extracted components & controller
@@ -205,7 +206,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
         title: '✨ ثبت یادآور جدید',
         subtitle: 'تنظیم زمان و یادآوری هشدار ساده',
         controller: _controller,
-        formWidget: GenericStep2Form(controller: _controller),
+        formWidget: SimpleReminderForm(controller: _controller),
         onSaved: () {
           widget.onSaved?.call();
           if (mounted) Navigator.of(context).pop();

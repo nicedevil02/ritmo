@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/analytics/movement_load_calculator.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/utils/ritmo_id_factory.dart';
@@ -128,6 +129,7 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> {
 
     try {
       final db = await DatabaseHelper.instance.database;
+      await SupplementarySportsTables.ensurePlanScheduleTable(db);
       final today = DateTime.now();
       final todayIso = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 

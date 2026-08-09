@@ -1,3 +1,4 @@
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,7 +9,7 @@ import 'package:ritmo/core/ux/ritmo_skeleton.dart';
 import 'package:ritmo/features/goals/logic/goals_controller.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/goals/models/goal_models.dart';
-import 'package:ritmo/features/goals/presentation/widgets/ai_goals_assistant_sheet.dart';
+import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/create_goal_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_archive_section.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_card_list_section.dart';

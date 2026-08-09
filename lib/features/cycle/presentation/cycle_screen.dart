@@ -24,6 +24,7 @@ import 'package:ritmo/features/cycle/presentation/widgets/cycle_trends_section.d
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_correlation_section.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_sos_section.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_pregnancy_mode.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_ai_consent_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';

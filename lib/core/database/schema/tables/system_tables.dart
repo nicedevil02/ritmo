@@ -332,6 +332,8 @@ class SystemTables {
           linkedRoutineId TEXT,
           orderIndex INTEGER NOT NULL DEFAULT 0,
           origin TEXT NOT NULL DEFAULT 'SIMPLE',
+          isImportant INTEGER NOT NULL DEFAULT 0,
+          importantAt INTEGER,
           createdAt INTEGER NOT NULL,
           updatedAt INTEGER NOT NULL
       );
@@ -339,5 +341,6 @@ class SystemTables {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_isDone ON simple_tasks(isDone);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_dueDate ON simple_tasks(dueDate);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_order ON simple_tasks(orderIndex);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_important ON simple_tasks(isImportant);');
   }
 }

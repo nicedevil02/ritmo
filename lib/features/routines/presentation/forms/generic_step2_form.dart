@@ -5,6 +5,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/routines/presentation/planner_controller.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_timeline_picker.dart';
+import 'package:ritmo/features/routines/presentation/widgets/planner_weekdays_picker.dart';
 
 class GenericStep2Form extends StatelessWidget {
   const GenericStep2Form({super.key, required this.controller});
@@ -128,320 +129,417 @@ class GenericStep2Form extends StatelessWidget {
     );
   }
 
+  void _showRecurrencePicker(BuildContext context, RitmoColors colors) {
+    final options = [
+      {'label': 'روزانه (هر روز)', 'value': 'EVERY_DAY'},
+      {'label': 'روزهای انتخابی (هفتگی)', 'value': 'CUSTOM_DAYS'},
+      {'label': 'فقط یک‌بار (بدون تکرار)', 'value': 'ONCE'},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.sheetBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'تنظیم نوع تکرار',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                ...options.map((opt) {
+                  final isSelected = controller.recurrenceType == opt['value'];
+                  return ListTile(
+                    title: Text(
+                      opt['label']!,
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? colors.primary : colors.textPrimary,
+                      ),
+                    ),
+                    trailing: isSelected ? Icon(Icons.check_rounded, color: colors.primary) : null,
+                    onTap: () {
+                      controller.recurrenceType = opt['value']!;
+                      controller.notifyListeners();
+                      Navigator.pop(context);
+                    },
+                  );
+                }),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Column(
-        children: [
-          PlannerTimelinePicker(controller: controller),
-          const SizedBox(height: 28),
-          
-          // 1. Duration Picker Card
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: colors.border.withValues(alpha: 0.1),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'مدت زمان',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Column(
+            children: [
+              PlannerTimelinePicker(controller: controller),
+              const SizedBox(height: 28),
+              
+              // 1. Duration Picker Card
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: colors.border.withValues(alpha: 0.1),
                   ),
                 ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E2235).withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove, size: 18),
-                        onPressed: () => controller.adjustDuration(-15),
-                        color: colors.textPrimary.withValues(alpha: 0.6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'مدت زمان',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
                       ),
-                      GestureDetector(
-                        onTap: () => _showDurationManualDialog(context, colors),
-                        behavior: HitTestBehavior.opaque,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          child: Text(
-                            '${toPersianDigits(controller.targetDuration.toString())} دقیقه',
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E2235).withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove, size: 18),
+                            onPressed: () => controller.adjustDuration(-15),
+                            color: colors.textPrimary.withValues(alpha: 0.6),
+                          ),
+                          GestureDetector(
+                            onTap: () => _showDurationManualDialog(context, colors),
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              child: Text(
+                                '${toPersianDigits(controller.targetDuration.toString())} دقیقه',
+                                style: TextStyle(
+                                  fontFamily: 'Vazirmatn',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add, size: 18),
+                            onPressed: () => controller.adjustDuration(15),
+                            color: colors.textPrimary.withValues(alpha: 0.6),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // 2. Recurrence Card
+              GestureDetector(
+                onTap: () => _showRecurrencePicker(context, colors),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: colors.border.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'تکرار',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            controller.recurrenceType == 'EVERY_DAY'
+                                ? 'روزانه (هر روز)'
+                                : (controller.recurrenceType == 'CUSTOM_DAYS' || controller.recurrenceType == 'WEEKLY'
+                                    ? 'روزهای انتخابی'
+                                    : 'فقط یک‌بار'),
                             style: TextStyle(
                               fontFamily: 'Vazirmatn',
                               fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: colors.primary,
-                              decoration: TextDecoration.underline,
+                              color: colors.textSecondary,
                             ),
                           ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add, size: 18),
-                        onPressed: () => controller.adjustDuration(15),
-                        color: colors.textPrimary.withValues(alpha: 0.6),
+                          const SizedBox(width: 8),
+                          Icon(Icons.sync_rounded, size: 18, color: colors.textSecondary.withValues(alpha: 0.7)),
+                        ],
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // 2. Recurrence Card
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: colors.border.withValues(alpha: 0.1),
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'تکرار',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      controller.recurrenceType == 'EVERY_DAY'
-                          ? 'روزانه'
-                          : (controller.recurrenceType == 'WEEKLY' ? 'هفتگی' : 'دلخواه'),
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 14,
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(Icons.sync_rounded, size: 18, color: colors.textSecondary.withValues(alpha: 0.7)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
 
-          // 3. Reminder Card
-          GestureDetector(
-            onTap: () => _showReminderPicker(context, colors),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: colors.border.withValues(alpha: 0.1),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'یادآوری',
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
+              // Weekdays selector if custom days or weekly
+              if (controller.recurrenceType == 'CUSTOM_DAYS' || controller.recurrenceType == 'WEEKLY') ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.02),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: colors.border.withValues(alpha: 0.08)),
                   ),
-                  Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        controller.reminderOffsetMinutes == 0
-                            ? 'همزمان با شروع'
-                            : '${toPersianDigits(controller.reminderOffsetMinutes.toString())} دقیقه قبل',
+                        'روزهای تکرار در هفته:',
                         style: TextStyle(
                           fontFamily: 'Vazirmatn',
-                          fontSize: 14,
-                          color: colors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textSecondary.withValues(alpha: 0.8),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Icon(Icons.arrow_forward_ios_rounded, size: 14, color: colors.textSecondary.withValues(alpha: 0.6)),
+                      const SizedBox(height: 10),
+                      PlannerWeekdaysPicker(
+                        selectedDays: controller.worshipSelectedDays,
+                        onChanged: (days) {
+                          controller.worshipSelectedDays = days;
+                          controller.notifyListeners();
+                        },
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // 4. Advanced Settings Card
-          Container(
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.45),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: colors.border.withValues(alpha: 0.05),
-              ),
-            ),
-            child: Column(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    controller.isAdvancedExpanded = !controller.isAdvancedExpanded;
-                    controller.notifyListeners();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    color: Colors.transparent,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'تنظیمات پیشرفته',
-                          style: TextStyle(
-                            fontFamily: 'Vazirmatn',
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                        Icon(
-                          controller.isAdvancedExpanded
-                              ? Icons.keyboard_arrow_up_rounded
-                              : Icons.keyboard_arrow_down_rounded,
-                          size: 20,
-                          color: colors.textSecondary,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  child: controller.isAdvancedExpanded
-                      ? Padding(
-                          padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Description field
-                              TextFormField(
-                                initialValue: controller.description,
-                                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
-                                decoration: InputDecoration(
-                                  labelText: 'توضیحات یا یادداشت‌ها',
-                                  labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                ),
-                                onChanged: (val) => controller.description = val,
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Priority dropdown
-                              DropdownButtonFormField<double>(
-                                initialValue: controller.priority,
-                                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
-                                decoration: InputDecoration(
-                                  labelText: 'اولویت',
-                                  labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                ),
-                                items: const [
-                                  DropdownMenuItem(value: 0.5, child: Text('پایین ⚠️')),
-                                  DropdownMenuItem(value: 1, child: Text('متوسط ⚠️⚠️')),
-                                  DropdownMenuItem(value: 1.5, child: Text('بالا ⚠️⚠️⚠️')),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    controller.priority = val;
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Energy Rule / Adaptive Behavior
-                              DropdownButtonFormField<String>(
-                                initialValue: controller.energyRule,
-                                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
-                                decoration: InputDecoration(
-                                  labelText: 'قانون مدیریت انرژی هوشمند (نقشه راه)',
-                                  labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                ),
-                                items: const [
-                                  DropdownMenuItem(value: 'NONE', child: Text('پایبندی بدون قید و شرط 🎯')),
-                                  DropdownMenuItem(value: 'SKIP', child: Text('پرش در صورت خستگی شدید 💤')),
-                                  DropdownMenuItem(value: 'OFFER_LIGHT', child: Text('کاهش خودکار به نسخه سبک ⚡')),
-                                  DropdownMenuItem(value: 'HIGH_ENERGY_ONLY', child: Text('فقط هنگام انرژی بالا 🔥')),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    controller.energyRule = val;
-                                    controller.notifyListeners();
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Zone (Realm) selection dropdown
-                              DropdownButtonFormField<String?>(
-                                initialValue: controller.selectedZoneId,
-                                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
-                                decoration: InputDecoration(
-                                  labelText: 'زون مربوطه (Realm)',
-                                  labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                ),
-                                items: [
-                                  const DropdownMenuItem<String?>(child: Text('بدون زون (عمومی)')),
-                                  ...controller.availableZones.map((z) {
-                                    return DropdownMenuItem<String?>(
-                                      value: z['id'] as String,
-                                      child: Text('${z['emoji'] ?? '🌐'} ${z['name'] ?? ''}'),
-                                    );
-                                  }),
-                                ],
-                                onChanged: (val) {
-                                  controller.selectedZoneId = val;
-                                  controller.notifyListeners();
-                                },
-                              ),
-                            ],
-                          ),
-                        )
-                      : const SizedBox.shrink(),
                 ),
               ],
-            ),
+              const SizedBox(height: 12),
+
+              // 3. Reminder Card
+              GestureDetector(
+                onTap: () => _showReminderPicker(context, colors),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: colors.border.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'یادآوری',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            controller.reminderOffsetMinutes == 0
+                                ? 'همزمان با شروع'
+                                : '${toPersianDigits(controller.reminderOffsetMinutes.toString())} دقیقه قبل',
+                            style: TextStyle(
+                              fontFamily: 'Vazirmatn',
+                              fontSize: 14,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: colors.textSecondary.withValues(alpha: 0.6)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // 4. Advanced Settings Card
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: colors.border.withValues(alpha: 0.05),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        controller.isAdvancedExpanded = !controller.isAdvancedExpanded;
+                        controller.notifyListeners();
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'تنظیمات پیشرفته',
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                            Icon(
+                              controller.isAdvancedExpanded
+                                  ? Icons.keyboard_arrow_up_rounded
+                                  : Icons.keyboard_arrow_down_rounded,
+                              size: 20,
+                              color: colors.textSecondary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (controller.isAdvancedExpanded)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Description field
+                            TextFormField(
+                              initialValue: controller.description,
+                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
+                              decoration: InputDecoration(
+                                labelText: 'توضیحات یا یادداشت‌ها',
+                                labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              onChanged: (val) => controller.description = val,
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Priority dropdown
+                            DropdownButtonFormField<double>(
+                              initialValue: controller.priority,
+                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
+                              decoration: InputDecoration(
+                                labelText: 'اولویت',
+                                labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: 0.5, child: Text('پایین ⚠️')),
+                                DropdownMenuItem(value: 1.0, child: Text('متوسط ⚠️⚠️')),
+                                DropdownMenuItem(value: 1.5, child: Text('بالا ⚠️⚠️⚠️')),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  controller.priority = val;
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Energy Rule / Adaptive Behavior
+                            DropdownButtonFormField<String>(
+                              initialValue: controller.energyRule,
+                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
+                              decoration: InputDecoration(
+                                labelText: 'قانون مدیریت انرژی هوشمند (نقشه راه)',
+                                labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: 'NONE', child: Text('پایبندی بدون قید و شرط 🎯')),
+                                DropdownMenuItem(value: 'SKIP', child: Text('پرش در صورت خستگی شدید 💤')),
+                                DropdownMenuItem(value: 'OFFER_LIGHT', child: Text('کاهش خودکار به نسخه سبک ⚡')),
+                                DropdownMenuItem(value: 'HIGH_ENERGY_ONLY', child: Text('فقط هنگام انرژی بالا 🔥')),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  controller.energyRule = val;
+                                  controller.notifyListeners();
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Zone (Realm) selection dropdown
+                            DropdownButtonFormField<String?>(
+                              initialValue: controller.selectedZoneId,
+                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
+                              decoration: InputDecoration(
+                                labelText: 'زون مربوطه (Realm)',
+                                labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              items: [
+                                const DropdownMenuItem<String?>(child: Text('بدون زون (عمومی)')),
+                                ...controller.availableZones.map((z) {
+                                  return DropdownMenuItem<String?>(
+                                    value: z['id'] as String,
+                                    child: Text('${z['emoji'] ?? '🌐'} ${z['name'] ?? ''}'),
+                                  );
+                                }),
+                              ],
+                              onChanged: (val) {
+                                controller.selectedZoneId = val;
+                                controller.notifyListeners();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

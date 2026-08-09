@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_ai_consent_sheet.dart';
 
 class CycleSosSection extends StatelessWidget {
 

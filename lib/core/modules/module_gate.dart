@@ -54,7 +54,8 @@ class ModuleGate {
       RitmoLogger.error('ModuleGate: Unknown module key "$moduleKey" requested from settings.');
       return false;
     }
-    return _resolve(desc, settings[moduleKey]);
+    final rawVal = settings[moduleKey] ?? (moduleKey == 'module_supplementary_sports_enabled' ? settings['module_sports_enabled'] : null);
+    return _resolve(desc, rawVal);
   }
 
   bool isDomainEnabled(AgendaDomain domain) {

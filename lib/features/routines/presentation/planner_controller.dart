@@ -311,6 +311,7 @@ class PlannerController extends ChangeNotifier {
     dependsOnRoutineId = data['dependsOnRoutineId'] as String?;
     selectedZoneId = data['zoneId'] as String?;
     energyRule = data['energyRule'] as String? ?? 'NONE';
+    reminderOffsetMinutes = data['reminderOffsetMinutes'] as int? ?? 15;
     
     // Load Time and Recurrence
     final timeStr = data['timeOfDay'] as String? ?? '08:00';

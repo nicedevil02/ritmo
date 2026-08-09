@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_exercise_model.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_plan_generator.dart';
@@ -73,6 +75,11 @@ class GoToPreviousExercise extends SSWorkoutIntent {
 
 class GoToNextExercise extends SSWorkoutIntent {
   const GoToNextExercise();
+}
+
+class JumpToExercise extends SSWorkoutIntent {
+  const JumpToExercise(this.index);
+  final int index;
 }
 
 class UpdateSetWeightAndReps extends SSWorkoutIntent {
@@ -224,6 +231,8 @@ class SSExerciseChecklistEntry {
   int get completedSetsCount => setRows.where((s) => s.status == SetStatus.done).length;
 }
 
+enum SSWorkoutViewMode { focus, routineList }
+
 // ─────────────────────────────────────────────────────────────
 // Redesigned Modern Glassmorphism Active Session Screen
 // ─────────────────────────────────────────────────────────────
@@ -245,6 +254,8 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
 
   late AnimationController _pulseAnimController;
+
+  SSWorkoutViewMode _viewMode = SSWorkoutViewMode.focus;
 
   SSWorkoutPlanKey get _key => SSWorkoutPlanKey(planId: widget.planId, dayName: widget.dayName);
 
@@ -438,6 +449,60 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     );
   }
 
+  Future<void> _showQuickEditValueDialog({
+    required String title,
+    required String initialValue,
+    required String suffix,
+    required ValueChanged<double> onSaved,
+  }) async {
+    final ctrl = TextEditingController(text: initialValue);
+    await showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(title, style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)),
+          content: TextField(
+            controller: ctrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            autofocus: true,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+            decoration: InputDecoration(
+              suffixText: suffix,
+              suffixStyle: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70),
+              filled: true,
+              fillColor: const Color(0xFF0F172A),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF334155))),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                final v = double.tryParse(ctrl.text);
+                if (v != null) {
+                  onSaved(v);
+                }
+                Navigator.pop(ctx);
+              },
+              child: const Text('تایید', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _onClosePressed() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -471,6 +536,198 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
       await ref.read(ssWorkoutProvider(_key).notifier).abandonSession();
       if (mounted) Navigator.pop(context);
     }
+  }
+
+  Future<void> _onFinishPressed() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            'اتمام تمرین؟ 🏁',
+            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          content: const Text(
+            'آیا می‌خواهید تمرین امروز را به پایان برسانید و نتایج را ثبت کنید؟',
+            style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('ادامه تمرین', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white60)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('ثبت و پایان', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok ?? false) {
+      await _finishAndLogWorkout();
+    }
+  }
+
+  void _showPlateCalculatorSheet(double totalWeight) {
+    RitmoHaptics.selection();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final barWeight = 20.0;
+        final perSide = max(0.0, (totalWeight - barWeight) / 2.0);
+        final availablePlates = [25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25];
+        final platesPerSide = <double, int>{};
+        var rem = perSide;
+
+        for (final p in availablePlates) {
+          final count = (rem / p).floor();
+          if (count > 0) {
+            platesPerSide[p] = count;
+            rem -= count * p;
+          }
+        }
+
+        return Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F172A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(top: BorderSide(color: Color(0xFF1E293B), width: 1.5)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.fitness_center_rounded, color: Color(0xFF10B981), size: 24),
+                  const SizedBox(width: 8),
+                  Text(
+                    'محاسبه‌گر صفحه وزنه (${toPersianDigits(totalWeight.toStringAsFixed(1))} کیلوگرم)',
+                    style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'وزن هر سمت میله (با فرض میله ۲۰ کیلویی): ${toPersianDigits(perSide.toStringAsFixed(1))} کیلوگرم',
+                style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white70),
+              ),
+              const SizedBox(height: 24),
+
+              if (platesPerSide.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Text('فقط وزن میله خالی (۲۰ کیلوگرم)', style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+                )
+              else
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
+                  children: platesPerSide.entries.map((e) {
+                    final plateWeight = e.key;
+                    final count = e.value;
+                    Color plateColor = const Color(0xFF10B981);
+                    if (plateWeight >= 20) plateColor = const Color(0xFFEF4444);
+                    else if (plateWeight >= 15) plateColor = const Color(0xFF3B82F6);
+                    else if (plateWeight >= 10) plateColor = const Color(0xFFF59E0B);
+                    else if (plateWeight >= 5) plateColor = const Color(0xFF8B5CF6);
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: plateColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: plateColor, width: 1.5),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            toPersianDigits('${plateWeight.toStringAsFixed(plateWeight % 1 == 0 ? 0 : 1)} kg'),
+                            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: plateColor),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            toPersianDigits('$count عدد هر طرف'),
+                            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('متوجه شدم', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _copyPreviousRecord(SSExerciseChecklistEntry entry) async {
+    try {
+      final lastSet = await ref.read(ssWorkoutProvider(_key).notifier).getLastLoggedSetForExercise(entry.exercise.id);
+      if (lastSet != null) {
+        final lastWeight = (lastSet['weight'] as num?)?.toDouble() ?? 0.0;
+        final lastReps = (lastSet['reps'] as num?)?.toInt() ?? 10;
+        for (var i = 0; i < entry.setRows.length; i++) {
+          _dispatchIntent(UpdateSetWeightAndReps(setIndex: i, weight: lastWeight, reps: lastReps));
+        }
+        RitmoHaptics.success();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Directionality(
+                textDirection: TextDirection.rtl,
+                child: Text(
+                  toPersianDigits('اطلاعات سابقه قبلی (${lastWeight.round()}kg × $lastReps تکرار) روی ست‌ها کپی شد ✨'),
+                  style: const TextStyle(fontFamily: 'Vazirmatn'),
+                ),
+              ),
+              backgroundColor: const Color(0xFF10B981),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Directionality(
+                textDirection: TextDirection.rtl,
+                child: Text('سابقه قبلی برای این حرکت ثبت نشده است.', style: TextStyle(fontFamily: 'Vazirmatn')),
+              ),
+              backgroundColor: Colors.orangeAccent,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _finishAndLogWorkout() async {
@@ -701,22 +958,29 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             child: Column(
               children: [
                 _buildTopHUDHeader(entry, state),
+                _buildViewModeToggle(),
                 Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 12),
-                        _buildHeroVisualStage(entry),
-                        const SizedBox(height: 16),
-                        _buildSetLoggingMatrix(entry),
-                        const SizedBox(height: 16),
-                        _buildRirExplanationBanner(),
-                        const SizedBox(height: 100), // padding for bottom dock
-                      ],
-                    ),
-                  ),
+                  child: _viewMode == SSWorkoutViewMode.focus
+                      ? SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 12),
+                              _buildHeroVisualStage(entry),
+                              const SizedBox(height: 12),
+                              _buildPreviousRecordPanel(entry),
+                              const SizedBox(height: 12),
+                              _buildMuscleActivationGauge(entry),
+                              const SizedBox(height: 12),
+                              _buildSetLoggingMatrix(entry),
+                              const SizedBox(height: 12),
+                              _buildRirExplanationBanner(),
+                              const SizedBox(height: 100),
+                            ],
+                          ),
+                        )
+                      : _buildRoutineMatrixView(state),
                 ),
                 _buildBottomFloatingDock(entry),
               ],
@@ -850,6 +1114,354 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         ],
       ),
     );
+  }
+
+  // ─── View Mode Toggle ────────────────────────────────────────
+  Widget _buildViewModeToggle() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: const Color(0xFF0F172A),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            _viewModeTab(SSWorkoutViewMode.focus, '🎯  تمرین جاری'),
+            _viewModeTab(SSWorkoutViewMode.routineList, '📋  کل برنامه'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _viewModeTab(SSWorkoutViewMode mode, String label) {
+    final isActive = _viewMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (_viewMode != mode) {
+            RitmoHaptics.selection();
+            setState(() => _viewMode = mode);
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFF10B981) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isActive
+                ? [BoxShadow(color: const Color(0xFF10B981).withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 2))]
+                : null,
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: isActive ? Colors.white : Colors.white54,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── Routine Matrix View ─────────────────────────────────────
+  Widget _buildRoutineMatrixView(SSWorkoutState state) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      itemCount: _exercises.length,
+      itemBuilder: (context, index) {
+        final ex = _exercises[index];
+        final isCurrent = index == _currentExerciseIndex;
+        final isDone = ex.status == ExerciseStatus.done;
+        final completedSets = ex.setRows.where((s) => s.status == SetStatus.done).length;
+
+        return GestureDetector(
+          onTap: () {
+            RitmoHaptics.selection();
+            _dispatchIntent(JumpToExercise(index));
+            setState(() => _viewMode = SSWorkoutViewMode.focus);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isCurrent ? const Color(0xFF10B981).withValues(alpha: 0.10) : const Color(0xFF141C2E),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isCurrent ? const Color(0xFF10B981) : const Color(0xFF1E293B),
+                width: isCurrent ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              textDirection: TextDirection.rtl,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: isDone
+                        ? const Color(0xFF10B981)
+                        : (isCurrent ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFF1E293B)),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: isDone
+                        ? const Icon(Icons.check_rounded, color: Colors.white, size: 20)
+                        : Text(
+                            toPersianDigits('${index + 1}'),
+                            style: TextStyle(
+                              fontFamily: 'Vazirmatn',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: isCurrent ? const Color(0xFF10B981) : Colors.white54,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    textDirection: TextDirection.rtl,
+                    children: [
+                      Text(
+                        ex.exercise.name,
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: isCurrent ? const Color(0xFF10B981) : Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        toPersianDigits('${ex.referenceSets} ست × ${ex.referenceReps} تکرار  •  $completedSets/${ex.referenceSets} انجام شده'),
+                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white54),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isCurrent)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text('جاری', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                  )
+                else if (isDone)
+                  const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22)
+                else
+                  const Icon(Icons.radio_button_unchecked, color: Colors.white30, size: 22),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ─── Previous Record + 1RM Panel ─────────────────────────────
+  Widget _buildPreviousRecordPanel(SSExerciseChecklistEntry entry) {
+    final activeRow = entry.setRows.where((r) => r.status == SetStatus.current || r.status == SetStatus.done).lastOrNull;
+    final w = activeRow?.weight ?? 0.0;
+    final r = activeRow?.reps ?? 0;
+    final oneRM = (w > 0 && r > 0) ? w * (1 + r / 30.0) : null;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF141C2E),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF1E293B)),
+      ),
+      child: Row(
+        textDirection: TextDirection.rtl,
+        children: [
+          // Previous Record
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  textDirection: TextDirection.rtl,
+                  children: [
+                    Icon(Icons.history_rounded, size: 15, color: Color(0xFF06B6D4)),
+                    SizedBox(width: 4),
+                    Text('دفعه قبل', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xFF06B6D4))),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                FutureBuilder<Map<String, dynamic>?>(
+                  future: ref.read(ssWorkoutProvider(_key).notifier).getLastLoggedSetForExercise(entry.exercise.id),
+                  builder: (context, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) {
+                      return const Text('...', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white54));
+                    }
+                    final data = snap.data;
+                    if (data == null) {
+                      return const Text('سابقه‌ای ندارد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white38));
+                    }
+                    final lw = (data['weight'] as num?)?.toDouble() ?? 0.0;
+                    final lr = (data['reps'] as num?)?.toInt() ?? 0;
+                    return Text(
+                      toPersianDigits('${lw.round()} kg × $lr تکرار'),
+                      style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Divider
+          Container(width: 1, height: 40, color: const Color(0xFF1E293B), margin: const EdgeInsets.symmetric(horizontal: 12)),
+
+          // 1RM Estimator
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  textDirection: TextDirection.rtl,
+                  children: [
+                    Icon(Icons.bolt_rounded, size: 15, color: Color(0xFFF59E0B)),
+                    SizedBox(width: 4),
+                    Text('۱ تکرار بیشینه (1RM)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xFFF59E0B))),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  oneRM != null
+                      ? toPersianDigits('~${oneRM.toStringAsFixed(1)} kg')
+                      : 'وزن را وارد کنید',
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: oneRM != null ? const Color(0xFFF59E0B) : Colors.white38,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Copy Prev Button
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => _copyPreviousRecord(entry),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF06B6D4).withValues(alpha: 0.4)),
+              ),
+              child: const Column(
+                children: [
+                  Text('📋', style: TextStyle(fontSize: 18)),
+                  SizedBox(height: 2),
+                  Text('کپی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Color(0xFF06B6D4), fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Muscle Activation Gauge ──────────────────────────────────
+  Widget _buildMuscleActivationGauge(SSExerciseChecklistEntry entry) {
+    final muscleData = _getMuscleData(entry.exercise.category, entry.exercise.id);
+    if (muscleData.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF141C2E),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF1E293B)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Icon(Icons.accessibility_new_rounded, size: 16, color: Color(0xFF8B5CF6)),
+              SizedBox(width: 6),
+              Text(
+                'درصد درگیری عضلات',
+                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...muscleData.entries.map((e) {
+            final colors = _muscleColor(e.key);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    textDirection: TextDirection.rtl,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(e.key, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white70)),
+                      Text(toPersianDigits('${e.value}٪'), style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: e.value / 100.0,
+                      backgroundColor: const Color(0xFF1E293B),
+                      valueColor: AlwaysStoppedAnimation<Color>(colors),
+                      minHeight: 7,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Map<String, int> _getMuscleData(String category, String exerciseId) {
+    const muscleMap = {
+      'chest': {'سینه': 70, 'پشت‌بازو (ترایسپس)': 20, 'سرشانه جلویی': 10},
+      'back': {'پشت (لت)': 65, 'جلوبازو (بایسپس)': 25, 'سرشانه عقبی': 10},
+      'legs': {'چهارسر ران': 50, 'همسترینگ': 30, 'باسن (گلوتئوس)': 20},
+      'shoulders': {'سرشانه': 60, 'پشت‌بازو': 25, 'سینه': 15},
+      'arms': {'جلوبازو': 55, 'پشت‌بازو': 30, 'ساعد': 15},
+      'core': {'شکم (ابدومینال)': 60, 'کمر (لوئر‌بک)': 25, 'پهلو (اوبلیک)': 15},
+      'cardio': {'قلب و ریه': 50, 'پا': 30, 'کل بدن': 20},
+      'stretch': {'انعطاف‌پذیری': 70, 'تنفس': 30},
+    };
+    return muscleMap[category] ?? {};
+  }
+
+  Color _muscleColor(String muscleName) {
+    if (muscleName.contains('سینه') || muscleName.contains('سرشانه') || muscleName.contains('شکم')) return const Color(0xFF10B981);
+    if (muscleName.contains('پشت') || muscleName.contains('کمر') || muscleName.contains('همسترینگ')) return const Color(0xFF3B82F6);
+    if (muscleName.contains('جلوبازو') || muscleName.contains('بایسپس') || muscleName.contains('ساعد')) return const Color(0xFFF59E0B);
+    if (muscleName.contains('چهارسر') || muscleName.contains('باسن') || muscleName.contains('پا')) return const Color(0xFF8B5CF6);
+    return const Color(0xFF06B6D4);
   }
 
   // ─── 2. HERO VISUAL STAGE (Lottie + Exercise Info) ───────────
@@ -1175,6 +1787,19 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       setIndex: row.setNumber - 1,
                       weight: row.weight + 2.5,
                     )),
+                    onTapValue: () {
+                      _showQuickEditValueDialog(
+                        title: 'تنظیم وزن ست ${toPersianDigits(row.setNumber.toString())}',
+                        initialValue: row.weight.toString(),
+                        suffix: 'کیلوگرم',
+                        onSaved: (newWeight) {
+                          _dispatchIntent(UpdateSetWeightAndReps(
+                            setIndex: row.setNumber - 1,
+                            weight: max(0, newWeight),
+                          ));
+                        },
+                      );
+                    },
                   )
                 : Center(
                     child: Text(
@@ -1198,6 +1823,19 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       setIndex: row.setNumber - 1,
                       reps: row.reps + 1,
                     )),
+                    onTapValue: () {
+                      _showQuickEditValueDialog(
+                        title: 'تنظیم تکرار ست ${toPersianDigits(row.setNumber.toString())}',
+                        initialValue: row.reps.toString(),
+                        suffix: 'تکرار',
+                        onSaved: (newReps) {
+                          _dispatchIntent(UpdateSetWeightAndReps(
+                            setIndex: row.setNumber - 1,
+                            reps: max(1, newReps.round()),
+                          ));
+                        },
+                      );
+                    },
                   )
                 : Center(
                     child: Text(
@@ -1239,6 +1877,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     required String valueText,
     required VoidCallback onMinus,
     required VoidCallback onPlus,
+    VoidCallback? onTapValue,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -1258,13 +1897,16 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               child: Icon(Icons.remove, size: 16, color: Colors.white70),
             ),
           ),
-          Text(
-            valueText,
-            style: const TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF10B981),
+          GestureDetector(
+            onTap: onTapValue,
+            child: Text(
+              valueText,
+              style: const TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF10B981),
+              ),
             ),
           ),
           InkWell(
@@ -1338,55 +1980,143 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
 
   // ─── 4. FLOATING BOTTOM DOCK ─────────────────────────────────
   Widget _buildBottomFloatingDock(SSExerciseChecklistEntry entry) {
+    // Calculate total weight for current set for plate calculator
+    final activeRow = entry.setRows.where((r) => r.status == SetStatus.current).firstOrNull;
+    final currentWeight = activeRow?.weight ?? 0.0;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F172A),
-        border: Border(top: BorderSide(color: Color(0xFF1E293B))),
-      ),
-      child: Row(
-        textDirection: TextDirection.rtl,
-        children: [
-          // Previous exercise
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70, size: 20),
-            onPressed: _currentExerciseIndex > 0
-                ? () => _dispatchIntent(const GoToPreviousExercise())
-                : null,
-          ),
-
-          Expanded(
-            child: _dockActionButton(
-              icon: Icons.swap_horiz_rounded,
-              label: 'تعویض',
-              onTap: _showSwapBottomSheet,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _dockActionButton(
-              icon: Icons.edit_note_rounded,
-              label: 'یادداشت',
-              onTap: _showNoteSheet,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _dockActionButton(
-              icon: Icons.smart_toy_outlined,
-              label: 'مربی AI',
-              onTap: _showAiCoachSheet,
-            ),
-          ),
-
-          // Next exercise
-          IconButton(
-            icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 20),
-            onPressed: _currentExerciseIndex < _exercises.length - 1
-                ? () => _dispatchIntent(const GoToNextExercise())
-                : null,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        border: const Border(top: BorderSide(color: Color(0xFF1E293B))),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
           ),
         ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              // Prev Exercise
+              _navArrowButton(
+                icon: Icons.arrow_back_ios_rounded,
+                enabled: _currentExerciseIndex > 0,
+                onTap: () => _dispatchIntent(const GoToPreviousExercise()),
+              ),
+
+              Expanded(
+                child: _dockActionButton(
+                  icon: Icons.fitness_center_rounded,
+                  label: 'وزنه‌ها',
+                  accentColor: const Color(0xFF10B981),
+                  onTap: () => _showPlateCalculatorSheet(currentWeight > 0 ? currentWeight : 60.0),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: _dockActionButton(
+                  icon: Icons.swap_horiz_rounded,
+                  label: 'تعویض',
+                  onTap: _showSwapBottomSheet,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: _dockActionButton(
+                  icon: Icons.edit_note_rounded,
+                  label: 'یادداشت',
+                  onTap: _showNoteSheet,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: _dockActionButton(
+                  icon: Icons.smart_toy_outlined,
+                  label: 'مربی AI',
+                  accentColor: const Color(0xFFF59E0B),
+                  onTap: _showAiCoachSheet,
+                ),
+              ),
+
+              // Next Exercise
+              _navArrowButton(
+                icon: Icons.arrow_forward_ios_rounded,
+                enabled: _currentExerciseIndex < _exercises.length - 1,
+                onTap: () => _dispatchIntent(const GoToNextExercise()),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Full-width Finish Workout button
+          SizedBox(
+            width: double.infinity,
+            child: GestureDetector(
+              onTap: () {
+                RitmoHaptics.confirm();
+                _onFinishPressed();
+              },
+              child: Container(
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFEF4444), Color(0xFFB91C1C)],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.flag_rounded, color: Colors.white, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'پایان تمرین 🏁',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _navArrowButton({required IconData icon, required bool enabled, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: enabled ? () { RitmoHaptics.selection(); onTap(); } : null,
+      child: Container(
+        width: 40,
+        height: 44,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          color: enabled ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: enabled ? const Color(0xFF334155) : const Color(0xFF1E293B)),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: enabled ? Colors.white70 : Colors.white24,
+        ),
       ),
     );
   }
@@ -1395,28 +2125,30 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    Color? accentColor,
   }) {
+    final color = accentColor ?? const Color(0xFF06B6D4);
     return GestureDetector(
-      onTap: onTap,
+      onTap: () { RitmoHaptics.selection(); onTap(); },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF334155)),
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: const Color(0xFF10B981)),
-            const SizedBox(width: 6),
+            Icon(icon, size: 18, color: color),
+            const SizedBox(height: 3),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Vazirmatn',
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: color,
               ),
             ),
           ],

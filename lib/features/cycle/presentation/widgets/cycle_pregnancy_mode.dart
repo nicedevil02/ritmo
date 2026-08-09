@@ -10,6 +10,7 @@ import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_ai_consent_sheet.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CyclePregnancyModeView extends StatefulWidget {

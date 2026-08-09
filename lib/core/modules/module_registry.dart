@@ -89,6 +89,13 @@ class ModuleRegistry {
       defaultEnabled: false,
     ),
     ModuleDescriptor(
+      key: 'module_supplementary_sports_enabled',
+      titleFa: 'ورزش و تحرک تکمیلی',
+      oneLineFa: 'برنامه و تمرین‌های ورزشی تکمیلی',
+      icon: Icons.directions_run_rounded,
+      defaultEnabled: false,
+    ),
+    ModuleDescriptor(
       key: 'module_medicine_enabled',
       titleFa: 'دارو و سلامت',
       oneLineFa: 'یادآوری مصرف داروها و پیگیری سلامتی',

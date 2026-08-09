@@ -126,7 +126,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) {
-        return const AssistantSheet(persona: PersonaRegistry.instance.getPersona('worship')!);
+        return AssistantSheet(persona: PersonaRegistry.instance.getPersona('worship')!);
       },
     );
   }

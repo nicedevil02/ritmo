@@ -31,6 +31,11 @@ class TaskAgendaSource {
       final startStr = start.toIso8601String().substring(0, 10);
       final endStr = end.toIso8601String().substring(0, 10);
 
+      // Self-healing check for isImportant column
+      try {
+        await db.execute('ALTER TABLE simple_tasks ADD COLUMN isImportant INTEGER NOT NULL DEFAULT 0;');
+      } catch (_) {}
+
       // 1) All tasks scheduled within range (dueDate >= startStr AND dueDate <= endStr)
       final rangeRows = await db.query(
         'simple_tasks',

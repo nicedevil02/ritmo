@@ -372,7 +372,7 @@ class _HealthScreenState extends State<HealthScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const Directionality(
+      builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AssistantSheet(persona: PersonaRegistry.instance.getPersona('health')!),
       ),

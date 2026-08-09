@@ -201,6 +201,8 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
         _goToPrevious();
       case GoToNextExercise():
         _goToNext();
+      case JumpToExercise(index: final idx):
+        _jumpToExercise(idx);
       case UpdateSetWeightAndReps(setIndex: final idx, weight: final w, reps: final r, rir: final rir):
         _updateSetWeightAndReps(idx, w, r, rir: rir);
       case FinishSession():
@@ -280,7 +282,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
   void _handleTimerExpiry() {
     switch (state.status) {
       case SSWorkoutSessionStatus.preparing:
-        _startCountdown();
+        _startExercising();
       case SSWorkoutSessionStatus.countdown:
         _startExercising();
       case SSWorkoutSessionStatus.exercising:
@@ -552,6 +554,19 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
     }
   }
 
+  void _jumpToExercise(int targetIdx) {
+    if (targetIdx >= 0 && targetIdx < state.exercises.length && targetIdx != state.currentExerciseIndex) {
+      final updatedExercises = List<SSExerciseChecklistEntry>.from(state.exercises);
+      updatedExercises[targetIdx] = updatedExercises[targetIdx].copyWith(status: ExerciseStatus.current);
+      state = state.copyWith(
+        currentExerciseIndex: targetIdx,
+        exercises: updatedExercises,
+      );
+      _saveSessionToPreferences();
+      _startExercising();
+    }
+  }
+
   // Handle Lifecycle resume to sync timestamps
   void handleLifecycleResumed() {
     if (state.isTimerPaused || state.timerTargetTimestamp == 0) return;
@@ -782,40 +797,52 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
       }
 
       await db.transaction((txn) async {
-        await txn.insert('ss_workout_session_log', {
-          'id': state.sessionId,
-          'planId': state.planId,
-          'startedAt': state.startedAt,
-          'finishedAt': finishedAt,
-          'durationSeconds': durationSec,
-          'completedExercisesCount': completedCount,
-          'totalExercisesCount': state.exercises.length,
-          'overallFeeling': overallFeeling != null ? _feelingStr(overallFeeling) : null,
-        });
+        await txn.insert(
+          'ss_workout_session_log',
+          {
+            'id': state.sessionId,
+            'planId': state.planId,
+            'startedAt': state.startedAt,
+            'finishedAt': finishedAt,
+            'durationSeconds': durationSec,
+            'completedExercisesCount': completedCount,
+            'totalExercisesCount': state.exercises.length,
+            'overallFeeling': overallFeeling != null ? _feelingStr(overallFeeling) : null,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
         
         for (final entry in state.exercises) {
           if (entry.feeling != null) {
-            await txn.insert('ss_exercise_feeling_log', {
-              'id': 'feel_${state.sessionId}_${entry.exercise.id}_${DateTime.now().millisecondsSinceEpoch}',
-              'sessionLogId': state.sessionId,
-              'exerciseId': entry.exercise.id,
-              'feeling': _feelingStr(entry.feeling!),
-              'loggedAt': DateTime.now().millisecondsSinceEpoch,
-            });
+            await txn.insert(
+              'ss_exercise_feeling_log',
+              {
+                'id': 'feel_${state.sessionId}_${entry.exercise.id}_${DateTime.now().millisecondsSinceEpoch}',
+                'sessionLogId': state.sessionId,
+                'exerciseId': entry.exercise.id,
+                'feeling': _feelingStr(entry.feeling!),
+                'loggedAt': DateTime.now().millisecondsSinceEpoch,
+              },
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
           }
 
           var setIdx = 1;
           for (final setRow in entry.setRows) {
             final setId = 'set_${state.sessionId}_${entry.exercise.id}_$setIdx';
-            await txn.insert('ss_workout_set_log', {
-              'id': setId,
-              'session_id': state.sessionId,
-              'exercise_id': entry.exercise.id,
-              'set_index': setIdx,
-              'weight': setRow.weight,
-              'reps': setRow.reps,
-              'feeling': entry.feeling != null ? _feelingStr(entry.feeling!) : null,
-            });
+            await txn.insert(
+              'ss_workout_set_log',
+              {
+                'id': setId,
+                'session_id': state.sessionId,
+                'exercise_id': entry.exercise.id,
+                'set_index': setIdx,
+                'weight': setRow.weight,
+                'reps': setRow.reps,
+                'feeling': entry.feeling != null ? _feelingStr(entry.feeling!) : null,
+              },
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
             setIdx++;
           }
         }

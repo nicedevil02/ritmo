@@ -24,6 +24,9 @@ import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:ritmo/features/profile/presentation/profile_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/modules_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/settings_screen.dart';
+import 'package:ritmo/features/simple_tasks/presentation/simple_tasks_screen.dart';
+import 'package:ritmo/features/notes/presentation/screens/notebook_screen.dart';
+
 import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_intro_screen.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
@@ -618,6 +621,30 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
         ),
       );
     }
+
+    // 7. Notebook & Experiences Module (R-08)
+    if (_matchesSearch('دفترچه و تجربه‌ها', 'یادداشت‌ها و درس‌های زندگی')) {
+      growthCards.add(
+        _buildGridItem(
+          index: cardIndex++,
+          icon: CupertinoIcons.doc_text_fill,
+          iconColor: const Color(0xffF59E0B),
+          title: 'دفترچه و تجربه‌ها',
+          description: 'یادداشت‌ها و درس‌های زندگی',
+          status: ModuleStatus.active,
+          illustrationAsset: 'assets/images/notes_card_top.png',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const NotebookScreen()),
+            ).then((_) => _loadAllData());
+          },
+          colors: colors,
+          isDarkMode: isDarkMode,
+        ),
+      );
+    }
+
 
     // 7. Goals Module
     if (_matchesSearch('اهداف و برنامه‌ها', 'برنامه‌ریزی برای بهترین خود')) {

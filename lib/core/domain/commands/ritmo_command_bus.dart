@@ -391,6 +391,9 @@ class RitmoCommandBus {
         return RitmoEventType.reflectionSaved;
       case EngineInvalidationTag.global:
         return RitmoEventType.settingsChanged;
+      case EngineInvalidationTag.notes:
+        return RitmoEventType.noteUpdated;
     }
   }
 }
+

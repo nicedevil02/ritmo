@@ -26,7 +26,12 @@ enum RitmoEventType {
   courseSessionCompleted('CourseSessionCompleted'),
   dayRolledOver('DayRolledOver'),
   dataImported('DataImported'),
-  settingsChanged('SettingsChanged');
+  settingsChanged('SettingsChanged'),
+  noteCreated('NoteCreated'),
+  noteUpdated('NoteUpdated'),
+  noteDeleted('NoteDeleted'),
+  experienceCreated('ExperienceCreated');
+
 
   const RitmoEventType(this.code);
   final String code;

@@ -11,4 +11,6 @@ enum EngineInvalidationTag {
   medicine,
   reflection,
   global,
+  notes,
 }
+

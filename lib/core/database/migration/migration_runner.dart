@@ -24,6 +24,8 @@ import 'package:ritmo/core/database/migration/migrations/migration_v82_sports_pr
 import 'package:ritmo/core/database/migration/migrations/migration_v83_calendar_upgrade.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v84_module_ownership.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v85_simple_tasks_title_normalized.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v86_notes.dart';
+
 class MigrationRunner {
   static final List<Migration> _migrations = [
     MigrationV2(),
@@ -110,7 +112,9 @@ class MigrationRunner {
     MigrationV83CalendarUpgrade(), // Prompt 067: day_marks table + calendar default settings
     MigrationV84(),
     MigrationV85(),
+    MigrationV86Notes(),
   ];
+
 
   static Future<void> run(Database db, int oldVersion, int newVersion) async {
     RitmoLog.info('MigrationRunner', 'Running migrations from v$oldVersion to v$newVersion');

@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/notes/presentation/widgets/module_note_history.dart';
+
 
 class SleepPatternsSection extends StatelessWidget {
 
@@ -221,11 +223,26 @@ class SleepPatternsSection extends StatelessWidget {
             subtitle: 'ساعت خوابی که در روزهای بعد بالاترین سطح انرژی و کیفیت حال را رقم زده است.',
             colors: colors,
           ),
+          const SizedBox(height: 20),
+
+          // 5. Sleep Notes History (M-06)
+          Text(
+            'یادداشت‌های شب‌های اخیر',
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: colors.cardTitle,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const ModuleNoteHistorySection(module: 'sleep', entityId: 'all'),
           const SizedBox(height: 16),
         ],
       ),
     );
   }
+
 
   String _getConsistencyLabel(int score) {
     if (score >= 90) return 'بسیار عالی';

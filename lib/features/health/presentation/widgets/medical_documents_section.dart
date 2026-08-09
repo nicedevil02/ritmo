@@ -97,7 +97,57 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
 
 
 
+  Future<void> _quickEditUserNotes(MedicalDocument doc) async {
+    final controller = TextEditingController(text: doc.userNotes ?? '');
+    final updated = await showDialog<String>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: context.colors.card,
+          title: const Text('ویرایش یادداشت شخصی', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: controller,
+            maxLines: 3,
+            textDirection: TextDirection.rtl,
+            style: TextStyle(fontFamily: 'Vazirmatn', color: context.colors.textPrimary),
+            decoration: const InputDecoration(
+              hintText: 'توضیحات یا یادداشت شخصی خود را وارد کنید...',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+              style: ElevatedButton.styleFrom(backgroundColor: context.colors.primary),
+              child: const Text('ذخیره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (updated != null) {
+      try {
+        final db = await DatabaseHelper.instance.database;
+        await db.update(
+          'medical_documents',
+          {'userNotes': updated, 'updatedAt': DateTime.now().millisecondsSinceEpoch},
+          where: 'id = ?',
+          whereArgs: [doc.id],
+        );
+        _loadData();
+      } catch (e) {
+        debugPrint('Error updating userNotes: $e');
+      }
+    }
+  }
+
   Future<void> _saveDocument(MedicalDocument doc, List<String> imagePaths) async {
+
     try {
       final db = await DatabaseHelper.instance.database;
       
@@ -328,37 +378,60 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
               ],
               if (doc.summary != null && doc.summary!.isNotEmpty) ...[
                 Text(
-                  'خلاصه گزارش:',
-                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                  '📋 خلاصه گزارش:',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   doc.summary!,
                   style: TextStyle(fontSize: 13, color: colors.textPrimary),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
               ],
               if (doc.doctorNotes != null && doc.doctorNotes!.isNotEmpty) ...[
                 Text(
-                  'توصیه پزشک:',
-                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                  '🩺 توصیه پزشک:',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.medicalRed),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   doc.doctorNotes!,
                   style: TextStyle(fontSize: 13, color: colors.textPrimary),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
               ],
-              if (doc.userNotes != null && doc.userNotes!.isNotEmpty) ...[
-                Text(
-                  'یادداشت کاربر:',
-                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '📝 یادداشت شخصی من:',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.warning),
+                  ),
+                  InkWell(
+                    onTap: () => _quickEditUserNotes(doc),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Text(
+                        doc.userNotes == null || doc.userNotes!.isEmpty ? '➕ افزودن یادداشت' : '✏️ ویرایش سریع',
+                        style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', color: colors.primary, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                (doc.userNotes != null && doc.userNotes!.isNotEmpty)
+                    ? doc.userNotes!
+                    : 'هیچ یادداشت شخصی ثبت نشده است.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: (doc.userNotes != null && doc.userNotes!.isNotEmpty) ? colors.textPrimary : colors.textSecondary.withValues(alpha: 0.7),
+                  fontStyle: (doc.userNotes == null || doc.userNotes!.isEmpty) ? FontStyle.italic : FontStyle.normal,
                 ),
-                Text(
-                  doc.userNotes!,
-                  style: TextStyle(fontSize: 13, color: colors.textPrimary),
-                ),
-                const SizedBox(height: 6),
-              ],
+              ),
+              const SizedBox(height: 8),
+
               if (images.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(

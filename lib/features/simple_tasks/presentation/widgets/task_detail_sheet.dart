@@ -16,6 +16,8 @@ import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_attachment.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_step.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_step_list.dart';
+import 'package:ritmo/features/notes/logic/promote_to_note.dart';
+
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
@@ -572,8 +574,59 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                       if (_noteController.text.isNotEmpty) ...[
                         const SizedBox(height: 6),
                         _buildNoteWithLinks(_noteController.text, context),
+                        const SizedBox(height: 8),
+                        if (_noteController.text.length > 300)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: colors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'این یادداشت بلند شده — می‌خواهی به دفترچه منتقلش کنی؟',
+                                    style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', color: colors.primary),
+                                  ),
+                                ),
+                                TextButton.icon(
+                                  onPressed: () {
+                                    NotePromoter.instance.promote(
+                                      context: context,
+                                      module: 'tasks',
+                                      entityId: _task.id,
+                                      text: _noteController.text,
+                                      titleHint: _task.title,
+                                    );
+                                  },
+                                  icon: const Text('📓', style: TextStyle(fontSize: 14)),
+                                  label: const Text('انتقال به دفترچه', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton.icon(
+                              onPressed: () {
+                                NotePromoter.instance.promote(
+                                  context: context,
+                                  module: 'tasks',
+                                  entityId: _task.id,
+                                  text: _noteController.text,
+                                  titleHint: _task.title,
+                                );
+                              },
+                              icon: const Text('📓', style: TextStyle(fontSize: 14)),
+                              label: const Text('تبدیل به یادداشت دفترچه', style: TextStyle(fontSize: 11)),
+                            ),
+                          ),
                       ],
                       const Divider(height: 24),
+
 
                       // 5. Attachments
                       Row(

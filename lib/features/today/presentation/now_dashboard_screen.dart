@@ -51,7 +51,11 @@ import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboa
 import 'package:ritmo/features/supplementary_sports/presentation/ss_intro_screen.dart';
 import 'package:ritmo/features/today/presentation/active_timer_overlay.dart';
 import 'package:ritmo/features/today/presentation/dashboard_controller.dart';
+import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
+import 'package:ritmo/features/notes/presentation/widgets/today_experience_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet.dart';
+
+
 import 'package:ritmo/features/today/presentation/widgets/dashboard/assistant_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_header.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_module_summary.dart';
@@ -663,7 +667,12 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     onViewAll: () => widget.onNavigateToTab?.call(4),
                   ),
                 ),
+                _enter(
+                  2,
+                  const TodayExperienceCard(),
+                ),
                 const SizedBox(height: RitmoSpacing.section),
+
 
                 // 4. کارت خلاصه‌ی وضعیت تک‌عاملی (ZoneCard / Energy)
                 _enter(

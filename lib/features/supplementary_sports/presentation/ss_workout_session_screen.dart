@@ -1278,108 +1278,122 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     final r = activeRow?.reps ?? 0;
     final oneRM = (w > 0 && r > 0) ? w * (1 + r / 30.0) : null;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141C2E),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF1E293B)),
-      ),
-      child: Row(
-        textDirection: TextDirection.rtl,
-        children: [
-          // Previous Record
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  textDirection: TextDirection.rtl,
-                  children: [
-                    Icon(Icons.history_rounded, size: 15, color: Color(0xFF06B6D4)),
-                    SizedBox(width: 4),
-                    Text('دفعه قبل', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xFF06B6D4))),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                FutureBuilder<Map<String, dynamic>?>(
-                  future: ref.read(ssWorkoutProvider(_key).notifier).getLastLoggedSetForExercise(entry.exercise.id),
-                  builder: (context, snap) {
-                    if (snap.connectionState == ConnectionState.waiting) {
-                      return const Text('...', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white54));
-                    }
-                    final data = snap.data;
-                    if (data == null) {
-                      return const Text('سابقه‌ای ندارد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white38));
-                    }
-                    final lw = (data['weight'] as num?)?.toDouble() ?? 0.0;
-                    final lr = (data['reps'] as num?)?.toInt() ?? 0;
-                    return Text(
-                      toPersianDigits('${lw.round()} kg × $lr تکرار'),
-                      style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                    );
-                  },
-                ),
-              ],
-            ),
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF141C2E),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFF1E293B)),
           ),
-
-          // Divider
-          Container(width: 1, height: 40, color: const Color(0xFF1E293B), margin: const EdgeInsets.symmetric(horizontal: 12)),
-
-          // 1RM Estimator
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  textDirection: TextDirection.rtl,
+          child: Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              // Previous Record
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.bolt_rounded, size: 15, color: Color(0xFFF59E0B)),
-                    SizedBox(width: 4),
-                    Text('۱ تکرار بیشینه (1RM)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xFFF59E0B))),
+                    const Row(
+                      textDirection: TextDirection.rtl,
+                      children: [
+                        Icon(Icons.history_rounded, size: 15, color: Color(0xFF06B6D4)),
+                        SizedBox(width: 4),
+                        Text('دفعه قبل', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xFF06B6D4))),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    FutureBuilder<Map<String, dynamic>?>(
+                      future: ref.read(ssWorkoutProvider(_key).notifier).getLastLoggedSetForExercise(entry.exercise.id),
+                      builder: (context, snap) {
+                        if (snap.connectionState == ConnectionState.waiting) {
+                          return const Text('...', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white54));
+                        }
+                        final data = snap.data;
+                        if (data == null) {
+                          return const Text('سابقه‌ای ندارد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white38));
+                        }
+                        final lw = (data['weight'] as num?)?.toDouble() ?? 0.0;
+                        final lr = (data['reps'] as num?)?.toInt() ?? 0;
+                        return Text(
+                          toPersianDigits('${lw.round()} kg × $lr تکرار'),
+                          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                        );
+                      },
+                    ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  oneRM != null
-                      ? toPersianDigits('~${oneRM.toStringAsFixed(1)} kg')
-                      : 'وزن را وارد کنید',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: oneRM != null ? const Color(0xFFF59E0B) : Colors.white38,
+              ),
+
+              // Divider
+              Container(width: 1, height: 40, color: const Color(0xFF1E293B), margin: const EdgeInsets.symmetric(horizontal: 12)),
+
+              // 1RM Estimator
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      textDirection: TextDirection.rtl,
+                      children: [
+                        Icon(Icons.bolt_rounded, size: 15, color: Color(0xFFF59E0B)),
+                        SizedBox(width: 4),
+                        Text('۱ تکرار بیشینه (1RM)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xFFF59E0B))),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      oneRM != null
+                          ? toPersianDigits('~${oneRM.toStringAsFixed(1)} kg')
+                          : 'وزن را وارد کنید',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: oneRM != null ? Colors.white : Colors.white38,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (entry.optionalNote != null && entry.optionalNote!.trim().isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              textDirection: TextDirection.rtl,
+              children: [
+                const Icon(Icons.note_alt_outlined, size: 16, color: Color(0xFF10B981)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'دفعه قبل: ${entry.optionalNote}',
+                    textDirection: TextDirection.rtl,
+                    style: const TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 11.5,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-
-          // Copy Prev Button
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => _copyPreviousRecord(entry),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF06B6D4).withValues(alpha: 0.4)),
-              ),
-              child: const Column(
-                children: [
-                  Text('📋', style: TextStyle(fontSize: 18)),
-                  SizedBox(height: 2),
-                  Text('کپی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Color(0xFF06B6D4), fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          ),
         ],
-      ),
+      ],
     );
   }
+
 
   // ─── Muscle Activation Gauge ──────────────────────────────────
   Widget _buildMuscleActivationGauge(SSExerciseChecklistEntry entry) {

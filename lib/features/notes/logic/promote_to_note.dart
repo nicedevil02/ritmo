@@ -75,7 +75,7 @@ class NotePromoter {
       if (context.mounted) {
         RitmoToast.show(
           context,
-          message: 'به دفترچه منتقل شد 📓',
+          'به دفترچه منتقل شد 📓',
           actionLabel: 'برگردان',
           onAction: () async {
             try {
@@ -91,7 +91,7 @@ class NotePromoter {
       if (context.mounted) {
         RitmoToast.show(
           context,
-          message: 'خطا در ثبت دفترچه',
+          'خطا در ثبت دفترچه',
         );
       }
       return null;

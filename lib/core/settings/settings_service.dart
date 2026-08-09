@@ -148,11 +148,19 @@ class SettingsService {
       value = intVal;
     } else if (desc.type == SettingType.enumeration) {
       final strVal = value.toString();
-      if (desc.allowed != null && !desc.allowed!.contains(strVal)) {
-        return false;
+      if (desc.allowed != null) {
+        final match = desc.allowed!.firstWhere(
+          (a) => a.toUpperCase() == strVal.toUpperCase(),
+          orElse: () => '',
+        );
+        if (match.isEmpty) {
+          debugPrint('[SettingsService] Rejected set for key $key: "$strVal" not in allowed ${desc.allowed}');
+          return false;
+        }
       }
       value = strVal;
     } else if (desc.type == SettingType.boolean) {
+
       if (value is! bool) {
         value = value.toString() == 'true';
       }

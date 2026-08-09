@@ -22,7 +22,9 @@ enum DataDomain {
   reflection,
   sports,
   courses,
+  notes,
 }
+
 
 enum CommandSource {
   user,

@@ -40,9 +40,11 @@ class PersonaRegistry {
         DataDomain.reflection,
         DataDomain.sports,
         DataDomain.courses,
+        DataDomain.notes,
       },
       commandIds: allCmdIds,
     ));
+
 
     register(AssistantPersona(
       id: 'worship',
@@ -124,7 +126,20 @@ class PersonaRegistry {
       reads: {DataDomain.medical, DataDomain.energy, DataDomain.routines},
       commandIds: {'app.openPage', 'setting.update', 'assistant.handoff', 'health.logAdherence', 'health.logVital', 'health.scheduleTest'},
     ));
+
+    register(AssistantPersona(
+      id: 'notes',
+      displayName: 'دستیار دفترچه و تجربه‌ها',
+      systemPromptKey: 'system_prompt_notes',
+      reads: {DataDomain.notes, DataDomain.routines},
+      commandIds: {
+        'create_note', 'update_note', 'search_notes', 'create_experience',
+        'list_experiences', 'get_note_details', 'app.openPage', 'setting.update', 'assistant.handoff'
+      },
+      handoffHint: 'یادداشت، ایده، تجربه، درس زندگی، «قبلاً نوشته بودم»، جست‌وجو در نوشته‌ها',
+    ));
   }
+
 }
 
 class SecurityError extends Error {

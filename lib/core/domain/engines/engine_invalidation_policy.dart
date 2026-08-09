@@ -101,7 +101,20 @@ class EngineInvalidationPolicy {
     RitmoEventType.settingsChanged: {
       EngineInvalidationTag.global,
     },
+    RitmoEventType.noteCreated: {
+      EngineInvalidationTag.notes,
+    },
+    RitmoEventType.noteUpdated: {
+      EngineInvalidationTag.notes,
+    },
+    RitmoEventType.noteDeleted: {
+      EngineInvalidationTag.notes,
+    },
+    RitmoEventType.experienceCreated: {
+      EngineInvalidationTag.notes,
+    },
   };
+
 
   static const Map<Type, Set<EngineInvalidationTag>> engineTags = {
     LifeBalanceEngine: {

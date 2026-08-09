@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/energy/models/energy_mood_models.dart';
+import 'package:ritmo/features/notes/presentation/widgets/module_note_history.dart';
+
 
 class EnergyTodaySection extends StatelessWidget {
 
@@ -190,9 +192,20 @@ class EnergyTodaySection extends StatelessWidget {
               );
             },
           ),
+        const SizedBox(height: 16),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            'یادداشت‌های ثبت‌شده انرژی و حال',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const ModuleNoteHistorySection(module: 'energy', entityId: 'all'),
       ],
     );
   }
+
 }
 
 class EnergyCurvePainter extends CustomPainter {

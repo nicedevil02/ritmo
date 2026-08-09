@@ -156,8 +156,11 @@ class StepIdentity extends StatelessWidget {
 
   Widget _buildGenderChip(BuildContext context, String value, String label) {
     final colors = context.colors;
-    final isSelected = gender == value;
+    final isSelected = gender.toUpperCase() == value.toUpperCase() ||
+        (value == 'OTHER' && gender == 'PREFER_NOT_TO_SAY') ||
+        (value == 'PREFER_NOT_TO_SAY' && gender == 'OTHER');
     return ChoiceChip(
+
       label: Text(label),
       selected: isSelected,
       onSelected: (selected) {

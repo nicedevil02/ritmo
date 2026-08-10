@@ -6,6 +6,7 @@ import 'package:ritmo/core/domain/commands/catalog/study_commands.dart';
 import 'package:ritmo/core/domain/commands/catalog/worship_commands.dart';
 import 'package:ritmo/core/domain/commands/catalog/wellbeing_commands.dart';
 import 'package:ritmo/core/domain/commands/catalog/sports_commands.dart';
+import 'package:ritmo/core/domain/commands/catalog/planning_commands.dart';
 
 void registerAllRitmoCommands() {
   RitmoCommandBus.instance.registerAll([
@@ -33,6 +34,18 @@ void registerAllRitmoCommands() {
     const GoalCreateCommand(),
     const GoalEditCommand(),
     const GoalCompleteStepCommand(),
+
+    // Planning commands (Prompt 072)
+    const PlanningApplyWeekCommand(),
+    const PlanningCreateCycleCommand(),
+    const PlanningCloseCycleCommand(),
+    const PlanningAddCommitmentCommand(),
+    const PlanningDropCommitmentCommand(),
+    const PlanningMoveAllocationCommand(),
+    const PlanningSplitCommitmentCommand(),
+    const PlanningLockAllocationCommand(),
+    const PlanningSetDayLightCommand(),
+    const PlanningMaterializeDayCommand(),
 
     // Study commands
     const CourseCreateCommand(),

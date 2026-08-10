@@ -424,6 +424,8 @@ class JourneyController extends ChangeNotifier {
         newSnapshots[entry.key] = _snapshotBuilder.buildSnapshot(entry.value);
       }
       _rangeSnapshots = newSnapshots;
+      final selectedKey = _formatDateKey(_selectedDate);
+      _snapshot = _rangeSnapshots[selectedKey];
       sw.stop();
       debugPrint('[JourneyController] loadAgendaRange: ${sw.elapsedMilliseconds}ms');
     } catch (e, st) {
@@ -452,6 +454,10 @@ class JourneyController extends ChangeNotifier {
         event.type == 'WorshipUpdated' ||
         event.type == 'CourseSessionCompleted' ||
         event.type == 'AgendaItemToggled' ||
+        event.type == 'TaskToggled' ||
+        event.type == 'TaskUpdated' ||
+        event.type == 'GoalStepToggled' ||
+        event.type == 'completion_recorded' ||
         event.type == 'ReshuffleApplied') {
       refresh();
     }

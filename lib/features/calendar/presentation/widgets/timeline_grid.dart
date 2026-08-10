@@ -29,6 +29,11 @@ class TimelineGrid extends StatefulWidget {
     this.sleepStartMinutes,
     this.sleepEndMinutes,
     this.highlightedItemId,
+    this.previewDraggingItemId,
+    this.previewStartMinutes,
+    this.previewDurationMinutes,
+    this.onDragStarted,
+    this.onDragCanceled,
     this.onItemTap,
     this.onItemMove,
     this.onItemResize,
@@ -50,6 +55,11 @@ class TimelineGrid extends StatefulWidget {
   final int? sleepStartMinutes;
   final int? sleepEndMinutes;
   final String? highlightedItemId;
+  final String? previewDraggingItemId;
+  final int? previewStartMinutes;
+  final int? previewDurationMinutes;
+  final void Function(AgendaItem item, int startMinutes, int durationMinutes)? onDragStarted;
+  final VoidCallback? onDragCanceled;
   final ValueChanged<AgendaItem>? onItemTap;
   final Function(AgendaItem item, int newStartMinutes)? onItemMove;
   final Function(AgendaItem item, int newDurationMinutes)? onItemResize;
@@ -157,14 +167,22 @@ class _TimelineGridState extends State<TimelineGrid> {
                 final gridWidth = constraints.maxWidth;
 
                 TimelineLayoutItem? draggingLayoutItem;
-                if (_activeDragItemId != null) {
+                final effectiveDragItemId = widget.previewDraggingItemId ?? _activeDragItemId;
+                final effectiveDragStartMinutes = widget.previewStartMinutes ?? _dragStartMinutes;
+                final effectiveDragDurationMinutes = widget.previewDurationMinutes ?? 30;
+
+                if (effectiveDragItemId != null) {
                   for (final item in layoutItems) {
-                    if (item.item.id == _activeDragItemId) {
+                    if (item.item.id == effectiveDragItemId) {
                       draggingLayoutItem = item;
                       break;
                     }
                   }
                 }
+
+                final isGhostVisible = effectiveDragItemId != null &&
+                    effectiveDragStartMinutes >= widget.rangeStartMinutes &&
+                    effectiveDragStartMinutes < widget.rangeEndMinutes;
 
                 return Stack(
                   clipBehavior: Clip.hardEdge,
@@ -194,12 +212,12 @@ class _TimelineGridState extends State<TimelineGrid> {
                     if (widget.isToday) _buildPastDimmer(nowMinutes, totalHeight),
 
                     // Drop target preview ghost box during drag
-                    if (_activeDragItemId != null && draggingLayoutItem != null)
+                    if (isGhostVisible)
                       Positioned(
-                        top: (_dragStartMinutes - widget.rangeStartMinutes) * widget.pxPerMinute,
-                        left: draggingLayoutItem.leftFraction * gridWidth,
-                        width: (draggingLayoutItem.widthFraction * gridWidth) - 4.0,
-                        height: (draggingLayoutItem.durationMinutes) * widget.pxPerMinute,
+                        top: (effectiveDragStartMinutes - widget.rangeStartMinutes) * widget.pxPerMinute,
+                        left: draggingLayoutItem != null ? (draggingLayoutItem.leftFraction * gridWidth) : 2.0,
+                        width: draggingLayoutItem != null ? ((draggingLayoutItem.widthFraction * gridWidth) - 4.0) : (gridWidth - 4.0),
+                        height: max((draggingLayoutItem?.durationMinutes ?? effectiveDragDurationMinutes) * widget.pxPerMinute, 28.0),
                         child: IgnorePointer(
                           child: Container(
                             decoration: BoxDecoration(
@@ -221,7 +239,7 @@ class _TimelineGridState extends State<TimelineGrid> {
                                     borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
                                   ),
                                   child: Text(
-                                    toPersianDigits(TimelineSnappingHelper.minutesToTimeString(_dragStartMinutes)),
+                                    toPersianDigits(TimelineSnappingHelper.minutesToTimeString(effectiveDragStartMinutes)),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: CalendarTokens.textLabel,
@@ -471,6 +489,7 @@ class _TimelineGridState extends State<TimelineGrid> {
         ),
         onDragStarted: () {
           RitmoHaptics.tap();
+          widget.onDragStarted?.call(item, layoutItem.startMinutes, layoutItem.durationMinutes);
           if (mounted) {
             setState(() {
               _activeDragItemId = item.id;
@@ -504,6 +523,7 @@ class _TimelineGridState extends State<TimelineGrid> {
           }
         },
         onDraggableCanceled: (_, __) {
+          widget.onDragCanceled?.call();
           if (mounted) {
             setState(() {
               _activeDragItemId = null;
@@ -512,7 +532,7 @@ class _TimelineGridState extends State<TimelineGrid> {
           }
         },
         onDragEnd: (details) {
-          widget.onItemMove?.call(item, _dragStartMinutes);
+          widget.onDragCanceled?.call();
           if (mounted) {
             setState(() {
               _activeDragItemId = null;

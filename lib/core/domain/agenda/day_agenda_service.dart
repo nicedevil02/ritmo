@@ -53,6 +53,10 @@ class DayAgendaService {
     'PrayerCompleted',
     'WorshipUpdated',
     'RoutineDeleted',
+    'completion_recorded',
+    'AgendaItemToggled',
+    'commitmentChanged',
+    'planningCycleActivated',
   };
 
   static const Set<String> _cacheInvalidatingEvents = {
@@ -71,13 +75,17 @@ class DayAgendaService {
     'CycleEnded',
     'DayRolledOver',
     'DataImported',
+    'completion_recorded',
+    'AgendaItemToggled',
+    'commitmentChanged',
+    'planningCycleActivated',
   };
 
   void _subscribeToEvents() {
     RitmoEventBus().onEvents.listen((event) {
       if (!_cacheInvalidatingEvents.contains(event.type)) return;
 
-      final date = event.payload['date'] as String?;
+      final date = (event.payload['date'] ?? event.payload['dateStr']) as String?;
       if (event.type == 'DayRolledOver' || event.type == 'DataImported') {
         invalidateAll();
       } else if (date != null) {
@@ -298,23 +306,50 @@ class DayAgendaService {
     final ihtiyatMinutes = int.tryParse(settingsMap['ihtiyat_minutes'] ?? '0') ?? 0;
     final calcMethodStr = settingsMap['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
 
-    // Preload goal steps for the range
+    // Preload goal steps and planning allocations for the range
     final goalStepsByDate = <String, List<Map<String, dynamic>>>{};
     if (opts.wants(AgendaDomain.goalStep)) {
       final startStr = _dateStr(start);
       final endStr = _dateStr(end);
-      final res = await db.rawQuery('''
-        SELECT gs.*, g.title as goalTitle
-        FROM goal_steps gs
-        JOIN goals g ON gs.goalId = g.id
-        WHERE gs.scheduledDate >= ? AND gs.scheduledDate <= ? AND g.status = 'ACTIVE'
-      ''', [startStr, endStr]);
-      for (final row in res) {
-        final dateStr = row['scheduledDate'] as String?;
-        if (dateStr != null) {
-          goalStepsByDate.putIfAbsent(dateStr, () => []).add(Map<String, dynamic>.from(row));
+
+      try {
+        final res = await db.rawQuery('''
+          SELECT gs.*, g.title as goalTitle
+          FROM goal_steps gs
+          JOIN goals g ON gs.goalId = g.id
+          WHERE gs.scheduledDate >= ? AND gs.scheduledDate <= ? AND g.status = 'ACTIVE'
+        ''', [startStr, endStr]);
+        for (final row in res) {
+          final dateStr = row['scheduledDate'] as String?;
+          if (dateStr != null) {
+            goalStepsByDate.putIfAbsent(dateStr, () => []).add(Map<String, dynamic>.from(row));
+          }
         }
-      }
+      } catch (_) {}
+
+      try {
+        final allocRes = await db.rawQuery('''
+          SELECT a.id as allocId, a.dayKey, a.plannedMinutes, a.status as allocStatus,
+                 c.id as commId, c.title as commTitle, c.importance, c.workKind
+          FROM planning_allocations a
+          JOIN planning_commitments c ON a.commitmentId = c.id
+          WHERE a.dayKey >= ? AND a.dayKey <= ? AND a.status != 'DROPPED' AND c.status != 'DROPPED'
+        ''', [startStr, endStr]);
+        for (final row in allocRes) {
+          final dateStr = row['dayKey'] as String?;
+          if (dateStr != null) {
+            goalStepsByDate.putIfAbsent(dateStr, () => []).add({
+              'id': row['allocId'],
+              'isPlanningAllocation': true,
+              'title': row['commTitle'],
+              'goalTitle': 'برنامه و تعهد',
+              'isCompleted': row['allocStatus'] == 'DONE' ? 1 : 0,
+              'durationMinutes': row['plannedMinutes'] ?? 30,
+              'scheduledDate': dateStr,
+            });
+          }
+        }
+      } catch (_) {}
     }
 
     // Preload cached Hijri dates
@@ -585,6 +620,7 @@ class DayAgendaService {
       final id = m['id'] as String;
       final goalId = m['goalId'] as String? ?? '';
       final completed = (m['isCompleted'] as int? ?? 0) == 1;
+      final duration = (m['durationMinutes'] as int?) ?? 30;
       return AgendaItem(
         id: 'goalStep:$id',
         domain: AgendaDomain.goalStep,
@@ -592,7 +628,7 @@ class DayAgendaService {
         title: m['title'] as String? ?? '',
         subtitle: m['goalTitle'] as String?,
         dateStr: dateStr,
-        durationMinutes: 30,
+        durationMinutes: duration,
         category: Category.personal,
         completion:
             completed ? AgendaCompletion.done : AgendaCompletion.pending,

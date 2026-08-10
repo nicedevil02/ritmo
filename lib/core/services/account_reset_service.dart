@@ -1,5 +1,8 @@
+import 'dart:io';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/database/legacy_database_recovery.dart';
 import 'package:ritmo/core/database/seed/seed_service.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,30 +10,40 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Full transactional account and user data reset service.
 class AccountResetService {
   static Future<void> wipeUserData() async {
-    RitmoLog.info('AccountResetService', 'Starting transactional wipe of user data');
+    RitmoLog.info('AccountResetService', 'Starting full ordered wipe of user data');
 
-    final db = await DatabaseHelper.instance.database;
+    // 1. Cancel active alarms & notifications
+    try {
+      final plugin = FlutterLocalNotificationsPlugin();
+      await plugin.cancelAll();
+    } catch (_) {}
 
-    // 1. Create emergency backup before wiping
-    await LegacyDatabaseRecovery.createEmergencyBackup(db.path);
+    // 2. Open DB to get path, then close connection safely
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final dbPath = db.path;
+      await DatabaseHelper.instance.close();
 
-    // 2. Perform transactional wipe across all database tables dynamically fetched from sqlite_master
-    await db.transaction((txn) async {
-      final tableRows = await txn.rawQuery(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'android_%'",
-      );
-      final tables = tableRows.map((r) => r['name'] as String).toList();
+      // 3. Delete DB main file and WAL files
+      final dbFile = File(dbPath);
+      if (await dbFile.exists()) await dbFile.delete();
+      final walFile = File('$dbPath-wal');
+      if (await walFile.exists()) await walFile.delete();
+      final shmFile = File('$dbPath-shm');
+      if (await shmFile.exists()) await shmFile.delete();
+    } catch (e, st) {
+      RitmoLog.error('AccountResetService', 'Error resetting database files', e, st);
+    }
 
-      for (final table in tables) {
-        try {
-          await txn.delete(table);
-        } catch (e) {
-          RitmoLog.warning('AccountResetService', 'Could not clear table $table: $e');
-        }
+    // 4. Wipe attachment and document files directory
+    try {
+      final appSupportDir = await getApplicationSupportDirectory();
+      if (await appSupportDir.exists()) {
+        await appSupportDir.delete(recursive: true);
       }
-    });
+    } catch (_) {}
 
-    // 3. Clear SharedPreferences
+    // 5. Clear SharedPreferences
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
@@ -38,8 +51,21 @@ class AccountResetService {
       RitmoLog.error('AccountResetService', 'Error clearing SharedPreferences', e, st);
     }
 
-    // 4. Re-seed essential system settings
-    await SeedService.seedSettings(db);
-    RitmoLog.info('AccountResetService', 'Transactional wipe completed successfully');
+    // 6. Clear Secure Storage (PIN, backup passcodes, tokens)
+    try {
+      const storage = FlutterSecureStorage();
+      await storage.deleteAll();
+    } catch (_) {}
+
+    // 7. Re-initialize fresh database & seed settings
+    try {
+      final freshDb = await DatabaseHelper.instance.database;
+      await SeedService.seedSettings(freshDb);
+      await SeedService.seedWorshipPractices(freshDb);
+    } catch (e, st) {
+      RitmoLog.error('AccountResetService', 'Error re-seeding database after wipe', e, st);
+    }
+
+    RitmoLog.info('AccountResetService', 'Full ordered reset completed successfully');
   }
 }

@@ -289,7 +289,7 @@ class RoutineAgendaSource {
       }
 
       items.add(AgendaItem(
-        id: 'routine:$routineId',
+        id: 'routine:$routineId:$dateStr',
         domain: AgendaDomain.routine,
         sourceId: routineId,
         title: r['title'] as String? ?? '',

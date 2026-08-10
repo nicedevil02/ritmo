@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
-import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'package:ritmo/features/courses/presentation/courses_screen.dart';
@@ -13,7 +11,6 @@ import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/goals/models/goal_models.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_formatters.dart';
 import 'package:ritmo/features/konkur/presentation/konkur_screen.dart';
-import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
 import 'package:ritmo/features/worship/presentation/worship_screen.dart';
 

@@ -13,20 +13,25 @@ import 'package:ritmo/features/assistant/models/assistant_models.dart';
 import 'package:ritmo/features/assistant/models/day_plan_models.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
+enum DayPlannerMode { standaloneCommit, draftOnly }
+
 class AiDayPlannerPreviewSheet extends StatefulWidget {
 
   const AiDayPlannerPreviewSheet({
     super.key,
     required this.initialDraft,
     required this.onSaved,
+    this.mode = DayPlannerMode.standaloneCommit,
   });
   final DayPlanDraft initialDraft;
   final VoidCallback onSaved;
+  final DayPlannerMode mode;
 
   static void show(
     BuildContext context, {
     required DayPlanDraft initialDraft,
     required VoidCallback onSaved,
+    DayPlannerMode mode = DayPlannerMode.standaloneCommit,
   }) {
     showModalBottomSheet(
       context: context,
@@ -35,6 +40,25 @@ class AiDayPlannerPreviewSheet extends StatefulWidget {
       builder: (context) => AiDayPlannerPreviewSheet(
         initialDraft: initialDraft,
         onSaved: onSaved,
+        mode: mode,
+      ),
+    );
+  }
+
+  static Future<DayPlanDraft?> showForResult(
+    BuildContext context, {
+    required DayPlanDraft initialDraft,
+    DayPlannerMode mode = DayPlannerMode.standaloneCommit,
+    VoidCallback? onSaved,
+  }) {
+    return showModalBottomSheet<DayPlanDraft?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AiDayPlannerPreviewSheet(
+        initialDraft: initialDraft,
+        onSaved: onSaved ?? () {},
+        mode: mode,
       ),
     );
   }
@@ -508,9 +532,11 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                 onPressed: _isSaving ? null : _saveDayPlan,
                 child: _isSaving
                     ? const CupertinoActivityIndicator(color: Colors.white)
-                    : const Text(
-                        'ثبت برنامه',
-                        style: TextStyle(
+                    : Text(
+                        widget.mode == DayPlannerMode.draftOnly
+                            ? 'ذخیره در پیش‌نویس هفته'
+                            : 'تأیید و ثبت',
+                        style: const TextStyle(
                           fontFamily: 'Vazirmatn',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -528,82 +554,64 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
   void _editItemDialog(DayPlanItemDraft item, int index) {
     final titleController = TextEditingController(text: item.title);
     final durationController = TextEditingController(text: item.durationMin?.toString() ?? '30');
-    var isDaily = item.recurrence == 'daily';
 
     showDialog(
       context: context,
       builder: (ctx) {
         final colors = ctx.colors;
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: colors.bg,
-              title: const Text('ویرایش فعالیت', textAlign: TextAlign.right),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: titleController,
-                      textAlign: TextAlign.right,
-                      decoration: const InputDecoration(
-                        labelText: 'عنوان فعالیت',
-                        alignLabelWithHint: true,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: durationController,
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.right,
-                      decoration: const InputDecoration(
-                        labelText: 'مدت زمان (دقیقه)',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('روتین تکرارشونده روزانه:'),
-                        Switch(
-                          value: isDaily,
-                          onChanged: (val) {
-                            setDialogState(() {
-                              isDaily = val;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+        return AlertDialog(
+          backgroundColor: colors.bg,
+          title: const Text('ویرایش آیتم', textAlign: TextAlign.right),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                textAlign: TextAlign.right,
+                decoration: const InputDecoration(labelText: 'عنوان'),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('انصراف'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      item.title = titleController.text.trim();
-                      item.durationMin = int.tryParse(durationController.text.trim());
-                      item.recurrence = isDaily ? 'daily' : 'oneOff';
-                    });
-                    _reValidate();
-                    Navigator.pop(ctx);
-                  },
-                  child: const Text('ثبت'),
-                ),
-              ],
-            );
-          },
+              const SizedBox(height: 12),
+              TextField(
+                controller: durationController,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.right,
+                decoration: const InputDecoration(labelText: 'مدت (دقیقه)'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('انصراف'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final newTitle = titleController.text.trim();
+                final newDuration = int.tryParse(durationController.text) ?? item.durationMin;
+                if (newTitle.isNotEmpty) {
+                  setState(() {
+                    _currentDraft.items[index] = item.copyWith(
+                      title: newTitle,
+                      durationMin: newDuration,
+                    );
+                  });
+                  _reValidate();
+                }
+                Navigator.pop(ctx);
+              },
+              child: const Text('ثبت'),
+            ),
+          ],
         );
       },
     );
   }
 
   Future<void> _saveDayPlan() async {
+    if (widget.mode == DayPlannerMode.draftOnly) {
+      Navigator.pop(context, _currentDraft);
+      return;
+    }
     setState(() {
       _isSaving = true;
     });

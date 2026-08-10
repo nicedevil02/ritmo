@@ -2,12 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/features/notes/data/notes_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/logic/note_fts_engine.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
-import 'package:ritmo/features/chat/presentation/ai_chat_screen.dart';
 import 'package:ritmo/features/notes/presentation/screens/experience_hub_screen.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
 import 'package:ritmo/features/notes/presentation/widgets/note_card.dart';
@@ -33,16 +31,27 @@ class _NotebookScreenState extends State<NotebookScreen> {
   }
 
   Future<void> _loadNotes() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
-    final notes = await NoteFtsEngine.instance.search(
-      _searchQuery,
-      kind: _selectedKind,
-    );
-    if (mounted) {
-      setState(() {
-        _notes = notes;
-        _isLoading = false;
-      });
+    try {
+      final notes = await NoteFtsEngine.instance.search(
+        _searchQuery,
+        kind: _selectedKind,
+      );
+      if (mounted) {
+        setState(() {
+          _notes = notes;
+          _isLoading = false;
+        });
+      }
+    } catch (e, st) {
+      debugPrint('Error loading notes in NotebookScreen: $e\n$st');
+      if (mounted) {
+        setState(() {
+          _notes = [];
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -126,7 +135,7 @@ class _NotebookScreenState extends State<NotebookScreen> {
               context,
               MaterialPageRoute(builder: (_) => const NoteEditorScreen()),
             );
-            if (mounted) _loadNotes();
+            if (mounted) await _loadNotes();
           },
 
           backgroundColor: colors.primary,

@@ -82,6 +82,10 @@ class EndOfDaySweep {
       DayAgendaService.instance.invalidateDate(yesterdayStr);
       DayAgendaService.instance.invalidateDate(todayStr);
 
+      // Cleanup notification_history older than 90 days (DB-07)
+      final ninetyDaysAgoMs = today.subtract(const Duration(days: 90)).millisecondsSinceEpoch;
+      await db.delete('notification_history', where: 'sentAt < ?', whereArgs: [ninetyDaysAgoMs]);
+
       await db.execute(
         "INSERT OR REPLACE INTO app_settings (key, value) VALUES ('last_worship_sweep_date', ?)",
         [todayStr],
@@ -101,17 +105,22 @@ class EndOfDaySweep {
     final yesterdayDate = DateTime.tryParse(yesterdayStr) ?? DateTime.now().subtract(const Duration(days: 1));
     final dayCtx = await WorshipEngine.instance.dayContext(yesterdayDate);
 
+    // Calculate end-of-yesterday cutoff: practices created AFTER this point
+    // were not active yesterday and should NOT be swept (prevents false qada on fresh install).
+    final yesterdayEnd = (yesterdayDate.add(const Duration(days: 1))).millisecondsSinceEpoch;
+
     final uncompletedRows = await txn.rawQuery('''
       SELECT p.*
       FROM worship_practices p
       WHERE p.isActive = 1
       AND p.userDisabledAt IS NULL
       AND p.practiceType IN ('PRAYER', 'MUSTAHAB', 'FASTING')
+      AND p.createdAt < ?
       AND NOT EXISTS (
         SELECT 1 FROM worship_completions c
         WHERE c.practiceId = p.id AND c.dateStr = ?
       )
-    ''', [yesterdayStr]);
+    ''', [yesterdayEnd, yesterdayStr]);
 
     for (final row in uncompletedRows) {
       final practice = WorshipPractice.fromMap(row);

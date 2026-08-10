@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/action_feedback.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_snapshot_builder.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -13,10 +15,8 @@ import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/features/calendar/presentation/models/now_pill_view_model.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_date_formatter.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_motion.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/calendar_search_delegate.dart';
-import 'package:ritmo/features/calendar/presentation/widgets/domain_selection_sheet.dart';
 import 'package:ritmo/features/calendar/utils/calendar_defaults.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/day_summary_bar.dart';
@@ -30,7 +30,6 @@ import 'package:ritmo/features/calendar/presentation/widgets/journey_week_view.d
 import 'package:ritmo/features/calendar/presentation/widgets/journey_year_view.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/now_pill.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_split_day_view.dart';
-import 'package:ritmo/features/registry/domain/registry_query.dart';
 import 'package:ritmo/features/registry/logic/registry_service.dart';
 import 'package:ritmo/features/registry/presentation/all_plans_screen.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_untimed_section.dart';
@@ -181,9 +180,20 @@ class _JourneyScreenState extends State<JourneyScreen> {
     ActionRouter.open(context, item: item, onChanged: () => _controller.refresh());
   }
 
-  void _openSmartPanel() {
-    final snapshot = _controller.snapshot;
-    if (snapshot == null) return;
+  Future<void> _openSmartPanel() async {
+    var snapshot = _controller.snapshot;
+    if (snapshot == null) {
+      final dateKey = '${_controller.selectedDate.year}-${_controller.selectedDate.month.toString().padLeft(2, '0')}-${_controller.selectedDate.day.toString().padLeft(2, '0')}';
+      snapshot = _controller.rangeSnapshots[dateKey];
+    }
+
+    if (snapshot == null) {
+      final dayAgenda = await DayAgendaService.instance.agendaForDate(_controller.selectedDate);
+      if (!mounted) return;
+      snapshot = const DayAgendaSnapshotBuilder().buildSnapshot(dayAgenda);
+    }
+
+    if (!mounted) return;
 
     JourneySmartPanel.showAsBottomSheet(
       context,
@@ -383,7 +393,9 @@ class _JourneyScreenState extends State<JourneyScreen> {
                                   padding: EdgeInsets.zero,
                                   icon: const Icon(Icons.space_dashboard_outlined, size: 20),
                                   tooltip: 'خلاصه روز',
-                                  onPressed: _openSmartPanel,
+                                  onPressed: () {
+                                    unawaited(_openSmartPanel());
+                                  },
                                 ),
                               ),
                               SizedBox(
@@ -408,20 +420,15 @@ class _JourneyScreenState extends State<JourneyScreen> {
                                   padding: EdgeInsets.zero,
                                   icon: const Icon(Icons.search_rounded, size: 20),
                                   tooltip: 'جستجوی رویدادها',
-                                  onPressed: () async {
-                                    final entries = await RegistryService().query(RegistryQuery(), {});
-                                    if (context.mounted) {
-                                      unawaited(
-                                        showSearch(
-                                          context: context,
-                                          delegate: CalendarSearchDelegate(
-                                            items: allItems,
-                                            registryEntries: entries,
-                                            onItemSelected: _openItemDetails,
-                                          ),
-                                        ),
-                                      );
-                                    }
+                                  onPressed: () {
+                                    final items = _controller.snapshot?.items ?? allItems;
+                                    showSearch(
+                                      context: context,
+                                      delegate: CalendarSearchDelegate(
+                                        items: items,
+                                        onItemSelected: _openItemDetails,
+                                      ),
+                                    );
                                   },
                                 ),
                               ),

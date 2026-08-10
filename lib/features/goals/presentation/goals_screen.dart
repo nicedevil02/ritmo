@@ -10,12 +10,13 @@ import 'package:ritmo/core/ux/ritmo_skeleton.dart';
 import 'package:ritmo/features/goals/logic/goals_controller.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/goals/models/goal_models.dart';
+import 'package:ritmo/features/goals/presentation/widgets/create_commitment_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/create_goal_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_archive_section.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_card_list_section.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_formatters.dart';
-import 'package:ritmo/features/goals/presentation/widgets/goals_timeline_section.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_tree_section.dart';
+import 'package:ritmo/features/goals/presentation/planning_screen.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -37,9 +38,8 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
 
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      if (_tabController.indexIsChanging) {
-        _controller.setTabIndex(_tabController.index);
-      }
+      _controller.setTabIndex(_tabController.index);
+      if (mounted) setState(() {});
     });
   }
 
@@ -309,8 +309,17 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
             ),
             IconButton(
               icon: Icon(CupertinoIcons.add, color: colors.primary),
-              tooltip: 'ثبت هدف جدید',
-              onPressed: _showCreateGoalSheet,
+              tooltip: _tabController.index == 0 ? 'افزودن تعهد جدید' : 'ثبت هدف جدید',
+              onPressed: () {
+                if (_tabController.index == 0) {
+                  CreateCommitmentSheet.show(
+                    context,
+                    onSaved: () => _controller.reload(force: true),
+                  );
+                } else {
+                  _showCreateGoalSheet();
+                }
+              },
             ),
             PopupMenuButton<String>(
               icon: Icon(Icons.more_vert, color: colors.textPrimary),
@@ -343,15 +352,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Polaris Hero (Dynamic active goal vs empty templates)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: isLoading
-                  ? const RitmoSkeletonCard()
-                  : _buildHeroSection(activeGoals, stepsByGoal, engineOutput, colors, isDarkMode),
-            ),
-
-            // Custom Segmented switcher (اهداف / نقشه راه)
+            // 1. Custom Segmented switcher (Right: برنامه‌ها, Left: اهداف)
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               height: 42,
@@ -363,11 +364,13 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
               padding: const EdgeInsets.all(3),
               child: Row(
                 children: [
+                  // Right button in RTL: برنامه‌ها (Index 0)
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
                         HapticFeedback.lightImpact();
                         _tabController.animateTo(0);
+                        if (mounted) setState(() {});
                       },
                       child: Container(
                         decoration: BoxDecoration(
@@ -376,7 +379,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          'اهداف',
+                          'برنامه‌ها',
                           style: TextStyle(
                             fontFamily: 'Vazirmatn',
                             fontSize: 13,
@@ -387,11 +390,14 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                       ),
                     ),
                   ),
+
+                  // Left button in RTL: اهداف (Index 1)
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
                         HapticFeedback.lightImpact();
                         _tabController.animateTo(1);
+                        if (mounted) setState(() {});
                       },
                       child: Container(
                         decoration: BoxDecoration(
@@ -400,7 +406,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          'نقشه راه',
+                          'اهداف',
                           style: TextStyle(
                             fontFamily: 'Vazirmatn',
                             fontSize: 13,
@@ -415,6 +421,23 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
               ),
             ),
 
+            // 2. Polaris Hero (Dynamic active goal vs empty templates - only on Goals tab: Index 1)
+            if (_tabController.index == 1) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: isLoading
+                    ? const RitmoSkeletonCard()
+                    : _buildHeroSection(activeGoals, stepsByGoal, engineOutput, colors, isDarkMode),
+              ),
+              Divider(
+                height: 16,
+                thickness: 1,
+                indent: 16,
+                endIndent: 16,
+                color: colors.border.withValues(alpha: 0.3),
+              ),
+            ],
+
             // Skeletons / Tab views
             Expanded(
               child: isLoading
@@ -425,47 +448,46 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                   : TabBarView(
                       controller: _tabController,
                       children: [
-                        // Tab 1: Goals Card List or Tree View
-                        if (_controller.showTreeView) GoalsTreeSection(
-                                goals: activeGoals,
-                                stepsByGoal: stepsByGoal,
-                                progressMap: engineOutput?.goalProgress ?? {},
-                                routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
-                                routines: routines,
-                                onRefresh: () => _controller.reload(force: true),
-                                onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
-                                onDeleteGoal: (goalId) async {
-                                  await GoalsRepository.instance.deleteGoal(goalId);
-                                },
-                                onEditGoal: (goal) {
-                                  _showCreateGoalSheet(editGoal: goal);
-                                },
-                              ) else GoalsCardListSection(
-                                goals: goals,
-                                stepsByGoal: stepsByGoal,
-                                progressMap: engineOutput?.goalProgress ?? {},
-                                routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
-                                routines: routines,
-                                courses: courses,
-                                onRefresh: () => _controller.reload(force: true),
-                                onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
-                                onDeleteGoal: (goalId) async {
-                                  await GoalsRepository.instance.deleteGoal(goalId);
-                                },
-                                onEditGoal: (goal) {
-                                  _showCreateGoalSheet(editGoal: goal);
-                                },
-                              ),
-
-                        // Tab 2: Timeline (Roadmap)
-                        GoalsTimelineSection(
+                        // Tab 0: Planning Horizons (Prompt 072)
+                        PlanningScreen(
+                          embedded: true,
                           upcomingTimeline: engineOutput?.upcomingTimeline ?? [],
-                          overdueSteps: engineOutput?.overdueSteps ?? [],
-                          goals: goals,
-                          onRefresh: () => _controller.reload(force: true),
-                          onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
-                          onEditGoal: (goal) => _showCreateGoalSheet(editGoal: goal),
                         ),
+
+                        // Tab 1: Goals Card List or Tree View
+                        if (_controller.showTreeView)
+                          GoalsTreeSection(
+                            goals: activeGoals,
+                            stepsByGoal: stepsByGoal,
+                            progressMap: engineOutput?.goalProgress ?? {},
+                            routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
+                            routines: routines,
+                            onRefresh: () => _controller.reload(force: true),
+                            onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
+                            onDeleteGoal: (goalId) async {
+                              await GoalsRepository.instance.deleteGoal(goalId);
+                            },
+                            onEditGoal: (goal) {
+                              _showCreateGoalSheet(editGoal: goal);
+                            },
+                          )
+                        else
+                          GoalsCardListSection(
+                            goals: goals,
+                            stepsByGoal: stepsByGoal,
+                            progressMap: engineOutput?.goalProgress ?? {},
+                            routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
+                            routines: routines,
+                            courses: courses,
+                            onRefresh: () => _controller.reload(force: true),
+                            onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
+                            onDeleteGoal: (goalId) async {
+                              await GoalsRepository.instance.deleteGoal(goalId);
+                            },
+                            onEditGoal: (goal) {
+                              _showCreateGoalSheet(editGoal: goal);
+                            },
+                          ),
                       ],
                     ),
             ),

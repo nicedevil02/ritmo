@@ -225,7 +225,13 @@ class MovementRepository {
   /// Delete movement event.
   Future<void> deleteEvent(String id) async {
     final db = await _db;
-    await db.delete('workout_logs', where: 'id = ?', whereArgs: [id]);
+
+    await db.transaction((txn) async {
+      await txn.delete('workout_exercise_logs', where: 'session_id = ?', whereArgs: [id]);
+      await txn.delete('workout_logs', where: 'id = ?', whereArgs: [id]);
+      // Re-evaluate PR entries associated with deleted log
+      await txn.delete('movement_pr', where: 'event_id = ?', whereArgs: [id]);
+    });
 
     RitmoEventBus().fire(RitmoEvent(
       type: RitmoEventType.workoutLogChanged.code,

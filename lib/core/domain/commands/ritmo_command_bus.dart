@@ -18,6 +18,9 @@ class RitmoCommandBus {
   final Map<String, RitmoCommand> _registry = {};
 
   void register(RitmoCommand command) {
+    if (_registry.containsKey(command.id)) {
+      throw StateError('Duplicate command registration ID: "${command.id}". Each command ID must be unique.');
+    }
     _registry[command.id] = command;
   }
 
@@ -39,8 +42,8 @@ class RitmoCommandBus {
     return _registry.values.where((c) => persona.commandIds.contains(c.id)).toList();
   }
 
-  Future<PlanPreview> preview(CommandPlan plan, {required String personaId}) async {
-    final db = await DatabaseHelper.instance.database;
+  Future<PlanPreview> preview(CommandPlan plan, {required String personaId, DatabaseExecutor? executor}) async {
+    final exec = executor ?? await DatabaseHelper.instance.database;
     final persona = PersonaRegistry.instance.getPersona(personaId);
     
     if (persona == null) {
@@ -72,7 +75,7 @@ class RitmoCommandBus {
       // Parameter validation
       for (final entry in cmd.params.entries) {
         final val = step.payload[entry.key];
-        final error = await entry.value.validate(val, db);
+        final error = await entry.value.validate(val, exec);
         if (error != null) {
           blockers.add(error);
         }
@@ -91,7 +94,7 @@ class RitmoCommandBus {
           source: CommandSource.assistant,
           personaId: personaId,
           now: now,
-          txn: db,
+          txn: exec,
         );
         try {
           final diff = await cmd.preview(ctx);

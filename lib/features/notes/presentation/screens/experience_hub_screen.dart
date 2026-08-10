@@ -27,13 +27,24 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
-    final exps = await ExperienceRepository.instance.listAll();
-    if (mounted) {
-      setState(() {
-        _experiences = exps;
-        _isLoading = false;
-      });
+    try {
+      final exps = await ExperienceRepository.instance.listAll();
+      if (mounted) {
+        setState(() {
+          _experiences = exps;
+          _isLoading = false;
+        });
+      }
+    } catch (e, st) {
+      debugPrint('Error loading experiences in ExperienceHubScreen: $e\n$st');
+      if (mounted) {
+        setState(() {
+          _experiences = [];
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -75,7 +86,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
               context,
               MaterialPageRoute(builder: (_) => const NoteEditorScreen(isExperience: true)),
             );
-            if (mounted) _loadData();
+            if (mounted) await _loadData();
           },
           backgroundColor: colors.primary,
           icon: const Icon(CupertinoIcons.add, color: Colors.white),
@@ -154,7 +165,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                                       context,
                                       MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
                                     );
-                                    if (mounted) _loadData();
+                                    if (mounted) await _loadData();
                                   }
                                 },
                                 child: Padding(
@@ -185,7 +196,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                                               activeTrackColor: colors.primary,
                                               onChanged: (val) async {
                                                 await ExperienceRepository.instance.setActive(exp.noteId, val);
-                                                _loadData();
+                                                if (mounted) await _loadData();
                                               },
                                             ),
                                           ],

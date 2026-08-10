@@ -8,12 +8,34 @@ import 'package:ritmo/features/supplementary_sports/movement/data/seed/movement_
 import 'package:sqflite/sqflite.dart';
 
 class SeedService {
+  static const int currentSeedVersion = 1;
+
   static Future<void> seedAll(Database db) async {
+    try {
+      final rows = await db.query('app_settings', where: "key = 'seed_version'");
+      if (rows.isNotEmpty) {
+        final version = int.tryParse(rows.first['value']?.toString() ?? '0') ?? 0;
+        if (version >= currentSeedVersion) return;
+      }
+    } catch (_) {}
+
     await seedSettings(db);
     await seedWorshipPractices(db);
     await seedIranCities(db);
     await seedSupplementarySports(db);
     await MovementKindsSeed.seed(db);
+
+    try {
+      await db.insert(
+        'app_settings',
+        {
+          'key': 'seed_version',
+          'value': currentSeedVersion.toString(),
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (_) {}
   }
 
   static Future<void> seedSettings(Database db) async {

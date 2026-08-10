@@ -4,11 +4,12 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/commands/command_plan.dart';
+import 'package:ritmo/core/domain/commands/ritmo_command.dart';
+import 'package:ritmo/core/domain/commands/ritmo_command_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
 import 'package:ritmo/features/assistant/logic/day_plan_validator.dart';
-import 'package:ritmo/features/assistant/models/assistant_models.dart';
 import 'package:ritmo/features/assistant/models/day_plan_models.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/ai_day_planner_preview_sheet.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -89,48 +90,46 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
   }
 
   Future<void> _saveWeeklyPlan() async {
-    setState(() {
-      _isSaving = true;
-    });
-
-    final groupId = 'week_plan_${DateTime.now().millisecondsSinceEpoch}';
-
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
     try {
-      for (var i = 0; i < _drafts.length; i++) {
-        final draft = _drafts[i];
-        final payload = draft.toJson();
-        payload['groupId'] = groupId;
+      final bus = RitmoCommandBus.instance;
+      final plan = CommandPlan(
+        id: 'plan_apply_week_${DateTime.now().millisecondsSinceEpoch}',
+        titleFa: 'ثبت برنامهٔ هفتگی',
+        steps: [
+          PlanStep(
+            commandId: 'planning.applyWeek',
+            payload: {
+              'drafts': _drafts.map((d) => d.toJson()).toList(),
+            },
+          ),
+        ],
+      );
 
-        final action = AssistantAction(
-          type: AssistantActionType.applyDayPlan,
-          title: 'ثبت برنامه روزانه',
-          payload: payload,
-        );
-
-        // Execute action (we wrap in custom callback to suppress toasts until final step)
-        final isLast = (i == _drafts.length - 1);
-        await AssistantActionRegistry.executeAction(
-          context,
-          action,
-          () {
-            if (isLast && mounted) {
-              Navigator.pop(context);
-              widget.onSaved();
-            }
-          },
-        );
+      final preview = await bus.preview(plan, personaId: 'goals');
+      if (!mounted) return;
+      if (preview.blockers.isNotEmpty) {
+        RitmoToast.show(context, preview.blockers.first, icon: Icons.error_outline, iconColor: Colors.red);
+        return;
       }
-    } catch (e) {
-      debugPrint('[AiWeeklyPlannerPreviewSheet] Save weekly plan failed: $e');
+
+      final result = await bus.execute(plan, personaId: 'goals', source: CommandSource.user);
+      if (!mounted) return;
+
+      if (result.success) {
+        Navigator.pop(context);
+        widget.onSaved();
+      } else {
+        RitmoToast.show(context, result.errorMessage ?? 'خطا در ثبت برنامه هفتگی ❌', icon: Icons.error_outline, iconColor: Colors.red);
+      }
+    } catch (e, st) {
+      debugPrint('[WeeklyPlan] save failed: $e\n$st');
       if (mounted) {
-        RitmoToast.show(context, 'خطا در ذخیره‌سازی برنامه هفتگی ❌');
+        RitmoToast.show(context, 'خطا در ذخیره‌سازی برنامه هفتگی ❌', icon: Icons.error_outline, iconColor: Colors.red);
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -230,13 +229,16 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(20),
                           child: InkWell(
-                            onTap: () {
-                              // Open single day planner preview sheet to edit
-                              AiDayPlannerPreviewSheet.show(
+                            onTap: () async {
+                              final edited = await AiDayPlannerPreviewSheet.showForResult(
                                 context,
                                 initialDraft: draft,
-                                onSaved: _reValidateAll,
+                                mode: DayPlannerMode.draftOnly,
                               );
+                              if (edited != null && mounted) {
+                                setState(() => _drafts[index] = edited);
+                                await _reValidateAll();
+                              }
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(16),
@@ -337,52 +339,67 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: BorderSide(color: colors.border),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            'انصراف',
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontSize: 15,
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colors.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          onPressed: _isSaving ? null : _saveWeeklyPlan,
-                          child: _isSaving
-                              ? const CupertinoActivityIndicator(color: Colors.white)
-                              : const Text(
-                                  'تأیید و ثبت برنامه‌ها',
-                                  style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                side: BorderSide(color: colors.border),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              child: Text(
+                                'انصراف',
+                                style: TextStyle(
+                                  fontFamily: 'Vazirmatn',
+                                  fontSize: 15,
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colors.primary,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              onPressed: _isSaving ? null : _saveWeeklyPlan,
+                              child: _isSaving
+                                  ? const CupertinoActivityIndicator(color: Colors.white)
+                                  : const Text(
+                                      'تأیید و ثبت برنامه‌ها',
+                                      style: TextStyle(
+                                        fontFamily: 'Vazirmatn',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'برنامهٔ هفته یک‌جا ثبت می‌شود؛ اگر مشکلی پیش بیاید هیچ روزی نیمه‌کاره ثبت نمی‌ماند.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 11,
+                          color: colors.textSecondary,
                         ),
                       ),
                     ],

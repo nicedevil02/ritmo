@@ -25,6 +25,8 @@ import 'package:ritmo/core/database/migration/migrations/migration_v83_calendar_
 import 'package:ritmo/core/database/migration/migrations/migration_v84_module_ownership.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v85_simple_tasks_title_normalized.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v86_notes.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v87_planning.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v88_audit_fixes.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -92,10 +94,10 @@ class MigrationRunner {
     MigrationV63(), // Fix active_timers schema alignment & legacy NOT NULL constraint compatibility
     MigrationV64(), // Prompt 046 goals schema migration M1-M4
     MigrationV65(), // Prompt 049 wellbeing daily table and performance indexes
-    MigrationV66(), // Prompt 048 M1: Move seeding into migration
-    MigrationV67(), // Prompt 048 M2: Additive schema for worship
-    MigrationV68(), // Prompt 048 M3: Backfill completions
-    MigrationV69(), // Prompt 050 M1, M2: Occurrence overrides and incremental columns
+    MigrationV66(),
+    MigrationV67(),
+    MigrationV68(),
+    MigrationV69(),
     MigrationV70CourseSkipReason(), // Prompt 056: Add skipReason column to course_sessions
     MigrationV71MotivationCognitive(), // Prompt 059: Motivation diagnosis, cognitive load & identity habit columns
     MigrationV72Cleanup(), // Prompt 055: Drop deprecated zones, zone_schedules & worship_seasons tables
@@ -113,12 +115,25 @@ class MigrationRunner {
     MigrationV84(),
     MigrationV85(),
     MigrationV86Notes(),
+    MigrationV87Planning(),
+    MigrationV88AuditFixes(),
   ];
 
+  static List<Migration> get debugMigrations => List.unmodifiable(_migrations);
 
   static Future<void> run(Database db, int oldVersion, int newVersion) async {
     RitmoLog.info('MigrationRunner', 'Running migrations from v$oldVersion to v$newVersion');
-    for (final migration in _migrations) {
+
+    final sorted = [..._migrations]..sort((a, b) => a.version.compareTo(b.version));
+
+    final seen = <int>{};
+    for (final m in sorted) {
+      if (!seen.add(m.version)) {
+        throw StateError('Duplicate migration version: ${m.version}');
+      }
+    }
+
+    for (final migration in sorted) {
       if (migration.version > oldVersion && migration.version <= newVersion) {
         try {
           await migration.up(db);

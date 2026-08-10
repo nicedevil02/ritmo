@@ -31,6 +31,9 @@ class EngineRegistry {
   final Map<Type, CachedEngine> _registry = {};
 
   void register(CachedEngine engine) {
+    if (_registry.containsKey(engine.runtimeType)) {
+      throw StateError('Duplicate engine registration for ${engine.runtimeType}. Each engine type must be registered once.');
+    }
     _registry[engine.runtimeType] = engine;
   }
 

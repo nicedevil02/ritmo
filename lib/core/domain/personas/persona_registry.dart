@@ -92,7 +92,26 @@ class PersonaRegistry {
       displayName: 'دستیار اهداف و برنامه‌ها',
       systemPromptKey: 'system_prompt_goals',
       reads: {DataDomain.goals, DataDomain.routines},
-      commandIds: {'goal.create', 'goal.edit', 'goal.completeStep', 'app.openPage', 'assistant.handoff', 'goal.decompose', 'goal.archive'},
+      commandIds: {
+        'goal.create',
+        'goal.edit',
+        'goal.completeStep',
+        'app.openPage',
+        'assistant.handoff',
+        'goal.decompose',
+        'goal.archive',
+        'planning.applyWeek',
+        'planning.createCycle',
+        'planning.closeCycle',
+        'planning.addCommitment',
+        'planning.dropCommitment',
+        'planning.moveAllocation',
+        'planning.splitCommitment',
+        'planning.lockAllocation',
+        'planning.setDayLight',
+        'planning.materializeDay',
+      },
+      handoffHint: 'برنامهٔ هفته، برنامهٔ ماه، تعهد، ظرفیت، «هفته‌م رو بچین»',
     ));
 
     register(AssistantPersona(

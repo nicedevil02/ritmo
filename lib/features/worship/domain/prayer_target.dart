@@ -23,27 +23,27 @@ class PrayerTarget {
     String groupKey = 'FAJR';
     List<String> practiceIds = [item.sourceId];
 
-    if (item.id.endsWith(':dhuhr_asr')) {
+    if (item.id.contains(':dhuhr_asr')) {
       groupKey = 'DHUHR_ASR';
       practiceIds = ['wp_dhuhr', 'wp_asr'];
-    } else if (item.id.endsWith(':maghrib_isha')) {
+    } else if (item.id.contains(':maghrib_isha')) {
       groupKey = 'MAGHRIB_ISHA';
       practiceIds = ['wp_maghrib', 'wp_isha'];
-    } else if (item.id.endsWith(':dhuhr')) {
+    } else if (item.id.contains(':dhuhr')) {
       groupKey = 'DHUHR';
       practiceIds = [item.sourceId];
-    } else if (item.id.endsWith(':asr')) {
+    } else if (item.id.contains(':asr')) {
       groupKey = 'ASR';
       practiceIds = [item.sourceId];
-    } else if (item.id.endsWith(':maghrib')) {
+    } else if (item.id.contains(':maghrib')) {
       groupKey = 'MAGHRIB';
       practiceIds = [item.sourceId];
-    } else if (item.id.endsWith(':isha')) {
+    } else if (item.id.contains(':isha')) {
       groupKey = 'ISHA';
       practiceIds = [item.sourceId];
     } else {
       // Try to infer from title or sourceId for fajr
-      if (item.sourceId.contains('fajr')) groupKey = 'FAJR';
+      if (item.sourceId.contains('fajr') || item.id.contains('fajr')) groupKey = 'FAJR';
     }
 
     final date = DateTime.tryParse(item.dateStr) ?? DateTime.now();

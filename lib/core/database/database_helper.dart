@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:ritmo/core/database/legacy_database_recovery.dart';
 import 'package:ritmo/core/database/migration/migration_runner.dart';
 import 'package:ritmo/core/database/schema/schema_manager.dart';
@@ -20,50 +18,66 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 86;
+  static const int _dbVersion = 88;
+  static int get dbVersionForTest => _dbVersion;
 
   @visibleForTesting
   static set databaseInstance(Database? db) => _database = db;
+  static Database? get rawDatabase => _database;
 
   static Completer<Database>? _dbInitCompleter;
 
   Future<Database> get database async {
-    if (_database != null && _database!.isOpen) return _database!;
-    if (_dbInitCompleter != null) return _dbInitCompleter!.future;
+    final existing = _database;
+    if (existing != null && existing.isOpen) return existing;
 
-    _dbInitCompleter = Completer<Database>();
+    // Reset dead/closed database reference (P0-02)
+    if (existing != null && !existing.isOpen) {
+      _database = null;
+      _dbInitCompleter = null;
+    }
+
+    final inFlight = _dbInitCompleter;
+    if (inFlight != null) return inFlight.future;
+
+    final completer = Completer<Database>();
+    _dbInitCompleter = completer;
+    completer.future.ignore();
+
     try {
       final db = await _initDB('ritmo.db');
       _database = db;
-      _dbInitCompleter!.complete(db);
+      completer.complete(db);
       return db;
     } catch (e, st) {
-      _dbInitCompleter?.completeError(e, st);
       _dbInitCompleter = null;
+      _database = null;
+      completer.completeError(e, st);
       rethrow;
     }
   }
 
-  /// Explicitly warms up background database tasks and seed verification.
+  /// Explicitly warms up background database tasks and seed verification (BOOT-07).
   static Future<void> warmUp(Database db) async {
     try {
       await SeedService.seedSupplementarySports(db);
-      _checkDailySweep(db);
+      await _checkDailySweep(db);
     } catch (e, st) {
       RitmoLog.error('DatabaseHelper', 'Warmup error', e, st);
     }
   }
 
-  static void _checkDailySweep(Database db) {
-    final todayStr = DateTime.now().toIso8601String().split('T').first;
-    db.query('app_settings', where: "key = 'last_worship_sweep_date'").then((rows) {
+  static Future<void> _checkDailySweep(Database db) async {
+    final todayStr = DayKey.from(DateTime.now()).value;
+    try {
+      final rows = await db.query('app_settings', where: "key = 'last_worship_sweep_date'");
       final lastDate = rows.isNotEmpty ? rows.first['value'] as String? : null;
       if (lastDate != todayStr) {
-        EndOfDaySweep.runSweep(db);
+        await EndOfDaySweep.runSweep(db);
       }
-    }).catchError((e, st) {
+    } catch (e, st) {
       RitmoLog.error('DatabaseHelper', 'Daily sweep error', e, st);
-    });
+    }
   }
 
   Future<Database> _initDB(String filePath) async {
@@ -73,7 +87,9 @@ class DatabaseHelper {
         options: OpenDatabaseOptions(
           version: _dbVersion,
           onCreate: _createDB,
+          onConfigure: _onConfigure,
           onUpgrade: onUpgrade,
+          onDowngrade: _onDowngrade,
         ),
       );
     } else {
@@ -86,29 +102,33 @@ class DatabaseHelper {
           onCreate: _createDB,
           onConfigure: _onConfigure,
           onUpgrade: onUpgrade,
+          onDowngrade: _onDowngrade,
         );
       } catch (e, st) {
-        RitmoLog.error('DatabaseHelper', 'Database open failed ($e). Quarantining file and creating fresh database', e, st);
-        final dbFile = File(path);
-        if (await dbFile.exists()) {
-          try {
-            final docsDir = await getApplicationDocumentsDirectory();
-            final timestamp = DateTime.now().millisecondsSinceEpoch;
-            final corruptPath = join(docsDir.path, 'ritmo_corrupt_open_$timestamp.db');
-            await dbFile.rename(corruptPath);
-          } catch (_) {
-            if (await dbFile.length() == 0) {
-              await dbFile.delete();
-            }
+        final errStr = e.toString().toLowerCase();
+        final isCorrupt = e is DatabaseException &&
+            (errStr.contains('malformed') ||
+                errStr.contains('not a database') ||
+                errStr.contains('encrypted'));
+
+        if (isCorrupt) {
+          RitmoLog.error('DatabaseHelper', 'Database corruption detected ($e). Quarantining file and creating fresh database', e, st);
+          final dbFile = File(path);
+          if (await dbFile.exists()) {
+            await LegacyDatabaseRecovery.quarantineCorruptFile(dbFile, 'open_failed_corrupt');
           }
+          return await openDatabase(
+            path,
+            version: _dbVersion,
+            onCreate: _createDB,
+            onConfigure: _onConfigure,
+            onUpgrade: onUpgrade,
+            onDowngrade: _onDowngrade,
+          );
+        } else {
+          RitmoLog.error('DatabaseHelper', 'Database open error non-fatal rethrow', e, st);
+          rethrow;
         }
-        return await openDatabase(
-          path,
-          version: _dbVersion,
-          onCreate: _createDB,
-          onConfigure: _onConfigure,
-          onUpgrade: onUpgrade,
-        );
       }
     }
   }
@@ -122,7 +142,15 @@ class DatabaseHelper {
     await MigrationRunner.run(db, oldVersion, newVersion);
   }
 
+  Future<void> _onDowngrade(Database db, int oldVersion, int newVersion) async {
+    RitmoLog.warning(
+      'DatabaseHelper',
+      'Downgrade detected: db=$oldVersion app=$newVersion. Keeping data as-is.',
+    );
+  }
+
   Future<void> _onConfigure(Database db) async {
+    await db.execute('PRAGMA foreign_keys = ON;');
     await db.rawQuery('PRAGMA journal_mode=WAL;');
     await db.rawQuery('PRAGMA synchronous=NORMAL;');
   }
@@ -133,69 +161,79 @@ class DatabaseHelper {
     required String notificationType,
     DatabaseExecutor? executor,
   }) async {
-    final exec = executor ?? await database;
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    await exec.insert('notification_history', {
-      'id': 'notif_${nowMs}_${routineId ?? "sys"}',
-      'routineId': routineId,
-      'notificationType': notificationType,
-      'sentAt': nowMs,
-      'actionTaken': actionTaken,
-    });
+    try {
+      final exec = executor ?? await database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      await exec.insert(
+        'notification_history',
+        {
+          'id': 'notif_${nowMs}_${routineId ?? "sys"}',
+          'routineId': routineId,
+          'notificationType': notificationType,
+          'sentAt': nowMs,
+          'actionTaken': actionTaken,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e, st) {
+      RitmoLog.error('DatabaseHelper', 'Failed to log notification event', e, st);
+    }
   }
 
   Future<void> addFastingDebtIfNeeded(DatabaseExecutor db, String dateStr) async {
-    final consentQuery = await db.query(
-      'app_settings',
-      where: 'key = ?',
-      whereArgs: ['cycle_consent_worship'],
-    );
-    if (consentQuery.isEmpty || consentQuery.first['value'].toString().toLowerCase() != 'true') {
-      return;
+    try {
+      final consentQuery = await db.query(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: ['cycle_consent_worship'],
+      );
+      if (consentQuery.isEmpty || consentQuery.first['value'].toString().toLowerCase() != 'true') {
+        return;
+      }
+
+      final activePeriods = await db.query(
+        'cycle_periods',
+        where: 'startDate <= ? AND (endDate IS NULL OR endDate >= ?)',
+        whereArgs: [dateStr, dateStr],
+      );
+      if (activePeriods.isEmpty) {
+        return;
+      }
+
+      final activePeriod = activePeriods.first;
+      final periodId = activePeriod['id']?.toString() ?? 'period';
+      final rawStart = activePeriod['startDate'] as String?;
+      final rawEnd = activePeriod['endDate'] as String?;
+
+      final startDateClean = (rawStart != null && rawStart.length >= 10) ? rawStart.substring(0, 10) : dateStr;
+      final endDateClean = (rawEnd != null && rawEnd.length >= 10) ? rawEnd.substring(0, 10) : dateStr;
+
+      final startKey = DayKey.tryParse(startDateClean) ?? DayKey.from(DateTime.now());
+      final endKey = DayKey.tryParse(endDateClean) ?? DayKey.from(DateTime.now());
+      final daysOwed = (endKey.differenceInDays(startKey) + 1).clamp(1, 30);
+
+      final debtId = 'fast_debt_$periodId';
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      await db.insert(
+        'fasting_debt',
+        {
+          'id': debtId,
+          'dateIso': dateStr,
+          'daysOwed': daysOwed,
+          'isResolved': 0,
+          'reason': 'عذر شرعی (دوره ماهانه)',
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e, st) {
+      RitmoLog.error('DatabaseHelper', 'addFastingDebtIfNeeded error', e, st);
     }
-
-    final activePeriods = await db.query(
-      'cycle_periods',
-      where: 'startDate <= ? AND (endDate IS NULL OR endDate >= ?)',
-      whereArgs: [dateStr, dateStr],
-    );
-    if (activePeriods.isEmpty) {
-      return;
-    }
-
-    final activePeriod = activePeriods.first;
-    final periodId = activePeriod['id']?.toString() ?? 'period';
-    final startDateStr = activePeriod['startDate']! as String;
-    final endDateStr = (activePeriod['endDate'] as String?) ?? dateStr;
-
-    final debtId = 'fast_debt_$periodId';
-    final existingDebt = await db.query(
-      'fasting_debt',
-      where: 'id = ? OR dateIso = ?',
-      whereArgs: [debtId, dateStr],
-    );
-    if (existingDebt.isNotEmpty) {
-      return;
-    }
-
-    final startKey = DayKey.parse(startDateStr);
-    final endKey = DayKey.parse(endDateStr);
-    final daysOwed = endKey.differenceInDays(startKey) + 1;
-
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    await db.insert('fasting_debt', {
-      'id': debtId,
-      'dateIso': dateStr,
-      'daysOwed': daysOwed,
-      'isResolved': 0,
-      'reason': 'عذر شرعی (دوره ماهانه)',
-      'createdAt': nowMs,
-      'updatedAt': nowMs,
-    });
   }
 
-  /// Fetches user gender ('FEMALE' or 'MALE') from app_settings, ss_user_profile, or SharedPreferences.
-  Future<String> getUserGender({DatabaseExecutor? executor}) async {
+  /// Fetches user gender ('FEMALE', 'MALE', or null if unknown) from app_settings, ss_user_profile, or SharedPreferences.
+  Future<String?> getUserGender({DatabaseExecutor? executor}) async {
     final exec = executor ?? await database;
     try {
       final genderQuery = await exec.query('app_settings', where: 'key = ?', whereArgs: ['user_gender']);
@@ -222,14 +260,14 @@ class DatabaseHelper {
     } catch (e, st) {
       RitmoLog.error('DatabaseHelper', 'Error getting user gender', e, st);
     }
-    return 'MALE';
+    return null;
   }
 
   Future<bool> isUserMenstruating({DatabaseExecutor? executor}) async {
     final exec = executor ?? await database;
     
-    final genderQuery = await exec.query('app_settings', where: 'key = ?', whereArgs: ['user_gender']);
-    if (genderQuery.isEmpty || genderQuery.first['value'].toString().toUpperCase() != 'FEMALE') {
+    final gender = await getUserGender(executor: exec);
+    if (gender != 'FEMALE') {
       return false;
     }
     
@@ -238,7 +276,7 @@ class DatabaseHelper {
       return false;
     }
     
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    final todayStr = DayKey.from(DateTime.now()).value;
     final activePeriods = await exec.query(
       'cycle_periods',
       where: 'startDate <= ? AND (endDate IS NULL OR endDate >= ?)',
@@ -286,7 +324,11 @@ class DatabaseHelper {
   }
 
   Future<void> close() async {
-    final db = await database;
-    await db.close();
+    final db = _database;
+    _database = null;
+    _dbInitCompleter = null;
+    if (db != null && db.isOpen) {
+      await db.close();
+    }
   }
 }

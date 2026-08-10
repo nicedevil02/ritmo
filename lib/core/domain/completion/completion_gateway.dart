@@ -415,6 +415,7 @@ class CompletionGateway {
           await db.delete('konkur_study_logs', where: 'id = ?', whereArgs: [idPayload]);
           return CompletionOutcome.success();
 
+        case 'prayer':
         case 'worship':
           final success = await WorshipCompletionRepository.instance.undo(idPayload);
           return success ? CompletionOutcome.success() : CompletionOutcome.failure('توکن لغو عبادت یافت نشد');

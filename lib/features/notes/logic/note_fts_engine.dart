@@ -82,6 +82,12 @@ class NoteFtsEngine {
   }) async {
     final trimmed = rawQuery.trim();
     if (trimmed.isEmpty) {
+      if (kind != null) {
+        return NotesRepository.instance.listByKind(kind);
+      }
+      if (tag != null && tag.isNotEmpty) {
+        return NotesRepository.instance.listByTag(tag);
+      }
       return NotesRepository.instance.listRecent(limit: limit, offset: offset);
     }
 

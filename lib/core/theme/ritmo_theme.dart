@@ -8,6 +8,7 @@ import 'package:ritmo/core/theme/ritmo_behavior.dart';
 import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_module_colors.dart';
 import 'package:ritmo/core/theme/ritmo_palette.dart';
+import 'package:ritmo/core/theme/palettes/jade_noir.dart';
 
 export 'package:ritmo/core/theme/ritmo_behavior.dart';
 export 'package:ritmo/core/theme/ritmo_colors.dart';
@@ -637,7 +638,12 @@ class RitmoGlassCardLight extends StatelessWidget {
 }
 
 extension RitmoThemeExtension on BuildContext {
-  RitmoColors get colors => Theme.of(this).extension<RitmoColors>()!;
+  RitmoColors get colors {
+    final c = Theme.of(this).extension<RitmoColors>();
+    assert(c != null, 'RitmoColors extension is not registered in BuildContext theme.');
+    return c ?? kJadeNoirDark;
+  }
+  RitmoColors get ritmoColors => colors;
   RitmoModuleColors get modules => colors.modules;
   RitmoBehavior get behavior =>
       Theme.of(this).extension<RitmoBehavior>() ?? const RitmoBehavior(reduceTransparency: false);

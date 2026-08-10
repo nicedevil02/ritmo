@@ -69,8 +69,12 @@ class DayPlanTables {
       await db.execute('''
         CREATE TABLE IF NOT EXISTS day_plan_templates (
           id TEXT PRIMARY KEY,
-          title TEXT NOT NULL,
-          plan_json TEXT NOT NULL,
+          name TEXT NOT NULL,
+          title TEXT,
+          plan_json TEXT,
+          itemsJson TEXT NOT NULL DEFAULT '[]',
+          useCount INTEGER NOT NULL DEFAULT 0,
+          lastUsedAt INTEGER,
           created_at INTEGER NOT NULL DEFAULT 0,
           createdAt INTEGER NOT NULL DEFAULT 0,
           updated_at INTEGER NOT NULL DEFAULT 0,
@@ -83,6 +87,10 @@ class DayPlanTables {
       final lowerTemplateCols = rawTemplateCols.map((n) => n.toLowerCase()).toSet();
 
       final templateAdditions = <String, String>{
+        'name': "TEXT NOT NULL DEFAULT ''",
+        'itemsJson': "TEXT NOT NULL DEFAULT '[]'",
+        'useCount': "INTEGER NOT NULL DEFAULT 0",
+        'lastUsedAt': "INTEGER",
         'created_at': "INTEGER NOT NULL DEFAULT 0",
         'createdAt': "INTEGER NOT NULL DEFAULT 0",
         'updated_at': "INTEGER NOT NULL DEFAULT 0",

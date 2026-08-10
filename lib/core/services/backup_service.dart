@@ -132,7 +132,7 @@ class BackupService {
   static Uint8List _deriveKey(String password, Uint8List salt) {
     final hmac = HMac(SHA256Digest(), 64);
     final derivator = PBKDF2KeyDerivator(hmac);
-    final params = Pbkdf2Parameters(salt, 10000, 32); // 10,000 iterations for mobile performance
+    final params = Pbkdf2Parameters(salt, 100000, 32); // 100,000 iterations for secure key derivation
     derivator.init(params);
     return derivator.process(Uint8List.fromList(utf8.encode(password)));
   }

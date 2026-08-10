@@ -22,22 +22,38 @@ class DayKey implements Comparable<DayKey> {
     return DayKey._(trimmed);
   }
 
+  static DayKey? tryParse(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final m = RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(value.trim());
+    if (m == null) return null;
+    final y = int.tryParse(m.group(1)!);
+    final mo = int.tryParse(m.group(2)!);
+    final d = int.tryParse(m.group(3)!);
+    if (y == null || mo == null || d == null) return null;
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    final yearStr = y.toString().padLeft(4, '0');
+    final monthStr = mo.toString().padLeft(2, '0');
+    final dayStr = d.toString().padLeft(2, '0');
+    return DayKey._('$yearStr-$monthStr-$dayStr');
+  }
+
   DayKey addDays(int days) {
-    final dt = toDateTime();
+    final dt = toUtcDateTime();
     final newDt = dt.add(Duration(days: days));
     return DayKey.from(newDt);
   }
 
   int differenceInDays(DayKey other) {
-    final a = toDateTime();
-    final b = other.toDateTime();
+    final a = toUtcDateTime();
+    final b = other.toUtcDateTime();
     return a.difference(b).inDays;
   }
 
   bool isBefore(DayKey other) => value.compareTo(other.value) < 0;
   bool isAfter(DayKey other) => value.compareTo(other.value) > 0;
 
-  DateTime toDateTime() {
+  /// UTC midnight - for internal date math and database storage
+  DateTime toUtcDateTime() {
     final parts = value.split('-');
     return DateTime.utc(
       int.parse(parts[0]),
@@ -45,6 +61,19 @@ class DayKey implements Comparable<DayKey> {
       int.parse(parts[2]),
     );
   }
+
+  /// Local midnight - for UI display, scheduling, and local comparisons
+  DateTime toLocalDateTime() {
+    final parts = value.split('-');
+    return DateTime(
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+      int.parse(parts[2]),
+    );
+  }
+
+  @Deprecated('Ambiguous. Use toUtcDateTime() or toLocalDateTime().')
+  DateTime toDateTime() => toUtcDateTime();
 
   @override
   int compareTo(DayKey other) => value.compareTo(other.value);

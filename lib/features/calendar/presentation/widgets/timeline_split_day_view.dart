@@ -44,6 +44,14 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
   late final ScrollController _sharedScrollController;
   late final ScrollController _singleColumnController;
 
+  final GlobalKey _morningGridKey = GlobalKey();
+  final GlobalKey _afternoonGridKey = GlobalKey();
+  final GlobalKey _singleGridKey = GlobalKey();
+
+  String? _draggingItemId;
+  int? _previewStartMinutes;
+  int _previewDurationMinutes = 30;
+
   @override
   void initState() {
     super.initState();
@@ -151,6 +159,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
     required BuildContext context,
     required SplitDayRange range,
     required HourAxisSide side,
+    required GlobalKey gridKey,
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -165,16 +174,35 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
 
     return DragTarget<AgendaItem>(
       onWillAcceptWithDetails: (details) => true,
-      onAcceptWithDetails: (details) {
-        final renderBox = context.findRenderObject() as RenderBox?;
+      onMove: (details) {
+        final renderBox = gridKey.currentContext?.findRenderObject() as RenderBox?;
         if (renderBox == null) return;
         final localOffset = renderBox.globalToLocal(details.offset);
-        final scrollOffset = _sharedScrollController.hasClients ? _sharedScrollController.offset : 0.0;
-        final localY = localOffset.dy + scrollOffset;
-
-        final rawMinutes = ((localY / CalendarTokens.pxPerMinuteSplit) + range.startMinutes).round();
+        final rawMinutes = ((localOffset.dy / CalendarTokens.pxPerMinuteSplit) + range.startMinutes).round();
         final dur = DurationBounds.sanitize(details.data.durationMinutes);
         final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
+
+        if (_previewStartMinutes != snappedStart || _draggingItemId != details.data.id) {
+          setState(() {
+            _draggingItemId = details.data.id;
+            _previewStartMinutes = snappedStart;
+            _previewDurationMinutes = dur;
+          });
+        }
+      },
+      onAcceptWithDetails: (details) {
+        final renderBox = gridKey.currentContext?.findRenderObject() as RenderBox?;
+        final localOffset = renderBox != null
+            ? renderBox.globalToLocal(details.offset)
+            : Offset.zero;
+        final rawMinutes = ((localOffset.dy / CalendarTokens.pxPerMinuteSplit) + range.startMinutes).round();
+        final dur = DurationBounds.sanitize(details.data.durationMinutes);
+        final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
+
+        setState(() {
+          _draggingItemId = null;
+          _previewStartMinutes = null;
+        });
 
         if (details.data.isTimed) {
           widget.onItemMove?.call(details.data, snappedStart);
@@ -186,6 +214,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
         return Stack(
           children: [
             TimelineGrid(
+              key: gridKey,
               items: widget.items,
               isToday: widget.isToday,
               rangeStartMinutes: range.startMinutes,
@@ -198,6 +227,22 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
               sleepStartMinutes: widget.sleepStartMinutes,
               sleepEndMinutes: widget.sleepEndMinutes,
               highlightedItemId: widget.highlightedItemId,
+              previewDraggingItemId: _draggingItemId,
+              previewStartMinutes: _previewStartMinutes,
+              previewDurationMinutes: _previewDurationMinutes,
+              onDragStarted: (item, startM, durM) {
+                setState(() {
+                  _draggingItemId = item.id;
+                  _previewStartMinutes = startM;
+                  _previewDurationMinutes = durM;
+                });
+              },
+              onDragCanceled: () {
+                setState(() {
+                  _draggingItemId = null;
+                  _previewStartMinutes = null;
+                });
+              },
               onItemTap: widget.onItemTap,
               onItemMove: widget.onItemMove,
               onItemResize: widget.onItemResize,
@@ -246,26 +291,84 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
       builder: (context, constraints) {
         if (constraints.maxWidth < CalendarTokens.splitMinScreenWidth) {
           // Fallback to single column timeline for narrow screens
-          return SingleChildScrollView(
-            controller: _singleColumnController,
-            padding: EdgeInsets.only(bottom: paddingBottom),
-            child: TimelineGrid(
-              items: widget.items,
-              isToday: widget.isToday,
-              rangeStartMinutes: 0,
-              rangeEndMinutes: 1440,
-              pxPerMinute: CalendarTokens.pxPerMinute,
-              hourAxisWidth: CalendarTokens.hourAxisWidth,
-              sleepStartMinutes: widget.sleepStartMinutes,
-              sleepEndMinutes: widget.sleepEndMinutes,
-              highlightedItemId: widget.highlightedItemId,
-              onItemTap: widget.onItemTap,
-              onItemMove: widget.onItemMove,
-              onItemResize: widget.onItemResize,
-              onSlotTap: widget.onSlotTap,
-              onScheduleUntimed: widget.onScheduleUntimed,
-              onOverflowTap: widget.onOverflowTap,
-            ),
+          return DragTarget<AgendaItem>(
+            onWillAcceptWithDetails: (details) => true,
+            onMove: (details) {
+              final renderBox = _singleGridKey.currentContext?.findRenderObject() as RenderBox?;
+              if (renderBox == null) return;
+              final localOffset = renderBox.globalToLocal(details.offset);
+              final rawMinutes = (localOffset.dy / CalendarTokens.pxPerMinute).round();
+              final dur = DurationBounds.sanitize(details.data.durationMinutes);
+              final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
+
+              if (_previewStartMinutes != snappedStart || _draggingItemId != details.data.id) {
+                setState(() {
+                  _draggingItemId = details.data.id;
+                  _previewStartMinutes = snappedStart;
+                  _previewDurationMinutes = dur;
+                });
+              }
+            },
+            onAcceptWithDetails: (details) {
+              final renderBox = _singleGridKey.currentContext?.findRenderObject() as RenderBox?;
+              final localOffset = renderBox != null
+                  ? renderBox.globalToLocal(details.offset)
+                  : Offset.zero;
+              final rawMinutes = (localOffset.dy / CalendarTokens.pxPerMinute).round();
+              final dur = DurationBounds.sanitize(details.data.durationMinutes);
+              final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
+
+              setState(() {
+                _draggingItemId = null;
+                _previewStartMinutes = null;
+              });
+
+              if (details.data.isTimed) {
+                widget.onItemMove?.call(details.data, snappedStart);
+              } else {
+                widget.onScheduleUntimed?.call(details.data, snappedStart, dur);
+              }
+            },
+            builder: (context, candidateData, rejectedData) {
+              return SingleChildScrollView(
+                controller: _singleColumnController,
+                padding: EdgeInsets.only(bottom: paddingBottom),
+                child: TimelineGrid(
+                  key: _singleGridKey,
+                  items: widget.items,
+                  isToday: widget.isToday,
+                  rangeStartMinutes: 0,
+                  rangeEndMinutes: 1440,
+                  pxPerMinute: CalendarTokens.pxPerMinute,
+                  hourAxisWidth: CalendarTokens.hourAxisWidth,
+                  sleepStartMinutes: widget.sleepStartMinutes,
+                  sleepEndMinutes: widget.sleepEndMinutes,
+                  highlightedItemId: widget.highlightedItemId,
+                  previewDraggingItemId: _draggingItemId,
+                  previewStartMinutes: _previewStartMinutes,
+                  previewDurationMinutes: _previewDurationMinutes,
+                  onDragStarted: (item, startM, durM) {
+                    setState(() {
+                      _draggingItemId = item.id;
+                      _previewStartMinutes = startM;
+                      _previewDurationMinutes = durM;
+                    });
+                  },
+                  onDragCanceled: () {
+                    setState(() {
+                      _draggingItemId = null;
+                      _previewStartMinutes = null;
+                    });
+                  },
+                  onItemTap: widget.onItemTap,
+                  onItemMove: widget.onItemMove,
+                  onItemResize: widget.onItemResize,
+                  onSlotTap: widget.onSlotTap,
+                  onScheduleUntimed: widget.onScheduleUntimed,
+                  onOverflowTap: widget.onOverflowTap,
+                ),
+              );
+            },
           );
         }
 
@@ -320,6 +423,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                             context: context,
                             range: SplitDayRange.morning,
                             side: HourAxisSide.leading,
+                            gridKey: _morningGridKey,
                           ),
                         ),
                         SizedBox(
@@ -348,6 +452,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                             context: context,
                             range: SplitDayRange.afternoon,
                             side: HourAxisSide.leading,
+                            gridKey: _afternoonGridKey,
                           ),
                         ),
                       ],

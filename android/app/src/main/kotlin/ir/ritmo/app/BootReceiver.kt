@@ -280,7 +280,7 @@ class BootReceiver : BroadcastReceiver() {
         } else {
             val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
             val digestMode = prefs.getString("flutter.notif_digest_mode", "false") == "true"
-            val maxNonEssential = prefs.getInt("flutter.notif_max_non_essential_per_hour", 3)
+            val maxNonEssential = prefs.getSafeInt("flutter.notif_max_non_essential_per_hour", 3)
 
             var isRateLimited = false
             synchronized(BootReceiver::class.java) {
@@ -374,14 +374,14 @@ class BootReceiver : BroadcastReceiver() {
                 notificationManager.notify(nonEssentialNotifId, builder.build())
             } else {
                 // Digest mode active: Increment digest counter in prefs
-                var digestCount = prefs.getInt("flutter.digest_notif_count", 0)
+                var digestCount = prefs.getSafeInt("flutter.digest_notif_count", 0)
                 digestCount++
-                prefs.edit().putInt("flutter.digest_notif_count", digestCount).apply()
+                prefs.edit().putLong("flutter.digest_notif_count", digestCount.toLong()).apply()
             }
 
             // Calculate total count for the summary
             val summaryCount = if (digestMode) {
-                prefs.getInt("flutter.digest_notif_count", 1)
+                prefs.getSafeInt("flutter.digest_notif_count", 1)
             } else {
                 var count = 1
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -434,6 +434,20 @@ class BootReceiver : BroadcastReceiver() {
             }
 
             notificationManager.notify(SUMMARY_NOTIF_ID, summaryBuilder.build())
+        }
+    }
+
+    private fun android.content.SharedPreferences.getSafeInt(key: String, defaultValue: Int = 0): Int {
+        return try {
+            val all = this.all
+            val v = all[key]
+            when (v) {
+                is Number -> v.toInt()
+                is String -> v.toIntOrNull() ?: defaultValue
+                else -> defaultValue
+            }
+        } catch (e: Exception) {
+            defaultValue
         }
     }
 }

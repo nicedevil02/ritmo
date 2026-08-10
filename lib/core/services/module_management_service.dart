@@ -216,8 +216,13 @@ class ModuleManagementService {
           case 'module_goals_enabled':
             await safeDelete('goals');
             await safeDelete('goal_steps');
+            await safeDelete('planning_reviews');
+            await safeDelete('planning_allocations');
+            await safeDelete('planning_commitments');
+            await safeDelete('planning_cycles');
             await safeDeleteSettingsLike('goals_%');
             await safeDeleteSettingsLike('goal_%');
+            await safeDeleteSettingsLike('planning_%');
             break;
 
           case 'module_assistant_enabled':

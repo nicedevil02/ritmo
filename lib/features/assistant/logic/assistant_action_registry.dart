@@ -10,6 +10,7 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/domain/engines/routine_occurrence_generator.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/assistant/logic/day_plan_template_service.dart';
@@ -1150,147 +1151,17 @@ class AssistantActionRegistry {
       case AssistantActionType.applyDayPlan:
         final planDate = action.payload['planDate']?.toString() ?? DateTime.now().toIso8601String().substring(0, 10);
         final items = action.payload['items'] as List? ?? [];
-        final nowMs = DateTime.now().millisecondsSinceEpoch;
-
-        final createdRoutineIds = <String>[];
-        final createdWorshipIds = <String>[];
-        final updatedWorshipIds = <String>[];
-        final updatedSleepSettings = <String>[];
+        final groupId = action.payload['groupId']?.toString() ?? 'day_plan_${DateTime.now().millisecondsSinceEpoch}';
 
         try {
+          final draft = DayPlanDraft.fromJson(Map<String, dynamic>.from(action.payload));
           await db.transaction((txn) async {
-            for (final rawItem in items) {
-              final item = Map<String, dynamic>.from(rawItem as Map);
-              final targetModule = item['targetModule']?.toString() ?? '';
-              final title = item['title']?.toString() ?? '';
-
-              if (targetModule == 'worship') {
-                final existing = await txn.query('worship_practices', 
-                  where: 'title = ? AND isActive = 1', 
-                  whereArgs: [title]);
-
-                if (existing.isEmpty) {
-                  final id = 'worship_${nowMs}_${math.Random().nextInt(99999)}';
-                  final practiceType = item['category']?.toString().toUpperCase() == 'DHIKR' 
-                      ? 'DHIKR' 
-                      : (item['category']?.toString().toUpperCase() == 'QURAN' ? 'QURAN' : 'MUSTAHAB');
-                  await txn.insert('worship_practices', {
-                    'id': id,
-                    'practiceType': practiceType,
-                    'subType': 'CUSTOM',
-                    'title': title,
-                    'dailyTarget': 1,
-                    'dailyDone': 0,
-                    'reminderEnabled': 1,
-                    'reminderTime': item['resolvedTime'] ?? '09:00',
-                    'reminderFrequency': 'DAILY',
-                    'reminderAnchor': item['startKind'] == 'anchor' ? item['anchorEvent'] : 'NONE',
-                    'reminderOffsetMinutes': item['offsetMin'] ?? 0,
-                    'reminderTimes': jsonEncode([item['resolvedTime'] ?? '09:00']),
-                    'isActive': 1,
-                    'notes': item['note'] ?? '',
-                    'dailyDoneDate': planDate,
-                    'createdAt': nowMs,
-                    'updatedAt': nowMs,
-                  });
-                  createdWorshipIds.add(id);
-                } else {
-                  final existingId = existing.first['id']! as String;
-                  await txn.update('worship_practices', {
-                    'reminderTime': item['resolvedTime'] ?? '09:00',
-                    'reminderAnchor': item['startKind'] == 'anchor' ? item['anchorEvent'] : 'NONE',
-                    'reminderOffsetMinutes': item['offsetMin'] ?? 0,
-                    'reminderTimes': jsonEncode([item['resolvedTime'] ?? '09:00']),
-                    'updatedAt': nowMs,
-                  }, where: 'id = ?', whereArgs: [existingId]);
-                  updatedWorshipIds.add(existingId);
-                }
-              } else if (targetModule == 'sleep' || title.contains('بیدار')) {
-                await txn.insert('app_settings', {
-                  'key': 'sleep_target_wake',
-                  'value': item['resolvedTime'] ?? '07:00',
-                  'updatedAt': nowMs,
-                }, conflictAlgorithm: ConflictAlgorithm.replace);
-                updatedSleepSettings.add('sleep_target_wake');
-              } else {
-                final routineId = 'routine_${nowMs}_${math.Random().nextInt(99999)}';
-                final itemType = item['recurrence'] == 'daily' ? 'ROUTINE' : 'TASK';
-
-                final categoryMap = {
-                  'work': 'work',
-                  'fitness': 'fitness',
-                  'health': 'health',
-                  'study': 'study',
-                  'personal': 'personal',
-                  'worship': 'worship'
-                };
-                final categoryStr = categoryMap[item['category']?.toString().toLowerCase()] ?? 'personal';
-
-                final routineData = {
-                  'id': routineId,
-                  'title': title,
-                  'description': item['note']?.toString(),
-                  'category': categoryStr,
-                  'routineType': itemType == 'ROUTINE' ? 'timeBased' : 'asNeeded',
-                  'notificationLevel': 'normal',
-                  'isEssential': 0,
-                  'isEssentialLocked': 0,
-                  'energyRule': 'NONE',
-                  'priority': 1.0,
-                  'targetDurationMinutes': item['durationMin'] ?? 30,
-                  'lightDurationMinutes': 0,
-                  'minimalDurationMinutes': 0,
-                  'isArchived': 0,
-                  'isPrivate': 0,
-                  'displayOrder': 1,
-                  'createdAt': nowMs,
-                  'updatedAt': nowMs,
-                  'itemType': itemType,
-                  'reminderOffsetMinutes': 0,
-                };
-
-                final scheduleData = {
-                  'id': 'sched_$routineId',
-                  'routineId': routineId,
-                  'scheduleType': itemType == 'TASK' ? 'DAILY' : 'RECURRENCE',
-                  'timeOfDay': item['resolvedTime'] ?? '08:00',
-                  'daysOfWeek': '6,7,1,2,3,4,5',
-                  'recurrenceRule': jsonEncode({
-                    'weekdays': [1, 2, 3, 4, 5, 6, 7],
-                    'startDate': planDate,
-                  }),
-                  'createdAt': nowMs,
-                  'updatedAt': nowMs,
-                };
-
-                await txn.insert('routines', routineData);
-                await txn.insert('routine_schedules', scheduleData);
-
-                final rule = RecurrenceRule.fromMap({
-                  'weekdays': [1, 2, 3, 4, 5, 6, 7],
-                  'startDate': DateTime.tryParse(planDate) ?? DateTime.now(),
-                  'reminderTimes': [item['resolvedTime'] ?? '08:00'],
-                });
-                await RoutineOccurrenceGenerator.generateFutureOccurrences(txn, routineId, rule);
-                createdRoutineIds.add(routineId);
-              }
-            }
-
-            final commitId = 'commit_$nowMs';
-            final groupId = action.payload['groupId']?.toString();
-            final commitData = {
-              'id': commitId,
-              'commitDate': planDate,
-              'createdItemIds': jsonEncode({
-                'routines': createdRoutineIds,
-                'worship': createdWorshipIds,
-                'updatedWorship': updatedWorshipIds,
-                'sleep': updatedSleepSettings,
-              }),
-              'createdAt': nowMs,
-              'groupId': groupId,
-            };
-            await txn.insert('day_plan_commits', commitData);
+            await DayPlanApplyExecutor.applyWithTxn(
+              txn: txn,
+              draft: draft,
+              groupId: groupId,
+              now: DateTime.now(),
+            );
           });
 
           RitmoEvents.notifyRoutineChanged();
@@ -1451,5 +1322,244 @@ class AssistantActionRegistry {
         RitmoToast.show(context, 'خطا در بازگردانی برنامه ❌');
       }
     }
+  }
+}
+
+class DayPlanApplyOutcome {
+  const DayPlanApplyOutcome({
+    required this.commitIds,
+    required this.undoTokens,
+  });
+  final List<String> commitIds;
+  final List<String> undoTokens;
+}
+
+class DayPlanApplyExecutor {
+  static Future<DayPlanApplyOutcome> applyWithTxn({
+    required DatabaseExecutor txn,
+    required DayPlanDraft draft,
+    required String groupId,
+    required DateTime now,
+  }) async {
+    final nowMs = now.millisecondsSinceEpoch;
+    final planDate = draft.planDate;
+
+    final createdRoutineIds = <String>[];
+    final createdWorshipIds = <String>[];
+    final updatedWorshipIds = <String>[];
+    final updatedSleepSettings = <String>[];
+    final createdTaskIds = <String>[];
+    final undoTokens = <String>[];
+
+    for (final item in draft.items) {
+      final targetModule = item.targetModule ?? '';
+      final title = item.title;
+      final recurrence = item.recurrence.toLowerCase();
+
+      if (targetModule == 'worship') {
+        final existing = await txn.query('worship_practices', 
+          where: 'title = ? AND isActive = 1', 
+          whereArgs: [title]);
+
+        if (existing.isEmpty) {
+          final id = 'worship_${nowMs}_${math.Random().nextInt(99999)}';
+          final practiceType = item.category?.toUpperCase() == 'DHIKR' 
+              ? 'DHIKR' 
+              : (item.category?.toUpperCase() == 'QURAN' ? 'QURAN' : 'MUSTAHAB');
+          await txn.insert('worship_practices', {
+            'id': id,
+            'practiceType': practiceType,
+            'subType': 'CUSTOM',
+            'title': title,
+            'dailyTarget': 1,
+            'dailyDone': 0,
+            'reminderEnabled': 1,
+            'reminderTime': item.resolvedTime ?? '09:00',
+            'reminderFrequency': 'DAILY',
+            'reminderAnchor': item.startKind == 'anchor' ? item.anchorEvent : 'NONE',
+            'reminderOffsetMinutes': item.offsetMin ?? 0,
+            'reminderTimes': jsonEncode([item.resolvedTime ?? '09:00']),
+            'isActive': 1,
+            'notes': item.note ?? '',
+            'dailyDoneDate': planDate,
+            'createdAt': nowMs,
+            'updatedAt': nowMs,
+          });
+          createdWorshipIds.add(id);
+          undoTokens.add('worship:$id');
+        } else {
+          final existingId = existing.first['id']! as String;
+          await txn.update('worship_practices', {
+            'reminderTime': item.resolvedTime ?? '09:00',
+            'reminderAnchor': item.startKind == 'anchor' ? item.anchorEvent : 'NONE',
+            'reminderOffsetMinutes': item.offsetMin ?? 0,
+            'reminderTimes': jsonEncode([item.resolvedTime ?? '09:00']),
+            'updatedAt': nowMs,
+          }, where: 'id = ?', whereArgs: [existingId]);
+          updatedWorshipIds.add(existingId);
+        }
+      } else if (targetModule == 'sleep' || title.contains('بیدار')) {
+        await txn.insert('app_settings', {
+          'key': 'sleep_target_wake',
+          'value': item.resolvedTime ?? '07:00',
+          'updatedAt': nowMs,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        updatedSleepSettings.add('sleep_target_wake');
+      } else if (recurrence == 'oneoff') {
+        // A-06: oneOff items become simple tasks
+        final taskId = 'task_${nowMs}_${math.Random().nextInt(99999)}';
+        await txn.insert('simple_tasks', {
+          'id': taskId,
+          'title': title,
+          'note': item.note,
+          'isDone': 0,
+          'dueDate': planDate,
+          'dueTime': item.resolvedTime ?? '08:00',
+          'origin': 'DAY_PLAN',
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        });
+        createdTaskIds.add(taskId);
+        undoTokens.add('task:$taskId');
+      } else {
+        final routineId = 'routine_${nowMs}_${math.Random().nextInt(99999)}';
+        final itemType = recurrence == 'daily' ? 'ROUTINE' : 'TASK';
+
+        final categoryMap = {
+          'work': 'work',
+          'fitness': 'fitness',
+          'health': 'health',
+          'study': 'study',
+          'personal': 'personal',
+          'worship': 'worship'
+        };
+        final categoryStr = categoryMap[item.category?.toLowerCase()] ?? 'personal';
+
+        final routineData = {
+          'id': routineId,
+          'title': title,
+          'description': item.note,
+          'category': categoryStr,
+          'routineType': itemType == 'ROUTINE' ? 'timeBased' : 'asNeeded',
+          'notificationLevel': 'normal',
+          'isEssential': 0,
+          'isEssentialLocked': 0,
+          'energyRule': 'NONE',
+          'priority': 1.0,
+          'targetDurationMinutes': item.durationMin ?? 30,
+          'lightDurationMinutes': 0,
+          'minimalDurationMinutes': 0,
+          'isArchived': 0,
+          'isPrivate': 0,
+          'displayOrder': 1,
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+          'itemType': itemType,
+          'reminderOffsetMinutes': 0,
+        };
+
+        final scheduleData = {
+          'id': 'sched_$routineId',
+          'routineId': routineId,
+          'scheduleType': itemType == 'TASK' ? 'DAILY' : 'RECURRENCE',
+          'timeOfDay': item.resolvedTime ?? '08:00',
+          'daysOfWeek': '6,7,1,2,3,4,5',
+          'recurrenceRule': jsonEncode({
+            'weekdays': [1, 2, 3, 4, 5, 6, 7],
+            'startDate': planDate,
+          }),
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        };
+
+        await txn.insert('routines', routineData);
+        await txn.insert('routine_schedules', scheduleData);
+
+        final rule = RecurrenceRule.fromMap({
+          'weekdays': [1, 2, 3, 4, 5, 6, 7],
+          'startDate': DateTime.tryParse(planDate) ?? DateTime.now(),
+          'reminderTimes': [item.resolvedTime ?? '08:00'],
+        });
+        await RoutineOccurrenceGenerator.generateFutureOccurrences(txn, routineId, rule);
+        createdRoutineIds.add(routineId);
+        undoTokens.add('routine:$routineId');
+      }
+    }
+
+    final commitId = 'commit_${nowMs}_${math.Random().nextInt(99999)}';
+    final commitData = {
+      'id': commitId,
+      'commitDate': planDate,
+      'date_iso': planDate,
+      'plan_json': jsonEncode(draft.toJson()),
+      'createdItemIds': jsonEncode({
+        'routines': createdRoutineIds,
+        'worship': createdWorshipIds,
+        'tasks': createdTaskIds,
+        'updatedWorship': updatedWorshipIds,
+        'sleep': updatedSleepSettings,
+      }),
+      'createdAt': nowMs,
+      'created_at': nowMs,
+      'updatedAt': nowMs,
+      'updated_at': nowMs,
+      'groupId': groupId,
+    };
+    await txn.insert('day_plan_commits', commitData);
+
+    return DayPlanApplyOutcome(
+      commitIds: [commitId],
+      undoTokens: undoTokens,
+    );
+  }
+}
+
+class AssistantUndoBridge {
+  static Future<void> undoDayPlanGroup(dynamic ctxOrDb, String groupId) async {
+    final DatabaseExecutor txn = (ctxOrDb is AgentCommandContext)
+        ? ctxOrDb.txn
+        : (ctxOrDb is DatabaseExecutor ? ctxOrDb : await DatabaseHelper.instance.database);
+
+    final commits = await txn.query(
+      'day_plan_commits',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+    );
+    final routines = <String>[];
+    final worship = <String>[];
+    final tasks = <String>[];
+    final commitIdsToDelete = <String>[];
+
+    for (final c in commits) {
+      commitIdsToDelete.add(c['id'] as String);
+      final createdItemIds = jsonDecode(c['createdItemIds'] as String? ?? '{}') as Map<String, dynamic>;
+      routines.addAll(List<String>.from(createdItemIds['routines'] ?? []));
+      worship.addAll(List<String>.from(createdItemIds['worship'] ?? []));
+      tasks.addAll(List<String>.from(createdItemIds['tasks'] ?? []));
+    }
+
+    for (final id in routines) {
+      await RitmoExecutionKernel.instance.execute(
+        DeleteRoutineCommand(routineId: id),
+      );
+    }
+    for (final id in worship) {
+      await txn.delete('worship_practices', where: 'id = ?', whereArgs: [id]);
+    }
+    for (final id in tasks) {
+      await txn.delete('simple_tasks', where: 'id = ?', whereArgs: [id]);
+    }
+    for (final cid in commitIdsToDelete) {
+      await txn.delete('day_plan_commits', where: 'id = ?', whereArgs: [cid]);
+    }
+
+    for (final id in routines) {
+      RitmoEventBus().fire(RitmoEvent(
+        type: 'RoutineDeleted',
+        timestamp: DateTime.now(),
+        payload: {'routineId': id},
+      ));
+    }
+    RitmoEvents.notifyRoutineChanged();
   }
 }

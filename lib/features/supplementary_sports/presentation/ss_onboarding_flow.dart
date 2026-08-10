@@ -77,7 +77,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       try {
         final g = await DatabaseHelper.instance.getUserGender();
         if (g == 'FEMALE' || g == 'MALE') {
-          _selectedGender = g;
+          _selectedGender = g!;
         }
       } catch (_) {}
 

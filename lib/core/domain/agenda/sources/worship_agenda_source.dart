@@ -40,8 +40,8 @@ class WorshipAgendaSource {
         db: db,
       );
     }
-    final prayerPractices = await db.query('worship_practices', where: 'practiceType = ?', whereArgs: ['OBLIGATORY_PRAYER']);
-    final mustahabPractices = await db.query('worship_practices', where: 'practiceType != ?', whereArgs: ['OBLIGATORY_PRAYER']);
+    final prayerPractices = await db.query('worship_practices', where: 'practiceType = ?', whereArgs: ['PRAYER']);
+    final mustahabPractices = await db.query('worship_practices', where: 'practiceType != ?', whereArgs: ['PRAYER']);
     final worshipDebts = await db.query('worship_debts');
 
     return WorshipAgendaSource(
@@ -141,7 +141,7 @@ class WorshipAgendaSource {
       final start = _parseDateTime(dateStr, prayerTimes['fajr']);
       final end = _parseDateTime(dateStr, prayerTimes['sunrise']);
       items.add(AgendaItem(
-        id: 'prayer:$id',
+        id: 'prayer:$id:$dateStr',
         domain: AgendaDomain.prayer,
         sourceId: id,
         title: fajr['title'] as String? ?? 'نماز صبح',
@@ -172,7 +172,7 @@ class WorshipAgendaSource {
         final start = _parseDateTime(dateStr, prayerTimes['dhuhr']);
         final end = _parseDateTime(dateStr, prayerTimes['asr']);
         items.add(AgendaItem(
-          id: 'prayer:$id:dhuhr',
+          id: 'prayer:$id:dhuhr:$dateStr',
           domain: AgendaDomain.prayer,
           sourceId: id,
           title: dhuhr['title'] as String? ?? 'نماز ظهر',
@@ -197,7 +197,7 @@ class WorshipAgendaSource {
         final start = _parseDateTime(dateStr, prayerTimes['asr']);
         final end = _parseDateTime(dateStr, prayerTimes['maghrib']);
         items.add(AgendaItem(
-          id: 'prayer:$id:asr',
+          id: 'prayer:$id:asr:$dateStr',
           domain: AgendaDomain.prayer,
           sourceId: id,
           title: asr['title'] as String? ?? 'نماز عصر',
@@ -227,7 +227,7 @@ class WorshipAgendaSource {
         final start = _parseDateTime(dateStr, prayerTimes['dhuhr']);
         final end = _parseDateTime(dateStr, prayerTimes['maghrib']);
         items.add(AgendaItem(
-          id: 'prayer:${id}:dhuhr_asr',
+          id: 'prayer:${id}:dhuhr_asr:$dateStr',
           domain: AgendaDomain.prayer,
           sourceId: id,
           title: 'نماز ظهر و عصر',
@@ -259,7 +259,7 @@ class WorshipAgendaSource {
         final start = _parseDateTime(dateStr, prayerTimes['maghrib']);
         final end = _parseDateTime(dateStr, prayerTimes['isha']);
         items.add(AgendaItem(
-          id: 'prayer:$id:maghrib',
+          id: 'prayer:$id:maghrib:$dateStr',
           domain: AgendaDomain.prayer,
           sourceId: id,
           title: maghrib['title'] as String? ?? 'نماز مغرب',
@@ -284,7 +284,7 @@ class WorshipAgendaSource {
         final start = _parseDateTime(dateStr, prayerTimes['isha']);
         final end = _parseDateTime(dateStr, prayerTimes['midnightShari'], nextDayIfBefore: true, referenceTime: start);
         items.add(AgendaItem(
-          id: 'prayer:$id:isha',
+          id: 'prayer:$id:isha:$dateStr',
           domain: AgendaDomain.prayer,
           sourceId: id,
           title: isha['title'] as String? ?? 'نماز عشا',
@@ -314,7 +314,7 @@ class WorshipAgendaSource {
         final start = _parseDateTime(dateStr, prayerTimes['maghrib']);
         final end = _parseDateTime(dateStr, prayerTimes['midnightShari'], nextDayIfBefore: true, referenceTime: start);
         items.add(AgendaItem(
-          id: 'prayer:${id}:maghrib_isha',
+          id: 'prayer:${id}:maghrib_isha:$dateStr',
           domain: AgendaDomain.prayer,
           sourceId: id,
           title: 'نماز مغرب و عشا',
@@ -344,7 +344,7 @@ class WorshipAgendaSource {
       final completion = status?.isDone == true ? AgendaCompletion.done : AgendaCompletion.pending;
 
       items.add(AgendaItem(
-        id: 'prayer:$id',
+        id: 'prayer:$id:$dateStr',
         domain: AgendaDomain.prayer,
         sourceId: id,
         title: p['title'] as String? ?? '',
@@ -553,7 +553,7 @@ class WorshipAgendaSource {
 
       for (final resolvedTime in resolvedTimes) {
         items.add(AgendaItem(
-          id: resolvedTimes.length > 1 ? 'mustahab:$id:$resolvedTime' : 'mustahab:$id',
+          id: resolvedTimes.length > 1 ? 'mustahab:$id:$resolvedTime:$dateStr' : 'mustahab:$id:$dateStr',
           domain: AgendaDomain.mustahab,
           sourceId: id,
           title: p['title'] as String? ?? '',
@@ -577,7 +577,7 @@ class WorshipAgendaSource {
       final remaining = dbt['remainingCount'] as int? ?? 0;
       if (remaining <= 0) continue;
       items.add(AgendaItem(
-        id: 'worshipDebt:$id',
+        id: 'worshipDebt:$id:$dateStr',
         domain: AgendaDomain.worshipDebt,
         sourceId: id,
         title: dbt['title'] as String? ?? 'قضا',

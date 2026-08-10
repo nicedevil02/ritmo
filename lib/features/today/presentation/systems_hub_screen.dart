@@ -420,6 +420,80 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
 
   static void _handleAvatarError(dynamic exception, StackTrace? stackTrace) {}
 
+  Widget _buildCategoryHeader(String title, RitmoColors colors) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 4,
+          height: 16,
+          decoration: BoxDecoration(
+            color: const Color(0xffEC4899),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+            fontFamily: 'Vazirmatn',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSideBySideCategorySection({
+    required String rightTitle,
+    required List<Widget> rightCards,
+    required String leftTitle,
+    required List<Widget> leftCards,
+    required RitmoColors colors,
+  }) {
+    final hasRight = rightCards.isNotEmpty;
+    final hasLeft = leftCards.isNotEmpty;
+
+    if (!hasRight && !hasLeft) return const SizedBox.shrink();
+
+    if (hasRight && !hasLeft) {
+      return _buildCategorySection(title: rightTitle, cards: rightCards, colors: colors);
+    }
+
+    if (!hasRight && hasLeft) {
+      return _buildCategorySection(title: leftTitle, cards: leftCards, colors: colors);
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCategoryHeader(rightTitle, colors),
+              const SizedBox(height: 12),
+              ...rightCards.map((card) => AspectRatio(aspectRatio: 1.0, child: card)),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCategoryHeader(leftTitle, colors),
+              const SizedBox(height: 12),
+              ...leftCards.map((card) => AspectRatio(aspectRatio: 1.0, child: card)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildCategorySection({
     required String title,
     required List<Widget> cards,
@@ -429,28 +503,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 4,
-              height: 16,
-              decoration: BoxDecoration(
-                color: const Color(0xffEC4899),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-                fontFamily: 'Vazirmatn',
-              ),
-            ),
-          ],
-        ),
+        _buildCategoryHeader(title, colors),
         const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 2,
@@ -707,9 +760,13 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
         const SizedBox(height: 24),
         _buildCategorySection(title: 'رشد و برنامه‌ریزی', cards: growthCards, colors: colors),
         const SizedBox(height: 24),
-        _buildCategorySection(title: 'توازن و معنویت', cards: spiritualityCards, colors: colors),
-        const SizedBox(height: 24),
-        _buildCategorySection(title: 'بستر هوشمند', cards: assistantCards, colors: colors),
+        _buildSideBySideCategorySection(
+          rightTitle: 'توازن و معنویت',
+          rightCards: spiritualityCards,
+          leftTitle: 'بستر هوشمند',
+          leftCards: assistantCards,
+          colors: colors,
+        ),
       ],
     );
   }
@@ -755,6 +812,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
         illustrationAsset.contains('sports_card_top.png') || 
         illustrationAsset.contains('assistant_card_top.png') || 
         illustrationAsset.contains('energy_card_top.png') || 
+        illustrationAsset.contains('notes_card_top.png') || 
+        illustrationAsset.contains('reflection_card_top.png') || 
         illustrationAsset.contains('cycle_card_top.png')) {
       imageAsset = illustrationAsset;
     } else {

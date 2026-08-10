@@ -11,6 +11,7 @@ import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'package:ritmo/features/health/data/pregnancy_repository.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/kick_session_tracker.dart';
 import 'package:sqflite/sqflite.dart';
 
 class PregnancySection extends StatefulWidget {
@@ -1045,7 +1046,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
                   statusColor = colors.textSecondary;
                   statusIcon = Icons.info_outline;
                   statusLabel = 'شمارش کامل شد اما بیش از حد معمول طول کشید';
-                } else if (count < 10 && durationMins >= 120) {
+                } else if (count < KickSessionTracker.targetCount && durationMins >= 120) {
                   statusColor = colors.warning;
                   statusIcon = Icons.warning_amber_rounded;
                   statusLabel = 'حرکات کمتر از حد انتظار بود؛ با پزشک خود تماس بگیرید';

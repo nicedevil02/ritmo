@@ -1,5 +1,5 @@
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
-import 'package:ritmo/core/domain/commands/catalog/command_manifest.dart';
+import 'package:ritmo/core/domain/commands/command_manifest.dart';
 import 'package:ritmo/core/ai/personas/assistant_charters.dart';
 
 class PersonaPromptBuilder {

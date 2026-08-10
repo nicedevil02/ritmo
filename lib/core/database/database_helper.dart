@@ -18,11 +18,12 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 89;
+  static const int _dbVersion = 90;
   static int get dbVersionForTest => _dbVersion;
 
   @visibleForTesting
   static set databaseInstance(Database? db) => _database = db;
+  void overrideDatabaseForTesting(Database db) => _database = db;
   static Database? get rawDatabase => _database;
 
   static Completer<Database>? _dbInitCompleter;

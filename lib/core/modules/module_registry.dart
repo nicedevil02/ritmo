@@ -131,6 +131,13 @@ class ModuleRegistry {
       icon: Icons.trending_up_rounded,
       defaultEnabled: false,
     ),
+    ModuleDescriptor(
+      key: 'module_notes_enabled',
+      titleFa: 'دفترچه و تجربه‌ها',
+      oneLineFa: 'یادداشت، ایده و درس‌هایی که از زندگی گرفته‌ای',
+      icon: Icons.menu_book_rounded,
+      defaultEnabled: false,
+    ),
   ];
 
   static ModuleDescriptor? findByKey(String key) {

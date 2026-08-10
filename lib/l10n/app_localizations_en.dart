@@ -1116,4 +1116,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cyclePregnancyDeactivate => 'Return to Normal Mode';
+
+  @override
+  String get pregnancyMedicalDisclaimer =>
+      'This application is not a medical tool and does not replace professional medical advice. In any concerning situation, contact a doctor or midwife.';
 }

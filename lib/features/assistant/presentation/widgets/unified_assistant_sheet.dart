@@ -1,21 +1,36 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shamsi_date/shamsi_date.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/ai/memory/assistant_memory_binding.dart';
+import 'package:ritmo/core/ai/personas/persona_prompt_builder.dart';
+import 'package:ritmo/core/ai/personas/persona_inference_profile.dart';
+import 'package:ritmo/core/ai/personas/persona_response_validator.dart';
+import 'package:ritmo/core/ai/personas/persona_skill.dart';
+import 'package:ritmo/core/ai/brief/persona_context_provider.dart';
+import 'package:ritmo/core/ai/brief/domain_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/sleep_brief.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/domain/commands/command_plan.dart';
-import 'package:ritmo/core/domain/commands/command_audit.dart';
 import 'package:ritmo/core/domain/commands/ritmo_command_bus.dart';
+import 'package:ritmo/core/domain/commands/command_manifest.dart';
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
 import 'package:ritmo/features/assistant/models/assistant_models.dart';
+import 'package:ritmo/features/chat/presentation/widgets/streaming_message_bubble.dart';
 
-/// Unified Assistant Sheet replacing all 11 repetitive assistant sheet implementations.
+/// Unified Assistant Sheet with iOS26 Glassmorphic Window, Speech-to-Text,
+/// StreamingMessageBubble, Swipe-to-Delete, and Copy animations matching Main Assistant.
 class AssistantSheet extends StatefulWidget {
   const AssistantSheet({
     super.key,
@@ -35,6 +50,7 @@ class AssistantSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (context) => AssistantSheet(
         persona: persona,
         initialQuery: initialQuery,
@@ -49,21 +65,30 @@ class AssistantSheet extends StatefulWidget {
 class _AssistantSheetState extends State<AssistantSheet> {
   final TextEditingController _chatController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Map<String, dynamic>> _messages = [];
+  final List<ChatMessage> _messages = [];
 
   bool _isTyping = false;
   bool _isStreaming = false;
-  String _domainContext = '';
   StreamSubscription<String>? _streamSubscription;
 
   bool _canUndoLast = false;
   String? _lastPlanId;
 
+  DomainBrief? _primaryBrief;
+  List<PersonaSkill> _relevantSkills = [];
+
+  final Map<String, Timer> _pendingDeleteTimers = {};
+
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _isSpeechAvailable = false;
+  bool _isListening = false;
+
   @override
   void initState() {
     super.initState();
-    _loadDomainContext();
+    _loadOpeningMove();
     _checkLastPlan();
+    _initSpeech();
     if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _sendMessage(widget.initialQuery);
@@ -74,9 +99,88 @@ class _AssistantSheetState extends State<AssistantSheet> {
   @override
   void dispose() {
     _streamSubscription?.cancel();
+    for (final timer in _pendingDeleteTimers.values) {
+      timer.cancel();
+    }
     _chatController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initSpeech() async {
+    try {
+      final available = await _speech.initialize(
+        onStatus: (status) {
+          if (status == 'notListening' && mounted) {
+            setState(() {
+              _isListening = false;
+            });
+          }
+        },
+        onError: (error) {
+          debugPrint('[AssistantSheet] Speech error: $error');
+        },
+      );
+      if (mounted) {
+        setState(() {
+          _isSpeechAvailable = available;
+        });
+      }
+    } catch (e) {
+      debugPrint('[AssistantSheet] Speech initialization failed: $e');
+    }
+  }
+
+  Future<void> _startListening() async {
+    if (!_isSpeechAvailable) {
+      await _initSpeech();
+    }
+    if (_isSpeechAvailable) {
+      setState(() {
+        _isListening = true;
+      });
+      unawaited(HapticFeedback.mediumImpact());
+      try {
+        await _speech.listen(
+          onResult: (result) {
+            if (mounted) {
+              setState(() {
+                _chatController.text = result.recognizedWords;
+              });
+            }
+          },
+          listenOptions: stt.SpeechListenOptions(localeId: 'fa_IR'),
+        );
+      } catch (e) {
+        debugPrint('[AssistantSheet] Speech listen error: $e');
+      }
+    }
+  }
+
+  Future<void> _stopListening() async {
+    if (_isListening) {
+      await _speech.stop();
+      setState(() {
+        _isListening = false;
+      });
+      unawaited(HapticFeedback.lightImpact());
+
+      final text = _chatController.text.trim();
+      if (text.isNotEmpty) {
+        unawaited(_sendMessage(text));
+      }
+    }
+  }
+
+  Future<void> _loadOpeningMove() async {
+    final brief = await PersonaContextProvider.getPrimaryBrief(widget.persona);
+    final skills = PersonaSkill.getSkillsForPersona(widget.persona.id, brief);
+    if (mounted) {
+      setState(() {
+        _primaryBrief = brief;
+        _relevantSkills = skills;
+      });
+    }
   }
 
   Future<void> _checkLastPlan() async {
@@ -95,13 +199,13 @@ class _AssistantSheetState extends State<AssistantSheet> {
         final settingsRows = await db.query('app_settings', where: 'key = ?', whereArgs: ['ai_undo_window_hours'], limit: 1);
         final hours = settingsRows.isNotEmpty ? (int.tryParse(settingsRows.first['value']?.toString() ?? '24') ?? 24) : 24;
         final limit = DateTime.now().subtract(Duration(hours: hours)).millisecondsSinceEpoch;
-        if (createdAt >= limit) {
+        if (createdAt >= limit && mounted) {
           setState(() {
             _canUndoLast = true;
             _lastPlanId = plan['id'] as String;
           });
         }
-      } else {
+      } else if (mounted) {
         setState(() {
           _canUndoLast = false;
           _lastPlanId = null;
@@ -110,59 +214,33 @@ class _AssistantSheetState extends State<AssistantSheet> {
     } catch (_) {}
   }
 
-  Future<void> _loadDomainContext() async {
+  String _getTodayJalaliString() {
+    final now = Jalali.now();
+    return '${now.year}/${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}';
+  }
+
+  void _copyToClipboard(String content) {
+    Clipboard.setData(ClipboardData(text: content));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('متن با موفقیت کپی شد 📋', style: TextStyle(fontFamily: 'Vazirmatn')),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleChatAction(ChatAction action) async {
     try {
-      final db = await DatabaseHelper.instance.database;
-      final buffer = StringBuffer();
-      final p = widget.persona;
-
-      if (p.canReadDomain(DataDomain.worship)) {
-        final debts = await db.query('worship_debts', where: 'isArchived = 0 AND remainingCount > 0');
-        if (debts.isNotEmpty) {
-          buffer.writeln('- بدهی‌های عبادی: ${debts.map((d) => "${d['title']}: ${d['remainingCount']}").join(', ')}');
-        }
-      }
-
-      if (p.canReadDomain(DataDomain.goals)) {
-        final goals = await db.query('goals', where: "status = 'ACTIVE'");
-        if (goals.isNotEmpty) {
-          buffer.writeln('- اهداف فعال: ${goals.map((g) => g['title']).join(', ')}');
-        }
-      }
-
-      if (p.canReadDomain(DataDomain.courses)) {
-        final courses = await db.query('courses');
-        if (courses.isNotEmpty) {
-          buffer.writeln('- دوره‌های فعال: ${courses.map((c) => c['title']).join(', ')}');
-        }
-      }
-
-      if (p.canReadDomain(DataDomain.konkur)) {
-        final plans = await db.query('konkur_plans');
-        if (plans.isNotEmpty) {
-          buffer.writeln('- برنامه‌های کنکور: ${plans.map((k) => k['topicName']).join(', ')}');
-        }
-      }
-
-      if (p.id == 'cycle' && p.canReadDomain(DataDomain.cycle)) {
-        final logs = await db.query('cycle_day_logs', orderBy: 'logDate DESC', limit: 7);
-        if (logs.isNotEmpty) {
-          buffer.writeln('- علائم اخیر چرخه بدنی ثبت شده است.');
-        }
-      }
-
-      if (p.id == 'health' && p.canReadDomain(DataDomain.medical)) {
-        final meds = await db.query('routines', where: "category = 'medical' AND isArchived = 0");
-        if (meds.isNotEmpty) {
-          buffer.writeln('- داروهای ثبت‌شده: ${meds.map((m) => m['title']).join(', ')}');
-        }
-      }
-
-      setState(() {
-        _domainContext = buffer.toString();
-      });
+      final assistantAction = action.toAssistantAction();
+      await AssistantActionRegistry.executeAction(
+        context,
+        assistantAction,
+        () {},
+      );
     } catch (e) {
-      debugPrint('[AssistantSheet] Error loading context for persona ${widget.persona.id}: $e');
+      debugPrint('[AssistantSheet] Error handling action: $e');
     }
   }
 
@@ -172,44 +250,65 @@ class _AssistantSheetState extends State<AssistantSheet> {
 
     if (quickQuery == null) _chatController.clear();
 
+    final userMsg = ChatMessage(
+      id: 'msg_${DateTime.now().millisecondsSinceEpoch}_u',
+      sessionId: widget.persona.id,
+      role: ChatRole.user,
+      content: query,
+      timestamp: DateTime.now(),
+    );
+
     setState(() {
       _isTyping = true;
-      _messages.add({
-        'id': 'msg_${DateTime.now().millisecondsSinceEpoch}_u',
-        'role': 'user',
-        'content': query,
-      });
+      _messages.add(userMsg);
     });
 
     _scrollToBottom();
 
     try {
-      final systemPrompt = '''
-شما ${widget.persona.displayName} در برنامه ریتمو هستید.
-پاسخ‌ها را صمیمی، محترمانه، علمی و تشویق‌کننده به زبان فارسی ارائه دهید.
-
-${_domainContext.isNotEmpty ? 'اطلاعات پرونده کاربر:\n$_domainContext' : ''}
-''';
-
+      final briefJson = await PersonaContextProvider.getBriefJson(widget.persona);
       final memorySuffix = await AssistantMemoryBinding.getSystemPromptSuffix(
         domain: widget.persona.id,
         query: query,
       );
 
-      final messagesToSent = <Map<String, String>>[
-        {'role': 'system', 'content': '$systemPrompt\n$memorySuffix'},
-        ..._messages.map((m) => {'role': m['role'] as String, 'content': m['content'] as String})
+      final todayJalali = _getTodayJalaliString();
+      final systemPrompt = PersonaPromptBuilder.buildPrompt(
+        persona: widget.persona,
+        todayJalali: todayJalali,
+        briefJson: briefJson,
+        memoryBlock: memorySuffix,
+      );
+
+      final profile = PersonaInferenceProfile.getProfile(widget.persona.id);
+      debugPrint('[AssistantSheet] Persona profile maxTokens: ${profile.maxTokens}');
+
+      final messagesToSend = <Map<String, String>>[
+        {'role': 'system', 'content': systemPrompt},
+        ..._messages.map((m) => {
+              'role': m.role == ChatRole.user
+                  ? 'user'
+                  : (m.role == ChatRole.system ? 'system' : 'assistant'),
+              'content': m.content,
+            })
       ];
 
-      final stream = AIGateway.instance.sendCustomChatStream(messages: messagesToSent);
+      final stream = AIGateway.instance.sendCustomChatStream(
+        messages: messagesToSend,
+      );
 
       final assistantMsgId = 'msg_${DateTime.now().millisecondsSinceEpoch}_a';
+      final assistantMsg = ChatMessage(
+        id: assistantMsgId,
+        sessionId: widget.persona.id,
+        role: ChatRole.assistant,
+        content: '',
+        timestamp: DateTime.now(),
+        isStreaming: true,
+      );
+
       setState(() {
-        _messages.add({
-          'id': assistantMsgId,
-          'role': 'assistant',
-          'content': '',
-        });
+        _messages.add(assistantMsg);
         _isTyping = false;
         _isStreaming = true;
       });
@@ -219,54 +318,119 @@ ${_domainContext.isNotEmpty ? 'اطلاعات پرونده کاربر:\n$_domain
         (chunk) {
           if (chunk.startsWith('error:')) {
             final errorMsg = chunk.substring(6);
-            setState(() {
-              _isStreaming = false;
-              if (fullResponse.isEmpty) {
-                if (errorMsg == 'quota_exceeded') {
-                  _messages.last['content'] =
-                      'سهمیه رایگان روزانه ۱۰,۰۰۰ نورون هوش مصنوعی کلادفلر شما برای امروز به پایان رسیده است ⚠️\n\nمی‌توانید فردا مجدداً تلاش کنید یا در تنظیمات پروفایل ارائه‌دهنده را روی OpenRouter یا Zhipu AI تنظیم نمایید 🔌';
+            if (mounted) {
+              setState(() {
+                _isStreaming = false;
+                String errText;
+                if (fullResponse.isEmpty) {
+                  if (errorMsg == 'quota_exceeded') {
+                    errText =
+                        'سهمیه رایگان روزانه ۱۰,۰۰۰ نورون هوش مصنوعی کلادفلر شما برای امروز به پایان رسیده است ⚠️\n\nمی‌توانید فردا مجدداً تلاش کنید یا در تنظیمات پروفایل ارائه‌دهنده را روی OpenRouter یا Zhipu AI تنظیم نمایید 🔌';
+                  } else {
+                    errText =
+                        'متأسفانه در حال حاضر خطایی در برقراری ارتباط با سرور هوش مصنوعی رخ داده است. لطفاً اتصال فیلترشکن یا اینترنت خود را بررسی کنید 🔌';
+                  }
                 } else {
-                  _messages.last['content'] =
-                      'متأسفانه در حال حاضر خطایی در برقراری ارتباط با سرور هوش مصنوعی رخ داده است. لطفاً اتصال فیلترشکن یا اینترنت خود را بررسی کنید. همچنین می‌توانید در تنظیمات پروفایل، ارائه‌دهنده را روی OpenRouter یا Zhipu AI تنظیم نمایید 🔌';
+                  errText = '$fullResponse\n\n⚠️ [اتصال به هوش مصنوعی قطع شد]';
                 }
-              } else {
-                _messages.last['content'] =
-                    '$fullResponse\n\n⚠️ [اتصال به هوش مصنوعی قطع شد]';
-              }
-            });
+                _messages[_messages.length - 1] = ChatMessage(
+                  id: assistantMsgId,
+                  sessionId: widget.persona.id,
+                  role: ChatRole.assistant,
+                  content: errText,
+                  timestamp: DateTime.now(),
+                  isStreaming: false,
+                );
+              });
+            }
             return;
           }
 
           fullResponse += chunk;
-          setState(() {
-            _messages.last['content'] = fullResponse;
-          });
-          _scrollToBottom();
+          if (mounted) {
+            setState(() {
+              _messages[_messages.length - 1] = ChatMessage(
+                id: assistantMsgId,
+                sessionId: widget.persona.id,
+                role: ChatRole.assistant,
+                content: fullResponse,
+                timestamp: DateTime.now(),
+                isStreaming: true,
+              );
+            });
+            _scrollToBottom();
+          }
         },
         onDone: () {
-          setState(() {
-            _isStreaming = false;
-          });
+          if (mounted) {
+            setState(() {
+              _messages[_messages.length - 1] = ChatMessage(
+                id: assistantMsgId,
+                sessionId: widget.persona.id,
+                role: ChatRole.assistant,
+                content: fullResponse,
+                timestamp: DateTime.now(),
+                isStreaming: false,
+              );
+              _isStreaming = false;
+            });
+          }
           if (fullResponse.isNotEmpty && !fullResponse.startsWith('error:')) {
-            _parseAndExecuteActions(fullResponse);
+            _validateAndExecute(fullResponse);
           }
         },
         onError: (err) {
-          setState(() {
-            _isStreaming = false;
-            if (fullResponse.isEmpty) {
-              _messages.last['content'] =
-                  'خطا در برقراری ارتباط با سرور هوش مصنوعی. لطفاً اتصال اینترنت/فیلترشکن را بررسی کنید 🔌';
-            }
-          });
+          if (mounted) {
+            setState(() {
+              _isStreaming = false;
+              if (fullResponse.isEmpty) {
+                _messages[_messages.length - 1] = ChatMessage(
+                  id: assistantMsgId,
+                  sessionId: widget.persona.id,
+                  role: ChatRole.assistant,
+                  content:
+                      'خطا در برقراری ارتباط با سرور هوش مصنوعی. لطفاً اتصال اینترنت/فیلترشکن را بررسی کنید 🔌',
+                  timestamp: DateTime.now(),
+                  isStreaming: false,
+                );
+              }
+            });
+          }
         },
       );
     } catch (e) {
-      setState(() {
-        _isTyping = false;
-        _isStreaming = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _isStreaming = false;
+        });
+      }
     }
+  }
+
+  void _validateAndExecute(String fullResponse) {
+    final manifestCmdIds = CommandManifest.asPromptBlock(personaId: widget.persona.id);
+    final validator = PersonaResponseValidator();
+
+    final parsedAction = ChatActionParser.parse(fullResponse);
+    final parsedResp = ParsedAssistantResponse(
+      reply: fullResponse,
+      confidence: BriefConfidence.medium,
+      commands: parsedAction.actions.map((a) => ParsedCommand(id: a.type, payload: a.payload, labelFa: a.type)).toList(),
+    );
+
+    final validation = validator.validate(
+      res: parsedResp,
+      persona: widget.persona,
+      brief: _primaryBrief ?? SleepBrief(sampleSize: 0, computedAt: DateTime.now(), avgDurationMinutes: 0, avgQuality: 0, sleepDebtMinutes: 0, consistencyScore: 0),
+      manifestCommandIds: manifestCmdIds.split('\n').map((l) => l.split(' ').first).toList(),
+    );
+
+    if (!validation.isValid && validation.retryMessage != null) {
+      debugPrint('[PersonaResponseValidator] Validation Warning: ${validation.reason}');
+    }
+
+    unawaited(_parseAndExecuteActions(fullResponse));
   }
 
   String? _mapActionTypeToNewCommandId(AssistantActionType type) {
@@ -321,13 +485,17 @@ ${_domainContext.isNotEmpty ? 'اطلاعات پرونده کاربر:\n$_domain
           final preview = await RitmoCommandBus.instance.preview(plan, personaId: widget.persona.id);
 
           if (preview.blockers.isNotEmpty) {
-            setState(() {
-              _messages.add({
-                'id': 'msg_err_${DateTime.now().millisecondsSinceEpoch}',
-                'role': 'assistant',
-                'content': 'تعدادی خطا مانع اجرای این اقدام شد:\n${preview.blockers.join('\n')}',
+            if (mounted) {
+              setState(() {
+                _messages.add(ChatMessage(
+                  id: 'msg_err_${DateTime.now().millisecondsSinceEpoch}',
+                  sessionId: widget.persona.id,
+                  role: ChatRole.assistant,
+                  content: 'تعدادی خطا مانع اجرای این اقدام شد:\n${preview.blockers.join('\n')}',
+                  timestamp: DateTime.now(),
+                ));
               });
-            });
+            }
             return;
           }
 
@@ -336,7 +504,7 @@ ${_domainContext.isNotEmpty ? 'اطلاعات پرونده کاربر:\n$_domain
           final agentMode = settingsRows.isNotEmpty ? settingsRows.first['value']?.toString() : 'confirm';
 
           if (agentMode == 'suggest' || agentMode == 'confirm' || preview.needsBiometric) {
-            _showPreviewSheet(plan, preview);
+            if (mounted) _showPreviewSheet(plan, preview);
           } else {
             // Auto Mode
             final result = await RitmoCommandBus.instance.execute(
@@ -345,33 +513,39 @@ ${_domainContext.isNotEmpty ? 'اطلاعات پرونده کاربر:\n$_domain
               source: CommandSource.assistant,
             );
             if (result.success) {
-              setState(() {
-                _messages.add({
-                  'id': 'msg_ok_${DateTime.now().millisecondsSinceEpoch}',
-                  'role': 'assistant',
-                  'content': 'اقدامات زیر با موفقیت اجرا شد:\n' + plan.steps.map((s) => '- ${RitmoCommandBus.instance.getCommand(s.commandId)?.humanTitle ?? s.commandId}').join('\n'),
+              final stepTitles = plan.steps.map((s) => '- ${RitmoCommandBus.instance.getCommand(s.commandId)?.humanTitle ?? s.commandId}').join('\n');
+              if (mounted) {
+                setState(() {
+                  _messages.add(ChatMessage(
+                    id: 'msg_ok_${DateTime.now().millisecondsSinceEpoch}',
+                    sessionId: widget.persona.id,
+                    role: ChatRole.assistant,
+                    content: 'اقدامات زیر با موفقیت اجرا شد:\n$stepTitles',
+                    timestamp: DateTime.now(),
+                  ));
                 });
-              });
-              _checkLastPlan();
+              }
+              unawaited(_checkLastPlan());
 
-              // Handle post-execution actions
               for (final res in result.results) {
                 if (res.commandId == 'app.openPage' && res.outputData?['route'] != null) {
                   final route = res.outputData!['route']!.toString();
-                  unawaited(Navigator.of(context).pushNamed(route));
+                  if (mounted) unawaited(Navigator.of(context).pushNamed(route));
                 }
                 if (res.commandId == 'assistant.handoff' && res.outputData?['personaId'] != null) {
                   final target = res.outputData!['personaId']!.toString();
                   handoffTo(target);
                 }
               }
-            } else {
+            } else if (mounted) {
               setState(() {
-                _messages.add({
-                  'id': 'msg_fail_${DateTime.now().millisecondsSinceEpoch}',
-                  'role': 'assistant',
-                  'content': 'خطا در اجرای اقدام: ${result.errorMessage}',
-                });
+                _messages.add(ChatMessage(
+                  id: 'msg_fail_${DateTime.now().millisecondsSinceEpoch}',
+                  sessionId: widget.persona.id,
+                  role: ChatRole.assistant,
+                  content: 'خطا در اجرای اقدام: ${result.errorMessage}',
+                  timestamp: DateTime.now(),
+                ));
               });
             }
           }
@@ -478,32 +652,39 @@ ${_domainContext.isNotEmpty ? 'اطلاعات پرونده کاربر:\n$_domain
                           source: CommandSource.assistant,
                         );
                         if (result.success) {
-                          setState(() {
-                            _messages.add({
-                              'id': 'msg_ok_${DateTime.now().millisecondsSinceEpoch}',
-                              'role': 'assistant',
-                              'content': 'اقدامات با موفقیت اجرا شد:\n' + plan.steps.map((s) => '- ${RitmoCommandBus.instance.getCommand(s.commandId)?.humanTitle ?? s.commandId}').join('\n'),
+                          final stepTitles = plan.steps.map((s) => '- ${RitmoCommandBus.instance.getCommand(s.commandId)?.humanTitle ?? s.commandId}').join('\n');
+                          if (mounted) {
+                            setState(() {
+                              _messages.add(ChatMessage(
+                                id: 'msg_ok_${DateTime.now().millisecondsSinceEpoch}',
+                                sessionId: widget.persona.id,
+                                role: ChatRole.assistant,
+                                content: 'اقدامات با موفقیت اجرا شد:\n$stepTitles',
+                                timestamp: DateTime.now(),
+                              ));
                             });
-                          });
-                          _checkLastPlan();
+                          }
+                          unawaited(_checkLastPlan());
 
                           for (final res in result.results) {
                             if (res.commandId == 'app.openPage' && res.outputData?['route'] != null) {
                               final route = res.outputData!['route']!.toString();
-                              unawaited(Navigator.of(context).pushNamed(route));
+                              if (mounted) unawaited(Navigator.of(context).pushNamed(route));
                             }
                             if (res.commandId == 'assistant.handoff' && res.outputData?['personaId'] != null) {
                               final target = res.outputData!['personaId']!.toString();
                               handoffTo(target);
                             }
                           }
-                        } else {
+                        } else if (mounted) {
                           setState(() {
-                            _messages.add({
-                              'id': 'msg_fail_${DateTime.now().millisecondsSinceEpoch}',
-                              'role': 'assistant',
-                              'content': 'خطا در اجرای اقدام: ${result.errorMessage}',
-                            });
+                            _messages.add(ChatMessage(
+                              id: 'msg_fail_${DateTime.now().millisecondsSinceEpoch}',
+                              sessionId: widget.persona.id,
+                              role: ChatRole.assistant,
+                              content: 'خطا در اجرای اقدام: ${result.errorMessage}',
+                              timestamp: DateTime.now(),
+                            ));
                           });
                         }
                       },
@@ -556,150 +737,337 @@ ${_domainContext.isNotEmpty ? 'اطلاعات پرونده کاربر:\n$_domain
       _isTyping = true;
     });
     final result = await RitmoCommandBus.instance.undoPlan(_lastPlanId!);
-    setState(() {
-      _isTyping = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isTyping = false;
+      });
+    }
 
     if (result.success) {
-      setState(() {
-        _messages.add({
-          'id': 'msg_undo_ok_${DateTime.now().millisecondsSinceEpoch}',
-          'role': 'assistant',
-          'content': 'آخرین اقدام با موفقیت لغو و بازیابی شد 🔄',
+      if (mounted) {
+        setState(() {
+          _messages.add(ChatMessage(
+            id: 'msg_undo_ok_${DateTime.now().millisecondsSinceEpoch}',
+            sessionId: widget.persona.id,
+            role: ChatRole.assistant,
+            content: 'آخرین اقدام با موفقیت لغو و بازیابی شد 🔄',
+            timestamp: DateTime.now(),
+          ));
         });
-      });
-      _checkLastPlan();
-    } else {
+      }
+      unawaited(_checkLastPlan());
+    } else if (mounted) {
       setState(() {
-        _messages.add({
-          'id': 'msg_undo_fail_${DateTime.now().millisecondsSinceEpoch}',
-          'role': 'assistant',
-          'content': 'لغو آخرین اقدام با شکست مواجه شد: ${result.errorMessage}',
-        });
+        _messages.add(ChatMessage(
+          id: 'msg_undo_fail_${DateTime.now().millisecondsSinceEpoch}',
+          sessionId: widget.persona.id,
+          role: ChatRole.assistant,
+          content: 'لغو آخرین اقدام با شکست مواجه شد: ${result.errorMessage}',
+          timestamp: DateTime.now(),
+        ));
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E2C) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: isDark ? Colors.white12 : Colors.black12)),
-            ),
-            child: Row(
-              children: [
-                Icon(CupertinoIcons.sparkles, color: context.colors.primary),
-                const SizedBox(width: 10),
-                Text(
-                  widget.persona.displayName,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Vazirmatn',
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
-                const Spacer(),
-                if (_canUndoLast)
-                  TextButton.icon(
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.orange,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    ),
-                    icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 16),
-                    label: const Text(
-                      'لغو اقدام اخیر',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: _undoLastAction,
-                  ),
-                IconButton(
-                  icon: const Icon(CupertinoIcons.xmark_circle_fill),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF1E1E2C).withValues(alpha: 0.85)
+                : Colors.white.withValues(alpha: 0.92),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.08),
+              width: 1.2,
             ),
           ),
-
-          // Messages
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, idx) {
-                final theme = Theme.of(context);
-                final msg = _messages[idx];
-                final isUser = msg['role'] == 'user';
-                return Align(
-                  alignment: isUser ? Alignment.centerLeft : Alignment.centerRight,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isUser
-                          ? theme.colorScheme.primary
-                          : (isDark ? const Color(0xFF2C2C3E) : Colors.grey[100]),
-                      borderRadius: BorderRadius.circular(16),
+          child: Column(
+            children: [
+              // Header with Glass Style & Avatar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
                     ),
-                    child: Text(
-                      msg['content'] as String,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(CupertinoIcons.sparkles, color: colors.primary, size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      widget.persona.displayName,
                       style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
                         fontFamily: 'Vazirmatn',
-                        color: isUser ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                        color: colors.textPrimary,
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          if (_isTyping || _isStreaming)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: CupertinoActivityIndicator(),
-            ),
-
-          // Input Bar
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: isDark ? Colors.white12 : Colors.black12)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _chatController,
-                    decoration: const InputDecoration(
-                      hintText: 'پیام خود را بنویسید...',
-                      border: InputBorder.none,
-                      hintStyle: TextStyle(fontFamily: 'Vazirmatn'),
+                    const Spacer(),
+                    if (_canUndoLast)
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.orange,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        ),
+                        icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 16),
+                        label: const Text(
+                          'لغو اقدام اخیر',
+                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: () => unawaited(_undoLastAction()),
+                      ),
+                    IconButton(
+                      icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.6)),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
-                    onSubmitted: (val) => _sendMessage(),
-                  ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(CupertinoIcons.arrow_up_circle_fill, color: Colors.blueAccent),
-                  onPressed: () => _sendMessage(),
+              ),
+
+              // Dynamic Opening Move Banner & Skill Chips
+              if (_messages.isEmpty) ...[
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF2C2C3E).withValues(alpha: 0.7)
+                        : Colors.blue.shade50.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(CupertinoIcons.chart_bar_alt_fill, size: 18, color: colors.primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            'اطلاعات کلیدی پرونده (${_primaryBrief?.confidence.name ?? 'در حال محاسبه'})',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Vazirmatn',
+                              fontSize: 13,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: _relevantSkills.map((skill) {
+                          return ActionChip(
+                            avatar: const Icon(CupertinoIcons.bolt_fill, size: 14, color: Colors.amber),
+                            label: Text(
+                              skill.labelFa,
+                              style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                            ),
+                            backgroundColor: isDark ? const Color(0xFF38384E) : Colors.white,
+                            onPressed: () => unawaited(_sendMessage(skill.queryPrompt)),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
               ],
-            ),
+
+              // Messages List with Swipe to Delete (Dismissible) & StreamingMessageBubble
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    final msg = _messages[index];
+                    final msgId = msg.id;
+
+                    return Dismissible(
+                      key: ValueKey<String>(msgId),
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 20),
+                      ),
+                      secondaryBackground: Container(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 20),
+                      ),
+                      onDismissed: (direction) {
+                        final removedMsg = msg;
+                        final removedIndex = index;
+                        setState(() {
+                          _messages.removeAt(removedIndex);
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('پیام حذف شد.', style: TextStyle(fontFamily: 'Vazirmatn')),
+                            action: SnackBarAction(
+                              label: 'بازیابی',
+                              textColor: Colors.amber,
+                              onPressed: () {
+                                setState(() {
+                                  if (removedIndex <= _messages.length) {
+                                    _messages.insert(removedIndex, removedMsg);
+                                  } else {
+                                    _messages.add(removedMsg);
+                                  }
+                                });
+                                _scrollToBottom();
+                              },
+                            ),
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                      },
+                      child: StreamingMessageBubble(
+                        message: msg,
+                        isLast: index == _messages.length - 1,
+                        onAction: (action) => unawaited(_handleChatAction(action)),
+                        onCopy: (content) => _copyToClipboard(content),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              if (_isTyping && !_isStreaming)
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CupertinoActivityIndicator(),
+                ),
+
+              // Chat Input Bar matching Main Assistant (Speech-to-Text mic + Glass Input + Circular Accent Send Button)
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  child: Row(
+                    children: [
+                      if (!_isStreaming) ...[
+                        GestureDetector(
+                          onLongPressStart: (_) => unawaited(_startListening()),
+                          onLongPressEnd: (_) => unawaited(_stopListening()),
+                          onLongPressCancel: () => unawaited(_stopListening()),
+                          child: CircleAvatar(
+                            radius: 20,
+                            backgroundColor: _isListening
+                                ? Colors.redAccent
+                                : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04)),
+                            child: Icon(
+                              _isListening ? CupertinoIcons.mic_fill : CupertinoIcons.mic,
+                              color: _isListening ? Colors.white : colors.textPrimary,
+                              size: 18,
+                            ),
+                          )
+                              .animate(target: _isListening ? 1.0 : 0.0)
+                              .scale(begin: const Offset(1, 1), end: const Offset(1.15, 1.15), duration: 150.ms)
+                              .then()
+                              .shake(hz: 3, curve: Curves.easeInOut),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
+                            ),
+                          ),
+                          child: TextField(
+                            controller: _chatController,
+                            minLines: 1,
+                            maxLines: 4,
+                            enabled: !_isStreaming,
+                            style: TextStyle(
+                              fontFamily: 'Vazirmatn',
+                              fontSize: 13,
+                              color: colors.textPrimary,
+                            ),
+                            decoration: InputDecoration(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              border: InputBorder.none,
+                              hintText: _isStreaming
+                                  ? 'دستیار در حال نوشتن است...'
+                                  : 'گفتگو با دستیار ${widget.persona.displayName}...',
+                              hintStyle: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontSize: 12,
+                                color: colors.textSecondary.withValues(alpha: 0.6),
+                              ),
+                            ),
+                            onSubmitted: (val) {
+                              if (!_isStreaming) unawaited(_sendMessage());
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: _isStreaming
+                            ? () {
+                                _streamSubscription?.cancel();
+                                setState(() {
+                                  _isStreaming = false;
+                                });
+                              }
+                            : () => unawaited(_sendMessage()),
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: _isStreaming
+                              ? const Color(0xffEF4444)
+                              : const Color(0xff5B8AF5),
+                          child: Icon(
+                            _isStreaming ? CupertinoIcons.stop_fill : CupertinoIcons.arrow_up,
+                            color: Colors.white,
+                            size: _isStreaming ? 14 : 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

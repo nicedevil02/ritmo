@@ -42,7 +42,7 @@ class PersonaRegistry {
         DataDomain.courses,
         DataDomain.notes,
       },
-      commandIds: allCmdIds,
+      commandIds: {...allCmdIds, 'assistant.handoff', 'app.openPage'},
     ));
 
 
@@ -148,12 +148,16 @@ class PersonaRegistry {
 
     register(AssistantPersona(
       id: 'notes',
-      displayName: 'دستیار دفترچه و تجربه‌ها',
+      displayName: 'دفترچه و تجربه‌ها',
       systemPromptKey: 'system_prompt_notes',
-      reads: {DataDomain.notes, DataDomain.routines},
+      reads: {DataDomain.notes},
       commandIds: {
-        'create_note', 'update_note', 'search_notes', 'create_experience',
-        'list_experiences', 'get_note_details', 'app.openPage', 'setting.update', 'assistant.handoff'
+        'note.create', 'note.append', 'note.edit', 'note.retitle', 'note.tag', 'note.untag',
+        'note.link', 'note.unlink', 'note.pin', 'note.unpin', 'note.archive', 'note.restore',
+        'note.delete', 'note.scheduleReview', 'note.extractActions', 'note.summarize',
+        'notes.search', 'notes.dailyNote',
+        'experience.create', 'experience.edit', 'experience.setActive', 'experience.setImportance',
+        'assistant.handoff', 'app.openPage', 'setting.update',
       },
       handoffHint: 'یادداشت، ایده، تجربه، درس زندگی، «قبلاً نوشته بودم»، جست‌وجو در نوشته‌ها',
     ));

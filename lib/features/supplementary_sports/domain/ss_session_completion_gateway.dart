@@ -1,80 +1,162 @@
-import 'package:ritmo/core/utils/ritmo_id_factory.dart';
+import 'dart:convert';
+
+import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_prescription_repository.dart';
 import 'package:ritmo/features/supplementary_sports/domain/prescription/session_prescription.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_event.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
+import 'package:sqflite/sqflite.dart';
 
 class SsSessionCompletionGateway {
-  /// Completes a prescription session, updates its status to DONE,
-  /// and bridges it to the `workout_logs` table via `MovementRepository.logEvent`
-  /// so that all trend charts, MET budget, and heatmaps correctly reflect this session.
+  static const String sourceModule = 'ss_prescription';
+
+  /// Completes a prescription session atomically and idempotently.
   static Future<String?> completeSession({
     required String dateIso,
-    required int actualMinutes,
-    required int actualRpe, // 3 to 9
+    int? actualMinutes,
+    int? actualRpe,
     String? location,
     String? customNote,
   }) async {
+    final db = await DatabaseHelper.instance.database;
     final repo = SsPrescriptionRepository.instance;
     final prescription = await repo.getPrescriptionForDate(dateIso);
     if (prescription == null) return null;
 
-    final logId = RitmoIdFactory.workoutLog();
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    _validateCompletion(prescription, actualMinutes, actualRpe);
 
-    // 1. Mark prescription as DONE and link it
-    final updatedPrescription = prescription.copyWith(
-      status: PrescriptionStatus.done,
-      workoutLogId: logId,
-      targetRpe: actualRpe, // Store the actual RPE they felt
-      updatedAt: nowMs,
+    String? completedLogId;
+    await db.transaction((txn) async {
+      completedLogId = await completeDetailedSessionInTransaction(
+        txn,
+        prescriptionId: prescription.id,
+        actualMinutes: actualMinutes,
+        actualRpe: actualRpe,
+        location: location,
+        customNote: customNote,
+      );
+    });
+
+    if (completedLogId != null) {
+      RitmoEventBus().fire(RitmoEvent(
+        type: RitmoEventType.workoutLogChanged.code,
+        timestamp: DateTime.now(),
+        payload: {
+          'source': sourceModule,
+          'id': completedLogId,
+          'prescriptionId': prescription.id,
+        },
+      ));
+    }
+    return completedLogId;
+  }
+
+  /// Transaction-aware variant. Never fires events here; caller fires after commit.
+  static Future<String?> completeDetailedSessionInTransaction(
+    DatabaseExecutor txn, {
+    required String? prescriptionId,
+    String? sessionId,
+    int? actualMinutes,
+    int? actualRpe,
+    String? location,
+    String? customNote,
+  }) async {
+    if (prescriptionId == null || prescriptionId.isEmpty) return null;
+
+    final rows = await txn.query(
+      'ss_session_prescription',
+      where: 'id = ?',
+      whereArgs: [prescriptionId],
+      limit: 1,
     );
-    await repo.savePrescriptionsBulk([updatedPrescription]);
-
-    // 2. Map RPE to MovementIntensity
-    MovementIntensity intensity = MovementIntensity.medium;
-    if (actualRpe <= 5) {
-      intensity = MovementIntensity.low;
-    } else if (actualRpe >= 8) {
-      intensity = MovementIntensity.high;
+    if (rows.isEmpty) {
+      throw StateError('SS_PRESCRIPTION_NOT_FOUND: $prescriptionId');
     }
 
-    // 3. Map SlotType to an appropriate MovementKind code
-    // Fallback defaults based on seed data
-    String kindCode = 'GYM'; 
-    switch (prescription.slotType) {
-      case SlotType.strength:
-        kindCode = 'GYM';
-        break;
-      case SlotType.cardio:
-        kindCode = 'RUNNING'; 
-        break;
-      case SlotType.mobility:
-        kindCode = 'YOGA';
-        break;
-      case SlotType.activeRest:
-        kindCode = 'WALKING';
-        break;
-      case SlotType.rest:
-        // Do not log a workout for pure rest days
-        return logId;
+    final prescription = SessionPrescription.fromMap(rows.first);
+    _validateCompletion(prescription, actualMinutes, actualRpe);
+
+    if (prescription.status == PrescriptionStatus.done &&
+        prescription.workoutLogId != null &&
+        prescription.workoutLogId!.isNotEmpty) {
+      return prescription.workoutLogId;
     }
 
-    // 4. Create the centralized MovementEvent
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final logId = prescription.workoutLogId?.trim().isNotEmpty == true
+        ? prescription.workoutLogId!
+        : 'wlog_ss_${prescription.id}';
+
+    final intensity = _intensityFromRpe(actualRpe);
     final event = MovementEvent(
       id: logId,
-      kindCode: kindCode,
-      durationMinutes: actualMinutes,
+      kindCode: _kindForSlot(prescription.slotType),
+      durationMinutes: actualMinutes ?? prescription.targetMinutes,
       intensity: intensity,
       loggedAt: nowMs,
-      sourceModule: 'ss_prescription',
+      location: location,
+      sourceModule: sourceModule,
+      sourceEntityId: prescription.id,
       note: customNote ?? prescription.headlineFa,
+      metricsJson: jsonEncode({
+        'prescriptionId': prescription.id,
+        'sessionId': sessionId,
+        'slotType': prescription.slotType.code,
+        'targetRpe': prescription.targetRpe,
+        'actualRpe': actualRpe,
+        'cycleWeek': prescription.cycleWeek,
+      }),
     );
 
-    // 5. Log it to `workout_logs` so it shows up in heatmap and MET budget
-    await MovementRepository.instance.logEvent(event);
+    await MovementRepository.instance.upsertEventInTransaction(txn, event);
+
+    final updated = prescription.copyWith(
+      status: PrescriptionStatus.done,
+      workoutLogId: logId,
+      actualRpe: actualRpe,
+      updatedAt: nowMs,
+    );
+    await txn.insert(
+      'ss_session_prescription',
+      updated.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
 
     return logId;
+  }
+
+  static void _validateCompletion(
+    SessionPrescription prescription,
+    int? actualMinutes,
+    int? actualRpe,
+  ) {
+    if (prescription.slotType == SlotType.rest) {
+      throw ArgumentError('Cannot complete a REST prescription as a workout.');
+    }
+    if (actualMinutes != null && (actualMinutes <= 0 || actualMinutes > 240)) {
+      throw ArgumentError('actualMinutes must be between 1 and 240.');
+    }
+    if (actualRpe != null && (actualRpe < 1 || actualRpe > 10)) {
+      throw ArgumentError('actualRpe must be between 1 and 10.');
+    }
+  }
+
+  static MovementIntensity _intensityFromRpe(int? actualRpe) {
+    if (actualRpe == null) return MovementIntensity.medium;
+    if (actualRpe <= 5) return MovementIntensity.low;
+    if (actualRpe >= 8) return MovementIntensity.high;
+    return MovementIntensity.medium;
+  }
+
+  static String _kindForSlot(SlotType slotType) {
+    return switch (slotType) {
+      SlotType.strength => 'SS_SESSION',
+      SlotType.cardio => 'CARDIO_GENERIC',
+      SlotType.mobility => 'YOGA',
+      SlotType.activeRest => 'WALKING',
+      SlotType.rest => 'OTHER',
+    };
   }
 }

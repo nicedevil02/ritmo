@@ -30,6 +30,10 @@ class CompleteCurrentSet extends SSWorkoutIntent {
   const CompleteCurrentSet();
 }
 
+class UndoLastSet extends SSWorkoutIntent {
+  const UndoLastSet();
+}
+
 class SelectFeeling extends SSWorkoutIntent {
   const SelectFeeling(this.exerciseId, this.feeling);
   final String exerciseId;
@@ -242,9 +246,11 @@ class SSWorkoutSessionScreen extends ConsumerStatefulWidget {
     super.key,
     required this.planId,
     this.dayName = 'تمرین امروز',
+    this.prescriptionId,
   });
   final String planId;
   final String dayName;
+  final String? prescriptionId;
 
   @override
   ConsumerState<SSWorkoutSessionScreen> createState() => _SSWorkoutSessionScreenState();
@@ -257,7 +263,11 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
 
   SSWorkoutViewMode _viewMode = SSWorkoutViewMode.focus;
 
-  SSWorkoutPlanKey get _key => SSWorkoutPlanKey(planId: widget.planId, dayName: widget.dayName);
+  SSWorkoutPlanKey get _key => SSWorkoutPlanKey(
+    planId: widget.planId,
+    dayName: widget.dayName,
+    prescriptionId: widget.prescriptionId,
+  );
 
   List<SSExerciseChecklistEntry> get _exercises => ref.read(ssWorkoutProvider(_key)).exercises;
   int get _currentExerciseIndex => ref.read(ssWorkoutProvider(_key)).currentExerciseIndex;
@@ -768,6 +778,112 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     }
   }
 
+  Future<void> _showPainActionSheet() async {
+    RitmoHaptics.selection();
+    // Pause timer if running
+    if (!_isTimerPaused) {
+      _dispatchIntent(const PauseResumeTimer());
+    }
+
+    if (!mounted) return;
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => BottomSheetContainer(
+        title: 'مدیریت درد و ناراحتی ⚠️',
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'سلامت شما اولویت اول است. در صورت احساس هرگونه درد غیرعادی، یکی از گزینه‌های زیر را انتخاب کنید:',
+                style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.arrow_downward_rounded, color: Colors.amberAccent),
+                title: const Text('کاهش وزن و شدت حرکت', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
+                subtitle: const Text('کاهش ۳۰ درصدی وزنه یا تکرار ست‌های باقی‌مانده', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54, fontSize: 12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                tileColor: const Color(0xFF1E293B),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final current = _exercises[_currentExerciseIndex];
+                  for (var i = 0; i < current.setRows.length; i++) {
+                    final set = current.setRows[i];
+                    if (set.status != SetStatus.done) {
+                      final newW = (set.weight * 0.7).roundToDouble();
+                      final newR = max(3, set.reps - 3);
+                      _dispatchIntent(UpdateSetWeightAndReps(setIndex: i, weight: newW > 0 ? newW : null, reps: newR));
+                    }
+                  }
+                  try {
+                    final db = await DatabaseHelper.instance.database;
+                    await db.insert('ss_decision_log', {
+                      'id': 'pain_dec_${DateTime.now().millisecondsSinceEpoch}',
+                      'userId': 'default',
+                      'decisionType': 'PAIN_ACTION',
+                      'rejectionReason': 'REDUCE_WEIGHT; exercise=${current.exercise.id}',
+                      'createdAt': DateTime.now().millisecondsSinceEpoch,
+                    });
+                  } catch (_) {}
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.swap_horiz_rounded, color: Color(0xFF38BDF8)),
+                title: const Text('تعویض با حرکت جایگزین ایمن', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
+                subtitle: const Text('انتخاب از بین حرکات کم‌فشارتر بدون فشار به این مفصل', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54, fontSize: 12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                tileColor: const Color(0xFF1E293B),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final current = _exercises[_currentExerciseIndex];
+                  try {
+                    final db = await DatabaseHelper.instance.database;
+                    await db.insert('ss_decision_log', {
+                      'id': 'pain_dec_${DateTime.now().millisecondsSinceEpoch}',
+                      'userId': 'default',
+                      'decisionType': 'PAIN_ACTION',
+                      'rejectionReason': 'SWAP_EXERCISE; exercise=${current.exercise.id}',
+                      'createdAt': DateTime.now().millisecondsSinceEpoch,
+                    });
+                  } catch (_) {}
+                  await _showSwapBottomSheet();
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.stop_circle_outlined, color: Colors.redAccent),
+                title: const Text('پایان امن تمرین امروز', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
+                subtitle: const Text('ثبت ست‌های انجام‌شده تا الان بدون افت رکورد', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54, fontSize: 12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                tileColor: const Color(0xFF1E293B),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    final db = await DatabaseHelper.instance.database;
+                    await db.insert('ss_decision_log', {
+                      'id': 'pain_dec_${DateTime.now().millisecondsSinceEpoch}',
+                      'userId': 'default',
+                      'decisionType': 'PAIN_ACTION',
+                      'rejectionReason': 'SAFE_STOP',
+                      'createdAt': DateTime.now().millisecondsSinceEpoch,
+                    });
+                  } catch (_) {}
+                  await _finishAndLogWorkout();
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showFeelingBottomSheet(SSWorkoutState state) {
     showModalBottomSheet(
       context: context,
@@ -894,8 +1010,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
       );
     }
 
-    if (_exercises.isEmpty) {
+    if (state.loadError != null || _exercises.isEmpty) {
       final colors = context.colors;
+      final errorMessage = state.loadError ?? 'تمرینی برای این روز آماده نشده است.';
       return Scaffold(
         backgroundColor: colors.background,
         appBar: AppBar(
@@ -919,23 +1036,38 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 Icon(Icons.fitness_center_outlined, size: 64, color: colors.textSecondary),
                 const SizedBox(height: 16),
                 Text(
-                  'تمرینی برای این روز آماده نشده است.',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, color: colors.textPrimary, fontWeight: FontWeight.bold),
+                  errorMessage,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, color: colors.textPrimary, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'می‌توانید از بخش «برنامه» حرکات تمرینی جدیدی اضافه کنید.',
+                  'می‌توانید از بخش «برنامه» حرکات تمرینی را بازتولید یا دوباره تلاش کنید.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('بازگشت به داشبورد', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E293B),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('بازگشت به برنامه', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () => ref.read(ssWorkoutProvider(_key).notifier).init(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('تلاش دوباره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1081,10 +1213,11 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 ),
               ),
               const Spacer(),
-              // AI Coach Quick Button
+              // Pain Action Quick Button
               IconButton(
-                icon: const Icon(Icons.smart_toy_outlined, color: Color(0xFF06B6D4), size: 24),
-                onPressed: _showAiCoachSheet,
+                icon: const Icon(Icons.healing_rounded, color: Colors.amberAccent, size: 24),
+                tooltip: 'درد دارم ⚠️',
+                onPressed: _showPainActionSheet,
               ),
               // Hands-Free Toggle
               IconButton(
@@ -1715,34 +1848,53 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           const SizedBox(height: 16),
 
           // Complete Active Set CTA Button
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: currentSetIndex != -1 ? const Color(0xFF10B981) : const Color(0xFF1E293B),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
-              ),
-              icon: Icon(
-                currentSetIndex != -1 ? CupertinoIcons.checkmark_alt_circle_fill : Icons.done_all,
-                size: 22,
-              ),
-              label: Text(
-                currentSetIndex != -1
-                    ? 'ثبت و تکمیل ست ${toPersianDigits((currentSetIndex + 1).toString())}'
-                    : 'همه ست‌ها انجام شد! 🏆',
-                style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+          Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: currentSetIndex != -1 ? const Color(0xFF10B981) : const Color(0xFF1E293B),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    icon: Icon(
+                      currentSetIndex != -1 ? CupertinoIcons.checkmark_alt_circle_fill : Icons.done_all,
+                      size: 22,
+                    ),
+                    label: Text(
+                      currentSetIndex != -1
+                          ? 'ثبت و تکمیل ست ${toPersianDigits((currentSetIndex + 1).toString())}'
+                          : 'همه ست‌ها انجام شد! 🏆',
+                      style: const TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: currentSetIndex != -1
+                        ? () => _dispatchIntent(const CompleteCurrentSet())
+                        : null,
+                  ),
                 ),
               ),
-              onPressed: currentSetIndex != -1
-                  ? () => _dispatchIntent(const CompleteCurrentSet())
-                  : null,
-            ),
+              if (entry.setRows.any((s) => s.status == SetStatus.done) || _currentExerciseIndex > 0) ...[
+                const SizedBox(width: 8),
+                IconButton.filledTonal(
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E293B),
+                    padding: const EdgeInsets.all(14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  icon: const Icon(Icons.undo_rounded, color: Colors.white70, size: 22),
+                  tooltip: 'واگرد آخرین ست',
+                  onPressed: () => _dispatchIntent(const UndoLastSet()),
+                ),
+              ],
+            ],
           ),
         ],
       ),

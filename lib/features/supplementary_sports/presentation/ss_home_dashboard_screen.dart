@@ -27,7 +27,9 @@ import 'package:ritmo/features/supplementary_sports/data/repositories/ss_prescri
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_program_builder.dart';
 import 'package:ritmo/features/supplementary_sports/domain/prescription/session_prescription.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_exercise_library_screen.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/ss_session_summary_screen.dart';
+import 'package:ritmo/features/supplementary_sports/data/models/ss_daily_checkin_model.dart';
+import 'package:ritmo/features/supplementary_sports/domain/ss_readiness_service.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_daily_checkin_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -539,20 +541,21 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
   String? _userGender;
   String? _unfinishedActivePlanId;
 
-  // Biometric Scores (Calculated Dynamically from SQLite Data)
-  int _energyScore = 82;
-  int _recoveryScore = 74;
-  int _sleepScore = 82;
+  // Biometric & Readiness Data (Calculated Honestly from SQLite Data)
+  SSReadinessVerdict? _readinessVerdict;
+  SsDailyCheckin? _dailyCheckin;
+  int _energyScore = 0;
+  int _recoveryScore = 0;
+  int _sleepScore = 0;
   String? _sleepRecoveryTip;
-  int _stressScore = 32;
-  int _activityScore = 88;
+  int _stressScore = 0;
+  int _activityScore = 0;
 
-  int get _overallReadinessScore {
-    final score = (_energyScore * 0.30) + (_recoveryScore * 0.30) + (_sleepScore * 0.20) + ((100 - _stressScore) * 0.10) + (_activityScore * 0.10);
-    return score.round().clamp(0, 100);
-  }
+  int get _overallReadinessScore => _readinessVerdict?.score ?? 0;
+  bool get _hasReadinessData => _readinessVerdict?.hasData ?? false;
 
   String get _readinessBadgeText {
+    if (!_hasReadinessData) return 'ثبت وضعیت امروز 📊';
     final score = _overallReadinessScore;
     if (score >= 80) return 'آمادگی عالی ⚡';
     if (score >= 65) return 'آمادگی ایده‌آل 🏃';
@@ -561,6 +564,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
   }
 
   Color get _readinessColor {
+    if (!_hasReadinessData) return const Color(0xFF64748B);
     final score = _overallReadinessScore;
     if (score >= 80) return const Color(0xFF10B981);
     if (score >= 65) return const Color(0xFF06B6D4);
@@ -696,15 +700,15 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               const SizedBox(height: 20),
 
               // 5 Biometric Meter Breakdown Tiles
-              _statusDetailMeterTile('انرژی بدنی ⚡', _energyScore, 'ذخایر گلیکوژن و آمادگی متابولیک عضلات جهت تولید نیرو.', const Color(0xFF10B981)),
+              _statusDetailMeterTile('انرژی بدنی ⚡', _energyScore, 'میزان سرزندگی و آمادگی حسی برای شروع تمرین.', const Color(0xFF10B981)),
               const SizedBox(height: 12),
-              _statusDetailMeterTile('ریکاوری عضلانی ❤️', _recoveryScore, 'نرخ بازسازی فیبرهای عضلانی و کاهش التهاب مفصلی.', const Color(0xFFEF4444)),
+              _statusDetailMeterTile('ریکاوری عضلانی ❤️', _recoveryScore, 'میزان کاهش کوفتگی و رفع خستگی عضلات.', const Color(0xFFEF4444)),
               const SizedBox(height: 12),
-              _statusDetailMeterTile('کیفیت خواب 🌙', _sleepScore, 'تداوم و عمق خواب شبانه برای ترشح هورمون رشد و ترمیم عضلات.', const Color(0xFF06B6D4)),
+              _statusDetailMeterTile('کیفیت خواب 🌙', _sleepScore, 'مدت و ثبات خواب شبانه برای تجدید قوا.', const Color(0xFF06B6D4)),
               const SizedBox(height: 12),
-              _statusDetailMeterTile('سطح استرس 🧠', _stressScore, 'میزان فشار روی سیستم عصبی سمپاتیک و بالانس کورتیزول.', const Color(0xFFF59E0B)),
+              _statusDetailMeterTile('سطح استرس 🧠', _stressScore, 'میزان فشار ذهنی و خستگی روزانه.', const Color(0xFFF59E0B)),
               const SizedBox(height: 12),
-              _statusDetailMeterTile('تداوم فعالیت 🏃', _activityScore, 'میزان پایداری در انجام روتین‌های تمرینی هفته جاری.', const Color(0xFF22C55E)),
+              _statusDetailMeterTile('تداوم فعالیت 🏃', _activityScore, 'میزان پایبندی به برنامه تمرینی هفته جاری.', const Color(0xFF22C55E)),
               const SizedBox(height: 20),
             ],
           ),
@@ -850,31 +854,28 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         _unfinishedActivePlanId = null;
       }
 
-      // Calculate Biometric Scores Dynamically
+      // Evaluate Readiness and Checkin honestly
+      _readinessVerdict = await SSReadinessService.instance.evaluateToday();
+      _dailyCheckin = await SSReadinessService.instance.getDailyCheckin(DateTime.now().toIso8601String().substring(0, 10));
+
       final completedCount = _weekCompleted.where((c) => c).length;
-      _activityScore = ((completedCount / 4) * 100).clamp(25, 96).round();
+      _activityScore = ((completedCount / 4) * 100).clamp(0, 100).round();
 
-      try {
-        final sleepLogs = await db.query(
-          'sleep_logs',
-          orderBy: 'createdAt DESC',
-          limit: 1,
-        );
-        if (sleepLogs.isNotEmpty) {
-          final sLog = sleepLogs.first;
-          final durMin = sLog['durationMinutes'] as int? ?? 420;
-          final qScore = sLog['quality'] as int? ?? 3;
-          final hrsStr = (durMin / 60).toStringAsFixed(1);
-          _sleepScore = ((durMin / 480) * 80 + (qScore * 4)).clamp(35, 98).round();
-          if (qScore <= 2 || durMin < 360) {
-            _sleepRecoveryTip = 'ثبت خواب: دیشب $hrsStr ساعت خواب دریافت شد. شدت تمرین امروز متناسب با ریکاوری تنظیم شد 🌙';
-          }
-        }
-      } catch (_) {}
-
-      _stressScore = (_sleepScore < 60) ? 55 : ((100 - _sleepScore) * 0.8).clamp(15, 60).round();
-      _recoveryScore = ((_sleepScore * 0.55) + (_activityScore * 0.45)).clamp(40, 98).round();
-      _energyScore = ((_sleepScore * 0.65) + ((100 - _stressScore) * 0.35)).clamp(35, 96).round();
+      if (_readinessVerdict != null && _readinessVerdict!.hasData) {
+        final sleepMin = _readinessVerdict!.sleepMinutes ?? 420;
+        final durHrs = (sleepMin / 60.0).toStringAsFixed(1);
+        _sleepScore = ((sleepMin / 480) * 100).clamp(0, 100).round();
+        _energyScore = _dailyCheckin != null ? (_dailyCheckin!.energy * 20) : (_sleepScore * 0.8).round();
+        _recoveryScore = _dailyCheckin != null ? ((6 - _dailyCheckin!.soreness) * 20) : (_sleepScore * 0.7).round();
+        _stressScore = ((100 - _sleepScore) * 0.5).round();
+        _sleepRecoveryTip = _readinessVerdict!.reasonFa;
+      } else {
+        _sleepScore = 0;
+        _energyScore = 0;
+        _recoveryScore = 0;
+        _stressScore = 0;
+        _sleepRecoveryTip = 'اطلاعات برای محاسبه دقیق آمادگی جسمانی کافی نیست.';
+      }
 
       final allPlans = await db.query(
         'ss_workout_plan',
@@ -1248,6 +1249,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               const SizedBox(height: 16),
               _buildAiCoachCard(aiSuggestion ?? 'امروز بدن شما پرانرژی‌تره، بهترین زمان برای افزایش شدت حرکاته. آب بیشتری بنوش و تمرکزت رو حفظ کن.'),
               const SizedBox(height: 16),
+              SSDailyCheckinWidget(
+                existingCheckin: _dailyCheckin,
+                onSaved: _loadDashboardData,
+              ),
+              const SizedBox(height: 16),
               _buildTodayBodyStatusWidget(),
               const SizedBox(height: 16),
               _buildNextWorkoutCard(
@@ -1284,6 +1290,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               _buildWeeklyStreakWidget(_weekCompleted),
               const SizedBox(height: 16),
               _buildAiCoachCard(pres.coachNoteFa ?? 'امروز برنامه ورزشی خود را در اولویت قرار دهید.'),
+              const SizedBox(height: 16),
+              SSDailyCheckinWidget(
+                existingCheckin: _dailyCheckin,
+                onSaved: _loadDashboardData,
+              ),
               const SizedBox(height: 16),
               _buildTodayBodyStatusWidget(),
               const SizedBox(height: 16),
@@ -1324,6 +1335,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               ),
               const SizedBox(height: 16),
               _buildWeeklyStreakWidget(_weekCompleted),
+              const SizedBox(height: 16),
+              SSDailyCheckinWidget(
+                existingCheckin: _dailyCheckin,
+                onSaved: _loadDashboardData,
+              ),
               const SizedBox(height: 16),
               _buildTodayBodyStatusWidget(),
               const SizedBox(height: 16),
@@ -2246,6 +2262,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
   }
 
   Widget _bodyGaugeCard(String label, String percent, IconData icon, Color color, double val, String statusTag) {
+    final displayPercent = _hasReadinessData ? '$percent٪' : '--';
+    final displayTag = _hasReadinessData ? statusTag : 'ثبت‌نشده';
+    final displayVal = _hasReadinessData ? val : 0.0;
+
     return Container(
       width: 76,
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
@@ -2269,7 +2289,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 width: 40,
                 height: 40,
                 child: CustomPaint(
-                  painter: RingGaugePainter(percentage: val, color: color),
+                  painter: RingGaugePainter(percentage: displayVal, color: color),
                 ),
               ),
               Icon(icon, size: 15, color: color),
@@ -2277,7 +2297,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           ),
           const SizedBox(height: 6),
           Text(
-            toPersianDigits('$percent٪'),
+            toPersianDigits(displayPercent),
             style: const TextStyle(
               fontFamily: 'Vazirmatn',
               fontSize: 11,
@@ -2293,7 +2313,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              statusTag,
+              displayTag,
               style: TextStyle(
                 fontFamily: 'Vazirmatn',
                 fontSize: 8.5,

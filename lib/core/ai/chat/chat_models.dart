@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/features/assistant/models/assistant_models.dart';
 
 enum ChatRole { user, assistant, system }
@@ -89,6 +90,10 @@ class ChatMessage {   // in-memory only — به DB نمیرود
   final int? tokensUsed;
   final List<ChatAction> actions;
   final bool isStreaming;
+
+  String get cleanDisplayText => role == ChatRole.user
+      ? content
+      : ChatActionParser.extractCleanReplyText(content);
 
   ChatMessage copyWith({String? content, List<ChatAction>? actions, bool? isStreaming, int? tokensUsed}) =>
     ChatMessage(

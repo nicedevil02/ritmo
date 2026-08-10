@@ -7,6 +7,7 @@ import 'package:ritmo/core/domain/commands/catalog/worship_commands.dart';
 import 'package:ritmo/core/domain/commands/catalog/wellbeing_commands.dart';
 import 'package:ritmo/core/domain/commands/catalog/sports_commands.dart';
 import 'package:ritmo/core/domain/commands/catalog/planning_commands.dart';
+import 'package:ritmo/core/domain/commands/catalog/notes_commands.dart';
 
 void registerAllRitmoCommands() {
   RitmoCommandBus.instance.registerAll([
@@ -65,5 +66,36 @@ void registerAllRitmoCommands() {
     const SportsMarkDoneCommand(),
     const SportsSkipSessionCommand(),
     const SportsMoveSessionCommand(),
+    const SportsLogCustomMovementCommand(),
+    const SportsSetDaysPerWeekCommand(),
+    const SportsLockDayCommand(),
+    const SportsUnlockDayCommand(),
+    const SportsApplyDeloadCommand(),
+    const SportsRegenerateWeekCommand(),
+    const SportsSwapExerciseCommand(),
+
+    // Notes & Experience commands (Prompt 071)
+    const NoteCreateCommand(),
+    const NoteAppendCommand(),
+    const NoteEditCommand(),
+    const NoteRetitleCommand(),
+    const NoteTagCommand(),
+    const NoteUntagCommand(),
+    const NoteLinkCommand(),
+    const NoteUnlinkCommand(),
+    const NotePinCommand(),
+    const NoteUnpinCommand(),
+    const NoteArchiveCommand(),
+    const NoteRestoreCommand(),
+    const NoteDeleteCommand(),
+    const NoteScheduleReviewCommand(),
+    const NoteExtractActionsCommand(),
+    const NoteSummarizeCommand(),
+    const NotesSearchCommand(),
+    const NotesDailyNoteCommand(),
+    const ExperienceCreateCommand(),
+    const ExperienceEditCommand(),
+    const ExperienceSetActiveCommand(),
+    const ExperienceSetImportanceCommand(),
   ]);
 }

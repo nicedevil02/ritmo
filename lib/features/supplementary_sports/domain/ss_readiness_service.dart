@@ -1,6 +1,7 @@
-// lib/features/supplementary_sports/domain/ss_readiness_service.dart
-
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/features/supplementary_sports/data/models/ss_daily_checkin_model.dart';
+import 'package:sqflite/sqflite.dart';
 
 enum SSReadinessTier { full, light, minimal, rest }
 
@@ -21,7 +22,7 @@ class SSReadinessVerdict {
   final String emoji;
   final int score; // 0..100 (0 means insufficient data)
   final int? sleepMinutes;
-  final int recoveryLoad; // soreness + fatigue (0..6)
+  final int recoveryLoad; // soreness + fatigue (0..10)
   final bool isMenstrualPhase;
   final bool hasData;
 }
@@ -30,60 +31,120 @@ class SSReadinessService {
   SSReadinessService._();
   static final instance = SSReadinessService._();
 
+  Future<void> saveDailyCheckin(SsDailyCheckin checkin) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.insert(
+      'ss_daily_checkin',
+      checkin.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<SsDailyCheckin?> getDailyCheckin(String dateIso) async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query(
+      'ss_daily_checkin',
+      where: 'dateIso = ?',
+      whereArgs: [dateIso],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return SsDailyCheckin.fromMap(rows.first);
+  }
+
+  Future<void> deleteDailyCheckin(String dateIso) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.delete(
+      'ss_daily_checkin',
+      where: 'dateIso = ?',
+      whereArgs: [dateIso],
+    );
+  }
+
   Future<SSReadinessVerdict> evaluateToday() async {
     final db = await DatabaseHelper.instance.database;
     final today = DateTime.now();
     final dateKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final nowMs = today.millisecondsSinceEpoch;
+    final twentyFourHoursAgo = nowMs - (24 * 60 * 60 * 1000);
 
     int? sleepMinutes;
     int soreness = 1;
     int fatigue = 1;
-    bool hasRecoveryData = false;
+    int energy = 3;
+    int painLevel = 0;
+    bool hasData = false;
 
-    // 1. Load recovery log if available
+    // 1. Check ss_daily_checkin first
     try {
-      final recRows = await db.query(
-        'workout_recovery_logs',
-        where: 'date = ?',
-        whereArgs: [dateKey],
-        orderBy: 'loggedAt DESC',
-        limit: 1,
-      );
-      if (recRows.isNotEmpty) {
-        soreness = recRows.first['soreness'] as int? ?? 1;
-        fatigue = recRows.first['fatigue'] as int? ?? 1;
-        hasRecoveryData = true;
+      final checkin = await getDailyCheckin(dateKey);
+      if (checkin != null) {
+        energy = checkin.energy;
+        soreness = checkin.soreness;
+        fatigue = checkin.fatigue;
+        painLevel = checkin.painLevel;
+        hasData = true;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[SSReadinessService] checkin query error: $e');
+    }
 
-    // 2. Load sleep data from bedtime_diagnostics (written by sleep module)
+    // 2. Load recovery log if checkin not present
+    if (!hasData) {
+      try {
+        final recRows = await db.query(
+          'workout_recovery_logs',
+          where: 'date = ?',
+          whereArgs: [dateKey],
+          orderBy: 'loggedAt DESC',
+          limit: 1,
+        );
+        if (recRows.isNotEmpty) {
+          soreness = (recRows.first['soreness'] as num?)?.toInt() ?? 1;
+          fatigue = (recRows.first['fatigue'] as num?)?.toInt() ?? 1;
+          hasData = true;
+        }
+      } catch (e) {
+        debugPrint('[SSReadinessService] recovery logs query error: $e');
+      }
+    }
+
+    // 3. Load fresh sleep data (logged within last 24h only)
     try {
       final diagRows = await db.query(
         'bedtime_diagnostics',
+        where: 'createdAt >= ?',
+        whereArgs: [twentyFourHoursAgo],
         orderBy: 'createdAt DESC',
         limit: 1,
       );
       if (diagRows.isNotEmpty) {
-        sleepMinutes = diagRows.first['durationMinutes'] as int?;
+        sleepMinutes = (diagRows.first['durationMinutes'] as num?)?.toInt();
+        hasData = true;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[SSReadinessService] bedtime query error: $e');
+    }
 
-    // Fallback to vital_signs_logs if bedtime_diagnostics is empty
     if (sleepMinutes == null) {
       try {
         final sleepRows = await db.query(
           'vital_signs_logs',
-          where: "type = 'SLEEP'",
+          where: "type = 'SLEEP' AND loggedAt >= ?",
+          whereArgs: [twentyFourHoursAgo],
           orderBy: 'loggedAt DESC',
           limit: 1,
         );
         if (sleepRows.isNotEmpty) {
           sleepMinutes = (sleepRows.first['value'] as num?)?.toInt();
+          hasData = true;
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[SSReadinessService] vital signs query error: $e');
+      }
     }
 
-    // 3. Check menstrual cycle phase with consent guard
+    // 4. Check menstrual cycle phase with consent guard
     bool isMenstrualPhase = false;
     try {
       final cycleConsent = await db.query(
@@ -110,21 +171,35 @@ class SSReadinessService {
           }
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[SSReadinessService] cycle consent error: $e');
+    }
 
     final recoveryLoad = soreness + fatigue;
 
-    // If no sleep log and no recovery log exist, report insufficient data honestly
-    if (sleepMinutes == null && !hasRecoveryData) {
+    // If no sleep log and no checkin exist, report insufficient data honestly
+    if (!hasData && sleepMinutes == null) {
       return SSReadinessVerdict(
         tier: SSReadinessTier.full,
-        reasonFa: 'اطلاعات کافی نیست — خواب دیشب را ثبت کن 🌙',
+        reasonFa: 'اطلاعات کافی نیست — وضعیت امروزت را ثبت کن 📊',
         emoji: '📊',
         score: 0,
         sleepMinutes: null,
         recoveryLoad: recoveryLoad,
         isMenstrualPhase: isMenstrualPhase,
         hasData: false,
+      );
+    }
+
+    if (painLevel >= 5) {
+      return SSReadinessVerdict(
+        tier: SSReadinessTier.rest,
+        reasonFa: 'به دلیل درد ثبت‌شده، استراحت یا تمرین بسیار سبک توصیه می‌شود 🛑',
+        emoji: '🛑',
+        score: 30,
+        sleepMinutes: sleepMinutes,
+        recoveryLoad: recoveryLoad,
+        isMenstrualPhase: isMenstrualPhase,
       );
     }
 
@@ -140,11 +215,14 @@ class SSReadinessService {
       );
     }
 
-    if (sleepMinutes != null && sleepMinutes < 300) {
-      final hours = (sleepMinutes / 60.0).toStringAsFixed(1);
+    if (energy <= 1 || (sleepMinutes != null && sleepMinutes < 300)) {
+      final hours = sleepMinutes != null ? (sleepMinutes / 60.0).toStringAsFixed(1) : null;
+      final msg = hours != null
+          ? 'دیشب کم خوابیدی ($hours ساعت) — نسخهٔ حداقلی تا زنجیره نشکنه ⚡'
+          : 'انرژی پایینه — نسخهٔ حداقلی تا زنجیره نشکنه ⚡';
       return SSReadinessVerdict(
         tier: SSReadinessTier.minimal,
-        reasonFa: 'دیشب خیلی کم خوابیدی ($hours ساعت) — نسخهٔ حداقلی تا زنجیره نشکنه ⚡',
+        reasonFa: msg,
         emoji: '⚡',
         score: 40,
         sleepMinutes: sleepMinutes,
@@ -152,11 +230,14 @@ class SSReadinessService {
       );
     }
 
-    if (sleepMinutes != null && sleepMinutes < 360) {
-      final hours = (sleepMinutes / 60.0).toStringAsFixed(1);
+    if (energy == 2 || (sleepMinutes != null && sleepMinutes < 360) || recoveryLoad >= 6) {
+      final hours = sleepMinutes != null ? (sleepMinutes / 60.0).toStringAsFixed(1) : null;
+      final msg = hours != null
+          ? 'خواب یا ریکاوری متوسط ($hours ساعت) — نسخهٔ سبک پیشنهاد می‌شه 🔋'
+          : 'بدنت هنوز خسته/کوفته‌ست — نسخهٔ سبک 🔋';
       return SSReadinessVerdict(
         tier: SSReadinessTier.light,
-        reasonFa: 'دیشب کم خوابیدی ($hours ساعت) — نسخهٔ سبک پیشنهاد می‌شه 🔋',
+        reasonFa: msg,
         emoji: '🔋',
         score: 60,
         sleepMinutes: sleepMinutes,
@@ -164,23 +245,12 @@ class SSReadinessService {
       );
     }
 
-    if (recoveryLoad >= 4) {
+    if (recoveryLoad >= 4 || energy == 3) {
       return SSReadinessVerdict(
-        tier: SSReadinessTier.light,
-        reasonFa: 'بدنت هنوز خسته/کوفته‌ست — نسخهٔ سبک 💤',
-        emoji: '💤',
-        score: 55,
-        sleepMinutes: sleepMinutes,
-        recoveryLoad: recoveryLoad,
-      );
-    }
-
-    if (recoveryLoad >= 2) {
-      return SSReadinessVerdict(
-        tier: SSReadinessTier.light,
-        reasonFa: 'کمی کوفتگی داری — ملایم تمرین کن 🟡',
+        tier: SSReadinessTier.full,
+        reasonFa: 'آمادگی مناسبه — تمرین متعادل و منظم 🟡',
         emoji: '🟡',
-        score: 75,
+        score: 80,
         sleepMinutes: sleepMinutes,
         recoveryLoad: recoveryLoad,
       );
@@ -188,7 +258,7 @@ class SSReadinessService {
 
     return SSReadinessVerdict(
       tier: SSReadinessTier.full,
-      reasonFa: 'انرژی و ریکاوری خوبه — نسخهٔ کامل 🔥',
+      reasonFa: 'انرژی و ریکاوری عالیه — با قدرت شروع کن 🔥',
       emoji: '🔥',
       score: 95,
       sleepMinutes: sleepMinutes,

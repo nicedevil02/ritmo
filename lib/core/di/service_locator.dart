@@ -14,6 +14,7 @@ import 'package:ritmo/core/analytics/life_balance_engine.dart';
 import 'package:ritmo/core/analytics/milestone_engine.dart';
 import 'package:ritmo/core/analytics/mood_engine.dart';
 import 'package:ritmo/core/analytics/motivation_diagnosis_engine.dart';
+import 'package:ritmo/core/analytics/notes_engine.dart';
 import 'package:ritmo/core/analytics/reflection_engine.dart';
 import 'package:ritmo/core/analytics/sleep_engine.dart';
 import 'package:ritmo/core/backend/auth_service.dart';
@@ -105,7 +106,8 @@ class AppBootstrapper {
         ..register(MotivationDiagnosisEngine())
         ..register(DailyBudgetEngine())
         ..register(CognitiveRoutingEngine())
-        ..register(FreshStartEngine());
+        ..register(FreshStartEngine())
+        ..register(NotesEngine());
 
       sl.registerSingleton<EngineRegistry>(registry);
 

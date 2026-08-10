@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/markdown_parser.dart';
@@ -38,8 +39,9 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
   }
 
   void _handleCopy() {
-    Clipboard.setData(ClipboardData(text: widget.message.content));
-    widget.onCopy(widget.message.content);
+    final cleanText = _getDisplayContent(widget.message.content);
+    Clipboard.setData(ClipboardData(text: cleanText));
+    widget.onCopy(cleanText);
     
     _copiedTimer?.cancel();
     setState(() {
@@ -56,11 +58,10 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
   }
 
   String _getDisplayContent(String rawContent) {
-    final idx = rawContent.indexOf('<actions');
-    if (idx != -1) {
-      return rawContent.substring(0, idx).trim();
+    if (widget.message.role == ChatRole.user) {
+      return rawContent;
     }
-    return rawContent;
+    return ChatActionParser.extractCleanReplyText(rawContent);
   }
 
   @override

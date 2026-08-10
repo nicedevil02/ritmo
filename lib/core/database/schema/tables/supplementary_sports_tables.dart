@@ -94,6 +94,7 @@ class SupplementarySportsTables {
       CREATE TABLE IF NOT EXISTS ss_workout_session_log (
         id TEXT PRIMARY KEY,
         planId TEXT,
+        prescriptionId TEXT,
         startedAt INTEGER NOT NULL,
         finishedAt INTEGER,
         durationSeconds INTEGER DEFAULT 0,
@@ -108,6 +109,11 @@ class SupplementarySportsTables {
       'CREATE INDEX IF NOT EXISTS idx_ss_session_log_date '
       'ON ss_workout_session_log(startedAt);',
     );
+    await db.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_session_log_prescription
+      ON ss_workout_session_log(prescriptionId)
+      WHERE prescriptionId IS NOT NULL;
+    ''');
 
     // 5. ss_exercise_feeling_log
     await db.execute('''
@@ -249,6 +255,8 @@ class SupplementarySportsTables {
         set_index INTEGER NOT NULL,
         weight REAL NOT NULL,
         reps INTEGER NOT NULL,
+        rir INTEGER,
+        note TEXT,
         feeling TEXT,
         FOREIGN KEY(session_id) REFERENCES ss_workout_session_log(id) ON DELETE CASCADE
       );
@@ -257,6 +265,25 @@ class SupplementarySportsTables {
       'CREATE INDEX IF NOT EXISTS idx_ss_workout_set_log_session '
       'ON ss_workout_set_log(session_id);',
     );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_ss_set_log_exercise_time '
+      'ON ss_workout_set_log(exercise_id, id);',
+    );
+
+    // 14. ss_daily_checkin
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ss_daily_checkin (
+        dateIso TEXT PRIMARY KEY,
+        energy INTEGER,
+        soreness INTEGER,
+        fatigue INTEGER,
+        painLevel INTEGER,
+        availableMinutes INTEGER,
+        note TEXT,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL
+      );
+    ''');
   }
 
   /// Ensures all 21 columns of ss_user_profile exist on existing legacy databases safely.
@@ -290,6 +317,7 @@ class SupplementarySportsTables {
           targetMinutes INTEGER NOT NULL,
           intensityTier TEXT NOT NULL,
           targetRpe INTEGER,
+          actualRpe INTEGER,
           headlineFa TEXT NOT NULL,
           coachNoteFa TEXT,
           source TEXT NOT NULL,
@@ -297,6 +325,7 @@ class SupplementarySportsTables {
           status TEXT NOT NULL DEFAULT 'PLANNED',
           movedToDateIso TEXT,
           legacyPlanId TEXT,
+          workoutPlanId TEXT,
           workoutLogId TEXT,
           createdAt INTEGER NOT NULL,
           updatedAt INTEGER NOT NULL
@@ -308,6 +337,9 @@ class SupplementarySportsTables {
       );
       await db.execute(
         'CREATE INDEX IF NOT EXISTS idx_ss_prescription_status ON ss_session_prescription(status, dateIso);',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_ss_prescription_plan ON ss_session_prescription(workoutPlanId, dateIso);',
       );
 
       await db.execute('''

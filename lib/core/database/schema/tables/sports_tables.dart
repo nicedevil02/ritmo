@@ -7,17 +7,36 @@ class SportsTables {
       CREATE TABLE workout_logs (
           id TEXT PRIMARY KEY,
           type TEXT NOT NULL,
+          kind TEXT,
+          sourceModule TEXT NOT NULL DEFAULT 'MOVEMENT',
+          sourceEntityId TEXT,
           durationMinutes INTEGER NOT NULL DEFAULT 0,
           intensity TEXT NOT NULL DEFAULT 'MEDIUM',
           note TEXT,
           loggedAt INTEGER NOT NULL,
+          endedAt INTEGER,
           tier TEXT,
           muscleGroups TEXT,
           feeling TEXT,
-          location TEXT
+          location TEXT,
+          distanceMeters REAL,
+          elevationMeters REAL,
+          laps INTEGER,
+          steps INTEGER,
+          avgHeartRate INTEGER,
+          metMinutes REAL NOT NULL DEFAULT 0,
+          caloriesKcal REAL NOT NULL DEFAULT 0,
+          venue TEXT,
+          companions TEXT,
+          metricsJson TEXT
       );
     ''');
     await db.execute('CREATE INDEX index_workout_logs_loggedAt ON workout_logs(loggedAt);');
+    await db.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_workout_logs_source_entity
+      ON workout_logs(sourceModule, sourceEntityId)
+      WHERE sourceEntityId IS NOT NULL;
+    ''');
 
     // 11.6. workout split + recovery (sports v2)
     await db.execute('''

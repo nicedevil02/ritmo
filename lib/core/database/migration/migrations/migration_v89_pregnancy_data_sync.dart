@@ -32,14 +32,22 @@ class MigrationV89PregnancyDataSync extends Migration {
               '';
           final trackerId = 'preg_migrated_${DateTime.now().millisecondsSinceEpoch}';
 
-          await db.insert('pregnancy_tracker', {
+          final trackerTableInfo = await db.rawQuery("PRAGMA table_info('pregnancy_tracker')");
+          final trackerCols = trackerTableInfo.map((c) => c['name'] as String).toSet();
+
+          final row = <String, dynamic>{
             'id': trackerId,
             'lmpDate': lmpStr,
-            'expectedDueDate': eddStr,
             'isActive': 1,
             'createdAt': nowMs,
             'updatedAt': nowMs,
-          });
+          };
+          if (trackerCols.contains('estimatedDueDate')) row['estimatedDueDate'] = eddStr;
+          if (trackerCols.contains('expectedDueDate')) row['expectedDueDate'] = eddStr;
+          if (trackerCols.contains('currentWeek')) row['currentWeek'] = 1;
+          if (trackerCols.contains('currentTrimester')) row['currentTrimester'] = 1;
+
+          await db.insert('pregnancy_tracker', row, conflictAlgorithm: ConflictAlgorithm.replace);
 
           // Migrate legacy kicks if any
           final kickRows = await db.query(

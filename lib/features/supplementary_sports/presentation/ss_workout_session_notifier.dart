@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_exercise_model.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_audio_cue_player.dart';
+import 'package:ritmo/features/supplementary_sports/domain/ss_session_completion_gateway.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_session_settings.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_workout_session_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -42,14 +44,15 @@ class SSTtsService {
 }
 
 class SSWorkoutState {
-
   SSWorkoutState({
     required this.sessionId,
     required this.planId,
+    this.prescriptionId,
     required this.dayName,
     required this.exercises,
     required this.currentExerciseIndex,
     required this.isLoading,
+    this.loadError,
     required this.startedAt,
     required this.isResting,
     required this.isTimerPaused,
@@ -57,6 +60,7 @@ class SSWorkoutState {
     required this.restRemainingSeconds,
     required this.restTargetTimestamp,
     required this.elapsedSeconds,
+    this.elapsedAnchorMs,
     required this.isShowingFeelingSheet,
     required this.handsFreeMode,
     required this.status,
@@ -66,14 +70,16 @@ class SSWorkoutState {
     required this.currentSide,
   });
 
-  factory SSWorkoutState.initial(String planId, String dayName) {
+  factory SSWorkoutState.initial(String planId, String dayName, {String? prescriptionId}) {
     return SSWorkoutState(
       sessionId: '',
       planId: planId,
+      prescriptionId: prescriptionId,
       dayName: dayName,
       exercises: const [],
       currentExerciseIndex: 0,
       isLoading: true,
+      loadError: null,
       startedAt: 0,
       isResting: false,
       isTimerPaused: false,
@@ -81,6 +87,7 @@ class SSWorkoutState {
       restRemainingSeconds: 90,
       restTargetTimestamp: 0,
       elapsedSeconds: 0,
+      elapsedAnchorMs: null,
       isShowingFeelingSheet: false,
       handsFreeMode: false,
       status: SSWorkoutSessionStatus.preparing,
@@ -90,12 +97,15 @@ class SSWorkoutState {
       currentSide: 'right',
     );
   }
+
   final String sessionId;
   final String planId;
+  final String? prescriptionId;
   final String dayName;
   final List<SSExerciseChecklistEntry> exercises;
   final int currentExerciseIndex;
   final bool isLoading;
+  final String? loadError;
   final int startedAt;
   final bool isResting;
   final bool isTimerPaused;
@@ -103,10 +113,11 @@ class SSWorkoutState {
   final int restRemainingSeconds;
   final int restTargetTimestamp;
   final int elapsedSeconds;
+  final int? elapsedAnchorMs;
   final bool isShowingFeelingSheet;
   final bool handsFreeMode;
 
-  // New State Machine properties
+  // State Machine properties
   final SSWorkoutSessionStatus status;
   final int timerTargetTimestamp;
   final int timerTotalSeconds;
@@ -116,10 +127,13 @@ class SSWorkoutState {
   SSWorkoutState copyWith({
     String? sessionId,
     String? planId,
+    String? prescriptionId,
     String? dayName,
     List<SSExerciseChecklistEntry>? exercises,
     int? currentExerciseIndex,
     bool? isLoading,
+    String? loadError,
+    bool clearLoadError = false,
     int? startedAt,
     bool? isResting,
     bool? isTimerPaused,
@@ -127,6 +141,7 @@ class SSWorkoutState {
     int? restRemainingSeconds,
     int? restTargetTimestamp,
     int? elapsedSeconds,
+    int? elapsedAnchorMs,
     bool? isShowingFeelingSheet,
     bool? handsFreeMode,
     SSWorkoutSessionStatus? status,
@@ -138,10 +153,12 @@ class SSWorkoutState {
     return SSWorkoutState(
       sessionId: sessionId ?? this.sessionId,
       planId: planId ?? this.planId,
+      prescriptionId: prescriptionId ?? this.prescriptionId,
       dayName: dayName ?? this.dayName,
       exercises: exercises ?? this.exercises,
       currentExerciseIndex: currentExerciseIndex ?? this.currentExerciseIndex,
       isLoading: isLoading ?? this.isLoading,
+      loadError: clearLoadError ? null : (loadError ?? this.loadError),
       startedAt: startedAt ?? this.startedAt,
       isResting: isResting ?? this.isResting,
       isTimerPaused: isTimerPaused ?? this.isTimerPaused,
@@ -149,6 +166,7 @@ class SSWorkoutState {
       restRemainingSeconds: restRemainingSeconds ?? this.restRemainingSeconds,
       restTargetTimestamp: restTargetTimestamp ?? this.restTargetTimestamp,
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
+      elapsedAnchorMs: elapsedAnchorMs ?? this.elapsedAnchorMs,
       isShowingFeelingSheet: isShowingFeelingSheet ?? this.isShowingFeelingSheet,
       handsFreeMode: handsFreeMode ?? this.handsFreeMode,
       status: status ?? this.status,
@@ -166,6 +184,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
 
   Timer? _sessionTimer;
   Timer? _autoDismissFeelingTimer;
+  bool _isCompletingSet = false;
 
   @override
   SSWorkoutState build() {
@@ -173,18 +192,26 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
       _sessionTimer?.cancel();
       _autoDismissFeelingTimer?.cancel();
     });
-    return SSWorkoutState.initial(key.planId, key.dayName);
+    return SSWorkoutState.initial(
+      key.planId,
+      key.dayName,
+      prescriptionId: key.prescriptionId,
+    );
   }
 
   Future<void> init() async {
     await _initOrRestoreSession();
-    _startSessionTimer();
+    if (state.loadError == null) {
+      _startSessionTimer();
+    }
   }
 
   void dispatch(SSWorkoutIntent intent) {
     switch (intent) {
       case CompleteCurrentSet():
         _completeCurrentSet();
+      case UndoLastSet():
+        _undoLastSet();
       case SelectFeeling(feeling: final f):
         _selectFeeling(f);
       case DismissFeelingSheet():
@@ -222,11 +249,14 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
   void _startSessionTimer() {
     _sessionTimer?.cancel();
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (state.isLoading) return;
+      if (state.isLoading || state.loadError != null) return;
 
       // 1. Tick overall elapsed seconds
       if (!state.isTimerPaused) {
-        state = state.copyWith(elapsedSeconds: state.elapsedSeconds + 1);
+        state = state.copyWith(
+          elapsedSeconds: state.elapsedSeconds + 1,
+          elapsedAnchorMs: DateTime.now().millisecondsSinceEpoch,
+        );
       }
 
       // 2. Tick active status timer
@@ -252,12 +282,14 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
             SsAudioCuePlayer.instance.playTick();
           } else if (state.status == SSWorkoutSessionStatus.exercising) {
             // Check for change sides midpoint
-            final entry = state.exercises[state.currentExerciseIndex];
-            if (entry.exercise.changeSides == true && state.timerTotalSeconds > 0) {
-              final midpoint = (state.timerTotalSeconds / 2).round();
-              if (remaining == midpoint && state.currentSide == 'right') {
-                state = state.copyWith(currentSide: 'left');
-                _triggerChangeSides();
+            if (state.currentExerciseIndex < state.exercises.length) {
+              final entry = state.exercises[state.currentExerciseIndex];
+              if (entry.exercise.changeSides == true && state.timerTotalSeconds > 0) {
+                final midpoint = (state.timerTotalSeconds / 2).round();
+                if (remaining == midpoint && state.currentSide == 'right') {
+                  state = state.copyWith(currentSide: 'left');
+                  _triggerChangeSides();
+                }
               }
             }
           }
@@ -320,6 +352,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
   }
 
   void _startExercising() {
+    if (state.currentExerciseIndex >= state.exercises.length) return;
     final entry = state.exercises[state.currentExerciseIndex];
     SsAudioCuePlayer.instance.playGo();
     SSTtsService.speak(entry.exercise.name);
@@ -364,15 +397,18 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
 
   void _togglePauseTimer() {
     if (state.isTimerPaused) {
-      final target = DateTime.now().millisecondsSinceEpoch + (state.timerRemainingSeconds * 1000);
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final target = now + (state.timerRemainingSeconds * 1000);
       state = state.copyWith(
         isTimerPaused: false,
         timerTargetTimestamp: target,
         restTargetTimestamp: target,
+        elapsedAnchorMs: now,
       );
     } else {
       state = state.copyWith(
         isTimerPaused: true,
+        elapsedAnchorMs: null,
       );
     }
     _saveSessionToPreferences();
@@ -380,42 +416,112 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
 
   // ─── Set Completion ───
   void _completeCurrentSet() {
-    final entry = state.exercises[state.currentExerciseIndex];
-    final curSetIdx = entry.currentSetIndex;
-    if (curSetIdx == -1) return;
+    if (_isCompletingSet) return;
+    _isCompletingSet = true;
+    try {
+      if (state.currentExerciseIndex >= state.exercises.length) return;
+      final entry = state.exercises[state.currentExerciseIndex];
+      final curSetIdx = entry.currentSetIndex;
+      if (curSetIdx == -1) return;
 
-    final updatedSetRows = List<SetRow>.from(entry.setRows);
-    updatedSetRows[curSetIdx] = updatedSetRows[curSetIdx].copyWith(status: SetStatus.done);
+      final updatedSetRows = List<SetRow>.from(entry.setRows);
+      updatedSetRows[curSetIdx] = updatedSetRows[curSetIdx].copyWith(status: SetStatus.done);
 
-    final nextIdx = curSetIdx + 1;
-    if (nextIdx < updatedSetRows.length) {
-      updatedSetRows[nextIdx] = updatedSetRows[nextIdx].copyWith(status: SetStatus.current);
-      final updatedExercises = List<SSExerciseChecklistEntry>.from(state.exercises);
-      updatedExercises[state.currentExerciseIndex] = entry.copyWith(setRows: updatedSetRows);
-      
-      state = state.copyWith(exercises: updatedExercises);
-      _startRest(updatedSetRows[curSetIdx].restSeconds);
-    } else {
-      // All sets done for this exercise
-      final updatedExercises = List<SSExerciseChecklistEntry>.from(state.exercises);
-      updatedExercises[state.currentExerciseIndex] = entry.copyWith(
-        setRows: updatedSetRows,
-        status: ExerciseStatus.done,
-      );
-      
-      state = state.copyWith(
-        exercises: updatedExercises,
-        isShowingFeelingSheet: true,
-      );
-      
-      _startAutoDismissFeelingTimer();
+      final nextIdx = curSetIdx + 1;
+      if (nextIdx < updatedSetRows.length) {
+        updatedSetRows[nextIdx] = updatedSetRows[nextIdx].copyWith(status: SetStatus.current);
+        final updatedExercises = List<SSExerciseChecklistEntry>.from(state.exercises);
+        updatedExercises[state.currentExerciseIndex] = entry.copyWith(setRows: updatedSetRows);
+        
+        state = state.copyWith(exercises: updatedExercises);
+        _startRest(updatedSetRows[curSetIdx].restSeconds);
+      } else {
+        // All sets done for this exercise
+        final updatedExercises = List<SSExerciseChecklistEntry>.from(state.exercises);
+        updatedExercises[state.currentExerciseIndex] = entry.copyWith(
+          setRows: updatedSetRows,
+          status: ExerciseStatus.done,
+        );
+        state = state.copyWith(
+          exercises: updatedExercises,
+          isShowingFeelingSheet: true,
+        );
+        _showFeelingSheetAutoDismiss();
+      }
+      _saveSessionToPreferences();
+    } finally {
+      _isCompletingSet = false;
     }
-
-    _saveSessionToPreferences();
-    HapticFeedback.mediumImpact();
   }
 
-  void _startAutoDismissFeelingTimer() {
+  void _undoLastSet() {
+    if (state.currentExerciseIndex >= state.exercises.length) return;
+    final entry = state.exercises[state.currentExerciseIndex];
+    final updatedSetRows = List<SetRow>.from(entry.setRows);
+    
+    // Find last done set in current exercise
+    int lastDoneIdx = -1;
+    for (int i = updatedSetRows.length - 1; i >= 0; i--) {
+      if (updatedSetRows[i].status == SetStatus.done) {
+        lastDoneIdx = i;
+        break;
+      }
+    }
+
+    if (lastDoneIdx == -1) {
+      // Revert from previous exercise if possible
+      if (state.currentExerciseIndex > 0) {
+        final prevExIdx = state.currentExerciseIndex - 1;
+        final prevEntry = state.exercises[prevExIdx];
+        final prevSetRows = List<SetRow>.from(prevEntry.setRows);
+        for (int i = prevSetRows.length - 1; i >= 0; i--) {
+          if (prevSetRows[i].status == SetStatus.done) {
+            prevSetRows[i] = prevSetRows[i].copyWith(status: SetStatus.current);
+            if (i + 1 < prevSetRows.length) {
+              prevSetRows[i + 1] = prevSetRows[i + 1].copyWith(status: SetStatus.pending);
+            }
+            break;
+          }
+        }
+        final updatedExercises = List<SSExerciseChecklistEntry>.from(state.exercises);
+        updatedExercises[prevExIdx] = prevEntry.copyWith(
+          setRows: prevSetRows,
+          status: ExerciseStatus.current,
+        );
+        updatedExercises[state.currentExerciseIndex] = entry.copyWith(status: ExerciseStatus.upcoming);
+        state = state.copyWith(
+          currentExerciseIndex: prevExIdx,
+          exercises: updatedExercises,
+          isResting: false,
+          isShowingFeelingSheet: false,
+        );
+        _saveSessionToPreferences();
+        _startExercising();
+      }
+      return;
+    }
+
+    updatedSetRows[lastDoneIdx] = updatedSetRows[lastDoneIdx].copyWith(status: SetStatus.current);
+    if (lastDoneIdx + 1 < updatedSetRows.length) {
+      updatedSetRows[lastDoneIdx + 1] = updatedSetRows[lastDoneIdx + 1].copyWith(status: SetStatus.pending);
+    }
+
+    final updatedExercises = List<SSExerciseChecklistEntry>.from(state.exercises);
+    updatedExercises[state.currentExerciseIndex] = entry.copyWith(
+      setRows: updatedSetRows,
+      status: ExerciseStatus.current,
+    );
+
+    state = state.copyWith(
+      exercises: updatedExercises,
+      isResting: false,
+      isShowingFeelingSheet: false,
+    );
+    _saveSessionToPreferences();
+    _startExercising();
+  }
+
+  void _showFeelingSheetAutoDismiss() {
     _autoDismissFeelingTimer?.cancel();
     _autoDismissFeelingTimer = Timer(const Duration(seconds: 5), () {
       dispatch(const DismissFeelingSheet());
@@ -567,8 +673,22 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
     }
   }
 
+  void _syncElapsedOnResume() {
+    if (state.isTimerPaused) return;
+    final anchor = state.elapsedAnchorMs;
+    if (anchor == null || anchor <= 0) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final delta = ((now - anchor) / 1000).floor();
+    if (delta <= 0) return;
+    state = state.copyWith(
+      elapsedSeconds: state.elapsedSeconds + delta,
+      elapsedAnchorMs: now,
+    );
+  }
+
   // Handle Lifecycle resume to sync timestamps
   void handleLifecycleResumed() {
+    _syncElapsedOnResume();
     if (state.isTimerPaused || state.timerTargetTimestamp == 0) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     final diff = state.timerTargetTimestamp - now;
@@ -582,6 +702,35 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
       );
       _startSessionTimer();
     }
+  }
+
+  Future<String?> _resolveWorkoutPlanId(DatabaseExecutor db) async {
+    final requested = state.planId;
+
+    final planRows = await db.query(
+      'ss_workout_plan',
+      where: 'id = ?',
+      whereArgs: [requested],
+      limit: 1,
+    );
+    if (planRows.isNotEmpty) return requested;
+
+    final prescriptionRows = await db.query(
+      'ss_session_prescription',
+      where: 'id = ? OR workoutPlanId = ? OR legacyPlanId = ?',
+      whereArgs: [requested, requested, requested],
+      orderBy: 'dateIso DESC',
+      limit: 1,
+    );
+    if (prescriptionRows.isEmpty) return null;
+
+    final prescription = prescriptionRows.first;
+    final resolved = prescription['workoutPlanId']?.toString().trim().isNotEmpty == true
+        ? prescription['workoutPlanId'].toString()
+        : prescription['legacyPlanId']?.toString();
+
+    if (resolved == null || resolved.isEmpty) return null;
+    return resolved;
   }
 
   // Database persistence & restore helper
@@ -611,65 +760,52 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
             timerTargetTimestamp: targetTimestamp,
             isTimerPaused: isPaused,
             elapsedSeconds: elapsed,
+            elapsedAnchorMs: isPaused ? null : DateTime.now().millisecondsSinceEpoch,
             isLoading: false,
+            clearLoadError: true,
           );
           return;
         }
       }
 
+      final db = await DatabaseHelper.instance.database;
+      final resolvedPlanId = await _resolveWorkoutPlanId(db);
+
+      if (resolvedPlanId == null) {
+        state = state.copyWith(
+          isLoading: false,
+          loadError: 'برنامهٔ این جلسه پیدا نشد. لطفاً از تب «برنامه» دوباره بساز یا یک تمرین دیگر انتخاب کن.',
+          exercises: const [],
+        );
+        return;
+      }
+
       // Initialize New session
       final now = DateTime.now().millisecondsSinceEpoch;
-      final newSessionId = 'session_${state.planId}_$now';
+      final newSessionId = 'session_${resolvedPlanId}_$now';
 
-      final db = await DatabaseHelper.instance.database;
-      var crossRefs = await db.rawQuery('''
+      final crossRefs = await db.rawQuery('''
         SELECT c.*, e.name, e.category, e.equipment, e.instructions, e.changeSides, e.repsDouble, e.repsHint, e.impact, e.noisy, e.durationSeconds
         FROM ss_workout_exercise_crossref c
         JOIN ss_exercise e ON c.exerciseId = e.id
         WHERE c.planId = ?
         ORDER BY c.orderIndex ASC
-      ''', [state.planId]);
+      ''', [resolvedPlanId]);
 
       if (crossRefs.isEmpty) {
-        // Fallback 1: Query any crossRefs in database
-        crossRefs = await db.rawQuery('''
-          SELECT c.*, e.name, e.category, e.equipment, e.instructions, e.changeSides, e.repsDouble, e.repsHint, e.impact, e.noisy, e.durationSeconds
-          FROM ss_workout_exercise_crossref c
-          JOIN ss_exercise e ON c.exerciseId = e.id
-          ORDER BY c.orderIndex ASC
-          LIMIT 6
-        ''');
-      }
-
-      if (crossRefs.isEmpty) {
-        // Fallback 2: Query directly from ss_exercise
-        final exercisesRaw = await db.query('ss_exercise', limit: 6);
-        if (exercisesRaw.isNotEmpty) {
-          crossRefs = exercisesRaw.map((e) => {
-            'exerciseId': e['id'],
-            'targetSets': 3,
-            'targetReps': 10,
-            'targetWeight': 0.0,
-            'orderIndex': 0,
-            'name': e['name'],
-            'category': e['category'],
-            'equipment': e['equipment'],
-            'instructions': e['instructions'],
-            'changeSides': e['changeSides'],
-            'repsDouble': e['repsDouble'],
-            'repsHint': e['repsHint'],
-            'impact': e['impact'],
-            'noisy': e['noisy'],
-            'durationSeconds': e['durationSeconds'],
-          }).toList();
-        }
+        state = state.copyWith(
+          isLoading: false,
+          loadError: 'برنامهٔ این جلسه پیدا نشد. لطفاً از تب «برنامه» دوباره بساز یا یک تمرین دیگر انتخاب کن.',
+          exercises: const [],
+        );
+        return;
       }
 
       final sessionSettings = await SSSessionSettings.load();
       final restOverride = prefs.getInt('ss_tired_rest_override');
       final effectiveDefaultRest = restOverride ?? sessionSettings.defaultRestSeconds;
 
-      // Fetch the last logged sets for all exercises in this plan to use as default values
+      // Fetch the last logged sets and notes for all exercises in this plan to use as default values
       final exerciseIds = crossRefs.map((row) => row['exerciseId'].toString()).toList();
       final lastSetsMap = await _getLastLoggedSetsForExercises(exerciseIds, db);
 
@@ -682,6 +818,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
         final refWeight = (row['targetWeight'] as num?)?.toDouble() ?? 0.0;
 
         final lastLoggedSets = lastSetsMap[exerciseId] ?? [];
+        final lastNote = await getLastNoteForExercise(exerciseId);
         
         final setRows = List.generate(
           refSets,
@@ -725,6 +862,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
           referenceWeight: refWeight,
           status: i == 0 ? ExerciseStatus.current : ExerciseStatus.upcoming,
           setRows: setRows,
+          optionalNote: lastNote,
         ));
       }
 
@@ -736,12 +874,17 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
         timerTotalSeconds: 5,
         timerRemainingSeconds: 5,
         timerTargetTimestamp: now + 5000,
+        elapsedAnchorMs: now,
         isLoading: false,
+        clearLoadError: true,
       );
       await _saveSessionToPreferences();
     } catch (e) {
       debugPrint('Error restoring session: $e');
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(
+        isLoading: false,
+        loadError: 'خطا در بارگذاری برنامه تمرینی.',
+      );
     }
   }
 
@@ -779,6 +922,29 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
     await prefs.remove('ss_tired_rest_override');
   }
 
+  String? _sessionNoteFromExercises() {
+    final notes = state.exercises
+        .where((e) => (e.optionalNote ?? '').trim().isNotEmpty)
+        .map((e) => '${e.exercise.name}: ${e.optionalNote!.trim()}')
+        .toList(growable: false);
+    if (notes.isEmpty) return null;
+    return notes.join('\n');
+  }
+
+  int? _estimatedRpeFromSets() {
+    final rirs = <int>[];
+    for (final entry in state.exercises) {
+      for (final set in entry.setRows) {
+        if (set.status == SetStatus.done && set.rir != null) {
+          rirs.add(set.rir!);
+        }
+      }
+    }
+    if (rirs.isEmpty) return null;
+    final avgRir = rirs.reduce((a, b) => a + b) / rirs.length;
+    return (10 - avgRir).round().clamp(1, 10);
+  }
+
   // Database persistence on session completion
   Future<Map<String, dynamic>> finishAndLogWorkout() async {
     state = state.copyWith(isLoading: true);
@@ -797,17 +963,20 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
       }
 
       await db.transaction((txn) async {
+        final resolvedPlanId = await _resolveWorkoutPlanId(txn);
         await txn.insert(
           'ss_workout_session_log',
           {
             'id': state.sessionId,
-            'planId': state.planId,
+            'planId': resolvedPlanId,
+            'prescriptionId': state.prescriptionId,
             'startedAt': state.startedAt,
             'finishedAt': finishedAt,
             'durationSeconds': durationSec,
             'completedExercisesCount': completedCount,
             'totalExercisesCount': state.exercises.length,
             'overallFeeling': overallFeeling != null ? _feelingStr(overallFeeling) : null,
+            'note': _sessionNoteFromExercises(),
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
@@ -827,24 +996,42 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
             );
           }
 
-          var setIdx = 1;
-          for (final setRow in entry.setRows) {
-            final setId = 'set_${state.sessionId}_${entry.exercise.id}_$setIdx';
+          final completedSetRows = entry.setRows
+              .where((setRow) => setRow.status == SetStatus.done)
+              .toList(growable: false);
+
+          for (var i = 0; i < completedSetRows.length; i++) {
+            final setRow = completedSetRows[i];
+            final setId = 'set_${state.sessionId}_${entry.exercise.id}_${setRow.setNumber}';
             await txn.insert(
               'ss_workout_set_log',
               {
                 'id': setId,
                 'session_id': state.sessionId,
                 'exercise_id': entry.exercise.id,
-                'set_index': setIdx,
+                'set_index': setRow.setNumber,
                 'weight': setRow.weight,
                 'reps': setRow.reps,
+                'rir': setRow.rir,
+                'note': entry.optionalNote,
                 'feeling': entry.feeling != null ? _feelingStr(entry.feeling!) : null,
               },
               conflictAlgorithm: ConflictAlgorithm.replace,
             );
-            setIdx++;
           }
+        }
+
+        // Complete prescription in the same transaction
+        if (state.prescriptionId != null && state.prescriptionId!.isNotEmpty) {
+          await SsSessionCompletionGateway.completeDetailedSessionInTransaction(
+            txn,
+            prescriptionId: state.prescriptionId,
+            sessionId: state.sessionId,
+            actualMinutes: max(1, (durationSec / 60).round()),
+            actualRpe: _estimatedRpeFromSets(),
+            location: null,
+            customNote: _sessionNoteFromExercises(),
+          );
         }
       });
 
@@ -894,7 +1081,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
       if (lastSessionIdQuery.isNotEmpty) {
         final lastSessionId = lastSessionIdQuery.first['session_id']! as String;
         final sets = await db.rawQuery('''
-          SELECT weight, reps, feeling, set_index
+          SELECT weight, reps, feeling, set_index, rir, note
           FROM ss_workout_set_log
           WHERE exercise_id = ? AND session_id = ?
           ORDER BY set_index ASC
@@ -905,11 +1092,28 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
     return result;
   }
 
+  Future<String?> getLastNoteForExercise(String exerciseId) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final results = await db.rawQuery('''
+        SELECT note
+        FROM ss_workout_set_log
+        WHERE exercise_id = ? AND note IS NOT NULL AND note != ''
+        ORDER BY id DESC
+        LIMIT 1
+      ''', [exerciseId]);
+      return results.isNotEmpty ? results.first['note']?.toString() : null;
+    } catch (e) {
+      debugPrint('Error querying last note: $e');
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>?> getLastLoggedSetForExercise(String exerciseId) async {
     try {
       final db = await DatabaseHelper.instance.database;
       final results = await db.rawQuery('''
-        SELECT weight, reps, feeling, session_id, set_index
+        SELECT weight, reps, feeling, session_id, set_index, rir, note
         FROM ss_workout_set_log
         WHERE exercise_id = ?
         ORDER BY id DESC
@@ -923,8 +1127,10 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
   }
 
   void _updateSetWeightAndReps(int setIndex, double? weight, int? reps, {int? rir}) {
+    if (state.currentExerciseIndex >= state.exercises.length) return;
     final entry = state.exercises[state.currentExerciseIndex];
     final updatedSetRows = List<SetRow>.from(entry.setRows);
+    if (setIndex >= updatedSetRows.length) return;
     final row = updatedSetRows[setIndex];
     
     updatedSetRows[setIndex] = row.copyWith(
@@ -950,10 +1156,15 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
 }
 
 class SSWorkoutPlanKey {
+  const SSWorkoutPlanKey({
+    required this.planId,
+    required this.dayName,
+    this.prescriptionId,
+  });
 
-  const SSWorkoutPlanKey({required this.planId, required this.dayName});
   final String planId;
   final String dayName;
+  final String? prescriptionId;
 
   @override
   bool operator ==(Object other) =>
@@ -961,10 +1172,11 @@ class SSWorkoutPlanKey {
       other is SSWorkoutPlanKey &&
           runtimeType == other.runtimeType &&
           planId == other.planId &&
-          dayName == other.dayName;
+          dayName == other.dayName &&
+          prescriptionId == other.prescriptionId;
 
   @override
-  int get hashCode => planId.hashCode ^ dayName.hashCode;
+  int get hashCode => Object.hash(planId, dayName, prescriptionId);
 }
 
 final ssWorkoutProvider = NotifierProvider.autoDispose.family<SSWorkoutNotifier, SSWorkoutState, SSWorkoutPlanKey>(

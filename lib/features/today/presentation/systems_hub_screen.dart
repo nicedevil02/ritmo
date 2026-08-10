@@ -87,12 +87,13 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
   bool _energyEnabled = false;
   bool _sleepEnabled = false;
   bool _progressiveHabitsEnabled = false;
-
+  bool _notesEnabled = false;
 
   // Status flags resolved from db state
   ModuleStatus _konkurStatus = ModuleStatus.inactive;
   ModuleStatus _goalsStatus = ModuleStatus.inactive;
   ModuleStatus _assistantStatus = ModuleStatus.inactive;
+  ModuleStatus _notesStatus = ModuleStatus.inactive;
 
   @override
   void initState() {
@@ -176,6 +177,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       _energyEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_energy_enabled');
       _sleepEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_sleep_enabled');
       _progressiveHabitsEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_progressive_habits_enabled');
+      _notesEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_notes_enabled');
 
 
       // 3. Load konkur subjects to determine status (active vs setupRequired)
@@ -188,8 +190,9 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       final hasGoals = goals.isNotEmpty;
       _goalsStatus = SystemsHubLogic.determineKonkurStatus(_goalsEnabled, hasGoals);
 
-      // 4. Load assistant status
+      // 4. Load assistant and notes status
       _assistantStatus = SystemsHubLogic.determineGenericStatus(_assistantEnabled);
+      _notesStatus = SystemsHubLogic.determineGenericStatus(_notesEnabled);
     } catch (e) {
       debugPrint('Error loading Systems Hub data: $e');
     }
@@ -684,14 +687,9 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           iconColor: const Color(0xffF59E0B),
           title: 'دفترچه و تجربه‌ها',
           description: 'یادداشت‌ها و درس‌های زندگی',
-          status: ModuleStatus.active,
+          status: _notesStatus,
           illustrationAsset: 'assets/images/notes_card_top.png',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const NotebookScreen()),
-            ).then((_) => _loadAllData());
-          },
+          onTap: () => _handleNotesTap(colors),
           colors: colors,
           isDarkMode: isDarkMode,
         ),
@@ -1098,9 +1096,33 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
         iconColor: const Color(0xffF59E0B),
         settingKey: 'module_goals_enabled',
         onActivated: () {
-          Navigator.push(
+           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const GoalsScreen()),
+          ).then((_) => _loadAllData());
+        },
+        colors: colors,
+      );
+    }
+  }
+
+  void _handleNotesTap(RitmoColors colors) {
+    if (_notesEnabled) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const NotebookScreen()),
+      ).then((_) => _loadAllData());
+    } else {
+      _showActivationSheet(
+        title: 'فعال‌سازی سیستم دفترچه و تجربه‌ها',
+        description: 'با فعال‌سازی این ماژول، می‌توانید یادداشت‌های آزاد، ایده‌ها و درس‌های زندگی خود را ثبت و در زمان‌های طلایی بازخوانی کنید.',
+        icon: CupertinoIcons.doc_text_fill,
+        iconColor: const Color(0xffF59E0B),
+        settingKey: 'module_notes_enabled',
+        onActivated: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const NotebookScreen()),
           ).then((_) => _loadAllData());
         },
         colors: colors,

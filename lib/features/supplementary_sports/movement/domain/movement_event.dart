@@ -25,6 +25,7 @@ class MovementEvent {
     this.venue,
     this.companions,
     this.sourceModule = 'MOVEMENT',
+    this.sourceEntityId,
     this.metricsJson,
   });
 
@@ -49,6 +50,7 @@ class MovementEvent {
   final String? venue;
   final String? companions;
   final String sourceModule;
+  final String? sourceEntityId;
   final String? metricsJson;
 
   factory MovementEvent.fromMap(Map<String, dynamic> map) {
@@ -74,6 +76,7 @@ class MovementEvent {
       venue: map['venue'] as String?,
       companions: map['companions'] as String?,
       sourceModule: map['sourceModule'] as String? ?? 'MOVEMENT',
+      sourceEntityId: map['sourceEntityId'] as String? ?? map['id'] as String?,
       metricsJson: map['metricsJson'] as String?,
     );
   }
@@ -102,6 +105,7 @@ class MovementEvent {
       'venue': venue,
       'companions': companions,
       'sourceModule': sourceModule,
+      'sourceEntityId': sourceEntityId ?? id,
       'metricsJson': metricsJson,
     };
   }
@@ -128,6 +132,7 @@ class MovementEvent {
     String? venue,
     String? companions,
     String? sourceModule,
+    String? sourceEntityId,
     String? metricsJson,
   }) {
     return MovementEvent(
@@ -152,6 +157,7 @@ class MovementEvent {
       venue: venue ?? this.venue,
       companions: companions ?? this.companions,
       sourceModule: sourceModule ?? this.sourceModule,
+      sourceEntityId: sourceEntityId ?? this.sourceEntityId,
       metricsJson: metricsJson ?? this.metricsJson,
     );
   }

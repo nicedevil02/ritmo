@@ -89,30 +89,20 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
 
     try {
       final db = await DatabaseHelper.instance.database;
-
-      // Ensure weight logs table exists
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS ss_weight_log (
-          id TEXT PRIMARY KEY,
-          weight REAL NOT NULL,
-          loggedAt INTEGER NOT NULL
-        );
-      ''');
-
       final today = DateTime.now();
 
       // 1. Fetch total session count
-      final totalSessionsResult = await db.rawQuery("SELECT COUNT(*) as count FROM workout_logs WHERE sourceModule = 'ss_prescription'");
+      final totalSessionsResult = await db.rawQuery("SELECT COUNT(*) as count FROM workout_logs WHERE sourceModule IN ('ss_prescription', 'movement_tracker', 'ss_session')");
       final totalSessions = Sqflite.firstIntValue(totalSessionsResult) ?? 0;
 
       // 2. Fetch total duration in minutes
-      final totalMinutesResult = await db.rawQuery("SELECT SUM(durationMinutes) as total FROM workout_logs WHERE sourceModule = 'ss_prescription'");
+      final totalMinutesResult = await db.rawQuery("SELECT SUM(durationMinutes) as total FROM workout_logs WHERE sourceModule IN ('ss_prescription', 'movement_tracker', 'ss_session')");
       final totalMinutes = (Sqflite.firstIntValue(totalMinutesResult) ?? 0);
 
       // 3. Fetch all completed session logs
       final allLogs = await db.query(
         'workout_logs',
-        where: "sourceModule = 'ss_prescription'",
+        where: "sourceModule IN ('ss_prescription', 'movement_tracker', 'ss_session')",
         orderBy: 'loggedAt ASC',
       );
 

@@ -277,6 +277,17 @@ class ModuleManagementService {
             await safeDeleteSettingsLike('checkin_%');
             await _safeDeleteRoutinesByCategory(txn, 'habits');
             break;
+
+          case 'module_notes_enabled':
+            await safeDelete('note_experience_meta');
+            await safeDelete('note_revisions');
+            await safeDelete('note_attachments');
+            await safeDelete('note_tags');
+            await safeDelete('note_links');
+            await safeDelete('notes');
+            await safeDelete('notes_fts');
+            await safeDeleteSettingsLike('notes_%');
+            break;
         }
 
         // Set module enable flag to 'false' so it requires activation & onboarding

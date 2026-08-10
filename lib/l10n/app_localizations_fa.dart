@@ -1107,12 +1107,16 @@ class AppLocalizationsFa extends AppLocalizations {
   String get cycleSosButton => 'کمک فوری تسکین درد';
 
   @override
-  String get cyclePregnancyActivate => '🤰 فعالسازی حالت بارداری';
+  String get cyclePregnancyActivate => '🤰 فعال‌سازی حالت بارداری';
 
   @override
   String get cyclePregnancyConfirmPrompt =>
-      'آیا باردار هستید؟ با فعالسازی این حالت، پیگیری چرخه قاعدگی متوقف میشود و اطلاعات دوران بارداری نمایش داده میشود.';
+      'آیا باردار هستید؟ با فعال‌سازی این حالت، پیگیری چرخه قاعدگی متوقف می‌شود و اطلاعات دوران بارداری نمایش داده می‌شود.';
 
   @override
   String get cyclePregnancyDeactivate => 'بازگشت به حالت عادی';
+
+  @override
+  String get pregnancyMedicalDisclaimer =>
+      'این برنامه یک ابزار پزشکی نیست و جایگزین نظر پزشک متخصص نمی‌شود. در هر وضعیت نگران‌کننده با پزشک یا ماما تماس بگیرید.';
 }

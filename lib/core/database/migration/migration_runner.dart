@@ -28,6 +28,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v86_notes.dar
 import 'package:ritmo/core/database/migration/migrations/migration_v87_planning.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v88_audit_fixes.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v89_pregnancy_data_sync.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v90_sports_integrity.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -119,6 +120,7 @@ class MigrationRunner {
     MigrationV87Planning(),
     MigrationV88AuditFixes(),
     MigrationV89PregnancyDataSync(),
+    MigrationV90SportsIntegrity(),
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

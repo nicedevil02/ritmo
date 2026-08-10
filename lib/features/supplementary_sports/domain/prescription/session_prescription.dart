@@ -110,6 +110,7 @@ class SessionPrescription {
     required this.targetMinutes,
     required this.intensityTier,
     this.targetRpe,
+    this.actualRpe,
     required this.headlineFa,
     this.coachNoteFa,
     required this.source,
@@ -117,6 +118,7 @@ class SessionPrescription {
     this.status = PrescriptionStatus.planned,
     this.movedToDateIso,
     this.legacyPlanId,
+    this.workoutPlanId,
     this.workoutLogId,
     required this.createdAt,
     required this.updatedAt,
@@ -130,6 +132,7 @@ class SessionPrescription {
   final int targetMinutes;
   final IntensityTier intensityTier;
   final int? targetRpe;
+  final int? actualRpe;
   final String headlineFa;
   final String? coachNoteFa;
   final String source;
@@ -137,6 +140,7 @@ class SessionPrescription {
   final PrescriptionStatus status;
   final String? movedToDateIso;
   final String? legacyPlanId;
+  final String? workoutPlanId;
   final String? workoutLogId;
   final int createdAt;
   final int updatedAt;
@@ -150,6 +154,7 @@ class SessionPrescription {
     int? targetMinutes,
     IntensityTier? intensityTier,
     int? targetRpe,
+    int? actualRpe,
     String? headlineFa,
     String? coachNoteFa,
     String? source,
@@ -157,6 +162,7 @@ class SessionPrescription {
     PrescriptionStatus? status,
     String? movedToDateIso,
     String? legacyPlanId,
+    String? workoutPlanId,
     String? workoutLogId,
     int? createdAt,
     int? updatedAt,
@@ -170,6 +176,7 @@ class SessionPrescription {
       targetMinutes: targetMinutes ?? this.targetMinutes,
       intensityTier: intensityTier ?? this.intensityTier,
       targetRpe: targetRpe ?? this.targetRpe,
+      actualRpe: actualRpe ?? this.actualRpe,
       headlineFa: headlineFa ?? this.headlineFa,
       coachNoteFa: coachNoteFa ?? this.coachNoteFa,
       source: source ?? this.source,
@@ -177,6 +184,7 @@ class SessionPrescription {
       status: status ?? this.status,
       movedToDateIso: movedToDateIso ?? this.movedToDateIso,
       legacyPlanId: legacyPlanId ?? this.legacyPlanId,
+      workoutPlanId: workoutPlanId ?? this.workoutPlanId,
       workoutLogId: workoutLogId ?? this.workoutLogId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -193,6 +201,7 @@ class SessionPrescription {
       'targetMinutes': targetMinutes,
       'intensityTier': intensityTier.code,
       'targetRpe': targetRpe,
+      'actualRpe': actualRpe,
       'headlineFa': headlineFa,
       'coachNoteFa': coachNoteFa,
       'source': source,
@@ -200,6 +209,7 @@ class SessionPrescription {
       'status': status.code,
       'movedToDateIso': movedToDateIso,
       'legacyPlanId': legacyPlanId,
+      'workoutPlanId': workoutPlanId,
       'workoutLogId': workoutLogId,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -223,6 +233,7 @@ class SessionPrescription {
       targetMinutes: map['targetMinutes'] as int? ?? 0,
       intensityTier: IntensityTier.fromCode(map['intensityTier'] as String? ?? 'MODERATE'),
       targetRpe: map['targetRpe'] as int?,
+      actualRpe: map['actualRpe'] as int?,
       headlineFa: map['headlineFa'] as String? ?? '',
       coachNoteFa: map['coachNoteFa'] as String?,
       source: map['source'] as String? ?? 'GENERATED',
@@ -230,6 +241,7 @@ class SessionPrescription {
       status: PrescriptionStatus.fromCode(map['status'] as String? ?? 'PLANNED'),
       movedToDateIso: map['movedToDateIso'] as String?,
       legacyPlanId: map['legacyPlanId'] as String?,
+      workoutPlanId: map['workoutPlanId'] as String? ?? map['legacyPlanId'] as String?,
       workoutLogId: map['workoutLogId'] as String?,
       createdAt: map['createdAt'] as int? ?? 0,
       updatedAt: map['updatedAt'] as int? ?? 0,

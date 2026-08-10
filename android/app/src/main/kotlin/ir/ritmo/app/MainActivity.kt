@@ -224,6 +224,30 @@ class MainActivity : FlutterFragmentActivity() {
                 }
             }
         }
+
+        // 7. Share Target MethodChannel (P-02)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ritmo/share").setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getInitialSharedText" -> {
+                    val sharedText = sharedTextPayload
+                    sharedTextPayload = null
+                    if (sharedText != null) {
+                        result.success(sharedText)
+                    } else {
+                        val act = intent?.action
+                        val type = intent?.type
+                        if (Intent.ACTION_SEND == act && type != null && "text/plain" == type) {
+                            val txt = intent?.getStringExtra(Intent.EXTRA_TEXT)
+                            intent?.action = null
+                            result.success(txt)
+                        } else {
+                            result.success(null)
+                        }
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
     /** Forces both the compact and full-screen widgets to re-read the latest snapshot. */
@@ -257,6 +281,7 @@ class MainActivity : FlutterFragmentActivity() {
     private var startTimerReminderId: String? = null
     private var openModuleId: String? = null
     private var openQuickAdd: Boolean = false
+    private var sharedTextPayload: String? = null
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -273,6 +298,12 @@ class MainActivity : FlutterFragmentActivity() {
             "com.ritmo.app.OPEN_QUICK_ADD" -> {
                 openQuickAdd = true
                 android.util.Log.d("MainActivity", "onNewIntent: OPEN_QUICK_ADD received")
+            }
+            Intent.ACTION_SEND -> {
+                if (intent.type == "text/plain") {
+                    sharedTextPayload = intent.getStringExtra(Intent.EXTRA_TEXT)
+                    android.util.Log.d("MainActivity", "onNewIntent: ACTION_SEND received with text")
+                }
             }
         }
     }

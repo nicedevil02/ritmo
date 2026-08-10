@@ -2051,13 +2051,13 @@ abstract class AppLocalizations {
   /// No description provided for @cyclePregnancyActivate.
   ///
   /// In fa, this message translates to:
-  /// **'🤰 فعالسازی حالت بارداری'**
+  /// **'🤰 فعال‌سازی حالت بارداری'**
   String get cyclePregnancyActivate;
 
   /// No description provided for @cyclePregnancyConfirmPrompt.
   ///
   /// In fa, this message translates to:
-  /// **'آیا باردار هستید؟ با فعالسازی این حالت، پیگیری چرخه قاعدگی متوقف میشود و اطلاعات دوران بارداری نمایش داده میشود.'**
+  /// **'آیا باردار هستید؟ با فعال‌سازی این حالت، پیگیری چرخه قاعدگی متوقف می‌شود و اطلاعات دوران بارداری نمایش داده می‌شود.'**
   String get cyclePregnancyConfirmPrompt;
 
   /// No description provided for @cyclePregnancyDeactivate.
@@ -2065,6 +2065,12 @@ abstract class AppLocalizations {
   /// In fa, this message translates to:
   /// **'بازگشت به حالت عادی'**
   String get cyclePregnancyDeactivate;
+
+  /// No description provided for @pregnancyMedicalDisclaimer.
+  ///
+  /// In fa, this message translates to:
+  /// **'این برنامه یک ابزار پزشکی نیست و جایگزین نظر پزشک متخصص نمی‌شود. در هر وضعیت نگران‌کننده با پزشک یا ماما تماس بگیرید.'**
+  String get pregnancyMedicalDisclaimer;
 }
 
 class _AppLocalizationsDelegate

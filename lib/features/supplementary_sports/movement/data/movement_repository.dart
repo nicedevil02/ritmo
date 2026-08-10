@@ -129,65 +129,89 @@ class MovementRepository {
     return MovementKind.fromMap(customMap);
   }
 
+  /// Transaction-aware upsert for MovementEvent. Idempotent and does not fire EventBus.
+  Future<Map<String, dynamic>> upsertEventInTransaction(
+    DatabaseExecutor txn,
+    MovementEvent event,
+  ) async {
+    final sourceEntityId = event.sourceEntityId ?? event.id;
+    final existing = await txn.query(
+      'workout_logs',
+      where: '(id = ?) OR (sourceModule = ? AND sourceEntityId = ?)',
+      whereArgs: [event.id, event.sourceModule, sourceEntityId],
+      limit: 1,
+    );
+
+    final kind = await getKind(event.kindCode);
+    final met = MovementLoadCalculator.metFor(
+      baseMet: kind?.baseMet ?? 4.0,
+      metLow: kind?.metLow ?? 3.0,
+      metHigh: kind?.metHigh ?? 6.0,
+      intensity: event.intensity,
+    );
+    final weightKg = await MovementLoadCalculator.getUserWeightKg(txn);
+    final metMins = MovementLoadCalculator.metMinutes(
+      met: met,
+      durationMinutes: event.durationMinutes,
+    );
+    final kcal = MovementLoadCalculator.calories(
+      met: met,
+      weightKg: weightKg,
+      durationMinutes: event.durationMinutes,
+    );
+
+    final fullEvent = event.copyWith(
+      sourceEntityId: sourceEntityId,
+      metMinutes: metMins,
+      caloriesKcal: kcal,
+    );
+
+    if (existing.isNotEmpty) {
+      final existingId = existing.first['id'].toString();
+      await txn.update(
+        'workout_logs',
+        fullEvent.copyWith(id: existingId).toMap(),
+        where: 'id = ?',
+        whereArgs: [existingId],
+      );
+      return {'id': existingId, 'isPr': false, 'wasDuplicate': true};
+    }
+
+    await txn.insert('workout_logs', fullEvent.toMap());
+    await txn.rawUpdate('''
+      UPDATE movement_kinds
+      SET usageCount = usageCount + 1, lastUsedAt = ?
+      WHERE code = ?
+    ''', [fullEvent.loggedAt, fullEvent.kindCode]);
+
+    final prResult = await _checkAndRecordPrs(txn, fullEvent, kind);
+    return {'id': fullEvent.id, 'isPr': prResult.isNewPr, 'prResult': prResult};
+  }
+
   /// Main method to log a MovementEvent. Handles MET/calories calculations,
   /// kind usage counter, PR checks, and event bus notification inside a transaction.
   Future<Map<String, dynamic>> logEvent(MovementEvent event) async {
     final db = await _db;
-    PRCheckResult? prResult;
+    Map<String, dynamic> result = {};
 
     await db.transaction((txn) async {
-      final kind = await getKind(event.kindCode);
-      final baseMet = kind?.baseMet ?? 4.0;
-      final metLow = kind?.metLow ?? 3.0;
-      final metHigh = kind?.metHigh ?? 6.0;
-
-      final met = MovementLoadCalculator.metFor(
-        baseMet: baseMet,
-        metLow: metLow,
-        metHigh: metHigh,
-        intensity: event.intensity,
-      );
-
-      final weightKg = await MovementLoadCalculator.getUserWeightKg(txn);
-      final metMins = MovementLoadCalculator.metMinutes(met: met, durationMinutes: event.durationMinutes);
-      final kcal = MovementLoadCalculator.calories(met: met, weightKg: weightKg, durationMinutes: event.durationMinutes);
-
-      final fullEvent = event.copyWith(
-        metMinutes: metMins,
-        caloriesKcal: kcal,
-      );
-
-      await txn.insert('workout_logs', fullEvent.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-
-      // Increment kind usage count
-      await txn.rawUpdate('''
-        UPDATE movement_kinds
-        SET usageCount = usageCount + 1, lastUsedAt = ?
-        WHERE code = ?
-      ''', [fullEvent.loggedAt, fullEvent.kindCode]);
-
-      // Check PR
-      prResult = await _checkAndRecordPrs(txn, fullEvent, kind);
+      result = await upsertEventInTransaction(txn, event);
     });
 
-    // Fire event bus
+    // Fire event bus after commit
     RitmoEventBus().fire(RitmoEvent(
       type: RitmoEventType.workoutLogChanged.code,
       timestamp: DateTime.now(),
       payload: {
-        'source': 'movement',
-        'id': event.id,
+        'source': event.sourceModule,
+        'id': result['id'] ?? event.id,
         'kind': event.kindCode,
         'loggedAt': event.loggedAt,
-        'isPr': prResult?.isNewPr ?? false,
+        'isPr': result['isPr'] ?? false,
       },
     ));
 
-    return {
-      'id': event.id,
-      'isPr': prResult?.isNewPr ?? false,
-      'prResult': prResult,
-    };
+    return result;
   }
 
   /// Update existing movement event.
@@ -208,29 +232,38 @@ class MovementRepository {
 
     final updated = event.copyWith(metMinutes: metMins, caloriesKcal: kcal);
 
-    await db.update(
-      'workout_logs',
-      updated.toMap(),
-      where: 'id = ?',
-      whereArgs: [event.id],
-    );
+    await db.transaction((txn) async {
+      await txn.update(
+        'workout_logs',
+        updated.toMap(),
+        where: 'id = ?',
+        whereArgs: [event.id],
+      );
+      await _recalculatePrsForKind(txn, event.kindCode);
+    });
 
     RitmoEventBus().fire(RitmoEvent(
       type: RitmoEventType.workoutLogChanged.code,
       timestamp: DateTime.now(),
-      payload: {'source': 'movement', 'id': event.id, 'kind': event.kindCode},
+      payload: {'source': event.sourceModule, 'id': event.id, 'kind': event.kindCode},
     ));
   }
 
   /// Delete movement event.
   Future<void> deleteEvent(String id) async {
     final db = await _db;
+    String? kindCode;
 
     await db.transaction((txn) async {
-      await txn.delete('workout_exercise_logs', where: 'session_id = ?', whereArgs: [id]);
+      final rows = await txn.query('workout_logs', where: 'id = ?', whereArgs: [id], limit: 1);
+      if (rows.isNotEmpty) {
+        kindCode = rows.first['kind']?.toString() ?? rows.first['type']?.toString();
+      }
+      await txn.delete('workout_exercise_logs', where: 'workoutLogId = ?', whereArgs: [id]);
       await txn.delete('workout_logs', where: 'id = ?', whereArgs: [id]);
-      // Re-evaluate PR entries associated with deleted log
-      await txn.delete('movement_pr', where: 'event_id = ?', whereArgs: [id]);
+      if (kindCode != null && kindCode!.isNotEmpty) {
+        await _recalculatePrsForKind(txn, kindCode!);
+      }
     });
 
     RitmoEventBus().fire(RitmoEvent(
@@ -238,6 +271,81 @@ class MovementRepository {
       timestamp: DateTime.now(),
       payload: {'source': 'movement', 'id': id, 'action': 'deleted'},
     ));
+  }
+
+  Future<void> _recalculatePrsForKind(DatabaseExecutor txn, String kindCode) async {
+    final logs = await txn.query(
+      'workout_logs',
+      where: '(kind = ? OR type = ?)',
+      whereArgs: [kindCode, kindCode],
+    );
+
+    final prTypes = ['MAX_DISTANCE', 'MAX_DURATION', 'MAX_ELEVATION', 'MAX_LAPS'];
+    for (final prType in prTypes) {
+      double? maxVal;
+      String? topLogId;
+      int? topLoggedAt;
+
+      for (final log in logs) {
+        double? val;
+        if (prType == 'MAX_DISTANCE') {
+          final dist = log['distanceMeters'] as num?;
+          if (dist != null && dist > 0) val = dist / 1000.0;
+        } else if (prType == 'MAX_DURATION') {
+          final dur = log['durationMinutes'] as num?;
+          if (dur != null && dur > 0) val = dur.toDouble();
+        } else if (prType == 'MAX_ELEVATION') {
+          final elev = log['elevationMeters'] as num?;
+          if (elev != null && elev > 0) val = elev.toDouble();
+        } else if (prType == 'MAX_LAPS') {
+          final laps = log['laps'] as num?;
+          if (laps != null && laps > 0) val = laps.toDouble();
+        }
+
+        if (val != null) {
+          if (maxVal == null || val > maxVal) {
+            maxVal = val;
+            topLogId = log['id']?.toString();
+            topLoggedAt = log['loggedAt'] as int?;
+          }
+        }
+      }
+
+      if (maxVal != null && topLogId != null) {
+        final existing = await txn.query(
+          'movement_pr',
+          where: 'kind = ? AND prType = ?',
+          whereArgs: [kindCode, prType],
+        );
+        if (existing.isEmpty) {
+          await txn.insert('movement_pr', {
+            'id': RitmoIdFactory.movementPr(),
+            'kind': kindCode,
+            'prType': prType,
+            'value': maxVal,
+            'logId': topLogId,
+            'achievedAt': topLoggedAt ?? DateTime.now().millisecondsSinceEpoch,
+          });
+        } else {
+          await txn.update(
+            'movement_pr',
+            {
+              'value': maxVal,
+              'logId': topLogId,
+              'achievedAt': topLoggedAt ?? DateTime.now().millisecondsSinceEpoch,
+            },
+            where: 'kind = ? AND prType = ?',
+            whereArgs: [kindCode, prType],
+          );
+        }
+      } else {
+        await txn.delete(
+          'movement_pr',
+          where: 'kind = ? AND prType = ?',
+          whereArgs: [kindCode, prType],
+        );
+      }
+    }
   }
 
   /// Fetch events logged between two dates (inclusive).

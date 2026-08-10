@@ -61,6 +61,7 @@ class SSPlanGenerator {
         week: week,
         dayOfWeek: day,
         progressionSignals: progressionSignals,
+        isDeload: isDeload,
       );
     }
   }
@@ -135,6 +136,7 @@ class SSPlanGenerator {
     required int week,
     required int dayOfWeek,
     Map<String, ProgressionSignal>? progressionSignals,
+    bool isDeload = false,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final random = Random();
@@ -200,7 +202,10 @@ class SSPlanGenerator {
       }).toList();
       
       if (finalExercises.isEmpty) {
-        finalExercises = allExercises;
+        throw StateError(
+          'SS_NO_SAFE_EXERCISES: No exercise satisfies equipment, skill, '
+          'neighbor-friendly, and physical-limitation constraints.',
+        );
       }
     }
 
@@ -373,32 +378,22 @@ class SSPlanGenerator {
     }
 
     double? baseWeight;
+    // Unknown load remains null until actual user history/input exists.
     final hasWeights = profile.availableEquipment.contains(Equipment.dumbbell) ||
-                            profile.availableEquipment.contains(Equipment.barbell);
-    if (hasWeights) {
-      baseWeight = profile.experienceLevel == ExperienceLevel.beginner
-          ? 5.0
-          : profile.experienceLevel == ExperienceLevel.intermediate
-              ? 12.0
-              : 20.0;
-    }
+                       profile.availableEquipment.contains(Equipment.barbell);
 
-    // Apply Progressive Overload week adjustments
-    if (week == 1) {
-      // baseline
+    // Apply Progressive Overload & Deload week adjustments
+    if (isDeload || week == 4) {
+      baseSets = max(1, baseSets - 1);
+      baseReps = max(3, baseReps - 2);
+      if (baseWeight != null) {
+        baseWeight = max(1.0, (baseWeight! * 0.8).roundToDouble());
+      }
     } else if (week == 2) {
       baseReps = baseReps + 2;
     } else if (week == 3) {
       baseSets = baseSets + 1;
       baseReps = max(3, baseReps - 2);
-      if (baseWeight != null) {
-        baseWeight = (baseWeight * 1.15).roundToDouble(); // +15% weight
-      }
-    } else if (week == 4) {
-      baseSets = max(1, baseSets - 1);
-      if (baseWeight != null) {
-        baseWeight = (baseWeight * 0.7).roundToDouble(); // -30% weight
-      }
     }
 
     // Insert Plan Row
@@ -425,28 +420,20 @@ class SSPlanGenerator {
       var exerciseReps = isWarmupOrCool ? 12 : baseReps;
       var exerciseWeight = (isWarmupOrCool || !isWeightSupported || !hasWeights) ? null : baseWeight;
 
-      // Apply Progressive Overload signals
+      // Apply Progressive Overload signals (only maintain or decrease allowed during deload)
       if (!isWarmupOrCool && progressionSignals != null && progressionSignals.containsKey(ex['id'])) {
         final signal = progressionSignals[ex['id']];
-        if (signal == ProgressionSignal.increase) {
-          if (isWeightSupported && exerciseWeight != null) {
-            exerciseWeight = (exerciseWeight * 1.1).roundToDouble();
+        if (!isDeload && signal == ProgressionSignal.increase) {
+          if (exerciseReps < 15) {
+            exerciseReps += 2;
           } else {
-            if (exerciseReps < 15) {
-              exerciseReps += 2;
-            } else {
-              exerciseSets += 1;
-            }
+            exerciseSets += 1;
           }
         } else if (signal == ProgressionSignal.decrease) {
-          if (isWeightSupported && exerciseWeight != null) {
-            exerciseWeight = max(1, (exerciseWeight * 0.9).roundToDouble());
-          } else {
-            if (exerciseReps > 5) {
-              exerciseReps = max(5, exerciseReps - 2);
-            } else {
-              exerciseSets = max(1, exerciseSets - 1);
-            }
+          if (exerciseSets > 1) {
+            exerciseSets -= 1;
+          } else if (exerciseReps > 3) {
+            exerciseReps = max(3, exerciseReps - 2);
           }
         }
       }

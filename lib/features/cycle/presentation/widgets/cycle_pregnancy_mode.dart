@@ -1,24 +1,27 @@
-import 'package:ritmo/core/logging/ritmo_logger.dart';
-import 'package:ritmo/features/health/data/pregnancy_repository.dart';
-import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
-import 'package:ritmo/core/domain/personas/persona_registry.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:persian_datetime_picker/persian_datetime_picker.dart';
+import 'package:flutter/services.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/features/cycle/presentation/widgets/cycle_ai_consent_sheet.dart';
-import 'package:sqflite/sqflite.dart';
-
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/kick_session_tracker.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/labor_mode_screen.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/pregnancy_today_card.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/weekly_share_card.dart';
+import 'package:ritmo/features/health/data/pregnancy_helpers.dart';
+import 'package:ritmo/features/health/data/pregnancy_repository.dart';
+import 'package:ritmo/features/health/data/pregnancy_week_data.dart';
+import 'package:ritmo/features/health/presentation/widgets/pregnancy_report.dart';
 
 class CyclePregnancyModeView extends StatefulWidget {
-
   const CyclePregnancyModeView({
     super.key,
     required this.pregnancyStartDate,
@@ -28,6 +31,7 @@ class CyclePregnancyModeView extends StatefulWidget {
     required this.dayLogs,
     this.engineOutput,
   });
+
   final String pregnancyStartDate;
   final String pregnancyDueDate;
   final VoidCallback onDeactivated;
@@ -39,8 +43,9 @@ class CyclePregnancyModeView extends StatefulWidget {
   State<CyclePregnancyModeView> createState() => _CyclePregnancyModeViewState();
 }
 
-class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with WidgetsBindingObserver {
-  String _toPersianDigits(Object? input) => toPersianDigits(input);
+class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with TickerProviderStateMixin, WidgetsBindingObserver {
+  late TabController _tabController;
+
   late DateTime _startDate;
   late DateTime _dueDate;
   late int _diffDays;
@@ -49,138 +54,104 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Wi
   late int _remainingDays;
   late double _progressPercent;
 
-  // Interactive logs state
-  int _kickCount = 0;
-  String _lastKickTime = '';
+  // UX-12 Neutral tone setting
+  String _pregTone = 'warm';
+
+  // UX-13 EDD source
+  String _eddSource = 'lmp';
+
+  // UX-04 KickSessionTracker
+  KickSessionTracker _kickTracker = KickSessionTracker();
+  double? _personalBaselineSecs;
+  String? _baselineFeedback;
+
+  // UX-10 Hospital Bag items
+  List<Map<String, dynamic>> _hospitalBagItems = [];
+
+  // Logs state
   List<String> _selectedSymptoms = [];
   final TextEditingController _noteController = TextEditingController();
-  bool _isSavingLog = false;
-  bool _hasSavedToday = false;
-  bool _isEditingToday = false;
-
-  final List<Map<String, String>> _pregnancySymptomsList = [
-    {'id': 'nausea', 'label': '🤢 تهوع صبحگاهی'},
-    {'id': 'fatigue', 'label': '😴 خستگی شدید'},
-    {'id': 'backache', 'label': '⚡ کمر درد'},
-    {'id': 'heartburn', 'label': '🔥 سوزش معده'},
-    {'id': 'swelling', 'label': '🦶 تورم پا'},
-    {'id': 'craving', 'label': '🍕 ویار شدید'},
-    {'id': 'moody', 'label': '🎭 نوسان خلق'},
-    {'id': 'headache', 'label': '🤕 سردرد'},
-  ];
-
-  final Map<int, Map<String, String>> pregnancyWeekData = {
-    4: {'size': 'به اندازه یک دانه خشخاش', 'development': 'لانه‌گزینی جنین در رحم', 'tip': 'تغذیه سالم، نوشیدن آب کافی و استراحت را در اولویت قرار دهید'},
-    5: {'size': 'به اندازه یک دانه کنجد', 'development': 'قلب شروع به تپیدن می‌کند', 'tip': 'از مصرف کافئین زیاد خودداری کنید'},
-    6: {'size': 'به اندازه یک دانه عدس', 'development': 'صورت در حال شکل‌گیری است', 'tip': 'استراحت کافی داشته باشید'},
-    8: {'size': 'به اندازه یک تمشک', 'development': 'انگشتان دست شکل گرفته‌اند', 'tip': 'غذاهای سرشار از آهن طبیعی مصرف کنید'},
-    10: {'size': 'به اندازه یک زیتون', 'development': 'اندام‌های حیاتی تشکیل شده‌اند', 'tip': 'پیاده‌روی روزانه ملایم را فراموش نکنید'},
-    12: {'size': 'به اندازه یک آلو', 'development': 'ناخن‌ها رشد می‌کنند', 'tip': 'ویزیت دوم پزشک و انجام غربالگری اول'},
-    14: {'size': 'به اندازه یک لیمو', 'development': 'جنین می‌تواند اخم کند', 'tip': 'حالت تهوع معمولاً کاهش می‌یابد'},
-    16: {'size': 'به اندازه یک آووکادو', 'development': 'جنین حرکات خود را حس می‌کند', 'tip': 'شاید اولین لگد را حس کنید!'},
-    18: {'size': 'به اندازه یک فلفل دلمه‌ای', 'development': 'گوش‌ها کامل شده‌اند', 'tip': 'با جنین حرف بزنید، صدایتان را می‌شنود'},
-    20: {'size': 'به اندازه یک موز', 'development': 'نیمه راه! جنسیت قابل تشخیص', 'tip': 'سونوگرافی آنومالی و غربالگری دوم'},
-    22: {'size': 'به اندازه یک بلال ذرت', 'development': 'ابروها و مژه‌ها رشد کرده‌اند', 'tip': 'ورزش‌های کگل را شروع کنید'},
-    24: {'size': 'به اندازه یک بادمجان', 'development': 'ریه‌ها در حال بلوغ هستند', 'tip': 'تست قند بارداری انجام دهید'},
-    26: {'size': 'به اندازه یک کلم بروکلی', 'development': 'چشم‌ها باز می‌شوند', 'tip': 'خواب به پهلوی چپ را عادت کنید'},
-    28: {'size': 'به اندازه یک کدو حلوایی کوچک', 'development': 'مغز به‌سرعت رشد می‌کند', 'tip': 'شمارش حرکات جنین را شروع کنید'},
-    30: {'size': 'به اندازه یک کاهو', 'development': 'جنین وضعیت سر پایین می‌گیرد', 'tip': 'کلاس آمادگی زایمان را در نظر بگیرید'},
-    32: {'size': 'به اندازه یک نارگیل', 'development': 'ناخن‌های پا رشد کرده‌اند', 'tip': 'ساک بیمارستان را آماده کنید'},
-    34: {'size': 'به اندازه یک طالبی', 'development': 'سیستم ایمنی فعال شده', 'tip': 'استراحت بیشتر و استفاده از بالش بارداری'},
-    36: {'size': 'به اندازه یک هندوانه کوچک', 'development': 'جنین تقریباً کامل است', 'tip': 'ویزیت‌ها هفتگی می‌شوند'},
-    38: {'size': 'به اندازه یک کدو تنبل', 'development': 'ریه‌ها بالغ شده‌اند', 'tip': 'علائم شروع زایمان را بشناسید'},
-    40: {'size': 'به اندازه یک هندوانه', 'development': 'آماده تولد! 🎉', 'tip': 'صبور باشید، نوبتش می‌رسد'},
-  };
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _tabController = TabController(length: 5, vsync: this);
     _calculateValues();
-    _loadTodayData();
+    _loadSettingsAndSession();
+    _loadHospitalBag();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _tabController.dispose();
     _noteController.dispose();
     super.dispose();
   }
 
-  @override
-  void didUpdateWidget(covariant CyclePregnancyModeView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.pregnancyStartDate != widget.pregnancyStartDate ||
-        oldWidget.pregnancyDueDate != widget.pregnancyDueDate) {
-      _calculateValues();
-      _loadTodayData();
-    }
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _calculateValues();
-      _loadTodayData();
-    }
-  }
-
-  Future<void> _loadTodayData() async {
-    final today = DateTime.now();
-    final todayStr = today.toIso8601String().substring(0, 10);
-
+  Future<void> _loadSettingsAndSession() async {
     try {
       final db = await DatabaseHelper.instance.database;
+      final rows = await db.query('app_settings');
+      final map = <String, String>{};
+      for (final r in rows) {
+        map[r['key'] as String] = r['value'] as String;
+      }
+
+      _pregTone = map['preg_tone'] ?? 'warm';
+      _eddSource = map['preg_edd_source'] ?? 'lmp';
+
+      // Restore active kick session
+      final restored = await KickSessionTracker.restoreFromSettings(DateTime.now());
+      if (restored != null) {
+        _kickTracker = restored;
+      }
+
+      // Load kick baseline
       final active = await PregnancyRepository.instance.getActiveTracker();
       final trackerId = active?['id'] as String? ?? 'preg_default';
+      _personalBaselineSecs = await KickSessionTracker.getPersonalBaselineDurationSecs(pregnancyId: trackerId);
 
-      // 1. Load today's symptoms from pregnancy_symptoms table (PREG-04)
-      final symptomsRows = await db.query(
-        'pregnancy_symptoms',
-        where: 'pregnancyId = ? AND date = ?',
-        whereArgs: [trackerId, todayStr],
-      );
+      if (mounted) setState(() {});
+    } catch (_) {}
+  }
 
-      _selectedSymptoms = symptomsRows
-          .map((r) => r['symptom'] as String)
-          .where((s) => !s.startsWith('SUPP_'))
-          .toList();
-
-      final notesWithContent = symptomsRows
-          .map((r) => r['note'] as String?)
-          .where((n) => n != null && n.isNotEmpty)
-          .toList();
-
-      if (notesWithContent.isNotEmpty) {
-        _noteController.text = notesWithContent.first!;
-      }
-
-      _hasSavedToday = symptomsRows.isNotEmpty;
-      _isEditingToday = false;
-
-      // 2. Load today's kick count & time from kick_counts table (PREG-12)
-      final kickRows = await db.query(
-        'kick_counts',
-        where: 'pregnancyId = ? AND sessionDate = ?',
-        whereArgs: [trackerId, todayStr],
-        orderBy: 'loggedAt DESC',
-      );
-
-      if (kickRows.isNotEmpty) {
-        _kickCount = (kickRows.first['kickCount'] as int?) ?? 0;
-        final loggedMs = (kickRows.first['loggedAt'] as int?) ?? 0;
-        if (loggedMs > 0) {
-          final dt = DateTime.fromMillisecondsSinceEpoch(loggedMs);
-          _lastKickTime = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  Future<void> _loadHospitalBag() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final rows = await db.query('app_settings', where: 'key = ?', whereArgs: ['preg_hospital_bag'], limit: 1);
+      if (rows.isNotEmpty) {
+        final jsonStr = rows.first['value'] as String?;
+        if (jsonStr != null && jsonStr.isNotEmpty) {
+          final decoded = jsonDecode(jsonStr) as List;
+          _hospitalBagItems = decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
         }
       }
-    } catch (e) {
-      debugPrint('Error loading today pregnancy data: $e');
-    }
 
-    if (mounted) {
-      setState(() {});
-    }
+      if (_hospitalBagItems.isEmpty) {
+        _hospitalBagItems = [
+          {'title': 'مدارک شناسایی و کارت بیمه', 'done': false},
+          {'title': 'برگه‌های آزمایش و سونوگرافی', 'done': false},
+          {'title': 'لباس راحتی برای مادر', 'done': false},
+          {'title': 'لباس و پوشک نوزاد', 'done': false},
+          {'title': 'شارژر و پاوربانک', 'done': false},
+          {'title': 'وسایل بهداشتی شخصی', 'done': false},
+          {'title': 'خوراکی سبک', 'done': false},
+        ];
+      }
+
+      if (mounted) setState(() {});
+    } catch (_) {}
+  }
+
+  Future<void> _saveHospitalBag() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final jsonStr = jsonEncode(_hospitalBagItems);
+      await db.insert('app_settings', {'key': 'preg_hospital_bag', 'value': jsonStr},
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    } catch (_) {}
   }
 
   void _calculateValues() {
@@ -193,7 +164,6 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Wi
     _diffDays = todayTruncated.difference(startTruncated).inDays;
     if (_diffDays < 0) _diffDays = 0;
 
-    // Use standard ACOG GestationalAge calculation (PREG-03)
     final ga = GestationalAge.fromDays(_diffDays);
     _currentWeek = ga.weeks;
     _currentDayInWeek = ga.days;
@@ -204,151 +174,321 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Wi
     _progressPercent = (_diffDays / 280.0).clamp(0.0, 1.0);
   }
 
-  Map<String, String> _getWeekData(int week) {
-    var targetWeek = 4;
-    final keys = pregnancyWeekData.keys.toList()..sort();
-    for (final k in keys) {
-      if (k <= week) {
-        targetWeek = k;
-      }
-    }
-    return pregnancyWeekData[targetWeek]!;
+  Future<void> _showPregnancyAssistant(BuildContext context) async {
+    final persona = PersonaRegistry.instance.getPersona('cycle') ?? PersonaRegistry.instance.getPersona('global');
+    if (persona == null || !context.mounted) return;
+
+    unawaited(AssistantSheet.show(
+      context,
+      persona: persona,
+      initialQuery: 'سلام! من در هفته ${toPersianDigits(_currentWeek)} بارداری هستم. چه نکات تغذیه‌ای و خودمراقبتی مهمی را باید برای امروز رعایت کنم؟',
+    ));
   }
 
-  Future<void> _saveKick(int newCount) async {
-    final today = DateTime.now();
-    final todayStr = today.toIso8601String().substring(0, 10);
-    final nowTimeStr = '${today.hour.toString().padLeft(2, '0')}:${today.minute.toString().padLeft(2, '0')}';
-    
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
+  Future<void> _registerKickTap() async {
+    final now = DateTime.now();
+    final reached10 = _kickTracker.registerTap(now);
+    await _kickTracker.saveToSettings();
+    unawaited(HapticFeedback.lightImpact());
+
+    if (reached10) {
       final active = await PregnancyRepository.instance.getActiveTracker();
       final trackerId = active?['id'] as String? ?? 'preg_default';
+      await _kickTracker.saveRecordToDb(pregnancyId: trackerId);
 
-      // Save kick count to kick_counts table (PREG-12)
-      await db.insert(
-        'kick_counts',
-        {
-          'id': 'kick_${trackerId}_${nowMs}',
-          'pregnancyId': trackerId,
-          'loggedAt': nowMs,
-          'kickCount': newCount,
-          'sessionDate': todayStr,
-          'createdAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
+      final durSecs = (now.difference(_kickTracker.start!).inMilliseconds) / 1000.0;
+      _baselineFeedback = KickSessionTracker.evaluatePersonalBaseline(
+        currentDurationSecs: durSecs,
+        baselineSecs: _personalBaselineSecs,
       );
 
-      if (newCount > _kickCount) {
-        _lastKickTime = nowTimeStr;
-      }
-    } catch (e) {
-      debugPrint('Error saving kick count: $e');
-    }
+      _kickTracker = KickSessionTracker();
 
-    setState(() {
-      _kickCount = newCount;
-    });
-  }
-
-  Future<void> _saveDailyLog() async {
-    final today = DateTime.now();
-    final todayStr = today.toIso8601String().substring(0, 10);
-    final note = _noteController.text.trim();
-
-    if (_selectedSymptoms.isEmpty && note.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('موردی انتخاب نشده است')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isSavingLog = true;
-    });
-
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final active = await PregnancyRepository.instance.getActiveTracker();
-      final trackerId = active?['id'] as String? ?? 'preg_default';
-
-      // Save to pregnancy_symptoms table cleanly (PREG-04, PREG-06)
-      for (final symCode in _selectedSymptoms) {
-        await db.insert(
-          'pregnancy_symptoms',
-          {
-            'id': 'sym_${trackerId}_${todayStr}_$symCode',
-            'pregnancyId': trackerId,
-            'date': todayStr,
-            'symptom': symCode,
-            'severity': 'MILD',
-            'note': note,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _baselineFeedback ?? '۱۰ حرکت کامل شد و جلسه با موفقیت ثبت گردید 🎉',
+              style: const TextStyle(fontFamily: 'Vazirmatn'),
+            ),
+            backgroundColor: Colors.green,
+          ),
         );
       }
-    } catch (e) {
-      debugPrint('Error saving daily pregnancy logs: $e');
+    } else if (_kickTracker.isExpired(now)) {
+      final active = await PregnancyRepository.instance.getActiveTracker();
+      final trackerId = active?['id'] as String? ?? 'preg_default';
+      await _kickTracker.saveRecordToDb(pregnancyId: trackerId);
+      _kickTracker = KickSessionTracker();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'اگر پس از ۲ ساعت به ۱۰ حرکت نرسیدید، امروز با پزشک خود تماس بگیرید.',
+              style: TextStyle(fontFamily: 'Vazirmatn'),
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+
+    if (mounted) setState(() {});
+  }
+
+  // UX-11 Respectful 3-Path End of Pregnancy
+  void _showEndPregnancySheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1E1E2C),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'پایان دوره بارداری',
+                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, padding: const EdgeInsets.all(14)),
+                icon: const Icon(CupertinoIcons.heart_fill),
+                label: const Text('تولد نوزاد 🎉', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                onPressed: () {
+                  Navigator.of(sheetCtx).pop();
+                  _handleBirthPath();
+                },
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800, foregroundColor: Colors.white, padding: const EdgeInsets.all(14)),
+                icon: const Icon(CupertinoIcons.heart),
+                label: const Text('پایان بارداری', style: TextStyle(fontFamily: 'Vazirmatn')),
+                onPressed: () {
+                  Navigator.of(sheetCtx).pop();
+                  _handleLossPath();
+                },
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton(
+                onPressed: () {
+                  Navigator.of(sheetCtx).pop();
+                  _handleMistakePath();
+                },
+                child: const Text('اشتباه ثبت شده بود', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleBirthPath() async {
+    final active = await PregnancyRepository.instance.getActiveTracker();
+    final trackerId = active?['id'] as String? ?? '';
+    if (trackerId.isNotEmpty) {
+      await PregnancyRepository.instance.deactivateTracker(trackerId);
     }
 
     if (mounted) {
-      setState(() {
-        _isSavingLog = false;
-        _hasSavedToday = true;
-        _isEditingToday = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('وضعیت امروز با موفقیت ثبت شد 🌸', style: TextStyle(fontFamily: 'Vazirmatn')),
-          backgroundColor: Color(0xffEC4899),
+      unawaited(showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('تبریک! این سفر به زیباترین مقصد رسید. 🌸', style: TextStyle(fontFamily: 'Vazirmatn')),
+          content: const Text('می‌خواهید ردیابی چرخه دوباره فعال شود؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                widget.onDeactivated();
+              },
+              child: const Text('بلافاصله', style: TextStyle(fontFamily: 'Vazirmatn')),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                final db = await DatabaseHelper.instance.database;
+                final remindMs = DateTime.now().add(const Duration(days: 40)).millisecondsSinceEpoch;
+                await db.insert('app_settings', {'key': 'preg_cycle_resume_reminder', 'value': remindMs.toString()},
+                    conflictAlgorithm: ConflictAlgorithm.replace);
+                widget.onDeactivated();
+              },
+              child: const Text('بعداً یادآوری کن (۴۰ روز بعد)', style: TextStyle(fontFamily: 'Vazirmatn')),
+            ),
+          ],
         ),
-      );
+      ));
     }
   }
 
-  void _showPregnancyLoggerInfo() {
-    showModalBottomSheet(
+  Future<void> _handleLossPath() async {
+    unawaited(showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final colors = context.colors;
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark ? Colors.black.withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.65),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                border: Border.all(
-                  color: const Color(0xffEC4899).withValues(alpha: 0.15),
-                ),
-              ),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.textSecondary.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+      builder: (ctx) => AlertDialog(
+        title: const Text('متأسفیم که این سفر به این شکل به پایان رسید.', style: TextStyle(fontFamily: 'Vazirmatn')),
+        content: const Text('هر وقت آماده بودید، این بخش دوباره در کنار شماست.', style: TextStyle(fontFamily: 'Vazirmatn')),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final db = await DatabaseHelper.instance.database;
+              await db.insert('app_settings', {'key': 'preg_section_hidden', 'value': 'true'},
+                  conflictAlgorithm: ConflictAlgorithm.replace);
+              widget.onDeactivated();
+            },
+            child: const Text('پنهان کردن کامل این بخش', style: TextStyle(fontFamily: 'Vazirmatn')),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await _purgeAllPregnancyTables();
+              widget.onDeactivated();
+            },
+            child: const Text('حذف کامل داده‌های این دوره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+          ),
+        ],
+      ),
+    ));
+  }
+
+  Future<void> _handleMistakePath() async {
+    await _purgeAllPregnancyTables();
+    widget.onDeactivated();
+  }
+
+  Future<void> _purgeAllPregnancyTables() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      await db.delete('pregnancy_tracker');
+      await db.delete('pregnancy_checkups');
+      await db.delete('pregnancy_symptoms');
+      await db.delete('kick_counts');
+      await db.delete('contraction_timer');
+      await KickSessionTracker.clearSettings();
+    } catch (_) {}
+  }
+
+  // UX-15 Privacy Badge Sheet
+  void _showPrivacyBadgeSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetCtx) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(CupertinoIcons.lock_shield_fill, size: 36, color: Colors.green),
+            const SizedBox(height: 12),
+            const Text(
+              'اطلاعات بارداری شما فقط روی همین گوشی ذخیره می‌شود.',
+              style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.of(sheetCtx).pop(),
+              child: const Text('متوجه شدم', style: TextStyle(fontFamily: 'Vazirmatn')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderActionButton({
+    required IconData icon,
+    required Color color,
+    required String tooltip,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 36,
+          height: 36,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: isDark ? 0.22 : 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: color.withValues(alpha: isDark ? 0.35 : 0.2),
+              width: 1,
+            ),
+          ),
+          child: Icon(icon, size: 17, color: color),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnifiedHeader(BuildContext context, RitmoColors colors, bool isDark, GestationalAge ga) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [
+                  const Color(0xFF2A1B35).withValues(alpha: 0.85),
+                  const Color(0xFF1E1B2E).withValues(alpha: 0.95),
+                ]
+              : [
+                  Colors.white.withValues(alpha: 0.95),
+                  const Color(0xFFFFF0F5).withValues(alpha: 0.85),
+                ],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.purple.withValues(alpha: 0.25) : Colors.pink.withValues(alpha: 0.18),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.pink.withValues(alpha: isDark ? 0.12 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Top Row: Title + Action Cluster
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Title & Tone
               Row(
                 children: [
-                  const Icon(CupertinoIcons.info_circle_fill, color: Color(0xffEC4899), size: 22),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.pink.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Text('👶', style: TextStyle(fontSize: 15)),
+                  ),
                   const SizedBox(width: 8),
                   Text(
-                    'چرا ثبت علائم بارداری مهم است؟',
+                    _pregTone == 'neutral' ? 'بارداری شما' : 'دوران شیرین بارداری 🎀',
                     style: TextStyle(
                       fontFamily: 'Vazirmatn',
                       fontSize: 16,
@@ -358,82 +498,136 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Wi
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              _buildInfoItem(
-                '🧠 دستیار هوشمند اختصاصی',
-                'هوش مصنوعی با تحلیل علائم روزانه شما، مشاوره‌های بهداشتی، ورزشی و تغذیه‌ای دقیقاً متناسب با وضعیت بدنی‌تان ارائه می‌دهد.',
-                colors,
-              ),
-              const SizedBox(height: 12),
-              _buildInfoItem(
-                '📋 گزارش سلامت برای پزشک زنان',
-                'روند علائم ثبت‌شده در طول هفته‌ها ذخیره شده و می‌توانید آن را در ویزیت‌های دوره‌ای به پزشک متخصص خود ارائه دهید تا ارزیابی دقیق‌تری از سلامت شما و جنین داشته باشد.',
-                colors,
-              ),
-              const SizedBox(height: 12),
-              _buildInfoItem(
-                '⚡ تشخیص علائم هشداردهنده',
-                'برنامه با ردیابی علائم مفرط یا ناهماهنگ، در صورت نیاز به شما پیشنهاد استراحت بیشتر یا مراجعه به پزشک را می‌دهد.',
-                colors,
-              ),
-              const SizedBox(height: 24),
-              CupertinoButton(
-                color: const Color(0xffEC4899),
-                borderRadius: BorderRadius.circular(16),
-                child: const Text('متوجه شدم', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
-                onPressed: () => Navigator.pop(context),
+
+              // Glass Action Cluster
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Tooltip(
+                    message: 'گزارش ویژه پزشک زنان',
+                    child: _buildHeaderActionButton(
+                      icon: CupertinoIcons.doc_text_fill,
+                      color: const Color(0xFF6366F1),
+                      tooltip: 'گزارش پزشک',
+                      onTap: () async {
+                        await PregnancyReportScreen.show(
+                          context,
+                          pregnancyId: 'preg_default',
+                          lmpDate: _startDate,
+                        );
+                      },
+                      isDark: isDark,
+                    ),
+                  ),
+                  Tooltip(
+                    message: 'اشتراک‌گذاری کارت رشد',
+                    child: _buildHeaderActionButton(
+                      icon: CupertinoIcons.share,
+                      color: const Color(0xFFEC4899),
+                      tooltip: 'اشتراک‌گذاری',
+                      onTap: () async => await WeeklyShareCardScreen.show(context, gestationalAge: ga),
+                      isDark: isDark,
+                    ),
+                  ),
+                  Tooltip(
+                    message: 'تنظیمات و گزینه‌ها',
+                    child: _buildHeaderActionButton(
+                      icon: CupertinoIcons.ellipsis_vertical,
+                      color: const Color(0xFF8B5CF6),
+                      tooltip: 'تنظیمات بارداری',
+                      onTap: _showEndPregnancySheet,
+                      isDark: isDark,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ),
+
+          const SizedBox(height: 10),
+
+          // Sub Row: Status Badges (Privacy + EDD Source) & Human Countdown Summary
+          Row(
+            children: [
+              // UX-15 Privacy Badge
+              InkWell(
+                onTap: _showPrivacyBadgeSheet,
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: isDark ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.green.withValues(alpha: 0.3), width: 0.8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(CupertinoIcons.lock_fill, size: 11, color: Colors.green),
+                      SizedBox(width: 4),
+                      Text(
+                        'اطلاعات فقط روی گوشی',
+                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              if (_eddSource == 'ultrasound') ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: isDark ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.blue.withValues(alpha: 0.3), width: 0.8),
+                  ),
+                  child: const Text(
+                    'سونوگرافی 🩺',
+                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+
+              const Spacer(),
+
+              // Human Countdown Summary Pill
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.pink.withValues(alpha: isDark ? 0.2 : 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'هفته ${toPersianDigits(_currentWeek)} + ${toPersianDigits(_currentDayInWeek)} روز',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.pink.shade200 : Colors.pink.shade700,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '• ${PregnancyHelpers.formatHumanCountdown(_remainingDays)}',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.purple.shade200 : Colors.purple.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
-    );
-  }
-);
-}
-
-  Widget _buildInfoItem(String title, String desc, RitmoColors colors) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontFamily: 'Vazirmatn',
-            fontSize: 13.5,
-            fontWeight: FontWeight.bold,
-            color: colors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          desc,
-          style: TextStyle(
-            fontFamily: 'Vazirmatn',
-            fontSize: 12,
-            height: 1.6,
-            color: colors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showPregnancyAssistant(BuildContext context) {
-    showCycleAiConsentSheet(
-      context,
-      engineOutput: widget.engineOutput,
-      dayLogs: widget.dayLogs,
-      settings: widget.settings,
-      isPregnancyMode: true,
-      onConsentGranted: () {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => AssistantSheet(persona: PersonaRegistry.instance.getPersona('cycle')!),
-        );
-      },
     );
   }
 
@@ -441,986 +635,298 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Wi
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final weekData = _getWeekData(_currentWeek);
-    
-    // Determine Trimester
-    var trimesterTitle = '';
-    var trimesterTips = '';
-    if (_currentWeek <= 12) {
-      trimesterTitle = 'سه‌ماهه اول (هفته ۱ تا ۱۲)';
-      trimesterTips = 'تغذیه سالم، نوشیدن آب کافی، کنترل و مدیریت تهوع صبحگاهی و استراحت کافی اولویت‌های این دوره هستند. بدن شما در حال تغییرات شدید هورمونی و پایه‌گذاری اندام‌های حیاتی جنین است.';
-    } else if (_currentWeek <= 26) {
-      trimesterTitle = 'سه‌ماهه دوم (هفته ۱۳ تا ۲۶)';
-      trimesterTips = 'با ورود به این دوره، تهوع کاهش یافته و انرژی شما بیشتر می‌شود. انجام ورزش‌های ملایم نظیر پیاده‌روی، تغذیه متنوع و غنی، و انجام غربالگری دوم (آنومالی) از نکات کلیدی این دوره است.';
-    } else {
-      trimesterTitle = 'سه‌ماهه سوم (هفته ۲۷ تا ۴۰+)';
-      trimesterTips = 'در هفته‌های پایانی بر استراحت بیشتر، شمارش منظم حرکات جنین، آماده‌سازی ساک بیمارستان و آمادگی برای علائم زایمان تمرکز کنید. خوابیدن به پهلوی چپ به خون‌رسانی بهتر جنین کمک می‌کند.';
-    }
+    final ga = GestationalAge.fromDays(_diffDays);
+
+    return Column(
+      children: [
+        // Unified Glass Header Card
+        _buildUnifiedHeader(context, colors, isDark, ga),
+
+        // 5 Main Tabs
+            TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              labelColor: colors.primary,
+              unselectedLabelColor: colors.textSecondary,
+              labelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+              tabs: const [
+                Tab(text: 'امروز و وضعیت'),
+                Tab(text: 'مراقبت‌ها'),
+                Tab(text: 'لگدشماری'),
+                Tab(text: 'انقباض‌سنج'),
+                Tab(text: 'علائم و یادداشت'),
+              ],
+            ),
+
+            // Tab Views
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // Tab 0: Main Dynamic Rich Dashboard (Today & Progress)
+                  _buildTabProgress(context),
+
+                  // Tab 1: Checkups Timeline (UX-06)
+                  _buildTabCheckups(),
+
+                  // Tab 2: Kick Counter (UX-04)
+                  _buildTabKicks(),
+
+                  // Tab 3: Contractions & Labor Mode Launcher (UX-05)
+                  _buildTabContractions(),
+
+                  // Tab 4: Symptoms Log
+                  _buildTabSymptoms(),
+                ],
+              ),
+            ),
+          ],
+        );
+  }
+
+  /// Tab 0: Rich Dynamic Dashboard with Hero Ring, Fetus Growth, AI Assistant & Quick Actions
+  Widget _buildTabProgress(BuildContext context) {
+    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ga = GestationalAge.fromDays(_diffDays);
+    final weekInfo = pregnancyWeekData[_currentWeek.clamp(1, 40)];
+
+    final babySize = weekInfo?.babySizeFa ?? weekInfo?.size ?? 'میوه کوچک';
+    final babyWeight = weekInfo?.babyWeightFa ?? '';
+    final developmentText = weekInfo?.development ?? 'اندام‌های جنین در حال تکمیل و رشد هستند.';
+    final tipText = weekInfo?.tip ?? 'تغذیه سالم، نوشیدن آب کافی و استراحت روزانه را در اولویت قرار دهید.';
+
+    final trimesterNum = ga.trimester;
+    final trimesterTitle = 'راهنمای سه ماهه ${trimesterNum == 1 ? "اول" : (trimesterNum == 2 ? "دوم" : "سوم")}';
+    final trimesterTips = trimesterNum == 1
+        ? 'مصرف منظم فولیک اسید، استراحت در صورت خستگی و مدیریت تهوع صبحگاهی با وعده‌های کوچک.'
+        : (trimesterNum == 2
+            ? 'بهترین زمان برای انجام سونوگرافی آنومالی، خوابیدن به پهلوی چپ و ثبت اولین لگدها.'
+            : 'شروع شمارش منظم لگد جنین، آماده‌سازی ساک بیمارستان و آشنایی با نشانه‌های زایمان.');
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xffEC4899).withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xffEC4899).withValues(alpha: 0.15), width: 1.5),
-                ),
-                child: const Text('🤰', style: TextStyle(fontSize: 26)),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'دوران شیرین بارداری 🎀',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'پیگیری و خودمراقبتی هفته به هفته بارداری',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 13,
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          // UX-01 Pregnancy Today Card Banner
+          PregnancyTodayCard(
+            gestationalAge: ga,
+            hasSupplementToday: _selectedSymptoms.any((s) => s.startsWith('SUPP_')),
+            hasKicksLogged: _kickTracker.count > 0,
+            onNavigateTab: (idx) => _tabController.animateTo(idx),
+            onOpenWeightLog: () {},
+            onOpenLaborMode: () => LaborModeScreen.show(context, pregnancyId: 'preg_default'),
+            onOpenHospitalBag: () => _tabController.animateTo(0),
           ),
-          const SizedBox(height: 20),
 
-          // Premium Circle Progress & Countdown Card
-          RitmoTheme.glassCard(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xffEC4899).withValues(alpha: 0.1), width: 1.5),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-              child: Column(
+          const SizedBox(height: 16),
+
+          // UX-02 Hero Progress Ring & Journey Map (Large 200px)
+          Center(
+            child: SizedBox(
+              width: 210,
+              height: 210,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  SizedBox(
-                    width: 155,
-                    height: 155,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        CustomPaint(
-                          painter: _PregnancyRingPainter(
-                            percentage: _progressPercent,
-                            colors: [
-                              const Color(0xffEC4899),
-                              const Color(0xff8B5CF6),
-                            ],
+                  CustomPaint(
+                    painter: _PregnancyRingPainter(
+                      percentage: _progressPercent,
+                      colors: const [Color(0xffEC4899), Color(0xff8B5CF6)],
+                    ),
+                  ),
+
+                  // UX-02 Milestones interactive tap targets (12, 20, 24, 28, 36)
+                  ...[12, 20, 24, 28, 36].map((week) {
+                    final angleDeg = PregnancyHelpers.milestoneAngle(week);
+                    final rad = (angleDeg - 90) * math.pi / 180;
+                    const r = 86.0;
+                    final x = 105.0 + r * math.cos(rad) - 24.0;
+                    final y = 105.0 + r * math.sin(rad) - 24.0;
+
+                    return Positioned(
+                      left: x,
+                      top: y,
+                      child: Semantics(
+                        button: true,
+                        label: 'مراقبت هفته $week',
+                        child: InkWell(
+                          onTap: () => _tabController.animateTo(1),
+                          borderRadius: BorderRadius.circular(24),
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            alignment: Alignment.center,
+                            child: CircleAvatar(
+                              radius: _currentWeek >= week ? 9 : 6,
+                              backgroundColor: _currentWeek >= week ? const Color(0xffEC4899) : Colors.grey.shade400,
+                              child: _currentWeek >= week
+                                  ? const Icon(CupertinoIcons.checkmark, size: 10, color: Colors.white)
+                                  : null,
+                            ),
                           ),
                         ),
-                        Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _toPersianDigits('هفته $_currentWeek'),
-                                style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                              if (_currentDayInWeek > 0) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  _toPersianDigits('+ $_currentDayInWeek روز'),
-                                  style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
-                                    fontSize: 14,
-                                    color: colors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ],
+                      ),
+                    );
+                  }),
+
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'هفته ${toPersianDigits(_currentWeek)}',
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '+ ${toPersianDigits(_currentDayInWeek)} روز',
+                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: isDark ? Colors.white70 : Colors.black54),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xffEC4899).withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${toPersianDigits((_progressPercent * 100).toInt())}% کل مسیر',
+                            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xffEC4899), fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    _remainingDays > 0
-                        ? _toPersianDigits('$_remainingDays روز تا تاریخ تخمینی زایمان 🎀')
-                        : 'تاریخ تخمینی زایمان سپری شده است 🎀',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _toPersianDigits(
-                        'تاریخ تخمینی زایمان: ${Jalali.fromDateTime(_dueDate).year}/${Jalali.fromDateTime(_dueDate).month}/${Jalali.fromDateTime(_dueDate).day}'),
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 13,
-                      color: colors.textSecondary,
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
 
-          // Pregnancy Assistant Card
-          _buildPregnancyAssistantCard(context),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
-          // Interactive Kick Counter Card (NEW!)
-          _buildKickCounterCard(),
-          const SizedBox(height: 16),
-
-          // Interactive Symptoms & Note Logger Card (NEW!)
-          _buildSymptomLoggerCard(),
-          const SizedBox(height: 16),
-
-          // Baby Development Info Card (Premium Styling)
+          // Weekly Fetus Growth & Fruit Size Card
           RitmoTheme.glassCard(
             child: Container(
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xffEC4899).withValues(alpha: 0.1), width: 1.2),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xff8B5CF6).withOpacity(0.15)),
               ),
-              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xffEC4899).withValues(alpha: 0.1),
+                          color: const Color(0xffEC4899).withOpacity(0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(CupertinoIcons.heart_fill, color: Color(0xffEC4899), size: 16),
+                        child: const Icon(CupertinoIcons.heart_circle_fill, color: Color(0xffEC4899), size: 22),
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        _toPersianDigits('وضعیت جنین در هفته $_currentWeek'),
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  _buildWeekDetailRow(
-                    'اندازه تقریبی:',
-                    weekData['size'] ?? '',
-                    CupertinoIcons.square_grid_2x2_fill,
-                    const Color(0xffEC4899),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Divider(color: isDark ? Colors.white10 : colors.border.withValues(alpha: 0.15), height: 1),
-                  ),
-                  _buildWeekDetailRow(
-                    'رشد فیزیکی:',
-                    weekData['development'] ?? '',
-                    CupertinoIcons.waveform_path_ecg,
-                    const Color(0xff8B5CF6),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Divider(color: isDark ? Colors.white10 : colors.border.withValues(alpha: 0.15), height: 1),
-                  ),
-                  _buildWeekDetailRow(
-                    'نکته هفته:',
-                    weekData['tip'] ?? '',
-                    CupertinoIcons.lightbulb_fill,
-                    const Color(0xffF59E0B),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Trimester Tips Card (Premium Styling)
-          RitmoTheme.glassCard(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.1), width: 1.2),
-              ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xff8B5CF6).withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(CupertinoIcons.heart_circle_fill, color: Color(0xff8B5CF6), size: 16),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        trimesterTitle,
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'جنین هفته ${toPersianDigits(_currentWeek)}: $babySize',
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            if (babyWeight.isNotEmpty)
+                              Text(
+                                'وزن تقریبی: $babyWeight',
+                                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: isDark ? Colors.white60 : colors.textSecondary),
+                              ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    trimesterTips,
+                    developmentText,
                     style: TextStyle(
                       fontFamily: 'Vazirmatn',
-                      fontSize: 14.5,
-                      color: isDark ? Colors.white70 : colors.textSecondary,
-                      height: 1.6,
+                      fontSize: 14,
+                      color: isDark ? Colors.white.withOpacity(0.87) : colors.textPrimary,
+                      height: 1.5,
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 28),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPregnancyAssistantCard(BuildContext context) {
-    final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xffEC4899),
-            Color(0xff8B5CF6),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xffEC4899).withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: () => _showPregnancyAssistant(context),
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white : colors.textPrimary.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(CupertinoIcons.sparkles, color: isDark ? Colors.white : colors.textPrimary, size: 22),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(CupertinoIcons.sparkles, color: Color(0xffEC4899), size: 18),
-                          const SizedBox(width: 6),
-                          Text(
-                            'دستیار هوشمند بارداری ریتمو',
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : colors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'مشاوره خودمراقبتی، تغذیه و مدیریت علائم هفته $_currentWeek بارداری',
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 13,
-                          color: isDark ? Colors.white70 : colors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(CupertinoIcons.chevron_left, color: isDark ? Colors.white : colors.textPrimary, size: 16),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWeekDetailRow(String label, String value, IconData icon, Color color) {
-    final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 14, color: color),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 13,
-                  color: isDark ? Colors.white38 : colors.textSecondary.withValues(alpha: 0.4),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 15,
-                  color: isDark ? Colors.white : colors.textPrimary,
-                  height: 1.45,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildKickCounterCard() {
-    final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return RitmoTheme.glassCard(
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.15), width: 1.2),
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xff8B5CF6).withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(CupertinoIcons.waveform_path, color: Color(0xff8B5CF6), size: 16),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'لگدشمار هوشمند بارداری',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : colors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                // Subtract button
-                IconButton(
-                  icon: Icon(CupertinoIcons.minus_circle, color: isDark ? Colors.white38 : colors.textSecondary.withValues(alpha: 0.4), size: 28),
-                  onPressed: _kickCount > 0 ? () => _saveKick(_kickCount - 1) : null,
-                ),
-                // Kick display (circular pulsing layout)
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xff8B5CF6).withValues(alpha: 0.05),
-                    border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.2), width: 2),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _toPersianDigits(_kickCount.toString()),
-                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
-                      ),
-                      Text(
-                        'لگد',
-                        style: TextStyle(fontSize: 12, color: isDark ? Colors.white38 : colors.textSecondary.withValues(alpha: 0.4), fontFamily: 'Vazirmatn'),
-                      ),
-                    ],
-                  ),
-                ),
-                // Add button
-                GestureDetector(
-                  onTap: () => _saveKick(_kickCount + 1),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xff8B5CF6).withValues(alpha: 0.15),
-                    ),
-                    child: const Icon(CupertinoIcons.add_circled_solid, color: Color(0xff8B5CF6), size: 36),
-                  ),
-                ),
-              ],
-            ),
-            if (_lastKickTime.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(
-                _toPersianDigits('آخرین حرکت ثبت‌شده: ساعت $_lastKickTime'),
-                style: TextStyle(fontSize: 13, color: isDark ? Colors.white38 : colors.textSecondary.withValues(alpha: 0.4), fontFamily: 'Vazirmatn'),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSymptomLoggerCard() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final selectedCount = _selectedSymptoms.length;
-    final colors = context.colors;
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: isDark
-            ? LinearGradient(
-                colors: [
-                  const Color(0xff181124).withValues(alpha: 0.85),
-                  const Color(0xff120D1C).withValues(alpha: 0.95),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              )
-            : LinearGradient(
-                colors: [
-                  const Color(0xffFFF1F2).withValues(alpha: 0.9),
-                  const Color(0xffFAF5FF).withValues(alpha: 0.95),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-        border: Border.all(
-          color: const Color(0xffEC4899).withValues(alpha: isDark ? 0.28 : 0.18),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xffEC4899).withValues(alpha: isDark ? 0.12 : 0.04),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header ──────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xffEC4899), Color(0xffF472B6)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xffEC4899).withValues(alpha: 0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(CupertinoIcons.heart_fill, color: Colors.white, size: 18),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'ثبت روزانه بارداری',
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : const Color(0xff1F1235),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: _showPregnancyLoggerInfo,
-                            child: Icon(
-                              CupertinoIcons.info_circle,
-                              size: 16,
-                              color: isDark ? Colors.white30 : colors.textSecondary.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        _hasSavedToday && !_isEditingToday
-                            ? 'اطلاعات امروز با موفقیت ثبت شد ✓'
-                            : 'علائم و یادداشت امروز',
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 12,
-                          color: _hasSavedToday && !_isEditingToday
-                              ? const Color(0xff10B981)
-                              : (isDark ? Colors.white54 : const Color(0xffEC4899).withValues(alpha: 0.8)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // badge
-                if (selectedCount > 0 && (!_hasSavedToday || _isEditingToday))
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xffEC4899),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      _toPersianDigits('$selectedCount علامت'),
-                      style: const TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 11,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          // ── Divider ──────────────────────────────────────────
-          Divider(
-            height: 1,
-            color: const Color(0xffEC4899).withValues(alpha: isDark ? 0.15 : 0.1),
-          ),
-
-          if (_hasSavedToday && !_isEditingToday) ...[
-            // ─── Completed Summary View ───
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_selectedSymptoms.isNotEmpty) ...[
-                    Text(
-                      'علائم ثبت‌شده امروز:',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white70 : colors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: _selectedSymptoms.map((sId) {
-                        final item = _pregnancySymptomsList.firstWhere(
-                          (element) => element['id'] == sId,
-                          orElse: () => {'label': sId},
-                        );
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xffEC4899).withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xffEC4899).withValues(alpha: 0.15)),
-                          ),
-                          child: Text(
-                            item['label'] ?? '',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? Colors.white : const Color(0xff1F1235),
-                              fontFamily: 'Vazirmatn',
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ] else ...[
-                    Text(
-                      'امروز هیچ علامتی ثبت نکردید.',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 12,
-                        color: isDark ? Colors.white38 : colors.textSecondary,
-                      ),
-                    ),
-                  ],
-                  if (_noteController.text.trim().isNotEmpty) ...[
-                    const SizedBox(height: 14),
-                    Text(
-                      'یادداشت امروز شما:',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white70 : colors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.015),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: isDark ? Colors.white10 : colors.border.withValues(alpha: 0.5)),
-                      ),
-                      child: Text(
-                        _noteController.text.trim(),
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: isDark ? Colors.white.withValues(alpha: 0.87) : colors.textPrimary,
-                          height: 1.5,
-                          fontFamily: 'Vazirmatn',
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _isEditingToday = true;
-                      });
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xffEC4899).withValues(alpha: 0.4)),
-                        color: Colors.transparent,
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(CupertinoIcons.pencil, color: Color(0xffEC4899), size: 14),
-                          SizedBox(width: 6),
-                          Text(
-                            'ویرایش علائم و یادداشت امروز',
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xffEC4899),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ] else ...[
-            // ─── Editable Form View ───
-            // ── Symptoms Grid ──────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Text(
-                'چطوری امروز؟ علائم رو انتخاب کن:',
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 13,
-                  color: isDark ? Colors.white60 : const Color(0xff6B7280),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 3.3,
-                children: _pregnancySymptomsList.map((s) {
-                  final isSelected = _selectedSymptoms.contains(s['id']);
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (isSelected) {
-                          _selectedSymptoms.remove(s['id']);
-                        } else {
-                          _selectedSymptoms.add(s['id']!);
-                        }
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeInOut,
-                      decoration: BoxDecoration(
-                        gradient: isSelected
-                            ? const LinearGradient(
-                                colors: [Color(0xffEC4899), Color(0xffD946EF)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              )
-                            : null,
-                        color: isSelected
-                            ? null
-                            : (isDark
-                                ? Colors.white.withValues(alpha: 0.03)
-                                : Colors.white.withValues(alpha: 0.75)),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isSelected
-                              ? Colors.transparent
-                              : (isDark
-                                  ? Colors.white.withValues(alpha: 0.06)
-                                  : const Color(0xffE5E7EB)),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.03),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                          if (isSelected)
-                            BoxShadow(
-                              color: const Color(0xffEC4899).withValues(alpha: 0.35),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              s['label']!.split(' ').first, // emoji
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                s['label']!.split(' ').skip(1).join(' '), // text
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
-                                  fontSize: 12,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : (isDark ? Colors.white.withValues(alpha: 0.85) : const Color(0xff4B5563)),
-                                ),
-                              ),
-                            ),
-                            if (isSelected) ...[
-                              const SizedBox(width: 4),
-                              const Icon(CupertinoIcons.checkmark_circle_fill,
-                                  color: Colors.white, size: 14),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-
-            // ── Note Field ──────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                  const Divider(height: 20),
                   Row(
                     children: [
-                      Icon(
-                        CupertinoIcons.pencil_outline,
-                        size: 14,
-                        color: isDark ? Colors.white54 : const Color(0xff6B7280),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'یادداشت شخصی:',
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 13,
-                          color: isDark ? Colors.white60 : const Color(0xff6B7280),
+                      const Icon(CupertinoIcons.lightbulb_fill, size: 16, color: Colors.amber),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'نکته هفته: $tipText',
+                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5, color: isDark ? Colors.white70 : colors.textSecondary),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.04)
-                          : Colors.white.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : const Color(0xffE5E7EB),
-                      ),
-                    ),
-                    child: TextField(
-                      controller: _noteController,
-                      maxLines: 2,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white : const Color(0xff1F1235),
-                        fontFamily: 'Vazirmatn',
-                        height: 1.4,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'حالت چطوره؟ هر چیزی که احساس می‌کنی بنویس...',
-                        hintStyle: TextStyle(
-                          color: isDark
-                              ? Colors.white30
-                              : const Color(0xff9CA3AF),
-                          fontSize: 12,
-                          fontFamily: 'Vazirmatn',
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
+          ),
 
-            // ── Save Button ──────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: GestureDetector(
-                onTap: _isSavingLog ? null : _saveDailyLog,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    gradient: _isSavingLog
-                        ? null
-                        : const LinearGradient(
-                            colors: [Color(0xffEC4899), Color(0xff8B5CF6)],
-                            begin: Alignment.centerRight,
-                            end: Alignment.centerLeft,
-                          ),
-                    color: _isSavingLog
-                        ? (isDark ? Colors.white12 : Colors.grey.shade300)
-                        : null,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: _isSavingLog
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: const Color(0xffEC4899).withValues(alpha: 0.4),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                  ),
-                  child: _isSavingLog
-                      ? const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          ),
-                        )
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+          const SizedBox(height: 16),
+
+          // Smart AI Pregnancy Assistant Card
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              gradient: const LinearGradient(
+                colors: [Color(0xffEC4899), Color(0xff8B5CF6)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xffEC4899).withOpacity(0.25),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(22),
+                onTap: () => _showPregnancyAssistant(context),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.25),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(CupertinoIcons.sparkles, color: Colors.white, size: 22),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(CupertinoIcons.checkmark_seal_fill,
-                                color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text(
-                              'ثبت و ذخیره یادداشت روزانه',
+                            const Text(
+                              'دستیار هوشمند بارداری ریتمو 🤖',
                               style: TextStyle(
                                 fontFamily: 'Vazirmatn',
                                 fontSize: 15,
@@ -1428,8 +934,118 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Wi
                                 color: Colors.white,
                               ),
                             ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'مشاوره تغذیه، علائم و خودمراقبتی هفته ${toPersianDigits(_currentWeek)} بارداری',
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.85),
+                              ),
+                            ),
                           ],
                         ),
+                      ),
+                      const Icon(CupertinoIcons.chevron_left, color: Colors.white, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Trimester Care Advice Card
+          RitmoTheme.glassCard(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xff8B5CF6).withOpacity(0.1)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    trimesterTitle,
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    trimesterTips,
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 13,
+                      color: isDark ? Colors.white70 : colors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Quick Actions Grid Hub
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionButton(
+                  icon: CupertinoIcons.sparkles,
+                  color: Colors.pinkAccent,
+                  label: 'شروع لگدشماری',
+                  onTap: () => _tabController.animateTo(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildQuickActionButton(
+                  icon: CupertinoIcons.timer,
+                  color: Colors.indigoAccent,
+                  label: 'حالت زایمان',
+                  onTap: () => LaborModeScreen.show(context, pregnancyId: 'preg_default'),
+                ),
+              ),
+            ],
+          ),
+
+          // UX-10 Hospital Bag checklist if week >= 32
+          if (_currentWeek >= 32) ...[
+            const SizedBox(height: 20),
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: colors.primary.withOpacity(0.2)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('🎒 چک‌لیست ساک بیمارستان (هفته ۳۲ به بعد)', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    ..._hospitalBagItems.map((item) {
+                      return CheckboxListTile(
+                        dense: true,
+                        title: Text(item['title'] as String, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                        value: item['done'] as bool,
+                        onChanged: (val) {
+                          setState(() {
+                            item['done'] = val ?? false;
+                          });
+                          _saveHospitalBag();
+                        },
+                      );
+                    }),
+                  ],
                 ),
               ),
             ),
@@ -1438,11 +1054,156 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Wi
       ),
     );
   }
+
+  Widget _buildQuickActionButton({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabCheckups() {
+    final checkupWindows = [
+      {'id': 'chk_1', 'title': 'مراقبت اول (هفته ۶ تا ۱۰)', 'start': 6, 'end': 10},
+      {'id': 'chk_2', 'title': 'مراقبت دوم (غربالگری اول)', 'start': 11, 'end': 13},
+      {'id': 'chk_3', 'title': 'مراقبت سوم (آنومالی هفته ۱۸ تا ۲۰)', 'start': 18, 'end': 20},
+      {'id': 'chk_4', 'title': 'مراقبت چهارم (تست قند هفته ۲۴ تا ۲۸)', 'start': 24, 'end': 28},
+      {'id': 'chk_5', 'title': 'مراقبت پنجم (هفته ۳۰ تا ۳۴)', 'start': 30, 'end': 34},
+      {'id': 'chk_6', 'title': 'مراقبت ششم (هفته ۳۵ تا ۳۷)', 'start': 35, 'end': 37},
+      {'id': 'chk_7', 'title': 'مراقبت هفتم (هفته ۳۸ تا ۴۰)', 'start': 38, 'end': 40},
+    ];
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: checkupWindows.length,
+      itemBuilder: (ctx, idx) {
+        final item = checkupWindows[idx];
+        final start = item['start'] as int;
+        final end = item['end'] as int;
+        final statusText = PregnancyHelpers.checkupWindowStatus(
+          currentWeek: _currentWeek,
+          windowStartWeek: start,
+          windowEndWeek: end,
+          isCompleted: false,
+        );
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          child: ListTile(
+            title: Text(item['title'] as String, style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13)),
+            subtitle: Text(statusText, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.purple)),
+            trailing: _currentWeek >= start && _currentWeek <= end
+                ? TextButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('یادآوری مراقبت ثبت شد ⏰', style: TextStyle(fontFamily: 'Vazirmatn'))),
+                      );
+                    },
+                    child: const Text('یادآوری', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                  )
+                : null,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTabKicks() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('جلسه واقعی «شمارش تا ۱۰» حرکات جنین', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Text(
+            'تعداد حرکات ثبت شده: ${toPersianDigits(_kickTracker.count)} / ۱۰',
+            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 24, fontWeight: FontWeight.bold, color: Colors.pinkAccent),
+          ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: _registerKickTap,
+            child: Container(
+              width: 140,
+              height: 140,
+              decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.pinkAccent),
+              child: const Center(
+                child: Text('ثبت حرکت 🦶', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabContractions() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('انقباض‌سنج و حالت زایمان', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16), backgroundColor: Colors.indigoAccent),
+            icon: const Icon(CupertinoIcons.fullscreen, color: Colors.white),
+            label: const Text('ورود به حالت زایمان (تمام‌صفحه)', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+            onPressed: () => LaborModeScreen.show(context, pregnancyId: 'preg_default'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabSymptoms() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          const Text('ثبت علائم و حالت امروز', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _noteController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              hintText: 'یادداشت یا توضیحات امروز...',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _PregnancyRingPainter extends CustomPainter {
-
   _PregnancyRingPainter({required this.percentage, required this.colors});
+
   final double percentage;
   final List<Color> colors;
 
@@ -1451,32 +1212,20 @@ class _PregnancyRingPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 8;
     const strokeWidth = 10.0;
-
     final rect = Rect.fromCircle(center: center, radius: radius);
 
-    // Background track
     final paintBg = Paint()
-      ..color = colors.first.withValues(alpha: 0.08)
+      ..color = colors.first.withOpacity(0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
     canvas.drawCircle(center, radius, paintBg);
 
-    // Gradient shader
     final gradient = SweepGradient(
       colors: colors,
       startAngle: -math.pi / 2,
       endAngle: 3 * math.pi / 2,
     );
 
-    // Glow effect
-    final paintGlow = Paint()
-      ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth + 4.0
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
-
-    // Foreground track
     final paintFg = Paint()
       ..shader = gradient.createShader(rect)
       ..style = PaintingStyle.stroke
@@ -1484,10 +1233,6 @@ class _PregnancyRingPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final sweepAngle = 2 * math.pi * percentage;
-
-    // Draw glow first
-    canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, paintGlow);
-    // Draw crisp path
     canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, paintFg);
   }
 

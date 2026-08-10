@@ -338,16 +338,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
   }
 
   int _getFarsiDayOfWeek(DateTime dt) {
-    switch (dt.weekday) {
-      case DateTime.monday: return 3;
-      case DateTime.tuesday: return 4;
-      case DateTime.wednesday: return 5;
-      case DateTime.thursday: return 6;
-      case DateTime.friday: return 7;
-      case DateTime.saturday: return 1;
-      case DateTime.sunday: return 2;
-    }
-    return 1;
+    return SsProgramCalendar.ritmoDayToLegacySsDay(
+      SsProgramCalendar.ritmoDayOf(dt),
+    );
   }
 
   String _getFarsiDayName(int dayOfWeek) {

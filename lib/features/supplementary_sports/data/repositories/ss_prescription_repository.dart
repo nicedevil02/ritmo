@@ -61,6 +61,43 @@ class SsPrescriptionRepository {
     return SessionPrescription.fromMap(rows.first);
   }
 
+  Future<SessionPrescription?> getPrescriptionByPlanId(String planId) async {
+    final db = await _database;
+    final rows = await db.query(
+      'ss_session_prescription',
+      where: '(workoutPlanId = ? OR legacyPlanId = ?)',
+      whereArgs: [planId, planId],
+      orderBy: 'dateIso DESC',
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return SessionPrescription.fromMap(rows.first);
+  }
+
+  Future<SessionPrescription?> getPrescriptionBySessionId(String sessionId) async {
+    final db = await _database;
+    final rows = await db.rawQuery('''
+      SELECT p.*
+      FROM ss_session_prescription p
+      JOIN ss_workout_session_log s ON s.prescriptionId = p.id
+      WHERE s.id = ?
+      LIMIT 1
+    ''', [sessionId]);
+    if (rows.isEmpty) return null;
+    return SessionPrescription.fromMap(rows.first);
+  }
+
+  Future<void> savePrescriptionIn(
+    DatabaseExecutor executor,
+    SessionPrescription prescription,
+  ) async {
+    await executor.insert(
+      'ss_session_prescription',
+      prescription.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   Future<void> savePrescription(SessionPrescription p) async {
     final db = await _database;
     await db.insert(

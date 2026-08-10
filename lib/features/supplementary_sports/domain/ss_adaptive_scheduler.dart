@@ -4,25 +4,34 @@ import 'package:ritmo/features/supplementary_sports/data/repositories/ss_profile
 import 'package:ritmo/features/supplementary_sports/domain/ss_program_calendar.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Handles weekly adaptive plan regeneration based on progression signals and completion rates.
+/// Handles weekly adaptive plan regeneration based on recent progression signals
+/// and completion of the current dated prescription cycle.
 class SSAdaptiveScheduler {
+  static const int _progressionWindowDays = 42;
+
   /// Ensures upcoming week's plan is generated adaptively.
   static Future<void> ensureUpcomingWeekReady(Database db, DateTime today) async {
     final profile = await SSProfileRepository.instance.getProfile();
     if (profile == null) return;
 
-    final currentWk = SsProgramCalendar.currentWeek(profile.programStartDate, today);
-    final nextWk = currentWk + 1;
+    final programStart = DateTime.tryParse(profile.programStartDate ?? '') ??
+        DateTime(today.year, today.month, today.day);
+    final nextWeekDate = today.add(const Duration(days: 7));
+    final nextWk = SsProgramCalendar.cycleWeekFor(
+      nextWeekDate,
+      programStart: programStart,
+    );
 
     final check = await db.query(
       'ss_workout_plan',
-      where: 'week = ?',
-      whereArgs: [nextWk],
+      where: 'id LIKE ?',
+      whereArgs: ['plan_w${nextWk}_%'],
+      limit: 1,
     );
+    if (check.isNotEmpty) return;
 
-    if (check.isNotEmpty) return; // Idempotent guard
-
-    final signals = await _collectProgressionSignals(db);
+    final signals = await _collectProgressionSignals(db, today);
+    final currentWk = SsProgramCalendar.cycleWeekFor(today, programStart: programStart);
     final completionRate = await _calculateWeekCompletionRate(db, currentWk);
 
     var effectiveProfile = profile;
@@ -30,7 +39,10 @@ class SSAdaptiveScheduler {
       effectiveProfile = profile.copyWith(daysPerWeek: profile.daysPerWeek - 1);
     }
 
-    final isDeloadWeek = (nextWk % profile.deloadEveryNWeeks == 0);
+    final isDeloadWeek = SsProgramCalendar.isDeloadWeek(
+      nextWk,
+      deloadEveryNWeeks: profile.deloadEveryNWeeks,
+    );
 
     await db.transaction((txn) async {
       await SSPlanGenerator.generateWeeklyAndMonthlyPlan(
@@ -44,76 +56,74 @@ class SSAdaptiveScheduler {
       await txn.insert('ss_decision_log', {
         'id': RitmoIdFactory.ssDecision(),
         'userId': 'default',
-        'decisionType': isDeloadWeek ? 'DELOAD_WEEK' : 'WEEK_REGENERATED',
-        'rejectionReason': 'CompletionRate: ${(completionRate * 100).toStringAsFixed(0)}%',
+        'decisionType': isDeloadWeek ? 'DELOAD_WEEK_APPLIED' : 'WEEK_REGENERATED',
+        'rejectionReason': 'cycleWeek=$nextWk; completion=${(completionRate * 100).toStringAsFixed(0)}%; deload=$isDeloadWeek',
         'createdAt': DateTime.now().millisecondsSinceEpoch,
       });
     });
   }
 
-  static Future<Map<String, ProgressionSignal>> _collectProgressionSignals(Database db) async {
-    final Map<String, ProgressionSignal> signals = {};
-
-    final feelings = await db.rawQuery('''
-      SELECT exerciseId, feeling, COUNT(*) as count
+  static Future<Map<String, ProgressionSignal>> _collectProgressionSignals(
+    Database db,
+    DateTime now,
+  ) async {
+    final since = now
+        .subtract(const Duration(days: _progressionWindowDays))
+        .millisecondsSinceEpoch;
+    final rows = await db.rawQuery('''
+      SELECT exerciseId, feeling, loggedAt
       FROM ss_exercise_feeling_log
-      GROUP BY exerciseId, feeling
-    ''');
+      WHERE loggedAt >= ?
+      ORDER BY exerciseId ASC, loggedAt DESC
+    ''', [since]);
 
-    final Map<String, int> easyCounts = {};
-    final Map<String, int> hardCounts = {};
-
-    for (final row in feelings) {
-      final exId = row['exerciseId'] as String;
-      final feeling = row['feeling'] as String;
-      final count = row['count'] as int;
-
-      if (feeling == 'EASY') {
-        easyCounts[exId] = (easyCounts[exId] ?? 0) + count;
-      } else if (feeling == 'HARD' || feeling == 'TOO_HARD') {
-        hardCounts[exId] = (hardCounts[exId] ?? 0) + count;
-      }
+    final byExercise = <String, List<String>>{};
+    for (final row in rows) {
+      final exerciseId = row['exerciseId']?.toString();
+      final feeling = row['feeling']?.toString().toUpperCase();
+      if (exerciseId == null || feeling == null) continue;
+      byExercise.putIfAbsent(exerciseId, () => []).add(feeling);
     }
 
-    final allExIds = {...easyCounts.keys, ...hardCounts.keys};
-    for (final exId in allExIds) {
-      final easy = easyCounts[exId] ?? 0;
-      final hard = hardCounts[exId] ?? 0;
+    final signals = <String, ProgressionSignal>{};
+    byExercise.forEach((exerciseId, feelings) {
+      final latest = feelings.take(3).toList(growable: false);
+      if (latest.length < 2) {
+        signals[exerciseId] = ProgressionSignal.maintain;
+        return;
+      }
 
-      if (easy >= 2 && hard == 0) {
-        signals[exId] = ProgressionSignal.increase;
-      } else if (hard >= 1) {
-        signals[exId] = ProgressionSignal.decrease;
+      final latestTwo = latest.take(2).toList(growable: false);
+      final hardCount = latestTwo.where((f) => f == 'HARD' || f == 'TOO_HARD').length;
+      final easyCount = latestTwo.where((f) => f == 'EASY').length;
+
+      if (hardCount >= 1) {
+        signals[exerciseId] = ProgressionSignal.decrease;
+      } else if (easyCount == 2) {
+        signals[exerciseId] = ProgressionSignal.increase;
       } else {
-        signals[exId] = ProgressionSignal.maintain;
+        signals[exerciseId] = ProgressionSignal.maintain;
       }
-    }
-
+    });
     return signals;
   }
 
   static Future<double> _calculateWeekCompletionRate(Database db, int week) async {
-    final rows = await db.rawQuery('''
-      SELECT status, COUNT(*) as count
-      FROM ss_plan_schedule
-      GROUP BY status
-    ''');
+    final rows = await db.query(
+      'ss_session_prescription',
+      columns: ['status'],
+      where: 'cycleWeek = ? AND slotType != ?',
+      whereArgs: [week, 'REST'],
+    );
 
-    int completed = 0;
-    int total = 0;
+    if (rows.isEmpty) return 1.0;
 
-    for (final r in rows) {
-      final status = r['status'] as String;
-      final count = r['count'] as int;
-      if (status == 'COMPLETED' || status == 'SHIFTED') {
-        completed += count;
-      }
-      if (status != 'REST') {
-        total += count;
-      }
+    var earned = 0.0;
+    for (final row in rows) {
+      final status = row['status']?.toString().toUpperCase();
+      if (status == 'DONE') earned += 1.0;
+      if (status == 'PARTIAL') earned += 0.5;
     }
-
-    if (total == 0) return 1.0;
-    return completed / total;
+    return (earned / rows.length).clamp(0.0, 1.0);
   }
 }

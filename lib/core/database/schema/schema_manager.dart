@@ -6,6 +6,7 @@ import 'package:ritmo/core/database/schema/tables/day_plan_tables.dart';
 import 'package:ritmo/core/database/schema/tables/goal_tables.dart';
 import 'package:ritmo/core/database/schema/tables/health_tables.dart';
 import 'package:ritmo/core/database/schema/tables/konkur_tables.dart';
+import 'package:ritmo/core/database/schema/tables/note_tables.dart';
 import 'package:ritmo/core/database/schema/tables/routine_tables.dart';
 import 'package:ritmo/core/database/schema/tables/sports_tables.dart';
 import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
@@ -30,5 +31,6 @@ class SchemaManager {
     await AssistantTables.create(db);
     await AiTables.create(db);
     await DayPlanTables.create(db);
+    await NoteTables.create(db);
   }
 }

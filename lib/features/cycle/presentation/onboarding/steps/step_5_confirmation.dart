@@ -201,8 +201,10 @@ class Step5Confirmation extends StatelessWidget {
     final active = <String>[];
     if (data.worshipConsent) active.add('عبادات');
     if (data.energyConsent) active.add('انرژی');
+    if (data.sleepConsent) active.add('خواب');
     if (data.remindersConsent) active.add('یادآوری‌ها');
     if (data.dashboardConsent) active.add('داشبورد امروز');
+    if (data.calendarConsent) active.add('تقویم اصلی');
     if (active.isEmpty) return 'هیچ‌کدام';
     return active.join('، ');
   }

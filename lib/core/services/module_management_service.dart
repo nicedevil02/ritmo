@@ -252,6 +252,16 @@ class ModuleManagementService {
             await safeDeleteSettingsLike('mood_%');
             break;
 
+          case 'module_pregnancy_enabled':
+            await safeDelete('contraction_timer');
+            await safeDelete('kick_counts');
+            await safeDelete('pregnancy_symptoms');
+            await safeDelete('pregnancy_checkups');
+            await safeDelete('pregnancy_tracker');
+            await safeDeleteSettingsLike('pregnancy_%');
+            await safeDeleteSettingsLike('cycle_pregnancy_%');
+            break;
+
           case 'module_sleep_enabled':
             await safeDelete('sleep_logs');
             await safeDelete('bedtime_diagnostics');

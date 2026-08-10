@@ -647,5 +647,6 @@
   "cycleSosButton": "Emergency Pain Relief",
   "cyclePregnancyActivate": "🤰 Activate Pregnancy Mode",
   "cyclePregnancyConfirmPrompt": "Are you pregnant? Activating this mode will pause menstrual cycle tracking and display pregnancy-related details instead.",
-  "cyclePregnancyDeactivate": "Return to Normal Mode"
+  "cyclePregnancyDeactivate": "Return to Normal Mode",
+  "pregnancyMedicalDisclaimer": "This application is not a medical tool and does not replace professional medical advice. In any concerning situation, contact a doctor or midwife."
 }

@@ -103,5 +103,41 @@ void main() {
       final periods = await db.query('cycle_periods');
       expect(periods.isEmpty, isTrue);
     });
+
+    test('saveOnboarding saves all 6 consents and lock settings accurately', () async {
+      final data = CycleOnboardingData(
+        periodStatus: CyclePeriodStatusChoice.dontKnow,
+        worshipConsent: true,
+        energyConsent: true,
+        sleepConsent: true,
+        remindersConsent: true,
+        dashboardConsent: true,
+        calendarConsent: true,
+        enableLock: true,
+      );
+
+      await CycleOnboardingController.instance.saveOnboarding(data);
+
+      final settings = await db.query('app_settings');
+      final settingsMap = {for (final s in settings) s['key'] as String: s['value'] as String};
+
+      expect(settingsMap['cycle_consent_worship'], equals('true'));
+      expect(settingsMap['cycle_consent_energy'], equals('true'));
+      expect(settingsMap['cycle_consent_sleep'], equals('true'));
+      expect(settingsMap['cycle_consent_reminders'], equals('true'));
+      expect(settingsMap['cycle_consent_dashboard'], equals('true'));
+      expect(settingsMap['show_cycle_in_calendar'], equals('true'));
+      expect(settingsMap['cycle_lock_enabled'], equals('true'));
+      expect(settingsMap['cycle_biometric_enabled'], equals('true'));
+
+      final loaded = await CycleOnboardingController.instance.loadInitialData();
+      expect(loaded.worshipConsent, isTrue);
+      expect(loaded.energyConsent, isTrue);
+      expect(loaded.sleepConsent, isTrue);
+      expect(loaded.remindersConsent, isTrue);
+      expect(loaded.dashboardConsent, isTrue);
+      expect(loaded.calendarConsent, isTrue);
+      expect(loaded.enableLock, isTrue);
+    });
   });
 }

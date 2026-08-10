@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
+import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/domain/models.dart';
 
 enum CyclePeriodStatusChoice {
@@ -19,8 +20,10 @@ class CycleOnboardingData {
     DateTime? startDate,
     this.worshipConsent = false,
     this.energyConsent = false,
+    this.sleepConsent = false,
     this.remindersConsent = false,
     this.dashboardConsent = false,
+    this.calendarConsent = false,
     this.enableLock = false,
   }) : startDate = startDate ?? DateTime.now().subtract(const Duration(days: 10));
 
@@ -30,8 +33,10 @@ class CycleOnboardingData {
   DateTime startDate;
   bool worshipConsent;
   bool energyConsent;
+  bool sleepConsent;
   bool remindersConsent;
   bool dashboardConsent;
+  bool calendarConsent;
   bool enableLock;
 
   CycleOnboardingData copyWith({
@@ -41,8 +46,10 @@ class CycleOnboardingData {
     DateTime? startDate,
     bool? worshipConsent,
     bool? energyConsent,
+    bool? sleepConsent,
     bool? remindersConsent,
     bool? dashboardConsent,
+    bool? calendarConsent,
     bool? enableLock,
   }) {
     return CycleOnboardingData(
@@ -52,8 +59,10 @@ class CycleOnboardingData {
       startDate: startDate ?? this.startDate,
       worshipConsent: worshipConsent ?? this.worshipConsent,
       energyConsent: energyConsent ?? this.energyConsent,
+      sleepConsent: sleepConsent ?? this.sleepConsent,
       remindersConsent: remindersConsent ?? this.remindersConsent,
       dashboardConsent: dashboardConsent ?? this.dashboardConsent,
+      calendarConsent: calendarConsent ?? this.calendarConsent,
       enableLock: enableLock ?? this.enableLock,
     );
   }
@@ -83,9 +92,18 @@ class CycleOnboardingController {
 
       final worship = settingsMap['cycle_consent_worship'] == 'true';
       final energy = settingsMap['cycle_consent_energy'] == 'true';
+      final sleep = settingsMap['cycle_consent_sleep'] == 'true';
       final reminders = settingsMap['cycle_consent_reminders'] == 'true';
       final dashboard = settingsMap['cycle_consent_dashboard'] == 'true';
-      final lockEnabled = settingsMap['cycle_pin_enabled'] == 'true' ||
+      final calendar = settingsMap['show_cycle_in_calendar'] == 'true';
+
+      // Check if user already set a PIN or lock in CycleLockGate / settings
+      final pinInStore = await SecureKeyStore.getKey('cycle_lock_password');
+      final pinInSettings = settingsMap['cycle_lock_password'] ?? settingsMap['app_lock_password'];
+      final hasPin = (pinInStore != null && pinInStore.isNotEmpty) || (pinInSettings != null && pinInSettings.isNotEmpty);
+      final lockSetting = settingsMap['cycle_lock_enabled'];
+      final lockEnabled = lockSetting == 'true' ||
+          (lockSetting != 'false' && hasPin) ||
           settingsMap['cycle_biometric_enabled'] == 'true';
 
       // Query latest period to infer start date if available
@@ -116,8 +134,10 @@ class CycleOnboardingController {
         startDate: startDate,
         worshipConsent: worship,
         energyConsent: energy,
+        sleepConsent: sleep,
         remindersConsent: reminders,
         dashboardConsent: dashboard,
+        calendarConsent: calendar,
         enableLock: lockEnabled,
       );
     } catch (e) {
@@ -144,11 +164,13 @@ class CycleOnboardingController {
       // Mirroring to legacy engine keys (Bug چ-۵ resolution)
       'user_cycle_length': data.cycleLength.toString(),
       'user_period_length': data.periodDuration.toString(),
-      // Privacy Consents
+      // Privacy Consents (all 6 connections)
       'cycle_consent_worship': data.worshipConsent.toString(),
       'cycle_consent_energy': data.energyConsent.toString(),
+      'cycle_consent_sleep': data.sleepConsent.toString(),
       'cycle_consent_reminders': data.remindersConsent.toString(),
       'cycle_consent_dashboard': data.dashboardConsent.toString(),
+      'show_cycle_in_calendar': data.calendarConsent.toString(),
       // One-time landing guidance flag (Bug چ-۱۸)
       'cycle_onboarding_just_completed': 'true',
     };
@@ -167,14 +189,17 @@ class CycleOnboardingController {
       );
     }
 
-    // 2. Handle Lock Preference (Bug چ-۱۰)
-    if (data.enableLock) {
-      batch.insert(
-        'app_settings',
-        {'key': 'cycle_biometric_enabled', 'value': 'true', 'updatedAt': nowMs},
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    }
+    // 2. Handle Lock Preference
+    batch.insert(
+      'app_settings',
+      {'key': 'cycle_lock_enabled', 'value': data.enableLock ? 'true' : 'false', 'updatedAt': nowMs},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    batch.insert(
+      'app_settings',
+      {'key': 'cycle_biometric_enabled', 'value': data.enableLock ? 'true' : 'false', 'updatedAt': nowMs},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
 
     // 3. Handle Period Insertion / Update idempotently (Bug چ-۱, چ-۳, چ-۶)
     final cleanStartStr = data.startDate.toIso8601String().substring(0, 10);

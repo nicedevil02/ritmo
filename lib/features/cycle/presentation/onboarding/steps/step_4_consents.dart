@@ -79,31 +79,51 @@ class Step4Consents extends StatelessWidget {
 
           // 2. Energy Consent
           _buildConsentTile(
-            title: 'تأثیر بر شاخص انرژی',
-            subtitle: 'محاسبه اثر تغییرات فاز بر عدد پیش‌بینی انرژی روزانه.',
+            title: 'تأثیر بر شاخص انرژی و روتین‌ها',
+            subtitle: 'تعدیل خودکار فشار کارهای روزانه و محاسبه اثر فاز بر عدد انرژی.',
             whatGoesOut: 'خروجی: فقط یک اثر عددی ملایم روی شاخص انرژی، بدون هیچ واژه صریحی.',
             value: data.energyConsent,
             onChanged: (val) => onDataChanged(data.copyWith(energyConsent: val)),
           ),
           const SizedBox(height: 10),
 
-          // 3. Reminders Consent
+          // 3. Sleep Consent
+          _buildConsentTile(
+            title: 'هماهنگی با بخش خواب و استراحت',
+            subtitle: 'پیشنهاد ساعات خواب و استراحت متناسب با نیاز بدن در فازهای مختلف.',
+            whatGoesOut: 'خروجی: فقط در دیتابیس محلی دستگاه برای تنظیم اهداف خواب.',
+            value: data.sleepConsent,
+            onChanged: (val) => onDataChanged(data.copyWith(sleepConsent: val)),
+          ),
+          const SizedBox(height: 10),
+
+          // 4. Reminders Consent
           _buildConsentTile(
             title: 'یادآوری‌های محرمانه',
-            subtitle: 'دریافت اعلان‌های ساده و بدون متن صریح برای ثبت دوره.',
+            subtitle: 'دریافت اعلان‌های ساده و بدون متن صریح برای ثبت دوره و حالات بدنی.',
             whatGoesOut: 'خروجی: اعلان محلی روی همین گوشی، بدون درج کلمات افشاکننده.',
             value: data.remindersConsent,
             onChanged: (val) => onDataChanged(data.copyWith(remindersConsent: val)),
           ),
           const SizedBox(height: 10),
 
-          // 4. Dashboard Consent
+          // 5. Dashboard Consent
           _buildConsentTile(
             title: 'نمایش کارت خلاصه در امروز',
-            subtitle: 'نمایش وضعیت فاز جاری در تب امروز.',
+            subtitle: 'نمایش وضعیت فاز جاری در تب امروز برای دسترسی و پایش سریع.',
             whatGoesOut: 'خروجی: فقط یک کارت محرمانه در تب امروز همین دستگاه.',
             value: data.dashboardConsent,
             onChanged: (val) => onDataChanged(data.copyWith(dashboardConsent: val)),
+          ),
+          const SizedBox(height: 10),
+
+          // 6. Calendar Consent
+          _buildConsentTile(
+            title: 'نمایش فاز چرخه در تقویم اصلی',
+            subtitle: 'علامت‌گذاری ملایم روزهای پیش‌بینی‌شده و فاز جاری در تقویم و ریتم‌های روزانه.',
+            whatGoesOut: 'خروجی: نمایش نشانگر غیرمستقیم در تقویم داخلی همین دستگاه.',
+            value: data.calendarConsent,
+            onChanged: (val) => onDataChanged(data.copyWith(calendarConsent: val)),
           ),
 
           const SizedBox(height: 24),

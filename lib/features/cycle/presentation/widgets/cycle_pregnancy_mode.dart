@@ -1,3 +1,5 @@
+import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/features/health/data/pregnancy_repository.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:convert';
@@ -12,6 +14,8 @@ import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_ai_consent_sheet.dart';
 import 'package:sqflite/sqflite.dart';
+
+import 'package:ritmo/core/utils/persian_digits.dart';
 
 class CyclePregnancyModeView extends StatefulWidget {
 
@@ -35,7 +39,8 @@ class CyclePregnancyModeView extends StatefulWidget {
   State<CyclePregnancyModeView> createState() => _CyclePregnancyModeViewState();
 }
 
-class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> {
+class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with WidgetsBindingObserver {
+  String _toPersianDigits(Object? input) => toPersianDigits(input);
   late DateTime _startDate;
   late DateTime _dueDate;
   late int _diffDays;
@@ -65,33 +70,59 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> {
   ];
 
   final Map<int, Map<String, String>> pregnancyWeekData = {
-    4: {'size': 'به اندازه یک دانه خشخاش', 'development': 'لانه گزینی جنین در رحم', 'tip': 'تغذیه سالم، نوشیدن آب کافی و استراحت را در اولویت قرار دهید'},
-    5: {'size': 'به اندازه یک دانه کنجد', 'development': 'قلب شروع به تپیدن میکند', 'tip': 'از مصرف کافئین زیاد خودداری کنید'},
-    6: {'size': 'به اندازه یک دانه عدس', 'development': 'صورت در حال شکلگیری است', 'tip': 'استراحت کافی داشته باشید'},
-    8: {'size': 'به اندازه یک تمشک', 'development': 'انگشتان دست شکل گرفتهاند', 'tip': 'غذاهای سرشار از آهن طبیعی مصرف کنید'},
-    10: {'size': 'به اندازه یک زیتون', 'development': 'اندامهای حیاتی تشکیل شدهاند', 'tip': 'پیادهروی روزانه ملایم را فراموش نکنید'},
-    12: {'size': 'به اندازه یک آلو', 'development': 'ناخنها رشد میکنند', 'tip': 'ویزیت دوم پزشک و انجام غربالگری اول'},
-    14: {'size': 'به اندازه یک لیمو', 'development': 'جنین میتواند اخم کند', 'tip': 'حالت تهوع معمولاً کاهش مییابد'},
-    16: {'size': 'به اندازه یک آووکادو', 'development': 'جنین حرکات خود را حس میکند', 'tip': 'شاید اولین لگد را حس کنید!'},
-    18: {'size': 'به اندازه یک فلفل دلمهای', 'development': 'گوشها کامل شدهاند', 'tip': 'با جنین حرف بزنید، صدایتان را میشنود'},
+    4: {'size': 'به اندازه یک دانه خشخاش', 'development': 'لانه‌گزینی جنین در رحم', 'tip': 'تغذیه سالم، نوشیدن آب کافی و استراحت را در اولویت قرار دهید'},
+    5: {'size': 'به اندازه یک دانه کنجد', 'development': 'قلب شروع به تپیدن می‌کند', 'tip': 'از مصرف کافئین زیاد خودداری کنید'},
+    6: {'size': 'به اندازه یک دانه عدس', 'development': 'صورت در حال شکل‌گیری است', 'tip': 'استراحت کافی داشته باشید'},
+    8: {'size': 'به اندازه یک تمشک', 'development': 'انگشتان دست شکل گرفته‌اند', 'tip': 'غذاهای سرشار از آهن طبیعی مصرف کنید'},
+    10: {'size': 'به اندازه یک زیتون', 'development': 'اندام‌های حیاتی تشکیل شده‌اند', 'tip': 'پیاده‌روی روزانه ملایم را فراموش نکنید'},
+    12: {'size': 'به اندازه یک آلو', 'development': 'ناخن‌ها رشد می‌کنند', 'tip': 'ویزیت دوم پزشک و انجام غربالگری اول'},
+    14: {'size': 'به اندازه یک لیمو', 'development': 'جنین می‌تواند اخم کند', 'tip': 'حالت تهوع معمولاً کاهش می‌یابد'},
+    16: {'size': 'به اندازه یک آووکادو', 'development': 'جنین حرکات خود را حس می‌کند', 'tip': 'شاید اولین لگد را حس کنید!'},
+    18: {'size': 'به اندازه یک فلفل دلمه‌ای', 'development': 'گوش‌ها کامل شده‌اند', 'tip': 'با جنین حرف بزنید، صدایتان را می‌شنود'},
     20: {'size': 'به اندازه یک موز', 'development': 'نیمه راه! جنسیت قابل تشخیص', 'tip': 'سونوگرافی آنومالی و غربالگری دوم'},
-    22: {'size': 'به اندازه یک بلال ذرت', 'development': 'ابروها و مژهها رشد کردهاند', 'tip': 'ورزشهای کگل را شروع کنید'},
-    24: {'size': 'به اندازه یک بادمجان', 'development': 'ریهها در حال بلوغ هستند', 'tip': 'تست قند بارداری انجام دهید'},
-    26: {'size': 'به اندازه یک کلم بروکلی', 'development': 'چشمها باز میشوند', 'tip': 'خواب به پهلوی چپ را عادت کنید'},
-    28: {'size': 'به اندازه یک کدو حلوایی کوچک', 'development': 'مغز بهسرعت رشد میکند', 'tip': 'شمارش حرکات جنین را شروع کنید'},
-    30: {'size': 'به اندازه یک کاهو', 'development': 'جنین وضعیت سر پایین میگیرد', 'tip': 'کلاس آمادگی زایمان را در نظر بگیرید'},
-    32: {'size': 'به اندازه یک نارگیل', 'development': 'ناخنهای پا رشد کردهاند', 'tip': 'ساک بیمارستان را آماده کنید'},
+    22: {'size': 'به اندازه یک بلال ذرت', 'development': 'ابروها و مژه‌ها رشد کرده‌اند', 'tip': 'ورزش‌های کگل را شروع کنید'},
+    24: {'size': 'به اندازه یک بادمجان', 'development': 'ریه‌ها در حال بلوغ هستند', 'tip': 'تست قند بارداری انجام دهید'},
+    26: {'size': 'به اندازه یک کلم بروکلی', 'development': 'چشم‌ها باز می‌شوند', 'tip': 'خواب به پهلوی چپ را عادت کنید'},
+    28: {'size': 'به اندازه یک کدو حلوایی کوچک', 'development': 'مغز به‌سرعت رشد می‌کند', 'tip': 'شمارش حرکات جنین را شروع کنید'},
+    30: {'size': 'به اندازه یک کاهو', 'development': 'جنین وضعیت سر پایین می‌گیرد', 'tip': 'کلاس آمادگی زایمان را در نظر بگیرید'},
+    32: {'size': 'به اندازه یک نارگیل', 'development': 'ناخن‌های پا رشد کرده‌اند', 'tip': 'ساک بیمارستان را آماده کنید'},
     34: {'size': 'به اندازه یک طالبی', 'development': 'سیستم ایمنی فعال شده', 'tip': 'استراحت بیشتر و استفاده از بالش بارداری'},
-    36: {'size': 'به اندازه یک هندوانه کوچک', 'development': 'جنین تقریباً کامل است', 'tip': 'ویزیتها هفتگی میشوند'},
-    38: {'size': 'به اندازه یک کدو تنبل', 'development': 'ریهها بالغ شدهاند', 'tip': 'علائم شروع زایمان را بشناسید'},
-    40: {'size': 'به اندازه یک هندوانه', 'development': 'آماده تولد! 🎉', 'tip': 'صبور باشید، نوبتش میرسد'},
+    36: {'size': 'به اندازه یک هندوانه کوچک', 'development': 'جنین تقریباً کامل است', 'tip': 'ویزیت‌ها هفتگی می‌شوند'},
+    38: {'size': 'به اندازه یک کدو تنبل', 'development': 'ریه‌ها بالغ شده‌اند', 'tip': 'علائم شروع زایمان را بشناسید'},
+    40: {'size': 'به اندازه یک هندوانه', 'development': 'آماده تولد! 🎉', 'tip': 'صبور باشید، نوبتش می‌رسد'},
   };
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _calculateValues();
     _loadTodayData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant CyclePregnancyModeView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.pregnancyStartDate != widget.pregnancyStartDate ||
+        oldWidget.pregnancyDueDate != widget.pregnancyDueDate) {
+      _calculateValues();
+      _loadTodayData();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _calculateValues();
+      _loadTodayData();
+    }
   }
 
   Future<void> _loadTodayData() async {
@@ -100,45 +131,48 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> {
 
     try {
       final db = await DatabaseHelper.instance.database;
-      
-      // 1. Load today's log from db
-      final logs = await db.query(
-        'cycle_day_logs',
-        where: 'logDate = ?',
-        whereArgs: [todayStr],
+      final active = await PregnancyRepository.instance.getActiveTracker();
+      final trackerId = active?['id'] as String? ?? 'preg_default';
+
+      // 1. Load today's symptoms from pregnancy_symptoms table (PREG-04)
+      final symptomsRows = await db.query(
+        'pregnancy_symptoms',
+        where: 'pregnancyId = ? AND date = ?',
+        whereArgs: [trackerId, todayStr],
       );
 
-      if (logs.isNotEmpty) {
-        final log = logs.first;
-        final symptomsJson = log['symptomsJson'] as String? ?? '[]';
-        try {
-          final List<dynamic> parsed = jsonDecode(symptomsJson);
-          _selectedSymptoms = parsed.map((e) => e.toString()).toList();
-        } catch (_) {}
-        _noteController.text = log['note'] as String? ?? '';
-        _hasSavedToday = true;
-      } else {
-        _hasSavedToday = false;
+      _selectedSymptoms = symptomsRows
+          .map((r) => r['symptom'] as String)
+          .where((s) => !s.startsWith('SUPP_'))
+          .toList();
+
+      final notesWithContent = symptomsRows
+          .map((r) => r['note'] as String?)
+          .where((n) => n != null && n.isNotEmpty)
+          .toList();
+
+      if (notesWithContent.isNotEmpty) {
+        _noteController.text = notesWithContent.first!;
       }
+
+      _hasSavedToday = symptomsRows.isNotEmpty;
       _isEditingToday = false;
 
-      // 2. Load today's kick count & time
-      final kickSetting = await db.query(
-        'app_settings',
-        where: 'key = ?',
-        whereArgs: ['pregnancy_kicks_$todayStr'],
+      // 2. Load today's kick count & time from kick_counts table (PREG-12)
+      final kickRows = await db.query(
+        'kick_counts',
+        where: 'pregnancyId = ? AND sessionDate = ?',
+        whereArgs: [trackerId, todayStr],
+        orderBy: 'loggedAt DESC',
       );
-      if (kickSetting.isNotEmpty) {
-        _kickCount = int.tryParse(kickSetting.first['value'] as String? ?? '0') ?? 0;
-      }
 
-      final lastKickSetting = await db.query(
-        'app_settings',
-        where: 'key = ?',
-        whereArgs: ['pregnancy_last_kick_$todayStr'],
-      );
-      if (lastKickSetting.isNotEmpty) {
-        _lastKickTime = lastKickSetting.first['value'] as String? ?? '';
+      if (kickRows.isNotEmpty) {
+        _kickCount = (kickRows.first['kickCount'] as int?) ?? 0;
+        final loggedMs = (kickRows.first['loggedAt'] as int?) ?? 0;
+        if (loggedMs > 0) {
+          final dt = DateTime.fromMillisecondsSinceEpoch(loggedMs);
+          _lastKickTime = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+        }
       }
     } catch (e) {
       debugPrint('Error loading today pregnancy data: $e');
@@ -159,12 +193,10 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> {
     _diffDays = todayTruncated.difference(startTruncated).inDays;
     if (_diffDays < 0) _diffDays = 0;
 
-    _currentWeek = (_diffDays / 7).floor() + 1;
-    _currentDayInWeek = _diffDays % 7;
-    
-    // Clamp week to 1-42
-    if (_currentWeek < 1) _currentWeek = 1;
-    if (_currentWeek > 42) _currentWeek = 42;
+    // Use standard ACOG GestationalAge calculation (PREG-03)
+    final ga = GestationalAge.fromDays(_diffDays);
+    _currentWeek = ga.weeks;
+    _currentDayInWeek = ga.days;
 
     _remainingDays = _dueDate.difference(todayTruncated).inDays;
     if (_remainingDays < 0) _remainingDays = 0;
@@ -183,18 +215,6 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> {
     return pregnancyWeekData[targetWeek]!;
   }
 
-  String _toPersianDigits(String input) {
-    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    var result = input;
-    for (var i = 0; i < english.length; i++) {
-      result = result.replaceAll(english[i], persian[i]);
-    }
-    return result;
-  }
-
-
-
   Future<void> _saveKick(int newCount) async {
     final today = DateTime.now();
     final todayStr = today.toIso8601String().substring(0, 10);
@@ -203,27 +223,24 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> {
     try {
       final db = await DatabaseHelper.instance.database;
       final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final active = await PregnancyRepository.instance.getActiveTracker();
+      final trackerId = active?['id'] as String? ?? 'preg_default';
 
+      // Save kick count to kick_counts table (PREG-12)
       await db.insert(
-        'app_settings',
+        'kick_counts',
         {
-          'key': 'pregnancy_kicks_$todayStr',
-          'value': newCount.toString(),
-          'updatedAt': nowMs,
+          'id': 'kick_${trackerId}_${nowMs}',
+          'pregnancyId': trackerId,
+          'loggedAt': nowMs,
+          'kickCount': newCount,
+          'sessionDate': todayStr,
+          'createdAt': nowMs,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
       if (newCount > _kickCount) {
-        await db.insert(
-          'app_settings',
-          {
-            'key': 'pregnancy_last_kick_$todayStr',
-            'value': nowTimeStr,
-            'updatedAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
         _lastKickTime = nowTimeStr;
       }
     } catch (e) {
@@ -236,31 +253,41 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> {
   }
 
   Future<void> _saveDailyLog() async {
+    final today = DateTime.now();
+    final todayStr = today.toIso8601String().substring(0, 10);
+    final note = _noteController.text.trim();
+
+    if (_selectedSymptoms.isEmpty && note.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('موردی انتخاب نشده است')),
+      );
+      return;
+    }
+
     setState(() {
       _isSavingLog = true;
     });
 
-    final today = DateTime.now();
-    final todayStr = today.toIso8601String().substring(0, 10);
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-
-    final symptomsJson = jsonEncode(_selectedSymptoms);
-    final note = _noteController.text.trim();
-
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.insert(
-        'cycle_day_logs',
-        {
-          'id': 'preg_log_$todayStr',
-          'logDate': todayStr,
-          'symptomsJson': symptomsJson,
-          'note': note,
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      final active = await PregnancyRepository.instance.getActiveTracker();
+      final trackerId = active?['id'] as String? ?? 'preg_default';
+
+      // Save to pregnancy_symptoms table cleanly (PREG-04, PREG-06)
+      for (final symCode in _selectedSymptoms) {
+        await db.insert(
+          'pregnancy_symptoms',
+          {
+            'id': 'sym_${trackerId}_${todayStr}_$symCode',
+            'pregnancyId': trackerId,
+            'date': todayStr,
+            'symptom': symCode,
+            'severity': 'MILD',
+            'note': note,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
     } catch (e) {
       debugPrint('Error saving daily pregnancy logs: $e');
     }

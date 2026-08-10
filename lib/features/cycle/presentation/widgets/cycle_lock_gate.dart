@@ -162,6 +162,7 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
             if (_enteredPin == _firstEnteredPin) {
               await SecureKeyStore.setKey('cycle_lock_password', _enteredPin);
               await SettingsService.instance.set('cycle_lock_password', _enteredPin);
+              await SettingsService.instance.set('cycle_lock_enabled', 'true');
               
               await HapticFeedback.mediumImpact();
               if (mounted) {

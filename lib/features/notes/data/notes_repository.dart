@@ -1,9 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/domain/capture_context.dart';
 import 'package:ritmo/features/notes/logic/note_fts_engine.dart';
+
+import 'package:ritmo/core/database/schema/tables/note_tables.dart';
 
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
@@ -13,8 +14,16 @@ class NotesRepository {
   static final NotesRepository instance = NotesRepository._();
 
   static const _uuid = Uuid();
+  bool _schemaEnsured = false;
 
-  Future<Database> get _db async => DatabaseHelper.instance.database;
+  Future<Database> get _db async {
+    final db = await DatabaseHelper.instance.database;
+    if (!_schemaEnsured) {
+      _schemaEnsured = true;
+      await NoteTables.ensureSchema(db);
+    }
+    return db;
+  }
 
   Future<Note> create({
     String? title,

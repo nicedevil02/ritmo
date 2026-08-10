@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
@@ -24,6 +25,7 @@ import 'package:ritmo/features/cycle/presentation/widgets/cycle_trends_section.d
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_correlation_section.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_sos_section.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_pregnancy_mode.dart';
+import 'package:ritmo/features/health/data/pregnancy_repository.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_ai_consent_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
@@ -3474,23 +3476,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         final lmpStr = lmp.toIso8601String().substring(0, 10);
         final eddStr = edd.toIso8601String().substring(0, 10);
 
-        final db = await DatabaseHelper.instance.database;
-        final now = DateTime.now().millisecondsSinceEpoch;
-
-        await db.insert(
-          'app_settings',
-          {'key': 'cycle_pregnancy_mode', 'value': 'true', 'updatedAt': now},
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-        await db.insert(
-          'app_settings',
-          {'key': 'cycle_pregnancy_start_date', 'value': lmpStr, 'updatedAt': now},
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-        await db.insert(
-          'app_settings',
-          {'key': 'cycle_pregnancy_due_date', 'value': eddStr, 'updatedAt': now},
-          conflictAlgorithm: ConflictAlgorithm.replace,
+        final cycleLen = int.tryParse(_settings['cycle_avg_length'] ?? '') ?? 28;
+        await PregnancyRepository.instance.startTracker(
+          lmp: lmp,
+          eddOverride: edd,
+          cycleLen: cycleLen,
         );
 
         await _loadData();
@@ -3516,7 +3506,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'غیرفعالسازی حالت بارداری',
+                    'غیرفعال‌سازی حالت بارداری',
                     textAlign: TextAlign.right,
                     style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
                   ),
@@ -3537,7 +3527,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       const SizedBox(width: 8),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xffEC4899),
+                          backgroundColor: colors.primary,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () => Navigator.pop(context, true),
@@ -3554,13 +3544,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     );
 
     if (confirmed ?? false) {
-      final db = await DatabaseHelper.instance.database;
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await db.insert(
-        'app_settings',
-        {'key': 'cycle_pregnancy_mode', 'value': 'false', 'updatedAt': now},
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      final active = await PregnancyRepository.instance.getActiveTracker();
+      final trackerId = active?['id'] as String? ?? 'preg_default';
+      await PregnancyRepository.instance.endTracker(trackerId, 'USER_SETTINGS_DEACTIVATED');
       await _loadData();
     }
   }
@@ -3634,11 +3620,30 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   if (enteredPin == firstNewPin) {
                     final db = await DatabaseHelper.instance.database;
                     final nowMs = DateTime.now().millisecondsSinceEpoch;
+                    await SecureKeyStore.setKey('cycle_lock_password', enteredPin);
                     await db.insert(
                       'app_settings',
                       {
                         'key': 'app_lock_password',
                         'value': enteredPin,
+                        'updatedAt': nowMs,
+                      },
+                      conflictAlgorithm: ConflictAlgorithm.replace,
+                    );
+                    await db.insert(
+                      'app_settings',
+                      {
+                        'key': 'cycle_lock_password',
+                        'value': enteredPin,
+                        'updatedAt': nowMs,
+                      },
+                      conflictAlgorithm: ConflictAlgorithm.replace,
+                    );
+                    await db.insert(
+                      'app_settings',
+                      {
+                        'key': 'cycle_lock_enabled',
+                        'value': 'true',
                         'updatedAt': nowMs,
                       },
                       conflictAlgorithm: ConflictAlgorithm.replace,

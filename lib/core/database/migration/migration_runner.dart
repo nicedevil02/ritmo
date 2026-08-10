@@ -27,6 +27,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v85_simple_ta
 import 'package:ritmo/core/database/migration/migrations/migration_v86_notes.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v87_planning.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v88_audit_fixes.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v89_pregnancy_data_sync.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -117,6 +118,7 @@ class MigrationRunner {
     MigrationV86Notes(),
     MigrationV87Planning(),
     MigrationV88AuditFixes(),
+    MigrationV89PregnancyDataSync(),
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

@@ -645,7 +645,8 @@
   "pregnancyTrimester3": "سه ماهه سوم",
   "pregnancyNoTracker": "پایش فعال بارداری وجود ندارد.",
   "cycleSosButton": "کمک فوری تسکین درد",
-  "cyclePregnancyActivate": "🤰 فعالسازی حالت بارداری",
-  "cyclePregnancyConfirmPrompt": "آیا باردار هستید؟ با فعالسازی این حالت، پیگیری چرخه قاعدگی متوقف میشود و اطلاعات دوران بارداری نمایش داده میشود.",
-  "cyclePregnancyDeactivate": "بازگشت به حالت عادی"
+  "cyclePregnancyActivate": "🤰 فعال‌سازی حالت بارداری",
+  "cyclePregnancyConfirmPrompt": "آیا باردار هستید؟ با فعال‌سازی این حالت، پیگیری چرخه قاعدگی متوقف می‌شود و اطلاعات دوران بارداری نمایش داده می‌شود.",
+  "cyclePregnancyDeactivate": "بازگشت به حالت عادی",
+  "pregnancyMedicalDisclaimer": "این برنامه یک ابزار پزشکی نیست و جایگزین نظر پزشک متخصص نمی‌شود. در هر وضعیت نگران‌کننده با پزشک یا ماما تماس بگیرید."
 }

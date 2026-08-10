@@ -22,6 +22,7 @@ enum SettingsGroup {
   assistant,
   dataBackup,
   security,
+  calendar,
 }
 
 @immutable
@@ -771,6 +772,61 @@ class SettingsRegistry {
       group: SettingsGroup.notifications,
       descriptionFa: 'زمان ارسال اعلان یادآوری روزانه',
       searchTerms: ['ساعت یادآور', 'زمان برنامه'],
+    ),
+
+    // ----------------------------------------------------
+    // K47: تنظیمات تقویم (Calendar)
+    // ----------------------------------------------------
+    SettingDescriptor(
+      key: 'calendar_default_scale',
+      type: SettingType.enumeration,
+      scope: SettingScope.db,
+      defaultValue: 'agenda',
+      labelFa: 'نمای پیش‌فرض تقویم',
+      group: SettingsGroup.calendar,
+      allowed: ['agenda', 'day', 'week', 'month', 'year'],
+      descriptionFa: 'مقیاس اولیه تقویم هنگام ورود به برنامه (برنامه، روز، هفته، ماه، سال)',
+      searchTerms: ['نمای تقویم', 'پیش‌فرض تقویم', 'مقیاس'],
+    ),
+    SettingDescriptor(
+      key: 'calendar_show_tasks',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: true,
+      labelFa: 'نمایش کارها در تقویم',
+      group: SettingsGroup.calendar,
+      descriptionFa: 'نمایش کارهای ساده و گام‌های اهداف در خط زمان و نمای برنامه',
+      searchTerms: ['نمایش کارها', 'تسک', 'کارها'],
+    ),
+    SettingDescriptor(
+      key: 'calendar_show_occasions',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: true,
+      labelFa: 'نمایش مناسبت‌ها و تعطیلات',
+      group: SettingsGroup.calendar,
+      descriptionFa: 'نمایش نوار مناسبت‌های رسمی و تعطیلات در تقویم',
+      searchTerms: ['مناسبت', 'تعطیلات', 'مناسبت‌ها'],
+    ),
+    SettingDescriptor(
+      key: 'calendar_show_hijri',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: true,
+      labelFa: 'نمایش تاریخ قمری',
+      group: SettingsGroup.calendar,
+      descriptionFa: 'نمایش تاریخ هجری قمری در سربرگ روز و مناسبت‌های مذهبی',
+      searchTerms: ['قمری', 'هجری', 'تاریخ قمری'],
+    ),
+    SettingDescriptor(
+      key: 'calendar_morning_brief_enabled',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: true,
+      labelFa: 'گزارش صبحگاهی',
+      group: SettingsGroup.calendar,
+      descriptionFa: 'تولید و نمایش خلاصه وضعیت صبحگاهی برای شروع روز',
+      searchTerms: ['گزارش صبحگاهی', 'خلاصه روز', 'مورنینگ بریف'],
     ),
   ];
 

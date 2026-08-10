@@ -1409,7 +1409,18 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     final activeRow = entry.setRows.where((r) => r.status == SetStatus.current || r.status == SetStatus.done).lastOrNull;
     final w = activeRow?.weight ?? 0.0;
     final r = activeRow?.reps ?? 0;
-    final oneRM = (w > 0 && r > 0) ? w * (1 + r / 30.0) : null;
+    double? oneRM;
+    if (w > 0 && r > 0) {
+      if (r == 1) {
+        oneRM = w;
+      } else if (r <= 10) {
+        oneRM = w * (1 + r / 30.0);
+      } else if (r <= 30) {
+        oneRM = w * (36.0 / (37.0 - r));
+      } else {
+        oneRM = w * 2.0;
+      }
+    }
 
     return Column(
       children: [
@@ -2056,7 +2067,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           InkWell(
-            onTap: onMinus,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onMinus();
+            },
             borderRadius: BorderRadius.circular(6),
             child: const Padding(
               padding: EdgeInsets.all(2),
@@ -2076,7 +2090,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             ),
           ),
           InkWell(
-            onTap: onPlus,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onPlus();
+            },
             borderRadius: BorderRadius.circular(6),
             child: const Padding(
               padding: EdgeInsets.all(2),

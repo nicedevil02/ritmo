@@ -2,6 +2,9 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_session_models.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_session_repository.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_event.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SSSessionRepositoryImpl implements SSSessionRepository {
@@ -48,6 +51,7 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
     
     final startedAt = logs.first['startedAt']! as int;
     final durationSec = ((finishedAt - startedAt) / 1000).round();
+    final durationMins = (durationSec / 60).ceil().clamp(1, 300);
     
     await db.update('ss_workout_session_log', {
       'finishedAt': finishedAt,
@@ -56,6 +60,21 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
       'totalExercisesCount': totalCount,
       'overallFeeling': overallFeeling,
     }, where: 'id = ?', whereArgs: [sessionId]);
+
+    // SPORTS-01: Synchronize with Movement Layer workout_logs
+    try {
+      final event = MovementEvent(
+        id: 'ss_mvt_$sessionId',
+        kindCode: 'STRENGTH_TRAINING',
+        sourceModule: 'sports',
+        sourceEntityId: sessionId,
+        loggedAt: startedAt,
+        durationMinutes: durationMins,
+        intensity: MovementIntensity.high,
+        note: overallFeeling != null ? 'احساس تمرین: $overallFeeling' : 'تمرین بدنسازی با $completedCount حرکت',
+      );
+      await MovementRepository.instance.logEvent(event);
+    } catch (_) {}
   }
 
   @override

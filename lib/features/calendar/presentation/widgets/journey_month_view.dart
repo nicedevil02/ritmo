@@ -4,6 +4,7 @@ import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/calendar/data/occasions_calendar_source.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/calendar/utils/domain_palette.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
@@ -15,11 +16,13 @@ class JourneyMonthView extends StatelessWidget {
     required this.selectedDate,
     required this.rangeSnapshots,
     required this.onSelectDate,
+    this.onLongPressDayCell,
   });
 
   final DateTime selectedDate;
   final Map<String, DayAgendaSnapshot> rangeSnapshots;
   final ValueChanged<DateTime> onSelectDate;
+  final void Function(DateTime date)? onLongPressDayCell;
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
@@ -104,6 +107,10 @@ class JourneyMonthView extends StatelessWidget {
                     if (presentDomains.length >= 4) break;
                   }
 
+                  // K41: Occasions-based holiday tinting
+                  final occasions = OccasionsCalendarSource.occasionsForDate(day);
+                  final isHoliday = occasions.any((o) => o.isHoliday);
+
                   // K26: 3-step Workload Heatmap Tint
                   double tintAlpha = 0.0;
                   if (isCurrentMonth) {
@@ -126,6 +133,7 @@ class JourneyMonthView extends StatelessWidget {
 
                   return InkWell(
                     onTap: () => onSelectDate(day),
+                    onLongPress: () => onLongPressDayCell?.call(day),
                     borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
                     child: Container(
                       decoration: BoxDecoration(
@@ -143,7 +151,7 @@ class JourneyMonthView extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              if (isFriday)
+                              if (isFriday || isHoliday)
                                 Container(
                                   width: 4,
                                   height: 4,
@@ -161,11 +169,11 @@ class JourneyMonthView extends StatelessWidget {
                                   dayNumStr,
                                   style: TextStyle(
                                     fontSize: 11,
-                                    fontWeight: isToday || isSelected || isFriday ? FontWeight.bold : FontWeight.normal,
+                                    fontWeight: isToday || isSelected || isFriday || isHoliday ? FontWeight.bold : FontWeight.normal,
                                     color: isCurrentMonth
                                         ? (isSelected
                                             ? colors.primary
-                                            : (isFriday ? colors.error : colors.textPrimary))
+                                            : (isFriday || isHoliday ? colors.error : colors.textPrimary))
                                         : colors.disabled,
                                     fontFamily: 'Vazirmatn',
                                   ),

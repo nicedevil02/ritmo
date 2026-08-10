@@ -13,6 +13,7 @@ import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/features/profile/presentation/crash_reports_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/appearance_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/assistant_privacy_group_screen.dart';
+import 'package:ritmo/features/settings/presentation/groups/calendar_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/data_backup_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/identity_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/modules_group_screen.dart';
@@ -137,6 +138,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         icon: CupertinoIcons.lock_shield_fill,
         gradient: const [Color(0xFFFF416C), Color(0xFFFF4B2B)],
         pageBuilder: () => const SecurityGroupScreen(),
+      ),
+      _GroupItem(
+        group: SettingsGroup.calendar,
+        title: 'تقویم و برنامه‌ریزی',
+        subtitle: 'نمای پیش‌فرض، نمایش مناسبت‌ها، تسک‌ها و خلاصه صبحگاهی',
+        icon: CupertinoIcons.calendar_today,
+        gradient: const [Color(0xFF4568DC), Color(0xFFB06AB3)],
+        pageBuilder: () => const CalendarGroupScreen(),
       ),
     ];
 

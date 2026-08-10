@@ -179,6 +179,50 @@ class AgendaItem {
   bool get isCompleted =>
       completion == AgendaCompletion.done ||
       completion == AgendaCompletion.partial;
+
+  AgendaItem copyWith({
+    String? id,
+    AgendaDomain? domain,
+    String? sourceId,
+    String? title,
+    String? subtitle,
+    String? dateStr,
+    String? timeOfDay,
+    int? durationMinutes,
+    Category? category,
+    AgendaCompletion? completion,
+    double? priority,
+    bool? isEssential,
+    AgendaDeepLink? deepLink,
+    DateTime? windowStart,
+    DateTime? windowEnd,
+    bool? hasOverride,
+    bool? isEstimated,
+    Map<String, dynamic>? meta,
+    AgendaItemType? itemType,
+  }) {
+    return AgendaItem(
+      id: id ?? this.id,
+      domain: domain ?? this.domain,
+      sourceId: sourceId ?? this.sourceId,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      dateStr: dateStr ?? this.dateStr,
+      timeOfDay: timeOfDay ?? this.timeOfDay,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
+      category: category ?? this.category,
+      completion: completion ?? this.completion,
+      priority: priority ?? this.priority,
+      isEssential: isEssential ?? this.isEssential,
+      deepLink: deepLink ?? this.deepLink,
+      windowStart: windowStart ?? this.windowStart,
+      windowEnd: windowEnd ?? this.windowEnd,
+      hasOverride: hasOverride ?? this.hasOverride,
+      isEstimated: isEstimated ?? this.isEstimated,
+      meta: meta ?? this.meta,
+      itemType: itemType ?? this.itemType,
+    );
+  }
 }
 
 /// Options controlling how a day's agenda is assembled.

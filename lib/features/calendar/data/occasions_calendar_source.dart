@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:ritmo/features/worship/logic/worship_calendar_logic.dart';
+import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/features/worship/logic/worship_occasions_data.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -25,8 +25,7 @@ class OccasionsCalendarSource {
   static List<CalendarOccasion> occasionsForDate(DateTime date) {
     try {
       final solar = Jalali.fromDateTime(date);
-      // Derive Hijri date (approximate or via WorshipCalendarLogic)
-      final hijriDate = WorshipCalendarLogic.getHijriDateForJalali(solar);
+      final hijriDate = HijriCalendarCalculator.hijriFromGregorian(date);
       final list = WorshipOccasionsData.getOccasionsForDay(solar, hijriDate);
 
       final result = <CalendarOccasion>[];
@@ -44,7 +43,7 @@ class OccasionsCalendarSource {
         result.add(CalendarOccasion(
           title: occ.title,
           isHoliday: occ.isReligiousHoliday,
-          category: occ.category,
+          category: occ.category.name,
           recommendedAmal: occ.recommendedAmal,
         ));
       }

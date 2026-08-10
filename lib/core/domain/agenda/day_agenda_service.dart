@@ -409,6 +409,22 @@ class DayAgendaService {
       taskSource = await TaskAgendaSource.load(db, start, end, _dateStr(DateTime.now()));
     }
 
+    final dayMarksByDate = <String, String>{};
+    try {
+      final startStr = _dateStr(start);
+      final endStr = _dateStr(end);
+      final markRows = await db.query(
+        'day_marks',
+        where: 'date >= ? AND date <= ?',
+        whereArgs: [startStr, endStr],
+      );
+      for (final r in markRows) {
+        final d = r['date']?.toString();
+        final k = r['kind']?.toString();
+        if (d != null && k != null) dayMarksByDate[d] = k;
+      }
+    } catch (_) {}
+
     final worshipSource = WorshipAgendaSource(
       prayerPractices: prayerPractices,
       mustahabPractices: mustahabPractices,
@@ -441,6 +457,7 @@ class DayAgendaService {
       goalStepsByDate: goalStepsByDate,
       sportsPlansByDay: sportsPlansByDay,
       medicineLogsByDate: medicineLogsByDate,
+      dayMarksByDate: dayMarksByDate,
       latitude: latitude,
       longitude: longitude,
       ihtiyatMinutes: ihtiyatMinutes,
@@ -546,9 +563,21 @@ class DayAgendaService {
       items.addAll(ctx.taskSource!.itemsForDate(dateStr, isToday: isToday));
     }
 
+    // K43: Apply REST/TRAVEL day effect — mark non-essential items as skipped.
+    final dayMark = ctx.dayMarksByDate[dateStr];
+    List<AgendaItem> finalItems = items;
+    if (dayMark == 'REST' || dayMark == 'TRAVEL') {
+      finalItems = items.map((item) {
+        if (!item.isEssential && item.completion == AgendaCompletion.none) {
+          return item.copyWith(completion: AgendaCompletion.skipped);
+        }
+        return item;
+      }).toList();
+    }
+
     final filtered = opts.includeCompleted
-        ? items
-        : items.where((i) {
+        ? finalItems
+        : finalItems.where((i) {
             return i.completion != AgendaCompletion.done &&
                 i.completion != AgendaCompletion.partial &&
                 i.completion != AgendaCompletion.skipped;
@@ -813,6 +842,7 @@ class _AgendaContext {
     required this.goalStepsByDate,
     required this.sportsPlansByDay,
     required this.medicineLogsByDate,
+    required this.dayMarksByDate,
     required this.latitude,
     required this.longitude,
     required this.ihtiyatMinutes,
@@ -839,6 +869,7 @@ class _AgendaContext {
   final Map<String, List<Map<String, dynamic>>> goalStepsByDate;
   final Map<int, List<Map<String, dynamic>>> sportsPlansByDay;
   final Map<String, List<Map<String, dynamic>>> medicineLogsByDate;
+  final Map<String, String> dayMarksByDate;
 
   final double latitude;
   final double longitude;

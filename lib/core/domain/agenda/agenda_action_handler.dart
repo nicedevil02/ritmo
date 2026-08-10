@@ -415,6 +415,15 @@ class AgendaActionHandler {
             whereArgs: [item.sourceId],
           );
         }
+      } else if (item.domain == AgendaDomain.task) {
+        final updates = <String, dynamic>{'updatedAt': nowMs};
+        if (newTimeOfDay != null) updates['dueTime'] = newTimeOfDay;
+        await txn.update(
+          'simple_tasks',
+          updates,
+          where: 'id = ?',
+          whereArgs: [item.sourceId],
+        );
       }
     });
 
@@ -455,6 +464,16 @@ class AgendaActionHandler {
           },
           where: 'id = ?',
           whereArgs: [courseId],
+        );
+      } else if (item.domain == AgendaDomain.task) {
+        await txn.update(
+          'simple_tasks',
+          {
+            'dueTime': null,
+            'updatedAt': nowMs,
+          },
+          where: 'id = ?',
+          whereArgs: [item.sourceId],
         );
       }
     });

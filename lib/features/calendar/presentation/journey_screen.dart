@@ -11,6 +11,8 @@ import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/features/calendar/data/day_mark_repository.dart';
+import 'package:ritmo/features/calendar/data/occasions_calendar_source.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/features/calendar/presentation/models/now_pill_view_model.dart';
@@ -30,6 +32,7 @@ import 'package:ritmo/features/calendar/presentation/widgets/journey_week_view.d
 import 'package:ritmo/features/calendar/presentation/widgets/journey_year_view.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/now_pill.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_split_day_view.dart';
+import 'package:ritmo/features/calendar/widgets/day_review_sheet.dart';
 import 'package:ritmo/features/registry/logic/registry_service.dart';
 import 'package:ritmo/features/registry/presentation/all_plans_screen.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_untimed_section.dart';
@@ -208,6 +211,38 @@ class _JourneyScreenState extends State<JourneyScreen> {
     );
   }
 
+  // K32 — Open the day review sheet for the given date.
+  Future<void> _openDayReview(DateTime date, DayAgendaSnapshot? existingSnapshot) async {
+    final ds = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    DayAgendaSnapshot? snap = existingSnapshot;
+    if (snap == null) {
+      final dayAgenda = await DayAgendaService.instance.agendaForDate(date);
+      if (!mounted) return;
+      snap = const DayAgendaSnapshotBuilder().buildSnapshot(dayAgenda);
+    }
+    if (!mounted) return;
+    DayReviewSheet.show(
+      context,
+      dateStr: ds,
+      snapshot: snap,
+      onReviewed: _controller.refresh,
+    );
+  }
+
+  // K44 — Show bottom sheet to pick day mark (REST / TRAVEL / SPECIAL / NORMAL).
+  Future<void> _showDayMarkMenu(BuildContext ctx, DateTime date) async {
+    final ds = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final existing = await DayMarkRepository.instance.getMark(ds);
+    if (!mounted) return;
+    final kind = await showModalBottomSheet<DayMarkKind>(
+      context: ctx,
+      builder: (_) => _DayMarkSheet(current: existing?.kind ?? DayMarkKind.normal),
+    );
+    if (kind == null || !mounted) return;
+    await DayMarkRepository.instance.setMark(ds, kind);
+    _controller.refresh();
+  }
+
   @override
   void dispose() {
     _eventSubscription?.cancel();
@@ -342,6 +377,90 @@ class _JourneyScreenState extends State<JourneyScreen> {
                             ),
                         ],
                       ),
+                      
+                      // K40 — Occasion banner (day scale only, first occasion title)
+                      if (activeScale == JourneyScale.day)
+                        Builder(builder: (ctx) {
+                          final occasions = OccasionsCalendarSource.occasionsForDate(selectedDate);
+                          if (occasions.isEmpty) return const SizedBox.shrink();
+                          final first = occasions.first;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  first.isHoliday ? Icons.celebration_outlined : Icons.info_outline_rounded,
+                                  size: 13,
+                                  color: first.isHoliday
+                                      ? Theme.of(ctx).colorScheme.error
+                                      : Theme.of(ctx).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                                ),
+                                const SizedBox(width: 5),
+                                Expanded(
+                                  child: Text(
+                                    first.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontFamily: 'Vazirmatn',
+                                      color: first.isHoliday
+                                          ? Theme.of(ctx).colorScheme.error
+                                          : Theme.of(ctx).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+
+                      // K45 — Day mark badge (روز استراحت 🌴 / روز سفر ✈️ / روز خاص ⭐)
+                      if (activeScale == JourneyScale.day)
+                        FutureBuilder<DayMark?>(
+                          future: DayMarkRepository.instance.getMark(
+                            '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
+                          ),
+                          builder: (ctx, snap) {
+                            final mark = snap.data;
+                            if (mark == null || mark.kind == DayMarkKind.normal) return const SizedBox.shrink();
+                            final (label, icon) = switch (mark.kind) {
+                              DayMarkKind.rest   => ('روز استراحت 🌴', Icons.beach_access_outlined),
+                              DayMarkKind.travel => ('روز سفر ✈️',     Icons.flight_outlined),
+                              DayMarkKind.special => ('روز خاص ⭐',    Icons.star_outline),
+                              _                   => ('',               Icons.circle),
+                            };
+                            if (label.isEmpty) return const SizedBox.shrink();
+                            return GestureDetector(
+                              onTap: () => unawaited(_showDayMarkMenu(ctx, selectedDate)),
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(ctx).colorScheme.secondaryContainer,
+                                  borderRadius: BorderRadius.circular(CalendarTokens.radiusPill),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(icon, size: 13, color: Theme.of(ctx).colorScheme.onSecondaryContainer),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      label,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontFamily: 'Vazirmatn',
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(ctx).colorScheme.onSecondaryContainer,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+
                       const SizedBox(height: CalendarTokens.spacingS),
 
                       // [2] Navigation & Context Action Row
@@ -386,6 +505,17 @@ class _JourneyScreenState extends State<JourneyScreen> {
                           ),
                           Row(
                             children: [
+                              // K32 — Day Review button
+                              SizedBox(
+                                width: 36,
+                                height: 36,
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  icon: const Icon(Icons.rate_review_outlined, size: 20),
+                                  tooltip: 'مرور روز',
+                                  onPressed: () => unawaited(_openDayReview(selectedDate, snapshot)),
+                                ),
+                              ),
                               SizedBox(
                                 width: 36,
                                 height: 36,
@@ -687,6 +817,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
           onSelectDate: (date) {
             _controller.selectDate(date, scaleToSet: JourneyScale.day);
           },
+          onLongPressDayCell: (date) => unawaited(_showDayMarkMenu(context, date)),
         );
       case JourneyScale.year:
         return JourneyYearView(
@@ -697,5 +828,52 @@ class _JourneyScreenState extends State<JourneyScreen> {
           },
         );
     }
+  }
+}
+
+// K44 — Day Mark picker bottom sheet
+class _DayMarkSheet extends StatelessWidget {
+  const _DayMarkSheet({required this.current});
+  final DayMarkKind current;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: theme.dividerColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Text('وضعیت روز', style: theme.textTheme.titleMedium?.copyWith(fontFamily: 'Vazirmatn')),
+            const SizedBox(height: 12),
+            _markTile(context, DayMarkKind.normal, 'روز عادی', Icons.wb_sunny_outlined),
+            _markTile(context, DayMarkKind.rest, 'روز استراحت 🌴', Icons.beach_access_outlined),
+            _markTile(context, DayMarkKind.travel, 'روز سفر ✈️', Icons.flight_outlined),
+            _markTile(context, DayMarkKind.special, 'روز خاص ⭐', Icons.star_outline),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _markTile(BuildContext context, DayMarkKind kind, String label, IconData icon) {
+    final isSelected = kind == current;
+    final theme = Theme.of(context);
+    return ListTile(
+      leading: Icon(icon, color: isSelected ? theme.colorScheme.primary : null),
+      title: Text(label, style: const TextStyle(fontFamily: 'Vazirmatn')),
+      trailing: isSelected ? Icon(Icons.check_rounded, color: theme.colorScheme.primary) : null,
+      onTap: () => Navigator.of(context).pop(kind),
+    );
   }
 }

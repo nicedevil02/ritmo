@@ -51,18 +51,30 @@ class SSSessionSummaryScreen extends StatefulWidget {
       _SSSessionSummaryScreenState();
 }
 
-class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> {
+class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with SingleTickerProviderStateMixin {
   List<bool> _continuity = List.filled(7, false);
   bool _isLoading = true;
   double _caloriesBurned = 0;
   double _userWeight = 70;
   bool _isRegisteredInCalendar = false;
   bool _isRegistering = false;
+  List<Map<String, dynamic>> _newPrs = [];
+  late AnimationController _celebrationController;
 
   @override
   void initState() {
     super.initState();
+    _celebrationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..forward();
     _loadContinuityAndCalories();
+  }
+
+  @override
+  void dispose() {
+    _celebrationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadContinuityAndCalories() async {
@@ -108,8 +120,18 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> {
         durationMinutes: durationMins,
       );
 
+      // 3. Load PRs achieved today
+      final prRows = await db.query(
+        'movement_pr',
+        where: 'achievedAt >= ?',
+        whereArgs: [last7DaysStart],
+        orderBy: 'achievedAt DESC',
+        limit: 3,
+      );
+
       setState(() {
         _continuity = contList;
+        _newPrs = prRows;
         _isLoading = false;
       });
     } catch (e) {
@@ -340,7 +362,76 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
+                         const SizedBox(height: 24),
+
+                        if (_newPrs.isNotEmpty) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  textDirection: TextDirection.rtl,
+                                  children: [
+                                    Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 24),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'رکوردهای جدید ثبت‌شده 🏆',
+                                      style: TextStyle(
+                                        fontFamily: 'Vazirmatn',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                ..._newPrs.map((pr) {
+                                  final type = pr['prType']?.toString() ?? '';
+                                  final val = (pr['value'] as num?)?.toStringAsFixed(1) ?? '0';
+                                  var label = 'رکورد جدید';
+                                  if (type == 'MAX_DISTANCE') label = 'بیشترین مسافت: $val کیلومتر';
+                                  if (type == 'MAX_DURATION') label = 'طولانی‌ترین زمان: $val دقیقه';
+                                  if (type == 'MAX_ELEVATION') label = 'بیشترین ارتفاع: $val متر';
+                                  if (type == 'MAX_LAPS') label = 'بیشترین دور: $val';
+
+                                  return Container(
+                                    margin: const EdgeInsets.only(top: 6),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black26,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      toPersianDigits(label),
+                                      style: const TextStyle(
+                                        fontFamily: 'Vazirmatn',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
 
                         // Continuity Display
                         Text(

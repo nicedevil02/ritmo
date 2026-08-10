@@ -6,6 +6,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/features/settings/presentation/groups/appearance_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/assistant_privacy_group_screen.dart';
+import 'package:ritmo/features/settings/presentation/groups/calendar_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/data_backup_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/identity_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/modules_group_screen.dart';
@@ -135,6 +136,8 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
         return 'داده و پشتیبان';
       case SettingsGroup.security:
         return 'امنیت';
+      case SettingsGroup.calendar:
+        return 'تقویم';
     }
   }
 
@@ -164,6 +167,9 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
         break;
       case SettingsGroup.security:
         page = const SecurityGroupScreen();
+        break;
+      case SettingsGroup.calendar:
+        page = const CalendarGroupScreen();
         break;
     }
 

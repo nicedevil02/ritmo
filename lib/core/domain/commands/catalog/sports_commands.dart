@@ -815,3 +815,331 @@ class SportsSwapExerciseCommand extends RitmoCommand {
     return CommandResult.ok(commandId: id);
   }
 }
+
+/// Set training days for sports program (in Ritmo global weekday mapping 1..7)
+class SportsSetTrainingDaysCommand extends RitmoCommand {
+  const SportsSetTrainingDaysCommand();
+
+  @override
+  String get id => 'sports.set_training_days';
+
+  @override
+  String get humanTitle => 'تنظیم روزهای تمرین';
+
+  @override
+  String get humanDescriptionFa => 'روزهای هفته‌ای که قصد تمرین دارید را مشخص می‌کند.';
+
+  @override
+  Sensitivity get sensitivity => Sensitivity.confirm;
+
+  @override
+  Set<DataDomain> get touches => {DataDomain.sports};
+
+  @override
+  Map<String, ParamSpec> get params => {
+    'days': const ParamSpec(
+      type: ParamType.list,
+      labelFa: 'روزهای هفته (۱: دوشنبه تا ۷: یکشنبه)',
+      required: true,
+      exampleFa: '[6, 1, 3]',
+    ),
+  };
+
+  @override
+  Future<PlanDiff> preview(AgentCommandContext ctx) async {
+    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'روزهای تمرین هفته به‌روزرسانی می‌شوند 🗓️');
+  }
+
+  @override
+  Future<CommandResult> run(AgentCommandContext ctx) async {
+    final rawDays = ctx.payload['days'];
+    List<int> days = [];
+    if (rawDays is List) {
+      days = rawDays.map((e) => int.tryParse(e.toString()) ?? 0).where((d) => d >= 1 && d <= 7).toList();
+    }
+    if (days.isEmpty) {
+      return CommandResult.failure(commandId: id, errorMessage: 'لیست روزهای تمرین نامعتبر است.');
+    }
+
+    final repo = SSProfileRepository.instance;
+    final profile = await repo.getProfile();
+    if (profile == null) return CommandResult.failure(commandId: id, errorMessage: 'پروفایل ورزشی یافت نشد.');
+
+    final oldDaysJson = profile.trainingDays;
+    final newProfile = profile.copyWith(
+      daysPerWeek: days.length,
+      trainingDays: jsonEncode(days),
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    await repo.saveProfile(newProfile);
+
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'trainingDays': days},
+      inverseData: {'oldDaysJson': oldDaysJson, 'oldDaysPerWeek': profile.daysPerWeek},
+    );
+  }
+
+  @override
+  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+    final oldDaysJson = inverseData['oldDaysJson']?.toString();
+    final oldDaysPerWeek = (inverseData['oldDaysPerWeek'] as num?)?.toInt() ?? 3;
+    if (oldDaysJson != null) {
+      final repo = SSProfileRepository.instance;
+      final profile = await repo.getProfile();
+      if (profile != null) {
+        final newProfile = profile.copyWith(
+          daysPerWeek: oldDaysPerWeek,
+          trainingDays: oldDaysJson,
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
+        );
+        await repo.saveProfile(newProfile);
+      }
+    }
+    return CommandResult.ok(commandId: id);
+  }
+}
+
+/// Set session duration minutes
+class SportsSetSessionMinutesCommand extends RitmoCommand {
+  const SportsSetSessionMinutesCommand();
+
+  @override
+  String get id => 'sports.set_session_minutes';
+
+  @override
+  String get humanTitle => 'تنظیم مدت زمان جلسه تمرین';
+
+  @override
+  String get humanDescriptionFa => 'مدت زمان هر جلسه تمرین ورزشی به دقیقه را تنظیم می‌کند.';
+
+  @override
+  Sensitivity get sensitivity => Sensitivity.safe;
+
+  @override
+  Set<DataDomain> get touches => {DataDomain.sports};
+
+  @override
+  Map<String, ParamSpec> get params => {
+    'minutes': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'مدت زمان (دقیقه)',
+      required: true,
+      exampleFa: '45',
+    ),
+  };
+
+  @override
+  Future<PlanDiff> preview(AgentCommandContext ctx) async {
+    final mins = ctx.payload['minutes'] as int? ?? 45;
+    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'مدت زمان هر جلسه به $mins دقیقه تغییر می‌یابد ⏱️');
+  }
+
+  @override
+  Future<CommandResult> run(AgentCommandContext ctx) async {
+    final minutes = (ctx.payload['minutes'] as num?)?.toInt();
+    if (minutes == null || minutes < 10 || minutes > 180) {
+      return CommandResult.failure(commandId: id, errorMessage: 'مدت زمان باید بین ۱۰ تا ۱۸۰ دقیقه باشد.');
+    }
+
+    final repo = SSProfileRepository.instance;
+    final profile = await repo.getProfile();
+    if (profile == null) return CommandResult.failure(commandId: id, errorMessage: 'پروفایل ورزشی یافت نشد.');
+
+    final oldDuration = profile.sessionDuration;
+    final newProfile = profile.copyWith(
+      sessionDuration: minutes,
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    await repo.saveProfile(newProfile);
+
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'sessionDuration': minutes},
+      inverseData: {'oldDuration': oldDuration},
+    );
+  }
+
+  @override
+  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+    final oldDuration = (inverseData['oldDuration'] as num?)?.toInt();
+    if (oldDuration != null) {
+      final repo = SSProfileRepository.instance;
+      final profile = await repo.getProfile();
+      if (profile != null) {
+        await repo.saveProfile(profile.copyWith(
+          sessionDuration: oldDuration,
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
+        ));
+      }
+    }
+    return CommandResult.ok(commandId: id);
+  }
+}
+
+/// Set focus muscle group codes
+class SportsSetFocusCommand extends RitmoCommand {
+  const SportsSetFocusCommand();
+
+  @override
+  String get id => 'sports.set_focus';
+
+  @override
+  String get humanTitle => 'تنظیم تمرکز عضلانی';
+
+  @override
+  String get humanDescriptionFa => 'گروه‌های عضلانی مورد تمرکز را در برنامه ورزشی تنظیم می‌کند.';
+
+  @override
+  Sensitivity get sensitivity => Sensitivity.safe;
+
+  @override
+  Set<DataDomain> get touches => {DataDomain.sports};
+
+  @override
+  Map<String, ParamSpec> get params => {
+    'focusCodes': const ParamSpec(
+      type: ParamType.list,
+      labelFa: 'کدهای تمرکز عضلانی (مانند CHEST, SHOULDER)',
+      required: true,
+      exampleFa: '["CHEST", "BICEPS"]',
+    ),
+  };
+
+  @override
+  Future<PlanDiff> preview(AgentCommandContext ctx) async {
+    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'تمرکز عضلانی برنامه به‌روزرسانی می‌شود 🎯');
+  }
+
+  @override
+  Future<CommandResult> run(AgentCommandContext ctx) async {
+    final rawFocus = ctx.payload['focusCodes'];
+    List<String> focusList = [];
+    if (rawFocus is List) {
+      focusList = rawFocus.map((e) => e.toString().toUpperCase()).toList();
+    }
+    if (focusList.isEmpty) {
+      return CommandResult.failure(commandId: id, errorMessage: 'لیست کدهای تمرکز خالی است.');
+    }
+
+    final repo = SSProfileRepository.instance;
+    final profile = await repo.getProfile();
+    if (profile == null) return CommandResult.failure(commandId: id, errorMessage: 'پروفایل ورزشی یافت نشد.');
+
+    final oldFocus = profile.focusAreas;
+    final newProfile = profile.copyWith(
+      focusAreas: focusList.join(','),
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    await repo.saveProfile(newProfile);
+
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'focusAreas': focusList},
+      inverseData: {'oldFocus': oldFocus},
+    );
+  }
+
+  @override
+  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+    final oldFocus = inverseData['oldFocus']?.toString();
+    if (oldFocus != null) {
+      final repo = SSProfileRepository.instance;
+      final profile = await repo.getProfile();
+      if (profile != null) {
+        await repo.saveProfile(profile.copyWith(
+          focusAreas: oldFocus,
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
+        ));
+      }
+    }
+    return CommandResult.ok(commandId: id);
+  }
+}
+
+/// Set a specific date as rest day in prescription
+class SportsSetRestDayCommand extends RitmoCommand {
+  const SportsSetRestDayCommand();
+
+  @override
+  String get id => 'sports.set_rest_day';
+
+  @override
+  String get humanTitle => 'تنظیم روز استراحت';
+
+  @override
+  String get humanDescriptionFa => 'یک تاریخ مشخص را به عنوان روز استراحت تنظیم می‌کند.';
+
+  @override
+  Sensitivity get sensitivity => Sensitivity.safe;
+
+  @override
+  Set<DataDomain> get touches => {DataDomain.sports};
+
+  @override
+  Map<String, ParamSpec> get params => {
+    'dateIso': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'تاریخ به فرمت ISO (YYYY-MM-DD)',
+      required: true,
+      exampleFa: '2026-08-10',
+    ),
+  };
+
+  @override
+  Future<PlanDiff> preview(AgentCommandContext ctx) async {
+    final dt = ctx.payload['dateIso']?.toString() ?? '';
+    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'تاریخ $dt به روز استراحت تبدیل می‌شود 🌴');
+  }
+
+  @override
+  Future<CommandResult> run(AgentCommandContext ctx) async {
+    final dateIso = ctx.payload['dateIso']?.toString();
+    if (dateIso == null || dateIso.isEmpty) {
+      return CommandResult.failure(commandId: id, errorMessage: 'تاریخ الزامی است.');
+    }
+
+    final repo = SsPrescriptionRepository.instance;
+    final existing = await repo.getPrescriptionForDate(dateIso);
+    if (existing == null) {
+      return CommandResult.failure(commandId: id, errorMessage: 'نسخه‌ای برای این تاریخ یافت نشد.');
+    }
+
+    final oldStatus = existing.status.code;
+    final oldSlotType = existing.slotType.code;
+
+    final updated = existing.copyWith(
+      slotType: SlotType.rest,
+      status: PrescriptionStatus.skipped,
+      headlineFa: 'استراحت',
+      isLocked: true,
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    await repo.savePrescription(updated);
+
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'dateIso': dateIso},
+      inverseData: {'dateIso': dateIso, 'oldStatus': oldStatus, 'oldSlotType': oldSlotType},
+    );
+  }
+
+  @override
+  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+    final dateIso = inverseData['dateIso']?.toString();
+    final oldSlotType = inverseData['oldSlotType']?.toString();
+    final oldStatus = inverseData['oldStatus']?.toString();
+    if (dateIso != null && oldSlotType != null && oldStatus != null) {
+      final repo = SsPrescriptionRepository.instance;
+      final existing = await repo.getPrescriptionForDate(dateIso);
+      if (existing != null) {
+        await repo.savePrescription(existing.copyWith(
+          slotType: SlotType.parse(oldSlotType),
+          status: PrescriptionStatus.parse(oldStatus),
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
+        ));
+      }
+    }
+    return CommandResult.ok(commandId: id);
+  }
+}

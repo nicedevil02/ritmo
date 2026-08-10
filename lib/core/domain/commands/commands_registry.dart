@@ -73,6 +73,10 @@ void registerAllRitmoCommands() {
     const SportsApplyDeloadCommand(),
     const SportsRegenerateWeekCommand(),
     const SportsSwapExerciseCommand(),
+    const SportsSetTrainingDaysCommand(),
+    const SportsSetSessionMinutesCommand(),
+    const SportsSetFocusCommand(),
+    const SportsSetRestDayCommand(),
 
     // Notes & Experience commands (Prompt 071)
     const NoteCreateCommand(),

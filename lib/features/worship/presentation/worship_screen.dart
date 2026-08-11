@@ -1,25 +1,23 @@
-import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
-import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
+import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
+import 'package:ritmo/features/worship/domain/prayer_target.dart';
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
-import 'package:ritmo/features/worship/presentation/widgets/lunar_month_grid.dart';
 import 'package:ritmo/features/worship/presentation/widgets/mustahab_section.dart';
 import 'package:ritmo/features/worship/presentation/widgets/night_prayer_card.dart';
-import 'package:ritmo/features/worship/presentation/widgets/obligatory_prayers_section.dart';
 import 'package:ritmo/features/worship/presentation/widgets/prayer_arc_hero.dart';
-import 'package:ritmo/features/worship/presentation/widgets/prayer_sheet.dart';
-import 'package:ritmo/features/worship/domain/prayer_target.dart';
 import 'package:ritmo/features/worship/presentation/widgets/prayer_city_picker.dart';
+import 'package:ritmo/features/worship/presentation/widgets/prayer_sheet.dart';
 import 'package:ritmo/features/worship/presentation/widgets/qibla_compass_sheet.dart';
 import 'package:ritmo/features/worship/presentation/widgets/quran_dhikr_section.dart';
 import 'package:ritmo/features/worship/presentation/widgets/worship_debts_section.dart';
@@ -56,7 +54,6 @@ class _WorshipScreenState extends State<WorshipScreen> {
       }
     } catch (e) {
       debugPrint('Error loading worship screen data: $e');
-      // Retry once after short delay if first load fails
       await Future.delayed(const Duration(milliseconds: 500));
       try {
         final day = await WorshipEngine.instance.loadDay(DateTime.now());
@@ -121,14 +118,15 @@ class _WorshipScreenState extends State<WorshipScreen> {
   }
 
   void _openAiAssistantSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return AssistantSheet(persona: PersonaRegistry.instance.getPersona('worship')!);
-      },
-    );
+    final persona = PersonaRegistry.instance.getPersona('worship') ?? PersonaRegistry.instance.getPersona('global');
+    if (persona != null) {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (context) => AssistantSheet(persona: persona),
+      );
+    }
   }
 
   void _openQiblaCompass() {
@@ -166,128 +164,118 @@ class _WorshipScreenState extends State<WorshipScreen> {
         context: context,
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: RitmoModuleAppBar(
-            title: 'عبادت و معنویت',
-            subtitle: 'اذان، ادعیه و نمازهای مستحبی',
-            statusBadge: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xff10B981).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(6),
+          body: SafeArea(
+            child: RefreshIndicator(
+              color: const Color(0xffD4A843),
+              backgroundColor: isDarkMode ? const Color(0xff2A2D3D) : Colors.white,
+              onRefresh: _refresh,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 40),
+                child: Column(
+                  children: [
+                    // 1. MODULE APP BAR WITH QUICK ACTIONS & STATUS BADGES
+                    RitmoModuleAppBar(
+                      title: 'عبادت و معنویت',
+                      subtitle: _worshipDay != null
+                          ? '${_worshipDay!.times.cityId} • ${_worshipDay!.hijri.formatted}'
+                          : 'در حال بارگذاری...',
+                      actions: [
+                        IconButton(
+                          icon: const Icon(CupertinoIcons.sparkles, color: Color(0xffD4A843)),
+                          tooltip: 'دستیار معنوی هوشمند',
+                          onPressed: _openAiAssistantSheet,
+                        ),
+                        IconButton(
+                          icon: const Icon(CupertinoIcons.compass, color: Color(0xffC4953B)),
+                          tooltip: 'قبله‌نما',
+                          onPressed: _openQiblaCompass,
+                        ),
+                        IconButton(
+                          icon: Icon(CupertinoIcons.settings, color: isDarkMode ? Colors.white70 : Colors.black87),
+                          tooltip: 'تنظیمات محاسبه',
+                          onPressed: () => _openCityPicker(1),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (_isLoading && _worshipDay == null) ...[
+                      const RitmoSkeletonCard(height: 320),
+                      const SizedBox(height: 16),
+                    ] else if (_worshipDay != null) ...[
+                      // 1. PRAYER ARC HERO
+                      PrayerArcHero(
+                        day: _worshipDay!,
+                        onPracticeToggle: (practiceId, isDone) async {
+                          String group = 'FAJR';
+                          if (practiceId.contains('dhuhr') || practiceId.contains('asr')) group = 'DHUHR_ASR';
+                          if (practiceId.contains('maghrib') || practiceId.contains('isha')) group = 'MAGHRIB_ISHA';
+
+                          if (isDone) {
+                            final target = await PrayerTarget.fromGroupKey(group, DateTime.now());
+                            if (!context.mounted) return;
+                            await PrayerSheet.show(context, target);
+                          } else {
+                            final target = await PrayerTarget.fromGroupKey(group, DateTime.now());
+                            for (final pId in target.practiceIds) {
+                              await WorshipEngine.instance.clearLog(practiceId: pId, date: DateTime.now());
+                            }
+                          }
+                          _onDataChanged();
+                        },
+                        onTravellerToggle: (isTraveller) async {
+                          final currentCtx = _worshipDay?.context;
+                          final ctx = WorshipDayContext(
+                            date: currentCtx?.date ?? DateTime.now(),
+                            isTraveller: isTraveller,
+                            prayerExempt: currentCtx?.prayerExempt ?? false,
+                            fastingExempt: isTraveller || (currentCtx?.fastingExempt ?? false),
+                            reason: isTraveller ? 'TRAVEL' : currentCtx?.reason,
+                          );
+                          await WorshipEngine.instance.setDayContext(ctx);
+                          _onDataChanged();
+                        },
+                        onOpenCityPicker: () => _openCityPicker(0),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // 2. NIGHT PRAYER RITUAL CARD (after Shari Midnight)
+                      NightPrayerCard(
+                        day: _worshipDay!,
+                        onComplete: _onDataChanged,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // 3. PREMIUM SOLAR WORSHIP CALENDAR & REACTIVE DETAIL PANEL (INCLUDES OBLIGATORY PRAYERS & MUSTAHABS)
+                      WorshipSolarCalendar(
+                        initialJalali: Jalali.now(),
+                        qamariNightText: _getQamariNightText(),
+                        onChanged: _onDataChanged,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 4. QURAN & DHIKR
+                      QuranDhikrSection(
+                        onChanged: _onDataChanged,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // 5. SCHEDULED MUSTAHABAT ("مستحبات برنامه‌ریزی‌شده")
+                      MustahabSection(
+                        onChanged: _onDataChanged,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // 6. DEBTS ("جبران")
+                      WorshipDebtsSection(
+                        onChanged: _onDataChanged,
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ],
+                ),
               ),
-              child: const Text(
-                'فعال',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Color(0xff10B981), fontWeight: FontWeight.bold),
-              ),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(CupertinoIcons.sparkles, color: Color(0xffD4A843)),
-                tooltip: 'دستیار معنوی هوشمند',
-                onPressed: _openAiAssistantSheet,
-              ),
-              IconButton(
-                icon: const Icon(CupertinoIcons.compass, color: Color(0xffC4953B)),
-                tooltip: 'قبله‌نما',
-                onPressed: _openQiblaCompass,
-              ),
-              IconButton(
-                icon: Icon(CupertinoIcons.settings, color: isDarkMode ? Colors.white70 : Colors.black87),
-                tooltip: 'تنظیمات محاسبه',
-                onPressed: () => _openCityPicker(1),
-              ),
-            ],
-          ),
-          body: RefreshIndicator(
-            color: const Color(0xffD4A843),
-            backgroundColor: isDarkMode ? const Color(0xff2A2D3D) : Colors.white,
-            onRefresh: _refresh,
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              children: [
-                if (_isLoading && _worshipDay == null) ...[
-                  const RitmoSkeletonCard(height: 320),
-                  const SizedBox(height: 16),
-                ] else if (_worshipDay != null) ...[
-                  // 1. DAY ARC HERO ("قوس روز") — Section 4 UI Innovation #1
-                  PrayerArcHero(
-                    day: _worshipDay!,
-                    onPracticeToggle: (practiceId, isDone) async {
-                      String group = 'FAJR';
-                      if (practiceId.contains('dhuhr') || practiceId.contains('asr')) group = 'DHUHR_ASR';
-                      if (practiceId.contains('maghrib') || practiceId.contains('isha')) group = 'MAGHRIB_ISHA';
-                      
-                      if (isDone) {
-                        final target = await PrayerTarget.fromGroupKey(group, DateTime.now());
-                        if (!context.mounted) return;
-                        await PrayerSheet.show(context, target);
-                      } else {
-                        final target = await PrayerTarget.fromGroupKey(group, DateTime.now());
-                        for (final pId in target.practiceIds) {
-                          await WorshipEngine.instance.clearLog(practiceId: pId, date: DateTime.now());
-                        }
-                      }
-                      _onDataChanged();
-                    },
-                    onTravellerToggle: (isTraveller) async {
-                      final ctx = WorshipDayContext(
-                        date: _worshipDay?.context.date ?? DateTime.now(),
-                        isTraveller: isTraveller,
-                        prayerExempt: false,
-                        fastingExempt: isTraveller,
-                        reason: isTraveller ? 'TRAVEL' : null,
-                      );
-                      await WorshipEngine.instance.setDayContext(ctx);
-                      _onDataChanged();
-                    },
-                    onOpenCityPicker: () => _openCityPicker(0),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // 2. NIGHT PRAYER RITUAL CARD — Section 5 Feature #3 (after Shari Midnight)
-                  NightPrayerCard(
-                    day: _worshipDay!,
-                    onComplete: _onDataChanged,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // 3. PREMIUM SOLAR WORSHIP CALENDAR & REACTIVE DETAIL PANEL
-                  WorshipSolarCalendar(
-                    initialJalali: Jalali.now(),
-                    qamariNightText: _getQamariNightText(),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                if (_isLoading) ...[
-                  const RitmoSkeletonList(itemCount: 4, itemHeight: 90),
-                ] else ...[
-                  // 4. OBLIGATORY PRAYERS
-                  ObligatoryPrayersSection(
-                    onChanged: _onDataChanged,
-                    prayerTime: _worshipDay?.times.toPrayerTime(),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 6. MUSTAHAB
-                  MustahabSection(
-                    onChanged: _onDataChanged,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 7. QURAN & DHIKR
-                  QuranDhikrSection(
-                    onChanged: _onDataChanged,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 8. DEBTS ("جبران")
-                  WorshipDebtsSection(
-                    onChanged: _onDataChanged,
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ],
             ),
           ),
         ),

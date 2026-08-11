@@ -46,14 +46,14 @@ class ReflectionEntry {
       'date': date,
       'mood_score': moodScore,
       'reflection_text': reflectionText,
-      'reflectionNote': reflectionText, // legacy
+      // DEPRECATED — do not write: 'reflectionNote'
       'learnings': learnings,
       'gratitude': gratitude,
       'wins': wins,
-      'goodThing': wins, // legacy
+      // DEPRECATED — do not write: 'goodThing'
       'challenges': challenges,
       'tomorrowFocus': tomorrowFocus,
-      'timestamp': createdAt, // legacy
+      // DEPRECATED — do not write: 'timestamp'
       'isPrivate': isPrivate,
       'createdAt': createdAt,
     };

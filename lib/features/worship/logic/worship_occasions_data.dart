@@ -1,4 +1,5 @@
 import 'package:shamsi_date/shamsi_date.dart';
+import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 
 enum WorshipOccasionCategory {
@@ -6,6 +7,7 @@ enum WorshipOccasionCategory {
   mourning,    // شهادت / وفات / سوگواری (🏴/🌙)
   worshipDeed, // اعمال خاص / شب قدر / عرفه (✨/🤲)
   fasting,     // روزه واجب یا مستحبی (🌙/🌾)
+  national,    // مناسبت ملی / تقویم رسمی (🇮🇷/🏛️)
 }
 
 class WorshipOccasion {
@@ -15,13 +17,17 @@ class WorshipOccasion {
     this.description,
     this.recommendedAmal,
     this.isReligiousHoliday = false,
-  });
+    bool? isHoliday,
+  }) : _isHoliday = isHoliday;
 
   final String title;
   final WorshipOccasionCategory category;
   final String? description;
   final String? recommendedAmal;
   final bool isReligiousHoliday;
+  final bool? _isHoliday;
+
+  bool get isHoliday => _isHoliday ?? isReligiousHoliday;
 }
 
 class WorshipOccasionsData {
@@ -101,14 +107,6 @@ class WorshipOccasionsData {
       )
     ],
     '2-29': [
-      const WorshipOccasion(
-        title: 'شهادت ثامن الحجج حضرت علی بن موسی الرضا (ع) (آخر صفر)',
-        category: WorshipOccasionCategory.mourning,
-        recommendedAmal: 'زیارت حضرت امام رضا (ع) و صلوات خاصه امام رضا',
-        isReligiousHoliday: true,
-      )
-    ],
-    '2-30': [
       const WorshipOccasion(
         title: 'شهادت ثامن الحجج حضرت علی بن موسی الرضا (ع) (آخر صفر)',
         category: WorshipOccasionCategory.mourning,
@@ -348,12 +346,18 @@ class WorshipOccasionsData {
       )
     ],
 
-    // 10. Shawwal
     '10-1': [
       const WorshipOccasion(
         title: 'عید سعید فطر (اول شوال)',
         category: WorshipOccasionCategory.celebration,
         recommendedAmal: 'نماز عید فطر، پرداخت زکات فطره، تکبیرات عید و غسل اول روز',
+        isReligiousHoliday: true,
+      )
+    ],
+    '10-2': [
+      const WorshipOccasion(
+        title: 'تعطیلی به مناسبت عید سعید فطر (روز دوم)',
+        category: WorshipOccasionCategory.celebration,
         isReligiousHoliday: true,
       )
     ],
@@ -393,15 +397,6 @@ class WorshipOccasionsData {
         title: 'شهادت حضرت امام محمد تقی الجواد (ع) (آخر ذی‌القعده)',
         category: WorshipOccasionCategory.mourning,
         recommendedAmal: 'زیارت حضرت امام جواد (ع) و توسل به حضرت باب‌الحوائج',
-        isReligiousHoliday: true,
-      )
-    ],
-    '11-30': [
-      const WorshipOccasion(
-        title: 'شهادت حضرت امام محمد تقی الجواد (ع) (آخر ذی‌القعده)',
-        category: WorshipOccasionCategory.mourning,
-        recommendedAmal: 'زیارت حضرت امام جواد (ع) و توسل به حضرت باب‌الحوائج',
-        isReligiousHoliday: true,
       )
     ],
 
@@ -471,11 +466,558 @@ class WorshipOccasionsData {
         recommendedAmal: 'دو ركعت نماز پایان سال قمری و استغفار',
       )
     ],
+  };
+
+  /// Map of Solar month-day (e.g. "1-1") to list of Iranian national occasions.
+  static final Map<String, List<WorshipOccasion>> solarOccasions = {
+    // 1. Farvardin (فروردین)
+    '1-1': [
+      const WorshipOccasion(
+        title: 'جشن نوروز / آغاز سال نو',
+        category: WorshipOccasionCategory.national,
+        isHoliday: true,
+      )
+    ],
+    '1-2': [
+      const WorshipOccasion(
+        title: 'عید نوروز (روز دوم)',
+        category: WorshipOccasionCategory.national,
+        isHoliday: true,
+      )
+    ],
+    '1-3': [
+      const WorshipOccasion(
+        title: 'عید نوروز (روز سوم)',
+        category: WorshipOccasionCategory.national,
+        isHoliday: true,
+      )
+    ],
+    '1-4': [
+      const WorshipOccasion(
+        title: 'عید نوروز (روز چهارم)',
+        category: WorshipOccasionCategory.national,
+        isHoliday: true,
+      )
+    ],
+    '1-6': [
+      const WorshipOccasion(
+        title: 'زادروز زرتشت پیامبر',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '1-12': [
+      const WorshipOccasion(
+        title: 'روز جمهوری اسلامی ایران',
+        category: WorshipOccasionCategory.national,
+        isHoliday: true,
+      )
+    ],
+    '1-13': [
+      const WorshipOccasion(
+        title: 'روز طبیعت (سیزده‌بدر)',
+        category: WorshipOccasionCategory.national,
+        isHoliday: true,
+      )
+    ],
+    '1-18': [
+      const WorshipOccasion(
+        title: 'روز سلامتی (روز جهانی بهداشت)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '1-25': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت عطار نیشابوری',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '1-29': [
+      const WorshipOccasion(
+        title: 'روز ارتش جمهوری اسلامی ایران و نیروی زمینی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+
+    // 2. Ordibehesht (اردیبهشت)
+    '2-1': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت سعدی شیرازی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '2-2': [
+      const WorshipOccasion(
+        title: 'روز زمین پاک',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '2-3': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت شیخ بهایی / روز معمار',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '2-9': [
+      const WorshipOccasion(
+        title: 'روز شوراها',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '2-10': [
+      const WorshipOccasion(
+        title: 'روز ملی خلیج فارس',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '2-11': [
+      const WorshipOccasion(
+        title: 'روز جهانی کار و کارگر',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '2-12': [
+      const WorshipOccasion(
+        title: 'روز معلم / شهادت استاد مرتضی مطهری',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '2-15': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت شیخ صدوق / روز شیراز',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '2-25': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت حکیم فردوسی و پاسداشت زبان فارسی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '2-28': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت حکیم عمر خیام نیشابوری',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+
+    // 3. Khordad (خرداد)
+    '3-1': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت ملاصدرا (صدرالمتألهین)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '3-3': [
+      const WorshipOccasion(
+        title: 'فتح خرمشهر در عملیات بیت‌المقدس / روز مقاومت و پیروزی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '3-14': [
+      const WorshipOccasion(
+        title: 'رحلت حضرت امام خمینی (ره)',
+        category: WorshipOccasionCategory.national,
+        isHoliday: true,
+      )
+    ],
+    '3-15': [
+      const WorshipOccasion(
+        title: 'قیام خونین ۱۵ خرداد',
+        category: WorshipOccasionCategory.national,
+        isHoliday: true,
+      )
+    ],
+    '3-20': [
+      const WorshipOccasion(
+        title: 'روز ملی صنایع دستی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '3-25': [
+      const WorshipOccasion(
+        title: 'روز ملی گل و گیاه',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+
+    // 4. Tir (تیر)
+    '4-1': [
+      const WorshipOccasion(
+        title: 'روز اصناف',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '4-7': [
+      const WorshipOccasion(
+        title: 'شهادت آیت‌الله بهشتی و ۷۲ تن از یاران انقلاب / روز قوه قضائیه',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '4-8': [
+      const WorshipOccasion(
+        title: 'روز مبارزه با سلاح‌های شیمیایی و میکروبی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '4-10': [
+      const WorshipOccasion(
+        title: 'روز صنعت و معدن',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '4-14': [
+      const WorshipOccasion(
+        title: 'روز قلم',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '4-25': [
+      const WorshipOccasion(
+        title: 'روز بهزیستی و تامین اجتماعی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '4-27': [
+      const WorshipOccasion(
+        title: 'اعلام پذیرش قطعنامه ۵۹۸ شورای امنیت',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+
+    // 5. Mordad (مرداد)
+    '5-6': [
+      const WorshipOccasion(
+        title: 'روز ترویج آموزش‌های فنی و حرفه‌ای',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '5-8': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت شیخ شهاب‌الدین سهروردی (شیخ اشراق)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '5-14': [
+      const WorshipOccasion(
+        title: 'سالروز صدور فرمان مشروطیت / روز حقوق بشر اسلامی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '5-17': [
+      const WorshipOccasion(
+        title: 'روز خبرنگار',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '5-26': [
+      const WorshipOccasion(
+        title: 'سالروز ورود آزادگان سرافراز به میهن اسلامی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '5-28': [
+      const WorshipOccasion(
+        title: 'سالروز کودتای ۲۸ مرداد',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+
+    // 6. Shahrivar (شهریور)
+    '6-1': [
+      const WorshipOccasion(
+        title: 'روز پزشک / بزرگداشت ابوعلی سینا',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '6-2': [
+      const WorshipOccasion(
+        title: 'آغاز هفته دولت (شهادت رجایی و باهنر)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '6-4': [
+      const WorshipOccasion(
+        title: 'روز کارمند / جشن شهریورگان',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '6-5': [
+      const WorshipOccasion(
+        title: 'روز داروسازی / بزرگداشت زکریای رازی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '6-8': [
+      const WorshipOccasion(
+        title: 'روز مبارزه با تروریسم (انفجار دفتر نخست‌وزیری)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '6-13': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت ابوریحان بیرونی / روز علوم پایه',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '6-21': [
+      const WorshipOccasion(
+        title: 'روز ملی سینما',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '6-27': [
+      const WorshipOccasion(
+        title: 'روز شعر و ادب فارسی / بزرگداشت استاد شهریار',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '6-31': [
+      const WorshipOccasion(
+        title: 'آغاز هفته دفاع مقدس',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+
+    // 7. Mehr (مهر)
+    '7-1': [
+      const WorshipOccasion(
+        title: 'آغاز سال تحصیلی و بازگشایی مدارس',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '7-7': [
+      const WorshipOccasion(
+        title: 'روز آتش‌نشانی و ایمنی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '7-8': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت مولوی (جلال‌الدین بلخی)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '7-13': [
+      const WorshipOccasion(
+        title: 'روز نیروی انتظامی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '7-14': [
+      const WorshipOccasion(
+        title: 'روز دامپزشکی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '7-15': [
+      const WorshipOccasion(
+        title: 'روز روستا و عشایر',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '7-20': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت حافظ شیرازی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '7-26': [
+      const WorshipOccasion(
+        title: 'روز تربیت بدنی و ورزش',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+
+    // 8. Aban (آبان)
+    '8-7': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت کوروش بزرگ',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '8-8': [
+      const WorshipOccasion(
+        title: 'روز نوجوان و بسیج دانش‌آموزی (شهادت حسین فهمیده)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '8-10': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت ابوالفضل بیهقی / جشن آبان‌گان',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '8-13': [
+      const WorshipOccasion(
+        title: 'روز دانش‌آموز / روز مبارزه با استکبار جهانی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '8-24': [
+      const WorshipOccasion(
+        title: 'روز کتاب، کتابخوانی و کتابدار / بزرگداشت علامه طباطبایی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+
+    // 9. Azar (آذر)
+    '9-7': [
+      const WorshipOccasion(
+        title: 'روز نیروی دریایی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '9-9': [
+      const WorshipOccasion(
+        title: 'جشن آذرگان',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '9-10': [
+      const WorshipOccasion(
+        title: 'روز مجلس / شهادت آیت‌الله مدرس',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '9-12': [
+      const WorshipOccasion(
+        title: 'روز قانون اساسی جمهوری اسلامی ایران',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '9-16': [
+      const WorshipOccasion(
+        title: 'روز دانشجو',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '9-25': [
+      const WorshipOccasion(
+        title: 'روز پژوهش',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '9-26': [
+      const WorshipOccasion(
+        title: 'روز حمل و نقل',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '9-30': [
+      const WorshipOccasion(
+        title: 'شب یلدا (طولانی‌ترین شب سال / جشن چله)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+
+    // 10. Dey (دی)
+    '10-1': [
+      const WorshipOccasion(
+        title: 'جشن خرم‌روز (نخستین جشن دی‌گان)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '10-5': [
+      const WorshipOccasion(
+        title: 'روز ایمنی در برابر زلزله و کاهش اثرات بلایای طبیعی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '10-13': [
+      const WorshipOccasion(
+        title: 'روز جهانی مقاومت (شهادت سردار حاج قاسم سلیمانی)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '10-16': [
+      const WorshipOccasion(
+        title: 'روز شهدای دانشجو (شهادت علم‌الهدی و یاران)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '10-19': [
+      const WorshipOccasion(
+        title: 'قیام خونین مردم قم در سال ۱۳۵۶',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '10-22': [
+      const WorshipOccasion(
+        title: 'تشکیل شورای انقلاب به فرمان امام خمینی (ره)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+
+    // 11. Bahman (بهمن)
+    '11-12': [
+      const WorshipOccasion(
+        title: 'بازگشت حضرت امام خمینی (ره) به میهن و آغاز دهه فجر',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '11-14': [
+      const WorshipOccasion(
+        title: 'روز فناوری فضایی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '11-19': [
+      const WorshipOccasion(
+        title: 'روز نیروی هوایی (بیعت همافران با امام خمینی)',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '11-22': [
+      const WorshipOccasion(
+        title: 'سالروز پیروزی انقلاب اسلامی ایران',
+        category: WorshipOccasionCategory.national,
+        isHoliday: true,
+      )
+    ],
+    '11-29': [
+      const WorshipOccasion(
+        title: 'قیام مردم تبریز به مناسبت چهلم شهدای قم',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+
+    // 12. Esfand (اسفند)
+    '12-5': [
+      const WorshipOccasion(
+        title: 'روز مهندس / بزرگداشت خواجه نصیرالدین طوسی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '12-15': [
+      const WorshipOccasion(
+        title: 'روز درختکاری و آغاز هفته منابع طبیعی',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '12-22': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت شهدا',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '12-25': [
+      const WorshipOccasion(
+        title: 'روز بزرگداشت پروین اعتصامی / پایان سرایش شاهنامه',
+        category: WorshipOccasionCategory.national,
+      )
+    ],
+    '12-29': [
+      const WorshipOccasion(
+        title: 'روز ملی شدن صنعت نفت ایران',
+        category: WorshipOccasionCategory.national,
+        isHoliday: true,
+      )
+    ],
     '12-30': [
       const WorshipOccasion(
-        title: 'آخرین روز سال هجری قمری / استغفار و محاسبه نفس',
-        category: WorshipOccasionCategory.worshipDeed,
-        recommendedAmal: 'دو ركعت نماز پایان سال قمری و استغفار',
+        title: 'آخرین روز سال (تعطیل رسمی در سال‌های کبیسه)',
+        category: WorshipOccasionCategory.national,
+        isHoliday: true,
       )
     ],
   };
@@ -502,14 +1044,33 @@ class WorshipOccasionsData {
     }
   }
 
-  /// Returns worship occasions for a given solar date and Hijri date.
+  /// Returns worship and national occasions for a given solar date and Hijri date.
   static List<WorshipOccasion> getOccasionsForDay(Jalali solar, HijriDate hijri) {
     final list = <WorshipOccasion>[];
 
-    // Query Hijri occasions
-    final hKey = '${hijri.month}-${hijri.day}';
-    if (hijriOccasions.containsKey(hKey)) {
-      list.addAll(hijriOccasions[hKey]!);
+    // 1. Solar / National Occasions
+    final sKey = '${solar.month}-${solar.day}';
+    if (solarOccasions.containsKey(sKey)) {
+      list.addAll(solarOccasions[sKey]!);
+    }
+
+    // 2. Hijri / Religious Occasions
+    final daysInMonth = HijriCalendarCalculator.daysInMonth(hijri.year, hijri.month);
+    final isLastDay = hijri.day == daysInMonth;
+
+    // Last day of month special handling for 2-29 (End of Safar), 11-29 (End of Dhu al-Qadah), 12-29 (End of Dhu al-Hijjah)
+    if (hijri.day == 29 && daysInMonth == 30 && (hijri.month == 2 || hijri.month == 11 || hijri.month == 12)) {
+      // In a 30-day month, day 29 is NOT the last day, so do not trigger last-day occasions on day 29
+    } else if (isLastDay && daysInMonth == 30 && (hijri.month == 2 || hijri.month == 11 || hijri.month == 12)) {
+      final key29 = '${hijri.month}-29';
+      if (hijriOccasions.containsKey(key29)) {
+        list.addAll(hijriOccasions[key29]!);
+      }
+    } else {
+      final hKey = '${hijri.month}-${hijri.day}';
+      if (hijriOccasions.containsKey(hKey)) {
+        list.addAll(hijriOccasions[hKey]!);
+      }
     }
 
     return list;

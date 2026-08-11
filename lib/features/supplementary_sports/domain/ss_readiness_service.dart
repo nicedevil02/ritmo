@@ -74,6 +74,7 @@ class SSReadinessService {
     int energy = 3;
     int painLevel = 0;
     bool hasData = false;
+    bool hasSubjectiveData = false;
 
     // 1. Check ss_daily_checkin first
     try {
@@ -84,9 +85,38 @@ class SSReadinessService {
         fatigue = checkin.fatigue;
         painLevel = checkin.painLevel;
         hasData = true;
+        hasSubjectiveData = true;
       }
     } catch (e) {
       debugPrint('[SSReadinessService] checkin query error: $e');
+    }
+
+    // 1.5 Fallback to energy_logs if checkin not present
+    if (!hasSubjectiveData) {
+      try {
+        final elRows = await db.query(
+          'energy_logs',
+          where: 'loggedAt >= ?',
+          whereArgs: [twentyFourHoursAgo],
+          orderBy: 'loggedAt DESC',
+          limit: 1,
+        );
+        if (elRows.isNotEmpty) {
+          final levelStr = elRows.first['energyLevel'] as String?;
+          if (levelStr != null) {
+            // Map text (LOW/MEDIUM/HIGH) to 1-5 scale of ss_daily_checkin
+            if (levelStr.toUpperCase() == 'LOW') {
+              energy = 1;
+            } else if (levelStr.toUpperCase() == 'HIGH') {
+              energy = 5;
+            } else {
+              energy = 3; // Default for MEDIUM or unknown
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[SSReadinessService] energy_logs query error: $e');
+      }
     }
 
     // 2. Load recovery log if checkin not present
@@ -103,6 +133,7 @@ class SSReadinessService {
           soreness = (recRows.first['soreness'] as num?)?.toInt() ?? 1;
           fatigue = (recRows.first['fatigue'] as num?)?.toInt() ?? 1;
           hasData = true;
+          hasSubjectiveData = true;
         }
       } catch (e) {
         debugPrint('[SSReadinessService] recovery logs query error: $e');
@@ -130,7 +161,7 @@ class SSReadinessService {
       try {
         final sleepRows = await db.query(
           'vital_signs_logs',
-          where: "type = 'SLEEP' AND loggedAt >= ?",
+          where: "vitalType = 'SLEEP' AND loggedAt >= ?",
           whereArgs: [twentyFourHoursAgo],
           orderBy: 'loggedAt DESC',
           limit: 1,
@@ -149,26 +180,22 @@ class SSReadinessService {
     try {
       final cycleConsent = await db.query(
         'app_settings',
-        where: "key = 'share_cycle_with_sports'",
+        where: "key = 'cycle_consent_sports'",
         limit: 1,
       );
       final hasConsent = cycleConsent.isNotEmpty && cycleConsent.first['value'] == 'true';
 
       if (hasConsent) {
+        final todayIso = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
         final cycleRows = await db.query(
-          'cycle_logs',
-          where: "phase = 'MENSTRUAL'",
-          orderBy: 'date DESC',
+          'cycle_periods',
+          where: 'startDate <= ? AND (endDate IS NULL OR endDate >= ?)',
+          whereArgs: [todayIso, todayIso],
+          orderBy: 'startDate DESC',
           limit: 1,
         );
         if (cycleRows.isNotEmpty) {
-          final lastDateStr = cycleRows.first['date'] as String?;
-          if (lastDateStr != null) {
-            final lastDate = DateTime.tryParse(lastDateStr);
-            if (lastDate != null && today.difference(lastDate).inDays <= 5) {
-              isMenstrualPhase = true;
-            }
-          }
+          isMenstrualPhase = true;
         }
       }
     } catch (e) {
@@ -176,6 +203,13 @@ class SSReadinessService {
     }
 
     final recoveryLoad = soreness + fatigue;
+
+    String appendSubjective(String reason) {
+      if (!hasSubjectiveData && hasData) {
+        return '$reason (بر اساس داده‌ی خواب — چک‌این امروز ثبت نشده)';
+      }
+      return reason;
+    }
 
     // If no sleep log and no checkin exist, report insufficient data honestly
     if (!hasData && sleepMinutes == null) {
@@ -194,7 +228,7 @@ class SSReadinessService {
     if (painLevel >= 5) {
       return SSReadinessVerdict(
         tier: SSReadinessTier.rest,
-        reasonFa: 'به دلیل درد ثبت‌شده، استراحت یا تمرین بسیار سبک توصیه می‌شود 🛑',
+        reasonFa: appendSubjective('به دلیل درد ثبت‌شده، استراحت یا تمرین بسیار سبک توصیه می‌شود 🛑'),
         emoji: '🛑',
         score: 30,
         sleepMinutes: sleepMinutes,
@@ -206,7 +240,7 @@ class SSReadinessService {
     if (isMenstrualPhase) {
       return SSReadinessVerdict(
         tier: SSReadinessTier.light,
-        reasonFa: 'فاز قاعدگی — تمرینات ملایم و کششی پیشنهاد می‌شود 🌸',
+        reasonFa: appendSubjective('فاز قاعدگی — تمرینات ملایم و کششی پیشنهاد می‌شود 🌸'),
         emoji: '🌸',
         score: 50,
         sleepMinutes: sleepMinutes,
@@ -222,7 +256,7 @@ class SSReadinessService {
           : 'انرژی پایینه — نسخهٔ حداقلی تا زنجیره نشکنه ⚡';
       return SSReadinessVerdict(
         tier: SSReadinessTier.minimal,
-        reasonFa: msg,
+        reasonFa: appendSubjective(msg),
         emoji: '⚡',
         score: 40,
         sleepMinutes: sleepMinutes,
@@ -237,7 +271,7 @@ class SSReadinessService {
           : 'بدنت هنوز خسته/کوفته‌ست — نسخهٔ سبک 🔋';
       return SSReadinessVerdict(
         tier: SSReadinessTier.light,
-        reasonFa: msg,
+        reasonFa: appendSubjective(msg),
         emoji: '🔋',
         score: 60,
         sleepMinutes: sleepMinutes,
@@ -248,7 +282,7 @@ class SSReadinessService {
     if (recoveryLoad >= 4 || energy == 3) {
       return SSReadinessVerdict(
         tier: SSReadinessTier.full,
-        reasonFa: 'آمادگی مناسبه — تمرین متعادل و منظم 🟡',
+        reasonFa: appendSubjective('آمادگی مناسبه — تمرین متعادل و منظم 🟡'),
         emoji: '🟡',
         score: 80,
         sleepMinutes: sleepMinutes,
@@ -258,7 +292,7 @@ class SSReadinessService {
 
     return SSReadinessVerdict(
       tier: SSReadinessTier.full,
-      reasonFa: 'انرژی و ریکاوری عالیه — با قدرت شروع کن 🔥',
+      reasonFa: appendSubjective('انرژی و ریکاوری عالیه — با قدرت شروع کن 🔥'),
       emoji: '🔥',
       score: 95,
       sleepMinutes: sleepMinutes,

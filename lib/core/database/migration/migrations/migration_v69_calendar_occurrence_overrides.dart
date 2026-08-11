@@ -6,7 +6,7 @@ class MigrationV69 extends Migration {
   int get version => 69;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     // 1. occurrence_overrides table
     await db.execute('''
       CREATE TABLE IF NOT EXISTS occurrence_overrides (
@@ -50,7 +50,7 @@ class MigrationV69 extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {
+  Future<void> down(DatabaseExecutor db) async {
     await db.execute('DROP TABLE IF EXISTS occurrence_overrides;');
   }
 }

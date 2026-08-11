@@ -780,9 +780,43 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
         return;
       }
 
-      // Initialize New session
+      // Initialize New or Resume Today's session
       final now = DateTime.now().millisecondsSinceEpoch;
-      final newSessionId = 'session_${resolvedPlanId}_$now';
+      String newSessionId = 'session_${resolvedPlanId}_$now';
+      bool isResumingToday = false;
+      int accumulatedDurationSeconds = 0;
+      Map<String, List<Map<String, dynamic>>> todaySetsMap = {};
+
+      if (state.prescriptionId != null) {
+        final today = DateTime.now();
+        final startOfToday = DateTime(today.year, today.month, today.day).millisecondsSinceEpoch;
+        
+        final existingSessionLogs = await db.query(
+          'ss_workout_session_log',
+          where: 'prescriptionId = ? AND startedAt >= ?',
+          whereArgs: [state.prescriptionId, startOfToday],
+          orderBy: 'startedAt DESC',
+          limit: 1,
+        );
+        
+        if (existingSessionLogs.isNotEmpty) {
+          final sessionLog = existingSessionLogs.first;
+          newSessionId = sessionLog['id'] as String;
+          accumulatedDurationSeconds = sessionLog['durationSeconds'] as int? ?? 0;
+          isResumingToday = true;
+          
+          final todaySets = await db.query(
+            'ss_workout_set_log',
+            where: 'session_id = ?',
+            whereArgs: [newSessionId],
+            orderBy: 'set_index ASC',
+          );
+          for (final row in todaySets) {
+            final exId = row['exercise_id'].toString();
+            todaySetsMap.putIfAbsent(exId, () => []).add(row);
+          }
+        }
+      }
 
       final crossRefs = await db.rawQuery('''
         SELECT c.*, e.name, e.category, e.equipment, e.instructions, e.changeSides, e.repsDouble, e.repsHint, e.impact, e.noisy, e.durationSeconds
@@ -818,6 +852,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
         final refWeight = (row['targetWeight'] as num?)?.toDouble() ?? 0.0;
 
         final lastLoggedSets = lastSetsMap[exerciseId] ?? [];
+        final todayLoggedSets = todaySetsMap[exerciseId] ?? [];
         final lastNote = await getLastNoteForExercise(exerciseId);
         
         final setRows = List.generate(
@@ -825,23 +860,46 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
           (idx) {
             var setWeight = refWeight;
             var setReps = refReps;
-            if (idx < lastLoggedSets.length) {
-              setWeight = (lastLoggedSets[idx]['weight'] as num).toDouble();
-              setReps = (lastLoggedSets[idx]['reps'] as num).toInt();
-            } else if (lastLoggedSets.isNotEmpty) {
-              setWeight = (lastLoggedSets.last['weight'] as num).toDouble();
-              setReps = (lastLoggedSets.last['reps'] as num).toInt();
+            var status = SetStatus.pending;
+
+            if (isResumingToday && idx < todayLoggedSets.length) {
+              setWeight = (todayLoggedSets[idx]['weight'] as num).toDouble();
+              setReps = (todayLoggedSets[idx]['reps'] as num).toInt();
+              status = SetStatus.done;
+            } else {
+              if (idx < lastLoggedSets.length) {
+                setWeight = (lastLoggedSets[idx]['weight'] as num).toDouble();
+                setReps = (lastLoggedSets[idx]['reps'] as num).toInt();
+              } else if (lastLoggedSets.isNotEmpty) {
+                setWeight = (lastLoggedSets.last['weight'] as num).toDouble();
+                setReps = (lastLoggedSets.last['reps'] as num).toInt();
+              }
             }
+
             return SetRow(
               setNumber: idx + 1,
               weight: setWeight,
               reps: setReps,
               rir: 2,
               restSeconds: effectiveDefaultRest,
-              status: idx == 0 ? SetStatus.current : SetStatus.pending,
+              status: status,
             );
           },
         );
+
+        bool hasCurrent = false;
+        for (var j = 0; j < setRows.length; j++) {
+          if (setRows[j].status == SetStatus.pending && !hasCurrent) {
+            setRows[j] = setRows[j].copyWith(status: SetStatus.current);
+            hasCurrent = true;
+          }
+        }
+
+        final isDone = setRows.every((r) => r.status == SetStatus.done);
+        ExerciseStatus exStatus = ExerciseStatus.upcoming;
+        if (isDone) {
+          exStatus = ExerciseStatus.done;
+        }
 
         list.add(SSExerciseChecklistEntry(
           exercise: SsExerciseModel(
@@ -860,16 +918,24 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
           referenceSets: refSets,
           referenceReps: refReps,
           referenceWeight: refWeight,
-          status: i == 0 ? ExerciseStatus.current : ExerciseStatus.upcoming,
+          status: exStatus,
           setRows: setRows,
           optionalNote: lastNote,
         ));
       }
 
+      int firstUncompletedIndex = list.indexWhere((e) => e.status != ExerciseStatus.done);
+      if (firstUncompletedIndex == -1) firstUncompletedIndex = 0;
+      
+      if (list.isNotEmpty && list[firstUncompletedIndex].status == ExerciseStatus.upcoming) {
+        list[firstUncompletedIndex] = list[firstUncompletedIndex].copyWith(status: ExerciseStatus.current);
+      }
+
       state = state.copyWith(
         sessionId: newSessionId,
         exercises: list,
-        startedAt: now,
+        currentExerciseIndex: firstUncompletedIndex,
+        startedAt: isResumingToday ? (DateTime.now().millisecondsSinceEpoch - (accumulatedDurationSeconds * 1000)) : now,
         status: SSWorkoutSessionStatus.preparing,
         timerTotalSeconds: 5,
         timerRemainingSeconds: 5,
@@ -953,6 +1019,11 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
       final finishedAt = DateTime.now().millisecondsSinceEpoch;
       final durationSec = ((finishedAt - state.startedAt) / 1000).round();
       final completedCount = state.exercises.where((e) => e.status == ExerciseStatus.done).length;
+      
+      if (completedCount == 0) {
+        throw Exception('Cannot finish a workout with 0 completed exercises.');
+      }
+      
       final feelingsList = state.exercises.where((e) => e.feeling != null).map((e) => e.feeling!).toList();
       
       Feeling? overallFeeling;
@@ -1023,6 +1094,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
 
         // Complete prescription in the same transaction
         if (state.prescriptionId != null && state.prescriptionId!.isNotEmpty) {
+          final isPartial = completedCount < state.exercises.length;
           await SsSessionCompletionGateway.completeDetailedSessionInTransaction(
             txn,
             prescriptionId: state.prescriptionId,
@@ -1031,6 +1103,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
             actualRpe: _estimatedRpeFromSets(),
             location: null,
             customNote: _sessionNoteFromExercises(),
+            isPartial: isPartial,
           );
         }
       });

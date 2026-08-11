@@ -187,11 +187,22 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
 
     try {
       for (final id in practiceIds) {
-        await WorshipEngine.instance.logSkip(
+        final res = await WorshipEngine.instance.logSkip(
           practiceId: id,
           date: targetDate,
           addToQada: addToQada,
         );
+        if (res is WorshipLogBlocked) {
+          if (mounted) {
+            RitmoToast.show(context, res.userMessage);
+          }
+          return;
+        } else if (res is WorshipLogFailed) {
+          if (mounted) {
+            RitmoToast.show(context, 'خطا در ثبت قضا.');
+          }
+          return;
+        }
       }
 
       WorshipEngine.instance.invalidate(date: targetDate);
@@ -318,7 +329,14 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
     final day = _worshipDay!;
     final times = day.times;
     final dayCtx = day.context;
-    final isExempt = dayCtx.prayerExempt;
+    final isFullExempt = dayCtx.prayerExempt;
+    
+    bool isPrayerExempt(String p) => isFullExempt || dayCtx.exemptPrayers.contains(p);
+    
+    final fajrExempt = isPrayerExempt('FAJR');
+    final dhuhrExempt = isPrayerExempt('DHUHR') || isPrayerExempt('ASR');
+    final maghribExempt = isPrayerExempt('MAGHRIB') || isPrayerExempt('ISHA');
+
     final now = DateTime.now();
 
     // Group 1: Fajr
@@ -330,6 +348,7 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
     final fajrExpired = fajrState != null &&
         !fajrIsDone &&
         !fajrState.isSkipped &&
+        !fajrExempt &&
         now.isAfter(times.fajr) &&
         now.isAfter(fajrDeadline);
 
@@ -339,7 +358,7 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
     final dhuhrPractices = <WorshipPracticeState>[];
     if (dhuhrState != null) dhuhrPractices.add(dhuhrState);
     if (asrState != null) dhuhrPractices.add(asrState);
-    final dhuhrDeadline = times.maghrib;
+    final dhuhrDeadline = times.sunset;
     final dhuhrDone = _optimisticState.containsKey('DHUHR_ASR')
         ? _optimisticState['DHUHR_ASR']!
         : (dhuhrPractices.isNotEmpty && dhuhrPractices.any((p) => p.isDone));
@@ -347,6 +366,7 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
     final dhuhrExpired = dhuhrPractices.isNotEmpty &&
         !dhuhrDone &&
         !dhuhrSkipped &&
+        !dhuhrExempt &&
         now.isAfter(times.dhuhr) &&
         now.isAfter(dhuhrDeadline);
 
@@ -364,6 +384,7 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
     final maghribExpired = maghribPractices.isNotEmpty &&
         !maghribDone &&
         !maghribSkipped &&
+        !maghribExempt &&
         now.isAfter(times.maghrib) &&
         now.isAfter(maghribDeadline);
 
@@ -408,7 +429,7 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
           const SizedBox(height: 12),
 
           // Exemption Banner if active
-          if (isExempt) ...[
+          if (dayCtx.prayerExempt || dayCtx.exemptPrayers.isNotEmpty) ...[
             Container(
               padding: const EdgeInsets.all(10),
               margin: const EdgeInsets.only(bottom: 10),
@@ -423,7 +444,9 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'امروز معاف از نمازهای واجب هستید.',
+                      dayCtx.prayerExempt 
+                          ? 'امروز به دلیل پریود معاف از تمام نمازهای واجب هستید.'
+                          : 'به دلیل زمان پریود، بخشی از نمازهای امروز شما معاف است.',
                       style: TextStyle(
                         color: colors.textPrimary,
                         fontSize: 12.5,
@@ -447,7 +470,7 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
               deferCount: 0,
               hasReminder: true,
               isExpired: fajrExpired,
-              isExempt: isExempt,
+              isExempt: fajrExempt,
               expiredTimeDetail: 'وقت نماز صبح گذشته است (طلوع: ${_formatTime(times.sunrise)}).',
               onToggle: (val) => _handleToggleGroup(
                 groupKey: 'FAJR',
@@ -475,7 +498,7 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
               deferCount: 0,
               hasReminder: true,
               isExpired: dhuhrExpired,
-              isExempt: isExempt,
+              isExempt: dhuhrExempt,
               expiredTimeDetail: 'وقت نماز ظهر و عصر گذشته است (اذان مغرب: ${_formatTime(times.maghrib)}).',
               onToggle: (val) => _handleToggleGroup(
                 groupKey: 'DHUHR_ASR',
@@ -503,7 +526,7 @@ class _ObligatoryPrayersSectionState extends State<ObligatoryPrayersSection> {
               deferCount: 0,
               hasReminder: true,
               isExpired: maghribExpired,
-              isExempt: isExempt,
+              isExempt: maghribExempt,
               expiredTimeDetail: 'وقت نماز مغرب و عشا گذشته است (نیمه‌شب شرعی: ${_formatTime(times.midnightShari)}).',
               onToggle: (val) => _handleToggleGroup(
                 groupKey: 'MAGHRIB_ISHA',

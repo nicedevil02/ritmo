@@ -6,7 +6,7 @@ class MigrationV68 extends Migration {
   int get version => 68;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     try {
       final practices = await db.query(
@@ -45,5 +45,5 @@ class MigrationV68 extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

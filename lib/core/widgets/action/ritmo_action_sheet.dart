@@ -350,5 +350,6 @@ class _RitmoActionSheetState extends State<RitmoActionSheet> {
           ),
         ],
       ],
+    );
   }
 }

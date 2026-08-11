@@ -7,7 +7,7 @@ class MigrationV78SettingsProfile extends Migration {
   int get version => 78;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     final now = DateTime.now().millisecondsSinceEpoch;
 
     Future<void> put(String key, String value) => db.insert(
@@ -64,7 +64,7 @@ class MigrationV78SettingsProfile extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {
+  Future<void> down(DatabaseExecutor db) async {
     // این مایگریشن غیرقابل بازگشت است — down اجرا نمی‌شود
   }
 }

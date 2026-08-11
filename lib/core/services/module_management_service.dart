@@ -5,6 +5,9 @@ import 'package:ritmo/core/modules/module_registry.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/di/service_locator.dart';
+import 'package:ritmo/features/worship/logic/worship_engine.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Central Single Source of Truth for Module Activation & Synchronization in Ritmo.
@@ -202,7 +205,15 @@ class ModuleManagementService {
             await safeDeleteSettingExact('period_duration_days');
             try {
               await txn.delete('worship_debts', where: "id LIKE 'debt_cycle_fast_%'");
+              await txn.delete('worship_day_context', where: "reason = 'MENSTRUATION'");
             } catch (_) {}
+            WorshipEngine.instance.invalidate();
+            DayAgendaService.instance.invalidateDate(DateTime.now().toIso8601String().substring(0, 10));
+            RitmoEventBus().fire(RitmoEvent(
+              type: 'WorshipUpdated',
+              timestamp: DateTime.now(),
+              payload: {'date': DateTime.now().toIso8601String().substring(0, 10)},
+            ));
             break;
 
           case 'module_courses_enabled':

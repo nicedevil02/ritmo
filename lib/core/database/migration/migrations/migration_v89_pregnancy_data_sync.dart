@@ -4,13 +4,15 @@ import 'package:sqflite/sqflite.dart';
 
 class MigrationV89PregnancyDataSync extends Migration {
   @override
+  bool get requiresTransaction => false;
+  @override
   int get version => 89;
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     RitmoLog.info('MigrationV89', 'Applying V89 pregnancy data sync & index fixes...');
 
     final nowMs = DateTime.now().millisecondsSinceEpoch;

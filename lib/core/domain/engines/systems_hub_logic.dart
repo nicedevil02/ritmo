@@ -14,8 +14,7 @@ class SystemsHubLogic {
 
   static ModuleStatus determineReligionStatus(bool enabled, String? cityId) {
     if (!enabled) return ModuleStatus.inactive;
-    final configured = cityId != null && cityId.isNotEmpty && cityId != 'UNSET';
-    return configured ? ModuleStatus.active : ModuleStatus.setupRequired;
+    return ModuleStatus.active;
   }
 
   static ModuleStatus determineKonkurStatus(bool enabled, bool hasSubjects) {

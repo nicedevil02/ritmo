@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 class RoutineTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     // 1. routines table
     await db.execute('''
       CREATE TABLE routines (
@@ -143,5 +143,19 @@ class RoutineTables {
       SELECT * FROM routine_completions
       WHERE resultType IN ('FULL', 'PARTIAL', 'MINIMAL', 'DONE', 'LIGHT', 'COMPLETED');
     ''');
+
+  await db.execute('''
+      CREATE TABLE IF NOT EXISTS skip_reasons (
+          id TEXT PRIMARY KEY,
+          itemId TEXT NOT NULL,
+          domain TEXT NOT NULL,
+          dateStr TEXT NOT NULL,
+          reason TEXT NOT NULL,
+          note TEXT,
+          createdAt INTEGER NOT NULL
+        );
+
+  ''');
+
   }
 }

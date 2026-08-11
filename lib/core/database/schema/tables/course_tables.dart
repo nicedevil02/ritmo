@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 class CourseTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     // 9. courses table
     await db.execute('''
       CREATE TABLE courses (

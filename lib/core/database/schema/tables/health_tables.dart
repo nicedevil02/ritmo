@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 class HealthTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     // 21. prn_logs (V2 table)
     await db.execute('''
       CREATE TABLE prn_logs (
@@ -167,5 +167,38 @@ class HealthTables {
     ''');
     await db.execute('CREATE INDEX idx_medlog_routine ON medication_logs(routineId);');
     await db.execute('CREATE INDEX idx_medlog_time ON medication_logs(scheduledTime);');
+
+  await db.execute('''
+      CREATE TABLE IF NOT EXISTS wellbeing_daily (
+          date TEXT PRIMARY KEY,
+          indexValue REAL,
+          confidence REAL NOT NULL DEFAULT 0,
+          sleepScore REAL,
+          energyScore REAL,
+          moodScore REAL,
+          reflectionScore REAL,
+          contributionsJson TEXT,
+          computedAt INTEGER NOT NULL
+        );
+
+  ''');
+
+    // wellbeing_entry — unified wellbeing dimension table (V92)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS wellbeing_entry (
+          id TEXT PRIMARY KEY,
+          dateIso TEXT NOT NULL,
+          dimension TEXT NOT NULL,
+          value REAL NOT NULL,
+          note TEXT,
+          loggedAt INTEGER NOT NULL
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_wellbeing_entry_date ON wellbeing_entry(dateIso, dimension);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_wellbeing_entry_loggedAt ON wellbeing_entry(loggedAt);',
+    );
   }
 }

@@ -6,7 +6,7 @@ class MigrationV81AgentLayer extends Migration {
   int get version => 81;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     // 1. Add new columns to assistant_audit_log safely
@@ -79,5 +79,5 @@ class MigrationV81AgentLayer extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

@@ -3,9 +3,11 @@ import 'package:sqflite/sqflite.dart';
 
 class MigrationV67 extends Migration {
   @override
+  bool get requiresTransaction => false;
+  @override
   int get version => 67;
 
-  Future<bool> _columnExists(Database db, String table, String column) async {
+  Future<bool> _columnExists(DatabaseExecutor db, String table, String column) async {
     try {
       final info = await db.rawQuery('PRAGMA table_info($table)');
       return info.any((row) => row['name'] == column);
@@ -15,7 +17,7 @@ class MigrationV67 extends Migration {
   }
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     // 1. worship_practices: userDisabledAt
     if (!await _columnExists(db, 'worship_practices', 'userDisabledAt')) {
       await db.execute('ALTER TABLE worship_practices ADD COLUMN userDisabledAt TEXT;');
@@ -75,5 +77,5 @@ class MigrationV67 extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

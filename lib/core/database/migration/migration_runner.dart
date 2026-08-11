@@ -29,6 +29,10 @@ import 'package:ritmo/core/database/migration/migrations/migration_v87_planning.
 import 'package:ritmo/core/database/migration/migrations/migration_v88_audit_fixes.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v89_pregnancy_data_sync.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v90_sports_integrity.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v91_schema_canonicalization.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v92_unification.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v93_app_start_date.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v94_worship_debts_fix.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -121,6 +125,10 @@ class MigrationRunner {
     MigrationV88AuditFixes(),
     MigrationV89PregnancyDataSync(),
     MigrationV90SportsIntegrity(),
+    MigrationV91SchemaCanonicalization(),
+    MigrationV92Unification(),
+    MigrationV93AppStartDate(),
+    MigrationV94(),
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);
@@ -140,7 +148,13 @@ class MigrationRunner {
     for (final migration in sorted) {
       if (migration.version > oldVersion && migration.version <= newVersion) {
         try {
-          await migration.up(db);
+          if (migration.requiresTransaction) {
+            await db.transaction((txn) async {
+              await migration.up(txn);
+            });
+          } else {
+            await migration.up(db);
+          }
           RitmoLog.info('MigrationRunner', 'Successfully applied migration v${migration.version}');
         } catch (e, st) {
           RitmoLog.error('MigrationRunner', 'Failed to apply migration v${migration.version}', e, st);

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/modules/module_gate.dart';
 /// Represents a normalized sleep / rest window block for timeline presentation.
 class SleepWindowBlock {
@@ -94,8 +95,6 @@ class SleepWindowResolver {
       final m = int.parse(parts[1]);
       if (h < 0 || h > 23 || m < 0 || m > 59) return null;
       return (h * 60) + m;
-    } catch (_) {
-      return null;
-    }
+    } catch (e, st) { debugPrint('Error in sleep_window_resolver.dart: $e\n$st'); return null; }
   }
 }

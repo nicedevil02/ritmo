@@ -3,12 +3,14 @@ import 'package:sqflite/sqflite.dart';
 
 class MigrationV90SportsIntegrity extends Migration {
   @override
+  bool get requiresTransaction => false;
+  @override
   int get version => 90;
 
   @override
-  Future<void> up(Database db) async {
-    await db.transaction((txn) async {
-      await _safeAddColumn(txn, 'ss_session_prescription', 'workoutPlanId', 'TEXT');
+  Future<void> up(DatabaseExecutor db) async {
+    final txn = db; // requiresTransaction=false, db is the raw Database passed from runner
+    await _safeAddColumn(txn, 'ss_session_prescription', 'workoutPlanId', 'TEXT');
       await _safeAddColumn(txn, 'ss_session_prescription', 'actualRpe', 'INTEGER');
       await _safeAddColumn(txn, 'ss_workout_session_log', 'prescriptionId', 'TEXT');
       await _safeAddColumn(txn, 'ss_workout_set_log', 'rir', 'INTEGER');
@@ -102,7 +104,6 @@ class MigrationV90SportsIntegrity extends Migration {
         CREATE INDEX IF NOT EXISTS idx_ss_set_log_exercise_time
         ON ss_workout_set_log(exercise_id, id);
       ''');
-    });
   }
 
   Future<void> _safeAddColumn(
@@ -121,7 +122,7 @@ class MigrationV90SportsIntegrity extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {
+  Future<void> down(DatabaseExecutor db) async {
     // SQLite does not reliably support DROP COLUMN on all supported versions.
     // Destructive rollback is intentionally disabled to preserve user data.
   }

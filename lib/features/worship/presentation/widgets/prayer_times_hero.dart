@@ -429,8 +429,8 @@ class _PrayerTimesHeroState extends State<PrayerTimesHero>
                       color: colors.textSecondary.withValues(alpha: 0.6),
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      _formatTimeWithSeconds(_now),
+                    _HeroRollUpClock(
+                      time: _now,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -539,8 +539,8 @@ class _PrayerTimesHeroState extends State<PrayerTimesHero>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            shamsiFa,
+          _HeroRollUpText(
+            text: shamsiFa,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: sky.textColor,
@@ -550,8 +550,8 @@ class _PrayerTimesHeroState extends State<PrayerTimesHero>
             ),
           ),
           const SizedBox(height: 5),
-          Text(
-            hijriStr.isNotEmpty ? '$hijriStr  ·  $gregorianFa' : gregorianFa,
+          _HeroRollUpText(
+            text: hijriStr.isNotEmpty ? '$hijriStr  ·  $gregorianFa' : gregorianFa,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: sky.accentColor.withValues(alpha: 0.9),
@@ -713,8 +713,8 @@ class _PrayerTimesHeroState extends State<PrayerTimesHero>
               color: activePrayer != null ? sky.goldColor : sky.textColor.withValues(alpha: 0.6),
             ),
             const SizedBox(width: 5),
-            Text(
-              activePrayer != null
+            _HeroRollUpText(
+              text: activePrayer != null
                   ? 'وقت اذان ${_getPrayerFaName(activePrayer)}'
                   : 'تا $nextPrayerName: ${_formatDuration(durationToNext)}',
               style: TextStyle(
@@ -790,3 +790,219 @@ class _StarsPainter extends CustomPainter {
   bool shouldRepaint(covariant _StarsPainter old) =>
       old.starCount != starCount || old.opacity != opacity;
 }
+
+// ── 3D Cube Roll Single Digit for PrayerTimesHero ──
+class _HeroCubeRollDigit extends StatelessWidget {
+  const _HeroCubeRollDigit({
+    super.key,
+    required this.digit,
+    required this.style,
+    this.duration = const Duration(milliseconds: 320),
+    this.curve = Curves.easeOutCubic,
+  });
+
+  final String digit;
+  final TextStyle style;
+  final Duration duration;
+  final Curve curve;
+
+  @override
+  Widget build(BuildContext context) {
+    final digitWidth = (style.fontSize ?? 20) * 0.62;
+    final digitHeight = (style.fontSize ?? 20) * 1.25;
+
+    return SizedBox(
+      width: digitWidth,
+      height: digitHeight,
+      child: AnimatedSwitcher(
+        duration: duration,
+        switchInCurve: curve,
+        switchOutCurve: curve,
+        layoutBuilder: (currentChild, previousChildren) {
+          return Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              ...previousChildren,
+              if (currentChild != null) currentChild,
+            ],
+          );
+        },
+        transitionBuilder: (child, animation) {
+          final isIncoming = (child.key as ValueKey<String>?)?.value == digit;
+
+          return AnimatedBuilder(
+            animation: animation,
+            builder: (context, _) {
+              final t = animation.value;
+              final double angle;
+              final double yShift;
+              final double opacity;
+
+              if (isIncoming) {
+                angle = (1.0 - t) * (math.pi / 2);
+                yShift = (1.0 - t) * (digitHeight * 0.5);
+                opacity = (t * 1.5).clamp(0.0, 1.0);
+              } else {
+                angle = -(1.0 - t) * (math.pi / 2);
+                yShift = -(1.0 - t) * (digitHeight * 0.5);
+                opacity = (t * 1.5).clamp(0.0, 1.0);
+              }
+
+              final transform = Matrix4.identity()
+                ..setEntry(3, 2, 0.003) // 3D Perspective
+                ..translate(0.0, yShift, 0.0)
+                ..rotateX(angle);
+
+              return Transform(
+                transform: transform,
+                alignment: Alignment.center,
+                child: Opacity(
+                  opacity: opacity,
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
+        child: Text(
+          digit,
+          key: ValueKey<String>(digit),
+          textAlign: TextAlign.center,
+          style: style,
+        ),
+      ),
+    );
+  }
+}
+
+// ── 3D Cube Roll Digital Clock for PrayerTimesHero ──
+class _HeroRollUpClock extends StatelessWidget {
+  const _HeroRollUpClock({
+    super.key,
+    required this.time,
+    required this.style,
+  });
+
+  final DateTime time;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final hh = time.hour.toString().padLeft(2, '0');
+    final mm = time.minute.toString().padLeft(2, '0');
+    final ss = time.second.toString().padLeft(2, '0');
+    final colonWidth = (style.fontSize ?? 20) * 0.32;
+
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Hours
+          _HeroCubeRollDigit(digit: hh[0], style: style),
+          _HeroCubeRollDigit(digit: hh[1], style: style),
+
+          SizedBox(
+            width: colonWidth,
+            child: Text(':', textAlign: TextAlign.center, style: style),
+          ),
+
+          // Minutes
+          _HeroCubeRollDigit(digit: mm[0], style: style),
+          _HeroCubeRollDigit(digit: mm[1], style: style),
+
+          SizedBox(
+            width: colonWidth,
+            child: Text(':', textAlign: TextAlign.center, style: style),
+          ),
+
+          // Seconds (Individual digits)
+          _HeroCubeRollDigit(digit: ss[0], style: style),
+          _HeroCubeRollDigit(digit: ss[1], style: style),
+        ],
+      ),
+    );
+  }
+}
+
+// ── 3D Cube Roll Text for PrayerTimesHero ──
+class _HeroRollUpText extends StatelessWidget {
+  const _HeroRollUpText({
+    super.key,
+    required this.text,
+    required this.style,
+    this.textAlign = TextAlign.center,
+    this.duration = const Duration(milliseconds: 380),
+    this.curve = Curves.easeOutCubic,
+  });
+
+  final String text;
+  final TextStyle style;
+  final TextAlign textAlign;
+  final Duration duration;
+  final Curve curve;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: duration,
+      switchInCurve: curve,
+      switchOutCurve: curve,
+      layoutBuilder: (currentChild, previousChildren) {
+        return Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        );
+      },
+      transitionBuilder: (child, animation) {
+        final isIncoming = (child.key as ValueKey<String>?)?.value == text;
+
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (context, _) {
+            final t = animation.value;
+            final double angle;
+            final double yShift;
+            final double opacity;
+
+            if (isIncoming) {
+              angle = (1.0 - t) * (math.pi / 2);
+              yShift = (1.0 - t) * 14.0;
+              opacity = (t * 1.4).clamp(0.0, 1.0);
+            } else {
+              angle = -(1.0 - t) * (math.pi / 2);
+              yShift = -(1.0 - t) * 14.0;
+              opacity = (t * 1.4).clamp(0.0, 1.0);
+            }
+
+            final transform = Matrix4.identity()
+              ..setEntry(3, 2, 0.0025)
+              ..translate(0.0, yShift, 0.0)
+              ..rotateX(angle);
+
+            return Transform(
+              transform: transform,
+              alignment: Alignment.center,
+              child: Opacity(
+                opacity: opacity,
+                child: child,
+              ),
+            );
+          },
+        );
+      },
+      child: Text(
+        text,
+        key: ValueKey<String>(text),
+        textAlign: textAlign,
+        style: style,
+      ),
+    );
+  }
+}
+

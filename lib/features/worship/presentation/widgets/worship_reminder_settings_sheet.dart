@@ -509,16 +509,20 @@ class _WorshipReminderSettingsSheetState
                   HapticFeedback.selectionClick();
                   setState(() {
                     if (key == 'WEEKLY') {
-                      _reminderFrequency = 'WEEKLY';
-                      if (_selectedDays.isEmpty) {
+                      if (_reminderFrequency != 'WEEKLY') {
+                        _reminderFrequency = 'WEEKLY';
                         _selectedDays = [6, 7, 1, 2, 3, 4, 5];
                       }
                     } else if (key == 'MONTHLY') {
-                      _reminderFrequency = 'MONTHLY';
-                      _selectedDays = [1];
+                      if (_reminderFrequency != 'MONTHLY' && _reminderFrequency != 'LUNAR_MONTHLY') {
+                        _reminderFrequency = 'MONTHLY';
+                        _selectedDays = [1];
+                      }
                     } else {
-                      _reminderFrequency = 'ONCE';
-                      _selectedDays = [];
+                      if (_reminderFrequency != 'ONCE') {
+                        _reminderFrequency = 'ONCE';
+                        _selectedDays = [];
+                      }
                     }
                   });
                 },

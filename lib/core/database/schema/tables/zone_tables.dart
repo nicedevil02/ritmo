@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 class ZoneTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     // 5. zones table
     await db.execute('''
       CREATE TABLE zones (

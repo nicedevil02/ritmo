@@ -6,7 +6,7 @@ class MigrationV82SportsPrescription extends Migration {
   int get version => 82;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     // 1. Create ss_session_prescription table
@@ -164,7 +164,7 @@ class MigrationV82SportsPrescription extends Migration {
         final id = plan['id'] as String;
         final week = (plan['week'] as int?) ?? 1;
         final dayOfWeek = (plan['dayOfWeek'] as int?) ?? 1; // 1 = شنبه (ss mapping)
-        final category = plan['category'] as String? ?? 'STRENGTH';
+        final category = 'STRENGTH';
         final estimatedMins = (plan['estimatedMinutes'] as int?) ?? 45;
 
         // Convert ss dayOfWeek to Ritmo dayOfWeek
@@ -231,5 +231,5 @@ class MigrationV82SportsPrescription extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

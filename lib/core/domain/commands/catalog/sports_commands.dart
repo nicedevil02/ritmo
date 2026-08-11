@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/domain/commands/param_spec.dart';
 import 'package:ritmo/core/domain/commands/command_plan.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_prescription_repository.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_profile_repository.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_plan_generator.dart';
@@ -865,10 +867,10 @@ class SportsSetTrainingDaysCommand extends RitmoCommand {
     final profile = await repo.getProfile();
     if (profile == null) return CommandResult.failure(commandId: id, errorMessage: 'پروفایل ورزشی یافت نشد.');
 
-    final oldDaysJson = profile.trainingDays;
+    final oldDays = profile.trainingDays;
     final newProfile = profile.copyWith(
       daysPerWeek: days.length,
-      trainingDays: jsonEncode(days),
+      trainingDays: days,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
     );
     await repo.saveProfile(newProfile);
@@ -876,21 +878,21 @@ class SportsSetTrainingDaysCommand extends RitmoCommand {
     return CommandResult.ok(
       commandId: id,
       outputData: {'trainingDays': days},
-      inverseData: {'oldDaysJson': oldDaysJson, 'oldDaysPerWeek': profile.daysPerWeek},
+      inverseData: {'oldDays': oldDays, 'oldDaysPerWeek': profile.daysPerWeek},
     );
   }
 
   @override
   Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
-    final oldDaysJson = inverseData['oldDaysJson']?.toString();
+    final oldDaysRaw = inverseData['oldDays'] as List<dynamic>?;
     final oldDaysPerWeek = (inverseData['oldDaysPerWeek'] as num?)?.toInt() ?? 3;
-    if (oldDaysJson != null) {
+    if (oldDaysRaw != null) {
       final repo = SSProfileRepository.instance;
       final profile = await repo.getProfile();
       if (profile != null) {
         final newProfile = profile.copyWith(
           daysPerWeek: oldDaysPerWeek,
-          trainingDays: oldDaysJson,
+          trainingDays: oldDaysRaw.map((e) => (e as num).toInt()).toList(),
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         );
         await repo.saveProfile(newProfile);
@@ -946,9 +948,18 @@ class SportsSetSessionMinutesCommand extends RitmoCommand {
     final profile = await repo.getProfile();
     if (profile == null) return CommandResult.failure(commandId: id, errorMessage: 'پروفایل ورزشی یافت نشد.');
 
-    final oldDuration = profile.sessionDuration;
+    SessionDuration sessionDur = SessionDuration.medium45;
+    if (minutes <= 35) {
+      sessionDur = SessionDuration.short30;
+    } else if (minutes <= 50) {
+      sessionDur = SessionDuration.medium45;
+    } else {
+      sessionDur = SessionDuration.long60;
+    }
+
+    final oldDurationName = profile.sessionDuration.name;
     final newProfile = profile.copyWith(
-      sessionDuration: minutes,
+      sessionDuration: sessionDur,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
     );
     await repo.saveProfile(newProfile);
@@ -956,19 +967,23 @@ class SportsSetSessionMinutesCommand extends RitmoCommand {
     return CommandResult.ok(
       commandId: id,
       outputData: {'sessionDuration': minutes},
-      inverseData: {'oldDuration': oldDuration},
+      inverseData: {'oldDurationName': oldDurationName},
     );
   }
 
   @override
   Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
-    final oldDuration = (inverseData['oldDuration'] as num?)?.toInt();
-    if (oldDuration != null) {
+    final oldDurationName = inverseData['oldDurationName']?.toString();
+    if (oldDurationName != null) {
       final repo = SSProfileRepository.instance;
       final profile = await repo.getProfile();
       if (profile != null) {
+        final oldDur = SessionDuration.values.firstWhere(
+          (d) => d.name == oldDurationName,
+          orElse: () => SessionDuration.medium45,
+        );
         await repo.saveProfile(profile.copyWith(
-          sessionDuration: oldDuration,
+          sessionDuration: oldDur,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         ));
       }
@@ -1026,9 +1041,16 @@ class SportsSetFocusCommand extends RitmoCommand {
     final profile = await repo.getProfile();
     if (profile == null) return CommandResult.failure(commandId: id, errorMessage: 'پروفایل ورزشی یافت نشد.');
 
-    final oldFocus = profile.focusAreas;
+    final focusAreas = focusList.map((str) {
+      return BodyArea.values.firstWhere(
+        (b) => b.name.toUpperCase() == str.toUpperCase(),
+        orElse: () => BodyArea.fullBody,
+      );
+    }).toList();
+
+    final oldFocusNames = profile.focusAreas.map((b) => b.name).toList();
     final newProfile = profile.copyWith(
-      focusAreas: focusList.join(','),
+      focusAreas: focusAreas,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
     );
     await repo.saveProfile(newProfile);
@@ -1036,17 +1058,23 @@ class SportsSetFocusCommand extends RitmoCommand {
     return CommandResult.ok(
       commandId: id,
       outputData: {'focusAreas': focusList},
-      inverseData: {'oldFocus': oldFocus},
+      inverseData: {'oldFocusNames': oldFocusNames},
     );
   }
 
   @override
   Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
-    final oldFocus = inverseData['oldFocus']?.toString();
-    if (oldFocus != null) {
+    final oldFocusNames = inverseData['oldFocusNames'] as List<dynamic>?;
+    if (oldFocusNames != null) {
       final repo = SSProfileRepository.instance;
       final profile = await repo.getProfile();
       if (profile != null) {
+        final oldFocus = oldFocusNames.map((n) {
+          return BodyArea.values.firstWhere(
+            (b) => b.name == n.toString(),
+            orElse: () => BodyArea.fullBody,
+          );
+        }).toList();
         await repo.saveProfile(profile.copyWith(
           focusAreas: oldFocus,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
@@ -1133,9 +1161,11 @@ class SportsSetRestDayCommand extends RitmoCommand {
       final repo = SsPrescriptionRepository.instance;
       final existing = await repo.getPrescriptionForDate(dateIso);
       if (existing != null) {
+        final slot = SlotType.fromCode(oldSlotType);
+        final status = PrescriptionStatus.fromCode(oldStatus);
         await repo.savePrescription(existing.copyWith(
-          slotType: SlotType.parse(oldSlotType),
-          status: PrescriptionStatus.parse(oldStatus),
+          slotType: slot,
+          status: status,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         ));
       }

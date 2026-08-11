@@ -16,6 +16,9 @@ import 'package:ritmo/core/database/schema/tables/zone_tables.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SchemaManager {
+  // ⚠️ قانون: createAll() همیشه باید آینهی دقیق آخرین نسخهی اسکیما باشد.
+  // هر مهاجرتی که جدول یا ستون جدید میسازد، باید همزمان اینجا هم منعکس شود.
+  // در غیر این صورت نصبهای تازه و دستگاههای ارتقایافته دو اسکیمای متفاوت خواهند داشت.
   static Future<void> createAll(Database db) async {
     await RoutineTables.create(db);
     await WorshipTables.create(db);

@@ -13,7 +13,7 @@ import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/domain/completion/completion_gateway.dart';
 import 'package:ritmo/core/domain/completion/completion_request.dart';
-import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
+import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
 
 export 'package:ritmo/features/worship/logic/prayer_times.dart';
 
@@ -44,15 +44,20 @@ class WorshipDay {
 class WorshipPracticeState {
   const WorshipPracticeState({
     required this.practice,
+    required this.dateStr,
     required this.countDone,
     required this.countTarget,
     this.resultType,
-    this.qualityWindow,
+    this.quality,
     this.windowStart,
     this.windowEnd,
   });
 
   final WorshipPractice practice;
+
+  /// Reference date for this state in YYYY-MM-DD format.
+  final String dateStr;
+
   final int countDone;
   final int countTarget;
 
@@ -60,7 +65,7 @@ class WorshipPracticeState {
   final String? resultType;
 
   /// EARLY | NORMAL | LATE | null
-  final String? qualityWindow;
+  final String? quality;
 
   /// Prayer window start (prayers only)
   final DateTime? windowStart;
@@ -68,18 +73,28 @@ class WorshipPracticeState {
   /// Prayer window end (prayers only)
   final DateTime? windowEnd;
 
+  /// Only used for legacy rows prior to backfill of worship_completions table.
+  /// Strictly date-scoped to avoid cross-date state leakage.
+  int get _legacyDailyDone {
+    if (resultType != null) return 0;
+    if (practice.dailyDoneDate == null) return 0;
+    if (practice.dailyDoneDate != dateStr) return 0;
+    return practice.dailyDone;
+  }
+
+  bool get isQada => resultType == 'QADA_ADDED' || quality == 'QADA';
+
   bool get isDone =>
-      resultType == 'DONE' ||
-      (countDone >= countTarget && countTarget > 0) ||
-      practice.dailyDone == 1;
+      !isQada &&
+      (resultType == 'DONE' ||
+          (resultType != null && countTarget > 0 && countDone >= countTarget) ||
+          _legacyDailyDone >= 1);
 
   bool get isSkipped =>
-      resultType == 'SKIPPED' ||
-      resultType == 'QADA_ADDED' ||
-      practice.dailyDone == -1;
+      !isQada && (resultType == 'SKIPPED' || _legacyDailyDone == -1);
 
   bool get isMissed => resultType == 'MISSED';
-  bool get isPending => !isDone && !isSkipped && !isMissed;
+  bool get isPending => !isDone && !isSkipped && !isMissed && !isQada;
 }
 
 /// Result of a worship log operation — never throws for business paths.
@@ -127,6 +142,7 @@ class WorshipDayContext {
     this.isTraveller = false,
     this.fastingExempt = false,
     this.prayerExempt = false,
+    this.exemptPrayers = const [],
     this.reason,
   });
 
@@ -136,6 +152,7 @@ class WorshipDayContext {
       isTraveller: (m['isTraveller'] as int? ?? 0) == 1,
       fastingExempt: (m['fastingExempt'] as int? ?? 0) == 1,
       prayerExempt: (m['prayerExempt'] as int? ?? 0) == 1,
+      exemptPrayers: (m['exemptPrayers'] as String?)?.split(',').where((s) => s.isNotEmpty).toList() ?? [],
       reason: m['reason'] as String?,
     );
   }
@@ -144,6 +161,7 @@ class WorshipDayContext {
   final bool isTraveller;
   final bool fastingExempt;
   final bool prayerExempt;
+  final List<String> exemptPrayers;
 
   /// TRAVEL | MENSTRUATION | ILLNESS | MANUAL
   final String? reason;
@@ -157,6 +175,7 @@ class WorshipDayContext {
       'isTraveller': isTraveller ? 1 : 0,
       'fastingExempt': fastingExempt ? 1 : 0,
       'prayerExempt': prayerExempt ? 1 : 0,
+      'exemptPrayers': exemptPrayers.join(','),
       'reason': reason,
       'createdAt': now,
       'updatedAt': now,
@@ -297,6 +316,62 @@ class WorshipEngine {
   /// Returns Hijri date for [date] — always instant, always offline (W-6).
   HijriDate hijriFor(DateTime date, {int offsetDays = 0}) =>
       HijriCalendarCalculator.hijriFromGregorian(date, offsetDays: offsetDays);
+
+  /// Loads active scheduled mustahab practices for [date]
+  Future<List<WorshipPractice>> loadActiveMustahabs(DateTime date) async {
+    final db = await DatabaseHelper.instance.database;
+    final weekdayIndex = date.weekday;
+    final weekdayStr = weekdayIndex.toString();
+
+    final results = await db.query(
+      'worship_practices',
+      where: "practiceType = 'MUSTAHAB' AND isActive = 1",
+      orderBy: 'sortOrder ASC, createdAt DESC',
+    );
+    final allActive = results.map(WorshipPractice.fromMap).toList();
+
+    return allActive.where((p) {
+      final freq = (p.reminderFrequency).toUpperCase();
+      if (freq.isEmpty || freq == 'DAILY') return true;
+      if (freq == 'WEEKLY') {
+        final days = p.reminderDaysOfWeek;
+        if (days == null || days.isEmpty) return true;
+        if (days.contains(weekdayStr)) return true;
+        if (weekdayIndex == DateTime.thursday && (days.contains('Thursday') || days.contains('4'))) return true;
+        if (weekdayIndex == DateTime.friday && (days.contains('Friday') || days.contains('5'))) return true;
+        return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  /// Loads active mustahab practices that are specifically scheduled for [date] (excluding general daily mustahabs).
+  Future<List<WorshipPractice>> loadSpecificDayMustahabs(DateTime date) async {
+    final db = await DatabaseHelper.instance.database;
+    final weekdayIndex = date.weekday;
+    final weekdayStr = weekdayIndex.toString();
+
+    final results = await db.query(
+      'worship_practices',
+      where: "practiceType = 'MUSTAHAB' AND isActive = 1",
+      orderBy: 'sortOrder ASC, createdAt DESC',
+    );
+    final allActive = results.map(WorshipPractice.fromMap).toList();
+
+    return allActive.where((p) {
+      final freq = (p.reminderFrequency).toUpperCase();
+      if (freq.isEmpty || freq == 'DAILY') return false;
+      if (freq == 'WEEKLY' || freq == 'SPECIFIC_DAYS') {
+        final days = p.reminderDaysOfWeek;
+        if (days == null || days.isEmpty) return false;
+        if (days.contains(weekdayStr)) return true;
+        if (weekdayIndex == DateTime.thursday && (days.contains('Thursday') || days.contains('4'))) return true;
+        if (weekdayIndex == DateTime.friday && (days.contains('Friday') || days.contains('5'))) return true;
+        return false;
+      }
+      return false;
+    }).toList();
+  }
 
   // ── Prayer times (W-5) ───────────────────────────────────────────────────
 
@@ -556,18 +631,21 @@ class WorshipEngine {
     try {
       practiceRows = await db.query(
         'worship_practices',
-        where: 'isActive = 1 AND (userDisabledAt IS NULL)',
-        orderBy: 'sortOrder ASC',
+        where: 'isActive = 1 AND userDisabledAt IS NULL',
+        orderBy: 'id ASC',
       );
     } catch (_) {
       try {
         practiceRows = await db.query(
           'worship_practices',
           where: 'isActive = 1',
-          orderBy: 'sortOrder ASC',
+          orderBy: 'id ASC',
         );
       } catch (_) {
-        practiceRows = await db.query('worship_practices');
+        practiceRows = await db.query(
+          'worship_practices',
+          orderBy: 'id ASC',
+        );
       }
     }
 
@@ -597,22 +675,23 @@ class WorshipEngine {
 
       // Compute prayer window start/end
       DateTime? winStart, winEnd;
-      String? qualityWindow;
+      String? quality;
       if (practice.practiceType == 'PRAYER') {
         final slot = PrayerTimeline.getSlotFor(practice.subType ?? '', times);
         winStart = slot?.at;
         winEnd = slot != null ? PrayerTimeline.deadlineForSlot(slot.key, times) : null;
         if (comp != null) {
-          qualityWindow = comp['qualityWindow'] as String?;
+          quality = comp['quality'] as String? ?? comp['qualityWindow'] as String?;
         }
       }
 
       return WorshipPracticeState(
         practice: practice,
+        dateStr: cacheKey,
         countDone: comp != null ? (comp['countDone'] as int? ?? 0) : 0,
         countTarget: practice.dailyTarget,
         resultType: comp != null ? comp['resultType'] as String? : null,
-        qualityWindow: qualityWindow,
+        quality: quality,
         windowStart: winStart,
         windowEnd: winEnd,
       );
@@ -669,6 +748,15 @@ class WorshipEngine {
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       final recordId = 'wc_${practiceId}_$dateStr';
 
+      final now = DateTime.now();
+      final todayStr = _ds(now);
+      if (dateStr.compareTo(todayStr) > 0) {
+        return WorshipLogBlocked(
+          'NOT_YET_DUE',
+          'ثبت عبادت برای روزهای آینده امکان‌پذیر نیست.',
+        );
+      }
+
       // Load practice for metadata
       final practiceRows = await db.query(
         'worship_practices',
@@ -681,8 +769,6 @@ class WorshipEngine {
       final practiceType = practice?.practiceType ?? 'PRAYER';
 
       // Time-gating & Quality window for prayers
-      final now = DateTime.now();
-      final todayStr = _ds(now);
       final isToday = dateStr == todayStr;
 
       if (practiceType == 'PRAYER' && practice != null) {
@@ -711,13 +797,27 @@ class WorshipEngine {
         }
       }
 
+      // Incremental counting (E-5)
+      var currentCount = 0;
+      final existingRows = await db.query(
+        'worship_completions',
+        where: 'practiceId = ? AND dateStr = ?',
+        whereArgs: [practiceId, dateStr],
+      );
+      if (existingRows.isNotEmpty) {
+        currentCount = existingRows.first['countDone'] as int? ?? 0;
+      }
+      
+      final newCount = (currentCount + amount).clamp(0, dailyTarget);
+      final isDone = newCount >= dailyTarget;
+
       final completionRow = <String, dynamic>{
         'id': recordId,
         'practiceId': practiceId,
         'dateStr': dateStr,
         'practiceType': practiceType,
-        'resultType': amount >= dailyTarget ? 'DONE' : 'PARTIAL',
-        'countDone': amount,
+        'resultType': isDone ? 'DONE' : 'PARTIAL',
+        'countDone': newCount,
         'countTarget': dailyTarget,
         'loggedAt': nowMs,
         'createdAt': nowMs,
@@ -730,13 +830,15 @@ class WorshipEngine {
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
 
-        // Write dailyDone as a write-only cache (never read in business logic)
-        await txn.update(
-          'worship_practices',
-          {'dailyDone': amount, 'dailyDoneDate': dateStr, 'updatedAt': nowMs},
-          where: 'id = ?',
-          whereArgs: [practiceId],
-        );
+        if (isToday) {
+          // Write dailyDone as a write-only cache for today (never read in business logic)
+          await txn.update(
+            'worship_practices',
+            {'dailyDone': newCount, 'dailyDoneDate': dateStr, 'updatedAt': nowMs},
+            where: 'id = ?',
+            whereArgs: [practiceId],
+          );
+        }
       });
 
       invalidate(date: date);
@@ -767,6 +869,15 @@ class WorshipEngine {
     try {
       final db = await DatabaseHelper.instance.database;
       final dateStr = _ds(date);
+      final todayStr = _ds(DateTime.now());
+
+      if (dateStr.compareTo(todayStr) > 0) {
+        return WorshipLogBlocked(
+          'NOT_YET_DUE',
+          'ثبت عبادت برای روزهای آینده امکان‌پذیر نیست.',
+        );
+      }
+
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       final recordId = 'wc_${practiceId}_$dateStr';
 
@@ -778,7 +889,7 @@ class WorshipEngine {
       );
       final practice = practiceRows.isNotEmpty ? WorshipPractice.fromMap(practiceRows.first) : null;
       final practiceType = practice?.practiceType ?? (practiceId.contains('fasting') ? 'FASTING' : 'PRAYER');
-      final debtType = practiceType == 'FASTING' ? 'FASTING' : 'PRAYER';
+      final debtType = practiceType == 'FASTING' ? 'FASTING' : (practiceType == 'MUSTAHAB' ? 'MUSTAHAB' : 'PRAYER');
       final debtId = 'debt_${debtType}_$practiceId';
 
       await db.transaction((txn) async {
@@ -800,26 +911,50 @@ class WorshipEngine {
 
         if (addToQada) {
           // Deterministic debt ID — no timestamp, no duplicates (W-10)
-          await txn.rawInsert('''
-            INSERT INTO worship_debts
-              (id, debtType, sourcePracticeId, title,
-               totalCount, remainingCount, dailyTarget,
-               autoCreated, isArchived, createdAt, updatedAt)
-            SELECT ?, ?, ?, title, 1, 1, 1, 1, 0, ?, ?
-            FROM worship_practices WHERE id = ?
-            ON CONFLICT(id) DO UPDATE SET
-              totalCount = totalCount + 1,
-              remainingCount = remainingCount + 1,
-              updatedAt = excluded.updatedAt
-          ''', [debtId, debtType, practiceId, nowMs, nowMs, practiceId]);
+          final existingDebt = await txn.query('worship_debts', where: 'id = ?', whereArgs: [debtId]);
+          if (existingDebt.isNotEmpty) {
+            await txn.rawUpdate('''
+              UPDATE worship_debts
+              SET totalCount = totalCount + 1,
+                  remainingCount = remainingCount + 1,
+                  updatedAt = ?
+              WHERE id = ?
+            ''', [nowMs, debtId]);
+          } else {
+            final practiceRows = await txn.query(
+              'worship_practices',
+              columns: ['title'],
+              where: 'id = ?',
+              whereArgs: [practiceId],
+            );
+            final title = practiceRows.isNotEmpty && practiceRows.first['title'] != null
+                ? practiceRows.first['title'] as String
+                : (practiceType == 'FASTING' ? 'روزه قضا' : 'نماز قضا');
+
+            await txn.insert('worship_debts', {
+              'id': debtId,
+              'debtType': debtType,
+              'sourcePracticeId': practiceId,
+              'title': title,
+              'totalCount': 1,
+              'remainingCount': 1,
+              'dailyTarget': 1,
+              'autoCreated': 1,
+              'isArchived': 0,
+              'createdAt': nowMs,
+              'updatedAt': nowMs,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
+          }
         }
 
-        await txn.update(
-          'worship_practices',
-          {'dailyDone': -1, 'dailyDoneDate': dateStr, 'updatedAt': nowMs},
-          where: 'id = ?',
-          whereArgs: [practiceId],
-        );
+        if (dateStr == todayStr) {
+          await txn.update(
+            'worship_practices',
+            {'dailyDone': -1, 'dailyDoneDate': dateStr, 'updatedAt': nowMs},
+            where: 'id = ?',
+            whereArgs: [practiceId],
+          );
+        }
       });
 
       invalidate(date: date);
@@ -848,6 +983,7 @@ class WorshipEngine {
     try {
       final db = await DatabaseHelper.instance.database;
       final dateStr = _ds(date);
+      final todayStr = _ds(DateTime.now());
       final recordId = 'wc_${practiceId}_$dateStr';
       final nowMs = DateTime.now().millisecondsSinceEpoch;
 
@@ -870,15 +1006,17 @@ class WorshipEngine {
           whereArgs: [recordId],
         );
 
-        await txn.update(
-          'worship_practices',
-          {'dailyDone': 0, 'dailyDoneDate': dateStr, 'updatedAt': nowMs},
-          where: 'id = ?',
-          whereArgs: [practiceId],
-        );
+        if (dateStr == todayStr) {
+          await txn.update(
+            'worship_practices',
+            {'dailyDone': 0, 'dailyDoneDate': dateStr, 'updatedAt': nowMs},
+            where: 'id = ?',
+            whereArgs: [practiceId],
+          );
+        }
 
         if (wasQada) {
-          final debtType = practiceType == 'FASTING' ? 'FASTING' : 'PRAYER';
+          final debtType = practiceType == 'FASTING' ? 'FASTING' : (practiceType == 'MUSTAHAB' ? 'MUSTAHAB' : 'PRAYER');
           final debtId = 'debt_${debtType}_$practiceId';
           await txn.rawUpdate('''
             UPDATE worship_debts
@@ -1008,11 +1146,16 @@ class WorshipEngine {
           isTraveller INTEGER NOT NULL DEFAULT 0,
           fastingExempt INTEGER NOT NULL DEFAULT 0,
           prayerExempt INTEGER NOT NULL DEFAULT 0,
+          exemptPrayers TEXT,
           reason TEXT,
           createdAt TEXT NOT NULL,
           updatedAt TEXT NOT NULL
         );
       ''');
+      // Add column if missing (for existing users)
+      try {
+        await db.execute('ALTER TABLE worship_day_context ADD COLUMN exemptPrayers TEXT;');
+      } catch (_) {}
     } catch (_) {}
   }
 
@@ -1022,6 +1165,62 @@ class WorshipEngine {
   }
 
   Future<WorshipDayContext> _loadDayContext(DatabaseExecutor db, DateTime date) async {
+    final suspended = await CycleConsentBridge.isWorshipSuspended(targetDate: date);
+    List<String> calculatedExemptPrayers = [];
+    bool isFullDayExempt = suspended;
+
+    if (suspended) {
+      final period = await CycleConsentBridge.getActivePeriod(targetDate: date);
+      if (period != null) {
+        final startStr = period['startDate'] as String?;
+        final endStr = period['endDate'] as String?;
+        
+        DateTime? startTime;
+        DateTime? endTime;
+        
+        if (startStr != null && startStr.contains('T')) {
+          startTime = DateTime.tryParse(startStr);
+        }
+        if (endStr != null && endStr.contains('T')) {
+          endTime = DateTime.tryParse(endStr);
+        }
+        
+        if (startTime != null || endTime != null) {
+          final times = await _prayerTimesFromDb(db, date);
+          isFullDayExempt = false;
+          
+          final prayersToCheck = [
+            {'key': 'FAJR', 'start': times.fajr, 'end': times.sunrise},
+            {'key': 'DHUHR', 'start': times.dhuhr, 'end': times.sunset},
+            {'key': 'ASR', 'start': times.asr, 'end': times.sunset},
+            {'key': 'MAGHRIB', 'start': times.maghrib, 'end': times.midnightShari},
+            {'key': 'ISHA', 'start': times.isha, 'end': times.midnightShari},
+          ];
+          
+          for (final p in prayersToCheck) {
+            final pStart = p['start'] as DateTime;
+            final pEnd = p['end'] as DateTime;
+            
+            bool exempt = true;
+            if (startTime != null && pStart.isBefore(startTime)) {
+              exempt = false; // Adhan was before period started, so it's obligatory
+            }
+            if (endTime != null && pEnd.isAfter(endTime)) {
+              exempt = false; // Deadline is after period ended, so it's obligatory
+            }
+            
+            if (exempt) {
+              calculatedExemptPrayers.add(p['key'] as String);
+            }
+          }
+          
+          if (calculatedExemptPrayers.length == 5) {
+            isFullDayExempt = true;
+          }
+        }
+      }
+    }
+
     try {
       await _ensureDayContextTable(db);
       final rows = await db.query(
@@ -1030,8 +1229,32 @@ class WorshipEngine {
         whereArgs: [_ds(date)],
         limit: 1,
       );
-      if (rows.isNotEmpty) return WorshipDayContext.fromMap(rows.first);
+      if (rows.isNotEmpty) {
+        final ctx = WorshipDayContext.fromMap(rows.first);
+        if (suspended || ctx.prayerExempt || ctx.reason == 'MENSTRUATION') {
+          return WorshipDayContext(
+            date: date,
+            isTraveller: ctx.isTraveller,
+            prayerExempt: isFullDayExempt,
+            exemptPrayers: isFullDayExempt ? [] : calculatedExemptPrayers,
+            fastingExempt: true,
+            reason: 'MENSTRUATION',
+          );
+        }
+        return ctx;
+      }
     } catch (_) {}
+
+    if (suspended) {
+      return WorshipDayContext(
+        date: date,
+        prayerExempt: isFullDayExempt,
+        exemptPrayers: isFullDayExempt ? [] : calculatedExemptPrayers,
+        fastingExempt: true,
+        reason: 'MENSTRUATION',
+      );
+    }
+
     return WorshipDayContext(date: date);
   }
 

@@ -6,7 +6,7 @@ class MigrationV75NotificationReliability extends Migration {
   int get version => 75;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     // 1. Column tracking native alarm registration success
     await safeAddColumn(db, 'pending_reminders', 'nativeScheduled', 'INTEGER DEFAULT 0');
 
@@ -36,5 +36,5 @@ class MigrationV75NotificationReliability extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

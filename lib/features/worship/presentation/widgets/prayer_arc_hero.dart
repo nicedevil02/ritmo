@@ -138,16 +138,31 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
 
     final hijriStr = widget.day.hijri.formatted;
 
-    // ── Next Prayer & Countdown ──
-    final slots = PrayerTimeline.slotsForTimes(times);
+    // ── Next Obligatory Prayer & Countdown (Respects Asr/Isha setting) ──
+    final prayerCandidates = <PrayerSlot>[
+      PrayerSlot(key: 'FAJR', titleFa: 'اذان صبح', at: times.fajr, isPrayer: true),
+      PrayerSlot(key: 'DHUHR', titleFa: 'اذان ظهر', at: times.dhuhr, isPrayer: true),
+      if (_showAsrIsha)
+        PrayerSlot(key: 'ASR', titleFa: 'اذان عصر', at: times.asr, isPrayer: true),
+      PrayerSlot(key: 'MAGHRIB', titleFa: 'اذان مغرب', at: times.maghrib, isPrayer: true),
+      if (_showAsrIsha)
+        PrayerSlot(key: 'ISHA', titleFa: 'اذان عشا', at: times.isha, isPrayer: true),
+    ];
+    prayerCandidates.sort((a, b) => a.at.compareTo(b.at));
+
     PrayerSlot? nextSlot;
-    for (final s in slots) {
+    for (final s in prayerCandidates) {
       if (s.at.isAfter(_now)) {
         nextSlot = s;
         break;
       }
     }
-    nextSlot ??= slots.first;
+    nextSlot ??= PrayerSlot(
+      key: 'FAJR',
+      titleFa: 'اذان صبح',
+      at: times.fajr.add(const Duration(days: 1)),
+      isPrayer: true,
+    );
 
     final diff = nextSlot.at.difference(_now);
     final hoursLeft = diff.inHours;
@@ -155,13 +170,13 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
 
     String countdownText;
     if (diff.isNegative) {
-      countdownText = 'در انتظار ثبت ${nextSlot.titleFa}';
-    } else if (hoursLeft > 0) {
-      countdownText = '$hoursLeft ساعت و $minsLeft دقیقه تا ${nextSlot.titleFa}';
-    } else if (minsLeft > 0) {
-      countdownText = '$minsLeft دقیقه تا ${nextSlot.titleFa}';
-    } else {
       countdownText = 'زمان ${nextSlot.titleFa} فرا رسید';
+    } else if (hoursLeft > 0) {
+      countdownText = toPersianDigits('$hoursLeft ساعت و $minsLeft دقیقه تا ${nextSlot.titleFa}');
+    } else if (minsLeft > 0) {
+      countdownText = toPersianDigits('$minsLeft دقیقه تا ${nextSlot.titleFa}');
+    } else {
+      countdownText = 'کمتر از یک دقیقه تا ${nextSlot.titleFa}';
     }
 
     final isTraveller = widget.day.context.isTraveller;
@@ -370,68 +385,68 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                                       child: Column(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          // Live Digital Clock
-                                          Text(
-                                            _formatTime(_now),
-                                            style: TextStyle(
-                                              fontSize: clockFontSize,
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: 1.0,
-                                              color: sky.textColor,
+                                            // Live Digital Clock with Roll-up upward animation
+                                            _RollUpClock(
+                                              time: _now,
+                                              style: TextStyle(
+                                                fontSize: clockFontSize,
+                                                fontWeight: FontWeight.w900,
+                                                letterSpacing: 1.0,
+                                                color: sky.textColor,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 3),
+                                            const SizedBox(height: 3),
 
-                                          // Countdown text
-                                          Text(
-                                            countdownText,
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: countdownFontSize,
-                                              fontWeight: FontWeight.bold,
-                                              color: sky.goldColor,
-                                              height: 1.15,
+                                            // Countdown text with Roll-up upward animation
+                                            _RollUpText(
+                                              text: countdownText,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: countdownFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: sky.goldColor,
+                                                height: 1.15,
+                                              ),
                                             ),
-                                          ),
 
-                                          const SizedBox(height: 4),
-                                          Divider(
-                                            height: 5,
-                                            indent: 14,
-                                            endIndent: 14,
-                                            color: sky.goldColor.withValues(alpha: 0.4),
-                                          ),
+                                            const SizedBox(height: 4),
+                                            Divider(
+                                              height: 5,
+                                              indent: 14,
+                                              endIndent: 14,
+                                              color: sky.goldColor.withValues(alpha: 0.4),
+                                            ),
 
-                                          // Integrated Triple Date
-                                          Text(
-                                            shamsiStr,
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: shamsiFontSize,
-                                              fontWeight: FontWeight.bold,
-                                              color: sky.textColor,
+                                            // Integrated Triple Date with Roll-up upward animation
+                                            _RollUpText(
+                                              text: shamsiStr,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: shamsiFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: sky.textColor,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 1),
-                                          Text(
-                                            hijriStr,
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: hijriFontSize,
-                                              fontWeight: FontWeight.bold,
-                                              color: sky.goldColor,
+                                            const SizedBox(height: 1),
+                                            _RollUpText(
+                                              text: hijriStr,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: hijriFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: sky.goldColor,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 1),
-                                          Text(
-                                            gregorianStr,
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: gregorianFontSize,
-                                              fontWeight: FontWeight.w600,
-                                              color: sky.textColor.withValues(alpha: 0.8),
+                                            const SizedBox(height: 1),
+                                            _RollUpText(
+                                              text: gregorianStr,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: gregorianFontSize,
+                                                fontWeight: FontWeight.w600,
+                                                color: sky.textColor.withValues(alpha: 0.8),
+                                              ),
                                             ),
-                                          ),
                                         ],
                                       ),
                                     ),
@@ -1174,3 +1189,221 @@ class _StarsPainter extends CustomPainter {
   bool shouldRepaint(covariant _StarsPainter old) =>
       old.starCount != starCount || old.opacity != opacity;
 }
+
+// ── 3D Cube Roll Single Digit (چرخش سه‌بعدی مکعبی به عقب: وجه پایین میاد روبرو) ──
+class _CubeRollDigit extends StatelessWidget {
+  const _CubeRollDigit({
+    super.key,
+    required this.digit,
+    required this.style,
+    this.duration = const Duration(milliseconds: 320),
+    this.curve = Curves.easeOutCubic,
+  });
+
+  final String digit;
+  final TextStyle style;
+  final Duration duration;
+  final Curve curve;
+
+  @override
+  Widget build(BuildContext context) {
+    final digitWidth = (style.fontSize ?? 20) * 0.62;
+    final digitHeight = (style.fontSize ?? 20) * 1.25;
+
+    return SizedBox(
+      width: digitWidth,
+      height: digitHeight,
+      child: AnimatedSwitcher(
+        duration: duration,
+        switchInCurve: curve,
+        switchOutCurve: curve,
+        layoutBuilder: (currentChild, previousChildren) {
+          return Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              ...previousChildren,
+              if (currentChild != null) currentChild,
+            ],
+          );
+        },
+        transitionBuilder: (child, animation) {
+          final isIncoming = (child.key as ValueKey<String>?)?.value == digit;
+
+          return AnimatedBuilder(
+            animation: animation,
+            builder: (context, _) {
+              final t = animation.value;
+              final double angle;
+              final double yShift;
+              final double opacity;
+
+              if (isIncoming) {
+                // Incoming digit starts tilted from bottom (+pi/2) and rotates forward to 0
+                angle = (1.0 - t) * (math.pi / 2);
+                yShift = (1.0 - t) * (digitHeight * 0.5);
+                opacity = (t * 1.5).clamp(0.0, 1.0);
+              } else {
+                // Outgoing digit tilts backward into screen (-pi/2) and moves up
+                angle = -(1.0 - t) * (math.pi / 2);
+                yShift = -(1.0 - t) * (digitHeight * 0.5);
+                opacity = (t * 1.5).clamp(0.0, 1.0);
+              }
+
+              final transform = Matrix4.identity()
+                ..setEntry(3, 2, 0.003) // 3D Perspective
+                ..translate(0.0, yShift, 0.0)
+                ..rotateX(angle);
+
+              return Transform(
+                transform: transform,
+                alignment: Alignment.center,
+                child: Opacity(
+                  opacity: opacity,
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
+        child: Text(
+          digit,
+          key: ValueKey<String>(digit),
+          textAlign: TextAlign.center,
+          style: style,
+        ),
+      ),
+    );
+  }
+}
+
+// ── 3D Cube Roll Digital Clock (Per-digit: فقط ارقام در حال تغییر می‌چرخند) ──
+class _RollUpClock extends StatelessWidget {
+  const _RollUpClock({
+    super.key,
+    required this.time,
+    required this.style,
+  });
+
+  final DateTime time;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final hh = time.hour.toString().padLeft(2, '0');
+    final mm = time.minute.toString().padLeft(2, '0');
+    final ss = time.second.toString().padLeft(2, '0');
+    final colonWidth = (style.fontSize ?? 20) * 0.32;
+
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Hours (Tens & Units separately)
+          _CubeRollDigit(digit: hh[0], style: style),
+          _CubeRollDigit(digit: hh[1], style: style),
+
+          SizedBox(
+            width: colonWidth,
+            child: Text(':', textAlign: TextAlign.center, style: style),
+          ),
+
+          // Minutes (Tens & Units separately)
+          _CubeRollDigit(digit: mm[0], style: style),
+          _CubeRollDigit(digit: mm[1], style: style),
+
+          SizedBox(
+            width: colonWidth,
+            child: Text(':', textAlign: TextAlign.center, style: style),
+          ),
+
+          // Seconds (Tens & Units separately - فقط یکان می‌چرخه، دهگان فقط سر ۱۰، ۲۰، ...)
+          _CubeRollDigit(digit: ss[0], style: style),
+          _CubeRollDigit(digit: ss[1], style: style),
+        ],
+      ),
+    );
+  }
+}
+
+// ── 3D Cube Roll Text (برای متون شمارش معکوس و تاریخ‌ها) ──
+class _RollUpText extends StatelessWidget {
+  const _RollUpText({
+    super.key,
+    required this.text,
+    required this.style,
+    this.textAlign = TextAlign.center,
+    this.duration = const Duration(milliseconds: 380),
+    this.curve = Curves.easeOutCubic,
+  });
+
+  final String text;
+  final TextStyle style;
+  final TextAlign textAlign;
+  final Duration duration;
+  final Curve curve;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: duration,
+      switchInCurve: curve,
+      switchOutCurve: curve,
+      layoutBuilder: (currentChild, previousChildren) {
+        return Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        );
+      },
+      transitionBuilder: (child, animation) {
+        final isIncoming = (child.key as ValueKey<String>?)?.value == text;
+
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (context, _) {
+            final t = animation.value;
+            final double angle;
+            final double yShift;
+            final double opacity;
+
+            if (isIncoming) {
+              angle = (1.0 - t) * (math.pi / 2);
+              yShift = (1.0 - t) * 14.0;
+              opacity = (t * 1.4).clamp(0.0, 1.0);
+            } else {
+              angle = -(1.0 - t) * (math.pi / 2);
+              yShift = -(1.0 - t) * 14.0;
+              opacity = (t * 1.4).clamp(0.0, 1.0);
+            }
+
+            final transform = Matrix4.identity()
+              ..setEntry(3, 2, 0.0025)
+              ..translate(0.0, yShift, 0.0)
+              ..rotateX(angle);
+
+            return Transform(
+              transform: transform,
+              alignment: Alignment.center,
+              child: Opacity(
+                opacity: opacity,
+                child: child,
+              ),
+            );
+          },
+        );
+      },
+      child: Text(
+        text,
+        key: ValueKey<String>(text),
+        textAlign: textAlign,
+        style: style,
+      ),
+    );
+  }
+}
+

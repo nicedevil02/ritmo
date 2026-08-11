@@ -7,11 +7,7 @@ import 'package:ritmo/core/domain/agenda/action_feedback.dart';
 import 'package:ritmo/core/domain/completion/completion_gateway.dart';
 import 'package:ritmo/core/domain/completion/completion_request.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
-import 'package:ritmo/features/worship/logic/prayer_timeline.dart';
-import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
-import 'package:sqflite/sqflite.dart';
 
 class WorshipDebtsSection extends StatefulWidget {
 
@@ -31,28 +27,23 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
   List<WorshipDebt> _archivedDebts = [];
   bool _showArchived = false;
 
-  // End of day prompt condition
-  bool _showEndDayPrompt = false;
-  List<String> _undonePrayerTitles = [];
-
   @override
   void initState() {
     super.initState();
-    _loadDebtsAndCheckPrompt();
+    _loadDebts();
   }
 
   @override
   void didUpdateWidget(WorshipDebtsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _loadDebtsAndCheckPrompt();
+    _loadDebts();
   }
 
-  Future<void> _loadDebtsAndCheckPrompt() async {
+  Future<void> _loadDebts() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
 
-      // 1. Load Debts
+      // Load Debts
       final results = await db.query('worship_debts');
       final list = results.map(WorshipDebt.fromMap).toList();
 
@@ -67,66 +58,10 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
         }
       }
 
-      // 2. Check if we should show the undone prayer prompt
-      var showPrompt = false;
-      final undone = <String>[];
-
-      final promptSettings = await db.query(
-        'app_settings',
-        where: "key = 'worship_debt_prompt_date'",
-        limit: 1,
-      );
-      final lastPromptDate = promptSettings.isNotEmpty ? promptSettings.first['value']! as String : '';
-
-      if (lastPromptDate != todayStr) {
-        final isMenstruating = await CycleConsentBridge.isWorshipSuspended();
-
-        final uncompleted = await db.rawQuery('''
-          SELECT p.id, p.title, p.practiceType, p.subType
-          FROM worship_practices p
-          WHERE p.isActive = 1
-          AND (p.practiceType = 'PRAYER' OR (p.practiceType = 'MUSTAHAB' AND p.allowQada = 1) OR p.practiceType = 'FASTING')
-          AND NOT EXISTS (
-            SELECT 1 FROM worship_completions c
-            WHERE c.practiceId = p.id AND c.dateStr = ?
-            AND c.resultType IN ('DONE','PARTIAL','QADA_ADDED')
-          )
-        ''', [todayStr]);
-
-        final now = DateTime.now();
-        final times = await WorshipEngine.instance.prayerTimes(now);
-
-        for (final p in uncompleted) {
-          final pType = p['practiceType'] as String;
-          final subType = ((p['subType'] as String?) ?? '').toUpperCase();
-
-          // Menstrual guard (W9): exempt mandatory prayers during menses, but suggest fasts
-          if (isMenstruating && pType == 'PRAYER') continue;
-
-          // Prayer deadline guard: Only prompt for prayers whose legal deadline HAS PASSED!
-          if (pType == 'PRAYER') {
-            final slotKey = subType.replaceAll('WP_', '');
-            final deadline = PrayerTimeline.deadlineForSlot(slotKey, times);
-            if (deadline != null && now.isBefore(deadline)) {
-              // Prayer deadline has NOT passed yet -> Prayer is not expired, do NOT prompt for Qada!
-              continue;
-            }
-          }
-
-          undone.add(p['title']! as String);
-        }
-
-        if (undone.isNotEmpty) {
-          showPrompt = true;
-        }
-      }
-
       if (mounted) {
         setState(() {
           _activeDebts = active;
           _archivedDebts = archived;
-          _showEndDayPrompt = showPrompt;
-          _undonePrayerTitles = undone;
           _isLoading = false;
         });
       }
@@ -167,7 +102,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
           );
         }
 
-        await _loadDebtsAndCheckPrompt();
+        await _loadDebts();
         widget.onChanged();
 
         if (mounted) {
@@ -204,93 +139,9 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
         whereArgs: [debt.id],
       );
 
-      await _loadDebtsAndCheckPrompt();
+      await _loadDebts();
     } catch (e) {
       debugPrint('Error updating debt target: $e');
-    }
-  }
-
-  Future<void> _dismissPrompt(bool accept) async {
-    unawaited(HapticFeedback.mediumImpact());
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
-
-      // 1. Mark prompt as completed for today in settings
-      await db.insert(
-        'app_settings',
-        {
-          'key': 'worship_debt_prompt_date',
-          'value': todayStr,
-          'updatedAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-
-      // 2. If accepted, add all undone prayers to debts
-      if (accept) {
-        for (final title in _undonePrayerTitles) {
-          final debtId = 'debt_auto_${title.hashCode}_$nowMs';
-          
-          final existing = await db.query(
-            'worship_debts',
-            where: 'debtType = ? AND title = ? AND isArchived = 0',
-            whereArgs: ['PRAYER', title],
-            limit: 1,
-          );
-
-          if (existing.isNotEmpty) {
-            final id = existing.first['id']! as String;
-            final currentTotal = existing.first['totalCount']! as int;
-            final currentRemaining = existing.first['remainingCount']! as int;
-
-            await db.update(
-              'worship_debts',
-              {
-                'totalCount': currentTotal + 1,
-                'remainingCount': currentRemaining + 1,
-                'updatedAt': nowMs,
-              },
-              where: 'id = ?',
-              whereArgs: [id],
-            );
-          } else {
-            await db.insert(
-              'worship_debts',
-              {
-                'id': debtId,
-                'debtType': 'PRAYER',
-                'title': title,
-                'totalCount': 1,
-                'remainingCount': 1,
-                'dailyTarget': 1,
-                'autoCreated': 1,
-                'isArchived': 0,
-                'createdAt': nowMs,
-                'updatedAt': nowMs,
-              },
-            );
-          }
-        }
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('نمازهای خوانده‌نشده امروز به لیست قضای شما اضافه شد.', style: TextStyle(fontFamily: 'Vazirmatn')),
-              backgroundColor: Color(0xffD4A843),
-            ),
-          );
-        }
-      }
-
-      setState(() {
-        _showEndDayPrompt = false;
-      });
-      await _loadDebtsAndCheckPrompt();
-      widget.onChanged();
-    } catch (e) {
-      debugPrint('Error dismissing prompt: $e');
     }
   }
 
@@ -302,7 +153,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
       builder: (context) {
         return _AddDebtSheet(
           onSaved: () {
-            _loadDebtsAndCheckPrompt();
+            _loadDebts();
             widget.onChanged();
           },
         );
@@ -327,68 +178,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. END OF DAY PROMPT
-          if (_showEndDayPrompt && _undonePrayerTitles.isNotEmpty) ...[
-            Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xff0b0b0e) : colors.card,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? const Color(0xffD4A843).withValues(alpha: 0.15) : const Color(0xffD4A843).withValues(alpha: 0.4), width: 1.5),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(CupertinoIcons.bell_fill, color: Color(0xffD4A843), size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        'ثبت نماز قضا',
-                        style: TextStyle(color: colors.textPrimary, fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary.withValues(alpha: 0.5), size: 16),
-                        onPressed: () => _dismissPrompt(false),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'امروز موفق به خواندن ${toPersianDigits(_undonePrayerTitles.length.toString())} نماز (${_undonePrayerTitles.join(' و ')}) نشدید. مایلید این موارد به قضا اضافه شود؟',
-                    style: TextStyle(color: colors.textSecondary, fontSize: 13.5, fontFamily: 'Vazirmatn'),
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => _dismissPrompt(false),
-                        child: Text('خیر، لازم نیست', style: TextStyle(color: colors.textSecondary.withValues(alpha: 0.6), fontSize: 13.5, fontFamily: 'Vazirmatn')),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xffD4A843),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        ),
-                        onPressed: () => _dismissPrompt(true),
-                        child: Text(
-                          'بله، اضافه کن',
-                          style: TextStyle(color: colors.textPrimary, fontSize: 13.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          // 2. ACTIVE DEBTS SECTION
+          // ACTIVE DEBTS SECTION
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

@@ -19,7 +19,8 @@ class WorshipDayStatus {
   final int? countTarget;
 
   bool get isDone => resultType == 'DONE';
-  bool get isSkipped => resultType == 'SKIPPED';
+  bool get isSkipped => resultType == 'SKIPPED' || resultType == 'QADA_ADDED';
+  bool get isQadaAdded => resultType == 'QADA_ADDED';
   bool get isMissed => resultType == 'MISSED';
 }
 
@@ -131,17 +132,62 @@ class WorshipCompletionRepository {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      // Sync derived dailyDone on worship_practices
-      await txn.update(
-        'worship_practices',
-        {
-          'dailyDone': countDone,
-          'dailyDoneDate': dateStr,
-          'updatedAt': nowMs,
-        },
-        where: 'id = ?',
-        whereArgs: [practiceId],
-      );
+      if (quality == PrayerLogQuality.qada) {
+        final debtType = practiceType == 'FASTING'
+            ? 'FASTING'
+            : (practiceType == 'MUSTAHAB' ? 'MUSTAHAB' : 'PRAYER');
+        final debtId = 'debt_${debtType}_$practiceId';
+
+        final existingDebt = await txn.query('worship_debts', where: 'id = ?', whereArgs: [debtId]);
+        if (existingDebt.isNotEmpty) {
+          await txn.rawUpdate('''
+            UPDATE worship_debts
+            SET totalCount = totalCount + 1,
+                remainingCount = remainingCount + 1,
+                updatedAt = ?
+            WHERE id = ?
+          ''', [nowMs, debtId]);
+        } else {
+          final practiceRows = await txn.query(
+            'worship_practices',
+            columns: ['title'],
+            where: 'id = ?',
+            whereArgs: [practiceId],
+          );
+          final title = practiceRows.isNotEmpty && practiceRows.first['title'] != null
+              ? practiceRows.first['title'] as String
+              : _defaultPracticeTitle(practiceId);
+
+          await txn.insert('worship_debts', {
+            'id': debtId,
+            'debtType': debtType,
+            'sourcePracticeId': practiceId,
+            'title': title,
+            'totalCount': 1,
+            'remainingCount': 1,
+            'dailyTarget': 1,
+            'autoCreated': 1,
+            'isArchived': 0,
+            'createdAt': nowMs,
+            'updatedAt': nowMs,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      }
+
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      if (dateStr == todayStr) {
+        // Sync derived dailyDone on worship_practices only for today
+        await txn.update(
+          'worship_practices',
+          {
+            'dailyDone': quality == PrayerLogQuality.qada ? -1 : countDone,
+            'dailyDoneDate': dateStr,
+            'updatedAt': nowMs,
+          },
+          where: 'id = ?',
+          whereArgs: [practiceId],
+        );
+      }
     });
 
     DayAgendaService.instance.invalidateDate(dateStr);
@@ -183,17 +229,20 @@ class WorshipCompletionRepository {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      // Sync derived dailyDone on worship_practices (-1 for skipped)
-      await txn.update(
-        'worship_practices',
-        {
-          'dailyDone': -1,
-          'dailyDoneDate': dateStr,
-          'updatedAt': nowMs,
-        },
-        where: 'id = ?',
-        whereArgs: [practiceId],
-      );
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      if (dateStr == todayStr) {
+        // Sync derived dailyDone on worship_practices (-1 for skipped)
+        await txn.update(
+          'worship_practices',
+          {
+            'dailyDone': -1,
+            'dailyDoneDate': dateStr,
+            'updatedAt': nowMs,
+          },
+          where: 'id = ?',
+          whereArgs: [practiceId],
+        );
+      }
     });
 
     DayAgendaService.instance.invalidateDate(dateStr);
@@ -230,16 +279,19 @@ class WorshipCompletionRepository {
         whereArgs: [recordId],
       );
 
-      await txn.update(
-        'worship_practices',
-        {
-          'dailyDone': 0,
-          'dailyDoneDate': dateStr,
-          'updatedAt': nowMs,
-        },
-        where: 'id = ?',
-        whereArgs: [practiceId],
-      );
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      if (dateStr == todayStr) {
+        await txn.update(
+          'worship_practices',
+          {
+            'dailyDone': 0,
+            'dailyDoneDate': dateStr,
+            'updatedAt': nowMs,
+          },
+          where: 'id = ?',
+          whereArgs: [practiceId],
+        );
+      }
     });
 
     DayAgendaService.instance.invalidateDate(dateStr);
@@ -269,29 +321,43 @@ class WorshipCompletionRepository {
     DateTime? currentExpected;
 
     for (final row in rows) {
-      final resType = row['resultType'] as String;
-      if (resType != 'DONE') break;
-
       final dStr = row['dateStr'] as String;
       final date = DateTime.tryParse(dStr);
       if (date == null) break;
 
-      if (currentExpected == null) {
-        currentExpected = date;
-        streak++;
-      } else {
-        final expectedPrev = currentExpected.subtract(const Duration(days: 1));
-        if (date.year == expectedPrev.year &&
-            date.month == expectedPrev.month &&
-            date.day == expectedPrev.day) {
-          streak++;
-          currentExpected = date;
-        } else {
+      if (currentExpected != null) {
+        final expectedPrev = currentExpected!.subtract(const Duration(days: 1));
+        if (date.year != expectedPrev.year ||
+            date.month != expectedPrev.month ||
+            date.day != expectedPrev.day) {
           break;
         }
       }
+
+      final resType = row['resultType'] as String;
+
+      if (resType == 'SKIPPED' || resType == 'QADA_ADDED') {
+        currentExpected = date;
+        continue;
+      }
+
+      if (resType != 'DONE') break;
+
+      streak++;
+      currentExpected = date;
     }
 
     return streak;
+  }
+
+  String _defaultPracticeTitle(String id) {
+    final lower = id.toLowerCase();
+    if (lower.contains('fajr')) return 'نماز صبح';
+    if (lower.contains('dhuhr')) return 'نماز ظهر';
+    if (lower.contains('asr')) return 'نماز عصر';
+    if (lower.contains('maghrib')) return 'نماز مغرب';
+    if (lower.contains('isha')) return 'نماز عشا';
+    if (lower.contains('fasting')) return 'روزه قضا';
+    return 'نماز قضا';
   }
 }

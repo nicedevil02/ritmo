@@ -6,7 +6,7 @@ class MigrationV72Cleanup extends Migration {
   int get version => 72;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     // 1. Drop unused zone / realm tables
     await db.execute('DROP TABLE IF EXISTS zones;');
     await db.execute('DROP TABLE IF EXISTS zone_schedules;');
@@ -16,5 +16,5 @@ class MigrationV72Cleanup extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

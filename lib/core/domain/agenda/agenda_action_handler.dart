@@ -7,7 +7,6 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/features/worship/logic/prayer_timeline.dart';
-import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
@@ -232,10 +231,42 @@ class AgendaActionHandler {
     _invalidateAndNotify(dateStr, 'WorshipUpdated', {'date': dateStr});
   }
 
+  int _resolveToggleAmount(AgendaItem item, {required bool isDone}) {
+    return isDone ? 999999 : 0; // در logDone به dailyTarget کلمپ می‌شود
+  }
+
   Future<void> toggleAgendaItem({
     required AgendaItem item,
     required bool isDone,
   }) async {
+    if (item.domain == AgendaDomain.mustahab) {
+      final date = DateTime.tryParse(item.dateStr) ?? DateTime.now();
+      if (isDone) {
+        final res = await WorshipEngine.instance.logDone(
+          practiceId: item.sourceId,
+          date: date,
+          amount: _resolveToggleAmount(item, isDone: true),
+        );
+        if (res is WorshipLogFailed) {
+          throw Exception(res.error.toString());
+        } else if (res is WorshipLogBlocked) {
+          throw Exception(res.userMessage);
+        }
+      } else {
+        await WorshipEngine.instance.clearLog(
+          practiceId: item.sourceId,
+          date: date,
+        );
+      }
+
+      _invalidateAndNotify(item.dateStr, 'WorshipUpdated', {
+        'date': item.dateStr,
+        'practiceId': item.sourceId,
+        'isDone': isDone,
+      });
+      return;
+    }
+
     final db = await DatabaseHelper.instance.database;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
@@ -306,20 +337,6 @@ class AgendaActionHandler {
               whereArgs: [cycleDebtId],
             );
           }
-        }
-      } else if (item.domain == AgendaDomain.mustahab) {
-        if (isDone) {
-          final date = DateTime.tryParse(item.dateStr) ?? DateTime.now();
-          await WorshipEngine.instance.logDone(
-            practiceId: item.sourceId,
-            date: date,
-          );
-        } else {
-          final date = DateTime.tryParse(item.dateStr) ?? DateTime.now();
-          await WorshipEngine.instance.clearLog(
-            practiceId: item.sourceId,
-            date: date,
-          );
         }
       }
     });

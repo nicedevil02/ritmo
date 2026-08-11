@@ -42,7 +42,7 @@ class OccasionsCalendarSource {
       for (final occ in list) {
         result.add(CalendarOccasion(
           title: occ.title,
-          isHoliday: occ.isReligiousHoliday,
+          isHoliday: occ.isHoliday,
           category: occ.category.name,
           recommendedAmal: occ.recommendedAmal,
         ));

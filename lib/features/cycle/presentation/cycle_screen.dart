@@ -6,6 +6,9 @@ import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'dart:convert';
 import 'dart:ui';
+import 'package:ritmo/features/worship/logic/worship_engine.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -445,9 +448,22 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       );
 
       if (confirm ?? false) {
+        if (!mounted) return;
+        final time = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.now(),
+          helpText: 'ساعت شروع خونریزی را مشخص کنید',
+          confirmText: 'تایید',
+          cancelText: 'انصراف',
+        );
+        if (time == null || !mounted) return;
+        
+        final now = DateTime.now();
+        final startDateTime = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+        
         await db.insert('cycle_periods', {
           'id': 'period_$nowMs',
-          'startDate': todayStr,
+          'startDate': startDateTime.toIso8601String(),
           'endDate': null,
           'flowIntensity': 'MEDIUM',
           'isPredicted': 0,
@@ -470,11 +486,24 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       );
 
       if (confirm ?? false) {
+        if (!mounted) return;
+        final time = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.now(),
+          helpText: 'ساعت پایان خونریزی (پاک شدن) را مشخص کنید',
+          confirmText: 'تایید',
+          cancelText: 'انصراف',
+        );
+        if (time == null || !mounted) return;
+        
+        final now = DateTime.now();
+        final endDateTime = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+        
         // Find current ongoing period
         final activePeriods = await db.query(
           'cycle_periods',
           where: 'startDate <= ? AND endDate IS NULL',
-          whereArgs: [todayStr],
+          whereArgs: ['${todayStr}T23:59:59'],
           orderBy: 'startDate DESC',
           limit: 1,
         );
@@ -484,7 +513,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           await db.update(
             'cycle_periods',
             {
-              'endDate': todayStr,
+              'endDate': endDateTime.toIso8601String(),
               'updatedAt': nowMs,
             },
             where: 'id = ?',
@@ -3067,6 +3096,14 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 },
                 conflictAlgorithm: ConflictAlgorithm.replace,
               );
+              WorshipEngine.instance.invalidate();
+              final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+              DayAgendaService.instance.invalidateDate(todayStr);
+              RitmoEventBus().fire(RitmoEvent(
+                type: 'WorshipUpdated',
+                timestamp: DateTime.now(),
+                payload: {'date': todayStr},
+              ));
               await _loadData();
               if (setSheetState != null) setSheetState(() {});
             },

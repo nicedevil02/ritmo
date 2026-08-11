@@ -6,7 +6,7 @@ class MigrationV73StudySchema extends Migration {
   int get version => 73;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     // 1. Add columns to konkur_subjects, konkur_topics, konkur_study_sessions
     await safeAddColumn(db, 'konkur_subjects', 'origin', "TEXT NOT NULL DEFAULT 'USER'");
     await safeAddColumn(db, 'konkur_subjects', 'emoji', 'TEXT');
@@ -57,5 +57,5 @@ class MigrationV73StudySchema extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

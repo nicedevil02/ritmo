@@ -1,26 +1,21 @@
-import 'package:ritmo/core/domain/agenda/sources/worship_agenda_source.dart';
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
-import 'package:ritmo/core/domain/agenda/routine_agenda_source.dart';
-import 'package:ritmo/core/domain/agenda/sources/sports_agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/routine_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/task_agenda_source.dart';
-import 'package:ritmo/core/domain/engines/cycle_engine.dart';
+import 'package:ritmo/core/domain/agenda/sources/worship_agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/sports_agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/medicine_agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/goal_steps_agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/course_agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/konkur_agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/cycle_agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
-import 'package:ritmo/features/courses/logic/courses_repository.dart';
-import 'package:ritmo/features/courses/models/course_models.dart';
-import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
-import 'package:ritmo/features/konkur/models/konkur_models.dart';
-import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
-import 'package:ritmo/features/worship/models/worship_models.dart';
-import 'package:shamsi_date/shamsi_date.dart';
-import 'package:sqflite/sqflite.dart';
 
 /// 🔑 The single source of truth for "what is on a day".
 ///
@@ -135,8 +130,24 @@ class DayAgendaService {
 
     try {
       final ctx = await _buildContext(start, end, opts);
+      
+      DateTime? appStartDate;
+      if (ctx.settingsMap['app_start_date'] != null) {
+        final parsed = DateTime.tryParse(ctx.settingsMap['app_start_date']!);
+        if (parsed != null) {
+          appStartDate = DateTime(parsed.year, parsed.month, parsed.day);
+        }
+      }
+
       for (final date in dates) {
         final ds = _dateStr(date);
+        
+        // ROOT FIX: Avoid generating routines/prayers for days before the app was installed.
+        if (appStartDate != null && date.isBefore(appStartDate)) {
+          result[ds] = DayAgenda.empty(ds);
+          continue;
+        }
+
         // Cache only the full, unfiltered agenda; filtered queries are rebuilt.
         if (opts.domains.isEmpty && opts.includeCompleted && _cache.containsKey(ds)) {
           result[ds] = _cache[ds]!;
@@ -181,7 +192,6 @@ class DayAgendaService {
     final sportsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_supplementary_sports_enabled');
     final medicineEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_medicine_enabled');
 
-    // Cycle gates mirror the Home dashboard (conservative: dashboard consent).
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
     final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
     final cycleConsent = settingsMap['cycle_consent_dashboard'] == 'true';
@@ -190,101 +200,33 @@ class DayAgendaService {
     final cycleAllowed =
         isFemale && cycleEnabled && cycleConsent && cycleSetupDone && showCycleInCalendar;
 
-    final routineSource = await RoutineAgendaSource.load(db, settingsMap);
+    final startStr = _dateStr(start);
+    final endStr = _dateStr(end);
 
-    // Routine completions keyed by date -> routineId -> row.
-    final completionsByDate = <String, Map<String, Map<String, dynamic>>>{};
-    if (opts.wants(AgendaDomain.routine)) {
-      final comps = await db.query('routine_completions');
-      for (final c in comps) {
-        final resType = c['resultType'] as String?;
-        if (resType == 'SNOOZED' || resType == 'CANNOT_NOW') continue;
-        final dateStr = c['completionDate'] as String?;
-        final routineId = c['routineId'] as String?;
-        if (dateStr == null || routineId == null) continue;
-        completionsByDate
-            .putIfAbsent(dateStr, () => {})[routineId] =
-            Map<String, dynamic>.from(c);
-      }
-    }
+    final routineSource = await RoutineAgendaSource.load(db, settingsMap, startStr, endStr);
+    final worshipSource = await WorshipAgendaSource.load(db, settingsMap, start, end);
+    final sportsSource = await SportsAgendaSource.load(db, settingsMap);
+    final medicineSource = await MedicineAgendaSource.load(db, settingsMap, start, end);
+    final goalStepsSource = await GoalStepsAgendaSource.load(db, start, end);
 
-    // Worship practices (prayers + mustahab) and debts, loaded once.
-    final prayerPractices = <Map<String, dynamic>>[];
-    final mustahabPractices = <Map<String, dynamic>>[];
-    var worshipDebts = <Map<String, dynamic>>[];
-    if (religionEnabled) {
-      final practices = await db.query(
-        'worship_practices',
-        where: 'isActive = 1',
+    TaskAgendaSource? taskSource;
+    final tasksEnabled = settingsMap['calendar_show_tasks'] != 'false';
+    if (tasksEnabled && opts.wants(AgendaDomain.task)) {
+      taskSource = await TaskAgendaSource.load(
+        db, 
+        start, 
+        end, 
+        _dateStr(DateTime.now()),
+        settingsMap['app_start_date'],
       );
-      for (final p in practices) {
-        final type = p['practiceType'] as String? ?? '';
-        if (type == 'PRAYER') {
-          prayerPractices.add(Map<String, dynamic>.from(p));
-        } else if (type == 'MUSTAHAB' || type == 'QURAN' || type == 'DHIKR') {
-          if (p['reminderEnabled'] == 1) {
-            mustahabPractices.add(Map<String, dynamic>.from(p));
-          }
-        }
-      }
-      // Worship debts are no longer shown in the calendar per user request
-      worshipDebts = [];
     }
 
-    // Courses: active course titles + all sessions bucketed by plannedDate.
-    final courseTitles = <String, String>{};
-    final coursesMap = <String, Course>{};
-    final sessionsByDate = <String, List<CourseSession>>{};
-    if (coursesEnabled && opts.wants(AgendaDomain.course)) {
-      final courses = await CoursesRepository.instance.getActiveCourses();
-      for (final c in courses) {
-        courseTitles[c.id] = c.title;
-        coursesMap[c.id] = c;
-      }
-      final activeIds = courseTitles.keys.toSet();
-      final sessionRows = await db.query('course_sessions');
-      for (final row in sessionRows) {
-        final session = CourseSession.fromMap(row);
-        if (session.plannedDate == null) continue;
-        if (!activeIds.contains(session.courseId)) continue;
-        sessionsByDate
-            .putIfAbsent(session.plannedDate!, () => [])
-            .add(session);
-      }
-    }
+    final courseSource = await CourseAgendaSource.load(db, coursesEnabled, startStr, endStr);
 
-    // Konkur: plan items bucketed by date + subject names for subtitles.
-    final konkurByDate = <String, List<KonkurPlanItem>>{};
-    final konkurSubjectNames = <String, String>{};
-    if (konkurEnabled && opts.wants(AgendaDomain.konkur)) {
-      final repo = KonkurRepository.instance;
-      final plan = await repo.getPlanItems();
-      for (final item in plan) {
-        konkurByDate.putIfAbsent(item.dateIso, () => []).add(item);
-      }
-      if (konkurByDate.isNotEmpty) {
-        final subjects = await repo.getSubjects();
-        for (final s in subjects) {
-          konkurSubjectNames[s.id] = s.name;
-        }
-      }
-    }
+    final konkurSource = await KonkurAgendaSource.load(konkurEnabled);
 
-    // Cycle output computed once for "now" and classified per-date by window.
-    CycleEngineOutput? cycleOutput;
-    if (cycleAllowed && opts.wants(AgendaDomain.cycle)) {
-      try {
-        cycleOutput = await CycleEngine().calculate(CycleEngineInput(
-          db: db,
-          appSettings: settingsMap,
-          now: DateTime.now(),
-        ));
-      } catch (e) {
-        debugPrint('DayAgendaService cycle calc error: $e');
-      }
-    }
+    final cycleSource = await CycleAgendaSource.load(db, settingsMap, cycleAllowed);
 
-    // Coordinates lookup for cityId
     final cityId = settingsMap['prayer_city_id'] ??
         settingsMap['home_city_id'] ??
         'TEHRAN_TEHRAN';
@@ -295,7 +237,7 @@ class DayAgendaService {
       limit: 1,
     );
 
-    var latitude = 35.6892; // default Tehran
+    var latitude = 35.6892;
     var longitude = 51.3890;
 
     if (cityResult.isNotEmpty) {
@@ -306,113 +248,8 @@ class DayAgendaService {
     final ihtiyatMinutes = int.tryParse(settingsMap['ihtiyat_minutes'] ?? '0') ?? 0;
     final calcMethodStr = settingsMap['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
 
-    // Preload goal steps and planning allocations for the range
-    final goalStepsByDate = <String, List<Map<String, dynamic>>>{};
-    if (opts.wants(AgendaDomain.goalStep)) {
-      final startStr = _dateStr(start);
-      final endStr = _dateStr(end);
-
-      try {
-        final res = await db.rawQuery('''
-          SELECT gs.*, g.title as goalTitle
-          FROM goal_steps gs
-          JOIN goals g ON gs.goalId = g.id
-          WHERE gs.scheduledDate >= ? AND gs.scheduledDate <= ? AND g.status = 'ACTIVE'
-        ''', [startStr, endStr]);
-        for (final row in res) {
-          final dateStr = row['scheduledDate'] as String?;
-          if (dateStr != null) {
-            goalStepsByDate.putIfAbsent(dateStr, () => []).add(Map<String, dynamic>.from(row));
-          }
-        }
-      } catch (_) {}
-
-      try {
-        final allocRes = await db.rawQuery('''
-          SELECT a.id as allocId, a.dayKey, a.plannedMinutes, a.status as allocStatus,
-                 c.id as commId, c.title as commTitle, c.importance, c.workKind
-          FROM planning_allocations a
-          JOIN planning_commitments c ON a.commitmentId = c.id
-          WHERE a.dayKey >= ? AND a.dayKey <= ? AND a.status != 'DROPPED' AND c.status != 'DROPPED'
-        ''', [startStr, endStr]);
-        for (final row in allocRes) {
-          final dateStr = row['dayKey'] as String?;
-          if (dateStr != null) {
-            goalStepsByDate.putIfAbsent(dateStr, () => []).add({
-              'id': row['allocId'],
-              'isPlanningAllocation': true,
-              'title': row['commTitle'],
-              'goalTitle': 'برنامه و تعهد',
-              'isCompleted': row['allocStatus'] == 'DONE' ? 1 : 0,
-              'durationMinutes': row['plannedMinutes'] ?? 30,
-              'scheduledDate': dateStr,
-            });
-          }
-        }
-      } catch (_) {}
-    }
-
-    // Preload cached Hijri dates
-    final cachedHijriDates = <String, HijriDate>{};
-    if (religionEnabled) {
-      final hijriSettings = await db.query(
-        'app_settings',
-        where: "key LIKE 'hijri_date_%'",
-      );
-      for (final row in hijriSettings) {
-        try {
-          final val = row['value']! as String;
-          final decoded = json.decode(val) as Map<String, dynamic>;
-          final dateKey = row['key']! as String;
-          cachedHijriDates[dateKey] = HijriDate.fromMap(decoded);
-        } catch (e) {
-          debugPrint('Error decoding cached Hijri date in _buildContext: $e');
-        }
-      }
-    }
-    final sportsPlansByDay = <int, List<Map<String, dynamic>>>{};
-    if (sportsEnabled && opts.wants(AgendaDomain.sport)) {
-      try {
-        final plans = await db.query('ss_workout_plan');
-        for (final p in plans) {
-          final dow = p['dayOfWeek'] as int?;
-          if (dow != null) {
-            sportsPlansByDay.putIfAbsent(dow, () => []).add(Map<String, dynamic>.from(p));
-          }
-        }
-      } catch (e) {
-        debugPrint('DayAgendaService sports query error: $e');
-      }
-    }
-
-    // Preload medicine logs if enabled
-    final medicineLogsByDate = <String, List<Map<String, dynamic>>>{};
-    if (medicineEnabled && opts.wants(AgendaDomain.medicine)) {
-      try {
-        final logs = await db.query('medication_logs');
-        for (final l in logs) {
-          final schedTime = l['scheduledTime'] as int?;
-          if (schedTime != null) {
-            final dt = DateTime.fromMillisecondsSinceEpoch(schedTime);
-            final ds = _dateStr(dt);
-            medicineLogsByDate.putIfAbsent(ds, () => []).add(Map<String, dynamic>.from(l));
-          }
-        }
-      } catch (e) {
-        debugPrint('DayAgendaService medicine query error: $e');
-      }
-    }
-
-    final tasksEnabled = settingsMap['calendar_show_tasks'] != 'false';
-    TaskAgendaSource? taskSource;
-    if (tasksEnabled && opts.wants(AgendaDomain.task)) {
-      taskSource = await TaskAgendaSource.load(db, start, end, _dateStr(DateTime.now()));
-    }
-
     final dayMarksByDate = <String, String>{};
     try {
-      final startStr = _dateStr(start);
-      final endStr = _dateStr(end);
       final markRows = await db.query(
         'day_marks',
         where: 'date >= ? AND date <= ?',
@@ -423,20 +260,9 @@ class DayAgendaService {
         final k = r['kind']?.toString();
         if (d != null && k != null) dayMarksByDate[d] = k;
       }
-    } catch (_) {}
-
-    final worshipSource = WorshipAgendaSource(
-      prayerPractices: prayerPractices,
-      mustahabPractices: mustahabPractices,
-      worshipDebts: worshipDebts,
-      settingsMap: settingsMap,
-      religionEnabled: religionEnabled,
-      db: db,
-      cachedHijriDates: cachedHijriDates,
-    );
+    } catch (e, st) { debugPrint('Error in day_agenda_service.dart: $e\n$st'); }
 
     return _AgendaContext(
-      db: db,
       settingsMap: settingsMap,
       religionEnabled: religionEnabled,
       coursesEnabled: coursesEnabled,
@@ -447,23 +273,19 @@ class DayAgendaService {
       taskSource: taskSource,
       routineSource: routineSource,
       worshipSource: worshipSource,
-      completionsByDate: completionsByDate,
-      courseTitles: courseTitles,
-      coursesMap: coursesMap,
-      sessionsByDate: sessionsByDate,
-      konkurByDate: konkurByDate,
-      konkurSubjectNames: konkurSubjectNames,
-      cycleOutput: cycleOutput,
-      goalStepsByDate: goalStepsByDate,
-      sportsPlansByDay: sportsPlansByDay,
-      medicineLogsByDate: medicineLogsByDate,
+      sportsSource: sportsSource,
+      medicineSource: medicineSource,
+      goalStepsSource: goalStepsSource,
+      courseSource: courseSource,
+      konkurSource: konkurSource,
+      cycleSource: cycleSource,
       dayMarksByDate: dayMarksByDate,
       latitude: latitude,
       longitude: longitude,
       ihtiyatMinutes: ihtiyatMinutes,
       calcMethodStr: calcMethodStr,
     );
-  }
+}
 
   // ---------------------------------------------------------------------------
   // Per-day assembly
@@ -496,72 +318,43 @@ class DayAgendaService {
       AgendaDomain.task: ctx.taskSource != null,
     };
 
-    if (opts.wants(AgendaDomain.routine)) {
-      final routines = ctx.routineSource.agendaItemsForDate(
-        date,
-        prayerTimes: prayerTimes,
-        completionsByRoutineId: ctx.completionsByDate[dateStr] ?? const {},
-      );
+    final agendaCtx = AgendaDayContext(
+      date: date,
+      dateStr: dateStr,
+      isToday: isToday,
+      prayerTimes: prayerTimes,
+      options: opts,
+    );
 
-      final activeWorshipTitles = <String>{};
-      if (ctx.worshipSource.religionEnabled) {
-        for (final p in ctx.worshipSource.prayerPractices) {
-          final title = p['title'] as String?;
-          if (title != null) activeWorshipTitles.add(title.trim());
-        }
-        for (final p in ctx.worshipSource.mustahabPractices) {
-          final title = p['title'] as String?;
-          if (title != null) activeWorshipTitles.add(title.trim());
-        }
+    // Apply the activeWorshipTitles filter for routineSource
+    final activeWorshipTitles = <String>{};
+    if (ctx.worshipSource.isEnabled) {
+      for (final p in ctx.worshipSource.prayerPractices) {
+        final title = p['title'] as String?;
+        if (title != null) activeWorshipTitles.add(title.trim());
       }
-
-      final filteredRoutines = routines.where((r) {
-        final matches = activeWorshipTitles.contains(r.title.trim());
-        return !matches;
-      }).toList();
-
-      items.addAll(filteredRoutines);
+      for (final p in ctx.worshipSource.mustahabPractices) {
+        final title = p['title'] as String?;
+        if (title != null) activeWorshipTitles.add(title.trim());
+      }
     }
 
-    if (ctx.worshipSource.religionEnabled) {
-      items.addAll(await ctx.worshipSource.itemsForDate(
-        date, 
-        dateStr, 
-        prayerTimes, 
-        opts.wants(AgendaDomain.prayer), 
-        opts.wants(AgendaDomain.mustahab), 
-        opts.wants(AgendaDomain.worshipDebt)
-      ));
+    final routines = ctx.routineSource.itemsForDate(agendaCtx);
+    final filteredRoutines = routines.where((r) => !activeWorshipTitles.contains(r.title.trim())).toList();
+
+    items.addAll(filteredRoutines);
+    items.addAll(ctx.worshipSource.itemsForDate(agendaCtx));
+    items.addAll(ctx.sportsSource.itemsForDate(agendaCtx));
+    items.addAll(ctx.medicineSource.itemsForDate(agendaCtx));
+    items.addAll(ctx.goalStepsSource.itemsForDate(agendaCtx));
+
+    if (ctx.taskSource != null) {
+      items.addAll(ctx.taskSource!.itemsForDate(agendaCtx));
     }
 
-    if (ctx.coursesEnabled && opts.wants(AgendaDomain.course)) {
-      items.addAll(_collectCourses(ctx, dateStr));
-    }
-
-    if (opts.wants(AgendaDomain.goalStep)) {
-      items.addAll(_collectGoalSteps(ctx, dateStr));
-    }
-
-    if (ctx.konkurEnabled && opts.wants(AgendaDomain.konkur)) {
-      items.addAll(_collectKonkur(ctx, dateStr));
-    }
-
-    if (ctx.cycleAllowed && opts.wants(AgendaDomain.cycle)) {
-      final cycleItem = _collectCycle(ctx, date, dateStr, isToday);
-      if (cycleItem != null) items.add(cycleItem);
-    }
-
-    if (ctx.sportsEnabled && opts.wants(AgendaDomain.sport)) {
-      items.addAll(_collectSports(ctx, dateStr, date));
-    }
-
-    if (ctx.medicineEnabled && opts.wants(AgendaDomain.medicine)) {
-      items.addAll(_collectMedicine(ctx, dateStr, isToday));
-    }
-
-    if (ctx.taskSource != null && opts.wants(AgendaDomain.task)) {
-      items.addAll(ctx.taskSource!.itemsForDate(dateStr, isToday: isToday));
-    }
+    items.addAll(ctx.courseSource.itemsForDate(agendaCtx));
+    items.addAll(ctx.konkurSource.itemsForDate(agendaCtx));
+    items.addAll(ctx.cycleSource.itemsForDate(agendaCtx));
 
     // K43: Apply REST/TRAVEL day effect — mark non-essential items as skipped.
     final dayMark = ctx.dayMarksByDate[dateStr];
@@ -619,209 +412,18 @@ class DayAgendaService {
   // Collectors
   // ---------------------------------------------------------------------------
 
-  List<AgendaItem> _collectCourses(_AgendaContext ctx, String dateStr) {
-    final sessions = ctx.sessionsByDate[dateStr] ?? const [];
-    return sessions.map((s) {
-      final course = ctx.coursesMap[s.courseId];
-      return AgendaItem(
-        id: 'course:${s.id}',
-        domain: AgendaDomain.course,
-        sourceId: s.id,
-        title: s.sessionTitle ?? 'جلسه ${s.sessionNumber}',
-        subtitle: course?.title,
-        dateStr: dateStr,
-        timeOfDay: course?.preferredTime,
-        durationMinutes: course?.sessionDurationMinutes,
-        category: Category.learning,
-        completion:
-            s.isCompleted ? AgendaCompletion.done : AgendaCompletion.pending,
-        priority: 1.5,
-        deepLink:
-            AgendaDeepLink(domain: AgendaDomain.course, targetId: s.courseId),
-        meta: {'session': s.toMap()},
-      );
-    }).toList();
-  }
 
-  List<AgendaItem> _collectGoalSteps(_AgendaContext ctx, String dateStr) {
-    final rows = ctx.goalStepsByDate[dateStr] ?? const [];
-    return rows.map((m) {
-      final id = m['id'] as String;
-      final goalId = m['goalId'] as String? ?? '';
-      final completed = (m['isCompleted'] as int? ?? 0) == 1;
-      final duration = (m['durationMinutes'] as int?) ?? 30;
-      return AgendaItem(
-        id: 'goalStep:$id',
-        domain: AgendaDomain.goalStep,
-        sourceId: id,
-        title: m['title'] as String? ?? '',
-        subtitle: m['goalTitle'] as String?,
-        dateStr: dateStr,
-        durationMinutes: duration,
-        category: Category.personal,
-        completion:
-            completed ? AgendaCompletion.done : AgendaCompletion.pending,
-        deepLink:
-            AgendaDeepLink(domain: AgendaDomain.goalStep, targetId: goalId),
-        meta: {'step': m},
-      );
-    }).toList();
-  }
-
-  List<AgendaItem> _collectKonkur(_AgendaContext ctx, String dateStr) {
-    final plan = ctx.konkurByDate[dateStr] ?? const [];
-    return plan.map((item) {
-      AgendaCompletion completion;
-      switch (item.status) {
-        case 'DONE':
-          completion = AgendaCompletion.done;
-        case 'SKIPPED':
-          completion = AgendaCompletion.skipped;
-        default:
-          completion = AgendaCompletion.pending;
-      }
-      final subjectName =
-          item.subjectId != null ? ctx.konkurSubjectNames[item.subjectId] : null;
-      return AgendaItem(
-        id: 'konkur:${item.id}',
-        domain: AgendaDomain.konkur,
-        sourceId: item.id,
-        title: subjectName ?? 'برنامه کنکور',
-        subtitle: item.plannedMinutes > 0 ? '${item.plannedMinutes} دقیقه' : null,
-        dateStr: dateStr,
-        durationMinutes: item.plannedMinutes > 0 ? item.plannedMinutes : null,
-        category: Category.konkur,
-        completion: completion,
-        priority: 1.2,
-        deepLink:
-            AgendaDeepLink(domain: AgendaDomain.konkur, targetId: item.id),
-        meta: {'planItem': item.toMap()},
-      );
-    }).toList();
-  }
-
-  AgendaItem? _collectCycle(
-    _AgendaContext ctx,
-    DateTime date,
-    String dateStr,
-    bool isToday,
-  ) {
-    final out = ctx.cycleOutput;
-    if (out == null || !out.hasData) return null;
-
-    final day = DateTime(date.year, date.month, date.day);
-    bool inWindow(DateTime start, DateTime end) {
-      final s = DateTime(start.year, start.month, start.day);
-      final e = DateTime(end.year, end.month, end.day);
-      return !day.isBefore(s) && !day.isAfter(e);
-    }
-
-    String? title;
-    if (isToday && out.dayOfPeriod > 0) {
-      title = 'چرخه ماهانه (روز ${out.dayOfPeriod})';
-    } else if (inWindow(out.nextPeriodWindowStart, out.nextPeriodWindowEnd)) {
-      title = 'پیش‌بینی شروع دوره';
-    } else if (inWindow(out.pmsWindowStart, out.pmsWindowEnd)) {
-      title = 'پنجره‌ی PMS';
-    } else if (inWindow(out.fertileWindowStart, out.fertileWindowEnd)) {
-      title = 'پنجره‌ی باروری';
-    }
-
-    if (title == null) return null;
-
-    return AgendaItem(
-      id: 'cycle:$dateStr',
-      domain: AgendaDomain.cycle,
-      sourceId: dateStr,
-      title: title,
-      dateStr: dateStr,
-      category: Category.personal,
-      priority: 0.8,
-      deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: dateStr),
-    );
-  }
-
-  List<AgendaItem> _collectSports(
-    _AgendaContext ctx,
-    String dateStr,
-    DateTime date,
-  ) {
-    final items = <AgendaItem>[];
-    final plans = ctx.sportsPlansByDay[date.weekday] ?? const [];
-    for (final plan in plans) {
-      final id = plan['id'] as String;
-      final estMins = plan['estimatedMinutes'] as int? ?? 45;
-      final muscleGroups = plan['muscleGroups'] as String? ?? 'تمرین ورزشی';
-      items.add(AgendaItem(
-        id: 'sport:plan:$id',
-        domain: AgendaDomain.sport,
-        sourceId: id,
-        title: 'برنامه ورزشی: $muscleGroups',
-        subtitle: '$estMins دقیقه',
-        dateStr: dateStr,
-        durationMinutes: estMins,
-        category: Category.fitness,
-        priority: 1.4,
-        deepLink: AgendaDeepLink(domain: AgendaDomain.sport, targetId: id),
-        meta: {'workoutPlan': plan},
-      ));
-    }
-    return items;
-  }
-
-  List<AgendaItem> _collectMedicine(
-    _AgendaContext ctx,
-    String dateStr,
-    bool isToday,
-  ) {
-    final items = <AgendaItem>[];
-    final logs = ctx.medicineLogsByDate[dateStr] ?? const [];
-    for (final log in logs) {
-      final id = log['id'] as String;
-      final status = log['status'] as String? ?? 'TAKEN';
-      final isDone = status == 'TAKEN';
-      items.add(AgendaItem(
-        id: 'medicine:log:$id',
-        domain: AgendaDomain.medicine,
-        sourceId: id,
-        title: 'یادآور دارو',
-        subtitle: log['note'] as String?,
-        dateStr: dateStr,
-        durationMinutes: 5,
-        category: Category.medical,
-        completion: isDone ? AgendaCompletion.done : AgendaCompletion.pending,
-        priority: 2.0,
-        isEssential: true,
-        deepLink: AgendaDeepLink(domain: AgendaDomain.medicine, targetId: id),
-        meta: {'medicationLog': log},
-      ));
-    }
-    return items;
-  }
-
-  DateTime? _parseDateTime(String dateStr, String? timeStr, {bool nextDayIfBefore = false, DateTime? referenceTime}) {
-    if (timeStr == null || timeStr.isEmpty) return null;
-    try {
-      final parts = timeStr.split(':');
-      final date = DateTime.parse(dateStr);
-      final hour = int.parse(parts[0]);
-      final minute = int.parse(parts[1]);
-      var dt = DateTime(date.year, date.month, date.day, hour, minute);
-      if (nextDayIfBefore && referenceTime != null && dt.isBefore(referenceTime)) {
-        dt = dt.add(const Duration(days: 1));
-      }
-      return dt;
-    } catch (_) {
-      return null;
-    }
-  }
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+  // (time parsing helpers live in individual source/sheet files that need them)
 }
+
 
 /// Shared, range-scoped data loaded once and reused across every day.
 class _AgendaContext {
 
   _AgendaContext({
-    required this.db,
     required this.settingsMap,
     required this.religionEnabled,
     required this.coursesEnabled,
@@ -832,23 +434,18 @@ class _AgendaContext {
     this.taskSource,
     required this.routineSource,
     required this.worshipSource,
-    required this.completionsByDate,
-    required this.courseTitles,
-    required this.coursesMap,
-    required this.sessionsByDate,
-    required this.konkurByDate,
-    required this.konkurSubjectNames,
-    required this.cycleOutput,
-    required this.goalStepsByDate,
-    required this.sportsPlansByDay,
-    required this.medicineLogsByDate,
+    required this.sportsSource,
+    required this.medicineSource,
+    required this.goalStepsSource,
+    required this.courseSource,
+    required this.konkurSource,
+    required this.cycleSource,
     required this.dayMarksByDate,
     required this.latitude,
     required this.longitude,
     required this.ihtiyatMinutes,
     required this.calcMethodStr,
   });
-  final Database db;
   final Map<String, String> settingsMap;
   final bool religionEnabled;
   final bool coursesEnabled;
@@ -858,17 +455,13 @@ class _AgendaContext {
   final bool medicineEnabled;
   final TaskAgendaSource? taskSource;
   final RoutineAgendaSource routineSource;
-  final Map<String, Map<String, Map<String, dynamic>>> completionsByDate;
   final WorshipAgendaSource worshipSource;
-  final Map<String, String> courseTitles;
-  final Map<String, Course> coursesMap;
-  final Map<String, List<CourseSession>> sessionsByDate;
-  final Map<String, List<KonkurPlanItem>> konkurByDate;
-  final Map<String, String> konkurSubjectNames;
-  final CycleEngineOutput? cycleOutput;
-  final Map<String, List<Map<String, dynamic>>> goalStepsByDate;
-  final Map<int, List<Map<String, dynamic>>> sportsPlansByDay;
-  final Map<String, List<Map<String, dynamic>>> medicineLogsByDate;
+  final SportsAgendaSource sportsSource;
+  final MedicineAgendaSource medicineSource;
+  final GoalStepsAgendaSource goalStepsSource;
+  final CourseAgendaSource courseSource;
+  final KonkurAgendaSource konkurSource;
+  final CycleAgendaSource cycleSource;
   final Map<String, String> dayMarksByDate;
 
   final double latitude;

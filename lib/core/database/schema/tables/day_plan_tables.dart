@@ -2,13 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DayPlanTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     await ensureSchema(db);
   }
 
   /// Self-healing schema check for `day_plan_commits` and `day_plan_templates`.
   /// Ensures all required columns and indexes exist safely without crashing migrations.
-  static Future<void> ensureSchema(Database db) async {
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
     try {
       // 1. Create day_plan_commits table with full schema if it does not exist
       await db.execute('''

@@ -4,78 +4,170 @@ import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 
 class CycleConsentBridge {
-  /// Checks if the user is menstruating today (general biological status).
-  static Future<bool> isUserMenstruating() async {
+  /// Checks if the user is menstruating on [targetDate] (defaults to today).
+  static Future<bool> isUserMenstruating({DateTime? targetDate}) async {
     final db = await DatabaseHelper.instance.database;
     
     // Load app settings
     final settingsList = await db.query('app_settings');
     final settingsMap = {for (final s in settingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
 
-    final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-    final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
     final pregnancyMode = settingsMap['cycle_pregnancy_mode'] == 'true';
-
-    if (!isFemale || !cycleEnabled || pregnancyMode) {
+    if (pregnancyMode) {
       return false;
     }
 
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-    final today = DateTime.now();
+    final target = targetDate ?? DateTime.now();
+    final targetStr = target.toIso8601String().substring(0, 10);
+    final cleanTarget = DateTime(target.year, target.month, target.day);
 
-    // Query all periods starting on or before today
-    final periods = await db.query(
-      'cycle_periods',
-      where: 'startDate <= ?',
-      whereArgs: [todayStr],
-      orderBy: 'startDate DESC',
-    );
+    // 1. Check cycle_periods (current ongoing or past period covering targetDate)
+    try {
+      final periods = await db.query(
+        'cycle_periods',
+        where: 'startDate <= ?',
+        whereArgs: ['${targetStr}T23:59:59'],
+        orderBy: 'startDate DESC',
+      );
 
-    if (periods.isEmpty) {
-      return false;
-    }
+      for (final period in periods) {
+        final startStr = period['startDate'] as String?;
+        if (startStr == null) continue;
+        final start = DateTime.tryParse(startStr);
+        if (start == null) continue;
+        final cleanStart = DateTime(start.year, start.month, start.day);
+        final endStr = period['endDate'] as String?;
 
-    final latestPeriod = periods.first;
-    final startStr = latestPeriod['startDate'] as String?;
-    if (startStr == null) return false;
-    final start = DateTime.tryParse(startStr);
-    if (start == null) return false;
-    final endStr = latestPeriod['endDate'] as String?;
+        if (endStr != null && endStr.isNotEmpty) {
+          final end = DateTime.tryParse(endStr);
+          if (end != null) {
+            final cleanEnd = DateTime(end.year, end.month, end.day);
+            if (!cleanTarget.isBefore(cleanStart) && !cleanTarget.isAfter(cleanEnd)) {
+              return true;
+            }
+          }
+        } else {
+          // Ongoing active period (no end date recorded yet)
+          final daysDiff = cleanTarget.difference(cleanStart).inDays;
+          // In Sharia fiqh, period continues until ended or up to 10 days maximum
+          if (daysDiff >= 0 && daysDiff <= 10) {
+            return true;
+          }
+        }
+      }
+    } catch (_) {}
 
-    if (endStr != null) {
-      final end = DateTime.parse(endStr);
-      return !today.isAfter(end);
-    } else {
-      final avgPeriod = int.tryParse(settingsMap['cycle_avg_period'] ?? '6') ?? 6;
-      final daysDiff = today.difference(start).inDays;
-      return daysDiff >= 0 && daysDiff < avgPeriod;
-    }
+    // 2. Check cycle_day_logs for targetStr
+    try {
+      final dayLogs = await db.query(
+        'cycle_day_logs',
+        where: 'logDate = ?',
+        whereArgs: [targetStr],
+        limit: 1,
+      );
+      if (dayLogs.isNotEmpty) {
+        final flow = (dayLogs.first['flowLevel'] as String?)?.toUpperCase();
+        if (flow != null && flow != 'NONE' && flow != 'NONE_CLEAN' && flow != '') {
+          return true;
+        }
+      }
+    } catch (_) {}
+
+    // 3. Check legacy cycle_logs
+    try {
+      final oldLogs = await db.query(
+        'cycle_logs',
+        where: 'cycleStartDate <= ?',
+        whereArgs: [targetStr],
+        orderBy: 'cycleStartDate DESC',
+        limit: 1,
+      );
+      if (oldLogs.isNotEmpty) {
+        final startStr = oldLogs.first['cycleStartDate'] as String?;
+        final endStr = oldLogs.first['cycleEndDate'] as String?;
+        if (startStr != null) {
+          final start = DateTime.tryParse(startStr);
+          if (start != null) {
+            final cleanStart = DateTime(start.year, start.month, start.day);
+            if (endStr != null) {
+              final end = DateTime.tryParse(endStr);
+              if (end != null) {
+                final cleanEnd = DateTime(end.year, end.month, end.day);
+                if (!cleanTarget.isBefore(cleanStart) && !cleanTarget.isAfter(cleanEnd)) {
+                  return true;
+                }
+              }
+            } else {
+              final daysDiff = cleanTarget.difference(cleanStart).inDays;
+              if (daysDiff >= 0 && daysDiff <= 10) return true;
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    return false;
   }
 
   /// Checks if energy level tuning is consented by the user.
   static Future<bool> isEnergyTuned() async {
     final db = await DatabaseHelper.instance.database;
-    
     final settingsList = await db.query('app_settings');
     final settingsMap = {for (final s in settingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
 
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-    final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
     final energyConsent = settingsMap['cycle_consent_energy'] == 'true';
 
-    return isFemale && cycleEnabled && energyConsent;
+    return isFemale && energyConsent && (await isUserMenstruating());
+  }
+
+  /// Returns the active period for [targetDate] if any.
+  static Future<Map<String, dynamic>?> getActivePeriod({DateTime? targetDate}) async {
+    final db = await DatabaseHelper.instance.database;
+    final target = targetDate ?? DateTime.now();
+    final targetStr = target.toIso8601String().substring(0, 10);
+    final cleanTarget = DateTime(target.year, target.month, target.day);
+
+    try {
+      final periods = await db.query(
+        'cycle_periods',
+        where: 'startDate <= ?',
+        whereArgs: ['${targetStr}T23:59:59'],
+        orderBy: 'startDate DESC',
+      );
+
+      for (final period in periods) {
+        final startStr = period['startDate'] as String?;
+        if (startStr == null) continue;
+        final start = DateTime.tryParse(startStr);
+        if (start == null) continue;
+        final cleanStart = DateTime(start.year, start.month, start.day);
+        final endStr = period['endDate'] as String?;
+
+        if (endStr != null && endStr.isNotEmpty) {
+          final end = DateTime.tryParse(endStr);
+          if (end != null) {
+            final cleanEnd = DateTime(end.year, end.month, end.day);
+            if (!cleanTarget.isBefore(cleanStart) && !cleanTarget.isAfter(cleanEnd)) {
+              return period;
+            }
+          }
+        } else {
+          // Ongoing active period (no end date recorded yet)
+          final daysDiff = cleanTarget.difference(cleanStart).inDays;
+          if (daysDiff >= 0 && daysDiff <= 10) {
+            return period;
+          }
+        }
+      }
+    } catch (_) {}
+
+    return null;
   }
 
   /// Checks if worship should be suspended based on consent and active menstruation.
-  static Future<bool> isWorshipSuspended() async {
-    final db = await DatabaseHelper.instance.database;
-    final settingsList = await db.query('app_settings');
-    final settingsMap = {for (final s in settingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
-
-    final worshipConsent = settingsMap['cycle_consent_worship'] == 'true';
-    if (!worshipConsent) return false;
-
-    return isUserMenstruating();
+  static Future<bool> isWorshipSuspended({DateTime? targetDate}) async {
+    return (await getActivePeriod(targetDate: targetDate)) != null || await isUserMenstruating(targetDate: targetDate);
   }
 
   /// Exposes indirect body rhythm information to outer systems.

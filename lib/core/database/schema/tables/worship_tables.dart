@@ -1,12 +1,13 @@
 import 'package:sqflite/sqflite.dart';
 
 class WorshipTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     // 19. worship_debts
     await db.execute('''
       CREATE TABLE worship_debts (
           id TEXT PRIMARY KEY,
           practiceId TEXT,
+          sourcePracticeId TEXT,
           sourceKind TEXT DEFAULT 'MANUAL',
           debtType TEXT NOT NULL,
           title TEXT NOT NULL,

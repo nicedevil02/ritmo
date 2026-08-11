@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 class AssistantTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS chat_sessions (
         id TEXT PRIMARY KEY,

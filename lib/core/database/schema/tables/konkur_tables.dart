@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 class KonkurTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     // 23. konkur_subjects (V2 table)
     await db.execute('''
       CREATE TABLE konkur_subjects (

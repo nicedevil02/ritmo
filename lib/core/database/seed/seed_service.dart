@@ -8,17 +8,20 @@ import 'package:ritmo/features/supplementary_sports/movement/data/seed/movement_
 import 'package:sqflite/sqflite.dart';
 
 class SeedService {
-  static const int currentSeedVersion = 1;
+  static const int currentSeedVersion = 2;
 
-  static Future<void> seedAll(Database db) async {
+  static Future<void> seedAll(DatabaseExecutor db) async {
+    int seedVersion = 0;
     try {
       final rows = await db.query('app_settings', where: "key = 'seed_version'");
       if (rows.isNotEmpty) {
-        final version = int.tryParse(rows.first['value']?.toString() ?? '0') ?? 0;
-        if (version >= currentSeedVersion) return;
+        seedVersion = int.tryParse(rows.first['value']?.toString() ?? '0') ?? 0;
       }
     } catch (_) {}
 
+    if (seedVersion >= currentSeedVersion) return;
+
+    // Run all seeds idempotently (using conflictAlgorithm.ignore)
     await seedSettings(db);
     await seedWorshipPractices(db);
     await seedIranCities(db);
@@ -38,7 +41,7 @@ class SeedService {
     } catch (_) {}
   }
 
-  static Future<void> seedSettings(Database db) async {
+  static Future<void> seedSettings(DatabaseExecutor db) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final defaultSettings = {
       'gentleness_level': 'NORMAL',
@@ -98,6 +101,7 @@ class SeedService {
       'cycle_consent_reminders': 'false',
       'cycle_consent_worship': 'false',
       'cycle_consent_dashboard': 'false',
+      'cycle_consent_sports': 'false',
       'konkur_field': 'UNSET',
       'konkur_exam_date': '',
       'konkur_setup_done': 'false',
@@ -125,6 +129,7 @@ class SeedService {
       'health_adherence_enabled': 'true',
       'health_trend_window_days': '30',
       'show_cycle_in_calendar': 'false',
+      'app_start_date': DateTime.now().toIso8601String().substring(0, 10),
     };
 
     final batch = db.batch();
@@ -138,7 +143,7 @@ class SeedService {
     await batch.commit(noResult: true);
   }
 
-  static Future<void> seedWorshipPractices(Database db) async {
+  static Future<void> seedWorshipPractices(DatabaseExecutor db) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final prayers = [
       {
@@ -187,7 +192,7 @@ class SeedService {
     }
   }
 
-  static Future<void> seedIranCities(Database db) async {
+  static Future<void> seedIranCities(DatabaseExecutor db) async {
     try {
       final jsonStr = await rootBundle.loadString('assets/data/iran_cities.json');
       final rawList = jsonDecode(jsonStr) as List<dynamic>;
@@ -202,7 +207,7 @@ class SeedService {
     }
   }
 
-  static Future<void> seedSupplementarySports(Database db) async {
+  static Future<void> seedSupplementarySports(DatabaseExecutor db) async {
     try {
       var shouldForceReseed = false;
       try {
@@ -634,7 +639,7 @@ class SeedService {
     }
   }
 
-  static Future<void> _translateExistingSeededExercises(Database db) async {
+  static Future<void> _translateExistingSeededExercises(DatabaseExecutor db) async {
     try {
       final List<Map<String, dynamic>> exercises = await db.query('ss_exercise', columns: ['id', 'name']);
       final batch = db.batch();

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-enum DayStatus { completed, today, upcoming, rest }
+enum DayStatus { completed, partial, today, upcoming, rest }
 
 class WorkoutPlan {
 
@@ -95,18 +95,20 @@ class WorkoutExerciseCrossRef {
 
 class PlanDaySummary {
 
-  PlanDaySummary({
+  const PlanDaySummary({
     required this.id,
     required this.dayName,
     required this.muscleGroups,
     required this.status,
     this.dateIso,
+    this.completionPercentage = 0,
   });
   final String id;
   final String dayName; // شنبه، یکشنبه، ...
   final String muscleGroups; // پا، سینه، ...
   final DayStatus status;
   final String? dateIso;
+  final int completionPercentage;
 }
 
 class PlanVersionHistory {

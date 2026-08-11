@@ -409,6 +409,7 @@ class WorshipSeason {
     this.recurrence,
     this.dayList,
     this.hijriMonth,
+    this.recommendedAmal,
   });
 
   factory WorshipSeason.fromMap(Map<String, dynamic> map) {
@@ -426,6 +427,7 @@ class WorshipSeason {
       recurrence: map['recurrence'] as String?,
       dayList: map['dayList'] as String?,
       hijriMonth: map['hijriMonth'] as int?,
+      recommendedAmal: map['recommendedAmal'] as String?,
     );
   }
   final String id;
@@ -438,6 +440,7 @@ class WorshipSeason {
   final bool isActive;
   final double priorityWeight;
   final int createdAt;
+  final String? recommendedAmal;
 
   /// W-7: recurrence type — RANGE_HIJRI | RANGE_SOLAR | DAYS_OF_EVERY_HIJRI_MONTH
   ///                        | DAYS_OF_HIJRI_MONTH | NIGHTS_OF_HIJRI_MONTH

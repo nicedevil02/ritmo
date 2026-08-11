@@ -2,14 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
 class NoteTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     await ensureSchema(db);
   }
 
   /// Self-healing schema check and initialization for `notes` and related tables.
   /// Ensures all required tables, columns, and indexes exist regardless of database version
   /// or previous migration history.
-  static Future<void> ensureSchema(Database db) async {
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
     try {
       // 1. notes table
       await db.execute('''

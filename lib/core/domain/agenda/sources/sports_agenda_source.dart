@@ -1,40 +1,60 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_program_calendar.dart';
+import 'package:ritmo/features/supplementary_sports/domain/ss_week_resolver.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 
 /// AgendaSource for the unified Sports & Movement domain.
-class SportsAgendaSource {
+class SportsAgendaSource implements AgendaSource {
   SportsAgendaSource({
     required this.prescriptionsByDate,
-    required this.legacyPlansByDay,
     required this.sportsEnabled,
+    required this.programStartDate,
+    required this.totalWeeks,
+    required this.db,
+    required this.hasWeekCol,
+    required this.legacyPlans,
   });
 
   final Map<String, Map<String, dynamic>> prescriptionsByDate;
-  final Map<int, List<Map<String, dynamic>>> legacyPlansByDay;
   final bool sportsEnabled;
+  final DateTime programStartDate;
+  final int totalWeeks;
+  final Database db;
+  final bool hasWeekCol;
+  final List<Map<String, dynamic>> legacyPlans;
+
+  @override
+  Set<AgendaDomain> get domains => {AgendaDomain.sport};
+
+  @override
+  bool get isEnabled => sportsEnabled;
 
   static Future<SportsAgendaSource> load(
     Database db,
     Map<String, String> settingsMap,
   ) async {
-    final sportsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sports_enabled');
+    final sportsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sports_enabled') ||
+        ModuleGate.instance.isEnabledFrom(settingsMap, 'module_supplementary_sports_enabled');
 
     if (!sportsEnabled) {
       return SportsAgendaSource(
         prescriptionsByDate: const {},
-        legacyPlansByDay: const {},
         sportsEnabled: false,
+        programStartDate: DateTime.now(),
+        totalWeeks: 4,
+        db: db,
+        hasWeekCol: false,
+        legacyPlans: const [],
       );
     }
 
     final prescriptionsByDate = <String, Map<String, dynamic>>{};
-    final legacyPlansByDay = <int, List<Map<String, dynamic>>>{};
+    DateTime pStart = DateTime.now();
+    int totalW = 4;
 
     try {
       final rows = await db.query('ss_session_prescription');
@@ -48,27 +68,45 @@ class SportsAgendaSource {
       debugPrint('[SportsAgendaSource] prescription load error: $e\n$st');
     }
 
+    bool hasWeekCol = false;
     try {
-      final plans = await db.query('ss_workout_plan');
-      for (final plan in plans) {
-        final day = plan['dayOfWeek'] as int?;
-        if (day != null) {
-          legacyPlansByDay.putIfAbsent(day, () => []).add(Map<String, dynamic>.from(plan));
-        }
+      pStart = await SsWeekResolver.resolveProgramStartDate(db);
+      totalW = await SsWeekResolver.resolveTotalWeeks(db);
+
+      final tableInfo = await db.rawQuery("PRAGMA table_info(ss_workout_plan)");
+      hasWeekCol = tableInfo.any((col) => col['name'] == 'week');
+    } catch (e, st) {
+      debugPrint('[SportsAgendaSource] schema load error: $e\n$st');
+    }
+
+    final legacyPlans = <Map<String, dynamic>>[];
+    try {
+      final pRows = await db.query('ss_workout_plan');
+      for (final r in pRows) {
+        legacyPlans.add(Map<String, dynamic>.from(r));
       }
     } catch (e, st) {
-      debugPrint('[SportsAgendaSource] legacy plan load error: $e\n$st');
+      debugPrint('[SportsAgendaSource] schema load ss_workout_plan error: $e\n$st');
     }
 
     return SportsAgendaSource(
       prescriptionsByDate: prescriptionsByDate,
-      legacyPlansByDay: legacyPlansByDay,
       sportsEnabled: sportsEnabled,
+      programStartDate: pStart,
+      totalWeeks: totalW,
+      db: db,
+      hasWeekCol: hasWeekCol,
+      legacyPlans: legacyPlans,
     );
   }
 
-  List<AgendaItem> itemsForDate(DateTime date, String dateStr) {
+  @override
+  List<AgendaItem> itemsForDate(AgendaDayContext ctx) {
+    if (!ctx.options.wants(AgendaDomain.sport)) return const [];
     if (!sportsEnabled) return const [];
+
+    final dateStr = ctx.dateStr;
+    final date = ctx.date;
 
     final prescription = prescriptionsByDate[dateStr];
     if (prescription != null) {
@@ -78,8 +116,24 @@ class SportsAgendaSource {
     final legacyDay = SsProgramCalendar.ritmoDayToLegacySsDay(
       SsProgramCalendar.ritmoDayOf(date),
     );
-    final plans = legacyPlansByDay[legacyDay] ?? const [];
-    return plans.map((plan) => _legacyPlanItem(plan, dateStr)).toList(growable: false);
+    final activeW = SsWeekResolver.resolveActiveWeek(
+      programStartDate: programStartDate,
+      targetDate: date,
+      totalWeeks: totalWeeks,
+    );
+
+    List<Map<String, dynamic>> filteredPlans;
+    if (hasWeekCol) {
+      filteredPlans = legacyPlans.where((p) => p['dayOfWeek'] == legacyDay && p['week'] == activeW).toList();
+    } else {
+      filteredPlans = legacyPlans.where((p) => p['dayOfWeek'] == legacyDay).toList();
+    }
+
+    final items = filteredPlans.map((plan) => _legacyPlanItem(plan, dateStr)).toList(growable: false);
+
+    // Step 4: Final Deduplication Guard
+    final seen = <String>{};
+    return items.where((i) => seen.add('${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}')).toList();
   }
 
   List<AgendaItem> _itemsForPrescription(
@@ -98,7 +152,7 @@ class SportsAgendaSource {
 
     return [
       AgendaItem(
-        id: 'sport_${id}_$dateStr',
+        id: buildAgendaItemId(AgendaDomain.sport, id, dateStr),
         sourceId: id,
         domain: AgendaDomain.sport,
         itemType: AgendaItemType.flexible,
@@ -120,7 +174,7 @@ class SportsAgendaSource {
     final duration = plan['estimatedMinutes'] as int? ?? 45;
 
     return AgendaItem(
-      id: 'sport_${planId}_$dateStr',
+      id: buildAgendaItemId(AgendaDomain.sport, planId, dateStr),
       sourceId: planId,
       domain: AgendaDomain.sport,
       itemType: AgendaItemType.flexible,
@@ -135,17 +189,7 @@ class SportsAgendaSource {
   }
 
   String _legacyTitle(Map<String, dynamic> plan) {
-    final raw = plan['muscleGroups']?.toString();
-    if (raw == null || raw.isEmpty) return 'تمرین ورزشی';
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is List && decoded.isNotEmpty) {
-        return 'تمرین ${decoded.join(' و ')}';
-      }
-    } catch (_) {
-      // Fall through to raw text below.
-    }
-    return raw.trim().isEmpty ? 'تمرین ورزشی' : raw;
+    return SsWeekResolver.formatSportTitle(plan);
   }
 
   AgendaCompletion _completionFor(String status) {

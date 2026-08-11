@@ -6,7 +6,7 @@ class MigrationV76SimpleMode extends Migration {
   int get version => 76;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     // 1. CREATE TABLE simple_tasks
@@ -65,5 +65,5 @@ class MigrationV76SimpleMode extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

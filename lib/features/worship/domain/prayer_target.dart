@@ -59,7 +59,31 @@ class PrayerTarget {
   static Future<PrayerTarget> fromGroupKey(String groupKey, DateTime date, {String? titleFa}) async {
     final db = await DatabaseHelper.instance.database;
     List<String> practiceIds = [];
-    String title = titleFa ?? 'نماز';
+
+    String defaultTitle(String key) {
+      switch (key) {
+        case 'FAJR':
+          return 'نماز صبح';
+        case 'DHUHR_ASR':
+          return 'نماز ظهر و عصر';
+        case 'MAGHRIB_ISHA':
+          return 'نماز مغرب و عشا';
+        case 'DHUHR':
+          return 'نماز ظهر';
+        case 'ASR':
+          return 'نماز عصر';
+        case 'MAGHRIB':
+          return 'نماز مغرب';
+        case 'ISHA':
+          return 'نماز عشا';
+        case 'RAMADAN_FAST':
+          return 'روزه ماه مبارک رمضان';
+        default:
+          return 'نماز';
+      }
+    }
+
+    String title = titleFa ?? defaultTitle(groupKey);
 
     if (groupKey == 'RAMADAN_FAST') {
       final rows = await db.query(
@@ -89,7 +113,7 @@ class PrayerTarget {
         final rows = await db.query(
           'worship_practices',
           columns: ['id'],
-          where: 'subType IN (${List.filled(subTypes.length, '?').join(',')})',
+          where: 'subType IN (${List.filled(subTypes.length, '?').join(',')}) AND isActive = 1',
           whereArgs: subTypes,
         );
         if (rows.isNotEmpty) {

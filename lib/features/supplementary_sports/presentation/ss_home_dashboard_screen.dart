@@ -90,6 +90,17 @@ class SSHomeWorkoutCompleted extends SSHomeUiState {
   final String summary;
 }
 
+class SSHomeWorkoutPartiallyCompleted extends SSHomeUiState {
+  const SSHomeWorkoutPartiallyCompleted({
+    required this.dayName,
+    required this.summary,
+    required this.prescription,
+  });
+  final String dayName;
+  final String summary;
+  final SessionPrescription prescription;
+}
+
 class SSHomePlanCompleted extends SSHomeUiState {
   const SSHomePlanCompleted();
 }
@@ -917,21 +928,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         }
       }
 
-      if (sessionLogs.isNotEmpty) {
-        final session = sessionLogs.first;
-        if (mounted) {
-          setState(() {
-            _state = SSHomeWorkoutCompleted(
-              dayName: _getFarsiDayName(dayOfWeek),
-              summary: toPersianDigits(
-                '${session['completedExercisesCount']} از ${session['totalExercisesCount']} حرکت در ${((session['durationSeconds'] as int? ?? 0) / 60).round()} دقیقه انجام شد.',
-              ),
-            );
-          });
-        }
-        return;
-      }
-
       // ── NEW: Try ss_session_prescription first ──────────────────────
       final todayIso = '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
       SessionPrescription? todayPres;
@@ -977,6 +973,40 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
             todayPres = await SsPrescriptionRepository.instance.getPrescriptionForDate(todayIso);
           } catch (_) {}
         }
+      }
+
+      if (sessionLogs.isNotEmpty) {
+        final session = sessionLogs.first;
+        final completedCount = session['completedExercisesCount'] as int? ?? 0;
+        final totalCount = session['totalExercisesCount'] as int? ?? 0;
+        final percentage = totalCount > 0 ? ((completedCount / totalCount) * 100).round() : 0;
+
+        if (todayPres != null && todayPres.status == PrescriptionStatus.partial) {
+          if (mounted) {
+            setState(() {
+              _state = SSHomeWorkoutPartiallyCompleted(
+                dayName: _getFarsiDayName(dayOfWeek),
+                summary: toPersianDigits(
+                  'شما $completedCount از $totalCount حرکت را انجام داده‌اید ($percentage٪ پیشرفت).'
+                ),
+                prescription: todayPres!,
+              );
+            });
+          }
+          return;
+        }
+
+        if (mounted) {
+          setState(() {
+            _state = SSHomeWorkoutCompleted(
+              dayName: _getFarsiDayName(dayOfWeek),
+              summary: toPersianDigits(
+                '$completedCount از $totalCount حرکت در ${((session['durationSeconds'] as int? ?? 0) / 60).round()} دقیقه انجام شد.',
+              ),
+            );
+          });
+        }
+        return;
       }
 
       bool detailMode = false;
@@ -1290,6 +1320,77 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               _buildWeeklyStreakWidget(_weekCompleted),
               const SizedBox(height: 16),
               _buildAiCoachCard(pres.coachNoteFa ?? 'امروز برنامه ورزشی خود را در اولویت قرار دهید.'),
+              const SizedBox(height: 16),
+              SSDailyCheckinWidget(
+                existingCheckin: _dailyCheckin,
+                onSaved: _loadDashboardData,
+              ),
+              const SizedBox(height: 16),
+              _buildTodayBodyStatusWidget(),
+              const SizedBox(height: 16),
+              _buildNextWorkoutCard(
+                nextWorkoutName: _nextWorkoutName,
+                nextWorkoutMinutes: _nextWorkoutMinutes,
+                nextWorkoutDayName: _nextWorkoutDayName,
+              ),
+            ],
+          ),
+        );
+      case SSHomeWorkoutPartiallyCompleted(dayName: final dayName, summary: final summary, prescription: final pres):
+        return _buildDashboardContent(
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(Icons.incomplete_circle_rounded, color: Colors.white, size: 64),
+                    const SizedBox(height: 12),
+                    const Text('تمرین نیمه‌تمام ⏳', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const SizedBox(height: 6),
+                    Text(summary, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white)),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.play_arrow_rounded, color: Color(0xFFD97706)),
+                        label: const Text('ادامه تمرین', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFD97706))),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (ctx) => SSWorkoutSessionScreen(
+                                planId: pres.id,
+                                dayName: dayName,
+                                prescriptionId: pres.id,
+                              ),
+                            ),
+                          ).then((_) {
+                            if (mounted) _loadDashboardData();
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildWeeklyStreakWidget(_weekCompleted),
               const SizedBox(height: 16),
               SSDailyCheckinWidget(
                 existingCheckin: _dailyCheckin,

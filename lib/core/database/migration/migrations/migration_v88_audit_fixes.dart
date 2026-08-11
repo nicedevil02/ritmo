@@ -7,10 +7,12 @@ import 'package:sqflite/sqflite.dart';
 /// backfills user gender from ss_user_profile to app_settings, and adds fasting_debt index.
 class MigrationV88AuditFixes extends Migration {
   @override
+  bool get requiresTransaction => false;
+  @override
   int get version => 88;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     RitmoLog.info('MigrationV88', 'Applying V88 database audit fixes...');
 
     // 1. Re-create worship_seasons table if missing (DB-04 / DB-10)
@@ -177,7 +179,7 @@ class MigrationV88AuditFixes extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {
+  Future<void> down(DatabaseExecutor db) async {
     // Non-destructive down migration
   }
 }

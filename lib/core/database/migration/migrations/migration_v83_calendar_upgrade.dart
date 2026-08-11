@@ -9,7 +9,7 @@ class MigrationV83CalendarUpgrade extends Migration {
   int get version => 83;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     // 1) day_marks table — for marking special days
     await db.execute('''
       CREATE TABLE IF NOT EXISTS day_marks (
@@ -43,7 +43,7 @@ class MigrationV83CalendarUpgrade extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {
+  Future<void> down(DatabaseExecutor db) async {
     // Intentionally empty — schema is additive only (rule 8)
   }
 }

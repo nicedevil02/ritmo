@@ -8,7 +8,7 @@ class MigrationV84 extends Migration {
   int get version => 84;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     try {
       await safeAddColumn(db, 'pending_reminders', 'ownerModule', 'TEXT');
       await safeAddColumn(db, 'routine_occurrences', 'ownerModule', 'TEXT');
@@ -94,7 +94,7 @@ class MigrationV84 extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {
+  Future<void> down(DatabaseExecutor db) async {
     // SQLite has limited drop column support, so down is typically empty for columns
   }
 }

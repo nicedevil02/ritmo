@@ -104,12 +104,15 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
       isExpiringSoon: isExpiringSoon,
       onToggle: (val) async {
         var group = 'FAJR';
-        if (item.id.contains('wp_fajr') || item.sourceId == 'wp_fajr') {
-          group = 'FAJR';
-        } else if (item.id.contains('wp_dhuhr') || item.sourceId == 'wp_dhuhr') {
+        final combined = '${item.id}:${item.sourceId}'.toLowerCase();
+        if (combined.contains('dhuhr') || combined.contains('asr')) {
           group = 'DHUHR_ASR';
-        } else if (item.id.contains('wp_maghrib') || item.sourceId == 'wp_maghrib') {
+        } else if (combined.contains('maghrib') || combined.contains('isha')) {
           group = 'MAGHRIB_ISHA';
+        } else if (combined.contains('fasting') || combined.contains('ramadan')) {
+          group = 'RAMADAN_FAST';
+        } else {
+          group = 'FAJR';
         }
 
         if (val) {
@@ -222,7 +225,7 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
                         onChanged();
                       }
                     }
-                  } catch (_) {}
+                  } catch (e, st) { debugPrint('Error in agenda_renderer_registry.dart: $e\n$st'); }
                 },
                 child: Text('ثبت تعویق', style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn')),
               ),

@@ -4,8 +4,9 @@ import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 
-class TaskAgendaSource {
+class TaskAgendaSource implements AgendaSource {
   TaskAgendaSource({
     required this.tasksByDate,
     required this.overdueTasks,
@@ -21,11 +22,18 @@ class TaskAgendaSource {
   /// taskId -> (done, total)
   final Map<String, ({int done, int total})> stepCounts;
 
+  @override
+  Set<AgendaDomain> get domains => {AgendaDomain.task};
+
+  @override
+  bool get isEnabled => true;
+
   static Future<TaskAgendaSource> load(
     Database db,
     DateTime start,
     DateTime end,
     String todayStr,
+    [String? appStartDateStr]
   ) async {
     try {
       final startStr = start.toIso8601String().substring(0, 10);
@@ -50,10 +58,17 @@ class TaskAgendaSource {
       }
 
       // 2) Overdue tasks: isDone = 0 AND dueDate IS NOT NULL AND dueDate < todayStr
+      String overdueWhere = 'isDone = 0 AND dueDate IS NOT NULL AND dueDate < ?';
+      List<Object?> overdueArgs = [todayStr];
+      if (appStartDateStr != null) {
+        overdueWhere += ' AND dueDate >= ?';
+        overdueArgs.add(appStartDateStr);
+      }
+
       final overdueRows = await db.query(
         'simple_tasks',
-        where: 'isDone = 0 AND dueDate IS NOT NULL AND dueDate < ?',
-        whereArgs: [todayStr],
+        where: overdueWhere,
+        whereArgs: overdueArgs,
         orderBy: 'dueDate DESC, isImportant DESC',
         limit: 20, // Cap at 20 overdue tasks
       );
@@ -87,17 +102,20 @@ class TaskAgendaSource {
         overdueTasks: overdueRows,
         stepCounts: stepCounts,
       );
-    } catch (e) {
-      debugPrint('[TaskAgendaSource] Load error: $e');
+    } catch (e, st) {
+      debugPrint('[TaskAgendaSource] Load error: $e\n$st');
       return TaskAgendaSource(tasksByDate: const {}, overdueTasks: const [], stepCounts: const {});
     }
   }
 
-  List<AgendaItem> itemsForDate(String dateStr, {required bool isToday}) {
+  @override
+  List<AgendaItem> itemsForDate(AgendaDayContext ctx) {
+    if (!ctx.options.wants(AgendaDomain.task)) return [];
+
     final result = <AgendaItem>[];
 
     // 1) Regular tasks for this date
-    final dayRows = tasksByDate[dateStr] ?? const [];
+    final dayRows = tasksByDate[ctx.dateStr] ?? const [];
     for (final row in dayRows) {
       final taskId = row['id'].toString();
       final title = row['title'] as String? ?? '';
@@ -116,12 +134,12 @@ class TaskAgendaSource {
       }
 
       result.add(AgendaItem(
-        id: 'task:$taskId:$dateStr',
+        id: buildAgendaItemId(AgendaDomain.task, taskId, ctx.dateStr),
         domain: AgendaDomain.task,
         sourceId: taskId,
         title: title,
         subtitle: subtitle,
-        dateStr: dateStr,
+        dateStr: ctx.dateStr,
         timeOfDay: dueTime,
         durationMinutes: null,
         category: Category.personal,
@@ -139,7 +157,7 @@ class TaskAgendaSource {
     }
 
     // 2) Overdue tasks (Only if isToday is true)
-    if (isToday && overdueTasks.isNotEmpty) {
+    if (ctx.isToday && overdueTasks.isNotEmpty) {
       for (final row in overdueTasks) {
         final taskId = row['id'].toString();
         final title = row['title'] as String? ?? '';
@@ -154,15 +172,16 @@ class TaskAgendaSource {
             final j = Jalali.fromDateTime(dt);
             jalaliSubtitle = 'معوقه از ${toPersianDigits(j.day)} ${j.formatter.mN}';
           }
-        } catch (_) {}
+        } catch (e, st) { debugPrint('Error in task_agenda_source.dart: $e\n$st'); }
 
         result.add(AgendaItem(
-          id: 'task:$taskId:overdue:$dateStr',
+          // Exception: overdue tasks deliberately have a distinct ID pattern.
+          id: 'task:$taskId:overdue:${ctx.dateStr}',
           domain: AgendaDomain.task,
           sourceId: taskId,
           title: title,
           subtitle: jalaliSubtitle,
-          dateStr: dateStr,
+          dateStr: ctx.dateStr,
           timeOfDay: null,
           durationMinutes: null,
           category: Category.personal,

@@ -26,6 +26,21 @@ class NightPrayerCard extends StatefulWidget {
 
 class _NightPrayerCardState extends State<NightPrayerCard> {
   int _currentRakah = 0; // 0 to 11
+  Timer? _tickerTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _tickerTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tickerTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -160,14 +160,30 @@ class EndOfDaySweep {
           final debtType = practice.practiceType == 'FASTING' ? 'FAST' : 'PRAYER';
           final debtTitle = practice.practiceType == 'FASTING' ? 'روزه قضا' : practice.title;
 
-          await txn.rawInsert('''
-            INSERT INTO worship_debts (id, debtType, sourcePracticeId, title, totalCount, remainingCount, dailyTarget, autoCreated, isArchived, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, 1, 1, 1, 1, 0, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET
-              totalCount = totalCount + 1,
-              remainingCount = remainingCount + 1,
-              updatedAt = excluded.updatedAt
-          ''', [debtId, debtType, practice.id, debtTitle, nowMs, nowMs]);
+          final existingDebt = await txn.query('worship_debts', where: 'id = ?', whereArgs: [debtId]);
+          if (existingDebt.isNotEmpty) {
+            await txn.rawUpdate('''
+              UPDATE worship_debts
+              SET totalCount = totalCount + 1,
+                  remainingCount = remainingCount + 1,
+                  updatedAt = ?
+              WHERE id = ?
+            ''', [nowMs, debtId]);
+          } else {
+            await txn.insert('worship_debts', {
+              'id': debtId,
+              'debtType': debtType,
+              'sourcePracticeId': practice.id,
+              'title': debtTitle,
+              'totalCount': 1,
+              'remainingCount': 1,
+              'dailyTarget': 1,
+              'autoCreated': 1,
+              'isArchived': 0,
+              'createdAt': nowMs,
+              'updatedAt': nowMs,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
+          }
         }
       } catch (e) {
         debugPrint('Worship sweep error for ${practice.id}: $e');

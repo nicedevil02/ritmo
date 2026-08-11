@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/agenda/agenda_action_handler.dart';
 import 'package:ritmo/core/domain/agenda/agenda_renderer_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
@@ -67,6 +69,24 @@ class QuranDhikrAgendaRenderer extends AgendaTileRenderer {
             ),
             const SizedBox(width: 8),
           ],
+          if (item.timeOfDay != null || (item.meta?['practice']?['reminderEnabled'] == 1)) ...[
+            Icon(Icons.notifications_active_outlined, size: 14, color: colors.textSecondary.withValues(alpha: 0.7)),
+            const SizedBox(width: 8),
+          ],
+          GestureDetector(
+            onTap: () async {
+              await AgendaActionHandler.instance.toggleAgendaItem(
+                item: item,
+                isDone: !isDone,
+              );
+              onChanged();
+            },
+            child: Icon(
+              isDone ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
+              color: isDone ? colors.success : colors.textSecondary,
+              size: 20,
+            ),
+          ),
         ],
       ),
     );

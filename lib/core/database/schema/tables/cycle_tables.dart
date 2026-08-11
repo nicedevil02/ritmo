@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 class CycleTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     // 22. cycle_logs (V2 table)
     await db.execute('''
       CREATE TABLE cycle_logs (

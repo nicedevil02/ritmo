@@ -7,7 +7,7 @@ class MigrationV85 extends Migration {
   int get version => 85;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     try {
       await safeAddColumn(db, 'simple_tasks', 'titleNormalized', 'TEXT');
       
@@ -31,5 +31,5 @@ class MigrationV85 extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

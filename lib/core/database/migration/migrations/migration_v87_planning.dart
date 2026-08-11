@@ -3,10 +3,12 @@ import 'package:ritmo/core/database/migration/migration_interface.dart';
 
 class MigrationV87Planning extends Migration {
   @override
+  bool get requiresTransaction => false;
+  @override
   int get version => 87;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     // 1) Schema migration for day_plan_templates (A-03)
     final templateCols = (await db.rawQuery("PRAGMA table_info('day_plan_templates');"))
         .map((r) => r['name'] as String)
@@ -158,7 +160,7 @@ class MigrationV87Planning extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {
+  Future<void> down(DatabaseExecutor db) async {
     await db.execute('DROP TABLE IF EXISTS planning_reviews;');
     await db.execute('DROP TABLE IF EXISTS planning_allocations;');
     await db.execute('DROP TABLE IF EXISTS planning_commitments;');

@@ -7,7 +7,7 @@ class MigrationV80AiOpencodeDefaults extends Migration {
   int get version => 80;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     Future<void> putSetting(String key, String value) async {
@@ -37,5 +37,5 @@ class MigrationV80AiOpencodeDefaults extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

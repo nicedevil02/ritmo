@@ -6,7 +6,7 @@ class MigrationV79TaskUpgrade extends Migration {
   int get version => 79;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     // 1. New columns for simple_tasks
@@ -71,5 +71,5 @@ class MigrationV79TaskUpgrade extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

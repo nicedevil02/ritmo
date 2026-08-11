@@ -398,7 +398,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                                 const SizedBox(width: 5),
                                 Expanded(
                                   child: Text(
-                                    first.title,
+                                    first.isHoliday ? '${first.title} - تعطیل' : first.title,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(

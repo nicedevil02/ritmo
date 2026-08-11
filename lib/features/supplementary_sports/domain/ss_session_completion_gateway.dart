@@ -19,6 +19,7 @@ class SsSessionCompletionGateway {
     int? actualRpe,
     String? location,
     String? customNote,
+    bool isPartial = false,
   }) async {
     final db = await DatabaseHelper.instance.database;
     final repo = SsPrescriptionRepository.instance;
@@ -36,6 +37,7 @@ class SsSessionCompletionGateway {
         actualRpe: actualRpe,
         location: location,
         customNote: customNote,
+        isPartial: isPartial,
       );
     });
 
@@ -62,6 +64,7 @@ class SsSessionCompletionGateway {
     int? actualRpe,
     String? location,
     String? customNote,
+    bool isPartial = false,
   }) async {
     if (prescriptionId == null || prescriptionId.isEmpty) return null;
 
@@ -113,7 +116,7 @@ class SsSessionCompletionGateway {
     await MovementRepository.instance.upsertEventInTransaction(txn, event);
 
     final updated = prescription.copyWith(
-      status: PrescriptionStatus.done,
+      status: isPartial ? PrescriptionStatus.partial : PrescriptionStatus.done,
       workoutLogId: logId,
       actualRpe: actualRpe,
       updatedAt: nowMs,

@@ -41,6 +41,7 @@ class PrayerTimeline {
       PrayerSlot(key: 'DHUHR', titleFa: 'اذان ظهر', at: times.dhuhr, isPrayer: true),
       if (includeAsrIsha)
         PrayerSlot(key: 'ASR', titleFa: 'اذان عصر', at: times.asr, isPrayer: true),
+      PrayerSlot(key: 'SUNSET', titleFa: 'غروب آفتاب', at: times.sunset, isPrayer: false),
       PrayerSlot(key: 'MAGHRIB', titleFa: 'اذان مغرب', at: times.maghrib, isPrayer: true),
       if (includeAsrIsha)
         PrayerSlot(key: 'ISHA', titleFa: 'اذان عشا', at: times.isha, isPrayer: true),
@@ -62,7 +63,7 @@ class PrayerTimeline {
   }
 
   /// Deadline DateTime for a given prayer key (W-5).
-  /// FAJR → SUNRISE, DHUHR/ASR → MAGHRIB, MAGHRIB/ISHA → MIDNIGHT_SHARI.
+  /// FAJR → SUNRISE, DHUHR/ASR → SUNSET, MAGHRIB/ISHA → MIDNIGHT_SHARI.
   static DateTime? deadlineForSlot(String prayerKey, PrayerTimes times) {
     final slots = slotsForTimes(times, includeAsrIsha: true);
     String? deadlineKey;
@@ -71,7 +72,7 @@ class PrayerTimeline {
         deadlineKey = 'SUNRISE';
       case 'DHUHR':
       case 'ASR':
-        deadlineKey = 'MAGHRIB';
+        deadlineKey = 'SUNSET';
       case 'MAGHRIB':
       case 'ISHA':
         deadlineKey = 'MIDNIGHT_SHARI';
@@ -85,8 +86,9 @@ class PrayerTimeline {
   }
 
   /// Next prayer slot after [now] using new PrayerTimes.
-  static PrayerSlot? nextFromTimes(PrayerTimes times, DateTime now, {bool includeAsrIsha = true}) {
+  static PrayerSlot? nextFromTimes(PrayerTimes times, DateTime now, {bool includeAsrIsha = true, bool prayersOnly = true}) {
     for (final slot in slotsForTimes(times, includeAsrIsha: includeAsrIsha)) {
+      if (prayersOnly && !slot.isPrayer) continue;
       if (slot.at.isAfter(now)) return slot;
     }
     return null;
@@ -141,6 +143,7 @@ class PrayerTimeline {
     addSlot('SUNRISE', 'طلوع آفتاب', times.sunrise, false);
     addSlot('DHUHR', 'اذان ظهر', times.dhuhr, true);
     if (includeAsrIsha) addSlot('ASR', 'اذان عصر', times.asr, true);
+    addSlot('SUNSET', 'غروب آفتاب', times.sunset, false);
     addSlot('MAGHRIB', 'اذان مغرب', times.maghrib, true);
     if (includeAsrIsha) addSlot('ISHA', 'اذان عشا', times.isha, true);
     addSlot('MIDNIGHT_SHARI', 'نیمه‌شب شرعی', times.midnightShari, false);
@@ -149,8 +152,9 @@ class PrayerTimeline {
     return slots;
   }
 
-  static PrayerSlot? next(PrayerTime times, DateTime now, {bool includeAsrIsha = true}) {
+  static PrayerSlot? next(PrayerTime times, DateTime now, {bool includeAsrIsha = true, bool prayersOnly = true}) {
     for (final slot in slotsFor(times, now, includeAsrIsha: includeAsrIsha)) {
+      if (prayersOnly && !slot.isPrayer) continue;
       if (slot.at.isAfter(now)) return slot;
     }
     final tomorrow = now.add(const Duration(days: 1));
@@ -181,7 +185,7 @@ class PrayerTimeline {
         deadlineKey = 'SUNRISE';
       case 'DHUHR':
       case 'ASR':
-        deadlineKey = 'MAGHRIB';
+        deadlineKey = 'SUNSET';
       case 'MAGHRIB':
       case 'ISHA':
         deadlineKey = 'MIDNIGHT_SHARI';

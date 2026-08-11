@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 class GoalTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     // 27. goals (V2 table)
     await db.execute('''
       CREATE TABLE goals (

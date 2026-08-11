@@ -209,11 +209,31 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
             final planId = p['id'].toString();
             final headline = p['headlineFa'] as String? ?? 'تمرین ورزشی';
             final statusStr = p['status'] as String? ?? 'PLANNED';
-            final isCompleted = statusStr == 'DONE' || statusStr == 'PARTIAL';
+            final isCompleted = statusStr == 'DONE';
+            final isPartial = statusStr == 'PARTIAL';
+
+            var percentage = 0;
+            if (isCompleted) {
+              percentage = 100;
+            } else if (isPartial) {
+              final pLogs = allLogs.where((l) => l['prescriptionId'] == planId).toList();
+              if (pLogs.isNotEmpty) {
+                // sort by date desc
+                pLogs.sort((a, b) => (b['startedAt'] as int? ?? 0).compareTo(a['startedAt'] as int? ?? 0));
+                final session = pLogs.first;
+                final completedCount = session['completedExercisesCount'] as int? ?? 0;
+                final totalCount = session['totalExercisesCount'] as int? ?? 0;
+                if (totalCount > 0) {
+                  percentage = ((completedCount / totalCount) * 100).round();
+                }
+              }
+            }
 
             var status = DayStatus.upcoming;
             if (isCompleted) {
               status = DayStatus.completed;
+            } else if (isPartial) {
+              status = DayStatus.partial;
             } else if (dayNum == todayFarsiDay && _selectedWeek == currentWeek) {
               status = DayStatus.today;
             }
@@ -225,6 +245,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                 muscleGroups: headline,
                 status: status,
                 dateIso: p['dateIso'] as String?,
+                completionPercentage: percentage,
               ),
             );
           }
@@ -734,6 +755,12 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
       case DayStatus.completed:
         statusColor = SupplementarySportsTheme.getSuccessColor(context);
         statusIcon = const Icon(Icons.check_circle, color: Colors.green, size: 20);
+      case DayStatus.partial:
+        statusColor = const Color(0xFFF59E0B);
+        statusIcon = Text(
+          toPersianDigits('${day.completionPercentage}٪'),
+          style: TextStyle(fontFamily: 'Vazirmatn', color: statusColor, fontSize: 13, fontWeight: FontWeight.bold),
+        );
       case DayStatus.today:
         statusColor = SupplementarySportsTheme.getSuccessColor(context).withValues(alpha: 0.2);
         statusIcon = Icon(Icons.circle, color: SupplementarySportsTheme.getSuccessColor(context), size: 14);

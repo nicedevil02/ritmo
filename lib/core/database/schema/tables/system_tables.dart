@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 class SystemTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     // 8. temporary_events table
     await db.execute('''
       CREATE TABLE temporary_events (
@@ -342,5 +342,32 @@ class SystemTables {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_dueDate ON simple_tasks(dueDate);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_order ON simple_tasks(orderIndex);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_important ON simple_tasks(isImportant);');
+
+  await db.execute('''
+      CREATE TABLE IF NOT EXISTS task_steps (
+          id TEXT PRIMARY KEY,
+          taskId TEXT NOT NULL,
+          title TEXT NOT NULL,
+          isCompleted INTEGER NOT NULL DEFAULT 0,
+          displayOrder INTEGER NOT NULL DEFAULT 0,
+          createdAt INTEGER NOT NULL,
+          completedAt INTEGER
+      );
+
+  ''');
+
+  await db.execute('''
+      CREATE TABLE IF NOT EXISTS task_attachments (
+          id TEXT PRIMARY KEY,
+          taskId TEXT NOT NULL,
+          fileName TEXT NOT NULL,
+          fileSizeBytes INTEGER NOT NULL DEFAULT 0,
+          mimeType TEXT,
+          localPath TEXT NOT NULL,
+          createdAt INTEGER NOT NULL
+      );
+
+  ''');
+
   }
 }

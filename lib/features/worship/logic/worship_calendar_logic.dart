@@ -25,15 +25,9 @@ class WorshipCalendarDay {
   final String dailyZikr;
 
   bool get hasOccasions => occasions.isNotEmpty;
-  bool get isNationalHoliday {
-    if (jalali.month == 1 && (jalali.day >= 1 && jalali.day <= 4 || jalali.day == 12 || jalali.day == 13)) return true;
-    if (jalali.month == 3 && (jalali.day == 14 || jalali.day == 15)) return true;
-    if (jalali.month == 11 && jalali.day == 22) return true;
-    if (jalali.month == 12 && jalali.day == 29) return true;
-    return false;
-  }
-  bool get isReligiousHoliday => isFriday || occasions.any((o) => o.isReligiousHoliday);
-  bool get isHoliday => isFriday || isNationalHoliday || occasions.any((o) => o.isReligiousHoliday);
+  bool get isNationalHoliday => occasions.any((o) => o.category == WorshipOccasionCategory.national && o.isHoliday);
+  bool get isReligiousHoliday => isFriday || occasions.any((o) => o.category != WorshipOccasionCategory.national && o.isHoliday);
+  bool get isHoliday => isFriday || occasions.any((o) => o.isHoliday);
 }
 
 class WorshipCalendarMonthData {

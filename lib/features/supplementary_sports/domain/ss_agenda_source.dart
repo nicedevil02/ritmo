@@ -4,21 +4,28 @@ import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/features/supplementary_sports/domain/ss_week_resolver.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// AgendaSource for the Supplementary Sports & Movement domain.
 class SsAgendaSource {
   SsAgendaSource({
-    required this.sportsPlansByDay,
     required this.movementRoutines,
     required this.sportsEnabled,
     this.prescriptionsByDate = const {},
+    required this.programStartDate,
+    required this.totalWeeks,
+    required this.db,
+    required this.hasWeekCol,
   });
 
-  final Map<int, List<Map<String, dynamic>>> sportsPlansByDay;
   final List<Map<String, dynamic>> movementRoutines;
   final bool sportsEnabled;
   final Map<String, Map<String, dynamic>> prescriptionsByDate;
+  final DateTime programStartDate;
+  final int totalWeeks;
+  final Database db;
+  final bool hasWeekCol;
 
   static Future<SsAgendaSource> load(
     Database db,
@@ -29,24 +36,27 @@ class SsAgendaSource {
 
     if (!sportsEnabled) {
       return SsAgendaSource(
-        sportsPlansByDay: const {},
         movementRoutines: const [],
         sportsEnabled: false,
+        programStartDate: DateTime.now(),
+        totalWeeks: 4,
+        db: db,
+        hasWeekCol: false,
       );
     }
 
-    // 1. Legacy ss_workout_plan (keyed by dayOfWeek)
-    final sportsPlansByDay = <int, List<Map<String, dynamic>>>{};
+    DateTime pStart = DateTime.now();
+    int totalW = 4;
+
+    bool hasWeekCol = false;
     try {
-      final plans = await db.query('ss_workout_plan');
-      for (final p in plans) {
-        final dow = p['dayOfWeek'] as int?;
-        if (dow != null) {
-          sportsPlansByDay.putIfAbsent(dow, () => []).add(Map<String, dynamic>.from(p));
-        }
-      }
+      pStart = await SsWeekResolver.resolveProgramStartDate(db);
+      totalW = await SsWeekResolver.resolveTotalWeeks(db);
+
+      final tableInfo = await db.rawQuery("PRAGMA table_info(ss_workout_plan)");
+      hasWeekCol = tableInfo.any((col) => col['name'] == 'week');
     } catch (e) {
-      debugPrint('[SsAgendaSource] Legacy plan load error: $e');
+      debugPrint('[SsAgendaSource] Schema load error: $e');
     }
 
     // 2. New ss_session_prescription (keyed by dateIso)
@@ -74,14 +84,17 @@ class SsAgendaSource {
     } catch (_) {}
 
     return SsAgendaSource(
-      sportsPlansByDay: sportsPlansByDay,
       movementRoutines: movementRoutines,
       sportsEnabled: sportsEnabled,
       prescriptionsByDate: prescriptionsByDate,
+      programStartDate: pStart,
+      totalWeeks: totalW,
+      db: db,
+      hasWeekCol: hasWeekCol,
     );
   }
 
-  List<AgendaItem> itemsForDate(DateTime date, String dateStr) {
+  Future<List<AgendaItem>> itemsForDate(DateTime date, String dateStr) async {
     if (!sportsEnabled) return const [];
 
     final items = <AgendaItem>[];
@@ -95,6 +108,13 @@ class SsAgendaSource {
       final headline = pres['headlineFa'] as String? ?? 'تمرین ورزشی';
       final targetMinutes = pres['targetMinutes'] as int? ?? 45;
       final coachNote = pres['coachNoteFa'] as String?;
+
+      if (status == 'MOVED') {
+        // Return only movement routines if prescription is moved
+        items.addAll(_movementItems(dateStr));
+        final seenMove = <String>{};
+        return items.where((i) => seenMove.add('${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}')).toList();
+      }
 
       // Skip REST days — nothing on agenda
       if (slotType != 'REST') {
@@ -122,17 +142,38 @@ class SsAgendaSource {
       }
 
       // When prescriptions exist, skip legacy plans for this date
-      return [...items, ..._movementItems(dateStr)];
+      final res = [...items, ..._movementItems(dateStr)];
+      final seen = <String>{};
+      return res.where((i) => seen.add('${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}')).toList();
     }
 
     // 2. Legacy ss_workout_plan fallback
     final dayOfWeek = date.weekday;
-    final plans = sportsPlansByDay[dayOfWeek] ?? const [];
-    for (final plan in plans) {
+    final activeW = SsWeekResolver.resolveActiveWeek(
+      programStartDate: programStartDate,
+      targetDate: date,
+      totalWeeks: totalWeeks,
+    );
+
+    List<Map<String, dynamic>> filteredPlans;
+    if (hasWeekCol) {
+      filteredPlans = await db.query(
+        'ss_workout_plan',
+        where: 'dayOfWeek = ? AND week = ?',
+        whereArgs: [dayOfWeek, activeW],
+      );
+    } else {
+      debugPrint('[SsAgendaSource] warning: week column not found in ss_workout_plan');
+      filteredPlans = await db.query(
+        'ss_workout_plan',
+        where: 'dayOfWeek = ?',
+        whereArgs: [dayOfWeek],
+      );
+    }
+
+    for (final plan in filteredPlans) {
       final planId = plan['id']?.toString() ?? 'plan_$dayOfWeek';
-      final title = plan['workoutName'] as String? ??
-          plan['title'] as String? ??
-          'تمرین ورزشی';
+      final title = SsWeekResolver.formatSportTitle(plan);
       final timeOfDay =
           plan['timeOfDay'] as String? ?? plan['targetTime'] as String?;
       final duration = plan['durationMinutes'] as int? ?? 45;
@@ -156,7 +197,9 @@ class SsAgendaSource {
     // 3. Movement routines
     items.addAll(_movementItems(dateStr));
 
-    return items;
+    // Step 4: Final Deduplication Guard
+    final seen = <String>{};
+    return items.where((i) => seen.add('${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}')).toList();
   }
 
   List<AgendaItem> _movementItems(String dateStr) {

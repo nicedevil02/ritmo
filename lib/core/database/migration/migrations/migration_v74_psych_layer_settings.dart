@@ -6,7 +6,7 @@ class MigrationV74PsychLayerSettings extends Migration {
   int get version => 74;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final defaults = {
       'motivation_diagnosis_enabled': 'true',
@@ -29,5 +29,5 @@ class MigrationV74PsychLayerSettings extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

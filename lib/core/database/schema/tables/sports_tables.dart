@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 class SportsTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     // 11.5. workout_logs (V2 table)
     await db.execute('''
       CREATE TABLE workout_logs (

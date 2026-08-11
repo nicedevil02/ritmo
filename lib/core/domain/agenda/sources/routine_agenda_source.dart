@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/engines/routine_occurrence_generator.dart';
+import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:sqflite/sqflite.dart';
@@ -16,7 +18,7 @@ import 'package:sqflite/sqflite.dart';
 ///
 /// Holds raw in-memory rows (loaded once) and resolves per-date without extra
 /// queries, which keeps the month range view (31 days) cheap.
-class RoutineAgendaSource {
+class RoutineAgendaSource implements AgendaSource {
 
   const RoutineAgendaSource({
     required this.routines,
@@ -24,6 +26,7 @@ class RoutineAgendaSource {
     required this.occurrences,
     required this.avgDurations,
     required this.categoryAvgDurations,
+    required this.completionsByDate,
     required this.activeModules,
   });
   final List<Map<String, dynamic>> routines;
@@ -31,19 +34,45 @@ class RoutineAgendaSource {
   final List<Map<String, dynamic>> occurrences;
   final Map<String, double> avgDurations;
   final Map<String, double> categoryAvgDurations;
+  final Map<String, Map<String, Map<String, dynamic>>> completionsByDate;
 
   /// Module gates the routine list honors: keys `religion`, `medicine`, `courses`.
   final Map<String, bool> activeModules;
+
+  @override
+  Set<AgendaDomain> get domains => {AgendaDomain.routine};
+
+  @override
+  bool get isEnabled => true;
 
   /// Loads all routine rows once. Reuse the returned instance for a whole
   /// range; do not reload per day.
   static Future<RoutineAgendaSource> load(
     Database db,
     Map<String, String> settingsMap,
+    String startStr,
+    String endStr,
   ) async {
     final routines = await db.query('routines', where: 'isArchived = 0');
     final schedules = await db.query('routine_schedules');
-    final occurrences = await db.query('routine_occurrences');
+    final occurrences = await db.query(
+      'routine_occurrences',
+      where: 'date >= ? AND date <= ?',
+      whereArgs: [startStr, endStr],
+    );
+
+    final completionsByDate = <String, Map<String, Map<String, dynamic>>>{};
+    final comps = await db.query('routine_completions', where: 'completionDate >= ? AND completionDate <= ?', whereArgs: [startStr, endStr]);
+    for (final c in comps) {
+      final resType = c['resultType'] as String?;
+      if (resType == 'SNOOZED' || resType == 'CANNOT_NOW') continue;
+      final dateStr = c['completionDate'] as String?;
+      final routineId = c['routineId'] as String?;
+      if (dateStr == null || routineId == null) continue;
+      completionsByDate
+          .putIfAbsent(dateStr, () => {})[routineId] =
+          Map<String, dynamic>.from(c);
+    }
 
     final avgDurations = <String, double>{};
     try {
@@ -61,7 +90,9 @@ class RoutineAgendaSource {
           avgDurations[rId] = avg;
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[RoutineAgendaSource] avgDurations failed: $e\n$st');
+    }
 
     final categoryAvgDurations = <String, double>{};
     try {
@@ -80,7 +111,9 @@ class RoutineAgendaSource {
           categoryAvgDurations[cat] = avg;
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[RoutineAgendaSource] categoryAvgDurations failed: $e\n$st');
+    }
 
     return RoutineAgendaSource(
       routines: routines.map(Map<String, dynamic>.from).toList(),
@@ -89,6 +122,7 @@ class RoutineAgendaSource {
           occurrences.map(Map<String, dynamic>.from).toList(),
       avgDurations: avgDurations,
       categoryAvgDurations: categoryAvgDurations,
+      completionsByDate: completionsByDate,
       activeModules: {
         'religion': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled'),
         'medicine': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_medicine_enabled'),
@@ -233,19 +267,15 @@ class RoutineAgendaSource {
     return null;
   }
 
-  /// Builds normalized [AgendaItem]s for routines active on [date].
-  ///
-  /// [completionsByRoutineId] maps routineId -> the completion row for [date]
-  /// (already filtered to that date by the caller).
-  List<AgendaItem> agendaItemsForDate(
-    DateTime date, {
-    required Map<String, String> prayerTimes,
-    Map<String, Map<String, dynamic>> completionsByRoutineId = const {},
-  }) {
-    final dateStr = _dateStr(date);
-    final items = <AgendaItem>[];
+  @override
+  List<AgendaItem> itemsForDate(AgendaDayContext ctx) {
+    if (!ctx.options.wants(AgendaDomain.routine)) return [];
 
-    for (final entry in activeForDate(date)) {
+    final dateStr = ctx.dateStr;
+    final items = <AgendaItem>[];
+    final dateCompletions = completionsByDate[dateStr] ?? {};
+
+    for (final entry in activeForDate(ctx.date)) {
       final r = entry['routine'] as Map<String, dynamic>;
       final s = entry['schedule'] as Map<String, dynamic>;
       final routineId = r['id'] as String;
@@ -256,9 +286,9 @@ class RoutineAgendaSource {
         orElse: () => Category.custom,
       );
 
-      final resolvedTime = resolveTime(s, prayerTimes);
+      final resolvedTime = resolveTime(s, ctx.prayerTimes);
 
-      final completion = completionsByRoutineId[routineId];
+      final completion = dateCompletions[routineId];
       var completionState = AgendaCompletion.pending;
       if (completion != null) {
         final resType = completion['resultType'] as String? ?? 'FULL';
@@ -289,7 +319,7 @@ class RoutineAgendaSource {
       }
 
       items.add(AgendaItem(
-        id: 'routine:$routineId:$dateStr',
+        id: buildAgendaItemId(AgendaDomain.routine, routineId, dateStr),
         domain: AgendaDomain.routine,
         sourceId: routineId,
         title: r['title'] as String? ?? '',

@@ -6,10 +6,10 @@ class MigrationV70CourseSkipReason extends Migration {
   int get version => 70;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     await safeAddColumn(db, 'course_sessions', 'skipReason', 'TEXT');
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

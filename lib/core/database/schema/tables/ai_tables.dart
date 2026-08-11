@@ -2,14 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
 class AiTables {
-  static Future<void> create(Database db) async {
+  static Future<void> create(DatabaseExecutor db) async {
     await ensureSchema(db);
   }
 
   /// Self-healing schema check and initialization for `ai_memory`.
   /// Ensures all required columns and indexes exist regardless of database version
   /// or previous migration history.
-  static Future<void> ensureSchema(Database db) async {
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
     try {
       // 1. Create table with full schema if it does not exist
       await db.execute('''
@@ -57,6 +57,7 @@ class AiTables {
         'category': "TEXT DEFAULT 'general'",
         'created_at': "INTEGER",
         'updated_at': "INTEGER",
+        'scope': "TEXT NOT NULL DEFAULT 'GENERAL'",
       };
 
       for (final entry in requiredAdditions.entries) {

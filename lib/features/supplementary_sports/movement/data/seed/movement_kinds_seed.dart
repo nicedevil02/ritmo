@@ -2,7 +2,7 @@ import 'package:sqflite/sqflite.dart';
 
 /// Seed data for the Movement Layer taxonomy (kinds).
 class MovementKindsSeed {
-  static Future<void> ensureSchema(Database db) async {
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS movement_kinds (
           code TEXT PRIMARY KEY,
@@ -33,7 +33,7 @@ class MovementKindsSeed {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_movement_kinds_usage ON movement_kinds(usageCount DESC);');
   }
 
-  static Future<void> seed(Database db) async {
+  static Future<void> seed(DatabaseExecutor db) async {
     await ensureSchema(db);
     final now = DateTime.now().millisecondsSinceEpoch;
 

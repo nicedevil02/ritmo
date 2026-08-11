@@ -483,7 +483,7 @@ class DashboardController {
     }
   }
 
-  Future<void> _buildModuleSummaries(Database db) async {
+  Future<void> _buildModuleSummaries(DatabaseExecutor db) async {
     final out = <DashboardModuleSummary>[];
     final s = settingsMap;
     String fa(Object v) => toPersianDigits(v.toString());
@@ -787,7 +787,7 @@ class DashboardController {
     }
   }
 
-  Future<void> updateCurrentEnergyState(Database db) async {
+  Future<void> updateCurrentEnergyState(DatabaseExecutor db) async {
     try {
       final energyLogs = await db.query('energy_logs');
       final completions = await db.query('routine_completions');
@@ -884,7 +884,7 @@ class DashboardController {
     };
   }
 
-  Future<void> _ensureWorshipDebtRoutineExists(Database db) async {
+  Future<void> _ensureWorshipDebtRoutineExists(DatabaseExecutor db) async {
     final results = await db.query('routines', where: 'id = ?', whereArgs: ['worship_debt_routine']);
     if (results.isEmpty) {
       final now = DateTime.now().millisecondsSinceEpoch;

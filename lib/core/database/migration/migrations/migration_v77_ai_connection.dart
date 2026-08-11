@@ -7,7 +7,7 @@ class MigrationV77AiConnection extends Migration {
   int get version => 77;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     final now = DateTime.now().millisecondsSinceEpoch;
 
     Future<void> put(String key, String value) => db.insert(
@@ -57,5 +57,5 @@ class MigrationV77AiConnection extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

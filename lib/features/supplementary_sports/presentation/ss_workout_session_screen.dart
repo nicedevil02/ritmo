@@ -549,6 +549,45 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   }
 
   Future<void> _onFinishPressed() async {
+    final state = ref.read(ssWorkoutProvider(_key));
+    final completedCount = state.exercises.where((e) => e.status == ExerciseStatus.done).length;
+
+    if (completedCount == 0) {
+      final abort = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text(
+              'انصراف از تمرین؟ ⚠️',
+              style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            content: const Text(
+              'شما هیچ حرکتی را کامل نکرده‌اید. آیا می‌خواهید از تمرین انصراف دهید؟\n(در صورت انصراف، این تمرین در تاریخچه ثبت نخواهد شد)',
+              style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('ادامه تمرین', style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xFF10B981))),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('انصراف و خروج', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.redAccent)),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (abort ?? false) {
+        await ref.read(ssWorkoutProvider(_key).notifier).abandonSession();
+        if (mounted) Navigator.pop(context);
+      }
+      return;
+    }
+
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
@@ -873,6 +912,15 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       'createdAt': DateTime.now().millisecondsSinceEpoch,
                     });
                   } catch (_) {}
+                  
+                  final state = ref.read(ssWorkoutProvider(_key));
+                  final completedCount = state.exercises.where((e) => e.status == ExerciseStatus.done).length;
+                  if (completedCount == 0) {
+                    await ref.read(ssWorkoutProvider(_key).notifier).abandonSession();
+                    if (mounted) Navigator.pop(context);
+                    return;
+                  }
+                  
                   await _finishAndLogWorkout();
                 },
               ),

@@ -7,7 +7,7 @@ class MigrationV86Notes extends Migration {
   int get version => 86;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     // 1. notes table
     await db.execute('''
       CREATE TABLE IF NOT EXISTS notes (
@@ -176,5 +176,5 @@ class MigrationV86Notes extends Migration {
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

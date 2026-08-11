@@ -28,6 +28,8 @@ import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_log_sheet.dart';
 import 'package:ritmo/features/today/presentation/active_timer_overlay.dart';
+import 'package:ritmo/features/worship/domain/prayer_target.dart';
+import 'package:ritmo/features/worship/presentation/widgets/prayer_sheet.dart';
 
 /// Central action router for opening the appropriate action sheet for any AgendaItem.
 class ActionRouter {
@@ -40,20 +42,13 @@ class ActionRouter {
         break;
 
       case AgendaDomain.prayer:
-        await _showDomainConfirmationSheet(
-          context,
-          item: item,
-          title: item.title,
-          domainLabel: 'نماز',
-          successMessage: 'نماز اول وقت ثبت شد',
-          onConfirm: () => CompletionGateway.instance.submit(
-            PrayerCompletion(
-              prayerKey: item.sourceId,
-              dateStr: item.dateStr,
-              mode: 'ON_TIME',
-            ),
-          ),
-        );
+        final groupKey = _resolvePrayerGroupKey(item);
+        final targetDate = DateTime.tryParse(item.dateStr) ?? DateTime.now();
+        final target = await PrayerTarget.fromGroupKey(groupKey, targetDate, titleFa: item.title);
+        if (context.mounted) {
+          await PrayerSheet.show(context, target);
+        }
+        onChanged?.call();
         break;
 
       case AgendaDomain.mustahab:
@@ -577,7 +572,7 @@ class ActionRouter {
         final val = int.tryParse(rows.first['value']?.toString() ?? '');
         if (val != null && val > 0) return val;
       }
-    } catch (_) {}
+    } catch (e, st) { debugPrint('Error in action_router.dart: $e\n$st'); }
     return 10;
   }
 
@@ -596,7 +591,7 @@ class ActionRouter {
       if (reminders.isNotEmpty) {
         return (reminders.first['deferCount'] as int?) ?? 0;
       }
-    } catch (_) {}
+    } catch (e, st) { debugPrint('Error in action_router.dart: $e\n$st'); }
     return 0;
   }
 
@@ -890,7 +885,7 @@ class ActionRouter {
         final parsed = int.tryParse(rows.first['value'].toString());
         if (parsed != null && parsed > 0) return parsed;
       }
-    } catch (_) {}
+    } catch (e, st) { debugPrint('Error in action_router.dart: $e\n$st'); }
     return 3;
   }
 
@@ -909,7 +904,21 @@ class ActionRouter {
         if (rule != null && rule.isNotEmpty) return rule;
         return rows.first['scheduleType']?.toString();
       }
-    } catch (_) {}
+    } catch (e, st) { debugPrint('Error in action_router.dart: $e\n$st'); }
     return null;
+  }
+
+  static String _resolvePrayerGroupKey(AgendaItem item) {
+    final combined = '${item.id}:${item.sourceId}'.toLowerCase();
+    if (combined.contains('dhuhr') || combined.contains('asr')) {
+      return 'DHUHR_ASR';
+    }
+    if (combined.contains('maghrib') || combined.contains('isha')) {
+      return 'MAGHRIB_ISHA';
+    }
+    if (combined.contains('fasting') || combined.contains('ramadan')) {
+      return 'RAMADAN_FAST';
+    }
+    return 'FAJR';
   }
 }

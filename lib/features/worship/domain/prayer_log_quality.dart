@@ -27,8 +27,10 @@ enum PrayerLogQuality {
   }
 
   factory PrayerLogQuality.fromCode(String? code) {
-    if (code == 'ON_TIME') return PrayerLogQuality.onTime;
-    if (code == 'QADA') return PrayerLogQuality.qada;
+    if (code == null) return PrayerLogQuality.inTime;
+    final upper = code.toUpperCase();
+    if (upper == 'ON_TIME' || upper == 'ONTIME' || upper == 'EARLY') return PrayerLogQuality.onTime;
+    if (upper == 'QADA' || upper == 'QADA_ADDED') return PrayerLogQuality.qada;
     return PrayerLogQuality.inTime;
   }
 }

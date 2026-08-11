@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
@@ -18,8 +17,10 @@ class MustahabSection extends StatefulWidget {
   const MustahabSection({
     super.key,
     required this.onChanged,
+    this.date,
   });
   final VoidCallback onChanged;
+  final DateTime? date;
 
   @override
   State<MustahabSection> createState() => _MustahabSectionState();
@@ -29,19 +30,25 @@ class _MustahabSectionState extends State<MustahabSection> {
   bool _isLoading = true;
   List<WorshipPractice> _activeMustahabs = [];
   Map<String, WorshipDayStatus> _statuses = {};
-  String _todayStr = '';
+
+  String get _targetDateStr =>
+      (widget.date ?? DateTime.now()).toIso8601String().substring(0, 10);
+
+  DateTime get _targetDate =>
+      widget.date != null ? DateTime(widget.date!.year, widget.date!.month, widget.date!.day) : DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    _todayStr = DateTime.now().toIso8601String().substring(0, 10);
     _loadMustahabs();
   }
 
   @override
   void didUpdateWidget(MustahabSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _loadMustahabs();
+    if (oldWidget.date != widget.date) {
+      _loadMustahabs();
+    }
   }
 
   Future<void> _loadMustahabs() async {
@@ -57,9 +64,7 @@ class _MustahabSectionState extends State<MustahabSection> {
 
       final list = results.map(WorshipPractice.fromMap).toList();
 
-      // Daily reset is handled centrally in EndOfDaySweep
-
-      final statuses = await WorshipCompletionRepository.instance.statusForDate(_todayStr);
+      final statuses = await WorshipCompletionRepository.instance.statusForDate(_targetDateStr);
       if (mounted) {
         setState(() {
           _activeMustahabs = list;
@@ -80,29 +85,22 @@ class _MustahabSectionState extends State<MustahabSection> {
   Future<void> _toggleDone(WorshipPractice practice, bool isDone) async {
     unawaited(HapticFeedback.selectionClick());
     try {
-      final db = await DatabaseHelper.instance.database;
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
-
-      final targetDate = DateTime.parse(_todayStr);
+      final targetDate = _targetDate;
+      WorshipLogResult result;
       if (isDone) {
-        await WorshipEngine.instance.logDone(practiceId: practice.id, date: targetDate);
+        result = await WorshipEngine.instance.logDone(practiceId: practice.id, date: targetDate);
       } else {
-        await WorshipEngine.instance.clearLog(practiceId: practice.id, date: targetDate);
+        result = await WorshipEngine.instance.clearLog(practiceId: practice.id, date: targetDate);
+      }
+
+      if (result is WorshipLogBlocked && mounted) {
+        RitmoSnackbar.warning(context, result.userMessage);
+      } else if (result is WorshipLogFailed && mounted) {
+        RitmoSnackbar.warning(context, 'خطا در ثبت: ${result.error}');
       }
 
       await _loadMustahabs();
       widget.onChanged();
-
-      // Notify the reactive layer (invalidates DayAgenda cache + refreshes UI).
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'WorshipUpdated',
-        timestamp: DateTime.now(),
-        payload: {
-          'practiceId': practice.id,
-          'done': isDone,
-          'date': _todayStr,
-        },
-      ));
     } catch (e) {
       debugPrint('Error updating mustahab: $e');
     }
@@ -126,7 +124,7 @@ class _MustahabSectionState extends State<MustahabSection> {
               style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontSize: 16.5, fontWeight: FontWeight.bold),
             ),
             content: Text(
-              'آیا مایلید ${practice.title} امروز را به بدهی‌های عبادی خود (بخش قضا) اضافه کنید؟',
+              'آیا مایلید ${practice.title} را به بدهی‌های عبادی خود (بخش قضا) اضافه کنید؟',
               style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn', fontSize: 14.5),
             ),
             actions: [
@@ -148,82 +146,32 @@ class _MustahabSectionState extends State<MustahabSection> {
       },
     );
 
-    if (addToQada ?? false) {
-      final db = await DatabaseHelper.instance.database;
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
-      final debtId = 'debt_${practice.subType ?? "mustahab"}_$nowMs';
+    // Mark as skipped and delegate deterministic debt creation entirely to WorshipEngine
+    final targetDate = _targetDate;
+    final result = await WorshipEngine.instance.logSkip(
+      practiceId: practice.id,
+      date: targetDate,
+      addToQada: addToQada ?? false,
+    );
 
-      // Add or increment debt
-      final existingDebt = await db.query(
-        'worship_debts',
-        where: 'debtType = ? AND title = ? AND isArchived = 0',
-        whereArgs: ['PRAYER', practice.title],
-        limit: 1,
-      );
-
-      if (existingDebt.isNotEmpty) {
-        final id = existingDebt.first['id']! as String;
-        final currentTotal = existingDebt.first['totalCount']! as int;
-        final currentRemaining = existingDebt.first['remainingCount']! as int;
-
-        await db.update(
-          'worship_debts',
-          {
-            'totalCount': currentTotal + 1,
-            'remainingCount': currentRemaining + 1,
-            'updatedAt': nowMs,
-          },
-          where: 'id = ?',
-          whereArgs: [id],
-        );
-      } else {
-        await db.insert(
-          'worship_debts',
-          {
-            'id': debtId,
-            'debtType': 'PRAYER',
-            'title': practice.title,
-            'totalCount': 1,
-            'remainingCount': 1,
-            'dailyTarget': 1,
-            'autoCreated': 1,
-            'isArchived': 0,
-            'createdAt': nowMs,
-            'updatedAt': nowMs,
-          },
-        );
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('قضای ${practice.title} به بدهی‌های شما اضافه شد.', style: const TextStyle(fontFamily: 'Vazirmatn')),
-            backgroundColor: const Color(0xffD4A843),
-          ),
-        );
-      }
+    if (result is WorshipLogBlocked && mounted) {
+      RitmoSnackbar.warning(context, result.userMessage);
+    } else if (result is WorshipLogFailed && mounted) {
+      RitmoSnackbar.warning(context, 'خطا در ثبت عدم انجام: ${result.error}');
+    } else if ((addToQada ?? false) && mounted) {
+      RitmoSnackbar.success(context, 'قضای ${practice.title} به بدهی‌های شما اضافه شد ✨');
     }
-
-    // Mark as skipped for today
-    final targetDate = DateTime.parse(_todayStr);
-    await WorshipEngine.instance.logSkip(practiceId: practice.id, date: targetDate, addToQada: addToQada ?? false);
 
     await _loadMustahabs();
     widget.onChanged();
   }
 
   void _showManageSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return _ManageMustahabSheet(
-          onSaved: () {
-            _loadMustahabs();
-            widget.onChanged();
-          },
-        );
+    ManageMustahabSheet.present(
+      context,
+      onSaved: () {
+        _loadMustahabs();
+        widget.onChanged();
       },
     );
   }
@@ -354,18 +302,27 @@ class _MustahabSectionState extends State<MustahabSection> {
   }
 }
 
-class _ManageMustahabSheet extends StatefulWidget {
-
-  const _ManageMustahabSheet({
+class ManageMustahabSheet extends StatefulWidget {
+  const ManageMustahabSheet({
+    super.key,
     required this.onSaved,
   });
   final VoidCallback onSaved;
 
+  static Future<void> present(BuildContext context, {required VoidCallback onSaved}) {
+    return showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => ManageMustahabSheet(onSaved: onSaved),
+    );
+  }
+
   @override
-  State<_ManageMustahabSheet> createState() => _ManageMustahabSheetState();
+  State<ManageMustahabSheet> createState() => _ManageMustahabSheetState();
 }
 
-class _ManageMustahabSheetState extends State<_ManageMustahabSheet> {
+class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
   List<Map<String, dynamic>> _presets = [];
   List<WorshipPractice> _customPractices = [];
   bool _isLoadingPresets = true;
@@ -427,27 +384,23 @@ class _ManageMustahabSheetState extends State<_ManageMustahabSheet> {
         setState(() {
           _presets = finalPresets;
           _customPractices = customs;
-          _isLoadingPresets = false;
         });
       }
     } catch (e) {
       debugPrint('Error loading presets: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingPresets = false;
+        });
+      }
     }
   }
 
   Future<void> _toggleCustomActive(WorshipPractice practice, bool enable) async {
     unawaited(HapticFeedback.lightImpact());
     try {
-      final db = await DatabaseHelper.instance.database;
-      await db.update(
-        'worship_practices',
-        {
-          'isActive': enable ? 1 : 0,
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-        },
-        where: 'id = ?',
-        whereArgs: [practice.id],
-      );
+      await WorshipEngine.instance.setPracticeEnabled(practice.id, enable);
       await _loadPresets();
       widget.onSaved();
     } catch (e) {
@@ -458,12 +411,12 @@ class _ManageMustahabSheetState extends State<_ManageMustahabSheet> {
   Future<void> _deleteCustom(WorshipPractice practice) async {
     unawaited(HapticFeedback.vibrate());
 
-    // 1. Temporarily remove from local list and update UI
-    setState(() {
-      _customPractices.removeWhere((p) => p.id == practice.id);
-    });
+    // 1. Soft delete immediately using WorshipEngine
+    await WorshipEngine.instance.setPracticeEnabled(practice.id, false);
+    await _loadPresets();
+    widget.onSaved();
 
-    var undoClicked = false;
+    if (!mounted) return;
 
     // 2. Show SnackBar with Undo action
     final colors = context.colors;
@@ -487,7 +440,7 @@ class _ManageMustahabSheetState extends State<_ManageMustahabSheet> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'مستحب سفارشی حذف شد',
+                  'مستحب سفارشی غیرفعال شد',
                   style: TextStyle(
                     fontFamily: 'Vazirmatn',
                     fontSize: 13.5,
@@ -496,11 +449,11 @@ class _ManageMustahabSheetState extends State<_ManageMustahabSheet> {
                 ),
               ),
               TextButton(
-                onPressed: () {
-                  undoClicked = true;
+                onPressed: () async {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  // Re-add and reload
-                  _loadPresets();
+                  await WorshipEngine.instance.setPracticeEnabled(practice.id, true);
+                  await _loadPresets();
+                  widget.onSaved();
                 },
                 child: const Text(
                   'بازگرداندن (Undo)',
@@ -517,22 +470,6 @@ class _ManageMustahabSheetState extends State<_ManageMustahabSheet> {
         ),
       ),
     );
-
-    // 3. Wait for 5 seconds, then check if we should delete from DB
-    await Future.delayed(const Duration(seconds: 5));
-    if (!undoClicked) {
-      try {
-        final db = await DatabaseHelper.instance.database;
-        await db.delete(
-          'worship_practices',
-          where: 'id = ?',
-          whereArgs: [practice.id],
-        );
-        widget.onSaved();
-      } catch (e) {
-        debugPrint('Error deleting custom practice: $e');
-      }
-    }
   }
 
   Map<String, dynamic> _getDefaultReminder(String id) {
@@ -545,9 +482,9 @@ class _ManageMustahabSheetState extends State<_ManageMustahabSheet> {
       'preset_nafilah_isha': {'time': '20:30', 'freq': 'DAILY', 'day': ''},
       'preset_ziarat_ashura': {'time': '08:00', 'freq': 'DAILY', 'day': ''},
       'preset_dua_ahd': {'time': '07:00', 'freq': 'DAILY', 'day': ''},
-      'preset_dua_kumayl': {'time': '20:00', 'freq': 'WEEKLY', 'day': 'Thursday'},
-      'preset_dua_nudbah': {'time': '07:30', 'freq': 'WEEKLY', 'day': 'Friday'},
-      'preset_jafar_tayyar': {'time': '10:00', 'freq': 'WEEKLY', 'day': 'Friday'},
+      'preset_dua_kumayl': {'time': '20:00', 'freq': 'WEEKLY', 'day': '4'},
+      'preset_dua_nudbah': {'time': '07:30', 'freq': 'WEEKLY', 'day': '5'},
+      'preset_jafar_tayyar': {'time': '10:00', 'freq': 'WEEKLY', 'day': '5'},
     };
     return defaults[id] ?? {'time': '21:00', 'freq': 'DAILY', 'day': ''};
   }
@@ -555,7 +492,13 @@ class _ManageMustahabSheetState extends State<_ManageMustahabSheet> {
   String _describeReminder(Map<String, dynamic> reminder) {
     final freq = reminder['freq'] == 'DAILY' ? 'هر روز' : 'هفتگی';
     final time = toPersianDigits(reminder['time'] as String);
-    final day = reminder['day'] == 'Thursday' ? 'پنجشنبه‌ها' : (reminder['day'] == 'Friday' ? 'جمعه‌ها' : '');
+    final dayRaw = reminder['day'] as String? ?? '';
+    String day = '';
+    if (dayRaw == 'Thursday' || dayRaw == '4') {
+      day = 'پنجشنبه‌ها';
+    } else if (dayRaw == 'Friday' || dayRaw == '5') {
+      day = 'جمعه‌ها';
+    }
     if (day.isNotEmpty) {
       return '$freq ($day) ساعت $time';
     }
@@ -753,8 +696,29 @@ class _ManageMustahabSheetState extends State<_ManageMustahabSheet> {
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
       final rDefaults = _getDefaultReminder(preset['id'] as String);
 
-      if (enable) {
-        // Upsert preset in DB
+      final existing = await db.query(
+        'worship_practices',
+        where: 'id = ?',
+        whereArgs: [preset['id']],
+        limit: 1,
+      );
+
+      if (existing.isNotEmpty) {
+        await db.update(
+          'worship_practices',
+          {
+            'isActive': enable ? 1 : 0,
+            'userDisabledAt': enable ? null : DateTime.now().toIso8601String(),
+            'reminderEnabled': enableReminder ? 1 : 0,
+            if (customTime != null) 'reminderTime': customTime,
+            if (customFreq != null) 'reminderFrequency': customFreq,
+            if (customDay != null) 'reminderDaysOfWeek': customDay,
+            'updatedAt': nowMs,
+          },
+          where: 'id = ?',
+          whereArgs: [preset['id']],
+        );
+      } else if (enable) {
         await db.insert(
           'worship_practices',
           {
@@ -774,18 +738,6 @@ class _ManageMustahabSheetState extends State<_ManageMustahabSheet> {
             'createdAt': nowMs,
             'updatedAt': nowMs,
           },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      } else {
-        // Mark inactive
-        await db.update(
-          'worship_practices',
-          {
-            'isActive': 0,
-            'updatedAt': nowMs,
-          },
-          where: 'id = ?',
-          whereArgs: [preset['id']],
         );
       }
 
@@ -812,7 +764,7 @@ class _ManageMustahabSheetState extends State<_ManageMustahabSheet> {
       if (existing.isNotEmpty) {
         practiceToEdit = WorshipPractice.fromMap(existing.first);
       } else {
-        final reminder = preset['reminder'] as Map<String, dynamic>;
+        final reminder = _getDefaultReminder(preset['id'] as String);
         final todayStr = DateTime.now().toIso8601String().substring(0, 10);
         final nowMs = DateTime.now().millisecondsSinceEpoch;
         practiceToEdit = WorshipPractice(
@@ -1148,22 +1100,16 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
         title: title,
         notes: notes,
         dailyTarget: 1,
+        createdAt: practice.createdAt == 0 ? nowMs : practice.createdAt,
         updatedAt: nowMs,
-        isActive: !isEdit || (widget.practice!.isActive),
+        isActive: true,
       );
 
-      if (isEdit) {
-        await db.insert(
-          'worship_practices',
-          p.toMap(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      } else {
-        await db.insert(
-          'worship_practices',
-          p.toMap(),
-        );
-      }
+      await db.insert(
+        'worship_practices',
+        p.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
 
       widget.onSaved();
 

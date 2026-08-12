@@ -27,7 +27,7 @@ class StarterPackCatalog {
     StarterRoutineTemplate(
       id: 'water_habit',
       titleFa: '💧 نوشیدن آب',
-      category: Category.fitness,
+      category: Category.personal,
       durationMinutes: DurationBounds.defaultMinutes,
       defaultTime: '08:00',
       forAreas: const [FocusArea.health],
@@ -35,7 +35,7 @@ class StarterPackCatalog {
     StarterRoutineTemplate(
       id: 'morning_stretch',
       titleFa: '🧘 کشش و نرمش صبحگاهی',
-      category: Category.fitness,
+      category: Category.personal,
       durationMinutes: 15,
       defaultTime: '07:30',
       forAreas: const [FocusArea.sport, FocusArea.health],
@@ -59,7 +59,7 @@ class StarterPackCatalog {
     StarterRoutineTemplate(
       id: 'night_winddown',
       titleFa: '🌙 آماده‌سازی برای خواب',
-      category: Category.fitness,
+      category: Category.personal,
       durationMinutes: 20,
       defaultTime: '22:30',
       forAreas: const [FocusArea.sleep, FocusArea.stress],

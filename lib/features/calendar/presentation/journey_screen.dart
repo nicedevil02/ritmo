@@ -9,6 +9,7 @@ import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_snapshot_builder.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/calendar/data/day_mark_repository.dart';
@@ -198,7 +199,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
 
     if (!mounted) return;
 
-    JourneySmartPanel.showAsBottomSheet(
+    unawaited(JourneySmartPanel.showAsBottomSheet(
       context,
       snapshot: snapshot,
       onSelectActivity: _openItemDetails,
@@ -208,7 +209,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
         }
         _scrollToTimeString(gap.startTimeStr);
       },
-    );
+    ));
   }
 
   // K32 — Open the day review sheet for the given date.
@@ -233,14 +234,14 @@ class _JourneyScreenState extends State<JourneyScreen> {
   Future<void> _showDayMarkMenu(BuildContext ctx, DateTime date) async {
     final ds = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     final existing = await DayMarkRepository.instance.getMark(ds);
-    if (!mounted) return;
+    if (!ctx.mounted) return;
     final kind = await showModalBottomSheet<DayMarkKind>(
       context: ctx,
       builder: (_) => _DayMarkSheet(current: existing?.kind ?? DayMarkKind.normal),
     );
     if (kind == null || !mounted) return;
     await DayMarkRepository.instance.setMark(ds, kind);
-    _controller.refresh();
+    unawaited(_controller.refresh());
   }
 
   @override
@@ -598,6 +599,35 @@ class _JourneyScreenState extends State<JourneyScreen> {
                                   icon: const Icon(Icons.refresh, size: 20),
                                   tooltip: 'بازخوانی',
                                   onPressed: _controller.refresh,
+                                ),
+                              ),
+                              SizedBox(
+                                width: 36,
+                                height: 36,
+                                child: PopupMenuButton<String>(
+                                  padding: EdgeInsets.zero,
+                                  icon: const Icon(Icons.more_vert_rounded, size: 20),
+                                  tooltip: 'تنظیمات نمای تقویم',
+                                  onSelected: (value) async {
+                                    if (value == 'toggle_compression') {
+                                      final current = SettingsService.instance.get<bool>('calendar_compress_recurring');
+                                      await SettingsService.instance.set('calendar_compress_recurring', !current);
+                                      unawaited(_controller.refresh());
+                                    }
+                                  },
+                                  itemBuilder: (ctx) {
+                                    final isCompressed = SettingsService.instance.get<bool>('calendar_compress_recurring');
+                                    return [
+                                      CheckedPopupMenuItem<String>(
+                                        value: 'toggle_compression',
+                                        checked: isCompressed,
+                                        child: const Text(
+                                          'فشرده‌سازی تکرارها',
+                                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                                        ),
+                                      ),
+                                    ];
+                                  },
                                 ),
                               ),
                             ],

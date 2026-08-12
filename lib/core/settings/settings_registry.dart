@@ -799,6 +799,16 @@ class SettingsRegistry {
       searchTerms: ['نمایش کارها', 'تسک', 'کارها'],
     ),
     SettingDescriptor(
+      key: 'calendar_compress_recurring',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: true,
+      labelFa: 'فشرده‌سازی تکرارها در نمای برنامه',
+      group: SettingsGroup.calendar,
+      descriptionFa: 'تجمیع روتین‌ها و کارهای تکرارشونده روزانه در باکت‌های دور تقویم',
+      searchTerms: ['فشرده‌سازی', 'تکرارها', 'روتین', 'تجمیع'],
+    ),
+    SettingDescriptor(
       key: 'calendar_show_occasions',
       type: SettingType.boolean,
       scope: SettingScope.db,

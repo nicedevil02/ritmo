@@ -11,6 +11,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/weekly_budget_card.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_budget.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_exercise_library_screen.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/ss_movement_tab_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_onboarding_flow.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_plan_day_detail_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_plan_overview_screen.dart';
@@ -116,10 +117,8 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
   int _selectedIndex = 0;
 
   // Lazy tab cache — only tab 0 is built eagerly; others build on first visit.
-  final List<Widget?> _pageCache = List.filled(4, null);
+  final List<Widget?> _pageCache = List.filled(5, null);
   final Set<int> _builtTabs = {0};
-
-
 
   Widget _buildPage(int index) {
     if (_pageCache[index] != null) return _pageCache[index]!;
@@ -127,7 +126,8 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
       0 => SSHomeDashboardTabContent(onNavigateToTab: _navigateToTab),
       1 => const SSExerciseLibraryScreen(),
       2 => SSPlanOverviewScreen(onNavigateToTab: _navigateToTab),
-      3 => SSProgressScreen(onNavigateToTab: _navigateToTab),
+      3 => SSMovementTabScreen(onNavigateToTab: _navigateToTab),
+      4 => SSProgressScreen(onNavigateToTab: _navigateToTab),
       _ => const SizedBox.shrink(),
     };
     _pageCache[index] = page;
@@ -143,14 +143,14 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
 
   void _onTabSelected(int index) {
     setState(() {
-      _selectedIndex = index.clamp(0, 3);
+      _selectedIndex = index.clamp(0, 4);
       _builtTabs.add(_selectedIndex); // mark tab as built before IndexedStack renders it
     });
   }
 
   void _navigateToTab(int index) {
     setState(() {
-      _selectedIndex = index.clamp(0, 3);
+      _selectedIndex = index.clamp(0, 4);
       _builtTabs.add(_selectedIndex);
     });
   }
@@ -169,7 +169,7 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
   Widget _buildSegmentedControl(BuildContext context) {
     final colors = context.colors;
     final sportsAccent = context.modules.sports;
-    final labels = ['امروز', 'ورزش‌ها', 'برنامه', 'پیشرفت'];
+    final labels = ['امروز', 'ورزش‌ها', 'برنامه', 'حرکت', 'پیشرفت'];
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -181,7 +181,7 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
       ),
       child: Row(
         textDirection: TextDirection.rtl,
-        children: List.generate(4, (index) {
+        children: List.generate(5, (index) {
           final isSelected = _selectedIndex == index;
           return Expanded(
             child: GestureDetector(
@@ -267,7 +267,7 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
                 index: _selectedIndex,
                 // Only render tabs that have been visited at least once.
                 children: List.generate(
-                  4,
+                  5,
                   (i) => _builtTabs.contains(i)
                       ? _buildPage(i)
                       : const SizedBox.shrink(),

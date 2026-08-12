@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
 import 'package:ritmo/features/calendar/logic/agenda_bucketing.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/calendar/utils/domain_palette.dart';
-import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 /// K20 — Agenda scale view: scrollable list bucketed by time proximity.
 ///
@@ -43,6 +44,8 @@ class JourneyAgendaView extends StatefulWidget {
 }
 
 class _JourneyAgendaViewState extends State<JourneyAgendaView> {
+  final Set<String> _expandedSeriesKeys = <String>{};
+
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading) {
@@ -63,51 +66,194 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
       return _EmptyAgendaState(onAddTap: widget.onAddTap);
     }
 
+    final compressEnabled = SettingsService.instance.get<bool>('calendar_compress_recurring');
+
+    // Find 2-3 closest incomplete unique items for the "Upcoming Unique Banner"
+    final upcomingUniques = _findUpcomingUniqueItems(bucketed);
+
     // Build sliver list
     final slivers = <Widget>[];
+
+    // 1. Upcoming Unique Banner at top (if banner has items)
+    if (upcomingUniques.isNotEmpty) {
+      slivers.add(SliverToBoxAdapter(
+        child: _UpcomingUniqueBanner(
+          items: upcomingUniques,
+          onItemTap: widget.onItemTap,
+        ),
+      ));
+    }
+
+    // 2. Bucket slivers
     for (final bucket in activeBuckets) {
       final items = bucketed[bucket]!;
-      slivers.add(_BucketHeaderSliver(
-        bucket: bucket,
-        count: items.length,
-        isOverdue: bucket == AgendaBucket.overdue,
-      ));
+      final shouldCompress = compressEnabled &&
+          (bucket == AgendaBucket.thisWeek ||
+           bucket == AgendaBucket.nextWeek ||
+           bucket == AgendaBucket.later);
 
-      final needsSubGroups = bucket == AgendaBucket.thisWeek ||
-          bucket == AgendaBucket.nextWeek ||
-          bucket == AgendaBucket.later;
+      if (shouldCompress) {
+        final daysInBucket = calculateDaysInBucket(bucket, now: widget.now, items: items);
+        final entries = collapseRecurringSeries(items, daysInBucket: daysInBucket);
 
-      if (needsSubGroups) {
-        final grouped = groupByDate(items);
-        final sortedDates = grouped.keys.toList()..sort();
-        for (final dateStr in sortedDates) {
-          final dayItems = _sortItems(grouped[dateStr]!);
-          slivers.add(_DaySubGroupHeader(dateStr: dateStr));
+        final singles = entries.whereType<AgendaSingle>().map((e) => e.item).toList();
+        final seriesList = entries.whereType<AgendaSeries>().toList();
+
+        final countText = _formatUnitCountText(singles.length, seriesList.length, items.length);
+
+        slivers.add(_BucketHeaderSliver(
+          bucket: bucket,
+          countText: countText,
+          isOverdue: bucket == AgendaBucket.overdue,
+        ));
+
+        // Render Singles grouped by date
+        if (singles.isNotEmpty) {
+          final groupedSingles = groupByDate(singles);
+          final sortedDates = groupedSingles.keys.toList()..sort();
+          for (final dateStr in sortedDates) {
+            final dayItems = _sortItems(groupedSingles[dateStr]!);
+            slivers.add(_DaySubGroupHeader(dateStr: dateStr));
+            slivers.add(_ItemsSliver(
+              items: dayItems,
+              onItemTap: widget.onItemTap,
+              onPostponeItem: widget.onPostponeItem,
+              onDoneItem: widget.onDoneItem,
+            ));
+          }
+        }
+
+        // Render Series groups
+        if (seriesList.isNotEmpty) {
+          slivers.add(SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  CalendarTokens.spacingXl, CalendarTokens.spacingM, CalendarTokens.spacingXl, 4),
+              child: Text(
+                'تکرارهای ثابت (${toPersianDigits(seriesList.length)})',
+                style: TextStyle(
+                  fontSize: CalendarTokens.textMeta,
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                  fontFamily: 'Vazirmatn',
+                ),
+              ),
+            ),
+          ));
+
+          for (final series in seriesList) {
+            final seriesKey = series.representative.recurrenceKey;
+            final isExpanded = _expandedSeriesKeys.contains(seriesKey);
+
+            slivers.add(SliverToBoxAdapter(
+              child: _RecurringGroupRow(
+                key: ValueKey('series_$seriesKey'),
+                series: series,
+                isExpanded: isExpanded,
+                onToggleExpand: () {
+                  setState(() {
+                    if (isExpanded) {
+                      _expandedSeriesKeys.remove(seriesKey);
+                    } else {
+                      _expandedSeriesKeys.add(seriesKey);
+                    }
+                  });
+                },
+                onItemTap: widget.onItemTap,
+                onPostponeItem: widget.onPostponeItem,
+                onDoneItem: widget.onDoneItem,
+              ),
+            ));
+          }
+        }
+      } else {
+        // Normal uncompressed bucket rendering
+        slivers.add(_BucketHeaderSliver(
+          bucket: bucket,
+          countText: toPersianDigits(items.length),
+          isOverdue: bucket == AgendaBucket.overdue,
+        ));
+
+        final needsSubGroups = bucket == AgendaBucket.thisWeek ||
+            bucket == AgendaBucket.nextWeek ||
+            bucket == AgendaBucket.later;
+
+        if (needsSubGroups) {
+          final grouped = groupByDate(items);
+          final sortedDates = grouped.keys.toList()..sort();
+          for (final dateStr in sortedDates) {
+            final dayItems = _sortItems(grouped[dateStr]!);
+            slivers.add(_DaySubGroupHeader(dateStr: dateStr));
+            slivers.add(_ItemsSliver(
+              items: dayItems,
+              onItemTap: widget.onItemTap,
+              onPostponeItem: widget.onPostponeItem,
+              onDoneItem: widget.onDoneItem,
+            ));
+          }
+        } else {
+          final sorted = _sortItems(items);
           slivers.add(_ItemsSliver(
-            items: dayItems,
+            items: sorted,
             onItemTap: widget.onItemTap,
             onPostponeItem: widget.onPostponeItem,
             onDoneItem: widget.onDoneItem,
           ));
         }
-      } else {
-        final sorted = _sortItems(items);
-        slivers.add(_ItemsSliver(
-          items: sorted,
-          onItemTap: widget.onItemTap,
-          onPostponeItem: widget.onPostponeItem,
-          onDoneItem: widget.onDoneItem,
-        ));
       }
     }
-
-    // K32-point-3: "مرور روز" row at end of today bucket is handled by onAddTap
-    // (day review button is in header — K32 path 1)
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: slivers,
     );
+  }
+
+  String _formatUnitCountText(int singlesCount, int seriesCount, int totalItems) {
+    if (seriesCount > 0 && singlesCount > 0) {
+      return '${toPersianDigits(singlesCount)} کار یکتا + ${toPersianDigits(seriesCount)} تکرار';
+    } else if (seriesCount > 0 && singlesCount == 0) {
+      return '${toPersianDigits(seriesCount)} تکرار';
+    } else {
+      return toPersianDigits(totalItems);
+    }
+  }
+
+  /// Collects up to 2-3 closest incomplete unique items from active buckets
+  List<AgendaItem> _findUpcomingUniqueItems(Map<AgendaBucket, List<AgendaItem>> bucketed) {
+    final futureBuckets = [
+      AgendaBucket.today,
+      AgendaBucket.tomorrow,
+      AgendaBucket.thisWeek,
+      AgendaBucket.nextWeek,
+      AgendaBucket.later,
+    ];
+
+    final allFutureItems = <AgendaItem>[];
+    for (final b in futureBuckets) {
+      if (bucketed[b] != null) {
+        allFutureItems.addAll(bucketed[b]!);
+      }
+    }
+
+    final keyCounts = <String, int>{};
+    for (final item in allFutureItems) {
+      keyCounts[item.recurrenceKey] = (keyCounts[item.recurrenceKey] ?? 0) + 1;
+    }
+
+    final uniques = allFutureItems.where((i) {
+      if (i.isCompleted) return false;
+      final cnt = keyCounts[i.recurrenceKey] ?? 0;
+      return cnt < 3;
+    }).toList();
+
+    uniques.sort((a, b) {
+      final dateCmp = a.dateStr.compareTo(b.dateStr);
+      if (dateCmp != 0) return dateCmp;
+      return (a.timeOfDay ?? '').compareTo(b.timeOfDay ?? '');
+    });
+
+    return uniques.take(3).toList();
   }
 
   /// Sort: timed items by time, then untimed by priority descending.
@@ -149,12 +295,12 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
 class _BucketHeaderSliver extends StatelessWidget {
   const _BucketHeaderSliver({
     required this.bucket,
-    required this.count,
+    required this.countText,
     required this.isOverdue,
   });
 
   final AgendaBucket bucket;
-  final int count;
+  final String countText;
   final bool isOverdue;
 
   @override
@@ -163,7 +309,7 @@ class _BucketHeaderSliver extends StatelessWidget {
       pinned: true,
       delegate: _StickyHeaderDelegate(
         bucket: bucket,
-        count: count,
+        countText: countText,
         isOverdue: isOverdue,
       ),
     );
@@ -173,12 +319,12 @@ class _BucketHeaderSliver extends StatelessWidget {
 class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   const _StickyHeaderDelegate({
     required this.bucket,
-    required this.count,
+    required this.countText,
     required this.isOverdue,
   });
 
   final AgendaBucket bucket;
-  final int count;
+  final String countText;
   final bool isOverdue;
 
   @override
@@ -221,7 +367,7 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
               borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
             ),
             child: Text(
-              toPersianDigits(count),
+              countText,
               style: TextStyle(
                 fontSize: CalendarTokens.textLabel,
                 fontWeight: FontWeight.w600,
@@ -238,9 +384,317 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(_StickyHeaderDelegate oldDelegate) =>
       oldDelegate.bucket != bucket ||
-      oldDelegate.count != count ||
+      oldDelegate.countText != countText ||
       oldDelegate.isOverdue != isOverdue;
 }
+
+// ────────────────────────────────────────────────────────────
+// Upcoming Unique Banner
+// ────────────────────────────────────────────────────────────
+
+class _UpcomingUniqueBanner extends StatelessWidget {
+  const _UpcomingUniqueBanner({
+    required this.items,
+    required this.onItemTap,
+  });
+
+  final List<AgendaItem> items;
+  final void Function(AgendaItem) onItemTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(
+        CalendarTokens.spacingXl,
+        CalendarTokens.spacingM,
+        CalendarTokens.spacingXl,
+        CalendarTokens.spacingS,
+      ),
+      padding: const EdgeInsets.all(CalendarTokens.spacingM),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.bookmark_added_outlined,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'پیش‌رو (کارهای یکتا)',
+                style: TextStyle(
+                  fontSize: CalendarTokens.textBody,
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.primary,
+                  fontFamily: 'Vazirmatn',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Column(
+            children: items.map((item) {
+              final color = domainColor(context, item.domain);
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: InkWell(
+                  onTap: () => onItemTap(item),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            item.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: CalendarTokens.textBody,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Vazirmatn',
+                              color: theme.textTheme.bodyMedium?.color,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+                          ),
+                          child: Text(
+                            daySubGroupLabel(item.dateStr),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontFamily: 'Vazirmatn',
+                              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.65),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// Recurring Group Row
+// ────────────────────────────────────────────────────────────
+
+class _RecurringGroupRow extends StatelessWidget {
+  const _RecurringGroupRow({
+    super.key,
+    required this.series,
+    required this.isExpanded,
+    required this.onToggleExpand,
+    required this.onItemTap,
+    this.onPostponeItem,
+    this.onDoneItem,
+  });
+
+  final AgendaSeries series;
+  final bool isExpanded;
+  final VoidCallback onToggleExpand;
+  final void Function(AgendaItem) onItemTap;
+  final Future<void> Function(AgendaItem)? onPostponeItem;
+  final Future<void> Function(AgendaItem)? onDoneItem;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final rep = series.representative;
+    final color = domainColor(context, rep.domain);
+    final icon = domainIcon(rep.domain);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: CalendarTokens.spacingXl,
+        vertical: 3,
+      ),
+      child: Card(
+        margin: EdgeInsets.zero,
+        elevation: 0,
+        color: theme.colorScheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+          side: BorderSide(
+            color: theme.dividerColor.withValues(alpha: 0.4),
+          ),
+        ),
+        child: Column(
+          children: [
+            InkWell(
+              onTap: onToggleExpand,
+              borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: CalendarTokens.spacingM,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    // Domain Icon
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(icon, size: 16, color: color),
+                    ),
+                    const SizedBox(width: CalendarTokens.spacingS),
+
+                    // Title + Subtitle
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            rep.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: CalendarTokens.textBody,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Vazirmatn',
+                              color: theme.textTheme.bodyMedium?.color,
+                            ),
+                          ),
+                          if (series.completedCount > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                '${toPersianDigits(series.completedCount)} از ${toPersianDigits(series.totalCount)} انجام شد',
+                                style: TextStyle(
+                                  fontSize: CalendarTokens.textMeta,
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Vazirmatn',
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Time label if timed
+                    if (rep.isTimed && rep.timeOfDay != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: Text(
+                          toPersianDigits(rep.timeOfDay ?? ''),
+                          style: TextStyle(
+                            fontSize: CalendarTokens.textMeta,
+                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                      ),
+
+                    // Recurrence Chip
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+                      ),
+                      child: Text(
+                        series.recurrenceLabel,
+                        style: TextStyle(
+                          fontSize: CalendarTokens.textMeta,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                          fontFamily: 'Vazirmatn',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+
+                    // Expand / Collapse Chevron
+                    Icon(
+                      isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Expanded Child Instances List
+            if (isExpanded) ...[
+              Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.3)),
+              Column(
+                children: series.instances.map((inst) {
+                  final onPostpone = onPostponeItem;
+                  final onDone = onDoneItem;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                        child: Text(
+                          daySubGroupLabel(inst.dateStr),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.45),
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                      ),
+                      _AgendaRow(
+                        item: inst,
+                        onTap: () => onItemTap(inst),
+                        onPostpone: onPostpone != null ? () => onPostpone(inst) : null,
+                        onDone: onDone != null ? () => onDone(inst) : null,
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 // ────────────────────────────────────────────────────────────
 // Day Sub-Group Header (non-sticky)
@@ -343,7 +797,7 @@ class _AgendaRowState extends State<_AgendaRow> {
     final icon = domainIcon(item.domain);
     final isDone = _isDone;
 
-    Widget row = SizedBox(
+    final Widget row = SizedBox(
       height: CalendarTokens.agendaRowHeight,
       child: InkWell(
         onTap: widget.onTap,
@@ -411,7 +865,7 @@ class _AgendaRowState extends State<_AgendaRow> {
                 Padding(
                   padding: const EdgeInsets.only(right: 4),
                   child: Text(
-                    toPersianDigits(item.timeOfDay!),
+                    toPersianDigits(item.timeOfDay ?? ''),
                     style: TextStyle(
                       fontSize: CalendarTokens.textMeta,
                       color: theme.textTheme.bodyMedium?.color

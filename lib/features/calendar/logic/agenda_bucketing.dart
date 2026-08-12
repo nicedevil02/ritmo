@@ -1,5 +1,6 @@
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -8,6 +9,29 @@ import 'package:shamsi_date/shamsi_date.dart';
 /// هفتهٔ شمسی: شنبه (Saturday) تا جمعه (Friday)
 /// از CourseScheduler.getSaturdayOfWeek برای محاسبهٔ مرز هفته استفاده می‌کنیم.
 enum AgendaBucket { overdue, today, tomorrow, thisWeek, nextWeek, later }
+
+/// Represents an entry in a compressed agenda view (either a single item or a recurring series group).
+sealed class AgendaEntry {}
+
+class AgendaSingle extends AgendaEntry {
+  AgendaSingle(this.item);
+  final AgendaItem item;
+}
+
+class AgendaSeries extends AgendaEntry {
+  AgendaSeries({
+    required this.representative,
+    required this.instances,
+    required this.recurrenceLabel,
+  });
+
+  final AgendaItem representative;
+  final List<AgendaItem> instances;
+  final String recurrenceLabel; // «هر روز» / «۵ روز از ۷» / «روزهای کاری» / «شنبه‌ها»
+
+  int get completedCount => instances.where((i) => i.isCompleted).length;
+  int get totalCount => instances.length;
+}
 
 /// برچسب فارسی هر سطل
 String bucketLabelFa(AgendaBucket b) {
@@ -105,6 +129,161 @@ Map<AgendaBucket, List<AgendaItem>> bucketRange(
   return result;
 }
 
+/// Computes the number of days represented in a given bucket.
+int calculateDaysInBucket(
+  AgendaBucket bucket, {
+  required DateTime now,
+  required List<AgendaItem> items,
+}) {
+  switch (bucket) {
+    case AgendaBucket.overdue:
+    case AgendaBucket.today:
+    case AgendaBucket.tomorrow:
+      return 1;
+    case AgendaBucket.thisWeek:
+      final today = DateTime(now.year, now.month, now.day);
+      final tomorrow = today.add(const Duration(days: 1));
+      final thisSat = CourseScheduler.getSaturdayOfWeek(today);
+      final thisFri = thisSat.add(const Duration(days: 6));
+      final thisWeekStart = tomorrow.add(const Duration(days: 1));
+      if (thisWeekStart.isAfter(thisFri)) return 1;
+      return thisFri.difference(thisWeekStart).inDays + 1;
+    case AgendaBucket.nextWeek:
+      return 7;
+    case AgendaBucket.later:
+      if (items.isEmpty) return 7;
+      final dates = <DateTime>[];
+      for (final item in items) {
+        try {
+          dates.add(DateTime.parse(item.dateStr));
+        } catch (_) {}
+      }
+      if (dates.isEmpty) return 7;
+      dates.sort();
+      final minDate = DateTime(dates.first.year, dates.first.month, dates.first.day);
+      final maxDate = DateTime(dates.last.year, dates.last.month, dates.last.day);
+      final diff = maxDate.difference(minDate).inDays + 1;
+      return diff > 0 ? diff : 1;
+  }
+}
+
+/// Computes Persian recurrence label for a series based on its occurrence dates and bucket days count.
+String calculateRecurrenceLabel(List<DateTime> dates, int daysInBucket) {
+  if (dates.isEmpty) return '';
+  final uniqueDates = dates.map((d) => DateTime(d.year, d.month, d.day)).toSet().toList()
+    ..sort();
+  final n = uniqueDates.length;
+  final m = daysInBucket > 0 ? daysInBucket : n;
+
+  if (n >= m && m >= 3) {
+    return 'هر روز';
+  }
+
+  // Check if all dates fall on Shamsi workdays (Saturday=1 to Wednesday=5)
+  final jalaliDates = uniqueDates.map((d) => Jalali.fromDateTime(d)).toList();
+  final isAllWorkdays = jalaliDates.every((j) => j.weekDay >= 1 && j.weekDay <= 5);
+  if (isAllWorkdays && n >= 3 && (m == 7 || n == 5)) {
+    return 'روزهای کاری';
+  }
+
+  // Check if all dates share the same weekday
+  final firstWd = jalaliDates.first.weekDay;
+  if (jalaliDates.every((j) => j.weekDay == firstWd)) {
+    const weekdayPlurals = [
+      'شنبه‌ها',
+      'یک‌شنبه‌ها',
+      'دوشنبه‌ها',
+      'سه‌شنبه‌ها',
+      'چهارشنبه‌ها',
+      'پنج‌شنبه‌ها',
+      'جمعه‌ها'
+    ];
+    final idx = (firstWd - 1).clamp(0, 6);
+    return weekdayPlurals[idx];
+  }
+
+  return '${toPersianDigits(n)} روز از ${toPersianDigits(m)}';
+}
+
+/// Collapses recurring daily items in [bucketItems] into [AgendaSeries] entries
+/// if their count >= [minOccurrences] (default 3). Unique items remain as [AgendaSingle].
+///
+/// Pure function (no DateTime.now() inside).
+/// Returns a list where [AgendaSingle] items appear FIRST (top) followed by [AgendaSeries].
+List<AgendaEntry> collapseRecurringSeries(
+  List<AgendaItem> bucketItems, {
+  required int daysInBucket,
+  int minOccurrences = 3,
+}) {
+  if (bucketItems.isEmpty) return const [];
+
+  final grouped = <String, List<AgendaItem>>{};
+  for (final item in bucketItems) {
+    grouped.putIfAbsent(item.recurrenceKey, () => []).add(item);
+  }
+
+  final singles = <AgendaSingle>[];
+  final seriesList = <AgendaSeries>[];
+
+  for (final entry in grouped.entries) {
+    final instances = entry.value;
+    if (instances.length >= minOccurrences) {
+      instances.sort((a, b) {
+        final dateCmp = a.dateStr.compareTo(b.dateStr);
+        if (dateCmp != 0) return dateCmp;
+        return (a.timeOfDay ?? '').compareTo(b.timeOfDay ?? '');
+      });
+
+      final dates = <DateTime>[];
+      for (final inst in instances) {
+        try {
+          dates.add(DateTime.parse(inst.dateStr));
+        } catch (_) {}
+      }
+
+      final label = calculateRecurrenceLabel(dates, daysInBucket);
+
+      final rep = instances.firstWhere(
+        (i) => !i.isCompleted,
+        orElse: () => instances.first,
+      );
+
+      seriesList.add(AgendaSeries(
+        representative: rep,
+        instances: instances,
+        recurrenceLabel: label,
+      ));
+    } else {
+      for (final item in instances) {
+        singles.add(AgendaSingle(item));
+      }
+    }
+  }
+
+  // Sort singles chronologically, then by time/priority
+  singles.sort((a, b) {
+    final dateCmp = a.item.dateStr.compareTo(b.item.dateStr);
+    if (dateCmp != 0) return dateCmp;
+    if (a.item.isTimed && b.item.isTimed) {
+      return (a.item.timeOfDay ?? '').compareTo(b.item.timeOfDay ?? '');
+    } else if (a.item.isTimed) {
+      return -1;
+    } else if (b.item.isTimed) {
+      return 1;
+    }
+    return b.item.priority.compareTo(a.item.priority);
+  });
+
+  // Sort series chronologically by representative dateStr / timeOfDay
+  seriesList.sort((a, b) {
+    final dateCmp = a.representative.dateStr.compareTo(b.representative.dateStr);
+    if (dateCmp != 0) return dateCmp;
+    return (a.representative.timeOfDay ?? '').compareTo(b.representative.timeOfDay ?? '');
+  });
+
+  return [...singles, ...seriesList];
+}
+
 /// Groups items within a bucket by their dateStr for sub-day headings.
 /// Used by `thisWeek`, `nextWeek`, `later` buckets.
 Map<String, List<AgendaItem>> groupByDate(List<AgendaItem> items) {
@@ -128,3 +307,4 @@ String daySubGroupLabel(String dateStr) {
     return dateStr;
   }
 }
+

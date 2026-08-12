@@ -180,6 +180,15 @@ class AgendaItem {
       completion == AgendaCompletion.done ||
       completion == AgendaCompletion.partial;
 
+  /// Stable key for identifying recurring daily series without changing DB schemas.
+  String get recurrenceKey {
+    final seriesId = (meta['routine'] as Map?)?['id']?.toString() ??
+        (meta['schedule'] as Map?)?['id']?.toString() ??
+        title;
+    return '${domain.name}|$seriesId|${timeOfDay ?? '-'}';
+  }
+
+
   AgendaItem copyWith({
     String? id,
     AgendaDomain? domain,

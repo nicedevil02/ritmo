@@ -39,6 +39,8 @@ class RitmoAppWidgetProvider : AppWidgetProvider() {
                     // P2-4: -1 یعنی «دادهای نیست» — پیشفرض امن و بدون کرش
                     val rhythmScore = jsonObj.optInt("rhythmScore", -1)
                     val currentEnergyLevel = jsonObj.optString("currentEnergyLevel", "متوسط")
+                    val rawNextAction = jsonObj.optString("nextActionTitle", "")
+                    val nextActionTitle = if (rawNextAction.isBlank() || rawNextAction == "null") "استراحت 🌿" else rawNextAction
 
                     views.setTextViewText(R.id.widget_next_action_title, "کار بعدی: $nextActionTitle")
                     if (rhythmScore >= 0) {

@@ -8,6 +8,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_session_models.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.dart';
+import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_analytics_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/bottom_sheet_container.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/continuity_bar.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/empty_state_view.dart';
@@ -432,12 +433,34 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'گزارش پیشرفت',
-                      style: SupplementarySportsTheme.h1.copyWith(
-                        color: SupplementarySportsTheme.getTextPrimary(context),
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'گزارش پیشرفت',
+                          style: SupplementarySportsTheme.h1.copyWith(
+                            color: SupplementarySportsTheme.getTextPrimary(context),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.analytics_outlined, size: 18),
+                          label: const Text(
+                            'آنالیز متریال و METs',
+                            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const MovementAnalyticsScreen()),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 20),
 

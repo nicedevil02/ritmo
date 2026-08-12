@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
-/// لایه نگاشت تم تکمیلی ورزش و حرکت به توکن‌های مرکزی Ritmo
+/// لایه نگاشت تم تکمیلی حرکت به توکن‌های مرکزی Ritmo
 class SupplementarySportsTheme {
   const SupplementarySportsTheme({
     required this.bg,

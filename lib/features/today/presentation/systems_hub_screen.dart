@@ -631,7 +631,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           index: cardIndex++,
           icon: Icons.fitness_center,
           iconColor: const Color(0xff10B981),
-          title: 'ورزش و حرکت',
+          title: 'حرکت',
           description: 'برنامه تمرین هوشمند و بودجهٔ حرکت هفتگی',
           status: (_sportsEnabled || _supplementarySportsEnabled) ? ModuleStatus.active : ModuleStatus.inactive,
           illustrationAsset: 'assets/images/sports_card_top.png',
@@ -1153,7 +1153,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       }
     } else {
       _showActivationSheet(
-        title: 'فعال‌سازی سیستم ورزش و حرکت',
+        title: 'فعال‌سازی سیستم حرکت',
         description: 'با فعال‌سازی این سیستم، می‌توانید برنامه تمرین هوشمند بر اساس سطح و اهداف خود دریافت کنید، حرکات را با بازخورد کیفی ثبت کنید و روند تداوم خود را دنبال کنید.',
         icon: Icons.fitness_center,
         iconColor: const Color(0xff10B981),

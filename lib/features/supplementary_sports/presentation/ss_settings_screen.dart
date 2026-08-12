@@ -713,7 +713,7 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
       backgroundColor: colors.background,
       appBar: AppBar(
         backgroundColor: colors.surface,
-        title: Text('تنظیمات ورزش و حرکت', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        title: Text('تنظیمات حرکت', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.textPrimary)),
         centerTitle: true,
       ),
       body: Directionality(

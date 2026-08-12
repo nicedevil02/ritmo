@@ -8,9 +8,9 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/ss_exercise_library_screen.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/weekly_budget_card.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_budget.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/ss_exercise_library_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_onboarding_flow.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_plan_day_detail_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_plan_overview_screen.dart';
@@ -119,6 +119,8 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
   final List<Widget?> _pageCache = List.filled(4, null);
   final Set<int> _builtTabs = {0};
 
+
+
   Widget _buildPage(int index) {
     if (_pageCache[index] != null) return _pageCache[index]!;
     final page = switch (index) {
@@ -191,14 +193,17 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
                   color: isSelected ? sportsAccent : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  labels[index],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    color: isSelected ? Colors.white : colors.textSecondary,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    labels[index],
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? Colors.white : colors.textSecondary,
+                    ),
                   ),
                 ),
               ),

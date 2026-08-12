@@ -8,7 +8,9 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/ss_movement_tab_screen.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/ss_exercise_library_screen.dart';
+import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/weekly_budget_card.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_budget.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_onboarding_flow.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_plan_day_detail_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_plan_overview_screen.dart';
@@ -20,13 +22,10 @@ import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_muscle_image_resolver.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_ai_coach_sheet.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_log_session_sheet.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_recovery_card.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
-import 'package:ritmo/features/supplementary_sports/data/repositories/ss_plan_generator.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_prescription_repository.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_program_builder.dart';
 import 'package:ritmo/features/supplementary_sports/domain/prescription/session_prescription.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/ss_exercise_library_screen.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_daily_checkin_model.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_readiness_service.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_daily_checkin_widget.dart';
@@ -115,34 +114,42 @@ class SSHomeDashboardScreen extends StatefulWidget {
 
 class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
   int _selectedIndex = 0;
-  late final List<Widget> _pages;
+
+  // Lazy tab cache — only tab 0 is built eagerly; others build on first visit.
+  final List<Widget?> _pageCache = List.filled(4, null);
+  final Set<int> _builtTabs = {0};
+
+  Widget _buildPage(int index) {
+    if (_pageCache[index] != null) return _pageCache[index]!;
+    final page = switch (index) {
+      0 => SSHomeDashboardTabContent(onNavigateToTab: _navigateToTab),
+      1 => const SSExerciseLibraryScreen(),
+      2 => SSPlanOverviewScreen(onNavigateToTab: _navigateToTab),
+      3 => SSProgressScreen(onNavigateToTab: _navigateToTab),
+      _ => const SizedBox.shrink(),
+    };
+    _pageCache[index] = page;
+    return page;
+  }
 
   @override
   void initState() {
     super.initState();
-    _pages = [
-      SSHomeDashboardTabContent(
-        onNavigateToTab: _navigateToTab,
-      ),
-      SSPlanOverviewScreen(
-        onNavigateToTab: _navigateToTab,
-      ),
-      SSMovementTabScreen(
-        onNavigateToTab: _navigateToTab,
-      ),
-      SSProgressScreen(onNavigateToTab: _navigateToTab),
-    ];
+    // Eagerly build only the first tab to avoid simultaneous DB reads.
+    _buildPage(0);
   }
 
   void _onTabSelected(int index) {
     setState(() {
       _selectedIndex = index.clamp(0, 3);
+      _builtTabs.add(_selectedIndex); // mark tab as built before IndexedStack renders it
     });
   }
 
   void _navigateToTab(int index) {
     setState(() {
       _selectedIndex = index.clamp(0, 3);
+      _builtTabs.add(_selectedIndex);
     });
   }
 
@@ -160,7 +167,7 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
   Widget _buildSegmentedControl(BuildContext context) {
     final colors = context.colors;
     final sportsAccent = context.modules.sports;
-    final labels = ['امروز', 'برنامه', 'حرکت', 'روند'];
+    final labels = ['امروز', 'ورزش‌ها', 'برنامه', 'پیشرفت'];
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -225,7 +232,7 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
           backgroundColor: colors.surface,
           elevation: 0,
           title: Text(
-            'ورزش و حرکت',
+            'حرکت',
             style: TextStyle(
               fontFamily: 'Vazirmatn',
               fontSize: 18,
@@ -253,7 +260,13 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
             Expanded(
               child: IndexedStack(
                 index: _selectedIndex,
-                children: _pages,
+                // Only render tabs that have been visited at least once.
+                children: List.generate(
+                  4,
+                  (i) => _builtTabs.contains(i)
+                      ? _buildPage(i)
+                      : const SizedBox.shrink(),
+                ),
               ),
             ),
           ],
@@ -544,13 +557,14 @@ class SSHomeDashboardTabContent extends StatefulWidget {
 class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
   SSHomeUiState _state = const SSHomeLoading();
 
-  List<bool> _weekCompleted = List.filled(7, false);
+  List<int> _weekCompleted = List.filled(7, -1);
   String? _nextWorkoutName;
   int? _nextWorkoutMinutes;
   String? _nextWorkoutDayName;
   int? _nextDayOfWeek;
   String? _userGender;
   String? _unfinishedActivePlanId;
+  MovementBudgetSnapshot? _movementBudgetSnapshot;
 
   // Biometric & Readiness Data (Calculated Honestly from SQLite Data)
   SSReadinessVerdict? _readinessVerdict;
@@ -583,18 +597,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
     return const Color(0xFFEF4444);
   }
 
-  void _openSettingsModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return const SSSettingsScreen(isModal: true);
-      },
-    ).then((_) {
-      if (mounted) _loadDashboardData();
-    });
-  }
 
   void _openAiCoach() {
     showModalBottomSheet(
@@ -812,21 +814,12 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         debugPrint('Error fetching gender: $e');
       }
       _userGender ??= 'MALE';
-
-      // Check plan completion
-      final totalPlannedResult = await db.rawQuery('SELECT COUNT(*) as count FROM ss_workout_plan');
-      final totalPlanned = Sqflite.firstIntValue(totalPlannedResult) ?? 0;
-      final totalCompletedResult = await db.rawQuery('SELECT COUNT(*) as count FROM ss_workout_session_log WHERE finishedAt IS NOT NULL');
-      final totalCompleted = Sqflite.firstIntValue(totalCompletedResult) ?? 0;
-
-      if (totalCompleted >= totalPlanned && totalPlanned > 0) {
-        if (mounted) {
-          setState(() {
-            _state = const SSHomePlanCompleted();
-          });
-        }
-        return;
+      try {
+        _movementBudgetSnapshot = await MovementBudgetService.instance.getCurrentWeekSnapshot();
+      } catch (e) {
+        debugPrint('Error loading movement budget on dashboard: $e');
       }
+      // (Removed flawed all-time plan completion check that caused the UI to get stuck)
 
       // Check today's session log
       final startOfToday = DateTime(today.year, today.month, today.day).millisecondsSinceEpoch;
@@ -851,7 +844,15 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         final targetDate = startOfWeekMidnight.add(Duration(days: i));
         final start = DateTime(targetDate.year, targetDate.month, targetDate.day).millisecondsSinceEpoch;
         final end = DateTime(targetDate.year, targetDate.month, targetDate.day, 23, 59, 59).millisecondsSinceEpoch;
-        return weekLogs.any((log) => (log['startedAt']! as int) >= start && (log['startedAt']! as int) <= end);
+        
+        final dayLogs = weekLogs.where((log) => (log['startedAt']! as int) >= start && (log['startedAt']! as int) <= end).toList();
+        if (dayLogs.isEmpty) return -1;
+        
+        final session = dayLogs.first;
+        final completedCount = session['completedExercisesCount'] as int? ?? 0;
+        final totalCount = session['totalExercisesCount'] as int? ?? 1;
+        if (totalCount == 0) return 0;
+        return ((completedCount / totalCount) * 100).round().clamp(0, 100);
       });
 
       final prefs = await SharedPreferences.getInstance();
@@ -869,12 +870,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
       _readinessVerdict = await SSReadinessService.instance.evaluateToday();
       _dailyCheckin = await SSReadinessService.instance.getDailyCheckin(DateTime.now().toIso8601String().substring(0, 10));
 
-      final completedCount = _weekCompleted.where((c) => c).length;
+      final completedCount = _weekCompleted.where((c) => c >= 50).length;
       _activityScore = ((completedCount / 4) * 100).clamp(0, 100).round();
 
       if (_readinessVerdict != null && _readinessVerdict!.hasData) {
         final sleepMin = _readinessVerdict!.sleepMinutes ?? 420;
-        final durHrs = (sleepMin / 60.0).toStringAsFixed(1);
         _sleepScore = ((sleepMin / 480) * 100).clamp(0, 100).round();
         _energyScore = _dailyCheckin != null ? (_dailyCheckin!.energy * 20) : (_sleepScore * 0.8).round();
         _recoveryScore = _dailyCheckin != null ? ((6 - _dailyCheckin!.soreness) * 20) : (_sleepScore * 0.7).round();
@@ -1577,6 +1577,13 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_movementBudgetSnapshot != null) ...[
+            WeeklyBudgetCard(
+              snapshot: _movementBudgetSnapshot!,
+              onTap: () {},
+            ),
+            const SizedBox(height: 16),
+          ],
           if (_unfinishedActivePlanId != null) ...[
             _buildUnfinishedSessionBanner(),
             const SizedBox(height: 12),
@@ -1974,7 +1981,8 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
   }
 
   // ─── 3. WEEKLY CONTINUITY STREAK WIDGET ──────────────────────
-  Widget _buildWeeklyStreakWidget(List<bool> weekCompleted) {
+  Widget _buildWeeklyStreakWidget(List<int> weekCompletedProgress) {
+    final weekCompleted = weekCompletedProgress.map((c) => c >= 50).toList();
     final farsiDays = <String>['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
     final completedCount = weekCompleted.where((c) => c).length;
 

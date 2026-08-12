@@ -391,11 +391,15 @@ class DayAgendaService {
       if (a.isTimed && b.isTimed) {
         final aM = _parseMinutes(a.timeOfDay);
         final bM = _parseMinutes(b.timeOfDay);
-        return aM.compareTo(bM);
+        final cmp = aM.compareTo(bM);
+        if (cmp != 0) return cmp;
+        return a.id.compareTo(b.id);
       }
       if (a.isTimed) return -1;
       if (b.isTimed) return 1;
-      return b.priority.compareTo(a.priority);
+      final pCmp = b.priority.compareTo(a.priority);
+      if (pCmp != 0) return pCmp;
+      return a.id.compareTo(b.id);
     });
   }
 

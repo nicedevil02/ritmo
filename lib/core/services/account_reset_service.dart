@@ -5,12 +5,21 @@ import 'package:path_provider/path_provider.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/seed/seed_service.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/services/premium_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Full transactional account and user data reset service.
 class AccountResetService {
   static Future<void> wipeUserData() async {
     RitmoLog.info('AccountResetService', 'Starting full ordered wipe of user data');
+
+    // 0. Backup premium status
+    Map<String, String>? premiumBackup;
+    try {
+      premiumBackup = await PremiumService.instance.exportEntitlement();
+    } catch (e) {
+      RitmoLog.error('AccountResetService', 'Error backing up premium state', e);
+    }
 
     // 1. Cancel active alarms & notifications
     try {
@@ -57,6 +66,15 @@ class AccountResetService {
       await storage.deleteAll();
     } catch (_) {}
 
+    // Restore premium status if backup exists
+    if (premiumBackup != null && premiumBackup.isNotEmpty) {
+      try {
+        await PremiumService.instance.restoreEntitlement(premiumBackup);
+      } catch (e) {
+        RitmoLog.error('AccountResetService', 'Error restoring premium state', e);
+      }
+    }
+
     // 7. Re-initialize fresh database & seed settings
     try {
       final freshDb = await DatabaseHelper.instance.database;
@@ -64,6 +82,13 @@ class AccountResetService {
       await SeedService.seedWorshipPractices(freshDb);
     } catch (e, st) {
       RitmoLog.error('AccountResetService', 'Error re-seeding database after wipe', e, st);
+    }
+
+    // 8. Re-load premium state
+    try {
+      await PremiumService.instance.loadEntitlement();
+    } catch (e) {
+      RitmoLog.error('AccountResetService', 'Error reloading premium state after restore', e);
     }
 
     RitmoLog.info('AccountResetService', 'Full ordered reset completed successfully');

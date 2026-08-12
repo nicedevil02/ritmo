@@ -29,8 +29,10 @@ class WeeklyBudgetCard extends StatelessWidget {
       footerText = 'هفتهٔ تازه شروع شده، اولین حرکت رو ثبت کن 🌱';
     } else if (snapshot.daysRemaining <= 2 && snapshot.progressRatio < 0.5) {
       footerText = 'هنوز وقت هست 💪 با یک حرکت سبک نزدیک‌تر میشی';
+    } else if (snapshot.projectedTotal != null) {
+      footerText = '${snapshot.daysRemaining.toPersianDigits()} روز مونده · با این روند به حدود ${snapshot.projectedTotal!.round().toPersianDigits()} MET-min میرسی';
     } else {
-      footerText = '${snapshot.daysRemaining.toPersianDigits()} روز مونده · با این روند به ${snapshot.projectedTotal.round().toPersianDigits()} MET-min می‌رسی';
+      footerText = '${snapshot.daysRemaining.toPersianDigits()} روز مونده · با یک حرکت سبک ادامه بده 💪';
     }
 
     return Directionality(
@@ -103,6 +105,8 @@ class WeeklyBudgetCard extends StatelessWidget {
                     runSpacing: 6,
                     children: snapshot.byKind.entries.take(3).map((e) {
                       final metVal = e.value.round().toPersianDigits();
+                      final kind = snapshot.kindsByCode[e.key];
+                      final label = kind == null ? e.key : '${kind.emoji} ${kind.titleFa}';
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
@@ -111,7 +115,7 @@ class WeeklyBudgetCard extends StatelessWidget {
                           border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.2)),
                         ),
                         child: Text(
-                          '${e.key}  $metVal MET-min',
+                          '$label  $metVal MET-min',
                           style: TextStyle(
                             fontFamily: 'Vazirmatn',
                             fontSize: 12,

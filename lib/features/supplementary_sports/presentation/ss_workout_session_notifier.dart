@@ -704,6 +704,10 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
     }
   }
 
+  void handleLifecyclePaused() {
+    _saveSessionToPreferences();
+  }
+
   Future<String?> _resolveWorkoutPlanId(DatabaseExecutor db) async {
     final requested = state.planId;
 

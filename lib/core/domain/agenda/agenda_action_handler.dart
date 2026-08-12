@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/agenda/action_feedback.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/completion/snooze_policy.dart';
@@ -238,6 +241,7 @@ class AgendaActionHandler {
   Future<void> toggleAgendaItem({
     required AgendaItem item,
     required bool isDone,
+    BuildContext? context,
   }) async {
     if (item.domain == AgendaDomain.mustahab) {
       final date = DateTime.tryParse(item.dateStr) ?? DateTime.now();
@@ -248,8 +252,16 @@ class AgendaActionHandler {
           amount: _resolveToggleAmount(item, isDone: true),
         );
         if (res is WorshipLogFailed) {
+          RitmoLogger.error('toggleAgendaItem: ${res.error}');
+          if (context != null) {
+            ActionFeedback.failure(context, message: 'خطا در ثبت: ${res.error}');
+          }
           throw Exception(res.error.toString());
         } else if (res is WorshipLogBlocked) {
+          RitmoLogger.warning('toggleAgendaItem: ${res.userMessage}');
+          if (context != null) {
+            ActionFeedback.failure(context, message: res.userMessage);
+          }
           throw Exception(res.userMessage);
         }
       } else {

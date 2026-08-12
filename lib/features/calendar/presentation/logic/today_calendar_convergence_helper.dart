@@ -70,7 +70,9 @@ class TodayCalendarConvergenceHelper {
       await _kernel.execute(CompleteOccurrenceCommand(
         routineId: item.sourceId,
         dateStr: item.dateStr,
-        resultType: 'COMPLETED',
+        // P1-6: موتور امتیاز فقط FULL/LIGHT/MINIMAL را میشناسد؛ 'COMPLETED'
+        // قبلاً باعث امتیاز صفر برای تکمیل کامل میشد.
+        resultType: 'FULL',
         durationMinutes: item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes,
       ));
     } else {

@@ -4,13 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
+import 'package:ritmo/core/services/feature_limits.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/courses/presentation/courses_screen.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/goals/models/goal_models.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_formatters.dart';
 import 'package:ritmo/features/konkur/presentation/konkur_screen.dart';
+import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
 import 'package:ritmo/features/worship/presentation/worship_screen.dart';
 
@@ -350,7 +353,24 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
   Future<void> _saveGoal() async {
     if (_titleController.text.trim().isEmpty) return;
 
-    // can() always returns true — no paywall
+    // بررسی سقف اهداف فعال — فقط هنگام ثبت هدف جدید (نه ویرایش)
+    if (widget.goalToEdit == null) {
+      final existingGoals = await GoalsRepository.instance.getGoals();
+      final activeGoalsCount = existingGoals.where((g) => g.status == 'ACTIVE').length;
+      final limit = FeatureLimits.current.maxActiveGoals;
+      if (activeGoalsCount >= limit) {
+        if (mounted) {
+          RitmoToast.show(
+            context,
+            'سقف $limit هدف فعال پر شده. برای افزودن اهداف بیشتر به ریتمو پلاس ارتقا دهید.',
+            icon: Icons.lock_outline,
+          );
+          PremiumUpgradeSheet.show(context);
+        }
+        return;
+      }
+    }
+
     setState(() {
       _isLoading = true;
     });

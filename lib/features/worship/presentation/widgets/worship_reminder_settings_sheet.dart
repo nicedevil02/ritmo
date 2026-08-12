@@ -208,7 +208,7 @@ class _WorshipReminderSettingsSheetState
               '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}')
           .toList());
 
-      final daysStr = _reminderFrequency == 'ONCE' ? _onceDateStr : _selectedDays.join(',');
+      final daysStr = _reminderFrequency == 'ONCE' ? (_onceDateStr ?? '') : _selectedDays.join(',');
 
       final updated = widget.practice.copyWith(
         reminderEnabled:      _reminderEnabled,
@@ -511,17 +511,18 @@ class _WorshipReminderSettingsSheetState
                     if (key == 'WEEKLY') {
                       if (_reminderFrequency != 'WEEKLY') {
                         _reminderFrequency = 'WEEKLY';
-                        _selectedDays = [6, 7, 1, 2, 3, 4, 5];
+                        _selectedDays = [];
                       }
                     } else if (key == 'MONTHLY') {
                       if (_reminderFrequency != 'MONTHLY' && _reminderFrequency != 'LUNAR_MONTHLY') {
                         _reminderFrequency = 'MONTHLY';
-                        _selectedDays = [1];
+                        _selectedDays = [];
                       }
                     } else {
                       if (_reminderFrequency != 'ONCE') {
                         _reminderFrequency = 'ONCE';
                         _selectedDays = [];
+                        _onceDateStr = '';
                       }
                     }
                   });

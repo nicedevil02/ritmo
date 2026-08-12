@@ -15,7 +15,8 @@ import 'package:ritmo/core/database/schema/schema_manager.dart';
 import 'package:sqflite/sqflite.dart';
 
 class RecordingDatabase implements Database {
-  final Map<String, Set<String>> tables = {};
+  final Map<String, Set<String>> tables;
+  RecordingDatabase({Map<String, Set<String>>? tables}) : this.tables = tables ?? {};
 
   void _parseSql(String sql) {
     // Strip single line comments --
@@ -57,12 +58,20 @@ class RecordingDatabase implements Database {
       }
     } else if (lower.startsWith('alter table')) {
       final addIdx = lower.indexOf('add column');
+      final renameIdx = lower.indexOf('rename to');
       if (addIdx != -1) {
         final tableIdx = lower.indexOf('alter table') + 'alter table'.length;
         final tableName = clean.substring(tableIdx, addIdx).trim().split(' ').first.replaceAll('`', '').replaceAll('"', '').replaceAll("'", '').toLowerCase();
         final colPart = clean.substring(addIdx + 'add column'.length).trim();
         final colName = colPart.split(' ').first.replaceAll('`', '').replaceAll('"', '').replaceAll("'", '').toLowerCase();
         tables.putIfAbsent(tableName, () => {}).add(colName);
+      } else if (renameIdx != -1) {
+        final tableIdx = lower.indexOf('alter table') + 'alter table'.length;
+        final oldTableName = clean.substring(tableIdx, renameIdx).trim().split(' ').first.replaceAll('`', '').replaceAll('"', '').replaceAll("'", '').replaceAll(';', '').toLowerCase();
+        final newTableName = clean.substring(renameIdx + 'rename to'.length).trim().split(' ').first.replaceAll('`', '').replaceAll('"', '').replaceAll("'", '').replaceAll(';', '').toLowerCase();
+        if (tables.containsKey(oldTableName)) {
+          tables[newTableName] = tables.remove(oldTableName)!;
+        }
       }
     } else if (lower.startsWith('drop table')) {
       final parts = clean.split(RegExp(r'\s+'));
@@ -119,7 +128,7 @@ class RecordingDatabase implements Database {
 
   @override
   Future<T> transaction<T>(Future<T> Function(Transaction txn) action, {bool? exclusive}) async {
-    final fakeTxn = FakeTransaction();
+    final fakeTxn = FakeTransaction(tables);
     return await action(fakeTxn);
   }
 
@@ -146,7 +155,9 @@ class RecordingDatabase implements Database {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class FakeTransaction extends RecordingDatabase implements Transaction {}
+class FakeTransaction extends RecordingDatabase implements Transaction {
+  FakeTransaction(Map<String, Set<String>> tables) : super(tables: tables);
+}
 
 class FakeBatch implements Batch {
   final RecordingDatabase db;

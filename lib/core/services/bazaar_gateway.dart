@@ -2,8 +2,8 @@ import 'package:flutter_poolakey/flutter_poolakey.dart' hide PurchaseInfo;
 import 'package:ritmo/core/services/payment_gateway.dart';
 
 class BazaarGateway implements PaymentGateway {
-  // TODO: کلید واقعی از پنل بازار
-  static const String _bazaarRsaKey = 'PLACEHOLDER_BAZAAR_RSA_KEY';
+  // کلید RSA از طریق --dart-define=BAZAAR_RSA_KEY=... در build تزریق می‌شود
+  static const String _bazaarRsaKey = String.fromEnvironment('BAZAAR_RSA_KEY');
 
   bool _connected = false;
 

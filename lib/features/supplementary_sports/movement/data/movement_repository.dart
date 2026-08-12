@@ -30,35 +30,36 @@ class MovementRepository {
 
   Future<Database> get _db async => DatabaseHelper.instance.database;
 
-  /// Fetch kinds filtered by optional family and enabled status.
   Future<List<MovementKind>> getKinds({MovementFamily? family, bool enabledOnly = true}) async {
     final db = await _db;
-    var whereClause = enabledOnly ? 'isEnabled = 1' : '1=1';
+    final whereClause = StringBuffer(enabledOnly ? 'isEnabled = 1' : '1=1');
     final whereArgs = <dynamic>[];
-
     if (family != null) {
-      whereClause += ' AND family = ?';
+      whereClause.write(' AND family = ?');
       whereArgs.add(family.code);
     }
 
-    var rows = await db.query(
-      'movement_kinds',
-      where: whereClause,
-      whereArgs: whereArgs,
-      orderBy: 'usageCount DESC, sortOrder ASC, titleFa ASC',
-    );
+    Future<List<Map<String, Object?>>> runQuery() => db.query(
+          'movement_kinds',
+          where: whereClause.toString(),
+          whereArgs: whereArgs,
+          orderBy: 'usageCount DESC, sortOrder ASC, titleFa ASC',
+        );
 
+    var rows = await runQuery();
     if (rows.isEmpty) {
-      await MovementKindsSeed.seed(db);
-      rows = await db.query(
-        'movement_kinds',
-        where: whereClause,
-        whereArgs: whereArgs,
-        orderBy: 'usageCount DESC, sortOrder ASC, titleFa ASC',
-      );
+      // هرگز بهخاطر خالی بودن نتیجهٔ یک فیلتر seed نکن.
+      // فقط وقتی bootstrap میکنیم که کل جدول واقعاً خالی باشد.
+      final total = Sqflite.firstIntValue(
+            await db.rawQuery('SELECT COUNT(*) FROM movement_kinds'),
+          ) ??
+          0;
+      if (total == 0) {
+        await MovementKindsSeed.seed(db);
+        rows = await runQuery();
+      }
     }
-
-    return rows.map((r) => MovementKind.fromMap(r)).toList();
+    return rows.map(MovementKind.fromMap).toList();
   }
 
   /// Search kinds by Persian query, matching titleFa, code, or aliasesFa.
@@ -109,7 +110,19 @@ class MovementRepository {
   /// Get single kind by code.
   Future<MovementKind?> getKind(String code) async {
     final db = await _db;
-    final rows = await db.query('movement_kinds', where: 'code = ?', whereArgs: [code], limit: 1);
+    return getKindIn(db, code);
+  }
+
+  /// Transaction-safe variant of [getKind].
+  /// Any code path that may run inside a transaction MUST call this
+  /// with the transaction's own executor.
+  Future<MovementKind?> getKindIn(DatabaseExecutor executor, String code) async {
+    final rows = await executor.query(
+      'movement_kinds',
+      where: 'code = ?',
+      whereArgs: [code],
+      limit: 1,
+    );
     if (rows.isEmpty) return null;
     return MovementKind.fromMap(rows.first);
   }
@@ -142,7 +155,7 @@ class MovementRepository {
       limit: 1,
     );
 
-    final kind = await getKind(event.kindCode);
+    final kind = await getKindIn(txn, event.kindCode);
     final met = MovementLoadCalculator.metFor(
       baseMet: kind?.baseMet ?? 4.0,
       metLow: kind?.metLow ?? 3.0,
@@ -249,19 +262,38 @@ class MovementRepository {
     ));
   }
 
-  /// Delete movement event.
+  /// Delete a movement event.
+  /// Logs owned by other modules (e.g. strength sessions written by the
+  /// completion gateway with sourceModule != 'MOVEMENT') are protected and
+  /// must be deleted from their owning module.
   Future<void> deleteEvent(String id) async {
     final db = await _db;
     String? kindCode;
 
     await db.transaction((txn) async {
       final rows = await txn.query('workout_logs', where: 'id = ?', whereArgs: [id], limit: 1);
-      if (rows.isNotEmpty) {
-        kindCode = rows.first['kind']?.toString() ?? rows.first['type']?.toString();
+      if (rows.isEmpty) return;
+
+      final row = rows.first;
+      final sourceModule = row['sourceModule'] as String? ?? 'MOVEMENT';
+      if (sourceModule != 'MOVEMENT') {
+        throw StateError(
+          'DELETE_BLOCKED: workout_logs row $id belongs to sourceModule=$sourceModule; '
+          'delete or revert it from that module.',
+        );
       }
+
+      kindCode = row['kind']?.toString() ?? row['type']?.toString();
+
       await txn.delete('workout_exercise_logs', where: 'workoutLogId = ?', whereArgs: [id]);
       await txn.delete('workout_logs', where: 'id = ?', whereArgs: [id]);
+
       if (kindCode != null && kindCode!.isNotEmpty) {
+        // شمارندهٔ استفاده را هماهنگ نگه دار (هرگز منفی نشود).
+        await txn.rawUpdate(
+          'UPDATE movement_kinds SET usageCount = MAX(usageCount - 1, 0) WHERE code = ?',
+          [kindCode],
+        );
         await _recalculatePrsForKind(txn, kindCode!);
       }
     });
@@ -346,6 +378,19 @@ class MovementRepository {
         );
       }
     }
+  }
+
+  /// Fetch events in the half-open range [startMs, endMsExclusive).
+  /// Prefer this over eventsBetween for any period math.
+  Future<List<MovementEvent>> eventsInRangeMs(int startMs, int endMsExclusive) async {
+    final db = await _db;
+    final rows = await db.query(
+      'workout_logs',
+      where: 'loggedAt >= ? AND loggedAt < ?',
+      whereArgs: [startMs, endMsExclusive],
+      orderBy: 'loggedAt DESC',
+    );
+    return rows.map((r) => MovementEvent.fromMap(r)).toList();
   }
 
   /// Fetch events logged between two dates (inclusive).

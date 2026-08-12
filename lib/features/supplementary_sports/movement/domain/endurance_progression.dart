@@ -30,7 +30,7 @@ class EnduranceProgressionEngine {
   }) {
     if (previousWeekValue > 0) {
       final percentageIncrease = (lastWeekValue - previousWeekValue) / previousWeekValue;
-      if (percentageIncrease > 0.15) {
+      if (percentageIncrease > 0.10) {
         return EnduranceProgressionResult(
           kindCode: kindCode,
           currentWeeklyValue: lastWeekValue,

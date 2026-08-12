@@ -155,6 +155,11 @@ class WorshipPractice {
   final String? reminderTime;
   final int? reminderOffsetMinutes;
   final String reminderAnchor;
+  /// Holds 4 completely different types of values based on [reminderFrequency]:
+  /// - WEEKLY: comma-separated list of weekdays (1 to 7)
+  /// - MONTHLY: comma-separated list of solar month days (1 to 31)
+  /// - LUNAR_MONTHLY: comma-separated list of lunar month days (1 to 30)
+  /// - ONCE: an ISO date string (YYYY-MM-DD)
   final String? reminderDaysOfWeek;
   final String? reminderTimes;
   final int deferCount;

@@ -1,22 +1,35 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
-import 'package:sqflite/sqflite.dart';
-// Conditionally import tapsell_plus to avoid compilation issues if any,
-// but since it's already in pubspec, standard import is fine. We just guard execution.
 import 'package:tapsell_plus/tapsell_plus.dart';
+
 
 class AdService {
   AdService._internal();
   static final AdService instance = AdService._internal();
 
-  static const String _tapsellAppId = 'PLACEHOLDER_TAPSELL_APP_ID';
-  static const String _bannerZoneId = 'PLACEHOLDER_BANNER_ZONE_ID';
-  static const String _interstitialZoneId = 'PLACEHOLDER_INTERSTITIAL_ZONE_ID';
+  static const String _tapsellAppId = String.fromEnvironment('TAPSELL_APP_ID');
+  static const String _bannerZoneId = String.fromEnvironment('TAPSELL_BANNER_ZONE_ID');
+  static const String _rewardedZoneId = String.fromEnvironment('TAPSELL_REWARDED_ZONE_ID');
+
+  /// صفحاتی که هرگز تبلیغ نمی‌بینند — محتوای حساس یا دینی/پزشکی/زیستی
+  static const Set<String> _adFreeScreens = {
+    'worship',
+    'prayer',
+    'quran',
+    'fasting',
+    'cycle',
+    'pregnancy',
+    'medicine',
+    'medication',
+    'sleep',
+    'reflection',
+    'energy',
+  };
 
   bool _initialized = false;
 
@@ -42,9 +55,14 @@ class AdService {
     }
   }
 
-  /// Returns a banner ad widget if the user is free, otherwise returns an empty SizedBox.
-  Widget getBannerAd() {
+  /// Returns a banner ad widget if the user is free and screen is allowed.
+  /// [screenId]: ID of the current screen — sensitive screens never show ads.
+  Widget getBannerAd({String screenId = ''}) {
     if (PremiumService.instance.isPremium) {
+      return const SizedBox.shrink();
+    }
+    // Never show ads on sensitive / religious / medical / biological screens
+    if (_adFreeScreens.contains(screenId)) {
       return const SizedBox.shrink();
     }
 
@@ -173,236 +191,42 @@ class AdService {
     );
   }
 
-  /// Shows an interstitial ad if allowed (max 1 per day, free users only)
+  /// اینترستیشال حذف شد — طبق قانون فاز ۴ نقشه راه
+  /// دلیل: تجربه کاربری مختل شده و احتمال ظاهر‌شدن در صفحات حساس
   Future<void> showInterstitialAd([BuildContext? context]) async {
-    if (PremiumService.instance.isPremium) return;
+    // Disabled in Phase 4
+    debugPrint('AdService: Interstitial ads are disabled.');
+  }
 
-    final db = await DatabaseHelper.instance.database;
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-
-    // Check daily limit
-    final settings = await db.query(
-      'app_settings',
-      where: 'key = ?',
-      whereArgs: ['last_interstitial_ad_date'],
-    );
-
-    if (settings.isNotEmpty && settings.first['value'] == todayStr) {
-      debugPrint('AdService: Interstitial daily limit reached.');
-      return;
+  Future<bool> showRewardedAdForAi(BuildContext context) async {
+    if (PremiumService.instance.isPremium) return false;
+    if (!_isTapsellSupported || !_initialized || _rewardedZoneId.isEmpty) {
+      return false;
     }
-
-    if (!_isTapsellSupported) {
-      if (context != null && context.mounted) {
-        _showSimulatedInterstitial(context, todayStr);
-      }
-      return;
-    }
-
-    await init();
-    if (!_initialized) {
-      if (context != null && context.mounted) {
-        _showSimulatedInterstitial(context, todayStr);
-      }
-      return;
-    }
-
     try {
-      // Request and show ad
-      final adResponse = await TapsellPlus.instance.requestInterstitialAd(_interstitialZoneId);
-      if (adResponse.isNotEmpty) {
-        await TapsellPlus.instance.showInterstitialAd(adResponse);
-
-        // Save show date to DB
-        await db.insert(
-          'app_settings',
-          {'key': 'last_interstitial_ad_date', 'value': todayStr},
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      }
+      final completer = Completer<bool>();
+      final responseId = await TapsellPlus.instance.requestRewardedVideoAd(_rewardedZoneId);
+      
+      await TapsellPlus.instance.showRewardedVideoAd(
+        responseId,
+        onOpened: (map) {
+          debugPrint('AdService: Rewarded ad opened: $map');
+        },
+        onClosed: (map) {
+          if (!completer.isCompleted) completer.complete(false);
+        },
+        onRewarded: (map) {
+          completer.complete(true);
+        },
+        onError: (map) {
+          if (!completer.isCompleted) completer.complete(false);
+        },
+      );
+      return await completer.future;
     } catch (e) {
-      debugPrint('AdService interstitial error: $e; falling back to simulated');
-      if (context != null && context.mounted) {
-        _showSimulatedInterstitial(context, todayStr);
-      }
+      debugPrint('AdService: Rewarded ad error: $e');
+      return false;
     }
-  }
-
-  void _showSimulatedInterstitial(BuildContext context, String todayStr) {
-    showGeneralDialog(
-      context: context,
-      barrierLabel: 'Interstitial Ad',
-      barrierColor: Colors.black.withValues(alpha: 0.8),
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) {
-        return _SimulatedInterstitialDialog(
-          onClose: () async {
-            try {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert(
-                'app_settings',
-                {'key': 'last_interstitial_ad_date', 'value': todayStr},
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
-            } catch (_) {}
-          },
-        );
-      },
-    );
-  }
-}
-
-class _SimulatedInterstitialDialog extends StatefulWidget {
-  const _SimulatedInterstitialDialog({required this.onClose});
-  final VoidCallback onClose;
-
-  @override
-  State<_SimulatedInterstitialDialog> createState() => _SimulatedInterstitialDialogState();
-}
-
-class _SimulatedInterstitialDialogState extends State<_SimulatedInterstitialDialog> {
-  int _secondsLeft = 3;
-  bool _canClose = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _startTimer();
-  }
-
-  void _startTimer() {
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return false;
-      setState(() {
-        _secondsLeft--;
-        if (_secondsLeft <= 0) {
-          _canClose = true;
-        }
-      });
-      return _secondsLeft > 0;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          width: 320,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: const Color(0xff1E1E2E),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xffFFA500).withValues(alpha: 0.4), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.4),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xffFFA500),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text(
-                      'تبلیغ شبیه‌سازی‌شده',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Vazirmatn',
-                      ),
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: _canClose
-                        ? () {
-                            widget.onClose();
-                            Navigator.pop(context);
-                          }
-                        : null,
-                    icon: Icon(
-                      _canClose ? Icons.close : Icons.hourglass_empty,
-                      size: 16,
-                      color: _canClose ? Colors.white : Colors.white24,
-                    ),
-                    label: Text(
-                      _canClose ? 'بستن تبلیغ' : 'بستن بعد از $_secondsLeft ثانیه',
-                      style: TextStyle(
-                        color: _canClose ? Colors.white : Colors.white24,
-                        fontSize: 11,
-                        fontFamily: 'Vazirmatn',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const Icon(
-                Icons.star_purple500_outlined,
-                size: 64,
-                color: Color(0xffFFA500),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'نسخه پریمیوم ریتم',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Vazirmatn',
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'با خرید اشتراک ویژه، تمام تبلیغات را حذف کنید و به موتورهای برنامه‌ریزی هوش مصنوعی، ماژول دوره‌ها و کنکور دسترسی کامل داشته باشید.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  fontFamily: 'Vazirmatn',
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  PremiumUpgradeSheet.show(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xffFFA500),
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  minimumSize: const Size(double.infinity, 44),
-                ),
-                child: const Text(
-                  'مشاهده گزینه‌های ارتقا 💎',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Vazirmatn',
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 

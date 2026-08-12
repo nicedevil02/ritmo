@@ -24,12 +24,10 @@ class PremiumUpgradeSheet extends StatefulWidget {
 }
 
 class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
-  String _selectedPlan = 'premium_yearly'; // premium_1month, premium_3month, premium_6month, premium_yearly, premium_lifetime
+  String _selectedPlan = 'premium_yearly'; // premium_3month, premium_yearly, premium_lifetime
   bool _isLoading = false;
   Map<String, String> _prices = {
-    'premium_1month': '۹۹,۰۰۰ تومان',
     'premium_3month': '۱۹۹,۰۰۰ تومان',
-    'premium_6month': '۳۴۹,۰۰۰ تومان',
     'premium_yearly': '۴۶۹,۰۰۰ تومان',
     'premium_lifetime': '۷۹۹,۰۰۰ تومان',
   };
@@ -43,9 +41,7 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
   Future<void> _loadPrices() async {
     try {
       final prices = await PaymentService.gateway.getProductDetails([
-        'premium_1month',
         'premium_3month',
-        'premium_6month',
         'premium_yearly',
         'premium_lifetime',
       ]);
@@ -66,12 +62,8 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
       if (result.success) {
         // Activate locally
         var durationDays = 0;
-        if (_selectedPlan == 'premium_1month') {
-          durationDays = 30;
-        } else if (_selectedPlan == 'premium_3month') {
+        if (_selectedPlan == 'premium_3month') {
           durationDays = 90;
-        } else if (_selectedPlan == 'premium_6month') {
-          durationDays = 180;
         } else if (_selectedPlan == 'premium_yearly') {
           durationDays = 365;
         } else if (_selectedPlan == 'premium_lifetime') {
@@ -135,9 +127,7 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
       for (final p in purchases) {
         if (p.sku == 'premium_lifetime' ||
             p.sku == 'premium_yearly' ||
-            p.sku == 'premium_6month' ||
-            p.sku == 'premium_3month' ||
-            p.sku == 'premium_1month') {
+            p.sku == 'premium_3month') {
           activePurchase = p;
           break;
         }
@@ -145,12 +135,8 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
 
       if (activePurchase != null) {
         var durationDays = 0;
-        if (activePurchase.sku == 'premium_1month') {
-          durationDays = 30;
-        } else if (activePurchase.sku == 'premium_3month') {
+        if (activePurchase.sku == 'premium_3month') {
           durationDays = 90;
-        } else if (activePurchase.sku == 'premium_6month') {
-          durationDays = 180;
         } else if (activePurchase.sku == 'premium_yearly') {
           durationDays = 365;
         }
@@ -261,38 +247,23 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    _buildFeatureRow(context, '🧠', 'هوش مصنوعی نامحدود', 'دستیار شخصی، تحلیل‌های روزانه، چت هوشمند و تحلیل ریتم زیستی'),
-                    _buildFeatureRow(context, '📅', 'روتین و اهداف نامحدود', 'ایجاد بیش از ۱۵ روتین فعال و ۳ هدف همزمان بدون محدودیت'),
+                    _buildFeatureRow(context, '🧠', 'هوش مصنوعی نامحدود', 'دستیار شخصی، تحلیل‌های روزانه و چت هوشمند با سهمیه ۵۰۰ پیام در ماه'),
+                    _buildFeatureRow(context, '📅', 'روتین و اهداف نامحدود', 'تا ۵۰ روتین فعال و ۲۰ هدف همزمان — در نسخه رایگان: ۷ روتین و ۳ هدف'),
+                    _buildFeatureRow(context, '🔱', 'تمام ماژول‌ها همزمان', 'فعال‌سازی هر ۱۵ ماژول به طور همزمان — در نسخه رایگان: تنها ۴ ماژول'),
                     _buildFeatureRow(context, '🔄', 'بازچینش هوشمند زمان', 'حل خودکار تداخل‌های زمانی با موتور تحلیل زمان ریتمو'),
-                    _buildFeatureRow(context, '🎓', 'ماژول‌های تخصصی دوره‌ها و کنکور', 'دسترسی کامل به زمان‌بندی هوشمند مطالعه و مدیریت کنکور'),
-                    _buildFeatureRow(context, '📊', 'هوش رفتاری پیشرفته', 'دریافت همبستگی‌های پیشرفته بین خواب، انرژی، نماز و کارها'),
-                    _buildFeatureRow(context, '🚫', 'حذف تبلیغات مزاحم', 'استفاده از تمام بخش‌های برنامه در محیطی کاملاً خلوت و بدون تبلیغ'),
+                    _buildFeatureRow(context, '📊', 'هوش رفتاری پیشرفته', 'بینش‌های Cross-Engine بین خواب، انرژی، نماز و کارها'),
+                    _buildFeatureRow(context, '🚫', 'بدون تبلیغ', 'محیط کاملاً خلوت بدون هیچ بنر تبلیغاتی'),
                     const SizedBox(height: 24),
 
-                    // Plans selection
-                    _buildPlanCard(
-                      sku: 'premium_1month',
-                      title: 'پلان ۱ ماهه',
-                      price: _prices['premium_1month'] ?? '۹۹,۰۰۰ تومان',
-                      isRecommended: false,
-                    ),
-                    const SizedBox(height: 12),
+                    // Plans selection — 3 focused options
                     _buildPlanCard(
                       sku: 'premium_3month',
                       title: 'پلان ۳ ماهه',
                       price: _prices['premium_3month'] ?? '۱۹۹,۰۰۰ تومان',
                       isRecommended: false,
-                      discountLabel: '۳۳٪ تخفیف',
+                      discountLabel: 'شروع اقتصادی',
                     ),
-                    const SizedBox(height: 12),
-                    _buildPlanCard(
-                      sku: 'premium_6month',
-                      title: 'پلان ۶ ماهه',
-                      price: _prices['premium_6month'] ?? '۳۴۹,۰۰۰ تومان',
-                      isRecommended: false,
-                      discountLabel: '۴۱٪ تخفیف',
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildPlanCard(
                       sku: 'premium_yearly',
                       title: 'پلان سالانه',
@@ -300,13 +271,13 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
                       isRecommended: true,
                       discountLabel: '۶۰٪ تخفیف',
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildPlanCard(
                       sku: 'premium_lifetime',
                       title: 'دسترسی مادام‌العمر',
                       price: _prices['premium_lifetime'] ?? '۷۹۹,۰۰۰ تومان',
                       isRecommended: false,
-                      discountLabel: 'ارزش فوق‌العاده',
+                      discountLabel: 'ارزش استثنایی',
                     ),
                     const SizedBox(height: 20),
                   ],

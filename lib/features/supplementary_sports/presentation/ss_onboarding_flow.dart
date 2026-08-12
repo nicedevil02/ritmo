@@ -501,6 +501,40 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
     );
   }
 
+  Widget _buildGenderToggleOption({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required RitmoColors colors,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        RitmoHaptics.selection();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.primary.withValues(alpha: 0.12) : colors.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? colors.primary : colors.border,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Vazirmatn',
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? colors.primary : colors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -640,10 +674,47 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         ),
         const SizedBox(height: 8),
         Text(
-          'قد و وزن به ما کمک می‌کنه شاخص توده بدنی (BMI) و کالری مصرفی رو دقیق‌تر حساب کنیم.',
+          'قد، وزن و جنسیت به ما کمک می‌کنه شاخص توده بدنی (BMI) و برنامه تمرینی شما رو دقیق‌تر حساب کنیم.',
           style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textSecondary),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
+
+        // Gender Selector
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          textDirection: TextDirection.rtl,
+          children: [
+            Text('جنسیت شما:', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+            Row(
+              children: [
+                _buildGenderToggleOption(
+                  label: 'آقا 👨',
+                  isSelected: _selectedGender == 'MALE',
+                  onTap: () {
+                    setState(() {
+                      _selectedGender = 'MALE';
+                      _saveStateToPreferences();
+                    });
+                  },
+                  colors: colors,
+                ),
+                const SizedBox(width: 8),
+                _buildGenderToggleOption(
+                  label: 'خانم 👩',
+                  isSelected: _selectedGender == 'FEMALE',
+                  onTap: () {
+                    setState(() {
+                      _selectedGender = 'FEMALE';
+                      _saveStateToPreferences();
+                    });
+                  },
+                  colors: colors,
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
         
         // BMI Gauge & Card
         Container(

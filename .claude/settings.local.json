@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Read(//c/Users/bahman/Desktop/Besme-Allah/Ritmo3/prompts/**)",
+      "Bash(echo \"=== exit $? \\(1=clean\\) ===\")",
+      "Bash(awk -F: '{s+=$2} END{print s}')",
+      "Bash(xargs -I{} sh -c 'echo ==={}===; head -30 \"{}\"')",
+      "Bash(awk '{print NR\": \"$0}' prompts/012_supplementary-sports-overhaul.md)",
+      "Bash(where jadx *)",
+      "Bash(where apktool *)",
+      "Bash(python -c \"import json;d=json.load\\(open\\(r'C:/Users/bahman/Desktop/Besme-Allah/Ritmo3/varzesh/assets/data/fitify_exercises_bodyweight.json',encoding='utf-8'\\)\\);print\\(type\\(d\\), len\\(d\\) if hasattr\\(d,'__len__'\\) else ''\\)\")",
+      "WebSearch",
+      "Bash(grep -n \"class \\\\|///\" lib/features/routines/presentation/quick_add_parser.dart)",
+      "Bash(xargs wc -l)"
+    ]
+  }
+}

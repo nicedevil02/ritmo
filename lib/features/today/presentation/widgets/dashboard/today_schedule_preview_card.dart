@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -101,11 +102,14 @@ class TodaySchedulePreviewCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.check_circle_outline, size: 20, color: Colors.green),
-                        tooltip: 'تکمیل برنامه',
-                        onPressed: () => convergenceHelper.completeItem(current),
-                      ),
+                      // P1-1ب: نگهدارندهٔ موقت — تا قبل از E-1 فقط روتینها از اینجا
+                      // تیک میخورند (مسیر امن REK)؛ مستحبات از صفحهٔ عبادت تیک میخورند.
+                      if (current.domain == AgendaDomain.routine)
+                        IconButton(
+                          icon: const Icon(Icons.check_circle_outline, size: 20, color: Colors.green),
+                          tooltip: 'تکمیل برنامه',
+                          onPressed: () => convergenceHelper.completeItem(current),
+                        ),
                       IconButton(
                         icon: const Icon(Icons.calendar_today, size: 18, color: Colors.blueAccent),
                         tooltip: 'مشاهده در تقویم',

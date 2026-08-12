@@ -25,6 +25,7 @@ class MovementKindsSeed {
           usageCount INTEGER NOT NULL DEFAULT 0,
           lastUsedAt INTEGER,
           sortOrder INTEGER NOT NULL DEFAULT 0,
+          sessionModeOverride TEXT,
           createdAt INTEGER NOT NULL,
           updatedAt INTEGER NOT NULL
       );
@@ -37,9 +38,13 @@ class MovementKindsSeed {
     await ensureSchema(db);
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    // Delete existing built-in kinds (keep user custom kinds with isCustom = 1)
-    await db.delete('movement_kinds', where: 'isCustom = 0');
+    // وضعیت متعلق به کاربر را از ردیفهای موجود حفظ کن.
+    final existingRows = await db.query('movement_kinds', where: 'isCustom = 0');
+    final existingByCode = <String, Map<String, Object?>>{
+      for (final r in existingRows) r['code'] as String: r,
+    };
 
+    final seedCodes = <String>{};
     final batch = db.batch();
 
     void addKind({
@@ -55,12 +60,15 @@ class MovementKindsSeed {
       bool isOutdoor = false,
       bool isSocial = false,
       bool needsVenue = false,
+      // seasonMask uses Persian (Jalali) month numbers 1..12
       String? seasonMask,
       int jointImpact = 1,
       String? aliasesFa,
       bool isEnabled = true,
       int sortOrder = 0,
     }) {
+      seedCodes.add(code);
+      final existing = existingByCode[code];
       batch.insert(
         'movement_kinds',
         {
@@ -80,11 +88,12 @@ class MovementKindsSeed {
           'jointImpact': jointImpact,
           'aliasesFa': aliasesFa,
           'isCustom': 0,
-          'isEnabled': isEnabled ? 1 : 0,
-          'usageCount': 0,
-          'lastUsedAt': null,
+          // ستونهای متعلق به کاربر؛ فقط در درج اولیه مقدار پیشفرض میگیرند:
+          'isEnabled': existing?['isEnabled'] ?? (isEnabled ? 1 : 0),
+          'usageCount': existing?['usageCount'] ?? 0,
+          'lastUsedAt': existing?['lastUsedAt'],
           'sortOrder': sortOrder,
-          'createdAt': now,
+          'createdAt': existing?['createdAt'] ?? now,
           'updatedAt': now,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
@@ -155,5 +164,12 @@ class MovementKindsSeed {
     addKind(code: 'OTHER', titleFa: 'سایر ورزش‌ها', emoji: '🎯', family: 'STRENGTH', baseMet: 4.0, metLow: 2.5, metHigh: 6.0, isEnabled: false);
 
     await batch.commit(noResult: true);
+
+    // پاکسازی انواع built-in که از seed حذف شدهاند، بدون دست زدن به نوعهای سفارشی:
+    await db.delete(
+      'movement_kinds',
+      where: 'isCustom = 0 AND code NOT IN (${List.filled(seedCodes.length, '?').join(', ')})',
+      whereArgs: seedCodes.toList(),
+    );
   }
 }

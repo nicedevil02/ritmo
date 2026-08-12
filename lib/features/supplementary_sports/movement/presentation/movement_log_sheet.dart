@@ -13,7 +13,7 @@ import 'package:ritmo/features/supplementary_sports/movement/data/movement_repos
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_event.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
-import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_custom_kind_sheet.dart';
+import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/movement_kind_selector.dart';
 
 Future<void> showMovementLogSheet(
   BuildContext context, {
@@ -73,12 +73,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _venueController = TextEditingController();
   final TextEditingController _companionsController = TextEditingController();
-  final TextEditingController _searchController = TextEditingController();
 
-  List<MovementKind> _recentKinds = [];
-  List<MovementKind> _displayKinds = [];
-  MovementFamily _selectedFamilyTab = MovementFamily.endurance;
-  bool _isLoadingKinds = true;
   bool _isSaving = false;
   double _userWeightKg = 70.0;
 
@@ -102,58 +97,16 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
     _noteController.dispose();
     _venueController.dispose();
     _companionsController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
   Future<void> _loadInitialData() async {
     final db = await DatabaseHelper.instance.database;
     final weight = await MovementLoadCalculator.getUserWeightKg(db);
-    final recents = await MovementRepository.instance.recentKinds(limit: 6);
-    final kinds = await MovementRepository.instance.getKinds(family: _selectedFamilyTab);
 
     if (mounted) {
       setState(() {
         _userWeightKg = weight;
-        _recentKinds = recents;
-        _displayKinds = kinds;
-        _selectedKind ??= recents.isNotEmpty ? recents.first : (kinds.isNotEmpty ? kinds.first : null);
-        _isLoadingKinds = false;
-      });
-    }
-  }
-
-  Future<void> _onSearchChanged(String query) async {
-    if (query.trim().isEmpty) {
-      final kinds = await MovementRepository.instance.getKinds(family: _selectedFamilyTab);
-      setState(() => _displayKinds = kinds);
-    } else {
-      final searchResults = await MovementRepository.instance.searchKinds(query);
-      setState(() => _displayKinds = searchResults);
-    }
-  }
-
-  Future<void> _selectFamilyTab(MovementFamily family) async {
-    setState(() {
-      _selectedFamilyTab = family;
-      _isLoadingKinds = true;
-    });
-    _searchController.clear();
-    final kinds = await MovementRepository.instance.getKinds(family: family);
-    if (mounted) {
-      setState(() {
-        _displayKinds = kinds;
-        _isLoadingKinds = false;
-      });
-    }
-  }
-
-  Future<void> _openCustomKindSheet() async {
-    final created = await showMovementCustomKindSheet(context);
-    if (created != null && mounted) {
-      setState(() {
-        _selectedKind = created;
-        _recentKinds.insert(0, created);
       });
     }
   }
@@ -298,135 +251,10 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // --- STAGE 1: KIND SELECTION ---
-                    if (_recentKinds.isNotEmpty) ...[
-                      const Text('انواع اخیر:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13)),
-                      const SizedBox(height: 8),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: _recentKinds.map((k) {
-                            final isSelected = _selectedKind?.code == k.code;
-                            return Padding(
-                              padding: const EdgeInsets.only(left: 8),
-                              child: ChoiceChip(
-                                label: Text('${k.emoji} ${k.titleFa}', style: TextStyle(fontFamily: 'Vazirmatn', color: isSelected ? Colors.white : colors.onSurface)),
-                                selected: isSelected,
-                                selectedColor: colors.primary,
-                                onSelected: (val) {
-                                  if (val) setState(() => _selectedKind = k);
-                                },
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-
-                    // Search & Custom Button
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: _onSearchChanged,
-                            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.onSurface),
-                            decoration: InputDecoration(
-                              hintText: 'جست‌وجوی نوع ورزش...',
-                              prefixIcon: const Icon(CupertinoIcons.search, size: 20),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        OutlinedButton.icon(
-                          onPressed: _openCustomKindSheet,
-                          icon: const Icon(CupertinoIcons.add, size: 18),
-                          label: const Text('نوع دلخواه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
-                          style: OutlinedButton.styleFrom(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          ),
-                        ),
-                      ],
+                    MovementKindSelector(
+                      selectedKind: _selectedKind,
+                      onKindSelected: (k) => setState(() => _selectedKind = k),
                     ),
-                    const SizedBox(height: 14),
-
-                    // Family Tabs
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: MovementFamily.values.map((f) {
-                          final isSelected = f == _selectedFamilyTab;
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 6),
-                            child: ChoiceChip(
-                              label: Text('${f.emoji} ${f.titleFa}', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: isSelected ? Colors.white : colors.onSurface)),
-                              selected: isSelected,
-                              selectedColor: colors.primary,
-                              onSelected: (_) => _selectFamilyTab(f),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Display Kinds Grid/List
-                    _isLoadingKinds
-                        ? const Center(child: Padding(padding: EdgeInsets.all(16), child: CupertinoActivityIndicator()))
-                        : (_displayKinds.isEmpty
-                            ? Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                child: Text(
-                                  'ورزشی در این دسته یافت نشد. می‌توانید با «نوع دلخواه» اضافه کنید.',
-                                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.onSurfaceVariant),
-                                ),
-                              )
-                            : Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _displayKinds.map((k) {
-                                  final isSelected = _selectedKind?.code == k.code;
-                                  return InkWell(
-                                    onTap: () => setState(() => _selectedKind = k),
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 150),
-                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? CalendarTokens.emerald.withValues(alpha: 0.22)
-                                            : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.30),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? CalendarTokens.emerald
-                                              : colors.outlineVariant.withValues(alpha: 0.20),
-                                          width: isSelected ? 1.5 : 1.0,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(k.emoji, style: const TextStyle(fontSize: 14)),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            k.titleFa,
-                                            style: TextStyle(
-                                              fontFamily: 'Vazirmatn',
-                                              fontSize: 13,
-                                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                              color: isSelected ? CalendarTokens.emerald : colors.onSurface,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              )),
                     const SizedBox(height: 24),
                     const Divider(),
                     const SizedBox(height: 16),

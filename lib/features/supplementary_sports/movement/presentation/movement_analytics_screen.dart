@@ -18,6 +18,7 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _prs = [];
   Map<MovementFamily, int> _familyCounts = {};
+  Map<String, String> _kindsMap = {};
 
   @override
   void initState() {
@@ -30,13 +31,22 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
     try {
       final prRows = await db.query('movement_pr', orderBy: 'achievedAt DESC');
       final logRows = await db.query('workout_logs', columns: ['kind', 'type']);
+      final kindRows = await db.query('movement_kinds');
+      
+      final kindsMap = {
+        for (final r in kindRows) r['code'] as String: r['titleFa'] as String
+      };
+      
+      final kindToFamilyMap = {
+        for (final r in kindRows) r['code'] as String: r['family'] as String?
+      };
 
       final familyCounts = <MovementFamily, int>{};
       for (final r in logRows) {
         final kCode = (r['kind'] ?? r['type'] ?? '').toString();
-        final kRows = await db.query('movement_kinds', where: 'code = ?', whereArgs: [kCode], limit: 1);
-        if (kRows.isNotEmpty) {
-          final f = MovementFamily.fromCode(kRows.first['family']?.toString() ?? 'ENDURANCE');
+        final familyStr = kindToFamilyMap[kCode];
+        if (familyStr != null) {
+          final f = MovementFamily.fromCode(familyStr);
           familyCounts[f] = (familyCounts[f] ?? 0) + 1;
         }
       }
@@ -45,6 +55,7 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
         setState(() {
           _prs = prRows;
           _familyCounts = familyCounts;
+          _kindsMap = kindsMap;
           _isLoading = false;
         });
       }
@@ -156,6 +167,23 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                               final prType = pr['prType']?.toString() ?? '';
                               final val = (pr['value'] as num? ?? 0).toDouble();
 
+                              final kindTitle = _kindsMap[kindCode] ?? kindCode;
+                              var typeLabel = prType;
+                              var unit = '';
+                              if (prType == 'MAX_DISTANCE') {
+                                typeLabel = 'بیشترین مسافت';
+                                unit = 'کیلومتر';
+                              } else if (prType == 'MAX_DURATION') {
+                                typeLabel = 'طولانی‌ترین زمان';
+                                unit = 'دقیقه';
+                              } else if (prType == 'MAX_ELEVATION') {
+                                typeLabel = 'بیشترین ارتفاع صعود';
+                                unit = 'متر';
+                              } else if (prType == 'MAX_LAPS') {
+                                typeLabel = 'بیشترین تعداد دور';
+                                unit = 'دور';
+                              }
+
                               return Card(
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 child: ListTile(
@@ -164,11 +192,11 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                                     child: Text('🏆', style: TextStyle(fontSize: 18)),
                                   ),
                                   title: Text(
-                                    '$kindCode — $prType',
+                                    '$kindTitle — $typeLabel',
                                     style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
                                   ),
                                   subtitle: Text(
-                                    'مقدار رکورد: ${val.toStringAsFixed(1).toPersianDigits()}',
+                                    'مقدار رکورد: ${val.toStringAsFixed(1).toPersianDigits()} $unit',
                                     style: TextStyle(fontFamily: 'Vazirmatn', color: colors.primary),
                                   ),
                                 ),

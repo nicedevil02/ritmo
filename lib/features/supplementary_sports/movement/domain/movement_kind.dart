@@ -83,6 +83,7 @@ class MovementKind {
     required this.usageCount,
     this.lastUsedAt,
     required this.sortOrder,
+    this.sessionModeOverride,
   });
 
   final String code;
@@ -105,6 +106,7 @@ class MovementKind {
   final int usageCount;
   final int? lastUsedAt;
   final int sortOrder;
+  final String? sessionModeOverride;
 
   factory MovementKind.fromMap(Map<String, dynamic> map) {
     return MovementKind(
@@ -128,6 +130,7 @@ class MovementKind {
       usageCount: (map['usageCount'] as int? ?? 0),
       lastUsedAt: map['lastUsedAt'] as int?,
       sortOrder: (map['sortOrder'] as int? ?? 0),
+      sessionModeOverride: map['sessionModeOverride'] as String?,
     );
   }
 
@@ -153,6 +156,7 @@ class MovementKind {
       'usageCount': usageCount,
       'lastUsedAt': lastUsedAt,
       'sortOrder': sortOrder,
+      'sessionModeOverride': sessionModeOverride,
     };
   }
 }

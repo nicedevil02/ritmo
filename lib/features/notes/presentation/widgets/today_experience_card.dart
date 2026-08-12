@@ -65,7 +65,8 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        // P1-4: مارجین افقی حذف شد — تراز با پدینگ ۲۰px صفحهٔ میزبان.
+        margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: colors.card,

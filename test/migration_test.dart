@@ -39,7 +39,24 @@ class MockDatabase implements Database {
     if (invocation.memberName == #query) {
       return Future.value(<Map<String, Object?>>[]);
     }
+    if (invocation.memberName == #isOpen) {
+      return true;
+    }
+    if (invocation.memberName == #transaction) {
+      final action = invocation.positionalArguments[0] as Function;
+      return action(MockTransaction(this));
+    }
     return null;
+  }
+}
+
+class MockTransaction implements Transaction, Database {
+  MockTransaction(this.db);
+  final Database db;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    return db.noSuchMethod(invocation);
   }
 }
 

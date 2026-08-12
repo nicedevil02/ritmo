@@ -314,6 +314,8 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.read(ssWorkoutProvider(_key).notifier).handleLifecycleResumed();
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      ref.read(ssWorkoutProvider(_key).notifier).handleLifecyclePaused();
     }
   }
 
@@ -514,7 +516,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   }
 
   Future<void> _onClosePressed() async {
-    final ok = await showDialog<bool>(
+    final result = await showDialog<String>(
       context: context,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
@@ -522,28 +524,35 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           backgroundColor: const Color(0xFF1E293B),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text(
-            'انصراف از تمرین؟ ⚠️',
+            'خروج از تمرین؟ ⚠️',
             style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white),
           ),
           content: const Text(
-            'با خروج از این صفحه، پیشرفت تمرین ذخیره‌نشده لغو خواهد شد.',
+            'می‌توانید تمرین را موقتاً متوقف کنید و بعداً ادامه دهید، یا آن را کاملاً لغو کنید.',
             style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('ادامه تمرین', style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xFF10B981))),
+              onPressed: () => Navigator.pop(ctx, 'cancel_workout'),
+              child: const Text('لغو کامل', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.redAccent)),
             ),
             TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('خروج و لغو', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.redAccent)),
+              onPressed: () => Navigator.pop(ctx, 'pause_workout'),
+              child: const Text('توقف موقت (بعدا ادامه میدم)', style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xFF10B981))),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, 'stay'),
+              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70)),
             ),
           ],
         ),
       ),
     );
-    if (ok ?? false) {
+    if (result == 'cancel_workout') {
       await ref.read(ssWorkoutProvider(_key).notifier).abandonSession();
+      if (mounted) Navigator.pop(context);
+    } else if (result == 'pause_workout') {
+      // Just pop the screen, session is already saved in SharedPreferences and DB as in-progress
       if (mounted) Navigator.pop(context);
     }
   }

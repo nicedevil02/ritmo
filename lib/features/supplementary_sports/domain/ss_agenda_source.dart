@@ -5,12 +5,15 @@ import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_week_resolver.dart';
+import 'package:ritmo/features/supplementary_sports/domain/ss_program_calendar.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// AgendaSource for the Supplementary Sports & Movement domain.
 class SsAgendaSource {
   SsAgendaSource({
     required this.movementRoutines,
+    required this.schedulesByRoutine,
+    required this.completedKeys,
     required this.sportsEnabled,
     this.prescriptionsByDate = const {},
     required this.programStartDate,
@@ -20,6 +23,8 @@ class SsAgendaSource {
   });
 
   final List<Map<String, dynamic>> movementRoutines;
+  final Map<String, List<Map<String, dynamic>>> schedulesByRoutine;
+  final Set<String> completedKeys;
   final bool sportsEnabled;
   final Map<String, Map<String, dynamic>> prescriptionsByDate;
   final DateTime programStartDate;
@@ -37,6 +42,8 @@ class SsAgendaSource {
     if (!sportsEnabled) {
       return SsAgendaSource(
         movementRoutines: const [],
+        schedulesByRoutine: const {},
+        completedKeys: const {},
         sportsEnabled: false,
         programStartDate: DateTime.now(),
         totalWeeks: 4,
@@ -71,8 +78,10 @@ class SsAgendaSource {
       }
     } catch (_) {}
 
-    // 3. Movement routines
+    // 3. Movement routines + their schedules + today's completions
     final movementRoutines = <Map<String, dynamic>>[];
+    final schedulesByRoutine = <String, List<Map<String, dynamic>>>{};
+    final completedKeys = <String>{}; // '<routineId>:<yyyy-MM-dd>'
     try {
       final rRows = await db.query(
         'routines',
@@ -81,10 +90,28 @@ class SsAgendaSource {
       for (final r in rRows) {
         movementRoutines.add(Map<String, dynamic>.from(r));
       }
-    } catch (_) {}
+
+      final sRows = await db.query('routine_schedules');
+      for (final s in sRows) {
+        final rid = s['routineId']?.toString();
+        if (rid == null) continue;
+        schedulesByRoutine.putIfAbsent(rid, () => []).add(Map<String, dynamic>.from(s));
+      }
+
+      final cRows = await db.query('routine_completions');
+      for (final c in cRows) {
+        final rid = c['routineId']?.toString();
+        final day = c['completionDate']?.toString();
+        if (rid != null && day != null) completedKeys.add('$rid:$day');
+      }
+    } catch (e) {
+      debugPrint('[SsAgendaSource] movement routines load error: $e');
+    }
 
     return SsAgendaSource(
       movementRoutines: movementRoutines,
+      schedulesByRoutine: schedulesByRoutine,
+      completedKeys: completedKeys,
       sportsEnabled: sportsEnabled,
       prescriptionsByDate: prescriptionsByDate,
       programStartDate: pStart,
@@ -111,7 +138,7 @@ class SsAgendaSource {
 
       if (status == 'MOVED') {
         // Return only movement routines if prescription is moved
-        items.addAll(_movementItems(dateStr));
+        items.addAll(_movementItems(date, dateStr));
         final seenMove = <String>{};
         return items.where((i) => seenMove.add('${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}')).toList();
       }
@@ -142,13 +169,14 @@ class SsAgendaSource {
       }
 
       // When prescriptions exist, skip legacy plans for this date
-      final res = [...items, ..._movementItems(dateStr)];
+      final res = [...items, ..._movementItems(date, dateStr)];
       final seen = <String>{};
       return res.where((i) => seen.add('${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}')).toList();
     }
 
     // 2. Legacy ss_workout_plan fallback
-    final dayOfWeek = date.weekday;
+    // قرارداد ss_workout_plan.dayOfWeek شنبهمحور است؛ تنها از مبدل مرکزی استفاده کن. تبدیل دستی weekday در هر نقطهٔ دیگر ممنوع است.
+    final dayOfWeek = SsProgramCalendar.ritmoDayToLegacySsDay(date.weekday);
     final activeW = SsWeekResolver.resolveActiveWeek(
       programStartDate: programStartDate,
       targetDate: date,
@@ -195,20 +223,27 @@ class SsAgendaSource {
     }
 
     // 3. Movement routines
-    items.addAll(_movementItems(dateStr));
+    items.addAll(_movementItems(date, dateStr));
 
     // Step 4: Final Deduplication Guard
     final seen = <String>{};
     return items.where((i) => seen.add('${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}')).toList();
   }
 
-  List<AgendaItem> _movementItems(String dateStr) {
+  List<AgendaItem> _movementItems(DateTime date, String dateStr) {
     final items = <AgendaItem>[];
     for (final r in movementRoutines) {
       final rId = r['id'] as String;
+      final schedules = schedulesByRoutine[rId] ?? const [];
+
+      // روتین بدون هیچ برنامهای یعنی «بدون زمانبندی» — در اجندا نمایش داده نمیشود.
+      if (schedules.isEmpty) continue;
+      if (!_isScheduledOn(schedules, date)) continue;
+
       final title = r['title'] as String? ?? 'فعالیت حرکتی';
       final isMeetup = (r['movementIsMeetup'] as int? ?? 0) == 1;
       final duration = r['targetDurationMinutes'] as int? ?? 30;
+      final isDone = completedKeys.contains('$rId:$dateStr');
 
       items.add(AgendaItem(
         id: 'sport:movement:$rId:$dateStr',
@@ -220,11 +255,23 @@ class SsAgendaSource {
         durationMinutes: duration,
         category: Category.fitness,
         deepLink: AgendaDeepLink(domain: AgendaDomain.sport, targetId: rId),
-        completion: AgendaCompletion.pending,
+        completion: isDone ? AgendaCompletion.done : AgendaCompletion.pending,
         meta: {'routine': r},
       ));
     }
     return items;
+  }
+
+  /// برمیگرداند آیا حداقل یکی از برنامههای روتین روی این تاریخ مینشیند یا نه.
+  /// قرارداد daysOfWeek در routine_schedules بدین صورت است که روزهای هفته را
+  /// به صورت رشته‌ای جدا شده با کاما ذخیره می‌کند (۱=دوشنبه تا ۷=یکشنبه).
+  bool _isScheduledOn(List<Map<String, dynamic>> schedules, DateTime date) {
+    for (final s in schedules) {
+      final daysStr = s['daysOfWeek'] as String? ?? '6,7,1,2,3,4,5';
+      final days = daysStr.split(',').map((d) => int.tryParse(d.trim())).whereType<int>().toSet();
+      if (days.contains(date.weekday)) return true;
+    }
+    return false;
   }
 }
 

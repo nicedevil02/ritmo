@@ -36,7 +36,8 @@ class ModuleSummaryGrid extends StatelessWidget {
             crossAxisCount: 2,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            childAspectRatio: 1.75, // ارتفاع کمتر
+            // P1-5: ارتفاع ثابت بهجای نسبت ابعاد — با بزرگنمایی فونت تا ۱٫۳× سرریز نمیشود.
+            mainAxisExtent: 112,
           ),
           itemBuilder: (context, i) => _ModuleSummaryCard(
             summary: summaries[i],

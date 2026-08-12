@@ -64,3 +64,5 @@ tool/suite_test_output.txt
 # Windows special device file
 nul
 
+build.env
+*.env

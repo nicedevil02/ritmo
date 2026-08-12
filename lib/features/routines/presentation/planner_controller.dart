@@ -12,9 +12,11 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
+import 'package:ritmo/core/services/feature_limits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/assistant/logic/duration_estimator.dart';
 import 'package:ritmo/features/health/presentation/widgets/medication_form_sheet.dart';
+import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:ritmo/features/routines/domain/strategies/planner_save_context.dart';
 import 'package:ritmo/features/routines/domain/strategies/planner_strategy_registry.dart';
 import 'package:ritmo/features/routines/presentation/quick_add_parser.dart';
@@ -1376,6 +1378,23 @@ class PlannerController extends ChangeNotifier {
       return;
     }
 
+    // بررسی سقف روتین — فقط برای ایجاد جدید (نه ویرایش)
+    if (!isEditing) {
+      final activeCount = await _countActiveRoutines();
+      final limit = FeatureLimits.current.maxActiveRoutines;
+      if (activeCount >= limit) {
+        if (context.mounted) {
+          RitmoToast.show(
+            context,
+            'سقف $limit روتین فعال پر شده. برای افزودن بیشتر به ریتمو پلاس ارتقا دهید.',
+            icon: Icons.lock_outline,
+          );
+          PremiumUpgradeSheet.show(context);
+        }
+        return;
+      }
+    }
+
     if (isSaving) return;
 
     isSaving = true;
@@ -1408,6 +1427,19 @@ class PlannerController extends ChangeNotifier {
       if (context.mounted) {
         RitmoToast.show(context, 'خطا در ثبت اطلاعات: $e', icon: Icons.error_outline, iconColor: Colors.red);
       }
+    }
+  }
+
+  /// تعداد روتین‌های فعال (archived=0)
+  Future<int> _countActiveRoutines() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final result = await db.rawQuery(
+        "SELECT COUNT(*) as count FROM routines WHERE COALESCE(archived, 0) = 0",
+      );
+      return (result.first['count'] as int?) ?? 0;
+    } catch (_) {
+      return 0;
     }
   }
 }

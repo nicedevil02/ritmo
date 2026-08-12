@@ -12,6 +12,7 @@ import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/completion/snooze_policy.dart';
 import 'package:ritmo/core/domain/engines/engine_enums.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/domain/engines/ritmo_intelligence_engine.dart';
@@ -66,6 +67,7 @@ import 'package:ritmo/features/today/presentation/widgets/dashboard/energy_manag
 import 'package:ritmo/features/today/presentation/widgets/dashboard/module_summary_grid.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_hero.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/today_details_section.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/today_schedule_preview_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/todays_tasks_section.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/zone_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/morning_checkin_sheet.dart';
@@ -108,6 +110,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   // G-2/G-4: منبع واحد Agenda (همهٔ دامنهها) + شمار واقعی دوزهای باقیماندهٔ دارو
   List<AgendaItem> _agendaItems = [];
   int _pendingMedDoses = 0;
+
+  // P1-1: اسنپشات «مسیر امروز»
+  DayAgendaSnapshot? _todaySnapshot;
 
   // G-4: توکن نسل برای باطلکردن نتایج کهنه و جلوگیری از race بین دو بارگذاری
   int _loadGeneration = 0;
@@ -154,12 +159,17 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     _inboxSubscription = RitmoEventBus().onEvents.where((e) => e.type == 'inbox_updated').listen((_) {
       _updateUnreadCount();
     });
+    // P1-1: وقتی از کارت «مسیر امروز» یا تقویم آیتمی تیک میخورد، خانه تازه شود.
+    _agendaSubscription = RitmoEventBus().onEvents.where((e) => e.type == 'AgendaItemToggled').listen((_) {
+      _loadDashboardData();
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _inboxSubscription?.cancel();
+    _agendaSubscription?.cancel();
     RitmoEvents.routineChanges.removeListener(_onRoutineChanges);
     super.dispose();
   }
@@ -463,6 +473,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         _avatarFileExists = avatarExistsResult;
         // G-2: منبع واحد Agenda برای کارت اقدام بعدی
         _agendaItems = controller.agenda;
+        // P1-1: اسنپشات «مسیر امروز»
+        _todaySnapshot = controller.todaySnapshot;
       });
 
       if (isStale()) return;
@@ -672,6 +684,12 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
     final tasksList = _timelineItems.where((i) => i['type'] == 'task').toList();
 
+    // P1-2: شمارش آیتمهای بخش تاشو بعد از خروج گرید ماژولها (H-2)
+    final detailsItemCount = (_showReplanBanner ? 1 : 0) +
+        (_needCheckin ? 1 : 0) +
+        (_recentInboxItems.isNotEmpty ? 1 : 0) +
+        1; // کارت پیشنهاد بازتاب (شرطهای داخلی خودش)
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Directionality(
@@ -728,9 +746,18 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                 ),
                 const SizedBox(height: RitmoSpacing.section),
 
-                // 3. کارهای امروز (Agenda - max 3-5 items)
+                // 3. مسیر امروز — اسنپشات یکپارچهٔ خانه/تقویم (P1-1)
+                if (_todaySnapshot != null) ...[
+                  _enter(
+                    3,
+                    TodaySchedulePreviewCard(snapshot: _todaySnapshot!),
+                  ),
+                  const SizedBox(height: RitmoSpacing.section),
+                ],
+
+                // 4. کارهای امروز
                 _enter(
-                  3,
+                  4,
                   TodaysTasksSection(
                     // G-6: لیست کامل پاس داده میشود؛ برش ۴تایی مسئولیت خود ویجت است.
                     tasks: tasksList,
@@ -740,20 +767,17 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     onViewAll: () => widget.onNavigateToTab?.call(4),
                   ),
                 ),
-                // G-7: مارجین افقی داخلی کارت تجربه با wrapper صفر خنثی شد تا با پدینگ ۲۰ صفحه تراز شود.
+
+                // 5. کارت تجربهٔ امروز (مارجین داخلیاش در P1-4 اصلاح شده است)
                 _enter(
-                  4,
-                  const Padding(
-                    padding: EdgeInsets.zero,
-                    child: TodayExperienceCard(),
-                  ),
+                  5,
+                  const TodayExperienceCard(),
                 ),
                 const SizedBox(height: RitmoSpacing.section),
 
-
-                // 4. کارت خلاصهی وضعیت تکعاملی (ZoneCard / Energy)
+                // 6. کارت وضعیت تکعاملی (ZoneCard / Energy)
                 _enter(
-                  5,
+                  6,
                   ZoneCard(
                     isDarkMode: isDarkMode,
                     currentEnergyPercent: _currentEnergyPercent,
@@ -771,9 +795,19 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                 ),
                 const SizedBox(height: RitmoSpacing.section),
 
-                // 5. حداکثر یک پیشنهاد دستیار
+                // 7. سیستمهای فعال — همیشه نمایان؛ صعود از بخش تاشو (P1-2 / H-2)
                 _enter(
-                  6,
+                  7,
+                  ModuleSummaryGrid(
+                    summaries: _moduleSummaries,
+                    onModuleTap: _openModuleScreen,
+                  ),
+                ),
+                const SizedBox(height: RitmoSpacing.section),
+
+                // 8. دستیار — فقط بریفینگ؛ سطح تکراری «بهترین اقدام بعدی» حذف شد (P1-3 / H-3)
+                _enter(
+                  8,
                   AssistantCard(
                     suggestedRoutine: _engineOutput?.suggestedRoutine,
                     suggestLightVersion:
@@ -787,25 +821,21 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     briefing: _briefing,
                     isBriefingLoading: _isBriefingLoading,
                     onRefreshBriefing: _refreshBriefing,
+                    showNextAction: false,
                   ),
                 ),
                 const SizedBox(height: RitmoSpacing.section),
 
-                // 6. بخش تاشوی «جزئیات امروز» (پیشفرض بسته)
+                // 9. بخش تاشوی «جزئیات امروز» (پیشفرض بسته)
                 _enter(
-                  7,
+                  9,
                   TodayDetailsSection(
-                    itemCount: _moduleSummaries.length + (_showReplanBanner ? 1 : 0),
+                    itemCount: detailsItemCount,
                     children: [
                       if (_showReplanBanner) ...[
                         _buildMidDayReplanBanner(),
                         const SizedBox(height: RitmoSpacing.md),
                       ],
-                      ModuleSummaryGrid(
-                        summaries: _moduleSummaries,
-                        onModuleTap: _openModuleScreen,
-                      ),
-                      const SizedBox(height: RitmoSpacing.md),
                       _buildCheckinReminderCard(),
                       _buildReflectionSuggestionCard(),
                       _buildRecentInboxAlertsSection(colors),

@@ -5,6 +5,8 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
+import 'package:ritmo/features/worship/logic/worship_repository.dart';
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/features/worship/logic/prayer_timeline.dart';
 import 'package:ritmo/features/worship/logic/prayer_times.dart';
@@ -90,8 +92,9 @@ class WorshipPracticeState {
           (resultType != null && countTarget > 0 && countDone >= countTarget) ||
           _legacyDailyDone >= 1);
 
+  static const int _dailyDoneSkippedSentinel = -1;
   bool get isSkipped =>
-      !isQada && (resultType == 'SKIPPED' || _legacyDailyDone == -1);
+      !isQada && (resultType == 'SKIPPED' || _legacyDailyDone == _dailyDoneSkippedSentinel);
 
   bool get isMissed => resultType == 'MISSED';
   bool get isPending => !isDone && !isSkipped && !isMissed && !isQada;
@@ -222,12 +225,20 @@ class WorshipEngine {
   WorshipEngine._();
   static final WorshipEngine instance = WorshipEngine._();
 
+  /// تنها شرط معتبر برای «این عبادت باید دیده شود».
+  /// هر خواننده‌ی جدید worship_practices موظف است از همین استفاده کند.
+  static const String activePracticesWhere = 'isActive = 1 AND userDisabledAt IS NULL';
+  static const String activePracticesOrderBy = 'sortOrder ASC, id ASC';
+
   // ── Cache ────────────────────────────────────────────────────────────────
   final Map<String, WorshipDay> _dayCache = {};
   Map<String, dynamic>? _settingsCache;
   List<OccasionItem>? _occasionsCache;
 
+  static bool _defaultsEnsured = false;
+
   Future<void> _ensureDefaultPractices(DatabaseExecutor db) async {
+    if (_defaultsEnsured) return;
     try {
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
@@ -267,6 +278,7 @@ class WorshipEngine {
           );
         }
       }
+      _defaultsEnsured = true;
     } catch (_) {}
   }
 
@@ -631,20 +643,22 @@ class WorshipEngine {
     try {
       practiceRows = await db.query(
         'worship_practices',
-        where: 'isActive = 1 AND userDisabledAt IS NULL',
-        orderBy: 'id ASC',
+        where: activePracticesWhere,
+        orderBy: activePracticesOrderBy,
       );
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLogger.warning('WorshipEngine.loadDay: fallback 1. error=$e', error: e, stack: st);
       try {
         practiceRows = await db.query(
           'worship_practices',
           where: 'isActive = 1',
-          orderBy: 'id ASC',
+          orderBy: activePracticesOrderBy,
         );
-      } catch (_) {
+      } catch (e2, st2) {
+        RitmoLogger.warning('WorshipEngine.loadDay: fallback 2. error=$e2', error: e2, stack: st2);
         practiceRows = await db.query(
           'worship_practices',
-          orderBy: 'id ASC',
+          orderBy: activePracticesOrderBy,
         );
       }
     }
@@ -681,7 +695,7 @@ class WorshipEngine {
         winStart = slot?.at;
         winEnd = slot != null ? PrayerTimeline.deadlineForSlot(slot.key, times) : null;
         if (comp != null) {
-          quality = comp['quality'] as String? ?? comp['qualityWindow'] as String?;
+          quality = comp['quality'] as String?;
         }
       }
 
@@ -741,6 +755,7 @@ class WorshipEngine {
     required String practiceId,
     required DateTime date,
     int amount = 1,
+    bool increment = false,
   }) async {
     try {
       final db = await DatabaseHelper.instance.database;
@@ -798,17 +813,18 @@ class WorshipEngine {
       }
 
       // Incremental counting (E-5)
-      var currentCount = 0;
-      final existingRows = await db.query(
-        'worship_completions',
-        where: 'practiceId = ? AND dateStr = ?',
-        whereArgs: [practiceId, dateStr],
-      );
-      if (existingRows.isNotEmpty) {
-        currentCount = existingRows.first['countDone'] as int? ?? 0;
+      var effectiveAmount = amount;
+      if (increment) {
+        final existingRows = await db.query(
+          'worship_completions',
+          where: 'practiceId = ? AND dateStr = ?',
+          whereArgs: [practiceId, dateStr],
+        );
+        final currentCount = existingRows.isNotEmpty ? (existingRows.first['countDone'] as int? ?? 0) : 0;
+        effectiveAmount = currentCount + amount;
       }
       
-      final newCount = (currentCount + amount).clamp(0, dailyTarget);
+      final newCount = effectiveAmount.clamp(0, dailyTarget);
       final isDone = newCount >= dailyTarget;
 
       final completionRow = <String, dynamic>{
@@ -950,7 +966,7 @@ class WorshipEngine {
         if (dateStr == todayStr) {
           await txn.update(
             'worship_practices',
-            {'dailyDone': -1, 'dailyDoneDate': dateStr, 'updatedAt': nowMs},
+            {'dailyDone': WorshipPracticeState._dailyDoneSkippedSentinel, 'dailyDoneDate': dateStr, 'updatedAt': nowMs},
             where: 'id = ?',
             whereArgs: [practiceId],
           );
@@ -1421,6 +1437,7 @@ class WorshipEngine {
 
   /// Invalidates cached data. Must be called after every write.
   void invalidate({DateTime? date}) {
+    WorshipRepository.instance.invalidateCache();
     if (date != null) {
       _dayCache.remove(_ds(date));
     } else {

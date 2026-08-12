@@ -1,5 +1,4 @@
-// lib/features/sports/movement/domain/movement_budget.dart
-
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_event.dart';
@@ -17,6 +16,7 @@ class MovementBudgetSnapshot {
     required this.daysRemaining,
     required this.projectedTotal,
     required this.events,
+    required this.kindsByCode,
   });
 
   final double weeklyMetMinutesTarget;
@@ -26,8 +26,9 @@ class MovementBudgetSnapshot {
   final Map<MovementFamily, double> byFamily;
   final Map<String, double> byKind;
   final int daysRemaining;
-  final double projectedTotal;
+  final double? projectedTotal;
   final List<MovementEvent> events;
+  final Map<String, MovementKind> kindsByCode;
 
   double get progressRatio => weeklyMetMinutesTarget > 0
       ? (achievedMetMinutes / weeklyMetMinutesTarget).clamp(0.0, 2.0)
@@ -49,20 +50,41 @@ class MovementBudgetService {
     int targetActiveDays = 4;
 
     try {
-      final bRows = await db.query('movement_budget', where: "id = 'default'", limit: 1);
-      if (bRows.isNotEmpty) {
-        targetMetMinutes = (bRows.first['weeklyMetMinutesTarget'] as num? ?? 500.0).toDouble();
-        targetActiveDays = (bRows.first['weeklyActiveDaysTarget'] as num? ?? 4).toInt();
+      bool hasExp = false;
+      bool hasDays = false;
+      try {
+        final info = await db.rawQuery('PRAGMA table_info(ss_user_profile)');
+        hasExp = info.any((row) => row['name'] == 'experienceLevel');
+        hasDays = info.any((row) => row['name'] == 'daysPerWeek');
+      } catch (_) {}
+
+      if (hasExp && hasDays) {
+        final profRows = await db.query('ss_user_profile', where: "id = 'default'", limit: 1);
+        if (profRows.isNotEmpty) {
+          final prof = profRows.first;
+          final exp = prof['experienceLevel']?.toString().toUpperCase() ?? 'BEGINNER';
+          final days = (prof['daysPerWeek'] as num? ?? 3).toInt();
+          
+          targetActiveDays = days;
+          if (exp == 'ADVANCED' || days >= 5) {
+            targetMetMinutes = 800.0;
+          } else if (exp == 'INTERMEDIATE' || exp == 'MODERATE' || days == 4) {
+            targetMetMinutes = 500.0;
+          } else {
+            targetMetMinutes = 300.0;
+          }
+        }
       } else {
-        await db.insert('movement_budget', {
-          'id': 'default',
-          'weeklyMetMinutesTarget': 500.0,
-          'weeklyActiveDaysTarget': 4,
-          'isAutoAdjusted': 1,
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-        });
+        // Fallback to movement_budget table
+        final bRows = await db.query('movement_budget', where: "id = 'default'", limit: 1);
+        if (bRows.isNotEmpty) {
+          targetMetMinutes = (bRows.first['weeklyMetMinutesTarget'] as num? ?? 500.0).toDouble();
+          targetActiveDays = (bRows.first['weeklyActiveDaysTarget'] as num? ?? 4).toInt();
+        }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[MovementBudget] budget config read failed, using defaults: $e');
+    }
 
     // Calculate Persian week start (Saturday)
     final now = DateTime.now();
@@ -71,9 +93,16 @@ class MovementBudgetService {
 
     final startOfWeekDate = now.subtract(Duration(days: dayOfWeekIndex));
     final startOfWeek = DateTime(startOfWeekDate.year, startOfWeekDate.month, startOfWeekDate.day);
-    final endOfWeek = startOfWeek.add(const Duration(days: 7));
+    final endOfWeekExclusive = startOfWeek.add(const Duration(days: 7)); // شنبهٔ هفتهٔ بعد، ناشمول
+    final events = await MovementRepository.instance.eventsInRangeMs(
+      startOfWeek.millisecondsSinceEpoch,
+      endOfWeekExclusive.millisecondsSinceEpoch,
+    );
 
-    final events = await MovementRepository.instance.eventsBetween(startOfWeek, endOfWeek);
+    final kindRows = await db.query('movement_kinds');
+    final kindsByCode = <String, MovementKind>{
+      for (final r in kindRows) r['code'] as String: MovementKind.fromMap(r),
+    };
 
     double totalMetMins = 0.0;
     final byFamily = <MovementFamily, double>{};
@@ -84,7 +113,7 @@ class MovementBudgetService {
       totalMetMins += e.metMinutes;
       byKind[e.kindCode] = (byKind[e.kindCode] ?? 0.0) + e.metMinutes;
 
-      final kind = await MovementRepository.instance.getKind(e.kindCode);
+      final kind = kindsByCode[e.kindCode];
       final family = kind?.family ?? MovementFamily.endurance;
       byFamily[family] = (byFamily[family] ?? 0.0) + e.metMinutes;
 
@@ -94,8 +123,13 @@ class MovementBudgetService {
 
     final daysPassed = (dayOfWeekIndex + 1).clamp(1, 7);
     final daysRemaining = (7 - daysPassed).clamp(0, 6);
-    final dailyPace = totalMetMins / daysPassed;
-    final projectedTotal = totalMetMins + (dailyPace * daysRemaining);
+
+    double? projectedTotal;
+    if (daysPassed >= 3 && totalMetMins > 0) {
+      final dailyPace = totalMetMins / daysPassed;
+      projectedTotal =
+          (totalMetMins + dailyPace * daysRemaining).clamp(0.0, targetMetMinutes * 1.5);
+    }
 
     return MovementBudgetSnapshot(
       weeklyMetMinutesTarget: targetMetMinutes,
@@ -107,6 +141,7 @@ class MovementBudgetService {
       daysRemaining: daysRemaining,
       projectedTotal: projectedTotal,
       events: events,
+      kindsByCode: kindsByCode,
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/modules/module_registry.dart';
 import 'package:ritmo/core/modules/module_deactivation_service.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
+import 'package:ritmo/core/services/feature_limits.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -10,6 +11,7 @@ import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
+import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
 
 class ModulesGroupScreen extends StatefulWidget {
@@ -49,10 +51,23 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
       await ModuleDeactivationService.deactivate(mod.key);
       await SettingsService.instance.set(mod.key, val);
     } else {
+      // Check module cap before enabling
+      final result = await ModuleManagementService.instance.setModuleEnabled(mod.key, val);
+      if (result == ModuleToggleResult.limitReached) {
+        if (!mounted) return;
+        final limit = FeatureLimits.current.maxActiveModules;
+        RitmoToast.show(
+          context,
+          'سقف $limit ماژول فعال همزمان پر شده. ابتدا یک ماژول را خاموش کنید یا به ریتمو پلاس ارتقا دهید.',
+          icon: Icons.lock_outline,
+        );
+        // Show upgrade sheet
+        PremiumUpgradeSheet.show(context);
+        return;
+      }
       setState(() {
         _moduleStates[mod.key] = val;
       });
-      await ModuleManagementService.instance.setModuleEnabled(mod.key, val);
       await ModuleGate.instance.refresh();
       await SettingsService.instance.set(mod.key, val);
     }

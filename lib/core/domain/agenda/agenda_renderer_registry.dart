@@ -491,7 +491,7 @@ class DefaultAgendaRenderer extends AgendaTileRenderer {
               ],
             ),
           ),
-          if (item.timeOfDay != null) ...[
+          if (item.hasValidTimeOfDay) ...[
             Text(
               item.timeOfDay!,
               style: TextStyle(
@@ -519,6 +519,7 @@ class DefaultAgendaRenderer extends AgendaTileRenderer {
           await AgendaActionHandler.instance.toggleAgendaItem(
             item: item,
             isDone: !isDone,
+            context: context,
           );
           onChanged();
         },

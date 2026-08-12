@@ -19,6 +19,7 @@ class WorshipAgendaSource implements AgendaSource {
   final Map<String, String> settingsMap;
   final bool religionEnabled;
   final Map<String, HijriDate> cachedHijriDates;
+  final bool hasLunarMonthly;
   final Database db;
 
   WorshipAgendaSource({
@@ -30,6 +31,7 @@ class WorshipAgendaSource implements AgendaSource {
     required this.cachedHijriDates,
     required this.statusesByDate,
     required this.contextsByDate,
+    required this.hasLunarMonthly,
     required this.db,
   });
 
@@ -59,20 +61,21 @@ class WorshipAgendaSource implements AgendaSource {
         cachedHijriDates: {},
         statusesByDate: {},
         contextsByDate: {},
+        hasLunarMonthly: false,
         db: db,
       );
     }
     final prayerPractices = await db.query(
       'worship_practices',
-      where: 'practiceType = ? AND isActive = 1 AND userDisabledAt IS NULL',
+      where: 'practiceType = ? AND ${WorshipEngine.activePracticesWhere}',
       whereArgs: ['PRAYER'],
-      orderBy: 'id ASC',
+      orderBy: WorshipEngine.activePracticesOrderBy,
     );
     final mustahabPractices = await db.query(
       'worship_practices',
-      where: 'practiceType != ? AND isActive = 1 AND userDisabledAt IS NULL',
+      where: 'practiceType != ? AND ${WorshipEngine.activePracticesWhere}',
       whereArgs: ['PRAYER'],
-      orderBy: 'id ASC',
+      orderBy: WorshipEngine.activePracticesOrderBy,
     );
     // Worship debts are no longer shown in the calendar per user request
     final worshipDebts = const <Map<String, dynamic>>[];
@@ -118,6 +121,7 @@ class WorshipAgendaSource implements AgendaSource {
       cachedHijriDates: cachedHijriDates,
       statusesByDate: statusesByDate,
       contextsByDate: contextsByDate,
+      hasLunarMonthly: mustahabPractices.any((p) => p['reminderFrequency'] == 'LUNAR_MONTHLY'),
       db: db,
     );
   }
@@ -135,7 +139,7 @@ class WorshipAgendaSource implements AgendaSource {
     
     if (ctx.options.wants(AgendaDomain.mustahab)) {
       HijriDate? hijriDate;
-      if (mustahabPractices.any((p) => p['reminderFrequency'] == 'LUNAR_MONTHLY')) {
+      if (hasLunarMonthly) {
         hijriDate = _getHijriDateSync(ctx.date);
       }
       items.addAll(_collectMustahab(ctx.dateStr, ctx.isToday, ctx.prayerTimes, hijriDate, worshipStatuses));
@@ -488,7 +492,9 @@ class WorshipAgendaSource implements AgendaSource {
       final h = int.tryParse(parts[0]) ?? 0;
       final m = int.tryParse(parts[1]) ?? 0;
       var total = h * 60 + m + offsetMinutes;
-      total = total.clamp(0, 24 * 60 - 1);
+      if (total < 0 || total >= 24 * 60) {
+        return null; // Overflows to another day
+      }
       final rh = total ~/ 60;
       final rm = total % 60;
       return '${rh.toString().padLeft(2, '0')}:${rm.toString().padLeft(2, '0')}';
@@ -537,7 +543,7 @@ class WorshipAgendaSource implements AgendaSource {
           final daysOfWeekStr = p['reminderDaysOfWeek'] as String?;
           if (daysOfWeekStr != null && daysOfWeekStr.trim().isNotEmpty) {
             final allowedDays = daysOfWeekStr.split(',').map(int.tryParse).whereType<int>().toSet();
-            if (allowedDays.isNotEmpty) {
+            if (allowedDays.isNotEmpty && allowedDays.every((d) => d >= 1 && d <= 7)) {
               if (!allowedDays.contains(parsedDate.weekday)) {
                 continue; // Skip this mustahab for this date
               }
@@ -552,7 +558,7 @@ class WorshipAgendaSource implements AgendaSource {
           final dayOfMonthStr = p['reminderDaysOfWeek'] as String?;
           if (dayOfMonthStr != null && dayOfMonthStr.trim().isNotEmpty) {
             final allowedDays = dayOfMonthStr.split(',').map(int.tryParse).whereType<int>().toSet();
-            if (allowedDays.isNotEmpty) {
+            if (allowedDays.isNotEmpty && allowedDays.every((d) => d >= 1 && d <= 31)) {
               var matches = false;
               for (final targetDay in allowedDays) {
                 if (jalaliDate.day == targetDay) {
@@ -584,7 +590,7 @@ class WorshipAgendaSource implements AgendaSource {
           if (dayOfMonthStr != null && dayOfMonthStr.trim().isNotEmpty) {
             if (hijriDate != null) {
               final allowedDays = dayOfMonthStr.split(',').map(int.tryParse).whereType<int>().toSet();
-              if (allowedDays.isNotEmpty) {
+              if (allowedDays.isNotEmpty && allowedDays.every((d) => d >= 1 && d <= 30)) {
                 var matches = false;
                 for (final targetDay in allowedDays) {
                   if (hijriDate.day == targetDay) {
@@ -614,7 +620,7 @@ class WorshipAgendaSource implements AgendaSource {
           }
         } else if (freq == 'ONCE') {
           final targetDateStr = p['reminderDaysOfWeek'] as String?;
-          if (targetDateStr != null && targetDateStr.trim().isNotEmpty) {
+          if (targetDateStr != null && targetDateStr.trim().isNotEmpty && RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(targetDateStr.trim())) {
             if (targetDateStr != dateStr) {
               continue; // Skip this mustahab for this date
             }
@@ -643,7 +649,14 @@ class WorshipAgendaSource implements AgendaSource {
             try {
               final decoded = jsonDecode(multipleTimesStr);
               if (decoded is List) {
-                resolvedTimes = decoded.map((e) => e.toString()).toList();
+                for (final e in decoded) {
+                  final tStr = e.toString().trim();
+                  if (RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(tStr)) {
+                    resolvedTimes.add(tStr);
+                  } else {
+                    RitmoLogger.warning('Invalid time format in reminderTimes for ${p['id']}: $tStr');
+                  }
+                }
               }
             } catch (e, st) { 
               RitmoLogger.error('Error decoding reminderTimes for $id: $e\n$st'); 
@@ -651,8 +664,12 @@ class WorshipAgendaSource implements AgendaSource {
           }
           if (resolvedTimes.isEmpty) {
             final singleTime = p['reminderTime'] as String?;
-            if (singleTime != null && singleTime.isNotEmpty) {
-              resolvedTimes.add(singleTime);
+            if (singleTime != null && singleTime.trim().isNotEmpty) {
+              if (RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(singleTime.trim())) {
+                resolvedTimes.add(singleTime.trim());
+              } else {
+                 RitmoLogger.warning('Invalid time format in reminderTime for ${p['id']}: $singleTime');
+              }
             }
           }
         }
@@ -663,20 +680,33 @@ class WorshipAgendaSource implements AgendaSource {
 
         final dailyTarget = p['dailyTarget'] as int? ?? 1;
         final countDone = status?.countDone ?? 0;
-        final freqFa = freq == 'WEEKLY' ? 'هفتگی'
-            : freq == 'MONTHLY' ? 'ماهانه'
-            : freq == 'LUNAR_MONTHLY' ? 'ماهانه'
-            : freq == 'ONCE' ? 'یک‌بار'
-            : 'روزانه';
-
-        final targetStr = dailyTarget > 1 ? '${toPersianDigits(countDone.toString())} از ${toPersianDigits(dailyTarget.toString())}' : '';
-        var subtitle = targetStr.isNotEmpty ? '$targetStr • $freqFa' : freqFa;
+        
+        String? subtitle;
+        if (dailyTarget > 1) {
+          subtitle = '${toPersianDigits(countDone.toString())} از ${toPersianDigits(dailyTarget.toString())}';
+        }
         
         if (resolvedTimes.length > 1) {
-          subtitle += ' • ${toPersianDigits(resolvedTimes.length.toString())} وعده';
+          final wede = '${toPersianDigits(resolvedTimes.length.toString())} وعده';
+          subtitle = subtitle != null ? '$subtitle • $wede' : wede;
         }
 
-        final firstTime = resolvedTimes.first;
+        // Find the best time (first future time, or just first if all are past)
+        String? bestTime = resolvedTimes.first;
+        if (isToday && resolvedTimes.length > 1) {
+          final now = DateTime.now();
+          final currentMinutes = now.hour * 60 + now.minute;
+          for (final t in resolvedTimes) {
+            if (t != null) {
+              final parts = t.split(':');
+              final tMins = int.parse(parts[0]) * 60 + int.parse(parts[1]);
+              if (tMins > currentMinutes) {
+                bestTime = t;
+                break;
+              }
+            }
+          }
+        }
 
         items.add(AgendaItem(
           id: buildAgendaItemId(AgendaDomain.mustahab, id, dateStr),
@@ -685,7 +715,7 @@ class WorshipAgendaSource implements AgendaSource {
           title: p['title'] as String? ?? '',
           subtitle: subtitle,
           dateStr: dateStr,
-          timeOfDay: firstTime,
+          timeOfDay: bestTime,
           durationMinutes: 15,
           category: Category.religious,
           priority: (p['sortOrder'] as num? ?? 0).toDouble(),

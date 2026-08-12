@@ -61,12 +61,33 @@ class RitmoForegroundService : Service() {
         override fun run() {
             if (elapsedSeconds < durationSeconds) {
                 elapsedSeconds++
-                updateTimerNotification()
                 sendTimerBroadcast(ACTION_TIMER_TICK)
                 handler.postDelayed(this, 1000)
             } else {
                 sendTimerBroadcast(ACTION_TIMER_COMPLETE)
                 stopSelf()
+            }
+        }
+    }
+
+    private var wakeLock: android.os.PowerManager.WakeLock? = null
+
+    private fun acquireWakeLock() {
+        if (wakeLock == null) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            wakeLock = powerManager.newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "Ritmo:ForegroundServiceWakeLock")
+        }
+        if (wakeLock?.isHeld == false) {
+            wakeLock?.acquire()
+        }
+    }
+
+    private fun releaseWakeLock() {
+        if (wakeLock?.isHeld == true) {
+            try {
+                wakeLock?.release()
+            } catch (e: Exception) {
+                Log.e("RitmoForegroundService", "Error releasing wake lock: ${e.message}")
             }
         }
     }
@@ -116,8 +137,10 @@ class RitmoForegroundService : Service() {
                     lastZoneIds = ids
                 }
                 
+                acquireWakeLock()
                 startStatusForeground()
             } else if (action == ACTION_START_TIMER) {
+                acquireWakeLock()
                 mode = "TIMER"
                 timerTitle = intent.getStringExtra("title") ?: "روتین"
                 durationSeconds = intent.getIntExtra("durationSeconds", 0)
@@ -431,18 +454,32 @@ class RitmoForegroundService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        val remaining = durationSeconds - elapsedSeconds
-        val min = remaining / 60
-        val sec = remaining % 60
-        val timeStr = String.format("%02d:%02d", min, sec)
-
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        val isPaused = timerTitle.contains("متوقف‌شده") || timerTitle.contains("paused")
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("تایمر روتین: " + timerTitle)
-            .setContentText("زمان باقی‌مانده: " + timeStr)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
-            .build()
+
+        if (isPaused) {
+            val remaining = durationSeconds - elapsedSeconds
+            val min = remaining / 60
+            val sec = remaining % 60
+            val timeStr = String.format(Locale.US, "%02d:%02d", min, sec)
+            builder.setContentText("زمان باقی‌مانده: " + timeStr)
+            builder.setUsesChronometer(false)
+        } else {
+            builder.setUsesChronometer(true)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && durationSeconds > 0) {
+                val remainingMs = (durationSeconds - elapsedSeconds) * 1000L
+                builder.setWhen(System.currentTimeMillis() + remainingMs)
+                builder.setChronometerCountDown(true)
+            } else {
+                builder.setWhen(System.currentTimeMillis() - elapsedSeconds * 1000L)
+            }
+        }
+
+        return builder.build()
     }
 
     private fun sendTimerBroadcast(action: String) {
@@ -456,6 +493,7 @@ class RitmoForegroundService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(timerRunnable)
+        releaseWakeLock()
         try {
             unregisterReceiver(screenStateReceiver)
         } catch (e: Exception) {}

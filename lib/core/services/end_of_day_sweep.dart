@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
@@ -8,6 +9,8 @@ import 'package:ritmo/core/utils/ritmo_date.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
+import 'package:ritmo/features/supplementary_sports/domain/ss_session_completion_gateway.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// EndOfDaySweep sweeps stale pending/snoozed occurrences past midnight and converts them to 'missed'.
@@ -76,6 +79,9 @@ class EndOfDaySweep {
 
         // Worship Sweep
         await _sweepWorship(txn, yesterdayStr, todayStr);
+        
+        // Sports Sweep
+        await _sweepSports(txn);
       });
 
       WorshipRepository.instance.invalidateCache();
@@ -200,5 +206,78 @@ class EndOfDaySweep {
       },
       where: 'isActive = 1',
     );
+  }
+
+  static Future<void> _sweepSports(DatabaseExecutor txn) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final activeSessionId = prefs.getString('ss_active_session_id');
+      final startedAt = prefs.getInt('ss_active_session_started_at');
+      final activePlanId = prefs.getString('ss_active_plan_id');
+      
+      if (activeSessionId != null && startedAt != null && activePlanId != null) {
+        final today = DateTime.now();
+        final startOfToday = DateTime(today.year, today.month, today.day).millisecondsSinceEpoch;
+        
+        // If the session was started before today, it's a stale/unfinished session from a previous day.
+        if (startedAt < startOfToday) {
+          final rawState = prefs.getString('ss_exercises_state');
+          int completedCount = 0;
+          int totalCount = 1;
+          if (rawState != null) {
+            try {
+              final list = jsonDecode(rawState) as List;
+              totalCount = list.length;
+              for (final item in list) {
+                if (item['status'] == 'ExerciseStatus.done') {
+                  completedCount++;
+                }
+              }
+            } catch (_) {}
+          }
+          
+          final durationSec = ((startOfToday - 1000) - startedAt) ~/ 1000;
+          final finishedAt = startOfToday - 1000; // Fake finish time at 23:59:59 yesterday
+          
+          await txn.insert(
+            'ss_workout_session_log',
+            {
+              'id': activeSessionId,
+              'planId': activePlanId,
+              'prescriptionId': activePlanId,
+              'startedAt': startedAt,
+              'finishedAt': finishedAt,
+              'durationSeconds': durationSec > 0 ? durationSec : 0,
+              'completedExercisesCount': completedCount,
+              'totalExercisesCount': totalCount,
+              'note': 'مختومه به دلیل پایان روز',
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+          
+          await SsSessionCompletionGateway.completeDetailedSessionInTransaction(
+            txn,
+            prescriptionId: activePlanId,
+            sessionId: activeSessionId,
+            actualMinutes: durationSec ~/ 60,
+            actualRpe: 5,
+            isPartial: true,
+          );
+          
+          // Clear preferences so it doesn't get swept again and dashboard doesn't show it as resumable
+          await prefs.remove('ss_active_session_id');
+          await prefs.remove('ss_active_plan_id');
+          await prefs.remove('ss_exercises_state');
+          await prefs.remove('ss_active_session_index');
+          await prefs.remove('ss_active_session_started_at');
+          await prefs.remove('ss_active_session_status');
+          await prefs.remove('ss_active_session_target_timestamp');
+          await prefs.remove('ss_active_session_elapsed');
+          await prefs.remove('ss_active_session_paused');
+        }
+      }
+    } catch (e) {
+      debugPrint('Sports sweep error: $e');
+    }
   }
 }

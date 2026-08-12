@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/agenda_action_handler.dart';
 import 'package:ritmo/core/domain/agenda/agenda_renderer_registry.dart';
@@ -23,6 +24,25 @@ class QuranDhikrAgendaRenderer extends AgendaTileRenderer {
       ),
       child: Row(
         children: [
+          GestureDetector(
+            onTap: () async {
+              HapticFeedback.selectionClick();
+              await AgendaActionHandler.instance.toggleAgendaItem(
+                item: item,
+                isDone: !isDone,
+                context: context,
+              );
+              onChanged();
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: Icon(
+                isDone ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
+                color: isDone ? colors.success : colors.textSecondary,
+                size: 20,
+              ),
+            ),
+          ),
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
@@ -33,32 +53,37 @@ class QuranDhikrAgendaRenderer extends AgendaTileRenderer {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
-                    decoration: isDone ? TextDecoration.lineThrough : null,
-                  ),
-                ),
-                if (item.subtitle != null && item.subtitle!.isNotEmpty)
+            child: GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/worship');
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    item.subtitle!,
+                    item.title,
                     style: TextStyle(
                       fontFamily: 'Vazirmatn',
-                      fontSize: 11,
-                      color: colors.textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                      decoration: isDone ? TextDecoration.lineThrough : null,
                     ),
                   ),
-              ],
+                  if (item.subtitle != null && item.subtitle!.isNotEmpty)
+                    Text(
+                      item.subtitle!,
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 11,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-          if (item.timeOfDay != null) ...[
+          if (item.hasValidTimeOfDay) ...[
             Text(
               item.timeOfDay!,
               style: TextStyle(
@@ -69,24 +94,10 @@ class QuranDhikrAgendaRenderer extends AgendaTileRenderer {
             ),
             const SizedBox(width: 8),
           ],
-          if (item.timeOfDay != null || (item.meta?['practice']?['reminderEnabled'] == 1)) ...[
+          if (item.hasValidTimeOfDay || (item.meta?['practice']?['reminderEnabled'] == 1)) ...[
             Icon(Icons.notifications_active_outlined, size: 14, color: colors.textSecondary.withValues(alpha: 0.7)),
             const SizedBox(width: 8),
           ],
-          GestureDetector(
-            onTap: () async {
-              await AgendaActionHandler.instance.toggleAgendaItem(
-                item: item,
-                isDone: !isDone,
-              );
-              onChanged();
-            },
-            child: Icon(
-              isDone ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
-              color: isDone ? colors.success : colors.textSecondary,
-              size: 20,
-            ),
-          ),
         ],
       ),
     );

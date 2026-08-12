@@ -14,7 +14,7 @@ void main() {
       expect(SupplementarySportsTheme.spacing16, equals(16.0));
       expect(SupplementarySportsTheme.spacing32, equals(32.0));
       expect(SupplementarySportsTheme.radiusCard, equals(16.0));
-      expect(SupplementarySportsTheme.radiusButton, equals(12.0));
+      expect(SupplementarySportsTheme.radiusButton, equals(14.0));
     });
 
     test('Workout Gradient returns correct colors for categories', () {

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
+import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
@@ -10,6 +11,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
+import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:ritmo/features/profile/presentation/crash_reports_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/appearance_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/assistant_privacy_group_screen.dart';
@@ -49,6 +51,103 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadPackageInfo();
+  }
+
+  Widget _buildPremiumStatusCard(BuildContext context) {
+    final colors = context.colors;
+    final isPremium = PremiumService.instance.isPremium;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isPremium
+              ? [const Color(0xff1E1B4B), const Color(0xff312E81)]
+              : [const Color(0xff1F2937), const Color(0xff111827)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isPremium
+              ? const Color(0xff818CF8).withValues(alpha: 0.3)
+              : Colors.amber.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isPremium ? const Color(0xff6366F1) : Colors.amber).withValues(alpha: 0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: (isPremium ? const Color(0xff818CF8) : Colors.amber).withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isPremium ? Icons.diamond_rounded : Icons.star_rounded,
+              color: isPremium ? const Color(0xffA5B4FC) : Colors.amber,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isPremium ? 'اشتراک پرمیوم ریتمو پلاس 💎' : 'ریتمو پایه (نسخه رایگان) ⚡',
+                  style: const TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isPremium
+                      ? 'دسترسی کامل به تمام امکانات هوشمند اپلیکیشن'
+                      : 'سقف ۴ ماژول، ۷ روتین و ۳ هدف همزمان',
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 11,
+                    color: Colors.white.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              PremiumUpgradeSheet.show(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isPremium ? const Color(0xff6366F1) : Colors.amber,
+              foregroundColor: isPremium ? Colors.white : Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text(
+              isPremium ? 'مدیریت' : 'ارتقا 💎',
+              style: const TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadPackageInfo() async {
@@ -218,6 +317,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
+            const SizedBox(height: 16),
+
+            // ─── کارت وضعیت اشتراک ریتمو پلاس ───
+            _buildPremiumStatusCard(context),
             const SizedBox(height: 24),
 
             // ─── عنوان بخش دسته‌بندی‌ها ───

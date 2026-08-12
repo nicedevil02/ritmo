@@ -60,7 +60,7 @@ void main() {
     });
 
     test('Animation Map handles known mappings', () {
-      expect(ssExerciseAnimationMap['bo009_squats'], equals('hw_40'));
+      expect(ssExerciseAnimationMap['bo009_squats'], equals('hw_21'));
       expect(ssExerciseAnimationMap['bo002_mountain_climbers'], equals('hw_12'));
     });
   });

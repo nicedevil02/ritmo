@@ -33,6 +33,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v91_schema_ca
 import 'package:ritmo/core/database/migration/migrations/migration_v92_unification.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v93_app_start_date.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v94_worship_debts_fix.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v95_movement_live_sessions.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -129,6 +130,7 @@ class MigrationRunner {
     MigrationV92Unification(),
     MigrationV93AppStartDate(),
     MigrationV94(),
+    MigrationV95(),
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

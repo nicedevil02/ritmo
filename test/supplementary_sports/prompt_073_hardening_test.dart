@@ -1,7 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/sports_agenda_source.dart';
 import 'package:ritmo/core/domain/commands/catalog/sports_commands.dart';
 import 'package:ritmo/core/domain/commands/commands_registry.dart';
+import 'package:ritmo/core/domain/commands/ritmo_command_bus.dart';
+import '../migration_test.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_daily_checkin_model.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_plan_generator.dart';
@@ -57,12 +61,13 @@ void main() {
         id: 'default',
         goal: FitnessGoal.fatLoss,
         experienceLevel: ExperienceLevel.beginner,
-        targetRpe: 7,
+        trainingLocation: TrainingLocation.home,
         daysPerWeek: 3,
         sessionDuration: SessionDuration.medium45,
         availableEquipment: const [],
-        physicalLimitations: const [PhysicalLimitation.backPain, PhysicalLimitation.kneePain],
+        physicalLimitations: const [Limitation.backProblems, Limitation.kneeProblems],
         focusAreas: const [BodyArea.fullBody],
+        createdAt: 0,
         updatedAt: 0,
       );
 
@@ -84,11 +89,21 @@ void main() {
             'slotType': 'STRENGTH',
           },
         },
-        legacyPlansByDay: {},
         sportsEnabled: true,
+        programStartDate: DateTime(2026, 8, 8),
+        totalWeeks: 4,
+        db: MockDatabase(),
+        hasWeekCol: false,
+        legacyPlans: const [],
       );
 
-      final items = source.itemsForDate(DateTime(2026, 8, 10), '2026-08-10');
+      final items = source.itemsForDate(AgendaDayContext(
+        date: DateTime(2026, 8, 10),
+        dateStr: '2026-08-10',
+        isToday: false,
+        prayerTimes: const {},
+        options: const AgendaQueryOptions(),
+      ));
       expect(items.length, 1);
       expect(items.first.title, 'تمرین بالاتنه و سینه');
       expect(items.first.durationMinutes, 45);
@@ -105,6 +120,7 @@ void main() {
         intensityTier: IntensityTier.light,
         targetRpe: 3,
         headlineFa: 'استراحت',
+        source: 'PLAN_GENERATOR',
         createdAt: 0,
         updatedAt: 0,
       );
@@ -186,12 +202,14 @@ void main() {
         intensity: MovementIntensity.medium,
         loggedAt: 1000,
         sourceModule: 'movement_tracker',
+        metMinutes: 105.0,
       );
       expect(event.metMinutes, 105.0); // 30 * 3.5 * 1.0
     });
 
     test('T-11: 10 AI Sports Commands registered in commands registry', () {
-      final registry = getRegisteredCommands();
+      registerAllRitmoCommands();
+      final registry = RitmoCommandBus.instance.all;
       final sportsCmds = registry.where((c) => c.id.startsWith('sports.')).toList();
 
       expect(sportsCmds.length, greaterThanOrEqualTo(10));

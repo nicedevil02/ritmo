@@ -59,6 +59,7 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
   bool _isRegisteredInCalendar = false;
   bool _isRegistering = false;
   List<Map<String, dynamic>> _newPrs = [];
+  Map<String, String> _kindsMap = {};
   late AnimationController _celebrationController;
 
   @override
@@ -126,12 +127,18 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
         where: 'achievedAt >= ?',
         whereArgs: [last7DaysStart],
         orderBy: 'achievedAt DESC',
-        limit: 3,
+        limit: 5,
       );
+
+      final kindRows = await db.query('movement_kinds');
+      final kindsMap = {
+        for (final r in kindRows) r['code'] as String: r['titleFa'] as String
+      };
 
       setState(() {
         _continuity = contList;
         _newPrs = prRows;
+        _kindsMap = kindsMap;
         _isLoading = false;
       });
     } catch (e) {
@@ -400,14 +407,17 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                ..._newPrs.map((pr) {
-                                  final type = pr['prType']?.toString() ?? '';
-                                  final val = (pr['value'] as num?)?.toStringAsFixed(1) ?? '0';
-                                  var label = 'رکورد جدید';
-                                  if (type == 'MAX_DISTANCE') label = 'بیشترین مسافت: $val کیلومتر';
-                                  if (type == 'MAX_DURATION') label = 'طولانی‌ترین زمان: $val دقیقه';
-                                  if (type == 'MAX_ELEVATION') label = 'بیشترین ارتفاع: $val متر';
-                                  if (type == 'MAX_LAPS') label = 'بیشترین دور: $val';
+                                 ..._newPrs.map((pr) {
+                                   final type = pr['prType']?.toString() ?? '';
+                                   final val = (pr['value'] as num?)?.toStringAsFixed(1) ?? '0';
+                                   final kindCode = pr['kind']?.toString() ?? '';
+                                   final kindTitle = _kindsMap[kindCode] ?? kindCode;
+                                   
+                                   var label = 'رکورد جدید';
+                                   if (type == 'MAX_DISTANCE') label = '$kindTitle - بیشترین مسافت: $val کیلومتر';
+                                   if (type == 'MAX_DURATION') label = '$kindTitle - طولانی‌ترین زمان: $val دقیقه';
+                                   if (type == 'MAX_ELEVATION') label = '$kindTitle - بیشترین ارتفاع: $val متر';
+                                   if (type == 'MAX_LAPS') label = '$kindTitle - بیشترین دور: $val';
 
                                   return Container(
                                     margin: const EdgeInsets.only(top: 6),

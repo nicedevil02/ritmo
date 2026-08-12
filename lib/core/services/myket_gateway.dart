@@ -4,8 +4,8 @@ import 'package:ritmo/core/services/payment_gateway.dart';
 class MyketGateway implements PaymentGateway {
   static const MethodChannel _channel = MethodChannel('com.ritmo.app/myket_billing');
 
-  // TODO: کلید واقعی از پنل مایکت
-  static const String _myketRsaKey = 'PLACEHOLDER_MYKET_RSA_KEY';
+  // کلید RSA از طریق --dart-define=MYKET_RSA_KEY=... در build تزریق می‌شود
+  static const String _myketRsaKey = String.fromEnvironment('MYKET_RSA_KEY');
 
   bool _initialized = false;
 

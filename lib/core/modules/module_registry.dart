@@ -146,4 +146,10 @@ class ModuleRegistry {
     }
     return null;
   }
+
+  /// Returns true if the module key refers to a core (always-on) module
+  static bool isCoreModule(String key) {
+    final desc = findByKey(key);
+    return desc?.isCore ?? false;
+  }
 }

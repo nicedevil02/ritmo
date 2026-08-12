@@ -10,6 +10,8 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_snapshot_builder.dart';
+import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/domain/engines/context_engine.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
@@ -47,6 +49,9 @@ class DashboardController {
 
   // 🔑 Single source of truth for "today" — fed by DayAgendaService.
   List<AgendaItem> agenda = [];
+
+  // P1-1: اسنپشات «مسیر امروز» — از همان Agenda ساخته میشود (اکنون/بعدی/پیشنهاد).
+  DayAgendaSnapshot? todaySnapshot;
 
   // Typed adapter views over [agenda] so existing Home widgets keep working.
   List<Map<String, dynamic>> todaysGoalSteps = [];
@@ -757,6 +762,15 @@ class DashboardController {
         options: const AgendaQueryOptions(),
       );
       agenda = dayAgenda.items;
+
+      // P1-1: ساخت اسنپشات از همان Agenda — بدون هیچ کوئری اضافهٔ جدید.
+      try {
+        todaySnapshot =
+            const DayAgendaSnapshotBuilder().buildSnapshot(dayAgenda, now: now);
+      } catch (e) {
+        debugPrint('Error building today snapshot: $e');
+        todaySnapshot = null;
+      }
 
       // Goal steps: raw rows (with goalTitle) — Home shows all, completed too.
       todaysGoalSteps = agenda

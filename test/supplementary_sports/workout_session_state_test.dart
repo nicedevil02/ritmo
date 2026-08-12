@@ -43,6 +43,32 @@ class SessionTestDatabase extends MockDatabase {
   Future<int> insert(String table, Map<String, Object?> values, {String? nullColumnHack, ConflictAlgorithm? conflictAlgorithm}) async {
     return 1;
   }
+
+  @override
+  Future<List<Map<String, Object?>>> query(
+    String table, {
+    bool? distinct,
+    List<String>? columns,
+    String? where,
+    List<Object?>? whereArgs,
+    String? groupBy,
+    String? having,
+    String? orderBy,
+    int? limit,
+    int? offset,
+  }) async {
+    if (table == 'ss_workout_plan' || table == 'ss_session_prescription') {
+      return [
+        {
+          'id': 'plan_w1_1',
+          'workoutPlanId': 'plan_w1_1',
+          'legacyPlanId': 'plan_w1_1',
+          'dateIso': '2026-08-11',
+        }
+      ];
+    }
+    return [];
+  }
 }
 
 void main() {
@@ -110,11 +136,10 @@ void main() {
       expect(state.timerRemainingSeconds, equals(5));
       expect(state.currentExerciseIndex, equals(0));
 
-      // Skip preparing -> transitions to countdown
+      // Skip preparing -> transitions to exercising
       notifier.dispatch(const SkipRestTimer());
       final countdownState = container.read(ssWorkoutProvider(key));
-      expect(countdownState.status, equals(SSWorkoutSessionStatus.countdown));
-      expect(countdownState.timerRemainingSeconds, equals(3));
+      expect(countdownState.status, equals(SSWorkoutSessionStatus.exercising));
     });
 
     test('Pausing and resuming rest timer updates state and timestamps', () async {
@@ -123,9 +148,8 @@ void main() {
 
       await notifier.init();
       
-      // Skip to countdown, then skip to exercise
-      notifier.dispatch(const SkipRestTimer()); // to countdown
-      notifier.dispatch(const SkipRestTimer()); // to exercising
+      // Skip to exercising
+      notifier.dispatch(const SkipRestTimer());
 
       // In exercising (plank is timed: 30s)
       final activeState = container.read(ssWorkoutProvider(key));

@@ -2,6 +2,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
+import 'package:ritmo/features/worship/logic/worship_cache_bus.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
 
@@ -192,6 +193,7 @@ class WorshipCompletionRepository {
 
     DayAgendaService.instance.invalidateDate(dateStr);
     WorshipRepository.instance.invalidateCache();
+    WorshipCacheBus.invalidateAll(dateStr: dateStr);
     RitmoEventBus().fire(RitmoEvent(
       type: 'WorshipUpdated',
       timestamp: DateTime.now(),
@@ -247,6 +249,7 @@ class WorshipCompletionRepository {
 
     DayAgendaService.instance.invalidateDate(dateStr);
     WorshipRepository.instance.invalidateCache();
+    WorshipCacheBus.invalidateAll(dateStr: dateStr);
     RitmoEventBus().fire(RitmoEvent(
       type: 'WorshipUpdated',
       timestamp: DateTime.now(),
@@ -296,6 +299,7 @@ class WorshipCompletionRepository {
 
     DayAgendaService.instance.invalidateDate(dateStr);
     WorshipRepository.instance.invalidateCache();
+    WorshipCacheBus.invalidateAll(dateStr: dateStr);
     RitmoEventBus().fire(RitmoEvent(
       type: 'WorshipUpdated',
       timestamp: DateTime.now(),
@@ -308,6 +312,15 @@ class WorshipCompletionRepository {
   /// Calculate consecutive streak of DONE days up to [upToDateStr].
   Future<int> streakFor(String practiceId, {required String upToDateStr}) async {
     final db = await DatabaseHelper.instance.database;
+
+    final practiceRows = await db.query(
+      'worship_practices',
+      columns: ['reminderFrequency', 'reminderDaysOfWeek'],
+      where: 'id = ?',
+      whereArgs: [practiceId],
+      limit: 1,
+    );
+    final freq = practiceRows.isNotEmpty ? (practiceRows.first['reminderFrequency'] as String? ?? 'DAILY') : 'DAILY';
 
     final rows = await db.query(
       'worship_completions',
@@ -326,25 +339,29 @@ class WorshipCompletionRepository {
       if (date == null) break;
 
       if (currentExpected != null) {
-        final expectedPrev = currentExpected!.subtract(const Duration(days: 1));
-        if (date.year != expectedPrev.year ||
-            date.month != expectedPrev.month ||
-            date.day != expectedPrev.day) {
-          break;
+        // Simplified check: since non-daily frequencies might have gaps, we only break
+        // the streak if we find a 'SKIPPED' or 'MISSED' record that sits between the completions.
+        // If we strictly check dates, we need complex logic for MONTHLY/WEEKLY.
+        // For DAILY, we can keep the strict check.
+        if (freq == 'DAILY') {
+           final expectedPrev = currentExpected!.subtract(const Duration(days: 1));
+           if (date.year != expectedPrev.year ||
+               date.month != expectedPrev.month ||
+               date.day != expectedPrev.day) {
+             break;
+           }
         }
       }
 
       final resType = row['resultType'] as String;
 
-      if (resType == 'SKIPPED' || resType == 'QADA_ADDED') {
+      if (resType == 'QADA_ADDED' || resType == 'DONE') {
+        streak++;
         currentExpected = date;
-        continue;
+      } else {
+        // SKIPPED or MISSED breaks the streak
+        break;
       }
-
-      if (resType != 'DONE') break;
-
-      streak++;
-      currentExpected = date;
     }
 
     return streak;

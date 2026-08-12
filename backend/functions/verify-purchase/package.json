@@ -1,0 +1,11 @@
+{
+  "name": "verify-purchase",
+  "version": "1.0.0",
+  "description": "Appwrite function to verify Bazaar and Myket purchase tokens for Ritmo",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ritmo Team",
+  "license": "MIT"
+}

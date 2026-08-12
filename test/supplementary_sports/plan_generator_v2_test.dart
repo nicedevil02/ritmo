@@ -62,6 +62,25 @@ class PlanTestDatabase extends MockDatabase {
     }
     return 1;
   }
+
+  @override
+  Future<List<Map<String, Object?>>> query(
+    String table, {
+    bool? distinct,
+    List<String>? columns,
+    String? where,
+    List<Object?>? whereArgs,
+    String? groupBy,
+    String? having,
+    String? orderBy,
+    int? limit,
+    int? offset,
+  }) async {
+    if (table == 'ss_exercise') {
+      return exercises;
+    }
+    return [];
+  }
 }
 
 void main() {
@@ -130,7 +149,7 @@ void main() {
       {
         'id': 'bo002_cooldown',
         'name': 'Cooldown stretching',
-        'category': 'stretching',
+        'category': 'yoga',
         'equipment': 'bodyweightOnly',
         'toolsRequired': '[]',
         'noisy': 0,
@@ -216,7 +235,7 @@ void main() {
     test('Female profile selects female oriented sets', () async {
       final db = PlanTestDatabase(exercises: mockExercises, suitability: mockSuitability);
       final profile = SsUserProfile(
-        goal: FitnessGoal.fatLoss,
+        goal: FitnessGoal.muscleGain,
         experienceLevel: ExperienceLevel.intermediate,
         trainingLocation: TrainingLocation.home,
         availableEquipment: [Equipment.bodyweightOnly],

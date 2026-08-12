@@ -4,6 +4,7 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/modules/module_content_map.dart';
 import 'package:ritmo/core/modules/module_registry.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/core/services/feature_limits.dart';
 
 class ModuleGate {
   ModuleGate._();
@@ -76,6 +77,18 @@ class ModuleGate {
 
   Set<String> get disabledKeys {
     return states.value.entries.where((e) => !e.value).map((e) => e.key).toSet();
+  }
+
+  /// تعداد ماژول‌های اختیاری فعال فعلی
+  int get activeOptionalModuleCount {
+    return states.value.entries
+        .where((e) => e.value && !ModuleRegistry.isCoreModule(e.key))
+        .length;
+  }
+
+  /// آیا ظرفیت فعال‌سازی ماژول جدید وجود دارد؟
+  bool get canActivateMoreModules {
+    return activeOptionalModuleCount < FeatureLimits.current.maxActiveModules;
   }
 
   bool _resolve(ModuleDescriptor d, String? raw) {

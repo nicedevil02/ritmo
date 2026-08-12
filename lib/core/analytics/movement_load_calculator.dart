@@ -1,5 +1,6 @@
 // lib/core/analytics/movement_load_calculator.dart
 
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -18,10 +19,10 @@ class MovementLoadCalculator {
     switch (intensity) {
       case MovementIntensity.low:
         return metLow;
-      case MovementIntensity.high:
-        return metHigh;
       case MovementIntensity.medium:
         return baseMet;
+      case MovementIntensity.high:
+        return metHigh;
     }
   }
 
@@ -45,17 +46,16 @@ class MovementLoadCalculator {
     return (met * 3.5 * weight / 200.0) * durationMinutes;
   }
 
-  /// MET of a supplementary sports session based on exercise category MET map:
-  /// cardio >= 4 -> 8.0, core -> 4.0, stretching/yoga -> 2.5, fallback strength -> 5.0.
+  /// MET of a supplementary sports session from its logged sets.
+  /// Real tables: ss_workout_set_log(session_id, exercise_id) and ss_exercise(id, category).
   static Future<double> metForSsSession(DatabaseExecutor db, String sessionId) async {
     try {
       final rows = await db.rawQuery('''
-        SELECT el.category, COUNT(*) as cnt
-        FROM ss_workout_session_log log
-        JOIN ss_session_set_log setlog ON setlog.sessionId = log.id
-        JOIN exercises_library el ON el.id = setlog.exerciseId
-        WHERE log.id = ?
-        GROUP BY el.category
+        SELECT e.category AS category, COUNT(*) AS cnt
+        FROM ss_workout_set_log sl
+        JOIN ss_exercise e ON e.id = sl.exercise_id
+        WHERE sl.session_id = ?
+        GROUP BY e.category
       ''', [sessionId]);
 
       if (rows.isEmpty) return 5.0; // fallback strength MET
@@ -79,7 +79,8 @@ class MovementLoadCalculator {
       }
 
       return totalSets > 0 ? totalWeightedMet / totalSets : 5.0;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[MovementLoad] metForSsSession failed for session=$sessionId: $e');
       return 5.0;
     }
   }

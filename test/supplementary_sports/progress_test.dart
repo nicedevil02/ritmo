@@ -30,6 +30,7 @@ void main() {
         weeklyMinutes: [30.0, 45.0, 0.0, 30.0, 45.0, 0.0, 0.0],
         weightLogs: [],
         completedDates: [],
+        isDetailMode: false,
       );
 
       expect(state.streakDays, equals(4));

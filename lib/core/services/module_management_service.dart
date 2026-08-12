@@ -1,14 +1,26 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/modules/module_registry.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
+import 'package:ritmo/core/services/feature_limits.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:sqflite/sqflite.dart';
+
+/// نتیجه تلاش برای فعال/غیرفعال‌کردن ماژول
+enum ModuleToggleResult {
+  /// موفق
+  success,
+  /// به سقف رایگان رسیده — نمایش آپگرید
+  limitReached,
+  /// خطا
+  error,
+}
 
 /// Central Single Source of Truth for Module Activation & Synchronization in Ritmo.
 class ModuleManagementService {
@@ -63,8 +75,17 @@ class ModuleManagementService {
 
   /// Sets a module enabled state with guaranteed atomic upsert, alarm cleanup/rescheduling,
   /// and global event bus notification.
-  Future<void> setModuleEnabled(String key, bool enabled) async {
+  Future<ModuleToggleResult> setModuleEnabled(String key, bool enabled) async {
     try {
+      // Check concurrent module limit when enabling a non-core module
+      if (enabled && !ModuleRegistry.isCoreModule(key)) {
+        if (!ModuleGate.instance.canActivateMoreModules) {
+          final limit = FeatureLimits.current.maxActiveModules;
+          debugPrint('ModuleManagementService: Module cap ($limit) reached. Upgrade required.');
+          return ModuleToggleResult.limitReached;
+        }
+      }
+
       final db = await DatabaseHelper.instance.database;
       final now = DateTime.now().millisecondsSinceEpoch;
 
@@ -104,8 +125,14 @@ class ModuleManagementService {
 
       // 3. Broadcast global event to notify all listeners (UI screens, engines, services)
       RitmoEvents.notifyRoutineChanged();
+
+      // 4. Refresh ModuleGate state
+      await ModuleGate.instance.refresh();
+
+      return ModuleToggleResult.success;
     } catch (e) {
       debugPrint('ModuleManagementService: Error setting module $key to $enabled: $e');
+      return ModuleToggleResult.error;
     }
   }
 

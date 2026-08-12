@@ -27,7 +27,11 @@ class AssistantCard extends StatelessWidget {
     required this.briefing,
     required this.isBriefingLoading,
     required this.onRefreshBriefing,
+    // P1-3: وقتی false است، بخش «بهترین اقدام بعدی» رندر نمیشود؛
+    // صفحهٔ اصلی false پاس میدهد چون NextActionHero صاحب اقدام اصلی است (H-3).
+    this.showNextAction = true,
   });
+
   // پیشنهاد هوشمند (AssistantBanner سابق)
   final Routine? suggestedRoutine;
   final bool suggestLightVersion;
@@ -41,6 +45,9 @@ class AssistantCard extends StatelessWidget {
   final AiBriefing? briefing;
   final bool isBriefingLoading;
   final VoidCallback onRefreshBriefing;
+
+  // P1-3: نمایش/عدمنمایش بخش «بهترین اقدام بعدی» (پیشفرض: true برای سازگاری)
+  final bool showNextAction;
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +128,8 @@ class AssistantCard extends StatelessWidget {
               const SizedBox(height: RitmoSpacing.md),
 
               // ── بهترین اقدام بعدی ──
+              // P1-3: در صفحهٔ اصلی مخفی است — hero صاحب اقدام اصلی است (H-3)
+              if (showNextAction) ...[
               Row(
                 children: [
                   Container(
@@ -239,6 +248,25 @@ class AssistantCard extends StatelessWidget {
                   ),
                 ],
               ),
+              ] else if (suggestedRoutine != null) ...[
+                // P1-3: در حالت مخفی، دسترسی به توضیح موتور حفظ میشود
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => onWhyTap(titleText),
+                    icon: Icon(CupertinoIcons.question_circle,
+                        size: 14, color: colors.textSecondary),
+                    label: Text(
+                      l10n.whyThisSuggestion,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colors.textSecondary,
+                        fontFamily: 'Vazirmatn',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
 
               // ── بریفینگ AI (شرطی) ──
               if (isBriefingLoading) ...[

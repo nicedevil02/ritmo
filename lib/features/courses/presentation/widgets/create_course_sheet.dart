@@ -219,11 +219,13 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
     final Course courseToSave;
     if (isEditing) {
       final old = widget.editingCourse!;
+      // Only rhythm-affecting fields trigger a reschedule of pending sessions —
+      // this must mirror CoursesRepository.updateCourse's needsReschedule check.
+      // Reminder toggle / reminder time changes are applied without touching
+      // planned dates, so they must NOT prompt this confirmation either.
       final needsReschedule = old.weeklyTargetSessions != _weeklyTarget ||
           !listEquals(old.preferredDays, _preferredDays) ||
-          old.totalSessions != totalSessions ||
-          old.preferredTime != timeStr ||
-          old.reminderEnabled != _reminderEnabled;
+          old.totalSessions != totalSessions;
 
       if (needsReschedule) {
         final confirm = await showDialog<bool>(

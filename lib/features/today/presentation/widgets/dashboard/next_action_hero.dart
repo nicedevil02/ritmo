@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -104,8 +105,12 @@ class NextActionHero extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                if (data.type == HeroPriorityType.activeTimer)
-                  Icon(Icons.timer_outlined, color: colors.primary, size: 20),
+                // P2-5: هر سطح اولویت آیکون متمایز خودش را دارد
+                Icon(
+                  _priorityIcon(data.type),
+                  color: isMedical ? colors.medicalRed : colors.primary,
+                  size: 20,
+                ),
               ],
             ),
             const SizedBox(height: RitmoSpacing.md),
@@ -197,6 +202,17 @@ class NextActionHero extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // P2-5: آیکون متمایز هر سطح اولویت
+  static IconData _priorityIcon(HeroPriorityType type) {
+    return switch (type) {
+      HeroPriorityType.activeTimer => Icons.timer_outlined,
+      HeroPriorityType.overdueOrNextItem => CupertinoIcons.play_fill,
+      HeroPriorityType.medicalSafety => CupertinoIcons.cross_fill,
+      HeroPriorityType.morningCheckIn => CupertinoIcons.sunrise_fill,
+      HeroPriorityType.emptyState => CupertinoIcons.leaf_arrow_circlepath,
+    };
   }
 
   static String _priorityBadgeText(HeroPriorityType type) {

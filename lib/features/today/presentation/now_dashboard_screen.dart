@@ -53,6 +53,7 @@ import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboa
 import 'package:ritmo/features/supplementary_sports/presentation/ss_intro_screen.dart';
 import 'package:ritmo/features/today/presentation/active_timer_overlay.dart';
 import 'package:ritmo/features/today/presentation/dashboard_controller.dart';
+import 'package:ritmo/features/today/presentation/home_focus_ranker.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
 import 'package:ritmo/features/notes/presentation/widgets/today_experience_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet.dart';
@@ -864,132 +865,128 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     final timers = RitmoTimerService.instance.activeTimers;
     final activeTimer = timers.isNotEmpty ? timers.first : null;
 
-    // ── سطح ۱: تایمر فعال ────────────────────────────────────────────
-    if (activeTimer != null) {
-      final timerTitle = _titleForTimerItem(activeTimer.itemId);
-      final minutes = ((activeTimer.durationSeconds) / 60).round();
-      return NextActionHeroData(
-        type: HeroPriorityType.activeTimer,
-        title: timerTitle.isNotEmpty ? timerTitle : 'کار در حال اجرا',
-        subtitle:
-            '${PersianDigits.convert(minutes.toString())} دقیقه · حالت ${_timerModeLabel(activeTimer.mode)}',
-        primaryCtaLabel: 'ادامه / مشاهده',
-        onPrimaryTap: () {
-          unawaited(_resumeActiveTimer(activeTimer.itemId, activeTimer.mode));
-        },
-      );
-    }
+    // P2-2: تصمیم اولویت به رتبهبند خالص واگذار شده (قابلتست واحد — P2-3).
+    // توجه: medicalCriticalCount فعلاً ۰ است تا محاسبهٔ واقعی بحران دارویی
+    // (تداخل/minInterval/maxDoses/حیاتی) در فاز بعد سیم شود.
+    final decision = HomeFocusRanker.decide(HomeFocusInput(
+      now: DateTime.now(),
+      hasActiveTimer: activeTimer != null,
+      medicalCriticalCount: 0,
+      pendingMedDoses: _pendingMedDoses,
+      medicineModuleEnabled: ModuleGate.instance
+          .isEnabledFrom(_settingsMap, 'module_medicine_enabled'),
+      agendaItems: _agendaItems,
+      fallbackTasksPending:
+          _timelineItems.any((i) => i['isCompleted'] != true),
+      needCheckin: _needCheckin,
+    ));
 
-    // ── سطح ۲: هشدار دارویی واقعی (نه چکاین صبحگاهی!) ───────────────
-    // قبلاً این شرط به `_needCheckin` گره خورده بود که ربطی به دوز دارو ندارد.
-    if (ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_medicine_enabled') &&
-        _pendingMedDoses > 0) {
-      return NextActionHeroData(
-        type: HeroPriorityType.medicalSafety,
-        title: 'دوز داروی امروز هنوز کامل نشده',
-        subtitle:
-            '${PersianDigits.convert(_pendingMedDoses.toString())} دوز باقیمانده',
-        primaryCtaLabel: 'ثبت مصرف دارو',
-        isMedicalAlert: true,
-        onPrimaryTap: () => _openModuleScreen('medicine'),
-      );
-    }
+    switch (decision.level) {
+      // ── بحران/باقیماندهٔ دارویی ──
+      case HomeFocusLevel.medicalCritical:
+      case HomeFocusLevel.medicalDue:
+        final isCritical = decision.level == HomeFocusLevel.medicalCritical;
+        return NextActionHeroData(
+          type: HeroPriorityType.medicalSafety,
+          title:
+              isCritical ? 'هشدار مهم دارویی' : 'دوز داروی امروز هنوز کامل نشده',
+          subtitle: isCritical
+              ? 'نیازمند بررسی فوری تداخل یا سقف دوز'
+              : '${PersianDigits.convert(_pendingMedDoses.toString())} دوز باقیمانده',
+          primaryCtaLabel: 'ثبت مصرف دارو',
+          isMedicalAlert: true,
+          onPrimaryTap: () => _openModuleScreen('medicine'),
+        );
 
-    // ── سطح ۳: نزدیکترین کار انجامنشده — اول از Agenda یکپارچه، بعد از timeline روتینی ──
-    final now = DateTime.now();
-    final nowMinutes = now.hour * 60 + now.minute;
+      // ── تایمر فعال ──
+      case HomeFocusLevel.activeTimer:
+        final t = activeTimer!;
+        final timerTitle = _titleForTimerItem(t.itemId);
+        final minutes = (t.durationSeconds / 60).round();
+        return NextActionHeroData(
+          type: HeroPriorityType.activeTimer,
+          title: timerTitle.isNotEmpty ? timerTitle : 'کار در حال اجرا',
+          subtitle:
+              '${PersianDigits.convert(minutes.toString())} دقیقه · حالت ${_timerModeLabel(t.mode)}',
+          primaryCtaLabel: 'ادامه / مشاهده',
+          onPrimaryTap: () {
+            unawaited(_resumeActiveTimer(t.itemId, t.mode));
+          },
+        );
 
-    // ۳-الف) منبع واحد: DayAgendaService (همهٔ دامنهها: نماز، دارو، ورزش، درس، هدف...)
-    final pendingAgenda = _agendaItems
-        .where((i) =>
-            !i.isCompleted &&
-            i.hasValidTimeOfDay &&
-            i.domain != AgendaDomain.worshipDebt)
-        .toList()
-      ..sort((a, b) => a.timeOfDay!.compareTo(b.timeOfDay!));
+      // ── آیتم Agenda (منبع واحد) ──
+      case HomeFocusLevel.agendaItem:
+        final chosen = decision.agendaItem!;
+        final timeLabel = PersianDigits.convert(chosen.timeOfDay!);
+        return NextActionHeroData(
+          type: HeroPriorityType.overdueOrNextItem,
+          title: chosen.title,
+          subtitle: decision.isOverdue
+              ? 'عقبافتاده · $timeLabel'
+              : 'زمان: $timeLabel',
+          primaryCtaLabel:
+              chosen.domain == AgendaDomain.routine ? 'ثبت / شروع' : 'مشاهده',
+          onPrimaryTap: () => _openAgendaItem(chosen),
+        );
 
-    if (pendingAgenda.isNotEmpty) {
-      // اولین آیتمِ هنوز-نرسیده؛ اگر همه گذشتهاند، اولین آیتمِ عقبافتاده.
-      AgendaItem chosen = pendingAgenda.first;
-      var foundUpcoming = false;
-      for (final item in pendingAgenda) {
-        final parts = item.timeOfDay!.split(':');
-        final m = (int.tryParse(parts[0]) ?? 0) * 60 + (int.tryParse(parts[1]) ?? 0);
-        if (m >= nowMinutes) {
-          chosen = item;
-          foundUpcoming = true;
-          break;
-        }
-      }
-      final timeLabel = PersianDigits.convert(chosen.timeOfDay!);
-      final subtitle = foundUpcoming
-          ? 'زمان: $timeLabel'
-          : 'عقبافتاده · $timeLabel';
-      return NextActionHeroData(
-        type: HeroPriorityType.overdueOrNextItem,
-        title: chosen.title,
-        subtitle: subtitle,
-        primaryCtaLabel: chosen.domain == AgendaDomain.routine ? 'ثبت / شروع' : 'مشاهده',
-        onPrimaryTap: () => _openAgendaItem(chosen),
-      );
-    }
-
-    // ۳-ب) fallback: هنوز P1 لود نشده → از timeline روتینی با فیلتر صحیح.
-    final pendingTasks = _timelineItems
-        .where((i) => i['isCompleted'] != true)
-        .toList();
-    if (pendingTasks.isNotEmpty) {
-      Map<String, dynamic> chosen = pendingTasks.first;
-      var foundUpcoming = false;
-      for (final item in pendingTasks) {
-        final t = item['time']?.toString() ?? '';
-        final parts = t.split(':');
-        if (parts.length == 2) {
-          final m = (int.tryParse(parts[0]) ?? 0) * 60 + (int.tryParse(parts[1]) ?? 0);
-          if (m >= nowMinutes) {
-            chosen = item;
-            foundUpcoming = true;
-            break;
+      // ── fallback روتینی (پنجرهٔ قبل از لود P1) ──
+      case HomeFocusLevel.agendaFallback:
+        final now = DateTime.now();
+        final nowMinutes = now.hour * 60 + now.minute;
+        final pendingTasks =
+            _timelineItems.where((i) => i['isCompleted'] != true).toList();
+        Map<String, dynamic> chosen = pendingTasks.first;
+        var foundUpcoming = false;
+        for (final item in pendingTasks) {
+          final t = item['time']?.toString() ?? '';
+          final parts = t.split(':');
+          if (parts.length == 2) {
+            final m =
+                (int.tryParse(parts[0]) ?? 0) * 60 + (int.tryParse(parts[1]) ?? 0);
+            if (m >= nowMinutes) {
+              chosen = item;
+              foundUpcoming = true;
+              break;
+            }
           }
         }
-      }
-      final title = chosen['title']?.toString() ?? 'برنامهٔ بعدی';
-      final timeStr = chosen['time']?.toString() ?? '--:--';
-      final routine = chosen['routine'] as Routine?;
-      return NextActionHeroData(
-        type: HeroPriorityType.overdueOrNextItem,
-        title: title,
-        subtitle: foundUpcoming
-            ? 'زمان: ${PersianDigits.convert(timeStr)}'
-            : 'عقبافتاده · ${PersianDigits.convert(timeStr)}',
-        primaryCtaLabel: 'ثبت / شروع',
-        onPrimaryTap: () {
-          if (routine != null) _showNiyyahSheet(routine);
-        },
-      );
-    }
+        final title = chosen['title']?.toString() ?? 'برنامهٔ بعدی';
+        final timeStr = chosen['time']?.toString() ?? '--:--';
+        final routine = chosen['routine'] as Routine?;
+        return NextActionHeroData(
+          type: HeroPriorityType.overdueOrNextItem,
+          title: title,
+          subtitle: foundUpcoming
+              ? 'زمان: ${PersianDigits.convert(timeStr)}'
+              : 'عقبافتاده · ${PersianDigits.convert(timeStr)}',
+          primaryCtaLabel: 'ثبت / شروع',
+          onPrimaryTap: () {
+            if (routine != null) _showNiyyahSheet(routine);
+          },
+        );
 
-    // ── سطح ۴: چکاین صبحگاهی ────────────────────────────────────────
-    if (_needCheckin) {
-      return NextActionHeroData(
-        type: HeroPriorityType.morningCheckIn,
-        title: 'ارزیابی انرژی اول روز',
-        subtitle: 'تنظیم ریتم فعالیت با چند پرسش کوتاه',
-        primaryCtaLabel: 'شروع ارزیابی',
-        onPrimaryTap: _showMorningCheckinSheet,
-      );
-    }
+      // ── چکاین صبحگاهی ──
+      case HomeFocusLevel.morningCheckIn:
+        return NextActionHeroData(
+          type: HeroPriorityType.morningCheckIn,
+          title: 'ارزیابی انرژی اول روز',
+          subtitle: 'تنظیم ریتم فعالیت با چند پرسش کوتاه',
+          primaryCtaLabel: 'شروع ارزیابی',
+          onPrimaryTap: _showMorningCheckinSheet,
+        );
 
-    // ── سطح ۵: حالت خالی صادقانه ─────────────────────────────────────
-    return NextActionHeroData(
-      type: HeroPriorityType.emptyState,
-      title: 'برنامهای برای این زمان ثبت نشده است',
-      subtitle: 'با افزودن کار جدید، ریتم امروزتان را شکل دهید',
-      primaryCtaLabel: 'افزودن برنامه',
-      onPrimaryTap: () {
-        UniversalPlannerSheet.show(context: context);
-      },
-    );
+      // ── حالت خالی صادقانه ──
+      case HomeFocusLevel.emptyState:
+        return NextActionHeroData(
+          type: HeroPriorityType.emptyState,
+          title: 'برنامهای برای این زمان ثبت نشده است',
+          subtitle: 'با افزودن کار جدید، ریتم امروزتان را شکل دهید',
+          primaryCtaLabel: 'افزودن برنامه',
+          onPrimaryTap: () {
+            UniversalPlannerSheet.show(context: context);
+          },
+        );
+    }
   }
 
   /// G-2: بازکردن آیتم Agenda بر اساس دامنهٔ آن (deep-link به ماژول مالک).

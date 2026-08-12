@@ -36,12 +36,16 @@ class RitmoAppWidgetProvider : AppWidgetProvider() {
                     views.setTextViewText(R.id.widget_rhythm_score, "نبض امروز: %۰")
                     views.setTextViewText(R.id.widget_energy_level, "انرژی: متوسط 🔋")
                 } else {
-                    val nextActionTitle = jsonObj.optString("nextActionTitle", "استراحت 🌿")
-                    val rhythmScore = jsonObj.optInt("rhythmScore", 0)
+                    // P2-4: -1 یعنی «دادهای نیست» — پیشفرض امن و بدون کرش
+                    val rhythmScore = jsonObj.optInt("rhythmScore", -1)
                     val currentEnergyLevel = jsonObj.optString("currentEnergyLevel", "متوسط")
 
                     views.setTextViewText(R.id.widget_next_action_title, "کار بعدی: $nextActionTitle")
-                    views.setTextViewText(R.id.widget_rhythm_score, "نبض امروز: %$rhythmScore")
+                    if (rhythmScore >= 0) {
+                        views.setTextViewText(R.id.widget_rhythm_score, "نبض امروز: %$rhythmScore")
+                    } else {
+                        views.setTextViewText(R.id.widget_rhythm_score, "نبض امروز: —")
+                    }
                     
                     val energyFa = when (currentEnergyLevel.uppercase()) {
                         "LOW" -> "کم ⚡"

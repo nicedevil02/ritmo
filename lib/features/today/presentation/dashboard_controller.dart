@@ -33,7 +33,9 @@ import 'package:sqflite/sqflite.dart';
 
 class DashboardController {
   bool isLoading = true;
-  int rhythmScore = 82;
+  // P2-4: مقدار اولیهٔ ۸۲ ساختگی بود؛ ۰ صادقانه است و با پرچم زیر از «بدون داده» تفکیک میشود.
+  int rhythmScore = 0;
+  bool rhythmScoreHasData = false;
   List<Map<String, dynamic>> completionsToday = [];
   RoutineTask? nextTask;
   AiBriefing? briefing;
@@ -62,6 +64,14 @@ class DashboardController {
   Map<String, String> prayerTimes = {};
   List<Map<String, dynamic>> medicationRoutines = [];
   Map<String, int> medicationCompletionsToday = {};
+
+  int get pendingMedicationDoseCount {
+    final totalDoses = medicationRoutines.fold<int>(
+        0, (a, r) => a + (((r['maxDosesPerDay'] as int?) ?? 1) <= 0 ? 1 : ((r['maxDosesPerDay'] as int?) ?? 1)));
+    final taken = medicationCompletionsToday.values.fold<int>(0, (a, c) => a + c);
+    final remaining = (totalDoses - taken) < 0 ? 0 : (totalDoses - taken);
+    return remaining;
+  }
 
   DailyBehavior? dailyBehavior;
   Map<String, dynamic>? activeZone;
@@ -382,9 +392,9 @@ class DashboardController {
         }
       }
 
-      // G-3: مقدار ساختگی ۸۲ حذف شد؛ نبود داده یعنی صفر، نه عدد جعلی.
-      // (مصرفکنندهٔ این مقدار در SnapshotHelper.updateWidgetSnapshot با صفر مشکلی ندارد.)
+      // G-3 + P2-4: مقدار ساختگی ۸۲ حذف شد؛ پرچم hasData «بدون داده» را از «۰٪» تفکیک میکند.
       rhythmScore = 0;
+      rhythmScoreHasData = totalWeight > 0;
       if (totalWeight > 0) {
         rhythmScore = ((completedWeight / totalWeight) * 100).round();
       }
@@ -455,7 +465,8 @@ class DashboardController {
       // Build widget snapshot
       await SnapshotHelper.updateWidgetSnapshot(
         nextActionTitle: nextTask?.routine.title ?? 'استراحت 🌿',
-        rhythmScore: rhythmScore,
+        // P2-4: بدون داده ⇒ null ⇒ در JSON بهصورت -1 (سنتینل «بدون داده»)
+        rhythmScore: rhythmScoreHasData ? rhythmScore : null,
         currentEnergyLevel: energyStr.toLowerCase(),
       );
 

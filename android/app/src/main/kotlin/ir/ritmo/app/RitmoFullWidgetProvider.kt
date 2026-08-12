@@ -44,10 +44,15 @@ class RitmoFullWidgetProvider : AppWidgetProvider() {
                 val raw = prefs.getString("flutter.widget_full_snapshot", null)
                 if (raw != null) {
                     val json = JSONObject(raw)
-                    val score = json.optInt("rhythmScore", 0)
+                    // P2-4: -1 یعنی «دادهای نیست» — پیشفرض امن و بدون کرش
+                    val score = json.optInt("rhythmScore", -1)
                     val energy = json.optString("energyLabel", "متوسط")
                     val next = json.optString("nextActionTitle", "استراحت 🌿")
-                    views.setTextViewText(R.id.widget_rhythm_score, "%" + toPersianDigits(score.toString()))
+                    if (score >= 0) {
+                        views.setTextViewText(R.id.widget_rhythm_score, "%" + toPersianDigits(score.toString()))
+                    } else {
+                        views.setTextViewText(R.id.widget_rhythm_score, "—")
+                    }
                     views.setTextViewText(R.id.widget_energy, energy)
                     views.setTextViewText(R.id.widget_next_action, "کار بعدی: $next")
                 } else {

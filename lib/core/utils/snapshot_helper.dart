@@ -22,14 +22,16 @@ class SnapshotHelper {
   /// In Kotlin, read: "flutter.widget_snapshot"
   static Future<void> updateWidgetSnapshot({
     required String nextActionTitle,
-    required int rhythmScore,
+    // P2-4: null یعنی «هنوز دادهٔ امتیازی نیست»؛ در JSON بهصورت -1 نوشته میشود
+    // تا مصرفکنندهٔ کاتلین با getInt کرش نکند.
+    required int? rhythmScore,
     required String currentEnergyLevel,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final data = {
       'schemaVersion': 1,
       'nextActionTitle': nextActionTitle,
-      'rhythmScore': rhythmScore,
+      'rhythmScore': rhythmScore ?? -1,
       'currentEnergyLevel': currentEnergyLevel,
       'updatedAt': DateTime.now().millisecondsSinceEpoch,
     };

@@ -101,6 +101,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   bool _isBriefingLoading = false;
   int _unreadInboxCount = 0;
   StreamSubscription? _inboxSubscription;
+  StreamSubscription? _agendaSubscription;
   List<InboxItem> _recentInboxItems = [];
 
 

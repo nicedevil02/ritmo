@@ -76,7 +76,8 @@ class DashboardController {
   bool reflectionDismissed = false;
 
   // Dynamic Energy State fields
-  double currentEnergyPercent = 65;
+  // G-3: null یعنی «هنوز هیچ لاگ انرژی ثبت نشده» — عدد ساختگی ۶۵ حذف شد.
+  double? currentEnergyPercent;
   String currentEnergyLabel = 'متوسط';
   String currentEnergyDesc = 'مناسب برای مطالعه، پروژه‌ها و روتین‌ها';
   String currentEnergyTimeAgo = 'بر اساس پیش‌فرض';
@@ -109,12 +110,25 @@ class DashboardController {
   }
 
   /// Phase 0 — blocks until the timeline and rhythm score are ready.
+  // G-1: سینک اسنپشات فقط یکبار در هر نشست اپ اجرا میشود؛ اجرای آن در هر
+  // resume/refresh باعث اسکن کامل جدولها و کندشدن بازگشت به اپ میشد.
+  static bool _snapshotSyncDoneThisSession = false;
+
   Future<void> loadP0() async {
     try {
       isLoading = true;
 
-      // Sync snapshots and run backfill engine
-      await SnapshotSyncService.syncAll();
+      // Sync snapshots and run backfill engine — once per app session only.
+      if (!_snapshotSyncDoneThisSession) {
+        _snapshotSyncDoneThisSession = true;
+        try {
+          await SnapshotSyncService.syncAll();
+        } catch (e) {
+          // اجازه بده نشست بعدی دوباره تلاش کند.
+          _snapshotSyncDoneThisSession = false;
+          debugPrint('SnapshotSyncService.syncAll failed: $e');
+        }
+      }
 
       final db = await DatabaseHelper.instance.database;
 
@@ -368,11 +382,11 @@ class DashboardController {
         }
       }
 
+      // G-3: مقدار ساختگی ۸۲ حذف شد؛ نبود داده یعنی صفر، نه عدد جعلی.
+      // (مصرفکنندهٔ این مقدار در SnapshotHelper.updateWidgetSnapshot با صفر مشکلی ندارد.)
       rhythmScore = 0;
       if (totalWeight > 0) {
         rhythmScore = ((completedWeight / totalWeight) * 100).round();
-      } else {
-        rhythmScore = 82; // Fallback to mockup value if no weight
       }
 
       // 7. Build timeline items (only show visible routines)
@@ -531,7 +545,12 @@ class DashboardController {
       out.add(DashboardModuleSummary(
         moduleId: 'energy', title: 'انرژی و مود',
         icon: CupertinoIcons.bolt_fill, accentColor: const Color(0xffEC4899),
-        primary: '${fa(currentEnergyPercent.round())}٪', secondary: 'سطح: $currentEnergyLabel',
+        primary: currentEnergyPercent == null
+            ? '—'
+            : '${fa(currentEnergyPercent!.round())}٪',
+        secondary: currentEnergyPercent == null
+            ? 'هنوز انرژی ثبت نشده'
+            : 'سطح: $currentEnergyLabel',
         backgroundImage: 'assets/images/energy_card_top.png',
       ));
     }
@@ -834,8 +853,9 @@ class DashboardController {
         desc = 'زمان مناسب برای استراحت و کار سبک';
       }
 
-      // Update state
-      currentEnergyPercent = finalPercent;
+      // Update state — G-3: فقط وقتی دستکم یک لاگ انرژی وجود دارد عدد نمایش بده؛
+      // در غیر این صورت null بماند تا UI حالت «ثبتنشده» را نشان دهد.
+      currentEnergyPercent = energyLogs.isNotEmpty ? finalPercent : null;
       currentEnergyLabel = label;
       currentEnergyDesc = desc;
       currentEnergyExplanation = explanations;
@@ -884,8 +904,13 @@ class DashboardController {
     };
   }
 
+  // G-1: این کوئری در هر loadP0 اجرا میشد؛ یکبار در نشست کافی است.
+  static bool _worshipDebtRoutineEnsured = false;
+
   Future<void> _ensureWorshipDebtRoutineExists(DatabaseExecutor db) async {
+    if (_worshipDebtRoutineEnsured) return;
     final results = await db.query('routines', where: 'id = ?', whereArgs: ['worship_debt_routine']);
+    _worshipDebtRoutineEnsured = true;
     if (results.isEmpty) {
       final now = DateTime.now().millisecondsSinceEpoch;
       await db.insert('routines', {
@@ -941,30 +966,65 @@ class DashboardController {
 
     final schedulesRaw = await db.query('zone_schedules');
     final schedules = schedulesRaw.map(Map<String, dynamic>.from).toList();
+
+    // G-5: همهٔ زمانبندیهای منطبق جمع میشوند؛ با پشتیبانی از بازههای شبانه
+    // (عبور از نیمهشب) و انتخاب قطعی در همپوشانی.
+    final matches = <Map<String, dynamic>>[];
     for (final sched in schedules) {
       final daysOfWeekStr = sched['daysOfWeek'] as String? ?? '';
-      final days = daysOfWeekStr.split(',').map((d) => int.tryParse(d.trim()) ?? 0).toSet();
-      if (days.contains(weekday)) {
-        final startTimeStr = sched['startTime'] as String? ?? '00:00';
-        final endTimeStr = sched['endTime'] as String? ?? '23:59';
+      final days = daysOfWeekStr
+          .split(',')
+          .map((d) => int.tryParse(d.trim()) ?? -1)
+          .toSet();
+      final startTimeStr = sched['startTime'] as String? ?? '00:00';
+      final endTimeStr = sched['endTime'] as String? ?? '23:59';
 
-        final startParts = startTimeStr.split(':');
-        final endParts = endTimeStr.split(':');
-        if (startParts.length == 2 && endParts.length == 2) {
-          final startMin = (int.tryParse(startParts[0]) ?? 0) * 60 + (int.tryParse(startParts[1]) ?? 0);
-          final endMin = (int.tryParse(endParts[0]) ?? 0) * 60 + (int.tryParse(endParts[1]) ?? 0);
+      final startParts = startTimeStr.split(':');
+      final endParts = endTimeStr.split(':');
+      if (startParts.length != 2 || endParts.length != 2) continue;
+      final startMin =
+          (int.tryParse(startParts[0]) ?? 0) * 60 + (int.tryParse(startParts[1]) ?? 0);
+      final endMin =
+          (int.tryParse(endParts[0]) ?? 0) * 60 + (int.tryParse(endParts[1]) ?? 0);
 
-          if (currentMinutes >= startMin && currentMinutes <= endMin) {
-            final zoneId = sched['zoneId'] as String;
-            final zoneQuery = await db.query('zones', where: 'id = ?', whereArgs: [zoneId]);
-            if (zoneQuery.isNotEmpty) {
-              final zone = Map<String, dynamic>.from(zoneQuery.first);
-              zone['startTime'] = startTimeStr;
-              zone['endTime'] = endTimeStr;
-              return zone;
-            }
-          }
-        }
+      final crossesMidnight = startMin > endMin;
+      // برای بازهٔ شبانه، ساعات بعد از شروع متعلق به «همین روز» و ساعات قبل از
+      // پایان متعلق به «روز قبل» است.
+      final prevWeekday = weekday == 1 ? 7 : weekday - 1;
+      final dayMatches = crossesMidnight
+          ? (currentMinutes >= startMin ? days.contains(weekday) : days.contains(prevWeekday))
+          : days.contains(weekday);
+      if (!dayMatches) continue;
+
+      final inWindow = crossesMidnight
+          ? (currentMinutes >= startMin || currentMinutes <= endMin)
+          : (currentMinutes >= startMin && currentMinutes <= endMin);
+      if (!inWindow) continue;
+
+      matches.add({
+        'zoneId': sched['zoneId'] as String,
+        'startTime': startTimeStr,
+        'endTime': endTimeStr,
+        'startMin': startMin,
+      });
+    }
+
+    if (matches.isNotEmpty) {
+      // G-5: انتخاب قطعی — شروعِ دیرتر (خاصتر) برنده است؛ در تساوی، zoneId
+      // نتیجه را پایدار و قابلتکرار نگه میدارد.
+      matches.sort((a, b) {
+        final c = (b['startMin'] as int).compareTo(a['startMin'] as int);
+        if (c != 0) return c;
+        return (a['zoneId'] as String).compareTo(b['zoneId'] as String);
+      });
+      final chosen = matches.first;
+      final zoneQuery = await db.query('zones',
+          where: 'id = ?', whereArgs: [chosen['zoneId']]);
+      if (zoneQuery.isNotEmpty) {
+        final zone = Map<String, dynamic>.from(zoneQuery.first);
+        zone['startTime'] = chosen['startTime'];
+        zone['endTime'] = chosen['endTime'];
+        return zone;
       }
     }
     return null;

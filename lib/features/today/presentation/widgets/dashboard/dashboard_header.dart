@@ -17,6 +17,7 @@ class DashboardHeader extends StatelessWidget {
     super.key,
     required this.userName,
     this.avatarPath,
+    this.avatarFileExists = false,
     required this.isAssistantActive,
     required this.unreadInboxCount,
     required this.onAvatarTap,
@@ -27,6 +28,7 @@ class DashboardHeader extends StatelessWidget {
 
   final String userName;
   final String? avatarPath;
+  final bool avatarFileExists;
   final bool isAssistantActive;
   final int unreadInboxCount;
   final VoidCallback onAvatarTap;
@@ -122,22 +124,11 @@ class DashboardHeader extends StatelessWidget {
         ? '${tg.greeting}، $userName'
         : l10n.welcomeUser(userName);
 
-    bool isAvatarValid(String? path) {
-      if (path == null || path.isEmpty) return false;
-      if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:') || path.startsWith('data:')) {
-        return true;
-      }
-      if (!kIsWeb) {
-        try {
-          return File(path).existsSync();
-        } catch (_) {
-          return false;
-        }
-      }
-      return false;
-    }
-
-    final hasAvatarFile = isAvatarValid(avatarPath);
+    // G-4: وجود فایل بهصورت async در صفحه محاسبه و بهعنوان پارامتر پاس داده میشود؛
+    // existsSync داخل build حذف شد (I/O دیسک در هر rebuild).
+    final hasAvatarFile = avatarFileExists &&
+        avatarPath != null &&
+        avatarPath!.isNotEmpty;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

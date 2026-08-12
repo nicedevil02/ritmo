@@ -113,6 +113,7 @@ class TodaysTasksSection extends StatelessWidget {
             ),
           )
         else
+          // G-6: حداکثر ۴ کارت اینجا رندر میشود؛ باقی از «مشاهده همه» در دسترس است.
           ...tasks.take(4).map((task) => _buildTaskCard(context, task)),
       ],
     );

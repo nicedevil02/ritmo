@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/completion/snooze_policy.dart';
 import 'package:ritmo/core/domain/engines/engine_enums.dart';
+import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/domain/engines/ritmo_intelligence_engine.dart';
@@ -102,6 +104,15 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   // Timeline list representation
   List<Map<String, dynamic>> _timelineItems = [];
 
+  // G-2/G-4: منبع واحد Agenda (همهٔ دامنهها) + شمار واقعی دوزهای باقیماندهٔ دارو
+  List<AgendaItem> _agendaItems = [];
+  int _pendingMedDoses = 0;
+
+  // G-4: توکن نسل برای باطلکردن نتایج کهنه و جلوگیری از race بین دو بارگذاری
+  int _loadGeneration = 0;
+  DateTime? _lastLoadAt;
+  bool _avatarFileExists = false;
+
   // Specialized Dashboard state variables
   Map<String, String> _settingsMap = {};
 
@@ -119,7 +130,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   bool _showReplanBanner = false;
 
   // Dynamic Energy State fields
-  double _currentEnergyPercent = 65;
+  // G-3: null = هیچ لاگ انرژی ثبت نشده؛ مقدار ساختگی ۶۵ حذف شد.
+  double? _currentEnergyPercent;
   String _currentEnergyLabel = 'متوسط';
   String _currentEnergyDesc = 'مناسب برای مطالعه، پروژه‌ها و روتین‌ها';
   String? _currentEnergyTimeAgo;
@@ -155,7 +167,13 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _checkLaunchIntent();
-      _loadDashboardData();
+      // G-4: اگر کمتر از ۳۰ ثانیه از آخرین بارگذاری موفق گذشته، دوباره لود نکن؛
+      // این کار از سینک/اسکن تکراری در هر سوییچ اپ جلوگیری میکند.
+      final last = _lastLoadAt;
+      if (last == null ||
+          DateTime.now().difference(last) > const Duration(seconds: 30)) {
+        _loadDashboardData();
+      }
     }
   }
 
@@ -353,6 +371,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
   Future<void> _loadDashboardData({bool showLoading = false}) async {
     if (!mounted) return;
+    // G-4: نسل جدید — هر نتیجهٔ کهنهای که بعداً برگردد دور ریخته میشود.
+    final generation = ++_loadGeneration;
+    bool isStale() => !mounted || generation != _loadGeneration;
+
     if (showLoading || _isFirstLoad) {
       setState(() {
         _isLoading = true;
@@ -364,7 +386,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     // ── P0: critical path (settings → routines → RIE → timeline) ──────────
     await controller.loadP0();
 
-    if (!mounted) return;
+    if (isStale()) return;
     setState(() {
       _isFirstLoad = false;
       _isLoading = false;
@@ -380,12 +402,16 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
       _needCheckin = controller.needCheckin;
       _hasReflection = controller.hasReflection;
       _reflectionDismissed = controller.reflectionDismissed;
+      // G-2: دوزهای واقعی باقیماندهٔ دارو (از P0 کنترلر)
+      _pendingMedDoses = controller.pendingMedicationDoseCount;
+      _lastLoadAt = DateTime.now();
     });
 
     // ── P1: deferred — runs after first frame is painted ─────────────────
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
+      if (isStale()) return;
       await controller.loadP1();
+      if (isStale()) return;
 
       var recentInbox = <InboxItem>[];
       try {
@@ -399,7 +425,25 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
       final showReplan = await MidDayReplanService.instance.shouldSuggestReplan();
 
-      if (!mounted) return;
+      // G-4: وجود فایل آواتار بهصورت async و خارج از build چک میشود (نه existsSync)
+      var avatarExistsResult = false;
+      final avatarPath = controller.settingsMap['user_avatar_path'];
+      if (avatarPath != null && avatarPath.isNotEmpty) {
+        if (avatarPath.startsWith('http://') ||
+            avatarPath.startsWith('https://') ||
+            avatarPath.startsWith('blob:') ||
+            avatarPath.startsWith('data:')) {
+          avatarExistsResult = true;
+        } else {
+          try {
+            avatarExistsResult = await File(avatarPath).exists();
+          } catch (_) {
+            avatarExistsResult = false;
+          }
+        }
+      }
+
+      if (isStale()) return;
       setState(() {
         _briefing = controller.briefing;
         _isBriefingLoading = controller.isBriefingLoading;
@@ -415,9 +459,14 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         _moduleSummaries = controller.moduleSummaries;
         _recentInboxItems = recentInbox;
         _showReplanBanner = showReplan;
+        _avatarFileExists = avatarExistsResult;
+        // G-2: منبع واحد Agenda برای کارت اقدام بعدی
+        _agendaItems = controller.agenda;
       });
 
+      if (isStale()) return;
       await _pushCriticalAlerts();
+      if (isStale()) return;
       await _pushCheckinsAndReflections();
     });
   }
@@ -538,7 +587,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         );
   }
 
-  /// اسکلت لودینگ هم‌شکل با چیدمان صفحه — به‌جای اسپینر (سند طراحی §۴.۲)
+  /// اسکلت لودینگ همشکل با چیدمان صفحه — بهجای اسپینر (سند طراحی §۴.۲)
+  /// G-8: هماندازه با چیدمان واقعی فعلی (Hero + ۴ ردیف کار + ردیف Zone/Energy).
   Widget _buildLoadingSkeleton() {
     return const Scaffold(
       backgroundColor: Colors.transparent,
@@ -568,17 +618,37 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                 ],
               ),
               SizedBox(height: RitmoSpacing.section),
-              // نوار زمینه
+              // کارت هیروی اقدام بعدی (هماندازهٔ NextActionHero)
               RitmoSkeleton(
-                  width: double.infinity, height: 36, borderRadius: 12),
+                  width: double.infinity, height: 150, borderRadius: 20),
               SizedBox(height: RitmoSpacing.section),
-              // کارت هیروی نبض
+              // ۴ ردیف کار امروز
               RitmoSkeleton(
-                  width: double.infinity, height: 190, borderRadius: 20),
+                  width: double.infinity, height: 62, borderRadius: 18),
+              SizedBox(height: 10),
+              RitmoSkeleton(
+                  width: double.infinity, height: 62, borderRadius: 18),
+              SizedBox(height: 10),
+              RitmoSkeleton(
+                  width: double.infinity, height: 62, borderRadius: 18),
+              SizedBox(height: 10),
+              RitmoSkeleton(
+                  width: double.infinity, height: 62, borderRadius: 18),
               SizedBox(height: RitmoSpacing.section),
-              // کارت زون
-              RitmoSkeleton(
-                  width: double.infinity, height: 130, borderRadius: 20),
+              // ردیف دوکارتی انرژی/قلمرو (هماندازهٔ ZoneCard)
+              Row(
+                children: [
+                  Expanded(
+                    child: RitmoSkeleton(
+                        width: double.infinity, height: 150, borderRadius: 24),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: RitmoSkeleton(
+                        width: double.infinity, height: 150, borderRadius: 24),
+                  ),
+                ],
+              ),
               SizedBox(height: RitmoSpacing.section),
               // کارت دستیار
               RitmoSkeleton(
@@ -622,6 +692,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                   DashboardHeader(
                     userName: _settingsMap['user_name'] ?? 'کاربر',
                     avatarPath: _settingsMap['user_avatar_path'],
+                    avatarFileExists: _avatarFileExists,
                     isAssistantActive:
                         ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_assistant_enabled'),
                     unreadInboxCount: _unreadInboxCount,
@@ -658,25 +729,30 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
                 // 3. کارهای امروز (Agenda - max 3-5 items)
                 _enter(
-                  2,
+                  3,
                   TodaysTasksSection(
-                    tasks: tasksList.take(5).toList(),
+                    // G-6: لیست کامل پاس داده میشود؛ برش ۴تایی مسئولیت خود ویجت است.
+                    tasks: tasksList,
                     onOpenDetails: _showDetailsSheet,
                     onStartTask: _showNiyyahSheet,
                     onReshuffleApplied: _loadDashboardData,
                     onViewAll: () => widget.onNavigateToTab?.call(4),
                   ),
                 ),
+                // G-7: مارجین افقی داخلی کارت تجربه با wrapper صفر خنثی شد تا با پدینگ ۲۰ صفحه تراز شود.
                 _enter(
-                  2,
-                  const TodayExperienceCard(),
+                  4,
+                  const Padding(
+                    padding: EdgeInsets.zero,
+                    child: TodayExperienceCard(),
+                  ),
                 ),
                 const SizedBox(height: RitmoSpacing.section),
 
 
-                // 4. کارت خلاصه‌ی وضعیت تک‌عاملی (ZoneCard / Energy)
+                // 4. کارت خلاصهی وضعیت تکعاملی (ZoneCard / Energy)
                 _enter(
-                  3,
+                  5,
                   ZoneCard(
                     isDarkMode: isDarkMode,
                     currentEnergyPercent: _currentEnergyPercent,
@@ -696,7 +772,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
                 // 5. حداکثر یک پیشنهاد دستیار
                 _enter(
-                  4,
+                  6,
                   AssistantCard(
                     suggestedRoutine: _engineOutput?.suggestedRoutine,
                     suggestLightVersion:
@@ -714,9 +790,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                 ),
                 const SizedBox(height: RitmoSpacing.section),
 
-                // 6. بخش تاشوی «جزئیات امروز» (پیش‌فرض بسته)
+                // 6. بخش تاشوی «جزئیات امروز» (پیشفرض بسته)
                 _enter(
-                  5,
+                  7,
                   TodayDetailsSection(
                     itemCount: _moduleSummaries.length + (_showReplanBanner ? 1 : 0),
                     children: [
@@ -745,55 +821,155 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     );
   }
 
+  /// G-2: عنوان خوانا برای تایمر فعال — بهجای نمایش itemId خام.
+  String _titleForTimerItem(String itemId) {
+    for (final i in _timelineItems) {
+      if (i['id']?.toString() == itemId) {
+        return i['title']?.toString() ?? '';
+      }
+    }
+    for (final a in _agendaItems) {
+      if (a.sourceId == itemId || a.id == itemId) return a.title;
+    }
+    return '';
+  }
+
+  /// G-2: برچسب فارسی حالت تایمر.
+  static String _timerModeLabel(String mode) {
+    switch (mode.toUpperCase()) {
+      case 'LIGHT':
+        return 'سبک';
+      case 'MINIMAL':
+        return 'حداقلی';
+      default:
+        return 'کامل';
+    }
+  }
+
+  /// G-2: ادامهٔ تایمر فعال — بهجای no-op قبلی (onNavigateToTab(2)).
+  Future<void> _resumeActiveTimer(String routineId, String mode) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final rows = await db.query('routines',
+          where: 'id = ?', whereArgs: [routineId], limit: 1);
+      if (rows.isEmpty || !mounted) return;
+      final routine = Routine.fromMap(rows.first);
+      _startTimerFlow(routine, mode);
+    } catch (e) {
+      debugPrint('Error resuming active timer: $e');
+    }
+  }
+
   NextActionHeroData _buildNextActionHeroData() {
     final timers = RitmoTimerService.instance.activeTimers;
     final activeTimer = timers.isNotEmpty ? timers.first : null;
+
+    // ── سطح ۱: تایمر فعال ────────────────────────────────────────────
     if (activeTimer != null) {
+      final timerTitle = _titleForTimerItem(activeTimer.itemId);
+      final minutes = ((activeTimer.durationSeconds) / 60).round();
       return NextActionHeroData(
         type: HeroPriorityType.activeTimer,
-        title: 'کار در حال اجرا: ${activeTimer.itemId}',
-        subtitle: '${PersianDigits.convert(((activeTimer.durationSeconds) / 60).round().toString())} دقیقه · حالت ${activeTimer.mode}',
+        title: timerTitle.isNotEmpty ? timerTitle : 'کار در حال اجرا',
+        subtitle:
+            '${PersianDigits.convert(minutes.toString())} دقیقه · حالت ${_timerModeLabel(activeTimer.mode)}',
         primaryCtaLabel: 'ادامه / مشاهده',
         onPrimaryTap: () {
-          widget.onNavigateToTab?.call(2);
+          unawaited(_resumeActiveTimer(activeTimer.itemId, activeTimer.mode));
         },
       );
     }
 
-    final nextItem = _timelineItems.isNotEmpty ? _timelineItems.first : null;
-    if (nextItem != null) {
-      final title = nextItem['title']?.toString() ?? 'برنامه‌ی بعدی';
-      final timeStr = nextItem['scheduled_time']?.toString() ?? 'امروز';
-      final routineId = nextItem['routine_id']?.toString() ?? nextItem['id']?.toString();
-      return NextActionHeroData(
-        type: HeroPriorityType.overdueOrNextItem,
-        title: title,
-        subtitle: 'زمان: ${PersianDigits.convert(timeStr)}',
-        primaryCtaLabel: 'ثبت / شروع',
-        onPrimaryTap: () async {
-          if (routineId != null) {
-            final db = await DatabaseHelper.instance.database;
-            final rows = await db.query('routines', where: 'id = ?', whereArgs: [routineId], limit: 1);
-            if (rows.isNotEmpty) {
-              final r = Routine.fromMap(rows.first);
-              _showNiyyahSheet(r);
-            }
-          }
-        },
-      );
-    }
-
-    if (ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_medicine_enabled') && _needCheckin) {
+    // ── سطح ۲: هشدار دارویی واقعی (نه چکاین صبحگاهی!) ───────────────
+    // قبلاً این شرط به `_needCheckin` گره خورده بود که ربطی به دوز دارو ندارد.
+    if (ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_medicine_enabled') &&
+        _pendingMedDoses > 0) {
       return NextActionHeroData(
         type: HeroPriorityType.medicalSafety,
-        title: 'بررسی ایمنی دارویی و مصرف امروز',
-        subtitle: 'ثبت وضعیت مصرف داروهای فعال',
+        title: 'دوز داروی امروز هنوز کامل نشده',
+        subtitle:
+            '${PersianDigits.convert(_pendingMedDoses.toString())} دوز باقیمانده',
         primaryCtaLabel: 'ثبت مصرف دارو',
         isMedicalAlert: true,
         onPrimaryTap: () => _openModuleScreen('medicine'),
       );
     }
 
+    // ── سطح ۳: نزدیکترین کار انجامنشده — اول از Agenda یکپارچه، بعد از timeline روتینی ──
+    final now = DateTime.now();
+    final nowMinutes = now.hour * 60 + now.minute;
+
+    // ۳-الف) منبع واحد: DayAgendaService (همهٔ دامنهها: نماز، دارو، ورزش، درس، هدف...)
+    final pendingAgenda = _agendaItems
+        .where((i) =>
+            !i.isCompleted &&
+            i.hasValidTimeOfDay &&
+            i.domain != AgendaDomain.worshipDebt)
+        .toList()
+      ..sort((a, b) => a.timeOfDay!.compareTo(b.timeOfDay!));
+
+    if (pendingAgenda.isNotEmpty) {
+      // اولین آیتمِ هنوز-نرسیده؛ اگر همه گذشتهاند، اولین آیتمِ عقبافتاده.
+      AgendaItem chosen = pendingAgenda.first;
+      var foundUpcoming = false;
+      for (final item in pendingAgenda) {
+        final parts = item.timeOfDay!.split(':');
+        final m = (int.tryParse(parts[0]) ?? 0) * 60 + (int.tryParse(parts[1]) ?? 0);
+        if (m >= nowMinutes) {
+          chosen = item;
+          foundUpcoming = true;
+          break;
+        }
+      }
+      final timeLabel = PersianDigits.convert(chosen.timeOfDay!);
+      final subtitle = foundUpcoming
+          ? 'زمان: $timeLabel'
+          : 'عقبافتاده · $timeLabel';
+      return NextActionHeroData(
+        type: HeroPriorityType.overdueOrNextItem,
+        title: chosen.title,
+        subtitle: subtitle,
+        primaryCtaLabel: chosen.domain == AgendaDomain.routine ? 'ثبت / شروع' : 'مشاهده',
+        onPrimaryTap: () => _openAgendaItem(chosen),
+      );
+    }
+
+    // ۳-ب) fallback: هنوز P1 لود نشده → از timeline روتینی با فیلتر صحیح.
+    final pendingTasks = _timelineItems
+        .where((i) => i['isCompleted'] != true)
+        .toList();
+    if (pendingTasks.isNotEmpty) {
+      Map<String, dynamic> chosen = pendingTasks.first;
+      var foundUpcoming = false;
+      for (final item in pendingTasks) {
+        final t = item['time']?.toString() ?? '';
+        final parts = t.split(':');
+        if (parts.length == 2) {
+          final m = (int.tryParse(parts[0]) ?? 0) * 60 + (int.tryParse(parts[1]) ?? 0);
+          if (m >= nowMinutes) {
+            chosen = item;
+            foundUpcoming = true;
+            break;
+          }
+        }
+      }
+      final title = chosen['title']?.toString() ?? 'برنامهٔ بعدی';
+      final timeStr = chosen['time']?.toString() ?? '--:--';
+      final routine = chosen['routine'] as Routine?;
+      return NextActionHeroData(
+        type: HeroPriorityType.overdueOrNextItem,
+        title: title,
+        subtitle: foundUpcoming
+            ? 'زمان: ${PersianDigits.convert(timeStr)}'
+            : 'عقبافتاده · ${PersianDigits.convert(timeStr)}',
+        primaryCtaLabel: 'ثبت / شروع',
+        onPrimaryTap: () {
+          if (routine != null) _showNiyyahSheet(routine);
+        },
+      );
+    }
+
+    // ── سطح ۴: چکاین صبحگاهی ────────────────────────────────────────
     if (_needCheckin) {
       return NextActionHeroData(
         type: HeroPriorityType.morningCheckIn,
@@ -804,15 +980,49 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
       );
     }
 
+    // ── سطح ۵: حالت خالی صادقانه ─────────────────────────────────────
     return NextActionHeroData(
       type: HeroPriorityType.emptyState,
-      title: 'برنامه‌ای برای این زمان ثبت نشده است',
+      title: 'برنامهای برای این زمان ثبت نشده است',
       subtitle: 'با افزودن کار جدید، ریتم امروزتان را شکل دهید',
       primaryCtaLabel: 'افزودن برنامه',
       onPrimaryTap: () {
         UniversalPlannerSheet.show(context: context);
       },
     );
+  }
+
+  /// G-2: بازکردن آیتم Agenda بر اساس دامنهٔ آن (deep-link به ماژول مالک).
+  void _openAgendaItem(AgendaItem item) {
+    switch (item.domain) {
+      case AgendaDomain.routine:
+        final raw = item.meta['routine'];
+        if (raw is Map) {
+          final routine = Routine.fromMap(Map<String, dynamic>.from(raw));
+          _showNiyyahSheet(routine);
+          return;
+        }
+        widget.onNavigateToTab?.call(4);
+      case AgendaDomain.prayer:
+      case AgendaDomain.mustahab:
+      case AgendaDomain.worshipDebt:
+        _openModuleScreen('worship');
+      case AgendaDomain.medicine:
+        _openModuleScreen('medicine');
+      case AgendaDomain.sport:
+        _openModuleScreen('sports');
+      case AgendaDomain.course:
+        _openModuleScreen('courses');
+      case AgendaDomain.goalStep:
+        _openModuleScreen('goals');
+      case AgendaDomain.konkur:
+        _openModuleScreen('konkur');
+      case AgendaDomain.cycle:
+        _openModuleScreen('cycle');
+      case AgendaDomain.event:
+      case AgendaDomain.task:
+        widget.onNavigateToTab?.call(4);
+    }
   }
 
   void _showMoreSheet() {
@@ -1465,10 +1675,24 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     );
   }
 
+  /// G-4: هش پایدار FNV-1a — برخلاف hashCode دارت، بین اجراهای اپ ثابت میماند
+  /// و باعث نمیشود هشدار یکسان بعد از ریاستارت دوباره push شود.
+  static int _stableHash(String s) {
+    var h = 0x811c9dc5;
+    for (final c in s.codeUnits) {
+      h ^= c;
+      h = (h * 0x01000193) & 0x7fffffff;
+    }
+    return h;
+  }
+
   Future<void> _pushCriticalAlerts() async {
     final alerts = _engineOutput?.criticalAlerts ?? [];
+    final now = DateTime.now();
+    final dateStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     for (final alert in alerts) {
-      final dedupeKey = 'alert_${alert.hashCode}';
+      final dedupeKey = 'alert_${dateStr}_${_stableHash(alert)}';
       await CentralInboxService.push(
         category: InboxCategory.INSIGHT,
         sourceSystem: 'intelligence_engine',

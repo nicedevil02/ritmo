@@ -3,12 +3,14 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_countdown_widget.dart';
 import 'package:ritmo/features/today/presentation/widgets/realm_management_sheet.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 
 class ZoneCard extends StatelessWidget {
 
+  // G-9: [currentEnergyPercent] از نوع nullable است؛ null یعنی «انرژی ثبت نشده».
   const ZoneCard({
     super.key,
     required this.isDarkMode,
@@ -25,7 +27,7 @@ class ZoneCard extends StatelessWidget {
     required this.onRealmChanged,
   });
   final bool isDarkMode;
-  final double currentEnergyPercent;
+  final double? currentEnergyPercent;
   final String currentEnergyLabel;
   final String currentEnergyDesc;
   final Map<String, dynamic>? activeZone;
@@ -91,11 +93,12 @@ class ZoneCard extends StatelessWidget {
             : l10n.energyDescMedium;
 
     final realmName = isOutOfZone ? l10n.outOfRealm : activeZoneName!;
+    // G-9: بازهٔ زمانی قلمرو با ارقام فارسی نمایش داده میشود.
     final realmTimeRange = (activeZoneTimeRange == null ||
-            activeZoneTimeRange == 'بدون زمان‌بندی فعال' ||
+            activeZoneTimeRange == 'بدون زمانبندی فعال' ||
             activeZoneTimeRange == 'No active schedule')
         ? l10n.noActiveSchedule
-        : activeZoneTimeRange!;
+        : toPersianDigits(activeZoneTimeRange!);
 
     return Row(
       children: [
@@ -157,12 +160,17 @@ class ZoneCard extends StatelessWidget {
                           height: 48,
                           child: CustomPaint(
                             painter: _EnergyRingPainter(
-                              percentage: currentEnergyPercent,
+                              // G-9: در حالت ثبتنشده حلقه خالی (صفر) رسم میشود.
+                              percentage: currentEnergyPercent ?? 0,
                               colors: energyRingColors,
                             ),
                             child: Center(
                               child: Text(
-                                '${currentEnergyPercent.toInt()}٪',
+                                // G-9: ارقام فارسی + حالت صادقانهٔ «ثبتنشده»
+                                currentEnergyPercent == null
+                                    ? '—'
+                                    : toPersianDigits(
+                                        '${currentEnergyPercent!.toInt()}٪'),
                                 style: TextStyle(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w900,

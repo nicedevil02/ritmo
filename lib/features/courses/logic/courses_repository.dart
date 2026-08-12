@@ -221,7 +221,10 @@ class CoursesRepository {
         }
 
         final session = draft.copyWith(
-          id: draft.id.isEmpty ? 'sess_${now.millisecondsSinceEpoch}_${syncedCourse.id.hashCode}_$i' : draft.id,
+          // Always generate a fresh ID — draft IDs (e.g. 'draft_0') are only
+          // unique within one import session and collide across imports,
+          // which used to abort the whole transaction silently.
+          id: 'sess_${now.millisecondsSinceEpoch}_${syncedCourse.id.hashCode}_$i',
           courseId: syncedCourse.id,
           sessionNumber: i + 1,
           displayOrder: i + 1,
@@ -254,20 +257,24 @@ class CoursesRepository {
     if (existingCourse == null) return;
 
     final existingSessions = await getSessionsForCourse(updatedCourse.id);
+    // Completed AND skipped sessions are both "locked" — they cannot be removed,
+    // so shrinking below their combined count must be rejected up front.
     final completedSessionsCount = existingSessions.where((s) => s.isCompleted).length;
+    final skippedSessionsCount = existingSessions.where((s) => s.isSkipped).length;
+    final lockedSessionsCount = completedSessionsCount + skippedSessionsCount;
 
-    if (updatedCourse.totalSessions < completedSessionsCount) {
+    if (updatedCourse.totalSessions < lockedSessionsCount) {
       throw CourseValidationException(
-        'CANNOT_SHRINK_BELOW_COMPLETED',
-        'تعداد جلسات نمی‌تواند کمتر از جلسات انجام‌شده ($completedSessionsCount) باشد.',
+        'CANNOT_SHRINK_BELOW_LOCKED',
+        'تعداد جلسات نمی‌تواند کمتر از جلسات انجام‌شده یا ردشده ($lockedSessionsCount) باشد.',
       );
     }
 
+    // Reminder-only changes (preferredTime / reminderEnabled) must NOT trigger a
+    // date redistribution — reminders are rebuilt separately in step 4 below.
     final needsReschedule = existingCourse.weeklyTargetSessions != updatedCourse.weeklyTargetSessions ||
         !listEquals(existingCourse.preferredDays, updatedCourse.preferredDays) ||
-        existingCourse.totalSessions != updatedCourse.totalSessions ||
-        existingCourse.preferredTime != updatedCourse.preferredTime ||
-        existingCourse.reminderEnabled != updatedCourse.reminderEnabled;
+        existingCourse.totalSessions != updatedCourse.totalSessions;
 
     final alarmsToCancel = <String>[];
 
@@ -497,6 +504,11 @@ class CoursesRepository {
         {
           'completionStatus': SessionStatus.pending.dbValue,
           'completedAt': null,
+          // Clear completion artifacts so stale stats don't survive the undo.
+          // (User-written content like note/keyTakeaway/openQuestion is preserved.)
+          'actualDurationMinutes': null,
+          'understandingScore': null,
+          'needsReview': 0,
           'updatedAt': now.millisecondsSinceEpoch,
         },
         where: 'id = ?',
@@ -519,6 +531,20 @@ class CoursesRepository {
             whereArgs: [courseId],
           );
         }
+
+        // Keep linked goal progress in sync when un-completing (two-way).
+        if (course.linkedGoalId != null) {
+          final allSess = await txn.query('course_sessions', where: 'courseId = ?', whereArgs: [courseId]);
+          final doneSess = allSess.where((s) => s['completionStatus'] == SessionStatus.completed.dbValue).length;
+          final ratio = course.totalSessions > 0 ? (doneSess / course.totalSessions) : 0.0;
+          await txn.update(
+            'goals',
+            {'progressCache': ratio, 'updatedAt': now.millisecondsSinceEpoch},
+            where: 'id = ?',
+            whereArgs: [course.linkedGoalId],
+          );
+        }
+
         await _rebuildRemindersForCourse(txn, course);
       }
     });
@@ -599,6 +625,79 @@ class CoursesRepository {
     _fireEvent('SKIP', courseId: courseId, sessionId: sessionId, allSkipped: allSkipped);
   }
 
+  /// Batch-skip sessions in a single transaction with ONE reminder rebuild and
+  /// ONE alarm sync (instead of per-session cycles). Used by Recovery Mode prune.
+  Future<void> skipSessions(List<String> sessionIds, {String? reason}) async {
+    if (sessionIds.isEmpty) return;
+    final db = await _database;
+    final now = DateTime.now();
+    final alarmsToCancel = <String>[];
+    String? courseId;
+
+    await db.transaction((txn) async {
+      for (final sessionId in sessionIds) {
+        final sessionMaps = await txn.query('course_sessions', where: 'id = ?', whereArgs: [sessionId]);
+        if (sessionMaps.isEmpty) continue;
+        final session = CourseSession.fromMap(sessionMaps.first);
+        courseId = session.courseId;
+
+        await txn.update(
+          'course_sessions',
+          {
+            'completionStatus': SessionStatus.skipped.dbValue,
+            'skipReason': reason,
+            'completedAt': null,
+            'updatedAt': now.millisecondsSinceEpoch,
+          },
+          where: 'id = ?',
+          whereArgs: [sessionId],
+        );
+
+        final rems = await txn.query('pending_reminders', where: 'courseSessionId = ?', whereArgs: [sessionId]);
+        for (final r in rems) {
+          if (r['id'] != null) alarmsToCancel.add(r['id']! as String);
+        }
+        await txn.delete('pending_reminders', where: 'courseSessionId = ?', whereArgs: [sessionId]);
+      }
+
+      final cid = courseId;
+      if (cid != null) {
+        // Mirror skipSession: complete the course when nothing pending remains.
+        final remainingPending = await txn.query(
+          'course_sessions',
+          where: 'courseId = ? AND completionStatus = ?',
+          whereArgs: [cid, SessionStatus.pending.dbValue],
+        );
+        if (remainingPending.isEmpty) {
+          await txn.update(
+            'courses',
+            {
+              'status': CourseStatus.completed,
+              'completedAt': now.millisecondsSinceEpoch,
+              'updatedAt': now.millisecondsSinceEpoch,
+            },
+            where: 'id = ?',
+            whereArgs: [cid],
+          );
+        }
+
+        final courseMaps = await txn.query('courses', where: 'id = ?', whereArgs: [cid]);
+        if (courseMaps.isNotEmpty) {
+          final course = Course.fromMap(courseMaps.first);
+          final rebuildAlarms = await _rebuildRemindersForCourse(txn, course);
+          alarmsToCancel.addAll(rebuildAlarms);
+        }
+      }
+    });
+
+    for (final id in alarmsToCancel) {
+      await sl<AlarmPlatform>().cancelAlarm(id);
+    }
+
+    await syncCourseAlarms();
+    _fireEvent('SKIP_BATCH', courseId: courseId);
+  }
+
   /// Reorder sessions within a course & keep titles synchronized (Fixes D-17)
   Future<void> reorderSessions(String courseId, List<String> orderedSessionIds) async {
     final db = await _database;
@@ -608,15 +707,32 @@ class CoursesRepository {
       final courseMaps = await txn.query('courses', where: 'id = ?', whereArgs: [courseId]);
       final unitLabel = courseMaps.isNotEmpty ? Course.fromMap(courseMaps.first).unitLabelResolved : 'جلسه';
 
+      final sessionMaps = await txn.query('course_sessions', where: 'courseId = ?', whereArgs: [courseId]);
+      final sessionsById = <String, CourseSession>{
+        for (final m in sessionMaps) m['id'] as String: CourseSession.fromMap(m),
+      };
+
       for (var i = 0; i < orderedSessionIds.length; i++) {
         final sId = orderedSessionIds[i];
         final newNum = i + 1;
+        final existing = sessionsById[sId];
+
+        // Preserve custom / AI-imported titles; only refresh titles that still
+        // follow the default "<unitLabel> <number>" pattern.
+        String? newTitle;
+        final currentTitle = existing?.sessionTitle;
+        if (currentTitle == null ||
+            currentTitle.trim().isEmpty ||
+            currentTitle == '$unitLabel ${existing?.sessionNumber}') {
+          newTitle = '$unitLabel $newNum';
+        }
+
         await txn.update(
           'course_sessions',
           {
             'displayOrder': newNum,
             'sessionNumber': newNum,
-            'sessionTitle': '$unitLabel $newNum',
+            if (newTitle != null) 'sessionTitle': newTitle,
             'updatedAt': now,
           },
           where: 'id = ? AND courseId = ?',
@@ -721,9 +837,10 @@ class CoursesRepository {
 
       // D-15: Auto-reschedule pending sessions starting from today when resuming a course!
       if (status == CourseStatus.active) {
+        // Do NOT touch user-scheduled sessions — manual reschedules are sticky.
         final pendingMaps = await txn.query(
           'course_sessions',
-          where: 'courseId = ? AND completionStatus = ?',
+          where: 'courseId = ? AND completionStatus = ? AND isUserScheduled = 0',
           whereArgs: [courseId, SessionStatus.pending.dbValue],
           orderBy: 'displayOrder ASC, sessionNumber ASC',
         );
@@ -846,6 +963,29 @@ class CoursesRepository {
     final maps = await db.query('goals', columns: ['title'], where: 'id = ?', whereArgs: [goalId], limit: 1);
     if (maps.isNotEmpty) return maps.first['title'] as String?;
     return null;
+  }
+
+  /// Fetch linked goal title + progressCache for the course detail card
+  /// (fixes the always-zero "پیشرفت کل هدف" display).
+  Future<Map<String, dynamic>?> getLinkedGoalInfo(String goalId) async {
+    final db = await _database;
+    final maps = await db.query('goals', columns: ['title', 'progressCache'], where: 'id = ?', whereArgs: [goalId], limit: 1);
+    if (maps.isEmpty) return null;
+    return maps.first;
+  }
+
+  /// Persist the resolved state of a session's open question.
+  Future<void> setSessionQuestionResolved(String sessionId, bool resolved) async {
+    final db = await _database;
+    await db.update(
+      'course_sessions',
+      {
+        'questionResolved': resolved ? 1 : 0,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      },
+      where: 'id = ?',
+      whereArgs: [sessionId],
+    );
   }
 
   /// Remove raw SQL from UI: fetch active goals list safely

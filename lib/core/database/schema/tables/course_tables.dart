@@ -65,6 +65,7 @@ class CourseTables {
           needsReview INTEGER NOT NULL DEFAULT 0,
           keyTakeaway TEXT,
           openQuestion TEXT,
+          questionResolved INTEGER NOT NULL DEFAULT 0,
           sourceSessionId TEXT,
           skipReason TEXT,
           displayOrder INTEGER NOT NULL DEFAULT 0,

@@ -430,6 +430,7 @@ class CourseSession {
     this.needsReview = false,
     this.keyTakeaway,
     this.openQuestion,
+    this.questionResolved = false,
     this.sourceSessionId,
     this.skipReason,
     this.displayOrder = 0,
@@ -459,6 +460,7 @@ class CourseSession {
       needsReview: (map['needsReview'] as int? ?? 0) == 1,
       keyTakeaway: map['keyTakeaway'] as String?,
       openQuestion: map['openQuestion'] as String?,
+      questionResolved: (map['questionResolved'] as int? ?? 0) == 1,
       sourceSessionId: map['sourceSessionId'] as String?,
       skipReason: map['skipReason'] as String?,
       displayOrder: map['displayOrder'] as int? ?? 0,
@@ -487,6 +489,7 @@ class CourseSession {
   final bool needsReview;
   final String? keyTakeaway;
   final String? openQuestion;
+  final bool questionResolved;
   final String? sourceSessionId;
   final String? skipReason;
   final int displayOrder;
@@ -537,6 +540,7 @@ class CourseSession {
     bool keyTakeawaySet = false,
     String? openQuestion,
     bool openQuestionSet = false,
+    bool? questionResolved,
     String? sourceSessionId,
     bool sourceSessionIdSet = false,
     String? skipReason,
@@ -566,6 +570,7 @@ class CourseSession {
       needsReview: needsReview ?? this.needsReview,
       keyTakeaway: keyTakeawaySet ? keyTakeaway : (keyTakeaway ?? this.keyTakeaway),
       openQuestion: openQuestionSet ? openQuestion : (openQuestion ?? this.openQuestion),
+      questionResolved: questionResolved ?? this.questionResolved,
       sourceSessionId: sourceSessionIdSet ? sourceSessionId : (sourceSessionId ?? this.sourceSessionId),
       skipReason: skipReasonSet ? skipReason : (skipReason ?? this.skipReason),
       displayOrder: displayOrder ?? this.displayOrder,
@@ -598,6 +603,7 @@ class CourseSession {
       'needsReview': needsReview ? 1 : 0,
       'keyTakeaway': keyTakeaway,
       'openQuestion': openQuestion,
+      'questionResolved': questionResolved ? 1 : 0,
       'sourceSessionId': sourceSessionId,
       'skipReason': skipReason,
       'displayOrder': displayOrder,

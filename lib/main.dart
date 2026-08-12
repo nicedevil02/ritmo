@@ -24,6 +24,7 @@ import 'package:ritmo/core/theme/theme_preferences.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/widgets/restart_widget.dart';
+import 'package:ritmo/features/courses/logic/course_timer_service.dart';
 import 'package:ritmo/features/onboarding/logic/onboarding_gate.dart';
 import 'package:ritmo/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:ritmo/features/onboarding/presentation/splash_screen.dart';
@@ -163,6 +164,9 @@ class _RitmoAppState extends State<RitmoApp> {
 
       // WarmUp database tasks and sweep (BOOT-07)
       await DatabaseHelper.warmUp(db);
+
+      // Restore any in-progress course study timer (C8)
+      await CourseTimerService.instance.initOnAppStart();
 
       // Check if onboarding is completed via OnboardingGate
       _onboardingCompleted = await OnboardingGate.isCompleted(db);

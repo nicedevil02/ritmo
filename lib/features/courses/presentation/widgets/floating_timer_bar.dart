@@ -55,7 +55,18 @@ class _FloatingTimerBarState extends State<FloatingTimerBar> {
     if (_session?.id != timer.sessionId) {
       final c = await CoursesRepository.instance.getCourseById(timer.courseId);
       final sessions = await CoursesRepository.instance.getSessionsForCourse(timer.courseId);
-      final s = sessions.firstWhere((element) => element.id == timer.sessionId, orElse: () => sessions.first);
+
+      // The course (or its sessions) may have been deleted while the timer was
+      // running — stop the orphaned timer instead of crashing on sessions.first.
+      if (c == null || sessions.isEmpty) {
+        await CourseTimerService.instance.stopTimer();
+        return;
+      }
+
+      final s = sessions.firstWhere(
+        (element) => element.id == timer.sessionId,
+        orElse: () => sessions.first,
+      );
       if (mounted) {
         setState(() {
           _course = c;

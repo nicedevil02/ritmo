@@ -47,12 +47,13 @@ class CourseEnergyEngine {
         final scoreB = (ruleB == 'highEnergyOnly' ? 10 : 0) + diffB;
         return scoreB.compareTo(scoreA);
       } else if (energy == 'LOW') {
-        // Low energy prefers lower difficulty and shorter duration
+        // Low energy prefers lower difficulty first, then shorter duration.
+        // (Previously duration minutes dominated the score and difficulty was
+        // effectively ignored.)
+        if (diffA != diffB) return diffA.compareTo(diffB);
         final durA = a.estimatedDurationMinutes ?? courseA?.sessionDurationMinutes ?? 45;
         final durB = b.estimatedDurationMinutes ?? courseB?.sessionDurationMinutes ?? 45;
-        final scoreA = diffA * 10 + durA;
-        final scoreB = diffB * 10 + durB;
-        return scoreA.compareTo(scoreB);
+        return durA.compareTo(durB);
       } else {
         // Medium energy: default display order or session number
         return a.displayOrder.compareTo(b.displayOrder);

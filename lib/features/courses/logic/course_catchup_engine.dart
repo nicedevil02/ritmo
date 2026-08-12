@@ -68,8 +68,12 @@ class CourseCatchupEngine {
       suggestedSkips = overdueCount - 10;
     }
 
+    // Compute a realistic catch-up window instead of a hardcoded "۳ هفته".
+    final extraPerWeek = proposedTarget - course.weeklyTargetSessions;
+    final weeksToCatchUp = extraPerWeek > 0 ? (overdueCount / extraPerWeek).ceil() : overdueCount;
+
     final msg = overdueCount > 5
-        ? 'شما $overdueCount جلسه از برنامه عقب هستید. پیشنهاد می‌کنیم هدف هفتگی را به $proposedTarget جلسه افزایش دهید تا ظرف ۳ هفته جبران شود.'
+        ? 'شما $overdueCount جلسه از برنامه عقب هستید. پیشنهاد می‌کنیم هدف هفتگی را به $proposedTarget جلسه افزایش دهید تا ظرف حدود $weeksToCatchUp هفته جبران شود.'
         : 'شما $overdueCount جلسه عقب هستید. جلسات معوقه در روزهای آینده زمان‌بندی مجدد شدند.';
 
     return CatchupPlan(
@@ -86,15 +90,15 @@ class CourseCatchupEngine {
     final course = await CoursesRepository.instance.getCourseById(plan.courseId);
     if (course == null) return;
 
+    // A single updateCourse call redistributes pending sessions with the new
+    // weekly target AND rebuilds reminders exactly once. (The previous loop of
+    // per-session rescheduleSession calls caused O(N) full reminder rebuilds,
+    // N alarm syncs, and marked every session as user-scheduled.)
     final updatedCourse = course.copyWith(
       weeklyTargetSessions: plan.proposedWeeklyTarget,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
     );
 
     await CoursesRepository.instance.updateCourse(updatedCourse);
-
-    for (final session in plan.rescheduledSessions) {
-      await CoursesRepository.instance.rescheduleSession(session.id, session.plannedDate);
-    }
   }
 }

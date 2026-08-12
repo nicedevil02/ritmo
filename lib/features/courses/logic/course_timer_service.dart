@@ -28,13 +28,15 @@ class ActiveCourseTimer {
     return total > 28800 ? 28800 : total;
   }
 
+  /// Maps to the actual `course_active_timers` schema:
+  /// courseSessionId (PK), courseId, startedAt, pausedAccumulatedMs, state, targetDurationMinutes, updatedAt.
   Map<String, dynamic> toMap() {
     return {
+      'courseSessionId': sessionId,
       'courseId': courseId,
-      'sessionId': sessionId,
       'startedAt': startedAt,
-      'elapsedSecondsBeforePause': elapsedSecondsBeforePause,
-      'isPaused': isPaused ? 1 : 0,
+      'pausedAccumulatedMs': elapsedSecondsBeforePause * 1000,
+      'state': isPaused ? 'PAUSED' : 'RUNNING',
       'updatedAt': updatedAt,
     };
   }
@@ -42,10 +44,10 @@ class ActiveCourseTimer {
   factory ActiveCourseTimer.fromMap(Map<String, dynamic> map) {
     return ActiveCourseTimer(
       courseId: map['courseId'] as String,
-      sessionId: map['sessionId'] as String,
+      sessionId: map['courseSessionId'] as String,
       startedAt: map['startedAt'] as int,
-      elapsedSecondsBeforePause: map['elapsedSecondsBeforePause'] as int,
-      isPaused: (map['isPaused'] as int) == 1,
+      elapsedSecondsBeforePause: (map['pausedAccumulatedMs'] as int? ?? 0) ~/ 1000,
+      isPaused: (map['state'] as String? ?? 'RUNNING') == 'PAUSED',
       updatedAt: map['updatedAt'] as int,
     );
   }
@@ -91,7 +93,7 @@ class CourseTimerService extends ChangeNotifier {
           await db.update(
             'course_active_timers',
             timer.toMap(),
-            where: 'sessionId = ?',
+            where: 'courseSessionId = ?',
             whereArgs: [timer.sessionId],
           );
         }
@@ -145,7 +147,7 @@ class CourseTimerService extends ChangeNotifier {
     await db.update(
       'course_active_timers',
       updated.toMap(),
-      where: 'sessionId = ?',
+      where: 'courseSessionId = ?',
       whereArgs: [updated.sessionId],
     );
 
@@ -171,7 +173,7 @@ class CourseTimerService extends ChangeNotifier {
     await db.update(
       'course_active_timers',
       updated.toMap(),
-      where: 'sessionId = ?',
+      where: 'courseSessionId = ?',
       whereArgs: [updated.sessionId],
     );
 

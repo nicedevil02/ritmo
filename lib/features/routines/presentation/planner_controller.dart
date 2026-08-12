@@ -1368,7 +1368,12 @@ class PlannerController extends ChangeNotifier {
   }
 
   Future<void> save(BuildContext context) async {
-    if (delegateToOwnerModule(context)) {
+    // Only delegate to the owner module's dedicated creation sheet when
+    // creating a NEW item. When editing, always save through the strategy
+    // pipeline (PlannerStrategyRegistry / GenericStrategy) so module-owned
+    // categories like learning routines actually persist their edits
+    // instead of reopening CreateCourseSheet/etc. every time.
+    if (!isEditing && delegateToOwnerModule(context)) {
       return;
     }
 

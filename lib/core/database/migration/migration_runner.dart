@@ -35,6 +35,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v93_app_start
 import 'package:ritmo/core/database/migration/migrations/migration_v94_worship_debts_fix.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v95_movement_live_sessions.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v96_onboarding_starter_category.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v97_course_session_question_resolved.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -133,6 +134,7 @@ class MigrationRunner {
     MigrationV94(),
     MigrationV95(),
     MigrationV96OnboardingStarterCategory(), // Fix: recategorize onboarding starter habits out of fitness (sports)
+    MigrationV97SessionQuestionResolved(), // Persist resolved state of course session open questions
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

@@ -34,7 +34,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   bool _isLoading = true;
 
   Map<String, dynamic>? _linkedGoal;
-  final double _linkedGoalProgress = 0;
+  double _linkedGoalProgress = 0;
   final Set<String> _resolvedQuestionIds = {};
 
 
@@ -60,17 +60,25 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       // 2. Fetch sessions
       _sessions = await CoursesRepository.instance.getSessionsForCourse(_course.id);
 
-      // 3. Fetch linked goal title if exists
+      // 3. Fetch linked goal title + real progress if exists (fixes always-zero progress)
       if (_course.linkedGoalId != null) {
-        final goalTitle = await CoursesRepository.instance.getLinkedGoalTitle(_course.linkedGoalId!);
-        if (goalTitle != null) {
-          _linkedGoal = {'title': goalTitle};
+        final goalInfo = await CoursesRepository.instance.getLinkedGoalInfo(_course.linkedGoalId!);
+        if (goalInfo != null) {
+          _linkedGoal = {'title': goalInfo['title']};
+          _linkedGoalProgress = (goalInfo['progressCache'] as num?)?.toDouble() ?? 0.0;
         } else {
           _linkedGoal = null;
+          _linkedGoalProgress = 0;
         }
       } else {
         _linkedGoal = null;
+        _linkedGoalProgress = 0;
       }
+
+      // 4. Restore persisted resolved-question state (was screen-local and reset on reload)
+      _resolvedQuestionIds
+        ..clear()
+        ..addAll(_sessions.where((s) => s.questionResolved).map((s) => s.id));
     } catch (e) {
       debugPrint('Error loading course details: $e');
     }
@@ -708,7 +716,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             const SizedBox(height: 12),
           ],
 
-          // 2. Open questions (with resolved checkbox)
+          // 2. Open questions (with resolved checkbox, persisted via setSessionQuestionResolved)
           if (questions.isNotEmpty) ...[
             Text(
               '❓ سؤال‌های باز (${toPersianDigits(questions.length)})',
@@ -730,13 +738,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       value: isResolved,
                       activeColor: colors.success,
                       onChanged: (val) {
+                        final resolved = val == true;
                         setState(() {
-                          if (val == true) {
+                          if (resolved) {
                             _resolvedQuestionIds.add(s.id);
                           } else {
                             _resolvedQuestionIds.remove(s.id);
                           }
                         });
+                        CoursesRepository.instance.setSessionQuestionResolved(s.id, resolved);
                       },
                     ),
                     Expanded(

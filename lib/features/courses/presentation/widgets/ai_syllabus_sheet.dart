@@ -48,19 +48,38 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
       final decoded = jsonDecode(text);
       if (decoded is List) {
         for (var i = 0; i < decoded.length; i++) {
-          final item = decoded[i] as Map<String, dynamic>;
-          drafts.add(CourseSession(
-            id: 'draft_$i',
-            courseId: '',
-            sessionNumber: i + 1,
-            sessionTitle: item['title']?.toString() ?? 'جلسه ${i + 1}',
-            sectionTitle: item['section']?.toString(),
-            learningObjective: item['objective']?.toString(),
-            estimatedDurationMinutes: int.tryParse(item['duration']?.toString() ?? '45') ?? 45,
-            difficulty: int.tryParse(item['difficulty']?.toString() ?? '3') ?? 3,
-            createdAt: nowMs,
-            updatedAt: nowMs,
-          ));
+          final item = decoded[i];
+          // Support the two most common AI outputs: a list of plain strings
+          // (["جلسه ۱: ..."]) and a list of objects ([{"title": ...}]).
+          if (item is String) {
+            final t = item.trim();
+            if (t.isNotEmpty) {
+              drafts.add(CourseSession(
+                id: 'draft_$i',
+                courseId: '',
+                sessionNumber: i + 1,
+                sessionTitle: t,
+                estimatedDurationMinutes: 45,
+                createdAt: nowMs,
+                updatedAt: nowMs,
+              ));
+            }
+            continue;
+          }
+          if (item is Map) {
+            drafts.add(CourseSession(
+              id: 'draft_$i',
+              courseId: '',
+              sessionNumber: i + 1,
+              sessionTitle: item['title']?.toString() ?? 'جلسه ${i + 1}',
+              sectionTitle: item['section']?.toString(),
+              learningObjective: item['objective']?.toString(),
+              estimatedDurationMinutes: int.tryParse(item['duration']?.toString() ?? '45') ?? 45,
+              difficulty: int.tryParse(item['difficulty']?.toString() ?? '3') ?? 3,
+              createdAt: nowMs,
+              updatedAt: nowMs,
+            ));
+          }
         }
       }
     } catch (_) {
@@ -122,6 +141,14 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
       }
     } catch (e) {
       debugPrint('Error saving AI syllabus: $e');
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'خطا در ذخیره دوره. لطفاً دوباره تلاش کنید.',
+          icon: Icons.error_outline,
+          iconColor: Colors.red,
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

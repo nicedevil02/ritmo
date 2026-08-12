@@ -44,6 +44,13 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
     if (activeTimer != null && activeTimer.sessionId == widget.session.id) {
       _secondsElapsed = CourseTimerService.instance.currentElapsedSeconds;
       _isRunning = !activeTimer.isPaused;
+    } else if (activeTimer != null) {
+      // A timer for a DIFFERENT session is running — never silently discard it.
+      _secondsElapsed = 0;
+      _isRunning = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _promptActiveTimerConflict();
+      });
     } else {
       CourseTimerService.instance.startTimer(widget.course.id, widget.session.id);
       _secondsElapsed = 0;
@@ -55,6 +62,51 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
     }
 
     _startTimer();
+  }
+
+  Future<void> _promptActiveTimerConflict() async {
+    final colors = context.colors;
+    final startNew = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF16192E) : Colors.white,
+          title: Text(
+            'تایمر جلسه دیگری در حال اجراست',
+            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16, color: colors.textPrimary),
+          ),
+          content: Text(
+            'یک تایمر مطالعه برای جلسه دیگری فعال است. با شروع این جلسه، تایمر قبلی پاک می‌شود. ادامه می‌دهید؟',
+            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
+              child: const Text('شروع این جلسه', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+    if (startNew == true) {
+      await CourseTimerService.instance.startTimer(widget.course.id, widget.session.id);
+      setState(() {
+        _secondsElapsed = 0;
+        _isRunning = true;
+      });
+      _pulseController.repeat(reverse: true);
+    } else {
+      Navigator.pop(context);
+    }
   }
 
   void _startTimer() {

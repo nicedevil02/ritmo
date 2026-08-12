@@ -208,12 +208,13 @@ class _RecoveryModeSheetState extends State<RecoveryModeSheet> {
         final updated = widget.course.copyWith(targetEndDate: targetDateStr);
         await CoursesRepository.instance.updateCourse(updated);
       } else if (_selectedPlanIndex == 2) {
-        // Prune non-learn sessions
-        for (final s in widget.sessions) {
-          if (!s.isCompleted && !s.isSkipped && s.activityKind != CourseActivityKind.learn) {
-            await CoursesRepository.instance.skipSession(s.id, reason: 'حالت جبران: غربال sessions غیر‌اصلی');
-          }
-        }
+        // Prune non-learn sessions — batched: one transaction, one reminder
+        // rebuild, one alarm sync (instead of per-session cycles).
+        final toSkip = widget.sessions
+            .where((s) => !s.isCompleted && !s.isSkipped && s.activityKind != CourseActivityKind.learn)
+            .map((s) => s.id)
+            .toList();
+        await CoursesRepository.instance.skipSessions(toSkip, reason: 'حالت جبران: غربال جلسات غیراصلی');
       }
 
       if (mounted) {

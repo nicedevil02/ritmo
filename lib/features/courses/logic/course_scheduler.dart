@@ -54,7 +54,7 @@ class CourseScheduler {
     }
 
     final normalizedDays = CourseValidator.normalizePreferredDays(preferredDays);
-    final effectiveWeeklyTarget = preferredDays.isNotEmpty
+    final effectiveWeeklyTarget = normalizedDays.isNotEmpty
         ? (weeklyTarget > normalizedDays.length ? normalizedDays.length : weeklyTarget)
         : weeklyTarget;
 

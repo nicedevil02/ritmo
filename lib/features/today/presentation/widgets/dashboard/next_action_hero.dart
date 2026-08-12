@@ -209,7 +209,7 @@ class NextActionHero extends StatelessWidget {
     return switch (type) {
       HeroPriorityType.activeTimer => Icons.timer_outlined,
       HeroPriorityType.overdueOrNextItem => CupertinoIcons.play_fill,
-      HeroPriorityType.medicalSafety => CupertinoIcons.cross_fill,
+      HeroPriorityType.medicalSafety => CupertinoIcons.cross,
       HeroPriorityType.morningCheckIn => CupertinoIcons.sunrise_fill,
       HeroPriorityType.emptyState => CupertinoIcons.leaf_arrow_circlepath,
     };

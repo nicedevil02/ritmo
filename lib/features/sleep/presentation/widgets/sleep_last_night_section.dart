@@ -1,10 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
-import 'package:sqflite/sqflite.dart';
 
 class SleepLastNightSection extends StatefulWidget {
 
@@ -25,48 +22,6 @@ class SleepLastNightSection extends StatefulWidget {
 }
 
 class _SleepLastNightSectionState extends State<SleepLastNightSection> {
-  bool _winddownEnabled = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _winddownEnabled = widget.isWinddownEnabled;
-  }
-
-  @override
-  void didUpdateWidget(covariant SleepLastNightSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.isWinddownEnabled != widget.isWinddownEnabled) {
-      _winddownEnabled = widget.isWinddownEnabled;
-    }
-  }
-
-  Future<void> _toggleWinddown(bool val) async {
-    setState(() {
-      _winddownEnabled = val;
-    });
-
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
-
-      await db.insert(
-        'app_settings',
-        {
-          'key': 'sleep_winddown_reminder',
-          'value': val.toString(),
-          'updatedAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-
-      await HapticFeedback.selectionClick();
-      widget.onRefresh();
-    } catch (e) {
-      debugPrint('Error saving winddown setting: $e');
-    }
-  }
-
   String _formatEpochTime(int? epochMs) {
     if (epochMs == null) return '--:--';
     final dt = DateTime.fromMillisecondsSinceEpoch(epochMs);
@@ -78,11 +33,11 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
     final dt = DateTime.fromMillisecondsSinceEpoch(log.bedtimeAt!);
     final targetMin = target.bedtimeHour * 60 + target.bedtimeMinute;
     final actualMin = dt.hour * 60 + dt.minute;
-    
+
     var diff = actualMin - targetMin;
     if (diff > 720) diff -= 1440;
     if (diff < -720) diff += 1440;
-    
+
     if (diff.abs() <= 5) return 'دقیقاً سر وقت';
     if (diff > 0) return '${diff.abs()} دقیقه دیرتر از هدف';
     return '${diff.abs()} دقیقه زودتر از هدف';
@@ -93,11 +48,11 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
     final dt = DateTime.fromMillisecondsSinceEpoch(log.wakeAt!);
     final targetMin = target.wakeHour * 60 + target.wakeMinute;
     final actualMin = dt.hour * 60 + dt.minute;
-    
+
     var diff = actualMin - targetMin;
     if (diff > 720) diff -= 1440;
     if (diff < -720) diff += 1440;
-    
+
     if (diff.abs() <= 5) return 'دقیقاً سر وقت';
     if (diff > 0) return '${diff.abs()} دقیقه دیرتر از هدف';
     return '${diff.abs()} دقیقه زودتر از هدف';
@@ -203,7 +158,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
                     style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Bedtime comparison
                   _buildComparisonRow(
                     title: 'خوابیدن:',
@@ -212,7 +167,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
                     deviation: _getBedtimeDeviationText(log, widget.target),
                     colors: colors,
                   ),
-                  
+
                   const SizedBox(height: 16),
                   const Divider(color: Colors.white10),
                   const SizedBox(height: 16),
@@ -260,19 +215,32 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
                   const SizedBox(height: 12),
                   const Divider(color: Colors.white10),
                   const SizedBox(height: 8),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text(
-                      'یادآور پیش‌خواب (Wind-down)',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white),
-                    ),
-                    subtitle: Text(
-                      'ارسال اعلان ملایم برای آماده‌شدن جهت خواب',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary),
-                    ),
-                    value: _winddownEnabled,
-                    activeThumbColor: const Color(0xff8B5CF6),
-                    onChanged: _toggleWinddown,
+                  // قدم صفر: یادآور پیش‌خواب فقط از «تنظیم اهداف خواب» مدیریت می‌شود؛
+                  // اینجا فقط وضعیت، به‌صورت فقط‌خواندنی نمایش داده می‌شود.
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'یادآور پیش‌خواب:',
+                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                      ),
+                      Text(
+                        widget.isWinddownEnabled ? 'فعال' : 'غیرفعال',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: widget.isWinddownEnabled
+                              ? const Color(0xff8B5CF6)
+                              : Colors.white54,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'تغییر از «تنظیم اهداف خواب»',
+                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary),
                   ),
                 ],
               ),

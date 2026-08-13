@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/services/sleep_winddown_reminder_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
 import 'package:sqflite/sqflite.dart';
@@ -51,12 +52,12 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
     // Difference between bedtime and wake time
     final btMin = _bedtime.hour * 60 + _bedtime.minute;
     final wtMin = _wakeTime.hour * 60 + _wakeTime.minute;
-    
+
     var diff = wtMin - btMin;
     if (diff <= 0) {
       diff += 1440; // Sleep crosses midnight
     }
-    
+
     setState(() {
       _targetDuration = diff;
     });
@@ -127,6 +128,9 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
+
+      // قدم صفر: یادآور پیش‌خواب حالا واقعاً خوانده و زمان‌بندی می‌شود
+      await SleepWinddownReminderService.syncFromSettings();
 
       // Fire event to invalidate cache
       RitmoEventBus().fire(RitmoEvent(

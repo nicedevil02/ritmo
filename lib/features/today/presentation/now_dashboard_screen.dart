@@ -32,10 +32,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_date.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
-import 'package:ritmo/features/assistant/logic/day_plan_composer.dart';
-import 'package:ritmo/features/assistant/logic/day_plan_template_service.dart';
 import 'package:ritmo/features/assistant/logic/mid_day_replan_service.dart';
-import 'package:ritmo/features/assistant/models/day_plan_models.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/ai_day_planner_preview_sheet.dart';
 import 'package:ritmo/features/courses/presentation/courses_screen.dart';
 import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
@@ -57,6 +54,7 @@ import 'package:ritmo/features/today/presentation/dashboard_controller.dart';
 import 'package:ritmo/features/today/presentation/home_focus_ranker.dart';
 import 'package:ritmo/features/notes/presentation/widgets/today_experience_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/ai_day_planner_launcher.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/assistant_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_header.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_module_summary.dart';
@@ -558,10 +556,12 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
   /// میان‌برهای صفحهٔ خانه.
   ///
-  /// ردیف عمداً ثابت است: هر میان‌بر همیشه سر جای خودش میماند تا حافظهٔ عضلانی
-  /// کاربر حفظ شود. فوریت با هایلایت اعلام میشود، نه با پنهانکردن همسایهها.
-  /// تنها استثنای قاعدهٔ «یک مقصد، یک ورودی» دستیار است که تب اختصاصی در داک دارد.
-  /// نوار افقی اسکرول میشود، پس تعداد میان‌برها محدودیت فضایی ندارد.
+  /// ردیف عمداً ثابت است: هر میان‌بر همیشه سر جای خودش می‌ماند تا حافظهٔ عضلانی
+  /// کاربر حفظ شود. فوریت با هایلایت اعلام می‌شود، نه با پنهان‌کردن همسایه‌ها —
+  /// چون نوار افقی اسکرول می‌شود و تعداد میان‌برها هیچوقت محدودیت فضایی نداشته.
+  ///
+  /// تنها استثنای قاعدهٔ «یک مقصد، یک ورودی» دستیار است که تب اختصاصی در داک
+  /// پایین دارد و کارت بریفینگش هم پایین صفحه هست.
   List<HomeQuickAction> _quickActions(RitmoColors colors, bool isDarkMode) {
     return [
       HomeQuickAction(
@@ -599,7 +599,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         label: 'برنامه‌ریز هوشمند',
         icon: CupertinoIcons.sparkles,
         color: colors.reflectionAccent,
-        onTap: _openAiDayPlanner,
+        onTap: () => AiDayPlannerLauncher.open(
+          context,
+          onSaved: _loadDashboardData,
+        ),
       ),
       HomeQuickAction(
         label: 'مدیریت انرژی',
@@ -1493,43 +1496,152 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     }
   }
 
-  /// «برنامه‌ریز هوشمند» — کاربر روزش را در چند جمله تعریف میکند، ریتمو با
-  /// درنظرگرفتن برنامههای موجود پیشنویس میسازد و همان پیشنمایش قابلویرایش
-  /// دستیار باز میشود. اگر کاربر به یکی از قالبهای ذخیرهشده اشاره کند،
-  /// همان قالب روی روز هدف مینشیند.
-  Future<void> _openAiDayPlanner() async {
-    final controller = TextEditingController();
+  Future<void> _dismissReplanSuggestion() async {
+    await MidDayReplanService.instance.recordUserRejected();
+    if (!mounted) return;
+    setState(() {
+      _showReplanBanner = false;
+    });
+    RitmoToast.show(context, 'پیشنهاد رد شد.');
+  }
 
-    final narration = await showDialog<String>(
+  void _openReflectionSheet() {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) {
-        final colors = ctx.colors;
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(RitmoRadius.hero),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  CupertinoIcons.sparkles,
-                  size: 20,
-                  color: colors.reflectionAccent,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'برنامه‌ریز هوشمند',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DailyReflectionSheet(
+        onSaved: () {
+          final now = DateTime.now();
+          final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+          CentralInboxService.markActionedForEntity('system', 'reflection_$dateStr');
+          _loadDashboardData();
+        },
+      ),
+    );
+  }
+
+  Future<void> _dismissReflection() async {
+    final db = await DatabaseHelper.instance.database;
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    await db.insert(
+      'app_settings',
+      {
+        'key': 'dismissed_reflection_date',
+        'value': todayStr,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    await HapticFeedback.lightImpact();
+    final now = DateTime.now();
+    final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    await CentralInboxService.markActionedForEntity('system', 'reflection_$dateStr');
+    if (!mounted) return;
+    setState(() {
+      _reflectionDismissed = true;
+    });
+    await _loadDashboardData();
+  }
+
+  /// G-4: هش پایدار FNV-1a — برخلاف hashCode دارت، بین اجراهای اپ ثابت میماند
+  /// و باعث نمیشود هشدار یکسان بعد از ریاستارت دوباره push شود.
+  static int _stableHash(String s) {
+    var h = 0x811c9dc5;
+    for (final c in s.codeUnits) {
+      h ^= c;
+      h = (h * 0x01000193) & 0x7fffffff;
+    }
+    return h;
+  }
+
+  Future<void> _pushCriticalAlerts() async {
+    final alerts = _engineOutput?.criticalAlerts ?? [];
+    final now = DateTime.now();
+    final dateStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    for (final alert in alerts) {
+      final dedupeKey = 'alert_${dateStr}_${_stableHash(alert)}';
+      await CentralInboxService.push(
+        category: InboxCategory.INSIGHT,
+        sourceSystem: 'intelligence_engine',
+        entityId: dedupeKey,
+        eventType: 'critical_alert',
+        title: 'هشدار سیستم',
+        body: alert,
+        priority: 2,
+        linkModule: 'insights',
+        linkAction: 'view_alerts',
+      );
+    }
+  }
+
+  Future<void> _pushCheckinsAndReflections() async {
+    final now = DateTime.now();
+    final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    
+    if (_needCheckin) {
+      final dedupeKey = 'checkin_$dateStr';
+      await CentralInboxService.push(
+        category: InboxCategory.REMINDER,
+        sourceSystem: 'system',
+        entityId: dedupeKey,
+        eventType: 'morning_checkin',
+        title: 'ارزیابی صبحگاهی 🌅',
+        body: 'روز خود را با ثبت ارزیابی صبحگاهی آغاز کنید تا وضعیت انرژی شما محاسبه شود.',
+        priority: 1,
+        linkModule: 'home',
+        linkAction: 'open_checkin',
+        dateBucket: dateStr,
+      );
+    }
+    
+    final reflectionAvailable = now.hour >= 22 && !_hasReflection && !_reflectionDismissed;
+    if (reflectionAvailable) {
+      final dedupeKey = 'reflection_$dateStr';
+      await CentralInboxService.push(
+        category: InboxCategory.REMINDER,
+        sourceSystem: 'system',
+        entityId: dedupeKey,
+        eventType: 'daily_reflection',
+        title: 'بازتاب روزانه 🌌',
+        body: 'زمان مناسبی برای ثبت بازخورد روز و تحلیل فعالیت‌هاست.',
+        priority: 1,
+        linkModule: 'home',
+        linkAction: 'open_reflection',
+        dateBucket: dateStr,
+      );
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SLIVER DELEGATES
+// ---------------------------------------------------------------------------
+
+/// هدر چسبان صفحهٔ خانه با ارتفاع ثابت؛ وضعیت «اسکرولشده» را به سازنده میدهد
+/// تا بتواند شیشهٔ مات و خط جداکننده را نرم روشن/خاموش کند.
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _StickyHeaderDelegate({required this.height, required this.builder});
+
+  final double height;
+  final Widget Function(BuildContext context, bool isScrolled) builder;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox(
+      height: height,
+      child: builder(context, shrinkOffset > 4 || overlapsContent),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyHeaderDelegate oldDelegate) => true;
+}

@@ -17,8 +17,17 @@ class HealthInsightsPage extends StatefulWidget {
 }
 
 class _HealthInsightsPageState extends State<HealthInsightsPage> {
+  /// Adherence window used by [HealthEngine]; kept in sync so the card's empty
+  /// state and the engine's numbers always describe the same period.
+  static const int _adherenceWindowDays = 30;
+
+  /// Statuses that mean "this dose is settled". A PENDING row is a dose that has
+  /// not come due yet, so it is neither adherence nor a miss.
+  static const Set<String> _resolvedDoseStatuses = {'TAKEN', 'SKIPPED', 'MISSED'};
+
   bool _isLoading = true;
   HealthEngineOutput? _engineOutput;
+  bool _hasAdherenceData = false;
 
   @override
   void initState() {
@@ -63,10 +72,12 @@ class _HealthInsightsPageState extends State<HealthInsightsPage> {
       );
 
       final engineOutput = HealthEngine.calculateSync(engineInput);
+      final hasAdherenceData = _countResolvedDoses(medLogs) > 0;
 
       if (mounted) {
         setState(() {
           _engineOutput = engineOutput;
+          _hasAdherenceData = hasAdherenceData;
           _isLoading = false;
         });
       }
@@ -78,6 +89,24 @@ class _HealthInsightsPageState extends State<HealthInsightsPage> {
         });
       }
     }
+  }
+
+  /// MED-06: doses that already came due and reached a final state inside the
+  /// adherence window. Zero of them means "nothing to measure yet", not "0٪
+  /// adherence", and the card has to say so instead of showing an empty red ring.
+  int _countResolvedDoses(List<MedicationLog> logs) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final cutoffMs = today.subtract(const Duration(days: _adherenceWindowDays)).millisecondsSinceEpoch;
+    final horizonMs = today.add(const Duration(days: 1)).millisecondsSinceEpoch;
+
+    return logs.where((log) {
+      // The scheduled slot is the dose's identity in time; createdAt is only a
+      // fallback for legacy rows written before scheduledTime was populated.
+      final ts = log.scheduledTime ?? log.createdAt;
+      if (ts < cutoffMs || ts >= horizonMs) return false;
+      return _resolvedDoseStatuses.contains(log.status);
+    }).length;
   }
 
   void _openDoctorVisitSummarySheet() {
@@ -147,7 +176,10 @@ class _HealthInsightsPageState extends State<HealthInsightsPage> {
             : ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  AdherenceCard(stats: _engineOutput!.adherence),
+                  AdherenceCard(
+                    stats: _engineOutput!.adherence,
+                    hasData: _hasAdherenceData,
+                  ),
                   const SizedBox(height: 16),
                   HealthTrendsSection(trends: _engineOutput!.trends),
                   const SizedBox(height: 16),

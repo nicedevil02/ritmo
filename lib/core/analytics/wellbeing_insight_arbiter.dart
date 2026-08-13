@@ -163,6 +163,21 @@ class WellbeingInsightArbiter {
   List<WellbeingInsight> _lastNight(WellbeingInsightInput input) {
     final night = input.sleep?.lastNight;
     if (night == null) {
+      if (input.sleepLogCount == 0) {
+        return [
+          WellbeingInsight(
+            kind: WellbeingInsightKind.lastNightSleep,
+            maturity: WellbeingInsightMaturity.growing,
+            title: 'خواب هنوز وارد ریتم نشده',
+            body: 'اولین ثبت خواب، شاخص و روایت امروز را روشن می‌کند.',
+            score: 0.28,
+            have: 0,
+            need: 1,
+            action: WellbeingInsightAction.logSleep,
+            actionLabel: 'ثبت خواب دیشب',
+          ),
+        ];
+      }
       return [
         WellbeingInsight(
           kind: WellbeingInsightKind.lastNightSleep,

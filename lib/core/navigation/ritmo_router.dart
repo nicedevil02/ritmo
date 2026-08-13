@@ -16,20 +16,20 @@ enum RitmoRouteKind { tab, screen, moduleEntry }
 /// مقصدِ حل‌شدهٔ یک مسیر — از ناوبری واقعی جداست تا بتوان آن را بدون ویجت
 /// تست کرد (قدم ۳ سند «مسیر خواب»).
 class RitmoRouteTarget {
-  const RitmoRouteTarget._({
+  RitmoRouteTarget._({
     required this.kind,
     this.tabIndex,
     this.builder,
     this.moduleOpener,
   });
 
-  const RitmoRouteTarget.tab(int tabIndex)
+  RitmoRouteTarget.tab(int tabIndex)
       : this._(kind: RitmoRouteKind.tab, tabIndex: tabIndex);
 
-  const RitmoRouteTarget.screen(WidgetBuilder builder)
+  RitmoRouteTarget.screen(WidgetBuilder builder)
       : this._(kind: RitmoRouteKind.screen, builder: builder);
 
-  const RitmoRouteTarget.module(Future<void> Function(BuildContext) opener)
+  RitmoRouteTarget.module(Future<void> Function(BuildContext) opener)
       : this._(kind: RitmoRouteKind.moduleEntry, moduleOpener: opener);
 
   final RitmoRouteKind kind;
@@ -73,46 +73,31 @@ class RitmoRouter {
     if (r.isEmpty) return null;
 
     // تب‌ها (حالت full: ۰ سیستم‌ها / ۱ بینش‌ها / ۲ امروز / ۳ دستیار / ۴ تقویم)
-    if (r == '/' || r == '/today') {
-      return const RitmoRouteTarget.tab(2);
-    }
-    if (r == '/systems' || r == '/system') {
-      return const RitmoRouteTarget.tab(0);
-    }
-    if (r == '/insights' || r == '/reports') {
-      return const RitmoRouteTarget.tab(1);
-    }
-    if (r == '/routines' || r == '/routine') {
-      return const RitmoRouteTarget.tab(3);
-    }
-    if (r == '/calendar') {
-      return const RitmoRouteTarget.tab(4);
-    }
+    if (r == '/' || r == '/today') return RitmoRouteTarget.tab(2);
+    if (r == '/systems' || r == '/system') return RitmoRouteTarget.tab(0);
+    if (r == '/insights' || r == '/reports') return RitmoRouteTarget.tab(1);
+    if (r == '/routines' || r == '/routine') return RitmoRouteTarget.tab(3);
+    if (r == '/calendar') return RitmoRouteTarget.tab(4);
 
     // صفحه‌ها
     if (r == '/goals' || r == '/goal') {
-      return const RitmoRouteTarget.screen(
-          _ConstScreenBuilder(GoalsScreen()).call);
+      return RitmoRouteTarget.screen((_) => const GoalsScreen());
     }
     if (r == '/sports' || r == '/sport') {
-      return const RitmoRouteTarget.screen(
-          _ConstScreenBuilder(SSHomeDashboardScreen()).call);
+      return RitmoRouteTarget.screen((_) => const SSHomeDashboardScreen());
     }
     if (r == '/health') {
-      return const RitmoRouteTarget.screen(
-          _ConstScreenBuilder(HealthScreen()).call);
+      return RitmoRouteTarget.screen((_) => const HealthScreen());
     }
     if (r == '/worship') {
-      return const RitmoRouteTarget.screen(
-          _ConstScreenBuilder(WorshipScreen()).call);
+      return RitmoRouteTarget.screen((_) => const WorshipScreen());
     }
 
     // بخش خواب در «حال و تعادل» زندگی می‌کند؛ «مسیر پله‌ها» هم بلوکی درون
     // همان بخش است (اسکرول به بلوک در فاز A)، پس هر دو به یک مقصد می‌رسند.
     if (r == '/sleep' || r == '/sleep/journey') {
-      return const RitmoRouteTarget.screen(_ConstScreenBuilder(
-              WellbeingScreen(initialSection: WellbeingSection.sleep))
-          .call);
+      return RitmoRouteTarget.screen((_) =>
+          const WellbeingScreen(initialSection: WellbeingSection.sleep));
     }
 
     // چرخه: کلیدواژه‌های فارسی/انگلیسی (مثل رفتار قبلی registry)
@@ -120,15 +105,14 @@ class RitmoRouter {
         r.contains('period') ||
         r.contains('چرخه') ||
         r.contains('پریود')) {
-      return const RitmoRouteTarget.screen(
-          _ConstScreenBuilder(CycleScreen()).call);
+      return RitmoRouteTarget.screen((_) => const CycleScreen());
     }
 
     // ماژول‌های با ورودی اختصاصی
     if (r == '/konkur' || r == '/study') {
-      return RitmoRouteTarget.module(
-        (context) async => StudyModuleEntry.open(context),
-      );
+      return RitmoRouteTarget.module((context) async {
+        await StudyModuleEntry.open(context);
+      });
     }
 
     return null;
@@ -165,12 +149,4 @@ class RitmoRouter {
         return true;
     }
   }
-}
-
-/// سازندهٔ constِ WidgetBuilder از یک ویجت const، تا resolve بتواند const باشد.
-class _ConstScreenBuilder {
-  const _ConstScreenBuilder(this._widget);
-  final Widget _widget;
-
-  Widget call(BuildContext _) => _widget;
 }

@@ -23,7 +23,14 @@ enum WellbeingInsightKind {
   indexDriver,
   tripleChain,
   loopOutcome,
+  // قدم ۱: kindهای برنامهٔ خواب؛ تولیدکنندهٔ نامزدشان در فاز A می‌آید
+  sleepPlanStep,
+  sleepGoalMismatch,
 }
+
+/// گروه انحصار روایت‌ها: در هر روز حداکثر یک روایت از هر گروه به مرحلهٔ
+/// نهایی می‌رسد (سند «مسیر خواب»، بخش ۳.ج — جلوگیری از سیل روایت‌های خواب).
+enum InsightGroup { sleep, energyMood, reflection, balance, index }
 
 enum WellbeingInsightMaturity { growing, ready }
 
@@ -47,6 +54,8 @@ class WellbeingInsight {
     required this.need,
     this.action,
     this.actionLabel,
+    this.timeWindow,
+    this.group,
   });
 
   final WellbeingInsightKind kind;
@@ -58,6 +67,17 @@ class WellbeingInsight {
   final int need;
   final WellbeingInsightAction? action;
   final String? actionLabel;
+
+  /// پنجرهٔ زمانی نمایش به «دقیقه از روز». اگر fromMin > toMin باشد، پنجره از
+  /// نیمه‌شب می‌گذرد (مثل 1260→120 یعنی ۲۱:۰۰ تا ۰۲:۰۰). null یعنی بدون محدودیت.
+  final ({int fromMin, int toMin})? timeWindow;
+
+  /// گروه انحصار. اگر null باشد از روی [kind] تعیین می‌شود؛ loopOutcome هنگام
+  /// ساخت، گروه روایت قبلی خودش را می‌گیرد.
+  final InsightGroup? group;
+
+  InsightGroup get effectiveGroup =>
+      group ?? WellbeingInsightArbiter.groupOf(kind);
 
   String get id => kind.name;
 
@@ -151,6 +171,8 @@ class WellbeingInsightArbiter {
 
   static Map<String, double> metricByKind(WellbeingInsightInput input) {
     final out = <String, double>{};
+    // نکتهٔ فاز A: sleepPlanStep باید با adherence7d از SleepProgramEngine
+    // پوشش داده شود، وگرنه WellbeingInsightLoop برای این kind فعال نمی‌شود.
     final balanceHours = input.sleep?.sleepBalanceHours;
     if (balanceHours != null) {
       out[WellbeingInsightKind.lastNightSleep.name] = balanceHours;
@@ -186,17 +208,74 @@ class WellbeingInsightArbiter {
     required List<WellbeingInsight> growing,
     required DateTime now,
   }) {
+    final minuteOfDay = now.hour * 60 + now.minute;
     if (ready.isNotEmpty) {
-      final ranked = [...ready]..sort(_byScoreThenKind);
-      final top = ranked.first.score;
-      final tied = ranked.where((c) => top - c.score <= nearTieDelta).toList();
-      if (tied.length == 1) return tied.first;
-      final day = DateTime(now.year, now.month, now.day).difference(DateTime(now.year)).inDays;
-      return tied[day % tied.length];
+      // نامزدهایی که timeWindow دارند فقط داخل پنجرهٔ خودشان رقابت می‌کنند.
+      final inWindow = ready
+          .where((c) => isInTimeWindow(c.timeWindow, minuteOfDay))
+          .toList();
+      if (inWindow.isNotEmpty) {
+        final ranked = [...inWindow]..sort(_byScoreThenKind);
+        // گروه انحصار: از هر گروه فقط قوی‌ترین نامزد به مرحلهٔ نهایی می‌رسد.
+        final bestByGroup = <InsightGroup, WellbeingInsight>{};
+        for (final c in ranked) {
+          bestByGroup.putIfAbsent(c.effectiveGroup, () => c);
+        }
+        final finalists = bestByGroup.values.toList()..sort(_byScoreThenKind);
+        final top = finalists.first.score;
+        final tied = finalists.where((c) => top - c.score <= nearTieDelta).toList();
+        if (tied.length == 1) return tied.first;
+        final day = DateTime(now.year, now.month, now.day).difference(DateTime(now.year)).inDays;
+        return tied[day % tied.length];
+      }
+      // همهٔ نامزدهای آماده بیرون از پنجرهٔ زمانی خودشان هستند.
     }
 
-    final viableGrowing = growing.where((c) => c.have > 0).toList()..sort(_byScoreThenKind);
+    final viableGrowing = growing
+        .where((c) => c.have > 0 && isInTimeWindow(c.timeWindow, minuteOfDay))
+        .toList()
+      ..sort(_byScoreThenKind);
     return viableGrowing.isEmpty ? null : viableGrowing.first;
+  }
+
+  /// آیا [minuteOfDay] داخل پنجره است؟ پنجرهٔ عبوری از نیمه‌شب پشتیبانی می‌شود.
+  static bool isInTimeWindow(
+      ({int fromMin, int toMin})? window, int minuteOfDay) {
+    if (window == null) return true;
+    return window.fromMin <= window.toMin
+        ? (minuteOfDay >= window.fromMin && minuteOfDay <= window.toMin)
+        : (minuteOfDay >= window.fromMin || minuteOfDay <= window.toMin);
+  }
+
+  /// نگاشت kind به گروه انحصار.
+  static InsightGroup groupOf(WellbeingInsightKind kind) {
+    switch (kind) {
+      case WellbeingInsightKind.lastNightSleep:
+      case WellbeingInsightKind.sleepNextDay:
+      case WellbeingInsightKind.sleepBank:
+      case WellbeingInsightKind.bestBedtime:
+      case WellbeingInsightKind.tripleChain:
+      case WellbeingInsightKind.sleepPlanStep:
+      case WellbeingInsightKind.sleepGoalMismatch:
+        return InsightGroup.sleep;
+      case WellbeingInsightKind.goldenWindow:
+      case WellbeingInsightKind.moodEnergyLink:
+        return InsightGroup.energyMood;
+      case WellbeingInsightKind.reflectionStreak:
+      case WellbeingInsightKind.reflectionLink:
+        return InsightGroup.reflection;
+      case WellbeingInsightKind.balanceTrend:
+        return InsightGroup.balance;
+      case WellbeingInsightKind.indexDriver:
+      case WellbeingInsightKind.loopOutcome:
+        // loopOutcome هنگام ساخت، گروه روایتِ مرجعش را می‌گیرد؛ این فقط fallback است
+        return InsightGroup.index;
+    }
+  }
+
+  static InsightGroup _groupOfKindName(String kindName) {
+    final kind = WellbeingInsightKind.values.asNameMap()[kindName];
+    return kind == null ? InsightGroup.index : groupOf(kind);
   }
 
   int _byScoreThenKind(WellbeingInsight a, WellbeingInsight b) {
@@ -213,6 +292,9 @@ class WellbeingInsightArbiter {
     );
     if (outcome == null) return const [];
     final label = _kindLabel(outcome.previousKindName);
+    // loopOutcome همان گروه روایتی را می‌گیرد که به آن اشاره می‌کند تا دو
+    // روایت هم‌گروه در یک روز با هم ظاهر نشوند.
+    final group = _groupOfKindName(outcome.previousKindName);
     if (outcome.improved) {
       return [
         WellbeingInsight(
@@ -223,6 +305,7 @@ class WellbeingInsightArbiter {
           score: 1.42,
           have: outcome.days,
           need: WellbeingInsightLoop.minDaysBeforeOutcome,
+          group: group,
         ),
       ];
     }
@@ -235,6 +318,7 @@ class WellbeingInsightArbiter {
         score: 0.74,
         have: outcome.days,
         need: WellbeingInsightLoop.minDaysBeforeOutcome,
+        group: group,
       ),
     ];
   }
@@ -660,6 +744,10 @@ class WellbeingInsightArbiter {
         return 'چرا این عدد';
       case 'tripleChain':
         return 'زنجیرهٔ سه‌تایی';
+      case 'sleepPlanStep':
+        return 'پلهٔ امشب';
+      case 'sleepGoalMismatch':
+        return 'بازبینی هدف خواب';
       default:
         return 'روایت امروز';
     }

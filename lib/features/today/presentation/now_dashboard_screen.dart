@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,6 @@ import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/services/ad_service.dart';
 import 'package:ritmo/core/services/central_inbox_service.dart';
-import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/services/ritmo_timer_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
@@ -42,8 +42,6 @@ import 'package:ritmo/features/health/presentation/health_screen.dart';
 import 'package:ritmo/features/inbox/logic/inbox_navigator.dart';
 import 'package:ritmo/features/inbox/presentation/inbox_screen.dart';
 import 'package:ritmo/features/study/study_module_entry.dart';
-import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
-import 'package:ritmo/features/profile/presentation/profile_screen.dart';
 import 'package:ritmo/features/settings/presentation/settings_screen.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 import 'package:ritmo/features/routines/presentation/widgets/routine_snooze_bottom_sheet.dart';
@@ -55,15 +53,17 @@ import 'package:ritmo/features/supplementary_sports/presentation/ss_intro_screen
 import 'package:ritmo/features/today/presentation/active_timer_overlay.dart';
 import 'package:ritmo/features/today/presentation/dashboard_controller.dart';
 import 'package:ritmo/features/today/presentation/home_focus_ranker.dart';
-import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
 import 'package:ritmo/features/notes/presentation/widgets/today_experience_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet.dart';
-
-
 import 'package:ritmo/features/today/presentation/widgets/dashboard/assistant_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_header.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_module_summary.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/energy_management_sheet.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/home_focus_hero.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/home_notice_cards.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/home_pulse_strip.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/home_quick_actions.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/home_section_header.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/module_summary_grid.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_hero.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/today_details_section.dart';
@@ -232,44 +232,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
             whereArgs: [routineId],
           );
           if (routines.isNotEmpty) {
-            final rMap = routines.first;
-            final categoryStr = rMap['category'] as String;
-            final category = Category.values.firstWhere(
-              (e) => e.name.toLowerCase() == categoryStr.toLowerCase(),
-              orElse: () => Category.custom,
-            );
-            final routine = Routine(
-              id: routineId,
-              title: rMap['title'] as String,
-              description: rMap['description'] as String?,
-              category: category,
-              routineType: RoutineType.values.firstWhere(
-                (e) => e.name.toLowerCase() == (rMap['routineType'] as String? ?? '').toLowerCase(),
-                orElse: () => RoutineType.timeBased,
-              ),
-              notificationLevel: NotificationLevel.values.firstWhere(
-                (e) => e.name.toLowerCase() == (rMap['notificationLevel'] as String? ?? '').toLowerCase(),
-                orElse: () => NotificationLevel.none,
-              ),
-              isEssential: rMap['isEssential'] == 1,
-              energyRule: EnergyRule.values.firstWhere(
-                (e) => e.name.toLowerCase() == (rMap['energyRule'] as String? ?? '').toLowerCase(),
-                orElse: () => EnergyRule.none,
-              ),
-              priority: rMap['priority'] as double? ?? 1.0,
-              targetDurationMinutes: rMap['targetDurationMinutes'] as int?,
-              lightDurationMinutes: rMap['lightDurationMinutes'] as int?,
-              minimalDurationMinutes: rMap['minimalDurationMinutes'] as int?,
-              progressionMode: rMap['progressionMode'] as String? ?? 'NONE',
-              progressionStart: rMap['progressionStart'] as int? ?? 0,
-              progressionTarget: rMap['progressionTarget'] as int? ?? 0,
-              progressionStep: rMap['progressionStep'] as int? ?? 0,
-              progressionEveryN: rMap['progressionEveryN'] as int? ?? 1,
-              progressionCurrent: rMap['progressionCurrent'] as int? ?? 0,
-              progressionDoneSinceAdvance: rMap['progressionDoneSinceAdvance'] as int? ?? 0,
-              itemType: rMap['itemType'] as String? ?? 'ROUTINE',
-            );
-
+            // G-9: هیدراسیون دستی ۳۰ خطی حذف شد — همان مسیر Routine.fromMap
+            // که _resumeActiveTimer استفاده میکند، منبع واحد تبدیل ردیف است.
+            final routine = Routine.fromMap(routines.first);
             if (mounted) {
               _startTimerFlow(routine, 'FULL');
             }
@@ -305,43 +270,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
         final routineMapList = await db.query('routines', where: 'id = ?', whereArgs: [routineId]);
         if (routineMapList.isNotEmpty) {
-          final rMap = routineMapList.first;
-          final categoryStr = rMap['category']! as String;
-          final category = Category.values.firstWhere(
-            (e) => e.name.toLowerCase() == categoryStr.toLowerCase(),
-            orElse: () => Category.custom,
-          );
-          final routine = Routine(
-            id: routineId,
-            title: rMap['title']! as String,
-            description: rMap['description'] as String?,
-            category: category,
-            routineType: RoutineType.values.firstWhere(
-              (e) => e.name.toLowerCase() == (rMap['routineType'] as String? ?? '').toLowerCase(),
-              orElse: () => RoutineType.timeBased,
-            ),
-            notificationLevel: NotificationLevel.values.firstWhere(
-              (e) => e.name.toLowerCase() == (rMap['notificationLevel'] as String? ?? '').toLowerCase(),
-              orElse: () => NotificationLevel.none,
-            ),
-            isEssential: rMap['isEssential'] == 1,
-            energyRule: EnergyRule.values.firstWhere(
-              (e) => e.name.toLowerCase() == (rMap['energyRule'] as String? ?? '').toLowerCase(),
-              orElse: () => EnergyRule.none,
-            ),
-            priority: rMap['priority'] as double? ?? 1.0,
-            targetDurationMinutes: rMap['targetDurationMinutes'] as int?,
-            lightDurationMinutes: rMap['lightDurationMinutes'] as int?,
-            minimalDurationMinutes: rMap['minimalDurationMinutes'] as int?,
-            progressionMode: rMap['progressionMode'] as String? ?? 'NONE',
-            progressionStart: rMap['progressionStart'] as int? ?? 0,
-            progressionTarget: rMap['progressionTarget'] as int? ?? 0,
-            progressionStep: rMap['progressionStep'] as int? ?? 0,
-            progressionEveryN: rMap['progressionEveryN'] as int? ?? 1,
-            progressionCurrent: rMap['progressionCurrent'] as int? ?? 0,
-            progressionDoneSinceAdvance: rMap['progressionDoneSinceAdvance'] as int? ?? 0,
-            itemType: rMap['itemType'] as String? ?? 'ROUTINE',
-          );
+          final routine = Routine.fromMap(routineMapList.first);
 
           var mode = 'FULL';
           if (plannedMinutes == routine.lightDurationMinutes) {
@@ -601,8 +530,144 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         );
   }
 
-  /// اسکلت لودینگ همشکل با چیدمان صفحه — بهجای اسپینر (سند طراحی §۴.۲)
-  /// G-8: هماندازه با چیدمان واقعی فعلی (Hero + ۴ ردیف کار + ردیف Zone/Energy).
+  /// پیشرفت واقعی مسیر امروز — اول از اسنپشات Agenda، در نبود آن از تایملاین.
+  ({double ratio, int done, int remaining, int total}) _todayProgress() {
+    final snapshot = _todaySnapshot;
+    if (snapshot != null) {
+      final total = snapshot.completedCount + snapshot.remainingCount;
+      if (total > 0) {
+        return (
+          ratio: snapshot.completedCount / total,
+          done: snapshot.completedCount,
+          remaining: snapshot.remainingCount,
+          total: total,
+        );
+      }
+    }
+    final total = _timelineItems.length;
+    final done = _timelineItems.where((i) => i['isCompleted'] == true).length;
+    return (
+      ratio: total == 0 ? 0.0 : done / total,
+      done: done,
+      remaining: total - done,
+      total: total,
+    );
+  }
+
+  /// میان‌برهای صفحهٔ خانه — پرتکرارترین کارها با یک لمس.
+  /// موارد مرتبط با لحظه (چکاین انجامنشده / پیشنهاد بازچینی) خودشان را برجسته میکنند.
+  List<HomeQuickAction> _quickActions(RitmoColors colors, bool isDarkMode) {
+    return [
+      HomeQuickAction(
+        label: 'افزودن برنامه',
+        icon: CupertinoIcons.add_circled_solid,
+        color: colors.primary,
+        onTap: () {
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              opaque: false,
+              barrierDismissible: true,
+              pageBuilder: (context, _, _) => UniversalPlannerSheet(
+                onSaved: _loadDashboardData,
+              ),
+            ),
+          );
+        },
+      ),
+      HomeQuickAction(
+        label: 'ارزیابی انرژی',
+        icon: CupertinoIcons.sunrise_fill,
+        color: colors.accent,
+        highlighted: _needCheckin,
+        onTap: _showMorningCheckinSheet,
+      ),
+      HomeQuickAction(
+        label: 'بازچینی روز',
+        icon: CupertinoIcons.arrow_2_squarepath,
+        color: colors.goldAccent,
+        highlighted: _showReplanBanner,
+        onTap: _runReplanFlow,
+      ),
+      HomeQuickAction(
+        label: 'مدیریت انرژی',
+        icon: CupertinoIcons.bolt_fill,
+        color: colors.energyAccent,
+        onTap: () => _showEnergyManagementSheet(isDarkMode),
+      ),
+      HomeQuickAction(
+        label: 'بازتاب روز',
+        icon: CupertinoIcons.moon_stars_fill,
+        color: colors.sleepAccent,
+        onTap: _openReflectionSheet,
+      ),
+      HomeQuickAction(
+        label: 'دستیار ریتمو',
+        icon: CupertinoIcons.sparkles,
+        color: colors.reflectionAccent,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AssistantScreen()),
+          );
+        },
+      ),
+    ];
+  }
+
+  /// هدر چسبان: با اسکرول به نوار شیشهای مات با خط مویی پایین تبدیل میشود.
+  Widget _buildStickyHeader(BuildContext context, bool isScrolled) {
+    final colors = context.colors;
+
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: isScrolled ? 18 : 0,
+          sigmaY: isScrolled ? 18 : 0,
+        ),
+        child: AnimatedContainer(
+          duration: RitmoMotion.effective(context, RitmoMotion.state),
+          curve: RitmoMotion.standard,
+          padding: const EdgeInsets.fromLTRB(20, RitmoSpacing.sm, 20, RitmoSpacing.sm),
+          decoration: BoxDecoration(
+            color: isScrolled
+                ? colors.background.withValues(alpha: 0.72)
+                : Colors.transparent,
+            border: Border(
+              bottom: BorderSide(
+                color: isScrolled
+                    ? colors.border.withValues(alpha: 0.6)
+                    : Colors.transparent,
+              ),
+            ),
+          ),
+          child: DashboardHeader(
+            userName: _settingsMap['user_name'] ?? 'کاربر',
+            avatarPath: _settingsMap['user_avatar_path'],
+            avatarFileExists: _avatarFileExists,
+            isAssistantActive: ModuleGate.instance
+                .isEnabledFrom(_settingsMap, 'module_assistant_enabled'),
+            unreadInboxCount: _unreadInboxCount,
+            onAvatarTap: _showMoreSheet,
+            onBellTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const InboxScreen()),
+              ).then((_) => _updateUnreadCount());
+            },
+            onAssistantTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AssistantScreen()),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// اسکلت لودینگ همشکل با چیدمان جدید — بهجای اسپینر (سند طراحی §۴.۲)
   Widget _buildLoadingSkeleton() {
     return const Scaffold(
       backgroundColor: Colors.transparent,
@@ -610,7 +675,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         textDirection: TextDirection.rtl,
         child: SingleChildScrollView(
           physics: NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(20, 16, 20, 130),
+          padding: EdgeInsets.fromLTRB(20, 16, 20, 140),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -631,42 +696,43 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                   RitmoSkeleton(width: 44, height: 44, borderRadius: 22),
                 ],
               ),
-              SizedBox(height: RitmoSpacing.section),
-              // کارت هیروی اقدام بعدی (هماندازهٔ NextActionHero)
+              SizedBox(height: RitmoSpacing.xl),
+              // کارت تمرکز اکنون
               RitmoSkeleton(
-                  width: double.infinity, height: 150, borderRadius: 20),
-              SizedBox(height: RitmoSpacing.section),
-              // ۴ ردیف کار امروز
+                  width: double.infinity, height: 208, borderRadius: 24),
+              SizedBox(height: RitmoSpacing.md),
+              // نبض امروز
               RitmoSkeleton(
-                  width: double.infinity, height: 62, borderRadius: 18),
-              SizedBox(height: 10),
-              RitmoSkeleton(
-                  width: double.infinity, height: 62, borderRadius: 18),
-              SizedBox(height: 10),
-              RitmoSkeleton(
-                  width: double.infinity, height: 62, borderRadius: 18),
-              SizedBox(height: 10),
-              RitmoSkeleton(
-                  width: double.infinity, height: 62, borderRadius: 18),
-              SizedBox(height: RitmoSpacing.section),
-              // ردیف دوکارتی انرژی/قلمرو (هماندازهٔ ZoneCard)
+                  width: double.infinity, height: 122, borderRadius: 20),
+              SizedBox(height: RitmoSpacing.md),
+              // نوار میانبرها
               Row(
                 children: [
-                  Expanded(
-                    child: RitmoSkeleton(
-                        width: double.infinity, height: 150, borderRadius: 24),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: RitmoSkeleton(
-                        width: double.infinity, height: 150, borderRadius: 24),
-                  ),
+                  RitmoSkeleton(width: 84, height: 88, borderRadius: 16),
+                  SizedBox(width: RitmoSpacing.sm),
+                  RitmoSkeleton(width: 84, height: 88, borderRadius: 16),
+                  SizedBox(width: RitmoSpacing.sm),
+                  RitmoSkeleton(width: 84, height: 88, borderRadius: 16),
+                  SizedBox(width: RitmoSpacing.sm),
+                  RitmoSkeleton(width: 84, height: 88, borderRadius: 16),
                 ],
               ),
-              SizedBox(height: RitmoSpacing.section),
-              // کارت دستیار
+              SizedBox(height: RitmoSpacing.xl),
+              // تیتر بخش + کارت مسیر امروز
+              RitmoSkeleton(width: 140, height: 14, borderRadius: 4),
+              SizedBox(height: RitmoSpacing.md),
               RitmoSkeleton(
-                  width: double.infinity, height: 170, borderRadius: 20),
+                  width: double.infinity, height: 136, borderRadius: 20),
+              SizedBox(height: RitmoSpacing.xl),
+              // ۳ ردیف کار امروز
+              RitmoSkeleton(
+                  width: double.infinity, height: 62, borderRadius: 18),
+              SizedBox(height: 10),
+              RitmoSkeleton(
+                  width: double.infinity, height: 62, borderRadius: 18),
+              SizedBox(height: 10),
+              RitmoSkeleton(
+                  width: double.infinity, height: 62, borderRadius: 18),
             ],
           ),
         ),
@@ -684,12 +750,40 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     final colors = context.colors;
 
     final tasksList = _timelineItems.where((i) => i['type'] == 'task').toList();
+    final alerts = _engineOutput?.criticalAlerts ?? const <String>[];
+    final progress = _todayProgress();
 
-    // P1-2: شمارش آیتمهای بخش تاشو بعد از خروج گرید ماژولها (H-2)
-    final detailsItemCount = (_showReplanBanner ? 1 : 0) +
-        (_needCheckin ? 1 : 0) +
-        (_recentInboxItems.isNotEmpty ? 1 : 0) +
-        1; // کارت پیشنهاد بازتاب (شرطهای داخلی خودش)
+    // شرطهای دیدهشدن کارتهای اطلاعرسانی — یکجا و صریح، نه داخل build خود کارتها.
+    final showReflectionCard = DateTime.now().hour >= 22 &&
+        !_hasReflection &&
+        !_reflectionDismissed;
+
+    final detailsChildren = <Widget>[
+      if (_showReplanBanner)
+        MidDayReplanCard(
+          onDismiss: _dismissReplanSuggestion,
+          onReplan: _runReplanFlow,
+        ),
+      if (_needCheckin) CheckinReminderCard(onTap: _showMorningCheckinSheet),
+      if (showReflectionCard)
+        ReflectionSuggestionCard(
+          onDismiss: _dismissReflection,
+          onRecord: _openReflectionSheet,
+        ),
+      if (_recentInboxItems.isNotEmpty)
+        RecentInboxCard(
+          items: _recentInboxItems,
+          onItemTap: (item) {
+            InboxNavigator.open(context, item).then((_) => _loadDashboardData());
+          },
+          onViewAll: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const InboxScreen()),
+            ).then((_) => _loadDashboardData());
+          },
+        ),
+    ];
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -700,153 +794,253 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         child: RefreshIndicator(
           onRefresh: _loadDashboardData,
           color: colors.primary,
-          child: SingleChildScrollView(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 130), // space for bottom dock
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. هدر هیرو
-                _enter(
-                  0,
-                  DashboardHeader(
-                    userName: _settingsMap['user_name'] ?? 'کاربر',
-                    avatarPath: _settingsMap['user_avatar_path'],
-                    avatarFileExists: _avatarFileExists,
-                    isAssistantActive:
-                        ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_assistant_enabled'),
-                    unreadInboxCount: _unreadInboxCount,
-                    onAvatarTap: _showMoreSheet,
-                    onBellTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const InboxScreen()),
-                      ).then((_) => _updateUnreadCount());
-                    },
-                    onAssistantTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const AssistantScreen()),
-                      );
-                    },
-                  ),
+            slivers: [
+              // هدر چسبان — همیشه در دسترس، با شیشهٔ مات هنگام اسکرول
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _StickyHeaderDelegate(
+                  height: 76,
+                  builder: _buildStickyHeader,
                 ),
-                _enter(
-                  1,
-                  _buildCriticalAlertsSection(),
-                ),
-
-                // 2. کارت هیروی اقدام بعدی (Next Action Hero)
-                _enter(
-                  2,
-                  NextActionHero(
-                    data: _buildNextActionHeroData(),
-                  ),
-                ),
-                const SizedBox(height: RitmoSpacing.section),
-
-                // 3. مسیر امروز — اسنپشات یکپارچهٔ خانه/تقویم (P1-1)
-                if (_todaySnapshot != null) ...[
-                  _enter(
-                    3,
-                    TodaySchedulePreviewCard(snapshot: _todaySnapshot!),
-                  ),
-                  const SizedBox(height: RitmoSpacing.section),
-                ],
-
-                // 4. کارهای امروز
-                _enter(
-                  4,
-                  TodaysTasksSection(
-                    // G-6: لیست کامل پاس داده میشود؛ برش ۴تایی مسئولیت خود ویجت است.
-                    tasks: tasksList,
-                    onOpenDetails: _showDetailsSheet,
-                    onStartTask: _showNiyyahSheet,
-                    onReshuffleApplied: _loadDashboardData,
-                    onViewAll: () => widget.onNavigateToTab?.call(4),
-                  ),
-                ),
-
-                // 5. کارت تجربهٔ امروز (مارجین داخلیاش در P1-4 اصلاح شده است)
-                _enter(
-                  5,
-                  const TodayExperienceCard(),
-                ),
-                const SizedBox(height: RitmoSpacing.section),
-
-                // 6. کارت وضعیت تکعاملی (ZoneCard / Energy)
-                _enter(
-                  6,
-                  ZoneCard(
-                    isDarkMode: isDarkMode,
-                    currentEnergyPercent: _currentEnergyPercent,
-                    currentEnergyLabel: _currentEnergyLabel,
-                    currentEnergyDesc: _currentEnergyDesc,
-                    activeZone: _activeZone,
-                    activeZoneName: _activeZoneName,
-                    activeZoneIcon: _activeZoneIcon,
-                    activeZoneColorHex: _activeZoneColorHex,
-                    activeZoneRoutinesCount: _activeZoneRoutinesCount,
-                    activeZoneTimeRange: _activeZoneTimeRange,
-                    onEnergyTap: () => _showEnergyManagementSheet(isDarkMode),
-                    onRealmChanged: _loadDashboardData,
-                  ),
-                ),
-                const SizedBox(height: RitmoSpacing.section),
-
-                // 7. سیستمهای فعال — همیشه نمایان؛ صعود از بخش تاشو (P1-2 / H-2)
-                _enter(
-                  7,
-                  ModuleSummaryGrid(
-                    summaries: _moduleSummaries,
-                    onModuleTap: _openModuleScreen,
-                  ),
-                ),
-                const SizedBox(height: RitmoSpacing.section),
-
-                // 8. دستیار — فقط بریفینگ؛ سطح تکراری «بهترین اقدام بعدی» حذف شد (P1-3 / H-3)
-                _enter(
-                  8,
-                  AssistantCard(
-                    suggestedRoutine: _engineOutput?.suggestedRoutine,
-                    suggestLightVersion:
-                        _engineOutput?.suggestLightVersion ?? false,
-                    activeZoneName: _activeZoneName ?? '',
-                    defaultEnergyLevel:
-                        _settingsMap['default_energy_level'] ?? 'MEDIUM',
-                    dailyBehavior: _dailyBehavior,
-                    onStartTap: _showNiyyahSheet,
-                    onWhyTap: _showWhySuggestionDialog,
-                    briefing: _briefing,
-                    isBriefingLoading: _isBriefingLoading,
-                    onRefreshBriefing: _refreshBriefing,
-                    showNextAction: false,
-                  ),
-                ),
-                const SizedBox(height: RitmoSpacing.section),
-
-                // 9. بخش تاشوی «جزئیات امروز» (پیشفرض بسته)
-                _enter(
-                  9,
-                  TodayDetailsSection(
-                    itemCount: detailsItemCount,
-                    children: [
-                      if (_showReplanBanner) ...[
-                        _buildMidDayReplanBanner(),
-                        const SizedBox(height: RitmoSpacing.md),
-                      ],
-                      _buildCheckinReminderCard(),
-                      _buildReflectionSuggestionCard(),
-                      _buildRecentInboxAlertsSection(colors),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, RitmoSpacing.md, 20, 140),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    // ۰. هشدارهای بحرانی — بالاتر از همه چیز
+                    if (alerts.isNotEmpty) ...[
+                      _enter(0, CriticalAlertsCard(alerts: alerts)),
+                      const SizedBox(height: RitmoSpacing.lg),
                     ],
-                  ),
+
+                    // ۱. تمرکز اکنون — تنها اقدام مهم این لحظه
+                    _enter(
+                      1,
+                      HomeFocusHero(
+                        data: _buildNextActionHeroData(),
+                        dayProgress: progress.total > 0 ? progress.ratio : null,
+                        progressCaption: progress.total > 0
+                            ? '${PersianDigits.convert(progress.remaining.toString())} مورد باقی‌مانده'
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: RitmoSpacing.md),
+
+                    // ۲. نبض امروز — وضعیت روز در یک نگاه
+                    _enter(
+                      2,
+                      HomePulseStrip(
+                        progress: progress.ratio,
+                        doneCount: progress.done,
+                        totalCount: progress.total,
+                        caption: (_activeZoneName == null ||
+                                _activeZoneName!.isEmpty)
+                            ? null
+                            : 'قلمرو: ${_activeZoneName!}',
+                        metrics: [
+                          HomePulseMetric(
+                            label: 'انجام‌شده',
+                            value: '${progress.done} مورد',
+                            icon: CupertinoIcons.checkmark_alt_circle_fill,
+                            color: colors.success,
+                          ),
+                          HomePulseMetric(
+                            label: 'باقی‌مانده',
+                            value: '${progress.remaining} مورد',
+                            icon: CupertinoIcons.circle_lefthalf_fill,
+                            color: colors.warning,
+                          ),
+                          if (_pendingMedDoses > 0)
+                            HomePulseMetric(
+                              label: 'دوز دارو',
+                              value: '$_pendingMedDoses باقی‌مانده',
+                              icon: CupertinoIcons.capsule_fill,
+                              color: colors.medicalRed,
+                              onTap: () => _openModuleScreen('medicine'),
+                            )
+                          else if (_peakPerformanceWindow != null &&
+                              _peakPerformanceWindow!.isNotEmpty)
+                            HomePulseMetric(
+                              label: 'پنجرهٔ اوج',
+                              value: _peakPerformanceWindow!,
+                              icon: CupertinoIcons.arrow_up_right_circle_fill,
+                              color: colors.primary,
+                              onTap: () => widget.onNavigateToTab?.call(1),
+                            )
+                          else
+                            HomePulseMetric(
+                              label: 'انرژی فعلی',
+                              value: _currentEnergyPercent == null
+                                  ? 'ثبت نشده'
+                                  : '${_currentEnergyPercent!.round()}٪',
+                              icon: CupertinoIcons.bolt_fill,
+                              color: colors.energyAccent,
+                              onTap: () =>
+                                  _showEnergyManagementSheet(isDarkMode),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: RitmoSpacing.md),
+
+                    // ۳. میانبرهای سریع
+                    _enter(
+                      3,
+                      HomeQuickActions(
+                        actions: _quickActions(colors, isDarkMode),
+                      ),
+                    ),
+                    const SizedBox(height: RitmoSpacing.xl),
+
+                    // ۴. مسیر امروز — اسنپشات یکپارچهٔ خانه/تقویم (P1-1)
+                    if (_todaySnapshot != null) ...[
+                      _enter(
+                        4,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            HomeSectionHeader(
+                              title: 'مسیر امروز',
+                              subtitle: 'اکنون، بعدی و شکاف‌های آزاد',
+                              icon: CupertinoIcons.map_fill,
+                              actionLabel: 'تقویم',
+                              onAction: () => widget.onNavigateToTab?.call(4),
+                            ),
+                            TodaySchedulePreviewCard(snapshot: _todaySnapshot!),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: RitmoSpacing.xl),
+                    ],
+
+                    // ۵. کارهای امروز (تیتر و اکشنها داخل خودش)
+                    _enter(
+                      5,
+                      TodaysTasksSection(
+                        // G-6: لیست کامل پاس داده میشود؛ برش ۴تایی مسئولیت خود ویجت است.
+                        tasks: tasksList,
+                        onOpenDetails: _showDetailsSheet,
+                        onStartTask: _showNiyyahSheet,
+                        onReshuffleApplied: _loadDashboardData,
+                        onViewAll: () => widget.onNavigateToTab?.call(4),
+                      ),
+                    ),
+
+                    // ۶. کارت تجربهٔ امروز
+                    _enter(6, const TodayExperienceCard()),
+                    const SizedBox(height: RitmoSpacing.lg),
+
+                    // ۷. انرژی و قلمرو
+                    _enter(
+                      7,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          HomeSectionHeader(
+                            title: 'انرژی و قلمرو',
+                            subtitle: _currentEnergyTimeAgo == null
+                                ? _currentEnergyDesc
+                                : 'آخرین ثبت: ${_currentEnergyTimeAgo!}',
+                            icon: CupertinoIcons.bolt_horizontal_fill,
+                            accent: colors.energyAccent,
+                            actionLabel: 'مدیریت',
+                            onAction: () =>
+                                _showEnergyManagementSheet(isDarkMode),
+                          ),
+                          ZoneCard(
+                            isDarkMode: isDarkMode,
+                            currentEnergyPercent: _currentEnergyPercent,
+                            currentEnergyLabel: _currentEnergyLabel,
+                            currentEnergyDesc: _currentEnergyDesc,
+                            activeZone: _activeZone,
+                            activeZoneName: _activeZoneName,
+                            activeZoneIcon: _activeZoneIcon,
+                            activeZoneColorHex: _activeZoneColorHex,
+                            activeZoneRoutinesCount: _activeZoneRoutinesCount,
+                            activeZoneTimeRange: _activeZoneTimeRange,
+                            onEnergyTap: () =>
+                                _showEnergyManagementSheet(isDarkMode),
+                            onRealmChanged: _loadDashboardData,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: RitmoSpacing.xl),
+
+                    // ۸. سیستمهای فعال (تیتر داخل خودش)
+                    _enter(
+                      8,
+                      ModuleSummaryGrid(
+                        summaries: _moduleSummaries,
+                        onModuleTap: _openModuleScreen,
+                      ),
+                    ),
+                    const SizedBox(height: RitmoSpacing.lg),
+
+                    // ۹. دستیار — بریفینگ روز
+                    _enter(
+                      9,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          HomeSectionHeader(
+                            title: 'دستیار هوشمند ریتمو',
+                            subtitle: 'خلاصهٔ امروز و پیشنهاد بعدی',
+                            icon: CupertinoIcons.sparkles,
+                            accent: colors.reflectionAccent,
+                            actionLabel: 'گفت‌وگو',
+                            onAction: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AssistantScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          AssistantCard(
+                            suggestedRoutine: _engineOutput?.suggestedRoutine,
+                            suggestLightVersion:
+                                _engineOutput?.suggestLightVersion ?? false,
+                            activeZoneName: _activeZoneName ?? '',
+                            defaultEnergyLevel:
+                                _settingsMap['default_energy_level'] ?? 'MEDIUM',
+                            dailyBehavior: _dailyBehavior,
+                            onStartTap: _showNiyyahSheet,
+                            onWhyTap: _showWhySuggestionDialog,
+                            briefing: _briefing,
+                            isBriefingLoading: _isBriefingLoading,
+                            onRefreshBriefing: _refreshBriefing,
+                            showNextAction: false,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ۱۰. جزئیات امروز — فقط وقتی چیزی برای گفتن هست
+                    if (detailsChildren.isNotEmpty) ...[
+                      const SizedBox(height: RitmoSpacing.lg),
+                      _enter(
+                        10,
+                        TodayDetailsSection(
+                          itemCount: detailsChildren.length,
+                          children: [
+                            for (int i = 0; i < detailsChildren.length; i++) ...[
+                              if (i > 0) const SizedBox(height: RitmoSpacing.md),
+                              detailsChildren[i],
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: RitmoSpacing.lg),
+                    AdService.instance.getBannerAd(),
+                  ]),
                 ),
-                const SizedBox(height: RitmoSpacing.section),
-                AdService.instance.getBannerAd(),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1293,414 +1487,68 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     }
   }
 
+  /// بازچینی هوشمند باقیماندهٔ روز — از میانبر و از کارت پیشنهاد.
+  Future<void> _runReplanFlow() async {
+    final draft = await MidDayReplanService.instance.computeReplan();
+    if (!mounted) return;
+    if (draft != null) {
+      AiDayPlannerPreviewSheet.show(
+        context,
+        initialDraft: draft,
+        onSaved: _loadDashboardData,
+      );
+    } else {
+      RitmoToast.show(context, 'کار عقب‌افتاده‌ای یافت نشد ⚡');
+    }
+  }
 
+  Future<void> _dismissReplanSuggestion() async {
+    await MidDayReplanService.instance.recordUserRejected();
+    if (!mounted) return;
+    setState(() {
+      _showReplanBanner = false;
+    });
+    RitmoToast.show(context, 'پیشنهاد رد شد.');
+  }
 
-
-
-
-
-
-  Widget _buildCheckinReminderCard() {
-    if (!_needCheckin) return const SizedBox.shrink();
-    final l10n = AppLocalizations.of(context)!;
-
-    final colors = context.colors;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: RitmoTheme.glassCardLight(
-        color: colors.primary.withValues(alpha: 0.08),
-        border: Border.all(
-          color: colors.primary.withValues(alpha: 0.2),
-          width: 1.5,
-        ),
-        child: InkWell(
-          onTap: () {
-            showModalBottomSheet(
-              context: context,
-              backgroundColor: Colors.transparent,
-              isScrollControlled: true,
-              builder: (context) => MorningCheckinSheet(
-                onSaved: () {
-                  final now = DateTime.now();
-                  final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-                  CentralInboxService.markActionedForEntity('system', 'checkin_$dateStr');
-                  _loadDashboardData();
-                },
-              ),
-            );
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(CupertinoIcons.sparkles, color: colors.primary, size: 20),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.checkinReminderTitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        l10n.checkinReminderDesc,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(CupertinoIcons.chevron_left, color: colors.textSecondary, size: 16),
-              ],
-            ),
-          ),
-        ),
+  void _openReflectionSheet() {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DailyReflectionSheet(
+        onSaved: () {
+          final now = DateTime.now();
+          final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+          CentralInboxService.markActionedForEntity('system', 'reflection_$dateStr');
+          _loadDashboardData();
+        },
       ),
     );
   }
 
-  Widget _buildReflectionSuggestionCard() {
-    final l10n = AppLocalizations.of(context)!;
+  Future<void> _dismissReflection() async {
+    final db = await DatabaseHelper.instance.database;
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    await db.insert(
+      'app_settings',
+      {
+        'key': 'dismissed_reflection_date',
+        'value': todayStr,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    await HapticFeedback.lightImpact();
     final now = DateTime.now();
-    if (now.hour < 22) return const SizedBox.shrink();
-    if (_hasReflection) return const SizedBox.shrink();
-    if (_reflectionDismissed) return const SizedBox.shrink();
-
-    final colors = context.colors;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: RitmoTheme.glassCardLight(
-        color: const Color(0xff6366F1).withValues(alpha: 0.08),
-        border: Border.all(
-          color: const Color(0xff6366F1).withValues(alpha: 0.2),
-          width: 1.5,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xff6366F1).withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(CupertinoIcons.moon_stars_fill, color: Color(0xff818CF8), size: 20),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.reflectionReminderTitle,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          l10n.reflectionReminderDesc,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () async {
-                      final db = await DatabaseHelper.instance.database;
-                      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-                      await db.insert(
-                        'app_settings',
-                        {
-                          'key': 'dismissed_reflection_date',
-                          'value': todayStr,
-                          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-                        },
-                        conflictAlgorithm: ConflictAlgorithm.replace,
-                      );
-                      await HapticFeedback.lightImpact();
-                      final now = DateTime.now();
-                      final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-                      await CentralInboxService.markActionedForEntity('system', 'reflection_$dateStr');
-                      setState(() {
-                        _reflectionDismissed = true;
-                      });
-                      await _loadDashboardData();
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: colors.textSecondary,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    ),
-                    child: Text(
-                      l10n.laterOrDismiss,
-                      style: const TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: Colors.transparent,
-                        isScrollControlled: true,
-                        builder: (context) => DailyReflectionSheet(
-                          onSaved: () {
-                            final now = DateTime.now();
-                            final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-                            CentralInboxService.markActionedForEntity('system', 'reflection_$dateStr');
-                            _loadDashboardData();
-                          },
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff6366F1),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      l10n.yesRecord,
-                      style: const TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMidDayReplanBanner() {
-    final colors = context.colors;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: RitmoTheme.glassCardLight(
-        color: colors.goldAccent.withValues(alpha: 0.08),
-        border: Border.all(
-          color: colors.goldAccent.withValues(alpha: 0.25),
-          width: 1.5,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: colors.goldAccent.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.history_toggle_off_rounded, color: colors.goldAccent, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'برنامه امروز شما عقب افتاده است ⏳',
-                          style: TextStyle(
-                            fontFamily: 'Vazirmatn',
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'آیا مایلید برنامه باقی‌مانده روز شما مجدداً چیده شود؟',
-                          style: TextStyle(
-                            fontFamily: 'Vazirmatn',
-                            fontSize: 11,
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () async {
-                      await MidDayReplanService.instance.recordUserRejected();
-                      setState(() {
-                        _showReplanBanner = false;
-                      });
-                      if (mounted) {
-                        RitmoToast.show(context, 'پیشنهاد رد شد.');
-                      }
-                    },
-                    child: Text(
-                      'انصراف',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 12,
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.goldAccent,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      elevation: 0,
-                    ),
-                    onPressed: () async {
-                      final draft = await MidDayReplanService.instance.computeReplan();
-                      if (draft != null) {
-                        if (mounted) {
-                          AiDayPlannerPreviewSheet.show(
-                            context,
-                            initialDraft: draft,
-                            onSaved: _loadDashboardData,
-                          );
-                        }
-                      } else {
-                        if (mounted) {
-                          RitmoToast.show(context, 'کار عقب‌افتاده‌ای یافت نشد ⚡');
-                        }
-                      }
-                    },
-                    child: const Text(
-                      'بازچینی برنامه',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCriticalAlertsSection() {
-    final l10n = AppLocalizations.of(context)!;
-    final alerts = _engineOutput?.criticalAlerts ?? [];
-    if (alerts.isEmpty) return const SizedBox.shrink();
-
-    final colors = context.colors;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: RitmoTheme.glassCardLight(
-        color: isDarkMode
-            ? Colors.red.withValues(alpha: 0.15)
-            : Colors.red.withValues(alpha: 0.08),
-        border: Border.all(
-          color: isDarkMode
-              ? Colors.red.withValues(alpha: 0.3)
-              : Colors.red.withValues(alpha: 0.2),
-          width: 1.5,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.red, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.criticalSystemAlerts,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: isDarkMode ? Colors.red[300] : Colors.red[800],
-                      fontFamily: 'Vazirmatn',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              ...alerts.map((alert) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• ', style: TextStyle(color: colors.textPrimary, fontSize: 14)),
-                    Expanded(
-                      child: Text(
-                        alert,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
-            ],
-          ),
-        ),
-      ),
-    );
+    final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    await CentralInboxService.markActionedForEntity('system', 'reflection_$dateStr');
+    if (!mounted) return;
+    setState(() {
+      _reflectionDismissed = true;
+    });
+    await _loadDashboardData();
   }
 
   /// G-4: هش پایدار FNV-1a — برخلاف hashCode دارت، بین اجراهای اپ ثابت میماند
@@ -1772,125 +1620,34 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
       );
     }
   }
-
-  Widget _buildRecentInboxAlertsSection(RitmoColors colors) {
-    if (_recentInboxItems.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'آخرین یادآوری‌ها و اعلان‌ها 🔔',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const InboxScreen()),
-                  ).then((_) => _loadDashboardData());
-                },
-                child: const Text(
-                  'مشاهده همه',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Color(0xff5B8AF5),
-                    fontFamily: 'Vazirmatn',
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _recentInboxItems.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final item = _recentInboxItems[index];
-              var itemColor = const Color(0xff5B8AF5);
-              if (item.priority == InboxPriority.critical) {
-                itemColor = Colors.redAccent;
-              } else if (item.category == InboxCategory.MILESTONE) {
-                itemColor = const Color(0xffFBBF24);
-              } else if (item.category == InboxCategory.INSIGHT) {
-                itemColor = const Color(0xff34D399);
-              }
-
-              return RitmoTheme.glassCardLight(
-                color: colors.card.withValues(alpha: 0.5),
-                border: Border.all(color: colors.border.withValues(alpha: 0.5)),
-                child: InkWell(
-                  onTap: () {
-                    InboxNavigator.open(context, item).then((_) => _loadDashboardData());
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                    child: Row(
-                      children: [
-                        Icon(item.icon, color: itemColor, size: 16),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.title,
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: colors.textPrimary,
-                                  fontFamily: 'Vazirmatn',
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              if (item.body != null && item.body!.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  item.body!,
-                                  style: TextStyle(
-                                    fontSize: 9.5,
-                                    color: colors.textSecondary,
-                                    fontFamily: 'Vazirmatn',
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        Icon(CupertinoIcons.chevron_left, color: colors.textSecondary, size: 12),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ---------------------------------------------------------------------------
-// CUSTOM PAINTERS & INDICATORS
+// SLIVER DELEGATES
 // ---------------------------------------------------------------------------
 
+/// هدر چسبان صفحهٔ خانه با ارتفاع ثابت؛ وضعیت «اسکرولشده» را به سازنده میدهد
+/// تا بتواند شیشهٔ مات و خط جداکننده را نرم روشن/خاموش کند.
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _StickyHeaderDelegate({required this.height, required this.builder});
 
+  final double height;
+  final Widget Function(BuildContext context, bool isScrolled) builder;
 
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox(
+      height: height,
+      child: builder(context, shrinkOffset > 4 || overlapsContent),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyHeaderDelegate oldDelegate) => true;
+}

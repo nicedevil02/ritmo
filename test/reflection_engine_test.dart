@@ -23,18 +23,20 @@ void main() {
       final output = await engine.calculate(input);
       expect(output.currentStreak, 3);
       expect(output.longestStreak, 3);
+      expect(output.forgivenThisWeek, isFalse);
+      expect(output.forgivenessAvailable, isTrue);
       expect(output.entryCount, 3);
       expect(output.completionRate, closeTo(3 / 14, 0.01));
     });
 
-    test('calculate streak correctly - intermittent / broken streak', () async {
+    test('one missed day in the last week is forgiven and does not increment', () async {
       final today = DateTime(2026, 6, 26);
 
       final input = ReflectionEngineInput(
         dailyReflections: [
           {'date': '2026-06-26', 'mood_score': 5},
           {'date': '2026-06-25', 'mood_score': 4},
-          // Missing 24th
+          // Missing 24th — forgiven, not counted
           {'date': '2026-06-23', 'mood_score': 3},
           {'date': '2026-06-22', 'mood_score': 4},
           {'date': '2026-06-21', 'mood_score': 4},
@@ -46,8 +48,20 @@ void main() {
       );
 
       final output = await engine.calculate(input);
-      expect(output.currentStreak, 2); // 26, 25
-      expect(output.longestStreak, 3); // 23, 22, 21
+      expect(output.currentStreak, 5); // 26, 25, skip 24, 23, 22, 21
+      expect(output.longestStreak, 3); // raw historical max stays honest
+      expect(output.forgivenThisWeek, isTrue);
+      expect(output.forgivenessAvailable, isFalse);
+    });
+
+    test('two consecutive missed days still break the current streak', () async {
+      final today = DateTime(2026, 6, 26);
+      final walk = ReflectionEngine.walkCurrentStreak(
+        dates: {'2026-06-23', '2026-06-22'},
+        today: today,
+      );
+      expect(walk.currentStreak, 0);
+      expect(walk.forgivenThisWeek, isFalse);
     });
 
     test('Pearson correlation - fewer than 30 pairs stays null', () async {

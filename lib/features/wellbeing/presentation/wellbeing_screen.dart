@@ -11,6 +11,7 @@ import 'package:ritmo/core/analytics/reflection_engine.dart';
 import 'package:ritmo/core/analytics/sleep_engine.dart';
 import 'package:ritmo/core/analytics/wellbeing_engine.dart';
 import 'package:ritmo/core/analytics/wellbeing_insight_arbiter.dart';
+import 'package:ritmo/core/analytics/wellbeing_insight_loop.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
@@ -77,6 +78,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   List<CheckinEntry> _checkins = [];
   SleepTarget _sleepTarget = SleepTarget.defaultTarget();
   List<WellbeingPulseDayData> _pulseDays = [];
+  WellbeingInsightLoopState? _loopPrevious;
+  WellbeingInsightSnapshot _insightSnapshotCache = const WellbeingInsightSnapshot();
 
   final TextEditingController _quickReflectionController = TextEditingController();
   bool _isSavingReflection = false;
@@ -90,7 +93,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
     RitmoEvents.routineChanges.addListener(_requestReload);
 
-    // H-01: Strict filtering to relevant wellbeing events only
     _eventSub = RitmoEventBus().onEvents.listen((event) {
       if (event.type == RitmoEventType.moodLogged.code ||
           event.type == RitmoEventType.sleepLogged.code ||
@@ -146,7 +148,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       final horizonMs = RitmoDate.startOfDayMillis(now.subtract(Duration(days: _selectedHorizonDays)));
       final horizonKey = RitmoDate.dayKey(now.subtract(Duration(days: _selectedHorizonDays)));
 
-      // H-03: Combined Parallel DB Queries & Module Checks
       final dbResults = await Future.wait([
         Future.value(ModuleGate.instance.isEnabled('module_energy_enabled')),
         Future.value(ModuleGate.instance.isEnabled('module_sleep_enabled')),
@@ -166,7 +167,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       _energyEnabled = dbResults[0] as bool;
       _sleepEnabled = dbResults[1] as bool;
 
-      // Parse sleep target settings
       final targetRows = dbResults[2] as List<Map<String, dynamic>>;
       String bedtime = '23:30';
       String wake = '07:00';
@@ -230,7 +230,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         routineCompletions: completionRows,
       );
 
-      // Safe Parallel Engine Evaluations with 1s Timeout
       Future<T?> evalEngine<I, T>(
         Type engineType,
         I input,
@@ -288,13 +287,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         ),
       );
 
-      // Build trend dataset once in _loadAllData
       final dayKeys = RitmoDate.lastNDayKeys(now, _selectedHorizonDays);
 
-      // A day can have more than one log. Averaging (instead of letting
-      // whichever entry the loop happens to visit last silently win, which
-      // depended on DB ordering rather than anything meaningful) keeps the
-      // pulse chart's per-day values honest and order-independent.
       final energyValuesByDate = <String, List<double>>{};
       for (final e in _rawEnergyLogs) {
         final key = RitmoDate.dayKey(DateTime.fromMillisecondsSinceEpoch(e.loggedAt));
@@ -338,6 +332,42 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           hasReflection: reflectionDates.contains(key),
         );
       }).toList();
+
+      _loopPrevious = await WellbeingInsightLoop.load(db);
+      final insightInput = WellbeingInsightInput(
+        now: now,
+        horizonDays: _selectedHorizonDays,
+        index: _wellbeing,
+        energy: _energyOutput,
+        mood: _moodOutput,
+        sleep: _sleepOutput,
+        reflection: _reflectionOutput,
+        balance: _lifeBalanceOutput,
+        energyLogCount: _rawEnergyLogs.length,
+        moodLogCount: _rawMoodLogs.length,
+        sleepLogCount: _rawSleepLogs.length,
+        reflectionCount: _reflections.length,
+        sleepLogs: _rawSleepLogs,
+        energyLogs: _rawEnergyLogs,
+        moodLogs: _rawMoodLogs,
+        targetSleepHours: _sleepTarget.durationMinutes / 60.0,
+        loopPrevious: _loopPrevious,
+      );
+      _insightSnapshotCache = const WellbeingInsightArbiter().evaluate(insightInput);
+      final featured = _insightSnapshotCache.featured;
+      if (featured != null) {
+        final metrics = WellbeingInsightArbiter.metricByKind(insightInput);
+        final metricKey = featured.kind == WellbeingInsightKind.loopOutcome
+            ? (_loopPrevious?.kindName ?? featured.kind.name)
+            : featured.kind.name;
+        await WellbeingInsightLoop.saveIfNewDay(
+          db: db,
+          now: now,
+          kindName: featured.kind.name,
+          previous: _loopPrevious,
+          metric: metrics[metricKey],
+        );
+      }
 
       if (mounted) {
         setState(() {
@@ -423,24 +453,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     _loadAllData();
   }
 
-  WellbeingInsightSnapshot get _insightSnapshot {
-    return const WellbeingInsightArbiter().evaluate(
-      WellbeingInsightInput(
-        now: DateTime.now(),
-        horizonDays: _selectedHorizonDays,
-        index: _wellbeing,
-        energy: _energyOutput,
-        mood: _moodOutput,
-        sleep: _sleepOutput,
-        reflection: _reflectionOutput,
-        balance: _lifeBalanceOutput,
-        energyLogCount: _rawEnergyLogs.length,
-        moodLogCount: _rawMoodLogs.length,
-        sleepLogCount: _rawSleepLogs.length,
-        reflectionCount: _reflections.length,
-      ),
-    );
-  }
+  WellbeingInsightSnapshot get _insightSnapshot => _insightSnapshotCache;
 
   void _onInsightAction(WellbeingInsightAction action) {
     RitmoHapticsPolicy.tap();
@@ -541,7 +554,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 preferredSize: const Size.fromHeight(80),
                 child: Column(
                   children: [
-                    // I-07: Timeframe Selector Pills (7 / 14 / 30 / 90)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       child: Row(
@@ -667,7 +679,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           padding: const EdgeInsets.all(RitmoSpacing.lg),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              // I-01: Inline 1-tap Reflection Input Card ("امروز چه چیز خوبی اتفاق افتاد؟")
               Container(
                 padding: const EdgeInsets.all(RitmoSpacing.md),
                 decoration: BoxDecoration(
@@ -760,7 +771,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   description: 'از کادر بالای صفحه اولین بازتاب خود را ثبت کن.',
                 )
               else
-                // I-02: Interactive Reflection List
                 ..._reflections.take(15).map((r) {
                   return Container(
                     margin: const EdgeInsets.only(bottom: RitmoSpacing.md),
@@ -811,7 +821,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     final colors = context.colors;
     final w = _wellbeing;
 
-    // H-22: Render missing card cleanly with explanations & direct sheet tap
     if (w == null || !w.hasValue) {
       return Container(
         padding: const EdgeInsets.all(RitmoSpacing.xl),
@@ -845,7 +854,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       );
     }
 
-    // H-25: Clean confidence bounds without 0 to 0 traps
     final lower = w.lowerBound != null ? RitmoNumber.faInt(w.lowerBound!) : '---';
     final upper = w.upperBound != null ? RitmoNumber.faInt(w.upperBound!) : '---';
     final valStr = w.value != null ? RitmoNumber.faInt(w.value!) : '---';
@@ -885,7 +893,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   Widget _buildQuickActionsRow(BuildContext context) {
     final colors = context.colors;
 
-    // I-03: Inline Activation Card when modules are disabled
     if (!_energyEnabled || !_sleepEnabled) {
       return Container(
         padding: const EdgeInsets.all(RitmoSpacing.md),
@@ -922,7 +929,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
     return Column(
       children: [
-        // I-14: 1-tap inline Energy Logging Bar
         Container(
           padding: const EdgeInsets.all(RitmoSpacing.sm),
           decoration: BoxDecoration(
@@ -1107,7 +1113,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     final score = _lifeBalanceOutput?.score;
     final distribution = _lifeBalanceOutput?.distribution ?? {};
 
-    // Domain names & icons in Persian
     final domainMap = {
       'RELIGION': 'عبادی 🤲',
       'HEALTH': 'ورزش و سلامت 🏋️',
@@ -1132,7 +1137,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             style: RitmoTextStyles.cardTitle(colors.textPrimary),
           ),
           const SizedBox(height: 8),
-          // H-21: Use LifeBalanceEngine.minCompletionsForBalance constant
           if (score == null)
             Text(
               'برای محاسبهٔ تعادل، داقل ${RitmoNumber.faInt(LifeBalanceEngine.minCompletionsForBalance)} روتین تکمیل‌شده لازم است.',
@@ -1144,7 +1148,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               style: RitmoTextStyles.body(colors.textPrimary),
             ),
             const SizedBox(height: 12),
-            // I-05 / P-7: 6-Domain Divergence Bar Chart
             Column(
               children: domainMap.entries.map((e) {
                 final ratio = ((distribution[e.key] ?? 0.0) / 100.0).clamp(0.05, 1.0);
@@ -1179,8 +1182,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     final colors = context.colors;
     final balance = _sleepOutput?.sleepBalanceHours ?? 0.0;
     final isDeficit = balance < 0;
-
-    // H-20: Correct card handling when 0 nights logged
     final isZeroData = _rawSleepLogs.isEmpty;
 
     return InkWell(
@@ -1318,7 +1319,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     );
   }
 
-  // I-08: Interactive Day Detail Sheet ("ورق روز")
   void _openDayDetailSheet(BuildContext context, WellbeingPulseDayData day) {
     RitmoHapticsPolicy.tap();
     RitmoSheetScaffold.present(
@@ -1449,7 +1449,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   }
 }
 
-// H-10: Tab keep-alive wrapper widget
 class _WellbeingTabKeepAlive extends StatefulWidget {
   const _WellbeingTabKeepAlive({required this.child});
   final Widget child;

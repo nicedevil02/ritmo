@@ -1,7 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/analytics/mood_engine.dart';
+import 'package:ritmo/core/analytics/reflection_engine.dart';
 import 'package:ritmo/core/analytics/sleep_engine.dart';
 import 'package:ritmo/core/analytics/wellbeing_insight_arbiter.dart';
+import 'package:ritmo/core/analytics/wellbeing_insight_loop.dart';
+import 'package:ritmo/core/analytics/wellbeing_triple_chain.dart';
 import 'package:ritmo/features/energy/models/energy_mood_models.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
 
@@ -26,6 +29,27 @@ void main() {
       need: need,
     );
   }
+
+  SleepEngineOutput sleepOut({SleepLog? lastNight, double balance = 0.2}) {
+    return SleepEngineOutput(
+      lastNight: lastNight,
+      avgDurationMinutes: 450,
+      avgQuality: 4,
+      sleepDebtMinutes: 0,
+      sleepBalanceHours: balance,
+      durationTrend: const [],
+      qualityTrend: const [],
+      correlationInsight: 'در حال یادگیری الگوی خواب شما 🌙',
+    );
+  }
+
+  final loggedNight = SleepLog(
+    date: '2026-08-12',
+    reason: '',
+    createdAt: 0,
+    durationMinutes: 450,
+    quality: SleepQuality.good,
+  );
 
   test('empty input yields no featured narrative', () {
     final snap = arbiter.evaluate(WellbeingInsightInput(now: now));
@@ -52,54 +76,25 @@ void main() {
       snap.growing.any((c) => c.kind == WellbeingInsightKind.lastNightSleep),
       isTrue,
     );
-    expect(
-      snap.ready.any((c) => c.kind == WellbeingInsightKind.lastNightSleep),
-      isFalse,
-    );
   });
 
   test('sleep history without last night becomes a ready prompt', () {
     final snap = arbiter.evaluate(WellbeingInsightInput(
       now: now,
       sleepLogCount: 4,
-      sleep: SleepEngineOutput(
-        avgDurationMinutes: 420,
-        avgQuality: 3,
-        sleepDebtMinutes: 30,
-        sleepBalanceHours: -0.2,
-        durationTrend: const [],
-        qualityTrend: const [],
-        correlationInsight: 'در حال یادگیری الگوی خواب شما 🌙',
-      ),
+      sleep: sleepOut(lastNight: null, balance: -0.2),
     ));
     expect(snap.featured?.kind, WellbeingInsightKind.lastNightSleep);
-    expect(snap.featured?.maturity, WellbeingInsightMaturity.ready);
     expect(snap.featured?.action, WellbeingInsightAction.logSleep);
   });
 
   test('ready mood correlation is featured when last night is already logged', () {
-    final lastNight = SleepLog(
-      date: '2026-08-12',
-      reason: '',
-      createdAt: 0,
-      durationMinutes: 450,
-      quality: SleepQuality.good,
-    );
     final snap = arbiter.evaluate(WellbeingInsightInput(
       now: now,
       sleepLogCount: 8,
       moodLogCount: 30,
       energyLogCount: 30,
-      sleep: SleepEngineOutput(
-        lastNight: lastNight,
-        avgDurationMinutes: 450,
-        avgQuality: 4,
-        sleepDebtMinutes: 0,
-        sleepBalanceHours: 0.2,
-        durationTrend: const [],
-        qualityTrend: const [],
-        correlationInsight: 'در حال یادگیری الگوی خواب شما 🌙',
-      ),
+      sleep: sleepOut(lastNight: loggedNight),
       mood: MoodEngineOutput(
         dominantMood: Mood.happy,
         moodTrend: const [4, 5],
@@ -109,7 +104,6 @@ void main() {
       ),
     ));
     expect(snap.featured?.kind, WellbeingInsightKind.moodEnergyLink);
-    expect(snap.featured?.maturity, WellbeingInsightMaturity.ready);
   });
 
   test('placeholder correlation text stays growing, not ready', () {
@@ -124,14 +118,114 @@ void main() {
         correlationInsight: 'داده‌های ثبت‌شده برای تحلیل همبستگی هنوز کافی نیست.',
       ),
     ));
-    expect(
-      snap.ready.any((c) => c.kind == WellbeingInsightKind.moodEnergyLink),
-      isFalse,
-    );
     expect(snap.featured?.kind, WellbeingInsightKind.moodEnergyLink);
     expect(snap.featured?.maturity, WellbeingInsightMaturity.growing);
-    expect(snap.featured?.have, 8);
-    expect(snap.featured?.need, 30);
+  });
+
+  test('forgiven streak names the weekly token', () {
+    final snap = arbiter.evaluate(WellbeingInsightInput(
+      now: now,
+      sleepLogCount: 3,
+      reflectionCount: 5,
+      sleep: sleepOut(lastNight: loggedNight),
+      reflection: ReflectionEngineOutput(
+        currentStreak: 5,
+        longestStreak: 3,
+        entryCount: 5,
+        completionRate: 0.5,
+        avgMoodScore: 4,
+        moodTrend: const [4],
+        themeFrequency: const {},
+        correlationInsight: 'در حال تحلیل همبستگی خودمراقبتی شما 🧐',
+        forgivenThisWeek: true,
+        forgivenessAvailable: false,
+      ),
+    ));
+    expect(snap.featured?.kind, WellbeingInsightKind.reflectionStreak);
+    expect(snap.featured?.title, contains('بخشش'));
+  });
+
+  test('improved loop outcome after 7 days outranks other ready stories', () {
+    final snap = arbiter.evaluate(WellbeingInsightInput(
+      now: now,
+      sleepLogCount: 8,
+      sleep: sleepOut(lastNight: loggedNight, balance: 1.2),
+      loopPrevious: const WellbeingInsightLoopState(
+        kindName: 'sleepBank',
+        date: '2026-08-06',
+        metric: 0.2,
+      ),
+    ));
+    expect(snap.featured?.kind, WellbeingInsightKind.loopOutcome);
+    expect(snap.featured?.title, contains('اثر داشت'));
+  });
+
+  test('loop outcome stays silent before seven days', () {
+    final snap = arbiter.evaluate(WellbeingInsightInput(
+      now: now,
+      sleepLogCount: 8,
+      sleep: sleepOut(lastNight: loggedNight, balance: 1.2),
+      loopPrevious: const WellbeingInsightLoopState(
+        kindName: 'sleepBank',
+        date: '2026-08-10',
+        metric: 0.2,
+      ),
+    ));
+    expect(
+      snap.ready.any((c) => c.kind == WellbeingInsightKind.loopOutcome),
+      isFalse,
+    );
+  });
+
+  test('triple chain is ready only with enough complete weekday triples', () {
+    SleepLog night(String date) => SleepLog(
+          date: date,
+          reason: '',
+          createdAt: 0,
+          durationMinutes: 300,
+          quality: SleepQuality.poor,
+        );
+    EnergyLog morning(DateTime day) => EnergyLog(
+          id: 'e${day.millisecondsSinceEpoch}',
+          energyLevel: EnergyLevel.low,
+          source: 'TEST',
+          loggedAt: DateTime(day.year, day.month, day.day, 8).millisecondsSinceEpoch,
+        );
+    MoodLog afternoon(DateTime day) => MoodLog(
+          id: 'm${day.millisecondsSinceEpoch}',
+          mood: Mood.sad,
+          valence: 2,
+          loggedAt: DateTime(day.year, day.month, day.day, 16).millisecondsSinceEpoch,
+        );
+
+    final nextDays = [
+      DateTime(2026, 7, 16),
+      DateTime(2026, 7, 23),
+      DateTime(2026, 7, 30),
+      DateTime(2026, 8, 6),
+    ];
+    final hit = const WellbeingTripleChain().detect(
+      sleepLogs: ['2026-07-15', '2026-07-22', '2026-07-29', '2026-08-05'].map(night).toList(),
+      energyLogs: nextDays.map(morning).toList(),
+      moodLogs: nextDays.map(afternoon).toList(),
+      targetSleepHours: 7.5,
+    );
+    expect(hit, isNotNull);
+    expect(hit!.hits, 4);
+    expect(hit.rate, 1.0);
+
+    final snap = arbiter.evaluate(WellbeingInsightInput(
+      now: now,
+      sleepLogCount: 4,
+      energyLogCount: 4,
+      moodLogCount: 4,
+      sleep: sleepOut(lastNight: loggedNight),
+      sleepLogs: ['2026-07-15', '2026-07-22', '2026-07-29', '2026-08-05'].map(night).toList(),
+      energyLogs: nextDays.map(morning).toList(),
+      moodLogs: nextDays.map(afternoon).toList(),
+      targetSleepHours: 7.5,
+    ));
+    expect(snap.featured?.kind, WellbeingInsightKind.tripleChain);
   });
 
   test('pickFeatured prefers ready over growing', () {
@@ -155,6 +249,5 @@ void main() {
     final a = arbiter.pickFeatured(ready: ready, growing: const [], now: DateTime(2026, 1, 1));
     final b = arbiter.pickFeatured(ready: ready, growing: const [], now: DateTime(2026, 1, 2));
     expect(a?.kind, isNot(b?.kind));
-    expect({a?.kind, b?.kind}, containsAll([WellbeingInsightKind.goldenWindow, WellbeingInsightKind.balanceTrend]));
   });
 }

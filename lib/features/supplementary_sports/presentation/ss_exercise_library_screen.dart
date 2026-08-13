@@ -9,7 +9,8 @@ import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/
 import 'package:url_launcher/url_launcher.dart';
 
 class SSExerciseLibraryScreen extends StatefulWidget {
-  const SSExerciseLibraryScreen({super.key});
+  const SSExerciseLibraryScreen({super.key, this.initialCategory});
+  final String? initialCategory;
 
   @override
   State<SSExerciseLibraryScreen> createState() => _SSExerciseLibraryScreenState();
@@ -46,19 +47,19 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
         clean.contains('upper_body') || clean.contains('push')) {
       return 'chest';
     }
+    // سینه و بالاتنه شامل سرشانه و بازو نیز می‌شود
+    if (clean.contains('shoulder') || clean.contains('deltoid') ||
+        clean.contains('arm') || clean.contains('bicep') || clean.contains('tricep')) {
+      return 'chest';
+    }
     if (clean.contains('back') || clean.contains('lat') ||
         clean.contains('row') || clean.contains('shoulder_and_back')) {
       return 'back';
     }
-    if (clean.contains('shoulder') || clean.contains('deltoid')) return 'back';
     if (clean.contains('lower_body') || clean.contains('leg') ||
         clean.contains('quad') || clean.contains('glute') ||
         clean.contains('hamstring') || clean.contains('calf')) {
       return 'legs';
-    }
-    if (clean.contains('arm') || clean.contains('bicep') ||
-        clean.contains('tricep')) {
-      return 'arms';
     }
     if (clean.contains('ab') || clean.contains('core') ||
         clean.contains('waist')) {
@@ -82,9 +83,7 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
       case 'all': return 'همه';
       case 'chest': return 'سینه و بالاتنه';
       case 'back': return 'پشت و زیربغل';
-      case 'shoulders': return 'سرشانه';
       case 'legs': return 'پا و باسن';
-      case 'arms': return 'بازو';
       case 'abs': return 'شکم و پهلو';
       case 'cardio': return 'کاردیو';
       case 'stretch': return 'کشش و یوگا';
@@ -107,13 +106,15 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
         catKeys.add(normKey);
       }
 
-      const orderedKeys = ['all', 'chest', 'back', 'shoulders', 'legs', 'arms', 'abs', 'cardio', 'stretch', 'other'];
+      const orderedKeys = ['all', 'chest', 'back', 'legs', 'abs', 'cardio', 'stretch', 'other'];
       final categoriesList = orderedKeys.where(catKeys.contains).toList();
 
       setState(() {
         _allExercises = results;
         _categories = categoriesList;
-        _selectedCategory = 'all';
+        _selectedCategory = (widget.initialCategory != null && categoriesList.contains(widget.initialCategory))
+            ? widget.initialCategory!
+            : 'all';
         _filterExercises();
         _isLoading = false;
       });

@@ -240,11 +240,10 @@ class CycleOnboardingController {
     } else if (data.periodStatus == CyclePeriodStatusChoice.endedWithKnownStart) {
       // Calculate end date based on bleeding duration
       final calcEndDate = data.startDate.add(Duration(days: data.periodDuration - 1));
-      final today = DateTime.now();
-      final cleanToday = DateTime(today.year, today.month, today.day);
 
-      // Ensure end date does not spill into the future
-      final safeEnd = calcEndDate.isAfter(cleanToday) ? cleanToday : calcEndDate;
+      // We do NOT clamp the onboarding initial period end date to today
+      // to avoid artificially truncating the user's typical period duration and skewing statistics.
+      final safeEnd = calcEndDate;
       final cleanEndStr = safeEnd.toIso8601String().substring(0, 10);
 
       final existing = await db.query(

@@ -8,9 +8,14 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/weekly_budget_card.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_budget.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
+import 'package:ritmo/features/supplementary_sports/movement/presentation/session/open_session.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_exercise_library_screen.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/ss_premium_muscle_category_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_movement_tab_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_onboarding_flow.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_plan_day_detail_screen.dart';
@@ -115,6 +120,7 @@ class SSHomeDashboardScreen extends StatefulWidget {
 
 class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
   int _selectedIndex = 0;
+  int _topSelectedIndex = 1; // 0 = بخش جدید, 1 = حرکت فعلی
 
   // Lazy tab cache — only tab 0 is built eagerly; others build on first visit.
   final List<Widget?> _pageCache = List.filled(5, null);
@@ -163,6 +169,56 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
       builder: (context) {
         return const SSSettingsScreen(isModal: true);
       },
+    );
+  }
+
+  Widget _buildTopTabs(BuildContext context) {
+    final colors = context.colors;
+    final sportsAccent = context.modules.sports;
+    final labels = ['بخش جدید', 'بخش فعلی'];
+
+    return Container(
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 4),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: colors.surfaceSunken,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        textDirection: TextDirection.rtl,
+        children: List.generate(2, (index) {
+          final isSelected = _topSelectedIndex == index;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _topSelectedIndex = index;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? sportsAccent : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    labels[index],
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? Colors.white : colors.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
     );
   }
 
@@ -261,22 +317,828 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
         ),
         body: Column(
           children: [
-            _buildSegmentedControl(context),
+            _buildTopTabs(context),
             Expanded(
-              child: IndexedStack(
-                index: _selectedIndex,
-                // Only render tabs that have been visited at least once.
-                children: List.generate(
-                  5,
-                  (i) => _builtTabs.contains(i)
-                      ? _buildPage(i)
-                      : const SizedBox.shrink(),
-                ),
-              ),
+              child: _topSelectedIndex == 0
+                  ? const _NewMovementSection()
+                  : Column(
+                      children: [
+                        _buildSegmentedControl(context),
+                        Expanded(
+                          child: IndexedStack(
+                            index: _selectedIndex,
+                            // Only render tabs that have been visited at least once.
+                            children: List.generate(
+                              5,
+                              (i) => _builtTabs.contains(i)
+                                  ? _buildPage(i)
+                                  : const SizedBox.shrink(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─── کلاس کمکی بخش جدید با ۳ زیرتب ───────────────────────────────────────────
+class _NewMovementSection extends StatefulWidget {
+  const _NewMovementSection();
+
+  @override
+  State<_NewMovementSection> createState() => _NewMovementSectionState();
+}
+
+class _NewMovementSectionState extends State<_NewMovementSection>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final accent = context.modules.sports;
+
+    return Column(
+      children: [
+        // Tab selector
+        Material(
+          color: colors.surface,
+          child: TabBar(
+            controller: _tabController,
+            labelColor: accent,
+            unselectedLabelColor: colors.textSecondary,
+            indicatorColor: accent,
+            indicatorWeight: 2.5,
+            labelStyle: const TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+            ),
+            tabs: const [
+              Tab(text: 'تب ۱'),
+              Tab(text: 'ورزش‌ها'),
+              Tab(text: 'تب ۳'),
+            ],
+          ),
+        ),
+        // Tab content
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              const Center(
+                child: Text(
+                  'محتوای تب ۱',
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              const _NewSportsTabContent(),
+              const Center(
+                child: Text(
+                  'محتوای تب ۳',
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── محتوای تب ورزش‌ها ───────────────────────────────────────────────────────
+class _NewSportsTabContent extends StatefulWidget {
+  const _NewSportsTabContent();
+
+  @override
+  State<_NewSportsTabContent> createState() => _NewSportsTabContentState();
+}
+
+class _NewSportsTabContentState extends State<_NewSportsTabContent> {
+  Map<MovementFamily, int> _familyCounts = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final kinds = await MovementRepository.instance.getKinds();
+      final counts = <MovementFamily, int>{};
+      for (final k in kinds) {
+        counts[k.family] = (counts[k.family] ?? 0) + 1;
+      }
+      if (mounted) {
+        setState(() {
+          _familyCounts = counts;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CupertinoActivityIndicator());
+    }
+
+    final colors = context.colors;
+    final families = MovementFamily.values;
+
+    return Scaffold(
+      backgroundColor: colors.background,
+      body: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 0.82,
+        ),
+        itemCount: families.length,
+        itemBuilder: (context, index) {
+          final family = families[index];
+          final count = _familyCounts[family] ?? 0;
+          return _FamilyCard(
+            family: family,
+            count: count,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => MovementFamilyDetailScreen(family: family),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─── کارت دسته‌بندی ورزش‌ها ─────────────────────────────────────────────────
+class _FamilyCard extends StatelessWidget {
+  const _FamilyCard({
+    required this.family,
+    required this.count,
+    required this.onTap,
+  });
+
+  final MovementFamily family;
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.border.withValues(alpha: 0.8)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.textPrimary.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Top part: Emoji icon container
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: colors.background,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    family.emoji,
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                ),
+                // Bottom part: Name and Count
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      family.titleFa,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11.5,
+                        color: colors.textPrimary,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${count.toString().toPersianDigits()} حرکت',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 9.5,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── صفحه لیست ورزش‌های یک گروه خاص ──────────────────────────────────────────
+class MovementFamilyDetailScreen extends StatefulWidget {
+  const MovementFamilyDetailScreen({super.key, required this.family});
+
+  final MovementFamily family;
+
+  @override
+  State<MovementFamilyDetailScreen> createState() => _MovementFamilyDetailScreenState();
+}
+
+class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen> {
+  List<MovementKind> _kinds = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadKinds();
+  }
+
+  Future<void> _loadKinds() async {
+    try {
+      var kinds = await MovementRepository.instance.getKinds(family: widget.family);
+      if (widget.family == MovementFamily.mindBody) {
+        // فیلتر کردن یوگا و کشش جداگانه جهت ترکیب آنها
+        kinds = kinds.where((k) => k.code != 'YOGA' && k.code != 'STRETCHING').toList();
+      }
+      if (mounted) {
+        setState(() {
+          _kinds = kinds;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Widget _buildStrengthSubcategoriesGrid(BuildContext context) {
+    final colors = context.colors;
+    final strengthCategories = [
+      _CustomStrengthCategory('سینه و بالاتنه', '💪', 'chest'),
+      _CustomStrengthCategory('پشت و زیربغل', '🛡️', 'back'),
+      _CustomStrengthCategory('پا و باسن', '🦵', 'legs'),
+      _CustomStrengthCategory('شکم و پهلو', '🍫', 'abs'),
+    ];
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.9,
+      ),
+      itemCount: strengthCategories.length,
+      itemBuilder: (context, index) {
+        final cat = strengthCategories[index];
+        return Container(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: colors.border.withValues(alpha: 0.8)),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => SSPremiumMuscleCategoryScreen(
+                      categoryKey: cat.key,
+                      categoryName: cat.title,
+                    ),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      cat.emoji,
+                      style: const TextStyle(fontSize: 22),
+                    ),
+                    Text(
+                      cat.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: colors.textPrimary,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMindBodyGrid(BuildContext context) {
+    final colors = context.colors;
+    final items = <dynamic>[];
+    // اضافه کردن کشش و یوگای ترکیبی به ابتدای لیست
+    items.add(const _CustomStrengthCategory('کشش و یوگا', '🧘', 'stretch'));
+    items.addAll(_kinds);
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.95,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        if (item is _CustomStrengthCategory) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: colors.border.withValues(alpha: 0.8)),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => SSPremiumMuscleCategoryScreen(
+                        categoryKey: item.key,
+                        categoryName: item.title,
+                      ),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item.emoji,
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                      Text(
+                        item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                          color: colors.textPrimary,
+                          height: 1.25,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        } else {
+          final kind = item as MovementKind;
+          return _KindCard(kind: kind);
+        }
+      },
+    );
+  }
+
+  Widget _buildEnduranceGrid(BuildContext context) {
+    final colors = context.colors;
+    final items = <dynamic>[];
+    // اضافه کردن تمرینات کاردیو به ابتدای لیست هوازی
+    items.add(const _CustomStrengthCategory('تمرینات کاردیو', '🫀', 'cardio'));
+    items.addAll(_kinds);
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.95,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        if (item is _CustomStrengthCategory) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: colors.border.withValues(alpha: 0.8)),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => SSPremiumMuscleCategoryScreen(
+                        categoryKey: item.key,
+                        categoryName: item.title,
+                      ),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item.emoji,
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                      Text(
+                        item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                          color: colors.textPrimary,
+                          height: 1.25,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        } else {
+          final kind = item as MovementKind;
+          return _KindCard(kind: kind);
+        }
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isStrength = widget.family == MovementFamily.strength;
+    final isMindBody = widget.family == MovementFamily.mindBody;
+    final isEndurance = widget.family == MovementFamily.endurance;
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: colors.background,
+        appBar: AppBar(
+          backgroundColor: colors.surface,
+          elevation: 0,
+          title: Text(
+            widget.family.titleFa,
+            style: const TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontWeight: FontWeight.bold,
+              fontSize: 17,
+            ),
+          ),
+          centerTitle: true,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: colors.textPrimary),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: isStrength
+            ? _buildStrengthSubcategoriesGrid(context)
+            : (isMindBody
+                ? (_isLoading
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : _buildMindBodyGrid(context))
+                : (isEndurance
+                    ? (_isLoading
+                        ? const Center(child: CupertinoActivityIndicator())
+                        : _buildEnduranceGrid(context))
+                    : (_isLoading
+                        ? const Center(child: CupertinoActivityIndicator())
+                        : _kinds.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'ورزشی در این گروه پیدا نشد.',
+                                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
+                                ),
+                              )
+                            : GridView.builder(
+                                padding: const EdgeInsets.all(16),
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 10,
+                                  mainAxisSpacing: 10,
+                                  childAspectRatio: 0.95,
+                                ),
+                                itemCount: _kinds.length,
+                                itemBuilder: (context, index) {
+                                  final kind = _kinds[index];
+                                  return _KindCard(kind: kind);
+                                },
+                              )))),
+      ),
+    );
+  }
+}
+
+class _CustomStrengthCategory {
+  final String title;
+  final String emoji;
+  final String key;
+  const _CustomStrengthCategory(this.title, this.emoji, this.key);
+}
+
+// ─── کارت هر ورزش خاص ────────────────────────────────────────────────────────
+class _KindCard extends StatelessWidget {
+  const _KindCard({required this.kind});
+
+  final MovementKind kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors.border.withValues(alpha: 0.8)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.transparent,
+              builder: (ctx) => _SportDetailSheet(kind: kind),
+            );
+          },
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      kind.emoji,
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: colors.background,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'MET ${kind.baseMet.toString().toPersianDigits()}',
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontFamily: 'Vazirmatn',
+                          fontWeight: FontWeight.bold,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  kind.titleFa,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                    color: colors.textPrimary,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── شیت جزئیات ورزش ──────────────────────────────────────────────────────────
+class _SportDetailSheet extends StatelessWidget {
+  const _SportDetailSheet({required this.kind});
+
+  final MovementKind kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final accent = context.modules.sports;
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text(kind.emoji, style: const TextStyle(fontSize: 32)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        kind.titleFa,
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        kind.family.titleFa,
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 12,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Information row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _InfoBlock(title: 'کالری‌سوزی (MET)', value: kind.baseMet.toString().toPersianDigits()),
+                _InfoBlock(title: 'متریک اصلی', value: kind.primaryMetric.unitFa.isEmpty ? 'دقیقه' : kind.primaryMetric.unitFa),
+                _InfoBlock(title: 'محیط ورزشی', value: kind.isOutdoor ? 'فضای باز' : 'فضای بسته'),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      unawaited(startMovementSessionFlow(context, kind));
+                    },
+                    child: const Text(
+                      'شروع تمرین',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── بلوک اطلاعات شیت ──────────────────────────────────────────────────────────
+class _InfoBlock extends StatelessWidget {
+  const _InfoBlock({required this.title, required this.value});
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Column(
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontFamily: 'Vazirmatn',
+            fontSize: 11,
+            color: colors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Vazirmatn',
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: colors.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 }

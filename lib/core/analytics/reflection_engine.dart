@@ -23,6 +23,18 @@ class ReflectionEngineInput {
   final bool computeThemes;
 }
 
+class ReflectionStreakWalk {
+  const ReflectionStreakWalk({
+    required this.currentStreak,
+    required this.forgivenThisWeek,
+    required this.forgivenessAvailable,
+  });
+
+  final int currentStreak;
+  final bool forgivenThisWeek;
+  final bool forgivenessAvailable;
+}
+
 class ReflectionEngineOutput {
   ReflectionEngineOutput({
     required this.currentStreak,
@@ -36,6 +48,8 @@ class ReflectionEngineOutput {
     this.reflectionMoodCorrelation,
     required this.correlationInsight,
     this.activeCount = 0,
+    this.forgivenThisWeek = false,
+    this.forgivenessAvailable = true,
   });
   final int currentStreak;
   final int longestStreak;
@@ -50,15 +64,76 @@ class ReflectionEngineOutput {
   final double? reflectionMoodCorrelation;
   final String correlationInsight;
   final int activeCount;
+  final bool forgivenThisWeek;
+  final bool forgivenessAvailable;
 }
 
 class ReflectionEngine implements CachedEngine<ReflectionEngineInput, ReflectionEngineOutput> {
   static const int minPointsForCorrelation = 30;
+  static const int forgivenessWindowDays = 7;
+
+  /// Current streak with at most one forgiven 1-day hole in the last 7 days.
+  /// The missed day does not increment the count. Visible for tests.
+  static ReflectionStreakWalk walkCurrentStreak({
+    required Set<String> dates,
+    required DateTime today,
+  }) {
+    final clean = RitmoDate.startOfDay(today);
+    final todayStr = RitmoDate.dayKey(clean);
+    final yesterday = clean.subtract(const Duration(days: 1));
+    final yesterdayStr = RitmoDate.dayKey(yesterday);
+
+    var forgiven = false;
+    late DateTime start;
+    if (dates.contains(todayStr)) {
+      start = clean;
+    } else if (dates.contains(yesterdayStr)) {
+      start = yesterday;
+    } else {
+      final twoAgo = clean.subtract(const Duration(days: 2));
+      if (dates.contains(RitmoDate.dayKey(twoAgo))) {
+        start = twoAgo;
+        forgiven = true;
+      } else {
+        return const ReflectionStreakWalk(
+          currentStreak: 0,
+          forgivenThisWeek: false,
+          forgivenessAvailable: true,
+        );
+      }
+    }
+
+    var streak = 0;
+    var check = start;
+    while (true) {
+      final key = RitmoDate.dayKey(check);
+      if (dates.contains(key)) {
+        streak++;
+        check = check.subtract(const Duration(days: 1));
+        continue;
+      }
+      final gapAge = clean.difference(check).inDays;
+      if (!forgiven && gapAge < forgivenessWindowDays) {
+        final beforeGap = check.subtract(const Duration(days: 1));
+        if (dates.contains(RitmoDate.dayKey(beforeGap))) {
+          forgiven = true;
+          check = beforeGap;
+          continue;
+        }
+      }
+      break;
+    }
+
+    return ReflectionStreakWalk(
+      currentStreak: streak,
+      forgivenThisWeek: forgiven,
+      forgivenessAvailable: !forgiven,
+    );
+  }
 
   @override
   Future<ReflectionEngineOutput> calculate(ReflectionEngineInput input) async {
     final cleanToday = RitmoDate.startOfDay(input.today);
-    final todayStr = RitmoDate.dayKey(cleanToday);
 
     // T-3.3 / W-09: Exact horizon window using RitmoDate
     final dayKeys = RitmoDate.lastNDayKeys(cleanToday, input.horizonDays);
@@ -69,31 +144,16 @@ class ReflectionEngine implements CachedEngine<ReflectionEngineInput, Reflection
       return d != null && allowedKeys.contains(d);
     }).toList();
 
-    // 2. Streaks
-    var currentStreak = 0;
-    var longestStreak = 0;
-
     final reflectionDates = input.dailyReflections
         .map((r) => r.readString('date'))
         .whereType<String>()
         .toSet();
 
+    final walk = walkCurrentStreak(dates: reflectionDates, today: cleanToday);
+    var longestStreak = 0;
+
     if (reflectionDates.isNotEmpty) {
       final sortedDates = reflectionDates.toList()..sort();
-
-      // Current streak:
-      final yesterdayStr = RitmoDate.dayKey(cleanToday.subtract(const Duration(days: 1)));
-      if (!reflectionDates.contains(todayStr) && !reflectionDates.contains(yesterdayStr)) {
-        currentStreak = 0;
-      } else {
-        var checkDate = reflectionDates.contains(todayStr) ? cleanToday : cleanToday.subtract(const Duration(days: 1));
-        while (reflectionDates.contains(RitmoDate.dayKey(checkDate))) {
-          currentStreak++;
-          checkDate = checkDate.subtract(const Duration(days: 1));
-        }
-      }
-
-      // Longest streak:
       var currentRun = 0;
       DateTime? prevDate;
       for (final dateStr in sortedDates) {
@@ -254,7 +314,7 @@ class ReflectionEngine implements CachedEngine<ReflectionEngineInput, Reflection
     }
 
     return ReflectionEngineOutput(
-      currentStreak: currentStreak,
+      currentStreak: walk.currentStreak,
       longestStreak: longestStreak,
       entryCount: input.dailyReflections.length,
       completionRate: compRate,
@@ -265,6 +325,8 @@ class ReflectionEngine implements CachedEngine<ReflectionEngineInput, Reflection
       reflectionMoodCorrelation: moodCorr,
       correlationInsight: correlationInsight,
       activeCount: activeReflections.length,
+      forgivenThisWeek: walk.forgivenThisWeek,
+      forgivenessAvailable: walk.forgivenessAvailable,
     );
   }
 

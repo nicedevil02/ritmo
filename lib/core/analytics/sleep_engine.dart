@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
+import 'package:ritmo/core/time/ritmo_time.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/util/safe_map.dart';
@@ -183,15 +184,11 @@ class SleepEngine implements CachedEngine<SleepEngineInput, SleepEngineOutput> {
         final actualBtMin = bt.hour * 60 + bt.minute;
         final actualWtMin = wt.hour * 60 + wt.minute;
 
-        var btDiff = actualBtMin - targetBedtimeMin;
-        if (btDiff > 720) btDiff -= 1440;
-        if (btDiff < -720) btDiff += 1440;
-        bedtimeDevs.add(btDiff.toDouble());
-
-        var wtDiff = actualWtMin - targetWakeMin;
-        if (wtDiff > 720) wtDiff -= 1440;
-        if (wtDiff < -720) wtDiff += 1440;
-        wakeDevs.add(wtDiff.toDouble());
+        // قدم ۱: تنها پیاده‌سازی مجازِ wrap-around در RitmoTime است
+        bedtimeDevs.add(
+            RitmoTime.signedMinuteDiff(actualBtMin, targetBedtimeMin).toDouble());
+        wakeDevs.add(
+            RitmoTime.signedMinuteDiff(actualWtMin, targetWakeMin).toDouble());
       }
     }
 

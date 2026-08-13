@@ -194,7 +194,8 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                   Container(
                     height: 6,
                     width: 6,
-                    decoration: BoxDecoration(color: tone, shape: BoxShape.circle),
+                    decoration:
+                        BoxDecoration(color: tone, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -422,7 +423,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
   static String _badgeText(HeroPriorityType type) {
     return switch (type) {
       HeroPriorityType.activeTimer => 'در حال اجرا',
-      HeroPriorityType.overdineOrNextItemPlaceholder => '',
+      HeroPriorityType.overdueOrNextItem => 'اقدام بعدی',
       HeroPriorityType.medicalSafety => 'هشدار دارویی',
       HeroPriorityType.morningCheckIn => 'ارزیابی اول روز',
       HeroPriorityType.emptyState => 'ریتم امروز',

@@ -1,18 +1,28 @@
-import 'package:ritmo/core/analytics/wellbeing_insight_arbiter.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
-import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:sqflite/sqflite.dart';
 
 class WellbeingInsightLoopState {
   const WellbeingInsightLoopState({
-    required this.kind,
+    required this.kindName,
     required this.date,
     required this.metric,
   });
 
-  final WellbeingInsightKind kind;
+  final String kindName;
   final String date;
   final double metric;
+}
+
+class WellbeingLoopOutcome {
+  const WellbeingLoopOutcome({
+    required this.previousKindName,
+    required this.improved,
+    required this.days,
+  });
+
+  final String previousKindName;
+  final bool improved;
+  final int days;
 }
 
 /// Stores the featured narrative of the day and later asks if it helped.
@@ -42,9 +52,11 @@ class WellbeingInsightLoop {
         if (key == metricKey) metric = double.tryParse(value ?? '');
       }
       if (kindName == null || date == null || metric == null) return null;
-      final kind = WellbeingInsightKind.values.where((k) => k.name == kindName);
-      if (kind.isEmpty) return null;
-      return WellbeingInsightLoopState(kind: kind.first, date: date, metric: metric);
+      return WellbeingInsightLoopState(
+        kindName: kindName,
+        date: date,
+        metric: metric,
+      );
     } catch (_) {
       return null;
     }
@@ -53,24 +65,21 @@ class WellbeingInsightLoop {
   static Future<void> saveIfNewDay({
     required dynamic db,
     required DateTime now,
-    required WellbeingInsight featured,
+    required String kindName,
     required WellbeingInsightLoopState? previous,
-    required Map<WellbeingInsightKind, double> metrics,
+    required double? metric,
   }) async {
     final today = RitmoDate.dayKey(now);
     if (previous?.date == today) return;
-
-    final kind = featured.kind == WellbeingInsightKind.loopOutcome
-        ? (previous?.kind ?? featured.kind)
-        : featured.kind;
-    if (kind == WellbeingInsightKind.loopOutcome) return;
-    final metric = metrics[kind];
-    if (metric == null) return;
+    if (kindName == 'loopOutcome') {
+      kindName = previous?.kindName ?? kindName;
+    }
+    if (kindName == 'loopOutcome' || metric == null) return;
 
     final nowMs = now.millisecondsSinceEpoch;
     try {
       for (final entry in {
-        kindKey: kind.name,
+        kindKey: kindName,
         dateKey: today,
         metricKey: metric.toString(),
       }.entries) {
@@ -87,117 +96,36 @@ class WellbeingInsightLoop {
     } catch (_) {}
   }
 
-  static WellbeingInsight? outcome({
+  static WellbeingLoopOutcome? evaluate({
     required WellbeingInsightLoopState? previous,
     required DateTime now,
-    required Map<WellbeingInsightKind, double> currentMetrics,
+    required Map<String, double> currentMetrics,
   }) {
-    if (previous == null) return null;
-    if (previous.kind == WellbeingInsightKind.loopOutcome) return null;
+    if (previous == null || previous.kindName == 'loopOutcome') return null;
     final prevDate = RitmoDate.tryParseDayKey(previous.date);
     if (prevDate == null) return null;
-    final days = RitmoDate.startOfDay(now).difference(RitmoDate.startOfDay(prevDate)).inDays;
+    final days =
+        RitmoDate.startOfDay(now).difference(RitmoDate.startOfDay(prevDate)).inDays;
     if (days < minDaysBeforeOutcome) return null;
-    final current = currentMetrics[previous.kind];
+    final current = currentMetrics[previous.kindName];
     if (current == null) return null;
-
-    final delta = current - previous.metric;
-    final improved = delta >= _threshold(previous.kind);
-    final label = _kindLabel(previous.kind);
-    if (improved) {
-      return WellbeingInsight(
-        kind: WellbeingInsightKind.loopOutcome,
-        maturity: WellbeingInsightMaturity.ready,
-        title: 'روایت هفتهٔ قبل اثر داشت',
-        body: 'بعد از دیدن «$label»، شاخص مرتبط بهتر شده. همین مسیر را یک هفتهٔ دیگر ادامه بده.',
-        score: 1.42,
-        have: days,
-        need: minDaysBeforeOutcome,
-      );
-    }
-    return WellbeingInsight(
-      kind: WellbeingInsightKind.loopOutcome,
-      maturity: WellbeingInsightMaturity.ready,
-      title: 'هنوز اثر واضحی دیده نشد',
-      body: 'هفتهٔ پیش «$label» را دیدی. تغییر شاخص هنوز از نویز روزمره بزرگ‌تر نیست — زود است نتیجه بگیریم.',
-      score: 0.74,
-      have: days,
-      need: minDaysBeforeOutcome,
+    return WellbeingLoopOutcome(
+      previousKindName: previous.kindName,
+      improved: current - previous.metric >= thresholdFor(previous.kindName),
+      days: days,
     );
   }
 
-  static Map<WellbeingInsightKind, double> metricsFor({
-    required WellbeingInsightInput input,
-  }) {
-    final out = <WellbeingInsightKind, double>{};
-    final balanceHours = input.sleep?.sleepBalanceHours;
-    if (balanceHours != null) {
-      out[WellbeingInsightKind.lastNightSleep] = balanceHours;
-      out[WellbeingInsightKind.sleepBank] = balanceHours;
-      out[WellbeingInsightKind.sleepNextDay] = balanceHours;
-      out[WellbeingInsightKind.bestBedtime] = balanceHours;
-      out[WellbeingInsightKind.tripleChain] = balanceHours;
-    }
-    final streak = input.reflection?.currentStreak;
-    if (streak != null) {
-      out[WellbeingInsightKind.reflectionStreak] = streak.toDouble();
-      out[WellbeingInsightKind.reflectionLink] = streak.toDouble();
-    }
-    final energyAvg = input.energy?.avgLevel;
-    if (energyAvg != null) {
-      out[WellbeingInsightKind.goldenWindow] = energyAvg;
-      out[WellbeingInsightKind.moodEnergyLink] = energyAvg;
-    }
-    final score = input.balance?.score;
-    if (score != null) {
-      out[WellbeingInsightKind.balanceTrend] = score.toDouble();
-    }
-    final index = input.index?.value;
-    if (index != null) {
-      out[WellbeingInsightKind.indexDriver] = index;
-    }
-    return out;
-  }
-
-  static double _threshold(WellbeingInsightKind kind) {
-    switch (kind) {
-      case WellbeingInsightKind.reflectionStreak:
-      case WellbeingInsightKind.reflectionLink:
+  static double thresholdFor(String kindName) {
+    switch (kindName) {
+      case 'reflectionStreak':
+      case 'reflectionLink':
         return 1.0;
-      case WellbeingInsightKind.balanceTrend:
-      case WellbeingInsightKind.indexDriver:
+      case 'balanceTrend':
+      case 'indexDriver':
         return 3.0;
       default:
         return 0.25;
-    }
-  }
-
-  static String _kindLabel(WellbeingInsightKind kind) {
-    switch (kind) {
-      case WellbeingInsightKind.lastNightSleep:
-        return 'خواب دیشب';
-      case WellbeingInsightKind.reflectionStreak:
-        return 'استریک بازتاب';
-      case WellbeingInsightKind.goldenWindow:
-        return 'پنجرهٔ طلایی';
-      case WellbeingInsightKind.moodEnergyLink:
-        return 'حال و انرژی';
-      case WellbeingInsightKind.sleepNextDay:
-        return 'خواب و روز بعد';
-      case WellbeingInsightKind.reflectionLink:
-        return 'بازتاب و حال';
-      case WellbeingInsightKind.sleepBank:
-        return 'ذخیرهٔ خواب';
-      case WellbeingInsightKind.bestBedtime:
-        return 'ساعت خواب بهتر';
-      case WellbeingInsightKind.balanceTrend:
-        return 'توزیع تلاش';
-      case WellbeingInsightKind.indexDriver:
-        return 'چرا این عدد';
-      case WellbeingInsightKind.tripleChain:
-        return 'زنجیرهٔ سه‌تایی';
-      case WellbeingInsightKind.loopOutcome:
-        return 'نتیجهٔ هفته';
     }
   }
 }

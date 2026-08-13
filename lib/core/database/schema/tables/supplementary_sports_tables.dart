@@ -189,6 +189,7 @@ class SupplementarySportsTables {
 
     await ensureUserProfileSchema(db);
     await ensurePrescriptionTables(db);
+    await ensureLiveMovementSessionTables(db);
 
     // 9. ss_decision_log
     await db.execute('''
@@ -382,92 +383,145 @@ class SupplementarySportsTables {
           );
         } catch (_) {}
       }
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS station_bundles (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            category TEXT NOT NULL,
+            itemsJson TEXT NOT NULL,
+            isUserTemplate INTEGER NOT NULL DEFAULT 0,
+            usageCount INTEGER NOT NULL DEFAULT 0,
+            createdAt INTEGER NOT NULL,
+            updatedAt INTEGER NOT NULL
+        );
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS ss_plan_schedule (
+            id TEXT PRIMARY KEY,
+            planId TEXT NOT NULL,
+            scheduledDate TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'PENDING',
+            sessionId TEXT,
+            shiftedFromDate TEXT,
+            createdAt INTEGER NOT NULL,
+            updatedAt INTEGER NOT NULL,
+            FOREIGN KEY(planId) REFERENCES ss_workout_plan(id) ON DELETE CASCADE
+        );
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS ss_exercise_pr (
+            id TEXT PRIMARY KEY,
+            exerciseId TEXT NOT NULL,
+            prType TEXT NOT NULL,
+            value REAL NOT NULL,
+            sessionId TEXT,
+            achievedAt INTEGER NOT NULL,
+            UNIQUE(exerciseId, prType)
+        );
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS ss_session_set_log (
+            id TEXT PRIMARY KEY,
+            sessionId TEXT NOT NULL,
+            exerciseId TEXT NOT NULL,
+            setNumber INTEGER NOT NULL,
+            weight REAL,
+            reps INTEGER,
+            rir INTEGER,
+            durationSeconds INTEGER,
+            isCompleted INTEGER NOT NULL DEFAULT 1,
+            loggedAt INTEGER NOT NULL,
+            FOREIGN KEY(sessionId) REFERENCES ss_workout_session_log(id) ON DELETE CASCADE
+        );
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS movement_budget (
+            id TEXT PRIMARY KEY DEFAULT 'default',
+            weeklyMetMinutesTarget REAL NOT NULL DEFAULT 500,
+            weeklyActiveDaysTarget INTEGER NOT NULL DEFAULT 4,
+            isAutoAdjusted INTEGER NOT NULL DEFAULT 1,
+            updatedAt INTEGER NOT NULL
+        );
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS movement_pr (
+            id TEXT PRIMARY KEY,
+            kind TEXT NOT NULL,
+            prType TEXT NOT NULL,
+            value REAL NOT NULL,
+            logId TEXT,
+            achievedAt INTEGER NOT NULL,
+            UNIQUE(kind, prType)
+        );
+      ''');
     } catch (_) {}
+  }
 
-  await db.execute('''
-      CREATE TABLE IF NOT EXISTS station_bundles (
-          id TEXT PRIMARY KEY,
-          title TEXT NOT NULL,
-          description TEXT,
-          category TEXT NOT NULL,
-          itemsJson TEXT NOT NULL,
-          isUserTemplate INTEGER NOT NULL DEFAULT 0,
-          usageCount INTEGER NOT NULL DEFAULT 0,
-          createdAt INTEGER NOT NULL,
-          updatedAt INTEGER NOT NULL
-      );
+  /// Ensures movement_sessions, movement_session_events, and movement_campaigns tables exist safely.
+  static Future<void> ensureLiveMovementSessionTables(DatabaseExecutor db) async {
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS movement_sessions (
+          id            TEXT PRIMARY KEY,
+          kindCode      TEXT NOT NULL,
+          routineId     TEXT,
+          occurrenceId  TEXT,
+          prescriptionId TEXT,
+          sessionMode   TEXT NOT NULL,
+          status        TEXT NOT NULL,
+          startedAt     INTEGER NOT NULL,
+          endedAt       INTEGER,
+          pausedMs      INTEGER NOT NULL DEFAULT 0,
+          targetJson    TEXT,
+          liveJson      TEXT,
+          workoutLogId  TEXT,
+          createdAt     INTEGER NOT NULL,
+          updatedAt     INTEGER NOT NULL
+        );
+      ''');
 
-  ''');
+      await db.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_movement_sessions_active
+          ON movement_sessions(status) WHERE status IN ('ACTIVE', 'PAUSED');
+      ''');
 
-  await db.execute('''
-      CREATE TABLE IF NOT EXISTS ss_plan_schedule (
-          id TEXT PRIMARY KEY,
-          planId TEXT NOT NULL,
-          scheduledDate TEXT NOT NULL,
-          status TEXT NOT NULL DEFAULT 'PENDING',
-          sessionId TEXT,
-          shiftedFromDate TEXT,
-          createdAt INTEGER NOT NULL,
-          updatedAt INTEGER NOT NULL,
-          FOREIGN KEY(planId) REFERENCES ss_workout_plan(id) ON DELETE CASCADE
-      );
-
-  ''');
-
-  await db.execute('''
-      CREATE TABLE IF NOT EXISTS ss_exercise_pr (
-          id TEXT PRIMARY KEY,
-          exerciseId TEXT NOT NULL,
-          prType TEXT NOT NULL,
-          value REAL NOT NULL,
-          sessionId TEXT,
-          achievedAt INTEGER NOT NULL,
-          UNIQUE(exerciseId, prType)
-      );
-
-  ''');
-
-  await db.execute('''
-      CREATE TABLE IF NOT EXISTS ss_session_set_log (
-          id TEXT PRIMARY KEY,
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS movement_session_events (
+          id        TEXT PRIMARY KEY,
           sessionId TEXT NOT NULL,
-          exerciseId TEXT NOT NULL,
-          setNumber INTEGER NOT NULL,
-          weight REAL,
-          reps INTEGER,
-          rir INTEGER,
-          durationSeconds INTEGER,
-          isCompleted INTEGER NOT NULL DEFAULT 1,
-          loggedAt INTEGER NOT NULL,
-          FOREIGN KEY(sessionId) REFERENCES ss_workout_session_log(id) ON DELETE CASCADE
-      );
+          type      TEXT NOT NULL,
+          at        INTEGER NOT NULL,
+          dataJson  TEXT
+        );
+      ''');
 
-  ''');
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_mse_session
+          ON movement_session_events(sessionId, at);
+      ''');
 
-  await db.execute('''
-      CREATE TABLE IF NOT EXISTS movement_budget (
-          id TEXT PRIMARY KEY DEFAULT 'default',
-          weeklyMetMinutesTarget REAL NOT NULL DEFAULT 500,
-          weeklyActiveDaysTarget INTEGER NOT NULL DEFAULT 4,
-          isAutoAdjusted INTEGER NOT NULL DEFAULT 1,
-          updatedAt INTEGER NOT NULL
-      );
-
-  ''');
-
-  await db.execute('''
-      CREATE TABLE IF NOT EXISTS movement_pr (
-          id TEXT PRIMARY KEY,
-          kind TEXT NOT NULL,
-          prType TEXT NOT NULL,
-          value REAL NOT NULL,
-          logId TEXT,
-          achievedAt INTEGER NOT NULL,
-          UNIQUE(kind, prType)
-      );
-
-  ''');
-
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS movement_campaigns (
+          id           TEXT PRIMARY KEY,
+          titleFa      TEXT NOT NULL,
+          goalCode     TEXT NOT NULL,
+          startDate    TEXT NOT NULL,
+          weeks        INTEGER NOT NULL,
+          status       TEXT NOT NULL,
+          routineIds   TEXT NOT NULL,
+          progressJson TEXT,
+          createdAt    INTEGER NOT NULL,
+          updatedAt    INTEGER NOT NULL
+        );
+      ''');
+    } catch (_) {}
   }
 }
 

@@ -7,6 +7,7 @@ import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_session.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_event.dart';
+import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 
@@ -14,7 +15,16 @@ class MovementSessionRepository {
   MovementSessionRepository._();
   static final instance = MovementSessionRepository._();
 
-  Future<Database> get _db async => DatabaseHelper.instance.database;
+  bool _tablesEnsured = false;
+
+  Future<Database> get _db async {
+    final db = await DatabaseHelper.instance.database;
+    if (!_tablesEnsured) {
+      await SupplementarySportsTables.ensureLiveMovementSessionTables(db);
+      _tablesEnsured = true;
+    }
+    return db;
+  }
 
   /// جلسهٔ زندهٔ فعلی (در صورت وجود) — برای بازیابی هنگام باز شدن اپ.
   Future<MovementSession?> getActiveSession() async {

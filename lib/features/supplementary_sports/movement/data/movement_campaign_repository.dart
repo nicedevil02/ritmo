@@ -2,13 +2,26 @@
 
 import 'dart:convert';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_campaign.dart';
+import 'package:sqflite/sqflite.dart';
 
 class MovementCampaignRepository {
   MovementCampaignRepository._();
   static final instance = MovementCampaignRepository._();
+
+  bool _tablesEnsured = false;
+
+  Future<Database> get _db async {
+    final db = await DatabaseHelper.instance.database;
+    if (!_tablesEnsured) {
+      await SupplementarySportsTables.ensureLiveMovementSessionTables(db);
+      _tablesEnsured = true;
+    }
+    return db;
+  }
 
   Future<MovementCampaign> createCampaign({
     required String goalCode,
@@ -16,7 +29,7 @@ class MovementCampaignRepository {
     required DateTime startDate,
     required int weeks,
   }) async {
-    final db = await DatabaseHelper.instance.database;
+    final db = await _db;
     final now = DateTime.now().millisecondsSinceEpoch;
     final startDateStr = '${startDate.year.toString().padLeft(4, '0')}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}';
 
@@ -174,7 +187,7 @@ class MovementCampaignRepository {
   }
 
   Future<MovementCampaign?> getActiveCampaign() async {
-    final db = await DatabaseHelper.instance.database;
+    final db = await _db;
     final rows = await db.query(
       'movement_campaigns',
       where: 'status = ?',
@@ -186,7 +199,7 @@ class MovementCampaignRepository {
   }
 
   Future<MovementCampaign?> getCampaignById(String id) async {
-    final db = await DatabaseHelper.instance.database;
+    final db = await _db;
     final rows = await db.query(
       'movement_campaigns',
       where: 'id = ?',
@@ -198,7 +211,7 @@ class MovementCampaignRepository {
   }
 
   Future<void> cancelCampaign(String id) async {
-    final db = await DatabaseHelper.instance.database;
+    final db = await _db;
     final campaign = await getCampaignById(id);
     if (campaign == null) return;
 
@@ -238,7 +251,7 @@ class MovementCampaignRepository {
     final lastWeek = progress['currentWeek'] as int? ?? 1;
 
     if (currentWeek > lastWeek && currentWeek <= campaign.weeks) {
-      final db = await DatabaseHelper.instance.database;
+      final db = await _db;
 
       for (final rId in campaign.routineIds) {
         final rRows = await db.query('routines', where: 'id = ?', whereArgs: [rId], limit: 1);

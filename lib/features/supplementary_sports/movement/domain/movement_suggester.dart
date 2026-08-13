@@ -6,6 +6,7 @@ import 'package:ritmo/core/analytics/movement_load_calculator.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_budget.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
+import 'package:flutter/foundation.dart';
 
 class MovementSuggestion {
   const MovementSuggestion({
@@ -138,7 +139,7 @@ class MovementSuggester {
         if (_mentionsAny(limStr, _backTerms)) limitations.add('back');
         if (_mentionsAny(limStr, _shoulderTerms)) limitations.add('shoulder');
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] movement_suggester.dart: $e'); }
 
     // Daily checkin parameters for today
     int availableMinutes = 30;
@@ -160,7 +161,7 @@ class MovementSuggester {
         soreness = (r['soreness'] as num? ?? 1).toInt().clamp(1, 5);
         painLevel = (r['painLevel'] as num? ?? 0).toInt().clamp(0, 10);
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] movement_suggester.dart: $e'); }
 
     // Recent kinds codes logged in last 14 days
     final recentKindCodes14d = <String>{};
@@ -176,7 +177,7 @@ class MovementSuggester {
         final code = r['kindCode'] as String?;
         if (code != null) recentKindCodes14d.add(code);
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] movement_suggester.dart: $e'); }
 
     final jalaliMonth = Jalali.now().month;
 

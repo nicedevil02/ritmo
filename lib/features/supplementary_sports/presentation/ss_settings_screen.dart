@@ -695,6 +695,7 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
                       ],
                     ),
                     IconButton(
+                      tooltip: 'بستن',
                       icon: Icon(CupertinoIcons.xmark, color: isDark ? Colors.white70 : Colors.black54, size: 20),
                       onPressed: () => Navigator.pop(context),
                     ),

@@ -1006,6 +1006,7 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
+              tooltip: 'حذف',
               icon: const Icon(Icons.remove, size: 16),
               onPressed: value > 0 ? () => onChanged(value - 2.5) : null,
             ),
@@ -1017,6 +1018,7 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
               ),
             ),
             IconButton(
+              tooltip: 'افزودن',
               icon: const Icon(Icons.add, size: 16),
               onPressed: () => onChanged(value + 2.5),
             ),

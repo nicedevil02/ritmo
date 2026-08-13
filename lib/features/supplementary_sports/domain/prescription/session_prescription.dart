@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 enum SlotType {
   strength,
@@ -222,7 +223,7 @@ class SessionPrescription {
     if (fociRaw is String && fociRaw.isNotEmpty) {
       try {
         foci = List<String>.from(jsonDecode(fociRaw) as List);
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] session_prescription.dart: $e'); }
     }
     return SessionPrescription(
       id: map['id'] as String,

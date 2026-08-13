@@ -15,6 +15,9 @@ import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart'
 import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_workout_session_screen.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:flutter/services.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_screen_awake.dart';
+import 'package:ritmo/features/supplementary_sports/movement/presentation/session/session_surface.dart';
 
 class MovementSessionScreen extends StatefulWidget {
   const MovementSessionScreen({
@@ -62,6 +65,7 @@ class _MovementSessionScreenState extends State<MovementSessionScreen> {
   @override
   void initState() {
     super.initState();
+    SsScreenAwake.enable();
     _notifier = MovementSessionNotifier(widget.session);
     _mode = effectiveMode(widget.kind);
     _notifier.addListener(_onSessionUpdated);
@@ -84,7 +88,7 @@ class _MovementSessionScreenState extends State<MovementSessionScreen> {
           _structuredPlanId = rows.first['id'] as String;
         });
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] movement_session_screen.dart: $e'); }
     setState(() => _isLoadingPlan = false);
   }
 
@@ -94,6 +98,7 @@ class _MovementSessionScreenState extends State<MovementSessionScreen> {
 
   @override
   void dispose() {
+    SsScreenAwake.disable();
     _notifier.removeListener(_onSessionUpdated);
     _notifier.dispose();
     super.dispose();
@@ -112,7 +117,7 @@ class _MovementSessionScreenState extends State<MovementSessionScreen> {
       backgroundColor: Colors.black,
       body: _isLoadingPlan
           ? const Center(child: CircularProgressIndicator())
-          : MovementSessionScaffold(
+          : MovementSessionSurface(
               notifier: _notifier,
               kind: widget.kind,
               mode: _mode,
@@ -203,7 +208,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
         final targetElev = (target['elevationMeters'] as num).toDouble();
         return (currentElev / targetElev).clamp(0.0, 1.0);
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] movement_session_screen.dart: $e'); }
     return 0.0;
   }
 
@@ -336,18 +341,22 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
+                      tooltip: 'حال عالی',
                       icon: Text('🤩', style: TextStyle(fontSize: selectedFeeling == 'EXCELLENT' ? 36 : 24)),
                       onPressed: () => setDlgState(() => selectedFeeling = 'EXCELLENT'),
                     ),
                     IconButton(
+                      tooltip: 'حال خوب',
                       icon: Text('🙂', style: TextStyle(fontSize: selectedFeeling == 'GOOD' ? 36 : 24)),
                       onPressed: () => setDlgState(() => selectedFeeling = 'GOOD'),
                     ),
                     IconButton(
+                      tooltip: 'حال معمولی',
                       icon: Text('😐', style: TextStyle(fontSize: selectedFeeling == 'NORMAL' ? 36 : 24)),
                       onPressed: () => setDlgState(() => selectedFeeling = 'NORMAL'),
                     ),
                     IconButton(
+                      tooltip: 'خسته',
                       icon: Text('😫', style: TextStyle(fontSize: selectedFeeling == 'EXHAUSTED' ? 36 : 24)),
                       onPressed: () => setDlgState(() => selectedFeeling = 'EXHAUSTED'),
                     ),
@@ -620,6 +629,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
               ),
               const SizedBox(width: 12),
               IconButton(
+                tooltip: 'ویرایش',
                 icon: const Icon(Icons.edit, color: Colors.white54),
                 onPressed: () {
                   RitmoHaptics.tap();
@@ -656,6 +666,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
               ),
               const SizedBox(width: 12),
               IconButton(
+                tooltip: 'ویرایش',
                 icon: const Icon(Icons.edit, color: Colors.white54),
                 onPressed: () {
                   RitmoHaptics.tap();
@@ -697,6 +708,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
+                tooltip: 'افزودن',
                 icon: const Icon(Icons.add_circle_outline, color: Colors.white70, size: 36),
                 onPressed: () => _updateLiveValue('hostScore', (hostScore + 1).toDouble()),
               ),
@@ -705,6 +717,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                 style: const TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.w900),
               ),
               IconButton(
+                tooltip: 'افزودن',
                 icon: const Icon(Icons.add_circle_outline, color: Colors.white70, size: 36),
                 onPressed: () => _updateLiveValue('guestScore', (guestScore + 1).toDouble()),
               ),

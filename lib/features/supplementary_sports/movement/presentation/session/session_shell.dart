@@ -21,7 +21,7 @@ const String _fontFa = 'Vazirmatn';
 
 /// اسکلت مشترک همهٔ جلسات فعالیت — قدرتی، پیاده‌روی، کوه، شنا، بازی.
 ///
-/// هر چیز مشترک یک جا زندگی می‌کند: محافظ خروج، هدر ورزش، نوار هدف، ناحیهٔ
+/// هر چیز مشترک یک جا زندگی می‌کند: محافط خروج، هدر ورزش، نوار هدف، ناحیهٔ
 /// اسکرول‌شوندهٔ متریک‌ها، کنترل توقف/ادامه/پایان و دیالوگ ثبت پایان.
 /// تفاوت ورزش‌ها فقط در قالب (SessionTemplate) است.
 class SessionShell extends StatefulWidget {
@@ -473,10 +473,10 @@ class _SessionShellState extends State<SessionShell> {
 											fontSize: 13,
 											fontWeight: FontWeight.bold,
 										),
-								),
-							],
+									),
+								],
+							),
 						),
-					),
 					)
 					.toList(),
 		);

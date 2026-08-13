@@ -45,10 +45,13 @@ class BottomSheetContainer extends StatelessWidget {
                 ),
               ],
             ),
-            padding: const EdgeInsets.only(
+            padding: EdgeInsets.only(
               left: SupplementarySportsTheme.spacing16,
               right: SupplementarySportsTheme.spacing16,
-              bottom: SupplementarySportsTheme.spacing24,
+              // UX: lift the sheet above the on-screen keyboard so the focused
+              // field stays visible while typing.
+              bottom: SupplementarySportsTheme.spacing24 +
+                  MediaQuery.of(context).viewInsets.bottom,
             ),
             child: SingleChildScrollView(
               child: Column(
@@ -71,7 +74,7 @@ class BottomSheetContainer extends StatelessWidget {
                     const SizedBox(height: SupplementarySportsTheme.spacing16),
                     // Title
                     Align(
-                      alignment: Alignment.centerRight,
+                      alignment: AlignmentDirectional.centerEnd,
                       child: Text(
                         title!,
                         textDirection: TextDirection.rtl,

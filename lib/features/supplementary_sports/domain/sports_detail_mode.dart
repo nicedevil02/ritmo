@@ -36,6 +36,6 @@ class SportsDetailMode {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       notifier.value = enabled;
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] sports_detail_mode.dart: $e'); }
   }
 }

@@ -76,6 +76,7 @@ class _SSCustomExerciseSheetState extends State<SSCustomExerciseSheet> {
                 ),
               ),
               IconButton(
+                tooltip: 'بستن',
                 icon: Icon(Icons.close_rounded, color: colors.textSecondary),
                 onPressed: () => Navigator.pop(context),
               ),

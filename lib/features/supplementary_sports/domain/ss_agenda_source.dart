@@ -7,6 +7,7 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_week_resolver.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_program_calendar.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:flutter/foundation.dart';
 
 /// AgendaSource for the Supplementary Sports & Movement domain.
 class SsAgendaSource {
@@ -76,7 +77,7 @@ class SsAgendaSource {
           prescriptionsByDate[dateIso] = Map<String, dynamic>.from(r);
         }
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_agenda_source.dart: $e'); }
 
     // 3. Movement routines + their schedules + today's completions
     final movementRoutines = <Map<String, dynamic>>[];

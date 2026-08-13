@@ -19,6 +19,7 @@ import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.d
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:flutter/services.dart';
 
 // --- Sealed Class for Progress State ---
 sealed class SSProgressUiState {
@@ -331,9 +332,16 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
           content: TextField(
             controller: controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+            textInputAction: TextInputAction.done,
+            autofocus: true,
+            maxLength: 6,
             decoration: const InputDecoration(
               labelText: 'وزن به کیلوگرم (مثلاً ۷۵.۵)',
               labelStyle: TextStyle(fontFamily: 'Vazirmatn'),
+              helperText: 'عدد اعشاری با نقطه، مثلاً ۷۲.۴',
+              helperStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+              counterText: '',
               border: OutlineInputBorder(),
             ),
           ),

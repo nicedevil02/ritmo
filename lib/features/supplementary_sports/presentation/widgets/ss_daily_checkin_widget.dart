@@ -38,7 +38,7 @@ List<String> _parseSoreParts(String? note) {
     if (decoded is Map && decoded.containsKey('soreParts')) {
       return List<String>.from(decoded['soreParts'] as List);
     }
-  } catch (_) {}
+  } catch (e) { debugPrint('[ss] ss_daily_checkin_widget.dart: $e'); }
   return [];
 }
 
@@ -275,7 +275,7 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
               break;
             }
           }
-        } catch (_) {}
+        } catch (e) { debugPrint('[ss] ss_daily_checkin_widget.dart: $e'); }
       }
 
       if (conflicts) {
@@ -317,7 +317,7 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
               break;
             }
           }
-        } catch (_) {}
+        } catch (e) { debugPrint('[ss] ss_daily_checkin_widget.dart: $e'); }
       }
 
       if (!altConflicts) {

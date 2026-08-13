@@ -19,6 +19,7 @@ import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/selectable_card.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_lottie_player.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_muscle_image_resolver.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_screen_awake.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_ai_coach_sheet.dart';
 
 // ─── MVI INTENTS ─────────────────────────────────────────────
@@ -291,6 +292,13 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     )..repeat(reverse: true);
 
     WidgetsBinding.instance.addObserver(this);
+    // UX: an active session must not let the screen sleep, and must not
+    // reflow into landscape while the user is mid-set.
+    SsScreenAwake.enable();
+    SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     Future.microtask(() {
       ref.read(ssWorkoutProvider(_key).notifier).init();
     });
@@ -300,12 +308,14 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     try {
       final gender = await DatabaseHelper.instance.getUserGender();
       if (mounted) setState(() => _userGender = gender);
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_workout_session_screen.dart: $e'); }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    SsScreenAwake.disable();
+    SystemChrome.setPreferredOrientations(DeviceOrientation.values);
     _pulseAnimController.dispose();
     super.dispose();
   }
@@ -314,8 +324,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.read(ssWorkoutProvider(_key).notifier).handleLifecycleResumed();
+      SsScreenAwake.enable();
     } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       ref.read(ssWorkoutProvider(_key).notifier).handleLifecyclePaused();
+      SsScreenAwake.disable();
     }
   }
 
@@ -479,6 +491,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           content: TextField(
             controller: ctrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+            textInputAction: TextInputAction.done,
+            maxLength: 6,
             autofocus: true,
             textAlign: TextAlign.center,
             style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
@@ -785,7 +800,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           );
         }
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_workout_session_screen.dart: $e'); }
   }
 
   Future<void> _finishAndLogWorkout() async {
@@ -876,7 +891,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       'rejectionReason': 'REDUCE_WEIGHT; exercise=${current.exercise.id}',
                       'createdAt': DateTime.now().millisecondsSinceEpoch,
                     });
-                  } catch (_) {}
+                  } catch (e) { debugPrint('[ss] ss_workout_session_screen.dart: $e'); }
                 },
               ),
               const SizedBox(height: 8),
@@ -898,7 +913,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       'rejectionReason': 'SWAP_EXERCISE; exercise=${current.exercise.id}',
                       'createdAt': DateTime.now().millisecondsSinceEpoch,
                     });
-                  } catch (_) {}
+                  } catch (e) { debugPrint('[ss] ss_workout_session_screen.dart: $e'); }
                   await _showSwapBottomSheet();
                 },
               ),
@@ -920,7 +935,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       'rejectionReason': 'SAFE_STOP',
                       'createdAt': DateTime.now().millisecondsSinceEpoch,
                     });
-                  } catch (_) {}
+                  } catch (e) { debugPrint('[ss] ss_workout_session_screen.dart: $e'); }
                   
                   final state = ref.read(ssWorkoutProvider(_key));
                   final completedCount = state.exercises.where((e) => e.status == ExerciseStatus.done).length;
@@ -1076,6 +1091,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           backgroundColor: colors.surface,
           elevation: 0,
           leading: IconButton(
+                     tooltip: 'بازگشت',
             icon: Icon(Icons.arrow_back, color: colors.textPrimary),
             onPressed: () => Navigator.pop(context),
           ),
@@ -1221,6 +1237,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             textDirection: TextDirection.rtl,
             children: [
               IconButton(
+                tooltip: 'بستن',
                 icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 24),
                 onPressed: _onClosePressed,
               ),
@@ -1278,6 +1295,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               ),
               // Hands-Free Toggle
               IconButton(
+                tooltip: 'خروج از حالت دست‌آزاد',
                 icon: Icon(
                   _handsFreeMode ? CupertinoIcons.zoom_out : CupertinoIcons.zoom_in,
                   color: _handsFreeMode ? const Color(0xFFF59E0B) : Colors.white70,
@@ -2740,6 +2758,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
+                      tooltip: 'بستن',
                       icon: const Icon(Icons.close_rounded, color: Colors.white70),
                       onPressed: _onClosePressed,
                     ),
@@ -2753,6 +2772,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       ),
                     ),
                     IconButton(
+                      tooltip: 'خروج از حالت دست‌آزاد',
                       icon: const Icon(CupertinoIcons.zoom_out, color: Color(0xFFF59E0B)),
                       onPressed: () {
                         HapticFeedback.selectionClick();

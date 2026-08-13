@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
+import 'package:flutter/foundation.dart';
 
 class SsWeekResolver {
   /// هفته‌ی فعال برنامه را بر اساس تاریخ شروع برنامه محاسبه می‌کند.
@@ -32,7 +33,7 @@ class SsWeekResolver {
           if (dt != null) return dt;
         }
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_week_resolver.dart: $e'); }
 
     try {
       final minCreated = await db.rawQuery(
@@ -44,7 +45,7 @@ class SsWeekResolver {
           return DateTime.fromMillisecondsSinceEpoch(ms);
         }
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_week_resolver.dart: $e'); }
 
     return DateTime.now();
   }
@@ -59,7 +60,7 @@ class SsWeekResolver {
         final count = res.first['weekCount'] as int;
         if (count > 0) return count;
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_week_resolver.dart: $e'); }
 
     try {
       final plans = await db.query('ss_workout_plan', columns: ['id']);
@@ -74,7 +75,7 @@ class SsWeekResolver {
         }
       }
       if (weeks.isNotEmpty) return weeks.length;
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_week_resolver.dart: $e'); }
 
     return 4;
   }
@@ -88,7 +89,7 @@ class SsWeekResolver {
       if (decoded is List && decoded.isNotEmpty) {
         return 'تمرین ${decoded.map((e) => e.toString()).join(' و ')}';
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_week_resolver.dart: $e'); }
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return 'تمرین ورزشی';
     return 'تمرین $trimmed';

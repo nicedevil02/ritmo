@@ -4,6 +4,7 @@ import 'package:ritmo/features/supplementary_sports/domain/prescription/muscle_g
 import 'package:ritmo/features/supplementary_sports/domain/prescription/split_pattern.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_program_calendar.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_prescription_repository.dart';
+import 'package:flutter/foundation.dart';
 
 class ProgramBuildRequest {
   const ProgramBuildRequest({
@@ -49,7 +50,7 @@ class SsProgramBuilder {
     if (profile.programStartDate != null && profile.programStartDate!.isNotEmpty) {
       try {
         programStart = DateTime.parse(profile.programStartDate!);
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] ss_program_builder.dart: $e'); }
     }
     
     final repo = SsPrescriptionRepository.instance;

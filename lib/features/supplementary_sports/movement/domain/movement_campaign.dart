@@ -1,6 +1,7 @@
 // lib/features/supplementary_sports/movement/domain/movement_campaign.dart
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 enum MovementCampaignStatus {
   active('ACTIVE'),
@@ -59,7 +60,7 @@ class MovementCampaign {
       if (decoded is List) {
         rIds = decoded.map((e) => e.toString()).toList();
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] movement_campaign.dart: $e'); }
 
     return MovementCampaign(
       id: map['id'] as String,

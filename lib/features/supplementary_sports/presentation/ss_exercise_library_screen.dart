@@ -497,6 +497,7 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                         border: InputBorder.none,
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
+                                tooltip: 'پاک کردن',
                                 icon: const Icon(Icons.clear, color: Colors.grey, size: 18),
                                 onPressed: () {
                                   setState(() {

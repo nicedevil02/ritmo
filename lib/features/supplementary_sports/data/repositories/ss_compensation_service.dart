@@ -22,7 +22,7 @@ class SSCompensationService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_handledPrefKey(dateStr), true);
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_compensation_service.dart: $e'); }
   }
 
   /// Option 1: Shift Schedule

@@ -392,6 +392,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'بستن',
                     icon: const Icon(CupertinoIcons.xmark_circle_fill),
                     onPressed: () => Navigator.of(context).pop(),
                   ),

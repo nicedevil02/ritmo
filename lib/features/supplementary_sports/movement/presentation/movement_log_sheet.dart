@@ -230,6 +230,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'بستن',
                     icon: const Icon(CupertinoIcons.xmark_circle_fill),
                     onPressed: () => Navigator.of(context).pop(),
                   ),

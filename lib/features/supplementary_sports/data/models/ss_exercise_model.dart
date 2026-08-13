@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class SsExerciseModel {
 
@@ -46,7 +47,7 @@ class SsExerciseModel {
           parsedTools = decoded.map((e) => e.toString()).toList();
         }
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_exercise_model.dart: $e'); }
 
     var parsedMuscleIntensity = <String, dynamic>{};
     try {
@@ -57,7 +58,7 @@ class SsExerciseModel {
           parsedMuscleIntensity = decoded;
         }
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_exercise_model.dart: $e'); }
 
     return SsExerciseModel(
       id: map['id']?.toString() ?? '',

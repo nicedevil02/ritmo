@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 enum MovementSessionStatus {
   active('ACTIVE'),
@@ -77,7 +78,7 @@ class MovementSession {
         if (pauseStartedAt != null) {
           return pauseStartedAt - startedAt - pausedMs;
         }
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] movement_session.dart: $e'); }
     }
     final baseEnd = endedAt ?? now;
     return baseEnd - startedAt - pausedMs;

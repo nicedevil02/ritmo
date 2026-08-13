@@ -6,6 +6,7 @@ import 'package:ritmo/features/supplementary_sports/movement/data/movement_repos
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_event.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:flutter/foundation.dart';
 
 class SSSessionRepositoryImpl implements SSSessionRepository {
   @override
@@ -74,7 +75,7 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
         note: overallFeeling != null ? 'احساس تمرین: $overallFeeling' : 'تمرین بدنسازی با $completedCount حرکت',
       );
       await MovementRepository.instance.logEvent(event);
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_session_repository_impl.dart: $e'); }
   }
 
   @override

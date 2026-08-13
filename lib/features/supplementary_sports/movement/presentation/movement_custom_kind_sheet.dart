@@ -220,9 +220,12 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                 // Title Input
                 TextFormField(
                   controller: _titleController,
+                  textInputAction: TextInputAction.done,
+                  maxLength: 40,
                   style: TextStyle(fontFamily: 'Vazirmatn', color: colors.onSurface),
                   decoration: InputDecoration(
                     labelText: 'نام ورزش',
+                    counterText: '',
                     hintText: 'مثلاً: پاتیناژ، دارت، تی‌آرایکس...',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                   ),

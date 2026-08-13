@@ -208,7 +208,7 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
               updatedAt: today.millisecondsSinceEpoch,
             ));
           }
-        } catch (_) {}
+        } catch (e) { debugPrint('[ss] ss_session_summary_screen.dart: $e'); }
       }
 
       // 3. Fire event to live sync calendar views

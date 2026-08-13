@@ -12,6 +12,11 @@ import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboa
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/primary_button.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_lottie_player.dart';
 import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.dart';
+import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
+import 'package:ritmo/core/utils/ritmo_id_factory.dart';
+import 'package:ritmo/features/routines/domain/routine_recurrence.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -39,17 +44,18 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
   final Set<Limitation> _selectedLimitations = {Limitation.none};
   int _selectedDays = 3;
   int _selectedMinutes = 45;
+  final Set<String> _selectedSportCodes = <String>{};
 
   bool _isGeneratingPlan = false;
   int _generationStage = 0; // 0 to 4
 
   List<int> get _activeSteps {
     if (_simplifiedMode) {
-      // 0: Mode, 1: BMI, 2: Goal, 8: DurationAndDays
-      return [0, 1, 2, 8];
+      // 0: Mode, 1: BMI, 2: Goal, 8: DurationAndDays, 9: FavoriteSports
+      return [0, 1, 2, 8, 9];
     } else {
-      // 0: Mode, 1: BMI, 2: Goal, 3: Exp, 4: Loc, 5: Focus, 6: Equip, 7: Limits, 8: Duration
-      return [0, 1, 2, 3, 4, 5, 6, 7, 8];
+      // 0: Mode, 1: BMI, 2: Goal, 3: Exp, 4: Loc, 5: Focus, 6: Equip, 7: Limits, 8: Duration, 9: FavoriteSports
+      return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     }
   }
 
@@ -79,7 +85,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         if (g == 'FEMALE' || g == 'MALE') {
           _selectedGender = g!;
         }
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] ss_onboarding_flow.dart: $e'); }
 
       final savedStep = prefs.getInt('ss_onboarding_step');
       if (savedStep != null && savedStep > 0 && savedStep <= _totalSteps) {
@@ -178,6 +184,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       await prefs.setString('ss_onboarding_location', _selectedLocation.toString());
       await prefs.setInt('ss_onboarding_days', _selectedDays);
       await prefs.setInt('ss_onboarding_duration_minutes', _selectedMinutes);
+      await prefs.setStringList('ss_onboarding_sports', _selectedSportCodes.toList());
       await prefs.setStringList(
         'ss_onboarding_equipment',
         _selectedEquipment.map((e) => e.toString()).toList(),
@@ -209,6 +216,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       await prefs.remove('ss_onboarding_equipment');
       await prefs.remove('ss_onboarding_focus_areas');
       await prefs.remove('ss_onboarding_limitations');
+      await prefs.remove('ss_onboarding_sports');
     } catch (e) {
       debugPrint('Error clearing onboarding prefs: $e');
     }
@@ -296,7 +304,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           {'key': 'user_gender', 'value': _selectedGender},
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] ss_onboarding_flow.dart: $e'); }
 
       // Apply selected detail mode
       await SportsDetailMode.setEnabled(!_simplifiedMode);
@@ -317,6 +325,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       setState(() => _generationStage = 4);
       await SSPlanGenerator.generateWeeklyAndMonthlyPlan(db, profile, week: 4);
       await Future<void>.delayed(const Duration(milliseconds: 400));
+
+      // ساخت روتین هفتگی برای ورزش‌های محبوب انتخاب‌شده در مرحلهٔ ۱۰.
+      if (_selectedSportCodes.isNotEmpty) {
+        await _createFavoriteSportRoutines(now);
+      }
 
       await _clearOnboardingPreferences();
 
@@ -362,6 +375,8 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         return _buildStep8Limitations();
       case 8:
         return _buildStep9DurationAndDays();
+      case 9:
+        return _buildStep10FavoriteSports();
       default:
         return Container();
     }
@@ -1099,6 +1114,266 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
   }
 
   // --- Step 8: Days, Duration & Persona Blueprint ---
+  /// ورزش‌هایی که در آنبوردینگ پیشنهاد نمی‌شوند — قدرتی با برنامهٔ
+  /// ساختاریافتهٔ خودش پوشش داده می‌شود و موارد عمومی انتخاب معناداری ندارند.
+  static const Set<String> _excludedSportCodes = <String>{
+    'STRENGTH_GYM',
+    'STRENGTH_HOME',
+    'SS_SESSION',
+    'CARDIO_GENERIC',
+    'OTHER',
+  };
+
+  Future<List<MovementKind>>? _sportKindsFuture;
+
+  Future<List<MovementKind>> _loadSportKinds() {
+    _sportKindsFuture ??= () async {
+      // بازیابی انتخاب قبلی کاربر، اگر آنبوردینگ را نیمه‌کاره رها کرده باشد.
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final saved = prefs.getStringList('ss_onboarding_sports');
+        if (saved != null && _selectedSportCodes.isEmpty) {
+          _selectedSportCodes.addAll(saved);
+        }
+      } catch (e) {
+        debugPrint('[ss] ss_onboarding_flow.dart: $e');
+      }
+      final kinds = await MovementRepository.instance.getKinds(enabledOnly: true);
+      return kinds.where((k) => !_excludedSportCodes.contains(k.code)).toList();
+    }();
+    return _sportKindsFuture!;
+  }
+
+  /// مرحلهٔ ۱۰: انتخاب ورزش‌های محبوب غیرقدرتی — برای هر کدام یک برنامهٔ
+  /// هفتگی پیش‌فرض ساخته می‌شود که کاربر بعداً از تب «برنامه» ویرایش می‌کند.
+  Widget _buildStep10FavoriteSports() {
+    final colors = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'غیر از قدرتی، چه ورزش‌هایی دوست دارید؟',
+          style: TextStyle(
+            fontFamily: 'Vazirmatn',
+            color: colors.textPrimary,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'برای هر انتخاب، یک برنامهٔ هفتگیٔ پیش‌فرض ساخته می‌شود. اختیاری است — بعداً از تب «برنامه» می‌توانید تغییرش دهید.',
+          style: TextStyle(
+            fontFamily: 'Vazirmatn',
+            color: colors.textSecondary,
+            fontSize: 13,
+            height: 1.6,
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 340,
+          child: FutureBuilder<List<MovementKind>>(
+            future: _loadSportKinds(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(
+                  child: Text(
+                    'فهرست ورزش‌ها بارگذاری نشد؛ می‌توانید بدون انتخاب ادامه دهید.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary, fontSize: 13),
+                  ),
+                );
+              }
+              final kinds = snapshot.data!;
+              final byFamily = <MovementFamily, List<MovementKind>>{};
+              for (final k in kinds) {
+                byFamily.putIfAbsent(k.family, () => <MovementKind>[]).add(k);
+              }
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final family in MovementFamily.values)
+                      if (byFamily.containsKey(family)) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10, bottom: 6),
+                          child: Text(
+                            '${family.emoji} ${family.titleFa}',
+                            style: TextStyle(
+                              fontFamily: 'Vazirmatn',
+                              color: colors.textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final kind in byFamily[family]!)
+                              _buildSportChip(kind, colors),
+                          ],
+                        ),
+                      ],
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSportChip(MovementKind kind, dynamic colors) {
+    final bool isSelected = _selectedSportCodes.contains(kind.code);
+    return Semantics(
+      button: true,
+      checked: isSelected,
+      label: kind.titleFa,
+      child: Tooltip(
+        message: kind.titleFa,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            RitmoHaptics.selection();
+            setState(() {
+              if (isSelected) {
+                _selectedSportCodes.remove(kind.code);
+              } else {
+                _selectedSportCodes.add(kind.code);
+              }
+            });
+            _saveStateToPreferences();
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? colors.primary.withValues(alpha: 0.18)
+                  : colors.card,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected
+                    ? colors.primary
+                    : colors.border.withValues(alpha: 0.5),
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(kind.emoji, style: const TextStyle(fontSize: 15)),
+                const SizedBox(width: 6),
+                Text(
+                  kind.titleFa,
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    color: isSelected ? colors.primary : colors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// برای هر ورزش محبوب یک روتین هفتگی با برنامهٔ پیش‌فرض می‌سازد
+  /// (یکشنبه و چهارشنبه، ساعت ۱۸) — قابل ویرایش از تب «برنامه».
+  Future<void> _createFavoriteSportRoutines(int now) async {
+    final kinds = await MovementRepository.instance.getKinds(enabledOnly: false);
+    for (final code in _selectedSportCodes) {
+      MovementKind? kind;
+      for (final k in kinds) {
+        if (k.code == code) {
+          kind = k;
+          break;
+        }
+      }
+      if (kind == null) continue;
+      try {
+        final routineId = RitmoIdFactory.routine();
+        final recurrence = WeekdaysRecurrence(weekdays: const {7, 3});
+        final (schedType, daysOfWeek) = deriveScheduleParams(recurrence);
+        await RitmoExecutionKernel.instance.execute(
+          CreateRoutineCommand(
+            routineData: {
+              'id': routineId,
+              'title': kind.titleFa,
+              'description': null,
+              'category': 'fitness',
+              'customCategoryId': null,
+              'zoneId': null,
+              'routineType': 'ROUTINE',
+              'notificationLevel': 'NORMAL',
+              'isEssential': 0,
+              'isEssentialLocked': 0,
+              'energyRule': 'NONE',
+              'priority': 1.0,
+              'targetDurationMinutes': 30,
+              'lightDurationMinutes': 0,
+              'minimalDurationMinutes': 0,
+              'isArchived': 0,
+              'isPrivate': 0,
+              'displayOrder': 1,
+              'createdAt': now,
+              'updatedAt': now,
+              'dependsOnRoutineId': null,
+              'itemType': 'ROUTINE',
+              'reminderOffsetMinutes': 0,
+              'movementKind': kind.code,
+              'movementTargetMetric': kind.primaryMetric.name.toUpperCase(),
+              'movementTargetValue': _defaultTargetFor(kind),
+              'movementIsMeetup': 0,
+            },
+            scheduleData: {
+              'id': RitmoIdFactory.schedule(routineId),
+              'routineId': routineId,
+              'scheduleType': schedType,
+              'timeOfDay': '18:00',
+              'daysOfWeek': daysOfWeek,
+              'recurrenceRule': encodeRecurrenceRule(
+                recurrence: recurrence,
+                startDate: DateTime.now(),
+                reminderTimes: const ['18:00'],
+              ),
+              'createdAt': now,
+              'updatedAt': now,
+            },
+          ),
+        );
+      } catch (e) {
+        debugPrint('[ss] ss_onboarding_flow.dart: $e');
+      }
+    }
+  }
+
+  double _defaultTargetFor(MovementKind kind) {
+    switch (kind.primaryMetric) {
+      case MovementMetric.distance:
+        return 3.0;
+      case MovementMetric.laps:
+        return 10.0;
+      case MovementMetric.elevation:
+        return 100.0;
+      case MovementMetric.steps:
+        return 4000.0;
+      case MovementMetric.duration:
+      case MovementMetric.sets:
+      case MovementMetric.none:
+        return 30.0;
+    }
+  }
+
   Widget _buildStep9DurationAndDays() {
     final colors = context.colors;
     return Column(
@@ -1171,6 +1446,19 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
     );
   }
 
+  void _showLockedOptionMessage(String label) {
+    final name = label.replaceAll('(به‌زودی 🔒)', '').trim();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 4),
+        content: Text(
+          '$name هنوز آماده نیست. الان برنامه برای تمرین خانگی با وزن بدن ساخته می‌شود و بقیه گزینه‌ها در نسخه‌های بعدی فعال می‌شوند.',
+          style: const TextStyle(fontFamily: 'Vazirmatn'),
+        ),
+      ),
+    );
+  }
+
   Widget _buildChoiceItem({
     required String label,
     required String icon,
@@ -1181,7 +1469,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
   }) {
     return GestureDetector(
       onTap: isDisabled
-          ? null
+          ? () => _showLockedOptionMessage(label)
           : () {
               RitmoHaptics.selection();
               onTap();
@@ -1231,7 +1519,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
     bool isDisabled = false,
   }) {
     return GestureDetector(
-      onTap: isDisabled ? null : onTap,
+      onTap: isDisabled ? () => _showLockedOptionMessage(label) : onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

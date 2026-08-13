@@ -938,7 +938,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
       SessionPrescription? todayPres;
       try {
         todayPres = await SsPrescriptionRepository.instance.getPrescriptionForDate(todayIso);
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
 
       SsUserProfile? userProfile;
       try {
@@ -946,7 +946,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         if (profileRows.isNotEmpty) {
           userProfile = SsUserProfile.fromMap(profileRows.first);
         }
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
 
       if (todayPres == null) {
         int existingCount = 0;
@@ -954,7 +954,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           existingCount = Sqflite.firstIntValue(
             await db.rawQuery('SELECT COUNT(*) FROM ss_session_prescription')
           ) ?? 0;
-        } catch (_) {}
+        } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
 
         if (existingCount == 0) {
           final prof = userProfile ?? SsUserProfile(
@@ -976,7 +976,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
 
           try {
             todayPres = await SsPrescriptionRepository.instance.getPrescriptionForDate(todayIso);
-          } catch (_) {}
+          } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
         }
       }
 
@@ -1020,7 +1020,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         if (dmRows.isNotEmpty) {
           detailMode = dmRows.first['value'] == 'true';
         }
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
 
       if (todayPres != null) {
         if (todayPres.slotType == SlotType.rest) {
@@ -1043,7 +1043,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           try {
             final wp = await SsPrescriptionRepository.instance.getPrescriptionForDate(iso);
             if (wp != null) weekPres[iso] = wp.toMap();
-          } catch (_) {}
+          } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
         }
         final weekTimelineFromPres = List<bool>.generate(7, (i) {
           final d = weekStart.add(Duration(days: i));

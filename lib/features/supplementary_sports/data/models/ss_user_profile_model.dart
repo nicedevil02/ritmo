@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 enum FitnessGoal { muscleGain, fatLoss, bodyRecomposition, strength }
 enum ExperienceLevel { beginner, intermediate, advanced }
@@ -70,7 +71,7 @@ class SsUserProfile {
     if (trainingDaysRaw is String && trainingDaysRaw.isNotEmpty) {
       try {
         trDays = List<int>.from(jsonDecode(trainingDaysRaw) as List);
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] ss_user_profile_model.dart: $e'); }
     }
     if (trDays.isEmpty) {
       final daysCount = map['daysPerWeek'] as int? ?? 3;

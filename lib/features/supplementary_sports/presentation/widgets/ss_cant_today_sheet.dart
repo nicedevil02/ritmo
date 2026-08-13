@@ -95,7 +95,7 @@ class _SSCantTodaySheet extends StatelessWidget {
             'reason': code,
             'createdAt': DateTime.now().millisecondsSinceEpoch,
           });
-        } catch (_) {}
+        } catch (e) { debugPrint('[ss] ss_cant_today_sheet.dart: $e'); }
         if (context.mounted) Navigator.pop(context);
         onReasonSelected(code);
       },

@@ -651,6 +651,7 @@ $_sportsContext
                           ),
                         ),
                         IconButton(
+                          tooltip: 'افزودن',
                           icon: Icon(CupertinoIcons.add, color: colors.primary, size: 22),
                           onPressed: () {
                             Navigator.pop(context);
@@ -684,6 +685,7 @@ $_sportsContext
                                     style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.6)),
                                   ),
                                   trailing: IconButton(
+                                              tooltip: 'حذف',
                                     icon: const Icon(CupertinoIcons.trash, size: 16, color: Colors.redAccent),
                                     onPressed: () async {
                                       await ChatRepository.instance.deleteSession(sess.id);
@@ -771,6 +773,7 @@ $_sportsContext
                         onPressed: _showSessionSelector,
                       ),
                       IconButton(
+                        tooltip: 'بستن',
                         icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
                         onPressed: () => Navigator.pop(context),
                       ),

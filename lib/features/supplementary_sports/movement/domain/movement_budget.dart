@@ -56,7 +56,7 @@ class MovementBudgetService {
         final info = await db.rawQuery('PRAGMA table_info(ss_user_profile)');
         hasExp = info.any((row) => row['name'] == 'experienceLevel');
         hasDays = info.any((row) => row['name'] == 'daysPerWeek');
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] movement_budget.dart: $e'); }
 
       if (hasExp && hasDays) {
         final profRows = await db.query('ss_user_profile', where: "id = 'default'", limit: 1);

@@ -12,6 +12,9 @@ import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_audio_cue_player.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_session_completion_gateway.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_session_settings.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_event.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_workout_session_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -39,7 +42,7 @@ class SSTtsService {
         _initialized = true;
       }
       await _flutterTts.speak(text);
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_workout_session_notifier.dart: $e'); }
   }
 }
 
@@ -1111,6 +1114,32 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
           );
         }
       });
+
+      // یکپارچه‌سازی تاریخچه: جلسهٔ قدرتی به‌عنوان رویداد حرکتی SS_SESSION
+      // ثبت می‌شود تا در بودجهٔ هفتگی و آنالیز حرکت هم شمرده شود.
+      // ثبت با شناسهٔ یکتا upsert است، پس تکرار آن داده را دوبرابر نمی‌کند.
+      try {
+        await MovementRepository.instance.logEvent(
+          MovementEvent(
+            id: 'ss_evt_${state.sessionId}',
+            kindCode: 'SS_SESSION',
+            durationMinutes: max(1, (durationSec / 60).round()),
+            intensity: MovementIntensity.medium,
+            note: _sessionNoteFromExercises(),
+            loggedAt: state.startedAt,
+            endedAt: finishedAt,
+            feeling: overallFeeling != null ? _feelingStr(overallFeeling) : null,
+            sourceModule: 'SS',
+            sourceEntityId: state.sessionId,
+            metricsJson: jsonEncode(<String, dynamic>{
+              'completedExercises': completedCount,
+              'totalExercises': state.exercises.length,
+            }),
+          ),
+        );
+      } catch (e) {
+        debugPrint('[ss] ss_workout_session_notifier.dart: $e');
+      }
 
       await clearSessionPreferences();
       state = state.copyWith(isLoading: false);

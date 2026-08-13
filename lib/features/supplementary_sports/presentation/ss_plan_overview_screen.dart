@@ -62,7 +62,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
           });
         }
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[ss] ss_plan_overview_screen.dart: $e'); }
     await _loadWeeklyPlan();
   }
 
@@ -94,7 +94,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
       // Fetch user gender
       try {
         _userGender = await DatabaseHelper.instance.getUserGender(executor: db);
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] ss_plan_overview_screen.dart: $e'); }
       _userGender ??= 'MALE';
 
       // 1. Fetch ALL plans
@@ -112,7 +112,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
         if (dmRows.isNotEmpty) {
           detailMode = dmRows.first['value'] == 'true';
         }
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] ss_plan_overview_screen.dart: $e'); }
 
       final allPres = await db.query('ss_session_prescription');
 
@@ -500,7 +500,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
             }
           }
         });
-      } catch (_) {}
+      } catch (e) { debugPrint('[ss] ss_plan_overview_screen.dart: $e'); }
 
       for (var w = 1; w <= 4; w++) {
         await SSPlanGenerator.generateWeeklyAndMonthlyPlan(db, profile, week: w, progressionSignals: signals);

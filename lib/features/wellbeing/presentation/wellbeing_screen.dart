@@ -10,6 +10,7 @@ import 'package:ritmo/core/analytics/mood_engine.dart';
 import 'package:ritmo/core/analytics/reflection_engine.dart';
 import 'package:ritmo/core/analytics/sleep_engine.dart';
 import 'package:ritmo/core/analytics/wellbeing_engine.dart';
+import 'package:ritmo/core/analytics/wellbeing_insight_arbiter.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
@@ -31,6 +32,7 @@ import 'package:ritmo/features/sleep/presentation/widgets/sleep_target_sheet.dar
 import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/frictionless_mood_bar.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_explanation_sheet.dart';
+import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_narrative_card.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_pulse_chart.dart';
 
 enum WellbeingSection { energy, sleep, reflection }
@@ -211,6 +213,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         energyLogs: energyRows,
         moodLogs: moodRows,
         today: now,
+        horizonDays: _selectedHorizonDays,
       );
       final reflectionInput = ReflectionEngineInput(
         dailyReflections: reflectionRows,
@@ -218,6 +221,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         energyLogs: energyRows,
         moodLogs: moodRows,
         today: now,
+        horizonDays: _selectedHorizonDays,
         computeThemes: false,
       );
       final balanceInput = LifeBalanceEngineInput(
@@ -419,6 +423,83 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     _loadAllData();
   }
 
+  WellbeingInsightSnapshot get _insightSnapshot {
+    return const WellbeingInsightArbiter().evaluate(
+      WellbeingInsightInput(
+        now: DateTime.now(),
+        horizonDays: _selectedHorizonDays,
+        index: _wellbeing,
+        energy: _energyOutput,
+        mood: _moodOutput,
+        sleep: _sleepOutput,
+        reflection: _reflectionOutput,
+        balance: _lifeBalanceOutput,
+        energyLogCount: _rawEnergyLogs.length,
+        moodLogCount: _rawMoodLogs.length,
+        sleepLogCount: _rawSleepLogs.length,
+        reflectionCount: _reflections.length,
+      ),
+    );
+  }
+
+  void _onInsightAction(WellbeingInsightAction action) {
+    RitmoHapticsPolicy.tap();
+    switch (action) {
+      case WellbeingInsightAction.logSleep:
+        RitmoSheetScaffold.present(
+          context: context,
+          title: 'ثبت خواب دیشب',
+          builder: (ctx) => SleepLogSheet(
+            onSaved: _requestReload,
+            target: _sleepTarget,
+          ),
+        );
+      case WellbeingInsightAction.logEnergy:
+        RitmoSheetScaffold.present(
+          context: context,
+          title: 'ثبت سطح انرژی',
+          builder: (ctx) => QuickLogSheet(onSaved: _requestReload),
+        );
+      case WellbeingInsightAction.logReflection:
+        _tabController.animateTo(2);
+      case WellbeingInsightAction.explainIndex:
+        _showExplanation(context);
+      case WellbeingInsightAction.explainGoldenWindow:
+        _showGoldenWindowDialog();
+      case WellbeingInsightAction.openSleepTarget:
+        RitmoSheetScaffold.present(
+          context: context,
+          title: 'تنظیم هدف خواب',
+          builder: (ctx) => SleepTargetSheet(
+            currentTarget: _sleepTarget,
+            onSaved: _requestReload,
+          ),
+        );
+    }
+  }
+
+  void _showGoldenWindowDialog() {
+    final colors = context.colors;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.card)),
+        title: Text('پنجرهٔ طلایی انرژی', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+        content: Text(
+          'در بازهٔ ${_energyOutput?.peakPerformanceWindow ?? "نامشخص"} معمولاً بیشترین انرژی را داری. کارهای مهم یا سخت‌تر خودت را از برنامهٔ «امروزِ من» به این بازه منتقل کن تا از این انرژی استفاده کنی.',
+          style: RitmoTextStyles.body(colors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text('باشه', style: RitmoTextStyles.label(colors.primary)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -525,6 +606,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       return _buildErrorCard(context);
     }
 
+    final snapshot = _insightSnapshot;
+
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -533,11 +616,19 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             delegate: SliverChildListDelegate([
               _buildIndexHeroCard(context),
               const SizedBox(height: RitmoSpacing.lg),
+              WellbeingNarrativeCard(
+                insight: snapshot.featured,
+                onAction: _onInsightAction,
+              ),
+              if (snapshot.featured != null) const SizedBox(height: RitmoSpacing.lg),
               FrictionlessMoodBar(onLogChanged: _requestReload),
               const SizedBox(height: RitmoSpacing.lg),
               _buildQuickActionsRow(context),
               const SizedBox(height: RitmoSpacing.lg),
-              _buildGoldenWindowCard(context),
+              _buildGoldenWindowCard(
+                context,
+                hideWhenFeatured: snapshot.featured?.kind == WellbeingInsightKind.goldenWindow,
+              ),
             ]),
           ),
         ),
@@ -957,9 +1048,12 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     );
   }
 
-  Widget _buildGoldenWindowCard(BuildContext context) {
+  Widget _buildGoldenWindowCard(BuildContext context, {bool hideWhenFeatured = false}) {
     final colors = context.colors;
 
+    if (hideWhenFeatured) {
+      return const SizedBox.shrink();
+    }
     if (_energyOutput == null || (_energyOutput?.sampleCount ?? 0) < 20) {
       return const SizedBox.shrink();
     }
@@ -987,31 +1081,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   ),
                 ],
               ),
-              // I-04: Golden Window card now opens an honest explanation instead of
-              // falsely claiming routines were auto-scheduled (nothing here talks
-              // to a scheduler yet).
               TextButton(
-                onPressed: () {
-                  RitmoHapticsPolicy.tap();
-                  showDialog<void>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      backgroundColor: colors.surface,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.card)),
-                      title: Text('پنجرهٔ طلایی انرژی', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
-                      content: Text(
-                        'در بازهٔ ${_energyOutput?.peakPerformanceWindow ?? "نامشخص"} معمولاً بیشترین انرژی را داری. کارهای مهم یا سخت‌تر خودت را از برنامهٔ «امروزِ من» به این بازه منتقل کن تا از این انرژی استفاده کنی.',
-                        style: RitmoTextStyles.body(colors.textSecondary),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: Text('باشه', style: RitmoTextStyles.label(colors.primary)),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                onPressed: _showGoldenWindowDialog,
                 child: Text('یعنی چی؟', style: TextStyle(fontSize: 11.5, color: colors.primary, fontFamily: 'Vazirmatn')),
               ),
             ],

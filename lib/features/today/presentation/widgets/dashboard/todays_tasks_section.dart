@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -7,9 +8,19 @@ import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/today/presentation/widgets/reshuffle_preview_sheet.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 
-/// سکشن «کارهای امروز» — خارج‌شده از مونولیت داشبورد. فقط لایه‌ی نمایش.
+/// سکشن «کارهای امروز» — فقط لایهٔ نمایش.
+///
+/// ورودی `tasks` همان ساختار Map قبلی است، اما حالا از Agenda ساخته میشود و
+/// نه فقط از روتینهای دارای occurrence. پس دو نوع ردیف داریم:
+///
+/// * ردیف روتین — `task['routine']` پر است و رفتار قبلی (تیک/جزئیات) را دارد.
+/// * ردیف اجندا — `task['routine']` خالی و `task['agendaItem']` پر است؛ مثل
+///   تمرین ورزشی یا دوز دارو. این ردیفها نمایش داده و به بخش صاحبشان
+///   راهنمایی میشوند، ولی وانمود نمیکنیم که تیکشان اینجا کار میکند.
+///
+/// دکمهٔ «رفع تداخل» دیگر همیشگی نیست: فقط وقتی ظاهر میشود که دستکم یک
+/// ردیف با `hasConflict` علامت خورده باشد، و تعداد را هم نشان میدهد.
 class TodaysTasksSection extends StatelessWidget {
-
   const TodaysTasksSection({
     super.key,
     required this.tasks,
@@ -17,19 +28,26 @@ class TodaysTasksSection extends StatelessWidget {
     required this.onStartTask,
     required this.onReshuffleApplied,
     this.onViewAll,
+    this.onOpenAgendaDomain,
   });
-  /// آیتم‌های timeline از نوع task (همان ساختار Map قبلی:
-  /// {routine, isCompleted, time, title, type})
+
   final List<Map<String, dynamic>> tasks;
   final Function(Routine) onOpenDetails;
   final Function(Routine) onStartTask;
   final VoidCallback onReshuffleApplied;
   final VoidCallback? onViewAll;
 
+  /// اختیاری: پرش به بخش صاحبِ یک آیتم اجندا (ورزش، کارها، …).
+  final void Function(AgendaDomain domain)? onOpenAgendaDomain;
+
+  int get _conflictCount =>
+      tasks.where((t) => t['hasConflict'] == true).length;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
+    final conflictCount = _conflictCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,51 +55,46 @@ class TodaysTasksSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              l10n.todaysTasksTitle,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: colors.sectionTitle,
-                fontFamily: 'Vazirmatn',
-              ),
-            ),
-            Row(
-              children: [
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: Colors.transparent,
-                        isScrollControlled: true,
-                        builder: (context) => ReshufflePreviewSheet(
-                          onApplied: onReshuffleApplied,
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(RitmoRadius.chip),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(RitmoRadius.chip),
-                      ),
-                      child: Text(
-                        l10n.resolveConflictBtn,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: colors.primary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      l10n.todaysTasksTitle,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: colors.sectionTitle,
+                        fontFamily: 'Vazirmatn',
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: RitmoSpacing.md),
+                  if (tasks.length > 4) ...[
+                    const SizedBox(width: RitmoSpacing.sm),
+                    Text(
+                      '${toPersianDigits('${tasks.length}')} مورد',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colors.textTertiary,
+                        fontFamily: 'Vazirmatn',
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // فقط وقتی تداخل واقعی وجود دارد.
+                if (conflictCount > 0) ...[
+                  _ConflictChip(
+                    count: conflictCount,
+                    label: l10n.resolveConflictBtn,
+                    onTap: () => _openReshuffleSheet(context),
+                  ),
+                  const SizedBox(width: RitmoSpacing.md),
+                ],
                 if (onViewAll != null)
                   GestureDetector(
                     onTap: onViewAll,
@@ -113,139 +126,134 @@ class TodaysTasksSection extends StatelessWidget {
             ),
           )
         else
-          // G-6: حداکثر ۴ کارت اینجا رندر میشود؛ باقی از «مشاهده همه» در دسترس است.
+          // حداکثر ۴ کارت اینجا رندر میشود؛ باقی از «مشاهده همه».
           ...tasks.take(4).map((task) => _buildTaskCard(context, task)),
       ],
+    );
+  }
+
+  void _openReshuffleSheet(BuildContext context) {
+    RitmoHaptics.tap();
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => ReshufflePreviewSheet(onApplied: onReshuffleApplied),
+    );
+  }
+
+  Category _categoryOf(Map<String, dynamic> task) {
+    final routine = task['routine'] as Routine?;
+    if (routine != null) return routine.category;
+    final item = task['agendaItem'] as AgendaItem?;
+    if (item != null) return item.category;
+    final name = (task['category'] as String?) ?? '';
+    return Category.values.firstWhere(
+      (c) => c.name == name,
+      orElse: () => Category.custom,
     );
   }
 
   Widget _buildTaskCard(BuildContext context, Map<String, dynamic> task) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
-    final isCompleted = task['isCompleted'] as bool;
-    final routine = task['routine'] as Routine;
+    final isCompleted = task['isCompleted'] == true;
+    final hasConflict = task['hasConflict'] == true;
+    final routine = task['routine'] as Routine?;
+    final item = task['agendaItem'] as AgendaItem?;
+    final title = (task['title'] as String?) ??
+        routine?.title ??
+        item?.title ??
+        '—';
+
+    final time = (task['time'] as String?) ?? '--:--';
+    final hasTime = time.isNotEmpty && time != '--:--';
+    final duration = task['durationMinutes'] as int?;
+    final domainLabel = task['domainLabel'] as String?;
+
+    final metaParts = <String>[
+      if (hasTime)
+        '${l10n.timeLabel} ${toPersianDigits(time)}'
+      else
+        'زمان آزاد',
+      if (duration != null && duration > 0)
+        '${toPersianDigits('$duration')} دقیقه',
+      if (domainLabel != null && domainLabel.isNotEmpty) domainLabel,
+    ];
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 5),
       child: RitmoTheme.glassCardLight(
         borderRadius: 18,
         color: colors.card.withValues(alpha: 0.55),
-        child: InkWell(
-          onTap: () {
-            RitmoHaptics.tap();
-            onOpenDetails(routine);
-          },
-          onLongPress: () {
-            RitmoHaptics.warning();
-            onStartTask(routine);
-          },
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: RitmoSpacing.lg, vertical: RitmoSpacing.md),
-            child: Row(
-              children: [
-                _categoryIcon(routine),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        routine.title,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: isCompleted
-                              ? colors.textSecondary
-                              : colors.textPrimary,
-                          decoration:
-                              isCompleted ? TextDecoration.lineThrough : null,
-                          fontFamily: 'Vazirmatn',
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${l10n.timeLabel} ${toPersianDigits('${task['time']}')}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
-                      ),
-                    ],
+        child: Container(
+          decoration: hasConflict
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: colors.warning.withValues(alpha: 0.55),
                   ),
-                ),
-                SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: Icon(
-                      isCompleted
-                          ? CupertinoIcons.check_mark_circled_solid
-                          : CupertinoIcons.circle,
-                      color: isCompleted ? colors.success : colors.textSecondary,
-                      size: 22,
-                    ),
-                    onPressed: () {
-                      RitmoHaptics.tap();
-                      if (!isCompleted) {
-                        onStartTask(routine);
-                      } else {
-                        onOpenDetails(routine);
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _categoryIcon(Routine routine) {
-    var icon = Icons.circle;
-    var color = const Color(0xff5B8AF5);
-    switch (routine.category) {
-      case Category.medical:
-        icon = CupertinoIcons.capsule_fill;
-        color = const Color(0xffFF6B6B);
-      case Category.religious:
-        icon = Icons.mosque;
-        color = const Color(0xff9B89FF);
-      case Category.learning:
-        icon = CupertinoIcons.book_fill;
-        color = const Color(0xffA78BFA);
-      case Category.fitness:
-        icon = Icons.directions_run;
-        color = const Color(0xff34D399);
-      case Category.work:
-        icon = CupertinoIcons.briefcase_fill;
-        color = const Color(0xff5B8AF5);
-      case Category.personal:
-        icon = CupertinoIcons.person_fill;
-        color = const Color(0xffF5B95B);
-      case Category.free:
-        icon = CupertinoIcons.heart_fill;
-        color = const Color(0xff2DD4BF);
-      case Category.konkur:
-        icon = Icons.school;
-        color = const Color(0xff2563EB);
-      case Category.custom:
-        icon = Icons.label;
-        color = const Color(0xffE25C9A);
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(RitmoSpacing.sm),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(RitmoRadius.chip),
-      ),
-      child: Icon(icon, color: color, size: 18),
-    );
-  }
-}
+                )
+              : null,
+          child: InkWell(
+            onTap: () {
+              RitmoHaptics.tap();
+              if (routine != null) {
+                onOpenDetails(routine);
+              } else {
+                _showAgendaSheet(context, task);
+              }
+            },
+            onLongPress: routine == null
+                ? null
+                : () {
+                    RitmoHaptics.warning();
+                    onStartTask(routine);
+                  },
+            borderRadius: BorderRadius.circular(18),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: RitmoSpacing.lg, vertical: RitmoSpacing.md),
+              child: Row(
+                children: [
+                  _categoryIcon(_categoryOf(task)),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: isCompleted
+                                ? colors.textSecondary
+                                : colors.textPrimary,
+                            decoration: isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          metaParts.join(' · '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: colors.textSecondary,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                        if (hasConflict) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                CupertinoIcons.exclamationmark_triangle_fill,
+                                size: 11,
+                                color:

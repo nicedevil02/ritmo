@@ -21,6 +21,28 @@ class WellbeingExplanationSheet extends StatelessWidget {
     );
   }
 
+  int get _horizonDays {
+    if (index.contributions.isNotEmpty) {
+      return index.contributions.first.windowDays;
+    }
+    return 14;
+  }
+
+  String get _horizonPhrase {
+    switch (_horizonDays) {
+      case 7:
+        return 'این هفته';
+      case 14:
+        return 'این دو هفته';
+      case 30:
+        return 'این ماه';
+      case 90:
+        return 'این سه ماه';
+      default:
+        return '${RitmoNumber.faInt(_horizonDays)} روز اخیر';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -122,7 +144,8 @@ class WellbeingExplanationSheet extends StatelessWidget {
       color = colors.primary;
     } else {
       final sign = score >= 0 ? '+' : '';
-      text = '$sign${RitmoNumber.faInt(score.round())}٪';
+      // Score points off the base of 50, not a percentage.
+      text = '$sign${RitmoNumber.faInt(score.round())}';
       color = score >= 0 ? colors.success : colors.error;
     }
 
@@ -244,12 +267,12 @@ class WellbeingExplanationSheet extends StatelessWidget {
     }
 
     if (maxPos != null && maxNeg != null) {
-      return 'بیشترین اثر مثبت این دو هفته از ${_signalName(maxPos.signal)} بوده، و بیشترین افت از ${_signalName(maxNeg.signal)}.';
+      return 'بیشترین اثر مثبت $_horizonPhrase از ${_signalName(maxPos.signal)} بوده، و بیشترین افت از ${_signalName(maxNeg.signal)}.';
     } else if (maxPos != null) {
-      return 'بیشترین اثر مثبت این دو هفته از ${_signalName(maxPos.signal)} ثبت شده است.';
+      return 'بیشترین اثر مثبت $_horizonPhrase از ${_signalName(maxPos.signal)} ثبت شده است.';
     } else if (maxNeg != null) {
-      return 'بیشترین افت شاخص این دو هفته متأثر از ${_signalName(maxNeg.signal)} بوده است.';
+      return 'بیشترین افت شاخص $_horizonPhrase متأثر از ${_signalName(maxNeg.signal)} بوده است.';
     }
-    return 'سیگنال‌های شما در تعادل نسبی با پایه قرار دارند.';
+    return 'سیگنال‌های شما $_horizonPhrase در تعادل نسبی با پایه قرار دارند.';
   }
 }

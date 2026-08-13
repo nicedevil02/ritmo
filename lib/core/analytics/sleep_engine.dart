@@ -220,24 +220,32 @@ class SleepEngine implements CachedEngine<SleepEngineInput, SleepEngineOutput> {
     final energyByDate = <String, List<double>>{};
     for (final el in energyLogs) {
       final loggedAt = el.readInt('loggedAt');
-      if (loggedAt != null) {
-        final date = RitmoDate.dayKeyFromMillis(loggedAt);
-        final level = el.readString('energyLevel') ?? 'MEDIUM';
-        var val = 2.0;
-        if (level == 'HIGH') val = 3.0;
-        if (level == 'LOW') val = 1.0;
-        energyByDate.putIfAbsent(date, () => []).add(val);
+      if (loggedAt == null) continue;
+      final level = el.readString('energyLevel');
+      if (level == null) continue;
+      final normalized = level.toUpperCase();
+      final double val;
+      if (normalized == 'HIGH') {
+        val = 3.0;
+      } else if (normalized == 'LOW') {
+        val = 1.0;
+      } else if (normalized == 'MEDIUM') {
+        val = 2.0;
+      } else {
+        continue;
       }
+      final date = RitmoDate.dayKeyFromMillis(loggedAt);
+      energyByDate.putIfAbsent(date, () => []).add(val);
     }
 
     final moodByDate = <String, List<double>>{};
     for (final ml in moodLogs) {
       final loggedAt = ml.readInt('loggedAt');
-      if (loggedAt != null) {
-        final date = RitmoDate.dayKeyFromMillis(loggedAt);
-        final valence = ml.readDouble('valence') ?? 3.0;
-        moodByDate.putIfAbsent(date, () => []).add(valence);
-      }
+      if (loggedAt == null) continue;
+      final valence = ml.readDouble('valence');
+      if (valence == null) continue;
+      final date = RitmoDate.dayKeyFromMillis(loggedAt);
+      moodByDate.putIfAbsent(date, () => []).add(valence);
     }
 
     // T-1.6: Paired entries without baseline placeholders

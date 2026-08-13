@@ -1,313 +1,431 @@
 import 'dart:convert';
-import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/domain/personas/assistant_persona.dart';
-import 'package:ritmo/core/domain/commands/ritmo_command.dart';
-import 'package:ritmo/core/ai/brief/domain_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/sleep_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/notes_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/rhythm_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/wellbeing_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/reflection_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/goals_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/study_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/courses_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/sports_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/worship_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/cycle_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/adherence_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/courses_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/cycle_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/goals_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/notes_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/reflection_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/rhythm_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/sleep_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/sports_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/study_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/wellbeing_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/worship_brief.dart';
+import 'package:ritmo/core/ai/brief/domain_brief.dart';
+import 'package:ritmo/core/analytics/sleep_engine.dart';
+import 'package:ritmo/core/analytics/wellbeing_engine.dart';
+import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/commands/ritmo_command.dart';
+import 'package:ritmo/core/domain/personas/assistant_persona.dart';
+import 'package:ritmo/features/energy/models/energy_mood_models.dart';
+import 'package:ritmo/features/sleep/models/sleep_models.dart';
 
 class PersonaContextProvider {
+  static const int _horizonDays = 14;
+
   static Future<String> getBriefJson(AssistantPersona persona) async {
     final Map<String, Object?> combined = {};
 
     try {
       final db = await DatabaseHelper.instance.database;
 
-      // 1. Sleep Brief
       if (persona.canReadDomain(DataDomain.sleep)) {
-        final sleepLogs = await db.query('bedtime_diagnostics', orderBy: 'createdAt DESC', limit: 30);
-        final brief = SleepBrief(
-          sampleSize: sleepLogs.length,
-          computedAt: DateTime.now(),
-          avgDurationMinutes: sleepLogs.isEmpty ? null : 420,
-          avgQuality: sleepLogs.isEmpty ? null : 3.8,
-          sleepDebtMinutes: sleepLogs.length * 20,
-          consistencyScore: sleepLogs.length > 5 ? 78.0 : 55.0,
-        );
-        combined['sleep'] = brief.toPromptJson();
+        combined['sleep'] = (await _buildSleepBrief(db)).toPromptJson();
       }
 
-      // 2. Wellbeing & Energy Brief
       if (persona.canReadDomain(DataDomain.energy)) {
-        final energyLogs = await db.query('energy_logs', orderBy: 'loggedAt DESC', limit: 20);
-        final brief = WellbeingBrief(
-          sampleSize: energyLogs.length,
-          computedAt: DateTime.now(),
-          wellbeingScore: energyLogs.isEmpty ? 70.0 : 78.5,
-          energyLevelAvg: energyLogs.isEmpty ? 3.5 : 4.0,
-        );
-        combined['wellbeing'] = brief.toPromptJson();
+        combined['wellbeing'] = (await _buildWellbeingBrief(db)).toPromptJson();
       }
 
-      // 3. Goals Brief
       if (persona.canReadDomain(DataDomain.goals)) {
-        final goals = await db.query('goals', where: "status = 'ACTIVE'");
-        final steps = await db.query('goal_steps', where: 'isCompleted = 0');
-        final brief = GoalsBrief(
-          sampleSize: goals.length,
-          computedAt: DateTime.now(),
-          activeGoalsCount: goals.length,
-          overallProgressPercentage: goals.isEmpty ? 0.0 : 45.0,
-          overdueStepsCount: steps.length,
-          deadGoalsCount: 0,
-        );
-        combined['goals'] = brief.toPromptJson();
+        combined['goals'] = (await _buildGoalsBrief(db)).toPromptJson();
       }
 
-      // 4. Worship Brief
       if (persona.canReadDomain(DataDomain.worship)) {
-        final practices = await db.query('worship_practices');
-        final debts = await db.query('worship_debts');
-        final brief = WorshipBrief(
-          sampleSize: practices.length + debts.length,
-          computedAt: DateTime.now(),
-          activePracticesCount: practices.length,
-          totalDebtsCount: debts.length,
-          consistencyScore: 82.0,
-        );
-        combined['worship'] = brief.toPromptJson();
+        combined['worship'] = (await _buildWorshipBrief(db)).toPromptJson();
       }
 
-      // 5. Konkur / Study Brief
       if (persona.canReadDomain(DataDomain.konkur)) {
-        final subjects = await db.query('konkur_subjects');
-        final brief = StudyBrief(
-          sampleSize: subjects.length,
-          computedAt: DateTime.now(),
-          activeSubjectsCount: subjects.length,
-          topPrioritySubject: subjects.isNotEmpty ? (subjects.first['name'] as String?) : null,
-        );
-        combined['konkur'] = brief.toPromptJson();
+        combined['konkur'] = (await _buildStudyBrief(db)).toPromptJson();
       }
 
-      // 6. Courses Brief
       if (persona.canReadDomain(DataDomain.courses)) {
-        final courses = await db.query('courses', where: "status = 'ACTIVE'");
-        final brief = CoursesBrief(
-          sampleSize: courses.length,
-          computedAt: DateTime.now(),
-          activeCoursesCount: courses.length,
-          weeklyTargetSessions: 5,
-          completedSessionsThisWeek: 3,
-        );
-        combined['courses'] = brief.toPromptJson();
+        combined['courses'] = (await _buildCoursesBrief(db)).toPromptJson();
       }
 
-      // 7. Sports Brief
       if (persona.canReadDomain(DataDomain.sports)) {
-        final logs = await db.query('workout_logs', limit: 10);
-        final brief = SportsBrief(
-          sampleSize: logs.length,
-          computedAt: DateTime.now(),
-          sessionsLoggedThisWeek: logs.length,
-          recoveryScore: 85.0,
-        );
-        combined['sports'] = brief.toPromptJson();
+        combined['sports'] = (await _buildSportsBrief(db)).toPromptJson();
       }
 
-      // 8. Reflection Brief
       if (persona.canReadDomain(DataDomain.reflection)) {
-        final reflections = await db.query('daily_reflections', limit: 14);
-        final brief = ReflectionBrief(
-          sampleSize: reflections.length,
-          computedAt: DateTime.now(),
-          totalReflections: reflections.length,
-        );
-        combined['reflection'] = brief.toPromptJson();
+        combined['reflection'] = (await _buildReflectionBrief(db)).toPromptJson();
       }
 
-      // 9. Notes Brief
       if (persona.canReadDomain(DataDomain.notes)) {
-        final notes = await db.query('notes', where: 'isArchived = 0');
-        final experiences = await db.query('experiences', where: 'isArchived = 0');
-        final brief = NotesBrief(
-          sampleSize: notes.length + experiences.length,
-          computedAt: DateTime.now(),
-          totalActive: notes.length,
-          createdThisWeek: notes.length,
-          writingDayStreak: 1,
-          topTags: const [],
-          orphanCount: 0,
-          reviewDueCount: 0,
-          experienceCount: experiences.length,
-          experienceActiveCount: experiences.length,
-        );
-        combined['notes'] = brief.toPromptJson();
+        combined['notes'] = (await _buildNotesBrief(db)).toPromptJson();
       }
 
-      // 10. Cycle Brief
       if (persona.id == 'cycle' && persona.canReadDomain(DataDomain.cycle)) {
-        final logs = await db.query('cycle_day_logs', limit: 10);
-        final brief = CycleBrief(
-          sampleSize: logs.length,
-          computedAt: DateTime.now(),
-          recordedSymptomLogsCount: logs.length,
-        );
-        combined['cycle'] = brief.toPromptJson();
+        combined['cycle'] = (await _buildCycleBrief(db)).toPromptJson();
       }
 
-      // 11. Health Brief
       if (persona.id == 'health' && persona.canReadDomain(DataDomain.medical)) {
-        final meds = await db.query('routines', where: "category = 'medical' AND isArchived = 0");
-        final brief = AdherenceBrief(
-          sampleSize: meds.length,
-          computedAt: DateTime.now(),
-          adherencePercentage: 90.0,
-          missedRoutinePatternCount: 0,
-        );
-        combined['health'] = brief.toPromptJson();
+        combined['health'] = (await _buildHealthBrief(db)).toPromptJson();
       }
 
-      // Global / Rhythm Brief
       if (persona.id == 'global') {
-        final brief = RhythmBrief(
-          sampleSize: 7,
+        combined['rhythm'] = RhythmBrief(
+          sampleSize: combined.length,
           computedAt: DateTime.now(),
-          dailyCapacityMinutes: 360,
-          allocatedMinutes: 240,
+          dailyCapacityMinutes: 0,
+          allocatedMinutes: 0,
           activeDomainCount: combined.length,
-        );
-        combined['rhythm'] = brief.toPromptJson();
+        ).toPromptJson();
       }
-    } catch (e) {
-      // Fallback on database query error
+    } catch (_) {
+      // Fallback on database query error — return whatever was built.
     }
 
-    if (combined.isEmpty) {
-      return '{}';
-    }
-
+    if (combined.isEmpty) return '{}';
     return jsonEncode(combined);
   }
 
-  /// Get the primary brief object for UI components (Dynamic Opening Move)
   static Future<DomainBrief?> getPrimaryBrief(AssistantPersona persona) async {
     try {
       final db = await DatabaseHelper.instance.database;
       switch (persona.id) {
         case 'sleep':
-          final sleepLogs = await db.query('bedtime_diagnostics', limit: 30);
-          return SleepBrief(
-            sampleSize: sleepLogs.length,
-            computedAt: DateTime.now(),
-            avgDurationMinutes: sleepLogs.isEmpty ? null : 420,
-            avgQuality: sleepLogs.isEmpty ? null : 3.8,
-            sleepDebtMinutes: sleepLogs.length * 20,
-            consistencyScore: sleepLogs.length > 5 ? 78.0 : 55.0,
-          );
+          return _buildSleepBrief(db);
         case 'wellbeing':
-          final energyLogs = await db.query('energy_logs', limit: 20);
-          return WellbeingBrief(
-            sampleSize: energyLogs.length,
-            computedAt: DateTime.now(),
-            wellbeingScore: 78.5,
-            energyLevelAvg: 4.0,
-          );
+          return _buildWellbeingBrief(db);
         case 'goals':
-          final goals = await db.query('goals', where: "status = 'ACTIVE'");
-          final steps = await db.query('goal_steps', where: 'isCompleted = 0');
-          return GoalsBrief(
-            sampleSize: goals.length,
-            computedAt: DateTime.now(),
-            activeGoalsCount: goals.length,
-            overallProgressPercentage: goals.isEmpty ? 0.0 : 45.0,
-            overdueStepsCount: steps.length,
-            deadGoalsCount: 0,
-          );
+          return _buildGoalsBrief(db);
         case 'worship':
-          final practices = await db.query('worship_practices');
-          final debts = await db.query('worship_debts');
-          return WorshipBrief(
-            sampleSize: practices.length + debts.length,
-            computedAt: DateTime.now(),
-            activePracticesCount: practices.length,
-            totalDebtsCount: debts.length,
-            consistencyScore: 82.0,
-          );
+          return _buildWorshipBrief(db);
         case 'konkur':
-          final subjects = await db.query('konkur_subjects');
-          return StudyBrief(
-            sampleSize: subjects.length,
-            computedAt: DateTime.now(),
-            activeSubjectsCount: subjects.length,
-            topPrioritySubject: subjects.isNotEmpty ? (subjects.first['name'] as String?) : null,
-          );
+          return _buildStudyBrief(db);
         case 'courses':
-          final courses = await db.query('courses', where: "status = 'ACTIVE'");
-          return CoursesBrief(
-            sampleSize: courses.length,
-            computedAt: DateTime.now(),
-            activeCoursesCount: courses.length,
-            weeklyTargetSessions: 5,
-            completedSessionsThisWeek: 3,
-          );
+          return _buildCoursesBrief(db);
         case 'sports':
-          final logs = await db.query('workout_logs', limit: 10);
-          return SportsBrief(
-            sampleSize: logs.length,
-            computedAt: DateTime.now(),
-            sessionsLoggedThisWeek: logs.length,
-            recoveryScore: 85.0,
-          );
+          return _buildSportsBrief(db);
         case 'reflection':
-          final reflections = await db.query('daily_reflections', limit: 14);
-          return ReflectionBrief(
-            sampleSize: reflections.length,
-            computedAt: DateTime.now(),
-            totalReflections: reflections.length,
-          );
+          return _buildReflectionBrief(db);
         case 'notes':
-          final notes = await db.query('notes', where: 'isArchived = 0');
-          final experiences = await db.query('experiences', where: 'isArchived = 0');
-          return NotesBrief(
-            sampleSize: notes.length + experiences.length,
-            computedAt: DateTime.now(),
-            totalActive: notes.length,
-            createdThisWeek: notes.length,
-            writingDayStreak: 1,
-            topTags: const [],
-            orphanCount: 0,
-            reviewDueCount: 0,
-            experienceCount: experiences.length,
-            experienceActiveCount: experiences.length,
-          );
+          return _buildNotesBrief(db);
         case 'cycle':
-          final logs = await db.query('cycle_day_logs', limit: 10);
-          return CycleBrief(
-            sampleSize: logs.length,
-            computedAt: DateTime.now(),
-            recordedSymptomLogsCount: logs.length,
-          );
+          return _buildCycleBrief(db);
         case 'health':
-          final meds = await db.query('routines', where: "category = 'medical' AND isArchived = 0");
-          return AdherenceBrief(
-            sampleSize: meds.length,
-            computedAt: DateTime.now(),
-            adherencePercentage: 90.0,
-            missedRoutinePatternCount: 0,
-          );
+          return _buildHealthBrief(db);
         case 'global':
         default:
           return RhythmBrief(
-            sampleSize: 7,
+            sampleSize: 0,
             computedAt: DateTime.now(),
-            dailyCapacityMinutes: 360,
-            allocatedMinutes: 240,
-            activeDomainCount: 5,
+            dailyCapacityMinutes: 0,
+            allocatedMinutes: 0,
+            activeDomainCount: 0,
           );
       }
     } catch (_) {
       return null;
     }
+  }
+
+  static Future<SleepTarget> _loadSleepTarget(dynamic db) async {
+    String bedtime = '23:30';
+    String wake = '07:00';
+    int durationMinutes = 450;
+    try {
+      final rows = await db.query('app_settings', where: "key LIKE 'sleep_target_%'");
+      for (final r in rows) {
+        final k = r['key'] as String?;
+        final v = r['value'] as String?;
+        if (k == null || v == null) continue;
+        if (k == 'sleep_target_bedtime') bedtime = v;
+        if (k == 'sleep_target_wake') wake = v;
+        if (k == 'sleep_target_duration_minutes') {
+          durationMinutes = int.tryParse(v) ?? 450;
+        }
+      }
+    } catch (_) {}
+    return SleepTarget(bedtime: bedtime, wake: wake, durationMinutes: durationMinutes);
+  }
+
+  static List<SleepLog> _parseSleepLogs(List<dynamic> rows) {
+    final logs = <SleepLog>[];
+    for (final row in rows) {
+      try {
+        logs.add(SleepLog.fromMap(Map<String, dynamic>.from(row as Map)));
+      } catch (_) {}
+    }
+    return logs;
+  }
+
+  static double? _energyLevel1to3(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    switch (raw.toUpperCase()) {
+      case 'HIGH':
+        return 3.0;
+      case 'MEDIUM':
+        return 2.0;
+      case 'LOW':
+        return 1.0;
+      default:
+        return null;
+    }
+  }
+
+  static Future<SleepBrief> _buildSleepBrief(dynamic db) async {
+    final now = DateTime.now();
+    final sleepRows = await db.query('sleep_logs', orderBy: 'date DESC', limit: 45);
+    final energyRows = await db.query('energy_logs', orderBy: 'loggedAt DESC', limit: 200);
+    final moodRows = await db.query('mood_logs', orderBy: 'loggedAt DESC', limit: 200);
+    final logs = _parseSleepLogs(sleepRows);
+    final out = await SleepEngine().calculate(
+      SleepEngineInput(
+        sleepLogs: logs,
+        target: await _loadSleepTarget(db),
+        energyLogs: List<Map<String, dynamic>>.from(energyRows),
+        moodLogs: List<Map<String, dynamic>>.from(moodRows),
+        today: now,
+        horizonDays: _horizonDays,
+      ),
+    );
+    return SleepBrief.fromEngine(out, logs.length);
+  }
+
+  static Future<WellbeingBrief> _buildWellbeingBrief(dynamic db) async {
+    final now = DateTime.now();
+    final energyRows = await db.query('energy_logs', orderBy: 'loggedAt DESC', limit: 200);
+    final moodRows = await db.query('mood_logs', orderBy: 'loggedAt DESC', limit: 200);
+    final sleepRows = await db.query('sleep_logs', orderBy: 'date DESC', limit: 45);
+    final reflectionRows = await db.query('daily_reflections', orderBy: 'date DESC', limit: 45);
+    final sleepLogs = _parseSleepLogs(sleepRows);
+    final target = await _loadSleepTarget(db);
+
+    SleepEngineOutput? sleepOut;
+    if (sleepLogs.isNotEmpty) {
+      sleepOut = await SleepEngine().calculate(
+        SleepEngineInput(
+          sleepLogs: sleepLogs,
+          target: target,
+          energyLogs: List<Map<String, dynamic>>.from(energyRows),
+          moodLogs: List<Map<String, dynamic>>.from(moodRows),
+          today: now,
+          horizonDays: _horizonDays,
+        ),
+      );
+    }
+
+    final energyScores = <double>[];
+    for (final row in energyRows) {
+      final score = _energyLevel1to3(row['energyLevel']?.toString());
+      if (score != null) energyScores.add(score);
+    }
+
+    final moodScores = <double>[];
+    String? recentMood;
+    for (final row in moodRows) {
+      final valence = row['valence'];
+      if (valence is num) moodScores.add(valence.toDouble());
+      if (recentMood == null) {
+        final raw = row['mood']?.toString();
+        if (raw != null && raw.isNotEmpty) {
+          recentMood = Mood.fromString(raw).label;
+        }
+      }
+    }
+
+    final reflectionMoods = <double>[];
+    for (final row in reflectionRows) {
+      final score = row['mood_score'] ?? row['moodScore'];
+      if (score is num) reflectionMoods.add(score.toDouble());
+    }
+
+    final avgSleepHours = sleepLogs.isEmpty
+        ? null
+        : sleepLogs.map((l) => l.durationHours).reduce((a, b) => a + b) / sleepLogs.length;
+    final avgEnergy = energyScores.isEmpty
+        ? null
+        : energyScores.reduce((a, b) => a + b) / energyScores.length;
+    final avgMood = moodScores.isEmpty
+        ? null
+        : moodScores.reduce((a, b) => a + b) / moodScores.length;
+    final avgReflection = reflectionMoods.isEmpty
+        ? null
+        : reflectionMoods.reduce((a, b) => a + b) / reflectionMoods.length;
+
+    final index = const WellbeingEngine().compute(
+      WellbeingEngineInput(
+        now: now,
+        horizonDays: _horizonDays,
+        sleepNights: sleepLogs.length,
+        avgSleepHours: avgSleepHours,
+        targetSleepHours: target.durationMinutes / 60.0,
+        avgSleepQuality: sleepOut?.avgQuality,
+        sleepConsistency: sleepOut?.consistencyScore,
+        energySamples: energyScores.length,
+        avgEnergyLevel: avgEnergy,
+        moodSamples: moodScores.length,
+        avgMoodScore: avgMood,
+        reflectionEntries: reflectionRows.length,
+        avgReflectionMood: avgReflection,
+      ),
+    );
+
+    return WellbeingBrief(
+      sampleSize: energyScores.length +
+          moodScores.length +
+          sleepLogs.length +
+          reflectionRows.length,
+      computedAt: now,
+      wellbeingScore: index.value,
+      energyLevelAvg: avgEnergy,
+      recentMood: recentMood,
+    );
+  }
+
+  static Future<GoalsBrief> _buildGoalsBrief(dynamic db) async {
+    final goals = await db.query('goals', where: "status = 'ACTIVE'");
+    final steps = await db.query('goal_steps');
+    var completed = 0;
+    var incomplete = 0;
+    for (final step in steps) {
+      final flag = step['isCompleted'];
+      final done = flag == 1 || flag == true;
+      if (done) {
+        completed++;
+      } else {
+        incomplete++;
+      }
+    }
+    final progress = steps.isEmpty ? 0.0 : (completed / steps.length) * 100.0;
+    return GoalsBrief(
+      sampleSize: goals.length,
+      computedAt: DateTime.now(),
+      activeGoalsCount: goals.length,
+      overallProgressPercentage: progress,
+      overdueStepsCount: incomplete,
+      deadGoalsCount: 0,
+    );
+  }
+
+  static Future<WorshipBrief> _buildWorshipBrief(dynamic db) async {
+    final practices = await db.query('worship_practices');
+    final debts = await db.query('worship_debts');
+    return WorshipBrief(
+      sampleSize: practices.length + debts.length,
+      computedAt: DateTime.now(),
+      activePracticesCount: practices.length,
+      totalDebtsCount: debts.length,
+    );
+  }
+
+  static Future<StudyBrief> _buildStudyBrief(dynamic db) async {
+    final subjects = await db.query('konkur_subjects');
+    return StudyBrief(
+      sampleSize: subjects.length,
+      computedAt: DateTime.now(),
+      activeSubjectsCount: subjects.length,
+      topPrioritySubject:
+          subjects.isNotEmpty ? (subjects.first['name'] as String?) : null,
+    );
+  }
+
+  static Future<CoursesBrief> _buildCoursesBrief(dynamic db) async {
+    final courses = await db.query('courses', where: "status = 'ACTIVE'");
+    return CoursesBrief(
+      sampleSize: courses.length,
+      computedAt: DateTime.now(),
+      activeCoursesCount: courses.length,
+      weeklyTargetSessions: 0,
+      completedSessionsThisWeek: 0,
+    );
+  }
+
+  static Future<SportsBrief> _buildSportsBrief(dynamic db) async {
+    final weekAgo = DateTime.now().subtract(const Duration(days: 7)).millisecondsSinceEpoch;
+    List<dynamic> logs = const [];
+    try {
+      logs = await db.query(
+        'workout_logs',
+        where: 'loggedAt >= ?',
+        whereArgs: [weekAgo],
+      );
+    } catch (_) {
+      logs = await db.query('workout_logs', limit: 10);
+    }
+    return SportsBrief(
+      sampleSize: logs.length,
+      computedAt: DateTime.now(),
+      sessionsLoggedThisWeek: logs.length,
+    );
+  }
+
+  static Future<ReflectionBrief> _buildReflectionBrief(dynamic db) async {
+    final reflections = await db.query('daily_reflections', limit: 14);
+    return ReflectionBrief(
+      sampleSize: reflections.length,
+      computedAt: DateTime.now(),
+      totalReflections: reflections.length,
+    );
+  }
+
+  static Future<NotesBrief> _buildNotesBrief(dynamic db) async {
+    final notes = await db.query(
+      'notes',
+      where: 'isArchived = 0 AND $kNotesAiVisibilityClause',
+    );
+    final experiences = await db.query('experiences', where: 'isArchived = 0');
+    return NotesBrief(
+      sampleSize: notes.length + experiences.length,
+      computedAt: DateTime.now(),
+      totalActive: notes.length,
+      createdThisWeek: 0,
+      writingDayStreak: 0,
+      topTags: const [],
+      orphanCount: 0,
+      reviewDueCount: 0,
+      experienceCount: experiences.length,
+      experienceActiveCount: experiences.length,
+    );
+  }
+
+  static Future<CycleBrief> _buildCycleBrief(dynamic db) async {
+    final logs = await db.query('cycle_day_logs', limit: 10);
+    return CycleBrief(
+      sampleSize: logs.length,
+      computedAt: DateTime.now(),
+      recordedSymptomLogsCount: logs.length,
+    );
+  }
+
+  static Future<AdherenceBrief> _buildHealthBrief(dynamic db) async {
+    final meds = await db.query(
+      'routines',
+      where: "category = 'medical' AND isArchived = 0",
+    );
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    var totalDoses = 0;
+    var taken = 0;
+    for (final r in meds) {
+      final maxDoses = (r['maxDosesPerDay'] as int?) ?? 1;
+      totalDoses += maxDoses <= 0 ? 1 : maxDoses;
+      try {
+        final completions = await db.query(
+          'routine_completions',
+          where: 'routineId = ? AND completionDate = ?',
+          whereArgs: [r['id'], todayStr],
+        );
+        taken += completions.length as int;
+      } catch (_) {}
+    }
+    final pct = totalDoses > 0 ? ((taken / totalDoses) * 100).clamp(0, 100).toDouble() : 0.0;
+    return AdherenceBrief(
+      sampleSize: meds.length,
+      computedAt: DateTime.now(),
+      adherencePercentage: pct,
+      missedRoutinePatternCount: 0,
+    );
   }
 }

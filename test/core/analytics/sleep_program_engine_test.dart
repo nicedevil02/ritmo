@@ -216,7 +216,7 @@ void main() {
     });
 
     test('ETA بازه‌ای است و با پایبندی عقب‌تر می‌رود', () async {
-      // پلهٔ فعلی 10:00، هدف 23:30 ⇒ ۶۳۰ دقیقه ⇒ ۴۲ پله
+      // پلهٔ فعلی 10:00، هدف 23:30 ⇒ کوتاه‌ترین مسیر رو به عقب است
       final plans = [
         plan('2026-08-08', 600, SleepPlanOutcome.hit),
         plan('2026-08-09', 600, SleepPlanOutcome.hit),
@@ -225,7 +225,6 @@ void main() {
         plan('2026-08-12', 600, SleepPlanOutcome.pending),
       ];
       final state = await run(logs: sevenNights(1410), plans: plans);
-      // با ۳ hit از ۴ ⇒ پله جلو می‌رود: 600-15=585 ⇒ فاصله 645 ⇒ ۴۳ پله
       expect(state.tonightBedtimeMin, 585);
       expect(state.adherence7d, 0.75);
       expect(state.etaWeeksMin, isNotNull);
@@ -279,7 +278,7 @@ void main() {
         ],
       );
       // پله 00:00 ⇒ پنجره ۲۲:۳۰ تا ۰۰:۳۰
-      expect(state.cardWindowFromMin, 1410);
+      expect(state.cardWindowFromMin, 1350);
       expect(state.cardWindowToMin, 30);
     });
 

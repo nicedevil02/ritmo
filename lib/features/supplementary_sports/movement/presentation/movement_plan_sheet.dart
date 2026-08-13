@@ -1,23 +1,28 @@
 // lib/features/supplementary_sports/movement/presentation/movement_plan_sheet.dart
 //
-// فاز ۲ — مسیر برنامه‌ریزی با روتین
-// این شیت برای ساخت و ویرایش روتین‌های ورزشی تکرارشونده استفاده می‌شود.
+// فاز ۲ — جریان ۳‌قدمی ساخت و ویرایش برنامهٔ ورزشی
+// ۱. انتخاب نوع ورزش و تمرکز عضله
+// ۲. انتخاب روزها و ساعت اختصاصی هر روز
+// ۳. تنظیم یادآوری و هدف
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
-import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
-import 'package:ritmo/features/routines/domain/routine_recurrence.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/features/routines/presentation/widgets/planner_day_of_week_selector.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/movement_reminder_service.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_plan_writer.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_reminder_defaults.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/movement_kind_selector.dart';
-import 'package:ritmo/features/routines/presentation/widgets/planner_day_of_week_selector.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+
+const String _fontFa = 'Vazirmatn';
 
 Future<void> showMovementPlanSheet(
   BuildContext context, {
@@ -52,9 +57,12 @@ class MovementPlanSheet extends StatefulWidget {
 class _MovementPlanSheetState extends State<MovementPlanSheet> {
   bool get _isEditing => widget.routineToEdit != null;
 
+  int _currentStep = 0; // 0 = نوع ورزش, 1 = روزها و زمان, 2 = یادآوری و هدف
+
   MovementKind? _selectedKind;
-  List<int> _selectedDays = <int>[];
-  TimeOfDay _selectedTime = const TimeOfDay(hour: 18, minute: 30);
+  String? _muscleFocus; // CHEST_UPPER, BACK_LATS, LEGS_GLUTES, CORE_ABS, FULL_BODY
+  List<int> _selectedDays = <int>[]; // Dart weekdays (1..7)
+  final Map<int, TimeOfDay> _dayTimes = {}; // Dart weekday -> TimeOfDay
   bool _hasReminder = true;
   int _reminderMinutes = MovementReminderDefaults.venueMinutes;
   bool _userChangedReminder = false;
@@ -71,16 +79,23 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
   void initState() {
     super.initState();
     if (widget.routineToEdit == null) {
-      _selectedDays = <int>[DateTime.now().weekday];
+      final todayDart = DateTime.now().weekday;
+      _selectedDays = <int>[todayDart];
+      _dayTimes[todayDart] = const TimeOfDay(hour: 18, minute: 30);
     }
     _initFromRoutine();
   }
 
+  TimeOfDay _defaultTimeForKind(MovementKind? kind) {
+    if (kind == null) return const TimeOfDay(hour: 18, minute: 30);
+    if (kind.isOutdoor) return const TimeOfDay(hour: 7, minute: 0);
+    if (kind.isSocial) return const TimeOfDay(hour: 20, minute: 0);
+    return const TimeOfDay(hour: 18, minute: 30);
+  }
+
   Future<void> _initFromRoutine() async {
     final toEdit = widget.routineToEdit;
-    if (toEdit == null) {
-      return;
-    }
+    if (toEdit == null) return;
 
     final kindCode = toEdit['movementKind']?.toString() ?? 'WALKING';
     final kinds = await MovementRepository.instance.getKinds(enabledOnly: false);
@@ -89,33 +104,73 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
       orElse: () => kinds.isNotEmpty ? kinds.first : _fallbackKind(),
     );
 
-    final daysStr = toEdit['daysOfWeek']?.toString() ?? '';
-    List<int> days = [];
-    if (daysStr.isNotEmpty) {
-      days = daysStr.split(',').map((s) => int.parse(s.trim())).toList();
-    } else {
-      days = <int>[DateTime.now().weekday];
+    final routineId = toEdit['id']?.toString() ?? '';
+    final days = <int>[];
+    final dayTimes = <int, TimeOfDay>{};
+
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final schedules = await db.query(
+        'routine_schedules',
+        where: 'routineId = ?',
+        whereArgs: [routineId],
+      );
+
+      if (schedules.isNotEmpty) {
+        for (final s in schedules) {
+          final timeStr = s['timeOfDay']?.toString() ?? '18:30';
+          final parts = timeStr.split(':');
+          final time = parts.length == 2
+              ? TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]))
+              : const TimeOfDay(hour: 18, minute: 30);
+
+          final daysStr = s['daysOfWeek']?.toString() ?? '';
+          for (final part in daysStr.split(',')) {
+            final w = int.tryParse(part.trim());
+            if (w != null) {
+              if (!days.contains(w)) days.add(w);
+              dayTimes[w] = time;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[ss] MovementPlanSheet init error: $e');
     }
 
-    final timeStr = toEdit['timeOfDay']?.toString() ?? '18:30';
-    final parts = timeStr.split(':');
-    final time = parts.length == 2
-        ? TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]))
-        : const TimeOfDay(hour: 18, minute: 30);
+    if (days.isEmpty) {
+      final daysStr = toEdit['daysOfWeek']?.toString() ?? '';
+      if (daysStr.isNotEmpty) {
+        days.addAll(daysStr.split(',').map((s) => int.parse(s.trim())));
+      } else {
+        days.add(DateTime.now().weekday);
+      }
+      final timeStr = toEdit['timeOfDay']?.toString() ?? '18:30';
+      final parts = timeStr.split(':');
+      final time = parts.length == 2
+          ? TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]))
+          : const TimeOfDay(hour: 18, minute: 30);
+      for (final d in days) {
+        dayTimes[d] = time;
+      }
+    }
 
     final targetVal = (toEdit['movementTargetValue'] as num? ?? 30.0).toDouble();
     final duration = (toEdit['targetDurationMinutes'] as num? ?? 30).toInt();
     final storedReminder = (toEdit['reminderOffsetMinutes'] as num? ?? 0).toInt();
+    final storedMuscleFocus = toEdit['movementMuscleFocus']?.toString();
 
     setState(() {
       _selectedKind = matchingKind;
+      _muscleFocus = storedMuscleFocus;
       _selectedDays = days;
-      _selectedTime = time;
-      _hasReminder = storedReminder > 0;
-      _reminderMinutes = storedReminder > 0
+      _dayTimes.clear();
+      _dayTimes.addAll(dayTimes);
+      _hasReminder = storedReminder != 0;
+      _reminderMinutes = storedReminder != 0
           ? storedReminder
           : MovementReminderDefaults.minutesFor(matchingKind);
-      _userChangedReminder = storedReminder > 0;
+      _userChangedReminder = storedReminder != 0;
       _durationMinutes = duration;
 
       if (matchingKind.primaryMetric == MovementMetric.distance) {
@@ -137,10 +192,9 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
         _reminderMinutes = MovementReminderDefaults.minutesFor(kind);
         _hasReminder = _reminderMinutes > 0;
       }
-      if (kind.isOutdoor && _selectedTime.hour == 18 && _selectedTime.minute == 30) {
-        _selectedTime = const TimeOfDay(hour: 7, minute: 0);
-      } else if (kind.isSocial && _selectedTime.hour == 18 && _selectedTime.minute == 30) {
-        _selectedTime = const TimeOfDay(hour: 20, minute: 0);
+      final defaultTime = _defaultTimeForKind(kind);
+      for (final d in _selectedDays) {
+        _dayTimes[d] = defaultTime;
       }
     });
   }
@@ -167,25 +221,40 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
     );
   }
 
-  Future<void> _selectTime() async {
+  Future<void> _selectTimeForDay(int dartWeekday) async {
+    final current = _dayTimes[dartWeekday] ?? _defaultTimeForKind(_selectedKind);
     final picked = await showTimePicker(
       context: context,
-      initialTime: _selectedTime,
+      initialTime: current,
       builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            materialTapTargetSize: MaterialTapTargetSize.padded,
-          ),
-          child: Directionality(
-            textDirection: TextDirection.rtl,
-            child: child!,
-          ),
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: child ?? const SizedBox.shrink(),
         );
       },
     );
     if (picked != null) {
-      setState(() => _selectedTime = picked);
+      setState(() {
+        _dayTimes[dartWeekday] = picked;
+      });
     }
+  }
+
+  void _applyTimeToAllDays(TimeOfDay time) {
+    setState(() {
+      for (final day in _selectedDays) {
+        _dayTimes[day] = time;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'ساعت ${toPersianDigits('${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}')} روی همهٔ روزها اعمال شد ✓',
+          style: const TextStyle(fontFamily: _fontFa),
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   double _getTargetValue() {
@@ -203,106 +272,45 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
     if (_selectedKind == null || _isSaving) return;
     if (_selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('حداقل یک روز در هفته را انتخاب کن', style: TextStyle(fontFamily: 'Vazirmatn'))),
+        const SnackBar(
+          content: Text(
+            'حداقل یک روز در هفته را انتخاب کن',
+            style: TextStyle(fontFamily: _fontFa),
+          ),
+        ),
       );
       return;
     }
 
     setState(() => _isSaving = true);
-    final now = DateTime.now().millisecondsSinceEpoch;
-
-    final routineId = _isEditing
-        ? widget.routineToEdit!['id'] as String
-        : RitmoIdFactory.routine();
-
-    final timeStr = '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
-    final targetValue = _getTargetValue();
-
-    final routineData = {
-      'id': routineId,
-      'title': _selectedKind!.titleFa,
-      'description': _isEditing ? widget.routineToEdit!['description'] : null,
-      'category': 'fitness',
-      'customCategoryId': null,
-      'zoneId': _isEditing ? widget.routineToEdit!['zoneId'] : null,
-      'routineType': 'ROUTINE',
-      'notificationLevel': 'NORMAL',
-      'isEssential': 0,
-      'isEssentialLocked': 0,
-      'energyRule': 'NONE',
-      'priority': 1.0,
-      'targetDurationMinutes': _durationMinutes,
-      'lightDurationMinutes': 0,
-      'minimalDurationMinutes': 0,
-      'isArchived': 0,
-      'isPrivate': 0,
-      'displayOrder': 1,
-      'createdAt': _isEditing ? widget.routineToEdit!['createdAt'] ?? now : now,
-      'updatedAt': now,
-      'dependsOnRoutineId': null,
-      'itemType': 'ROUTINE',
-      'reminderOffsetMinutes': _hasReminder ? _reminderMinutes : 0,
-      'movementKind': _selectedKind!.code,
-      'movementTargetMetric': _selectedKind!.primaryMetric.name.toUpperCase(),
-      'movementTargetValue': targetValue,
-      'movementIsMeetup': _selectedKind!.isSocial ? 1 : 0,
-    };
-
-    final recurrence = WeekdaysRecurrence(weekdays: _selectedDays.toSet());
-    final (schedType, daysOfWeek) = deriveScheduleParams(recurrence);
-    final recurrenceJson = encodeRecurrenceRule(
-      recurrence: recurrence,
-      startDate: DateTime.now(),
-      reminderTimes: [timeStr],
-    );
-
-    final scheduleData = {
-      'id': RitmoIdFactory.schedule(routineId),
-      'routineId': routineId,
-      'scheduleType': schedType,
-      'timeOfDay': timeStr,
-      'daysOfWeek': daysOfWeek,
-      'recurrenceRule': recurrenceJson,
-      'createdAt': _isEditing ? widget.routineToEdit!['createdAt'] ?? now : now,
-      'updatedAt': now,
-    };
 
     try {
-      if (_isEditing) {
-        await RitmoExecutionKernel.instance.execute(
-          EditRoutineCommand(
-            routineId: routineId,
-            routineData: routineData,
-            scheduleData: scheduleData,
-            applyToAll: true,
-          ),
-        );
-      } else {
-        await RitmoExecutionKernel.instance.execute(
-          CreateRoutineCommand(
-            routineData: routineData,
-            scheduleData: scheduleData,
-          ),
-        );
-      }
+      final defaultTime = _defaultTimeForKind(_selectedKind);
+      final dayTimesToSave = <int, TimeOfDay>{
+        for (final d in _selectedDays) d: _dayTimes[d] ?? defaultTime,
+      };
 
-      if (!_isEditing) {
-        RitmoEventBus().fire(RitmoEvent(
-          type: 'movement_plan_created',
-          timestamp: DateTime.now(),
-          payload: {
-            'kindCode': _selectedKind?.code,
-          },
-        ));
-      }
+      await MovementPlanWriter.savePlan(
+        routineId: widget.routineToEdit?['id'] as String?,
+        kind: _selectedKind!,
+        muscleFocus: _selectedKind!.family == MovementFamily.strength
+            ? (_muscleFocus ?? 'FULL_BODY')
+            : null,
+        dayTimesDartWeekday: dayTimesToSave,
+        targetDurationMinutes: _durationMinutes,
+        targetValue: _getTargetValue(),
+        reminderMinutes: _hasReminder ? _reminderMinutes : 0,
+        isEditing: _isEditing,
+        existingRoutineData: widget.routineToEdit,
+      );
 
       RitmoHaptics.success();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isEditing ? 'برنامه با موفقیت ویرایش شد ✨' : 'برنامهٔ حرکتی جدید با موفقیت ایجاد شد ✨',
-              style: const TextStyle(fontFamily: 'Vazirmatn'),
+              _isEditing ? 'برنامه با موفقیت ویرایش شد ✓' : 'برنامهٔ هفته با موفقیت ثبت شد 🎉',
+              style: const TextStyle(fontFamily: _fontFa),
             ),
           ),
         );
@@ -312,7 +320,9 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطا در ذخیره برنامه: $e', style: const TextStyle(fontFamily: 'Vazirmatn'))),
+          SnackBar(
+            content: Text('خطا در ذخیره برنامه: $e', style: const TextStyle(fontFamily: _fontFa)),
+          ),
         );
       }
     } finally {
@@ -320,40 +330,21 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
     }
   }
 
-  Future<void> _archivePlan() async {
+  Future<void> _archiveRoutine() async {
     if (!_isEditing) return;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('آرشیو برنامه', style: TextStyle(fontFamily: 'Vazirmatn')),
-        content: const Text('این برنامه به آرشیو منتقل شده و از اجندا حذف می‌شود. مطمئنی؟', style: TextStyle(fontFamily: 'Vazirmatn')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('بله، آرشیو کن', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
+    final routineId = widget.routineToEdit!['id'] as String;
 
     setState(() => _isSaving = true);
     try {
-      final routineId = widget.routineToEdit!['id'] as String;
       await RitmoExecutionKernel.instance.execute(
         ArchiveRoutineCommand(routineId: routineId),
       );
+      await MovementReminderService.rescheduleWeekReminders();
       RitmoHaptics.success();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('برنامه آرشیو شد 📥', style: TextStyle(fontFamily: 'Vazirmatn'))),
+          const SnackBar(content: Text('برنامه آرشیو شد 📥', style: TextStyle(fontFamily: _fontFa))),
         );
         widget.onSaved?.call();
         Navigator.of(context).pop();
@@ -361,7 +352,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطا در آرشیو برنامه: $e', style: const TextStyle(fontFamily: 'Vazirmatn'))),
+          SnackBar(content: Text('خطا در آرشیو برنامه: $e', style: const TextStyle(fontFamily: _fontFa))),
         );
       }
     } finally {
@@ -373,16 +364,15 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final timeLabel = '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}'.toPersianDigits();
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.88,
+        height: MediaQuery.of(context).size.height * 0.90,
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
+          border: Border.all(color: colors.border.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
@@ -391,7 +381,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: colors.onSurfaceVariant.withValues(alpha: 0.3),
+                color: colors.textSecondary.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -401,286 +391,702 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    _isEditing ? 'ویرایش برنامهٔ حرکت' : 'برنامه‌ریزی حرکت جدید',
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: colors.onSurface,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _isEditing ? 'ویرایش برنامهٔ حرکت' : 'افزودن به هفته',
+                        style: TextStyle(
+                          fontFamily: _fontFa,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _stepSubtitle(_currentStep),
+                        style: TextStyle(
+                          fontFamily: _fontFa,
+                          fontSize: 12,
+                          color: colors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    tooltip: 'بستن',
-                    icon: const Icon(CupertinoIcons.xmark_circle_fill),
-                    onPressed: () => Navigator.of(context).pop(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: colors.primaryContainer.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      '${toPersianDigits((_currentStep + 1).toString())} از ۳',
+                      style: TextStyle(
+                        fontFamily: _fontFa,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: colors.primary,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1),
+            const SizedBox(height: 10),
+            // Progress line
+            Row(
+              children: [
+                for (int i = 0; i < 3; i++)
+                  Expanded(
+                    child: Container(
+                      height: 3,
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        color: i <= _currentStep ? colors.primary : colors.surfaceSunken,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.only(
                   left: 20,
                   right: 20,
-                  top: 16,
+                  top: 12,
                   bottom: 20 + bottomInset,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    MovementKindSelector(
-                      selectedKind: _selectedKind,
-                      onKindSelected: _onKindSelected,
-                    ),
-                    const SizedBox(height: 24),
-                    const Divider(),
-                    const SizedBox(height: 16),
-                    if (_selectedKind != null) ...[
-                      Text(
-                        'هدف برنامه‌ریزی: ${_selectedKind!.emoji} ${_selectedKind!.titleFa}',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14, color: colors.primary),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('مدت زمان هدف:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-                          Text(
-                            '${_durationMinutes.toPersianDigits()} دقیقه',
-                            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.primary, fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      Slider(
-                        value: _durationMinutes.toDouble(),
-                        min: 5,
-                        max: 180,
-                        divisions: 35,
-                        activeColor: colors.primary,
-                        onChanged: (val) => setState(() => _durationMinutes = val.toInt()),
-                      ),
-                      const SizedBox(height: 12),
-                      if (_selectedKind!.primaryMetric == MovementMetric.distance) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('مسافت هدف (کیلومتر):', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-                            Text('${_distanceKm.toStringAsFixed(1).toPersianDigits()} km', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.primary)),
-                          ],
-                        ),
-                        Slider(
-                          value: _distanceKm,
-                          min: 0.5,
-                          max: 50.0,
-                          divisions: 99,
-                          activeColor: colors.primary,
-                          onChanged: (val) => setState(() => _distanceKm = val),
-                        ),
-                        const SizedBox(height: 12),
-                      ] else if (_selectedKind!.primaryMetric == MovementMetric.laps) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('تعداد طول هدف (استخر ۲۵ متری):', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-                            Text('${_laps.toPersianDigits()} طول (${(_laps * 25).toPersianDigits()} متر)', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.primary)),
-                          ],
-                        ),
-                        Slider(
-                          value: _laps.toDouble(),
-                          min: 1,
-                          max: 100,
-                          divisions: 99,
-                          activeColor: colors.primary,
-                          onChanged: (val) => setState(() => _laps = val.toInt()),
-                        ),
-                        const SizedBox(height: 12),
-                      ] else if (_selectedKind!.primaryMetric == MovementMetric.elevation) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('ارتفاع هدف (متر):', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-                            Text('${_elevationMeters.toInt().toPersianDigits()} متر', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.primary)),
-                          ],
-                        ),
-                        Slider(
-                          value: _elevationMeters,
-                          min: 10,
-                          max: 2000,
-                          divisions: 199,
-                          activeColor: colors.primary,
-                          onChanged: (val) => setState(() => _elevationMeters = val),
-                        ),
-                        const SizedBox(height: 12),
-                      ] else if (_selectedKind!.primaryMetric == MovementMetric.steps) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('تعداد گام هدف:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-                            Text('${_steps.toPersianDigits()} گام', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.primary)),
-                          ],
-                        ),
-                        Slider(
-                          value: _steps.toDouble(),
-                          min: 500,
-                          max: 30000,
-                          divisions: 59,
-                          activeColor: colors.primary,
-                          onChanged: (val) => setState(() => _steps = val.toInt()),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      const Divider(),
-                      const SizedBox(height: 16),
-                    ],
-                    const Text(
-                      'روزهای اجرای برنامه در هفته:',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    const SizedBox(height: 8),
-                    PlannerDayOfWeekSelector(
-                      selectedDays: _selectedDays,
-                      onChanged: (days) => setState(() => _selectedDays = days),
-                    ),
-                    const SizedBox(height: 24),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text(
-                        'ساعت شروع تمرین:',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
-                        ),
-                        child: Text(
-                          timeLabel,
-                          style: TextStyle(
-                            fontFamily: 'Vazirmatn',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: colors.primary,
-                          ),
-                        ),
-                      ),
-                      onTap: _selectTime,
-                    ),
-                    const SizedBox(height: 12),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text(
-                        'یادآوری قبل از شروع',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                      subtitle: Text(
-                        _hasReminder
-                            ? MovementReminderDefaults.labelFa(_reminderMinutes)
-                            : 'خاموش',
-                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
-                      ),
-                      value: _hasReminder,
-                      activeThumbColor: CalendarTokens.emerald,
-                      activeTrackColor: CalendarTokens.emerald.withValues(alpha: 0.5),
-                      onChanged: (val) => setState(() {
-                        _hasReminder = val;
-                        _userChangedReminder = true;
-                      }),
-                    ),
-                    if (_hasReminder) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final minutes in const [10, 30, 60, 90])
-                            ChoiceChip(
-                              label: Text(
-                                MovementReminderDefaults.labelFa(minutes),
-                                style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
-                              ),
-                              selected: _reminderMinutes == minutes,
-                              onSelected: (_) => setState(() {
-                                _reminderMinutes = minutes;
-                                _userChangedReminder = true;
-                              }),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
+                child: _buildCurrentStep(colors),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF1E2630)
-                    : Theme.of(context).colorScheme.surfaceContainerHigh,
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).dividerColor.withValues(alpha: 0.15),
+            _buildBottomBar(colors),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _stepSubtitle(int step) {
+    return switch (step) {
+      0 => 'قدم اول — انتخاب نوع ورزش و تمرکز',
+      1 => 'قدم دوم — انتخاب روزها و ساعت هر روز',
+      2 => 'قدم سوم — یادآوری و تنظیم هدف',
+      _ => '',
+    };
+  }
+
+  Widget _buildCurrentStep(RitmoColors colors) {
+    return switch (_currentStep) {
+      0 => _buildStep1KindAndFocus(colors),
+      1 => _buildStep2DaysAndTimes(colors),
+      2 => _buildStep3RemindersAndGoals(colors),
+      _ => const SizedBox.shrink(),
+    };
+  }
+
+  // ─── STEP 1: چه حرکتی؟ ──────────────────────────────────────────────────────
+  Widget _buildStep1KindAndFocus(RitmoColors colors) {
+    final isStrength = _selectedKind?.family == MovementFamily.strength;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        MovementKindSelector(
+          selectedKind: _selectedKind,
+          onKindSelected: _onKindSelected,
+        ),
+        if (isStrength) ...[
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'تمرکز عضلهٔ تمرین',
+                      style: TextStyle(
+                        fontFamily: _fontFa,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '(اختیاری)',
+                      style: TextStyle(
+                        fontFamily: _fontFa,
+                        fontSize: 11,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'برای فیلتر هوشمند کتابخانهٔ حرکات در جلسات',
+                  style: TextStyle(
+                    fontFamily: _fontFa,
+                    fontSize: 11.5,
+                    color: colors.textSecondary,
                   ),
                 ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _muscleChip('تمام بدن ⚡', 'FULL_BODY', colors),
+                    _muscleChip('سینه و بالاتنه 💪', 'CHEST_UPPER', colors),
+                    _muscleChip('پشت و زیربغل 🛡️', 'BACK_LATS', colors),
+                    _muscleChip('پا و باسن 🦵', 'LEGS_GLUTES', colors),
+                    _muscleChip('شکم و پهلو 🍫', 'CORE_ABS', colors),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _muscleChip(String label, String code, RitmoColors colors) {
+    final isSelected = (_muscleFocus ?? 'FULL_BODY') == code;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () {
+        RitmoHaptics.selection();
+        setState(() => _muscleFocus = code);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.primaryContainer : colors.surfaceSunken,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? colors.primary : colors.border,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: _fontFa,
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? colors.primary : colors.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── STEP 2: کدوم روزها؟ کی؟ ───────────────────────────────────────────────
+  Widget _buildStep2DaysAndTimes(RitmoColors colors) {
+    final defaultTime = _defaultTimeForKind(_selectedKind);
+    // Sort selected Dart weekdays by Persian Sat0 order
+    final sortedDays = List<int>.from(_selectedDays)
+      ..sort((a, b) => dartWeekdayToSat0(a).compareTo(dartWeekdayToSat0(b)));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'روزهای تکرار در هفته:',
+          style: TextStyle(
+            fontFamily: _fontFa,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        PlannerDayOfWeekSelector(
+          selectedDays: _selectedDays,
+          onChanged: (days) {
+            setState(() {
+              _selectedDays = days;
+              for (final d in days) {
+                _dayTimes.putIfAbsent(d, () => defaultTime);
+              }
+            });
+          },
+        ),
+        const SizedBox(height: 20),
+        if (sortedDays.isNotEmpty) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'ساعت اختصاصی هر روز:',
+                style: TextStyle(
+                  fontFamily: _fontFa,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+              if (sortedDays.length > 1)
+                TextButton.icon(
+                  onPressed: () {
+                    final firstTime = _dayTimes[sortedDays.first] ?? defaultTime;
+                    _applyTimeToAllDays(firstTime);
+                  },
+                  icon: Icon(Icons.sync_rounded, size: 16, color: colors.primary),
+                  label: Text(
+                    'یکسان‌سازی ساعت',
+                    style: TextStyle(
+                      fontFamily: _fontFa,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (final dartDay in sortedDays) _buildDayTimeTile(dartDay, colors),
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Center(
+              child: Text(
+                'برای تنظیم ساعت، حداقل یک روز را انتخاب کنید.',
+                style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 13),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDayTimeTile(int dartWeekday, RitmoColors colors) {
+    final sat0 = dartWeekdayToSat0(dartWeekday);
+    final dayName = kPersianWeekdayNames[sat0];
+    final time = _dayTimes[dartWeekday] ?? _defaultTimeForKind(_selectedKind);
+    final timeFormatted =
+        toPersianDigits('${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colors.primaryContainer.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.calendar_today_rounded, size: 16, color: colors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              dayName,
+              style: TextStyle(
+                fontFamily: _fontFa,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+          ),
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => _selectTimeForDay(dartWeekday),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: colors.surfaceSunken,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: colors.primary.withValues(alpha: 0.5)),
               ),
               child: Row(
                 children: [
-                  if (_isEditing) ...[
-                    Expanded(
-                      child: SizedBox(
-                        height: 52,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.redAccent),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
-                          onPressed: _isSaving ? null : _archivePlan,
-                          icon: const Icon(CupertinoIcons.archivebox_fill, color: Colors.redAccent, size: 18),
-                          label: const Text(
-                            'آرشیو برنامه',
-                            style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.redAccent, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                  Expanded(
-                    flex: 2,
-                    child: SizedBox(
-                      height: 52,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: (_selectedKind == null || _isSaving)
-                              ? Theme.of(context).disabledColor.withValues(alpha: 0.15)
-                              : CalendarTokens.emerald,
-                          disabledBackgroundColor: Theme.of(context).disabledColor.withValues(alpha: 0.15),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        onPressed: (_selectedKind == null || _isSaving) ? null : _savePlan,
-                        child: _isSaving
-                            ? const CupertinoActivityIndicator(color: Colors.white)
-                            : Text(
-                                _isEditing ? 'ذخیره تغییرات' : 'ایجاد برنامهٔ حرکت',
-                                style: const TextStyle(
-                                  fontFamily: 'Vazirmatn',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      ),
+                  Icon(Icons.access_time_rounded, size: 15, color: colors.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    timeFormatted,
+                    style: TextStyle(
+                      fontFamily: _fontFa,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── STEP 3: یادآوری و هدف ────────────────────────────────────────────────
+  Widget _buildStep3RemindersAndGoals(RitmoColors colors) {
+    final kind = _selectedKind ?? _fallbackKind();
+    final hasMorningSession = _dayTimes.values.any((t) => t.hour < 12);
+    final showNightBefore = kind.isOutdoor && hasMorningSession;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Reminder section
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.notifications_active_outlined, color: colors.primary, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'ارسال یادآوری قبل از حرکت',
+                        style: TextStyle(
+                          fontFamily: _fontFa,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Switch.adaptive(
+                    value: _hasReminder,
+                    activeTrackColor: colors.primary,
+                    onChanged: (val) {
+                      setState(() {
+                        _hasReminder = val;
+                        _userChangedReminder = true;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              if (_hasReminder) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'زمان یادآوری:',
+                  style: TextStyle(
+                    fontFamily: _fontFa,
+                    fontSize: 12,
+                    color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _reminderChip('۱۰ دقیقه قبل', 10, colors),
+                    _reminderChip('۳۰ دقیقه قبل', 30, colors),
+                    _reminderChip('۱ ساعت قبل', 60, colors),
+                    _reminderChip('۱.۵ ساعت قبل', 90, colors),
+                    if (showNightBefore)
+                      _reminderChip('شب قبل (۲۱:۰۰) 🌙', -1, colors),
+                  ],
+                ),
+              ],
+            ],
+          ),
         ),
+        const SizedBox(height: 20),
+        // Goals section
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'هدف هر جلسه (${kind.emoji} ${kind.titleFa}):',
+                style: TextStyle(
+                  fontFamily: _fontFa,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('مدت زمان هدف:', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary)),
+                  Text(
+                    '${toPersianDigits(_durationMinutes.toString())} دقیقه',
+                    style: TextStyle(
+                      fontFamily: _fontFa,
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+              Slider(
+                value: _durationMinutes.toDouble(),
+                min: 5,
+                max: 180,
+                divisions: 35,
+                activeColor: colors.primary,
+                onChanged: (val) => setState(() => _durationMinutes = val.toInt()),
+              ),
+              if (kind.primaryMetric == MovementMetric.distance) ...[
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('مسافت هدف:', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary)),
+                    Text(
+                      '${toPersianDigits(_distanceKm.toStringAsFixed(1))} کیلومتر',
+                      style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, color: colors.primary),
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: _distanceKm,
+                  min: 0.5,
+                  max: 50.0,
+                  divisions: 99,
+                  activeColor: colors.primary,
+                  onChanged: (val) => setState(() => _distanceKm = val),
+                ),
+              ] else if (kind.primaryMetric == MovementMetric.laps) ...[
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('تعداد طول (استخر ۲۵ متری):', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary)),
+                    Text(
+                      '${toPersianDigits(_laps.toString())} طول (${toPersianDigits((_laps * 25).toString())} متر)',
+                      style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, color: colors.primary),
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: _laps.toDouble(),
+                  min: 1,
+                  max: 100,
+                  divisions: 99,
+                  activeColor: colors.primary,
+                  onChanged: (val) => setState(() => _laps = val.toInt()),
+                ),
+              ] else if (kind.primaryMetric == MovementMetric.elevation) ...[
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('ارتفاع صعود:', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary)),
+                    Text(
+                      '${toPersianDigits(_elevationMeters.round().toString())} متر',
+                      style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, color: colors.primary),
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: _elevationMeters,
+                  min: 10,
+                  max: 2000,
+                  divisions: 199,
+                  activeColor: colors.primary,
+                  onChanged: (val) => setState(() => _elevationMeters = val),
+                ),
+              ] else if (kind.primaryMetric == MovementMetric.steps) ...[
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('تعداد گام:', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary)),
+                    Text(
+                      '${toPersianDigits(_steps.toString())} گام',
+                      style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, color: colors.primary),
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: _steps.toDouble(),
+                  min: 500,
+                  max: 30000,
+                  divisions: 59,
+                  activeColor: colors.primary,
+                  onChanged: (val) => setState(() => _steps = val.toInt()),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (_isEditing) ...[
+          const SizedBox(height: 24),
+          Center(
+            child: TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: colors.error),
+              icon: const Icon(CupertinoIcons.trash, size: 18),
+              label: const Text(
+                'آرشیو و حذف این برنامه',
+                style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold),
+              ),
+              onPressed: _archiveRoutine,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _reminderChip(String label, int minutes, RitmoColors colors) {
+    final isSelected = _reminderMinutes == minutes;
+    return ChoiceChip(
+      label: Text(label, style: const TextStyle(fontFamily: _fontFa, fontSize: 12)),
+      selected: isSelected,
+      selectedColor: colors.primary,
+      backgroundColor: colors.surfaceSunken,
+      labelStyle: TextStyle(
+        fontFamily: _fontFa,
+        color: isSelected ? colors.onPrimary : colors.textPrimary,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+      onSelected: (val) {
+        if (val) {
+          RitmoHaptics.selection();
+          setState(() {
+            _reminderMinutes = minutes;
+            _userChangedReminder = true;
+          });
+        }
+      },
+    );
+  }
+
+  // ─── BOTTOM ACTION BAR ─────────────────────────────────────────────────────
+  Widget _buildBottomBar(RitmoColors colors) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      decoration: BoxDecoration(
+        color: colors.surfaceElevated,
+        border: Border(top: BorderSide(color: colors.border.withValues(alpha: 0.4))),
+      ),
+      child: Row(
+        children: [
+          if (_currentStep > 0) ...[
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                side: BorderSide(color: colors.border),
+              ),
+              onPressed: () {
+                RitmoHaptics.tap();
+                setState(() => _currentStep--);
+              },
+              child: Text(
+                'قبلی',
+                style: TextStyle(
+                  fontFamily: _fontFa,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+          ],
+          Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: CalendarTokens.emerald,
+                foregroundColor: const Color(0xFF042116),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: _isSaving
+                  ? null
+                  : () {
+                      RitmoHaptics.tap();
+                      if (_currentStep < 2) {
+                        if (_currentStep == 0 && _selectedKind == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'لطفاً نوع ورزش را انتخاب کن',
+                                style: TextStyle(fontFamily: _fontFa),
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        if (_currentStep == 1 && _selectedDays.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'حداقل یک روز در هفته را انتخاب کن',
+                                style: TextStyle(fontFamily: _fontFa),
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        setState(() => _currentStep++);
+                      } else {
+                        _savePlan();
+                      }
+                    },
+              child: _isSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF042116)),
+                    )
+                  : Text(
+                      _currentStep < 2
+                          ? 'ادامه'
+                          : (_isEditing ? 'ذخیره تغییرات' : 'ثبت برنامه در هفته'),
+                      style: const TextStyle(
+                        fontFamily: _fontFa,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }

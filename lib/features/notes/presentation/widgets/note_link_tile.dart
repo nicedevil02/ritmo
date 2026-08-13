@@ -17,6 +17,7 @@ class NoteLinkTile extends StatelessWidget {
       case 'study':
         return CupertinoIcons.book_fill;
       case 'routines':
+      case 'habits':
         return CupertinoIcons.repeat;
       case 'tasks':
         return CupertinoIcons.checkmark_square_fill;
@@ -26,14 +27,56 @@ class NoteLinkTile extends StatelessWidget {
         return CupertinoIcons.bolt_fill;
       case 'health':
         return CupertinoIcons.heart_fill;
+      case 'finance':
+        return CupertinoIcons.money_dollar_circle_fill;
       default:
         return CupertinoIcons.link;
+    }
+  }
+
+  String _getModuleLabel(String module) {
+    switch (module.toLowerCase()) {
+      case 'courses':
+      case 'study':
+        return 'مطالعه و درس';
+      case 'routines':
+      case 'habits':
+        return 'روتین و عادت';
+      case 'tasks':
+        return 'وظایف و کارها';
+      case 'sleep':
+        return 'خواب و استراحت';
+      case 'energy':
+        return 'سطح انرژی';
+      case 'health':
+        return 'سلامت';
+      case 'finance':
+        return 'مالی و بودجه';
+      default:
+        return module;
+    }
+  }
+
+  String _getRelationLabel(String relation) {
+    switch (relation.toUpperCase()) {
+      case 'SPAWNED':
+        return 'انتقال‌یافته';
+      case 'REFERENCE':
+        return 'ارجاع';
+      case 'CHILD':
+        return 'زیرمجموعه';
+      default:
+        return relation;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+
+    final moduleLabel = _getModuleLabel(link.linkModule);
+    final relationLabel = _getRelationLabel(link.relation);
+    final shortEntityId = link.linkEntityId.length > 12 ? '${link.linkEntityId.substring(0, 12)}...' : link.linkEntityId;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -51,7 +94,7 @@ class NoteLinkTile extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'مرتبط با ${link.linkModule}: ${link.linkEntityId}',
+                'مرتبط با $moduleLabel ($shortEntityId)',
                 style: TextStyle(
                   fontFamily: 'Vazirmatn',
                   fontSize: 12,
@@ -66,7 +109,7 @@ class NoteLinkTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                link.relation,
+                relationLabel,
                 style: TextStyle(
                   fontFamily: 'Vazirmatn',
                   fontSize: 9,
@@ -81,3 +124,4 @@ class NoteLinkTile extends StatelessWidget {
     );
   }
 }
+

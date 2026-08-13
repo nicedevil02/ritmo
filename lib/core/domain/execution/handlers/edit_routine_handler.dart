@@ -34,7 +34,23 @@ class EditRoutineHandler implements KernelCommandHandler<EditRoutineCommand> {
     );
 
     RecurrenceRule? rule;
-    if (command.scheduleData != null) {
+    if (command.schedules != null && command.schedules!.isNotEmpty) {
+      if (command.applyToAll) {
+        await context.txn.delete(
+          'routine_schedules',
+          where: 'routineId = ?',
+          whereArgs: [id],
+        );
+      }
+      for (final s in command.schedules!) {
+        final newSchedule = Map<String, dynamic>.from(s)
+          ..['routineId'] = id;
+        await context.txn.insert('routine_schedules', newSchedule, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      final ruleStr = command.schedules!.first['recurrenceRule'] as String? ?? '{}';
+      final ruleMap = jsonDecode(ruleStr) as Map<String, dynamic>;
+      rule = RecurrenceRule.fromMap(ruleMap);
+    } else if (command.scheduleData != null) {
       final scheduleMap = Map<String, dynamic>.from(command.scheduleData!)..remove('id');
       final updated = await context.txn.update(
         'routine_schedules',

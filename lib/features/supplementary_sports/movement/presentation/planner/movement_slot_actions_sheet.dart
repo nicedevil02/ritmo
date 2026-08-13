@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/movement_reminder_service.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_slot_override_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
 
@@ -104,7 +105,10 @@ Future<bool> showMovementSlotActionsSheet(
       ),
     ),
   );
-  if (result == true) RitmoHaptics.success();
+  if (result == true) {
+    await MovementReminderService.rescheduleWeekReminders();
+    RitmoHaptics.success();
+  }
   return result == true;
 }
 

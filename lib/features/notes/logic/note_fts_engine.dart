@@ -8,9 +8,12 @@ class NoteFtsEngine {
   NoteFtsEngine._();
   static final NoteFtsEngine instance = NoteFtsEngine._();
 
+  bool? _cachedFtsAvailable;
+
   Future<Database> get _db async => DatabaseHelper.instance.database;
 
   Future<bool> isFtsAvailable() async {
+    if (_cachedFtsAvailable != null) return _cachedFtsAvailable!;
     try {
       final db = await _db;
       final rows = await db.query(
@@ -20,10 +23,16 @@ class NoteFtsEngine {
         limit: 1,
       );
       if (rows.isNotEmpty) {
-        return rows.first['value'] == 'true';
+        _cachedFtsAvailable = rows.first['value'] == 'true';
+        return _cachedFtsAvailable!;
       }
     } catch (_) {}
+    _cachedFtsAvailable = false;
     return false;
+  }
+
+  void invalidateCache() {
+    _cachedFtsAvailable = null;
   }
 
   Future<void> indexNote(Note note) async {
@@ -112,6 +121,11 @@ class NoteFtsEngine {
         if (kind != null) {
           sql += ' AND n.kind = ?';
           params.add(kind.value);
+        }
+
+        if (tag != null && tag.isNotEmpty) {
+          sql += ' AND EXISTS (SELECT 1 FROM note_tags t WHERE t.noteId = n.id AND t.tagNormalized = ?)';
+          params.add(tag.toLowerCase());
         }
 
         sql += ' ORDER BY n.isPinned DESC, n.updatedAt DESC LIMIT ? OFFSET ?';

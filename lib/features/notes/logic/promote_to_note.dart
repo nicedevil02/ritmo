@@ -3,6 +3,8 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/features/notes/domain/note_models.dart';
+import 'package:ritmo/features/notes/logic/note_fts_engine.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
@@ -72,6 +74,26 @@ class NotePromoter {
         }, conflictAlgorithm: ConflictAlgorithm.ignore);
       });
 
+      final createdNote = Note(
+        id: noteId,
+        title: title,
+        body: trimmedText,
+        titleNormalized: title.toLowerCase(),
+        bodyNormalized: trimmedText.toLowerCase(),
+        kind: NoteKind.note,
+        status: NoteStatus.active,
+        isPrivate: false,
+        isPinned: false,
+        dayKey: currentDayKey,
+        sourceModule: module,
+        sourceEntityId: entityId,
+        wordCount: trimmedText.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length,
+        createdAt: DateTime.fromMillisecondsSinceEpoch(nowMs),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(nowMs),
+      );
+
+      await NoteFtsEngine.instance.indexNote(createdNote);
+
       if (context.mounted) {
         RitmoToast.show(
           context,
@@ -81,6 +103,7 @@ class NotePromoter {
             try {
               await db.delete('notes', where: 'id = ?', whereArgs: [noteId]);
               await db.delete('note_links', where: 'id = ?', whereArgs: [linkId]);
+              await NoteFtsEngine.instance.deleteFromIndex(noteId);
             } catch (_) {}
           },
         );

@@ -3,15 +3,22 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/features/supplementary_sports/domain/ss_readiness_service.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/movement_reminder_service.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_slot_override_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/unified_planner_repository.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_slot_override.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_suggester.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_slot_resolver.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_plan_sheet.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/planner/movement_slot_actions_sheet.dart';
+import 'package:ritmo/features/supplementary_sports/movement/presentation/planner/week_smart_fill_sheet.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_plan_day_detail_screen.dart';
 
 const String _fontFa = 'Vazirmatn';
@@ -28,23 +35,74 @@ class UnifiedWeekPlannerView extends StatefulWidget {
 
 class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 	late Future<UnifiedWeekPlan> _future;
+	SSReadinessVerdict? _readinessVerdict;
+	List<MovementSlotOverride> _thisWeekOverrides = [];
 	int? _dropHighlight;
 
 	@override
 	void initState() {
 		super.initState();
 		_future = UnifiedPlannerRepository.instance.loadWeek();
+		_fetchReadinessAndOverrides();
 	}
 
 	void _reload() {
 		setState(() {
 			_future = UnifiedPlannerRepository.instance.loadWeek();
 		});
+		_fetchReadinessAndOverrides();
+	}
+
+	Future<void> _fetchReadinessAndOverrides() async {
+		try {
+			final verdict = await SSReadinessService.instance.evaluateToday();
+			final now = DateTime.now();
+			final start = weekStartSaturday(now);
+			final end = start.add(const Duration(days: 6));
+			final overrides = await MovementSlotOverrideRepository.instance.forDateRange(
+				formatDateIso(start),
+				formatDateIso(end),
+			);
+			if (mounted) {
+				setState(() {
+					_readinessVerdict = verdict;
+					_thisWeekOverrides = overrides;
+				});
+			}
+		} catch (e) {
+			debugPrint('[ss] unified_week_planner_screen.dart: $e');
+		}
 	}
 
 	Future<void> _openNewPlan() async {
 		RitmoHaptics.tap();
 		await showMovementPlanSheet(context, onSaved: _reload);
+	}
+
+	Future<void> _openSmartFill() async {
+		RitmoHaptics.tap();
+		try {
+			final suggestions = await MovementSuggester.suggestWeek();
+			if (!mounted) return;
+			if (suggestions.isEmpty) {
+				ScaffoldMessenger.of(context).showSnackBar(
+					const SnackBar(
+						content: Text(
+							'پیشنهاد مطمئنی ندارم — خودت بچین 😊',
+							style: TextStyle(fontFamily: _fontFa),
+						),
+					),
+				);
+				return;
+			}
+			await showWeekSmartFillSheet(
+				context,
+				suggestions: suggestions,
+				onApplied: _reload,
+			);
+		} catch (e) {
+			debugPrint('[ss] unified_week_planner_screen.dart smart fill error: $e');
+		}
 	}
 
 	WeekPlanItem? _nextUp(UnifiedWeekPlan plan, int todaySat0) {
@@ -54,6 +112,76 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 			}
 		}
 		return null;
+	}
+
+	Future<void> _applyLightToday(WeekPlanItem item) async {
+		if (item.dateIso == null) return;
+		try {
+			await MovementSlotOverrideRepository.instance.light(
+				routineId: item.id,
+				dateIso: item.dateIso!,
+			);
+			RitmoEventBus().fire(
+				RitmoEvent(
+					type: 'light_accepted',
+					timestamp: DateTime.now(),
+					payload: {
+						'routineId': item.id,
+						'dateIso': item.dateIso,
+					},
+				),
+			);
+			await MovementReminderService.rescheduleWeekReminders();
+			RitmoHaptics.success();
+			if (mounted) {
+				ScaffoldMessenger.of(context).showSnackBar(
+					const SnackBar(
+						content: Text(
+							'امروز سبک‌تر — قالب هفته سر جایش می‌ماند 🌿',
+							style: TextStyle(fontFamily: _fontFa),
+						),
+					),
+				);
+			}
+			_reload();
+		} catch (e) {
+			debugPrint('[ss] unified_week_planner_screen.dart: $e');
+		}
+	}
+
+	Future<void> _skipToday(WeekPlanItem item) async {
+		if (item.dateIso == null) return;
+		try {
+			await MovementSlotOverrideRepository.instance.skip(
+				routineId: item.id,
+				dateIso: item.dateIso!,
+			);
+			RitmoEventBus().fire(
+				RitmoEvent(
+					type: 'rest_day_accepted',
+					timestamp: DateTime.now(),
+					payload: {
+						'routineId': item.id,
+						'dateIso': item.dateIso,
+					},
+				),
+			);
+			await MovementReminderService.rescheduleWeekReminders();
+			RitmoHaptics.success();
+			if (mounted) {
+				ScaffoldMessenger.of(context).showSnackBar(
+					const SnackBar(
+						content: Text(
+							'جلسهٔ امروز رد شد — استراحت کن 🌿',
+							style: TextStyle(fontFamily: _fontFa),
+						),
+					),
+				);
+			}
+			_reload();
+		} catch (e) {
+			debugPrint('[ss] unified_week_planner_screen.dart: $e');
+		}
 	}
 
 	Future<void> _moveThisWeek(WeekPlanItem item, int destSat0) async {
@@ -67,6 +195,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 				newDateIso: destIso,
 				newTime: item.timeLabel,
 			);
+			await MovementReminderService.rescheduleWeekReminders();
 			RitmoHaptics.success();
 			if (mounted) {
 				ScaffoldMessenger.of(context).showSnackBar(
@@ -144,9 +273,17 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 			const SizedBox(height: 10),
 			_buildPulse(plan, next),
 			const SizedBox(height: 12),
-			_buildRhythmStrip(plan, todaySat0),
-			const SizedBox(height: 12),
 		];
+
+		// Task 5: Friday Summary Card (کارت جمع‌بندی جمعه)
+		if (todaySat0 == 6 && plan.completedItems >= 1) {
+			children.add(_buildFridaySummaryCard(plan, colors));
+			children.add(const SizedBox(height: 12));
+		}
+
+		children.add(_buildRhythmStrip(plan, todaySat0));
+		children.add(const SizedBox(height: 12));
+
 		if (plan.activeCampaign != null) {
 			children.add(_buildActiveCampaignCard(plan));
 		}
@@ -175,16 +312,22 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 						height: 52,
 						child: ElevatedButton.icon(
 							style: ElevatedButton.styleFrom(
-								backgroundColor: colors.primary,
-								foregroundColor: colors.onPrimary,
+								backgroundColor: CalendarTokens.emerald,
+								foregroundColor: const Color(0xFF042116),
 								elevation: 3,
-								shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+								shape: RoundedRectangleBorder(
+									borderRadius: BorderRadius.circular(16),
+								),
 							),
 							onPressed: _openNewPlan,
-							icon: const Icon(Icons.add_rounded),
+							icon: const Icon(Icons.add_rounded, size: 22),
 							label: const Text(
 								'افزودن به هفته',
-								style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.w800, fontSize: 15),
+								style: TextStyle(
+									fontFamily: _fontFa,
+									fontSize: 15,
+									fontWeight: FontWeight.bold,
+								),
 							),
 						),
 					),
@@ -194,18 +337,60 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 	}
 
 	Widget _buildHero(UnifiedWeekPlan plan, int todaySat0, WeekPlanItem? next) {
-		final emptyWeek = plan.totalItems == 0;
 		final todayEmpty = plan.byDay[todaySat0].isEmpty;
-		if (emptyWeek) {
+
+		if (plan.totalItems == 0) {
 			return _heroShell(
 				kicker: 'هفته هنوز خالی است',
 				title: 'ریتمت را بساز',
-				body: 'سه جلسهٔ واقعی کافی است. بقیه را خودت بچین.',
+				body: 'سه جلسهٔ واقعی کافی است. بقیه را خودت بچین یا از پر کردن هوشمند کمک بگیر.',
 				actions: [
 					_heroBtn('افزودن جلسه', primary: true, onTap: _openNewPlan),
+					_heroBtn('✨ پر کردن هوشمند', onTap: _openSmartFill),
 				],
 			);
 		}
+
+		// Task 2: Readiness-aware Hero (چراغ آمادگی روی کارت قهرمان)
+		final verdict = _readinessVerdict;
+		if (verdict != null && verdict.hasData && next != null && next.weekdaySat0 == todaySat0 && !next.isCompleted) {
+			if (verdict.tier == SSReadinessTier.light || verdict.tier == SSReadinessTier.minimal) {
+				return _heroShell(
+					kicker: 'آمادگی پایین امروز ${verdict.emoji}',
+					title: '${next.emoji} ${next.title}',
+					body: verdict.reasonFa,
+					amber: true,
+					actions: [
+						_heroBtn(
+							'⚡ نسخهٔ سبک',
+							primary: true,
+							customColor: const Color(0xFFF59E0B),
+							onTap: () => _applyLightToday(next),
+						),
+						_heroBtn('جزئیات', onTap: () => _openItem(next)),
+					],
+				);
+			}
+
+			if (verdict.tier == SSReadinessTier.rest) {
+				return _heroShell(
+					kicker: 'نیاز به ریکاوری ${verdict.emoji}',
+					title: 'پیشنهاد: استراحت امروز',
+					body: verdict.reasonFa,
+					amber: true,
+					actions: [
+						_heroBtn(
+							'امروز نرو',
+							primary: true,
+							customColor: const Color(0xFFF59E0B),
+							onTap: () => _skipToday(next),
+						),
+						_heroBtn('اگر خواستی، نسخه سبک', onTap: () => _applyLightToday(next)),
+					],
+				);
+			}
+		}
+
 		if (next != null && next.weekdaySat0 == todaySat0) {
 			final timeLabel = next.timeLabel;
 			final time = timeLabel == null ? '' : toPersianDigits(timeLabel);
@@ -252,30 +437,40 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 		required String body,
 		required List<Widget> actions,
 		bool rest = false,
+		bool amber = false,
 	}) {
 		final colors = context.colors;
 		final isDark = Theme.of(context).brightness == Brightness.dark;
-		final accent = colors.primary;
+		final Color accentColor = amber
+				? const Color(0xFFF59E0B)
+				: (rest ? colors.primary : colors.primary);
 
 		return Container(
 			padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
 			decoration: BoxDecoration(
 				borderRadius: BorderRadius.circular(22),
 				border: Border.all(
-					color: rest
-							? colors.success.withValues(alpha: 0.3)
-							: accent.withValues(alpha: 0.3),
+					color: amber
+							? const Color(0xFFF59E0B).withValues(alpha: 0.6)
+							: (rest
+									? colors.primary.withValues(alpha: 0.3)
+									: accentColor.withValues(alpha: 0.3)),
+					width: amber ? 1.5 : 1.0,
 				),
 				gradient: LinearGradient(
 					begin: Alignment.topRight,
 					end: Alignment.bottomLeft,
 					colors: isDark
-							? (rest
-									? [colors.primaryContainer.withValues(alpha: 0.25), colors.surfaceElevated]
-									: [colors.primaryContainer.withValues(alpha: 0.35), colors.surfaceElevated])
-							: (rest
-									? [colors.primaryContainer.withValues(alpha: 0.5), colors.surface]
-									: [colors.primaryContainer.withValues(alpha: 0.7), colors.surface]),
+							? (amber
+									? [const Color(0xFFF59E0B).withValues(alpha: 0.20), colors.surfaceElevated]
+									: (rest
+											? [colors.primaryContainer.withValues(alpha: 0.25), colors.surfaceElevated]
+											: [colors.primaryContainer.withValues(alpha: 0.35), colors.surfaceElevated]))
+							: (amber
+									? [const Color(0xFFF59E0B).withValues(alpha: 0.30), colors.surface]
+									: (rest
+											? [colors.primaryContainer.withValues(alpha: 0.5), colors.surface]
+											: [colors.primaryContainer.withValues(alpha: 0.7), colors.surface])),
 				),
 			),
 			child: Column(
@@ -287,7 +482,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 							fontFamily: _fontFa,
 							fontSize: 11,
 							fontWeight: FontWeight.w700,
-							color: rest ? colors.success : accent,
+							color: amber ? const Color(0xFFF59E0B) : (rest ? colors.primary : accentColor),
 						),
 					),
 					const SizedBox(height: 4),
@@ -321,20 +516,39 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 		);
 	}
 
-	Widget _heroBtn(String label, {required VoidCallback onTap, bool primary = false}) {
+	Widget _heroBtn(
+		String label, {
+		required VoidCallback onTap,
+		bool primary = false,
+		Color? customColor,
+	}) {
 		final colors = context.colors;
+		final btnBg = customColor ?? (primary ? colors.primary : colors.surfaceSunken);
+		final btnFg = customColor != null
+				? Colors.black
+				: (primary ? colors.onPrimary : colors.textPrimary);
+
 		return TextButton(
 			style: TextButton.styleFrom(
-				backgroundColor: primary ? colors.primary : colors.surfaceSunken,
-				foregroundColor: primary ? colors.onPrimary : colors.textPrimary,
+				backgroundColor: btnBg,
+				foregroundColor: btnFg,
 				padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
 				shape: RoundedRectangleBorder(
 					borderRadius: BorderRadius.circular(12),
-					side: primary ? BorderSide.none : BorderSide(color: colors.border),
+					side: (primary || customColor != null)
+							? BorderSide.none
+							: BorderSide(color: colors.border),
 				),
 			),
 			onPressed: onTap,
-			child: Text(label, style: const TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.w700, fontSize: 12.5)),
+			child: Text(
+				label,
+				style: const TextStyle(
+					fontFamily: _fontFa,
+					fontWeight: FontWeight.w700,
+					fontSize: 12.5,
+				),
+			),
 		);
 	}
 
@@ -420,6 +634,153 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 		);
 	}
 
+	// Task 5: Friday summary card (جمع‌بندی جمعه)
+	Widget _buildFridaySummaryCard(UnifiedWeekPlan plan, RitmoColors colors) {
+		final moveRetimeOverrides = _thisWeekOverrides
+				.where((o) => o.action == MovementSlotAction.move || o.action == MovementSlotAction.retime)
+				.toList();
+
+		final int completed = plan.completedItems;
+		final int total = plan.totalItems;
+		final int shifts = moveRetimeOverrides.length;
+
+		final String summaryText = shifts > 0
+				? 'این هفته ${toPersianDigits(completed.toString())} از ${toPersianDigits(total.toString())} جلسه رو رفتی، ${toPersianDigits(shifts.toString())} بار جابه‌جا کردی.'
+				: 'این هفته ${toPersianDigits(completed.toString())} از ${toPersianDigits(total.toString())} جلسه رو کامل رفتی! ریتمت عالی بود 💚';
+
+		return Container(
+			padding: const EdgeInsets.all(14),
+			decoration: BoxDecoration(
+				color: colors.surfaceElevated,
+				borderRadius: BorderRadius.circular(18),
+				border: Border.all(color: CalendarTokens.emerald.withValues(alpha: 0.5)),
+			),
+			child: Column(
+				crossAxisAlignment: CrossAxisAlignment.stretch,
+				children: [
+					Row(
+						children: [
+							const Text('🧾', style: TextStyle(fontSize: 20)),
+							const SizedBox(width: 8),
+							Text(
+								'جمع‌بندی جمعه',
+								style: TextStyle(
+									fontFamily: _fontFa,
+									fontSize: 15,
+									fontWeight: FontWeight.bold,
+									color: colors.textPrimary,
+								),
+							),
+						],
+					),
+					const SizedBox(height: 6),
+					Text(
+						summaryText,
+						style: TextStyle(
+							fontFamily: _fontFa,
+							fontSize: 12.5,
+							color: colors.textSecondary,
+							height: 1.4,
+						),
+					),
+					const SizedBox(height: 12),
+					if (shifts > 0) ...[
+						Row(
+							children: [
+								Expanded(
+									child: ElevatedButton(
+										style: ElevatedButton.styleFrom(
+											backgroundColor: CalendarTokens.emerald,
+											foregroundColor: const Color(0xFF042116),
+											shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+											padding: const EdgeInsets.symmetric(vertical: 10),
+										),
+										onPressed: () async {
+											RitmoHaptics.tap();
+											await MovementSlotOverrideRepository.instance.permanentizeWeek(moveRetimeOverrides);
+											RitmoHaptics.success();
+											if (mounted) {
+												ScaffoldMessenger.of(context).showSnackBar(
+													const SnackBar(
+														content: Text(
+															'قالب هفتگی با تغییرات جدید به‌روز شد ✓',
+															style: TextStyle(fontFamily: _fontFa),
+														),
+													),
+												);
+											}
+											_reload();
+										},
+										child: const Text(
+											'این تغییرها دائمی بشه',
+											style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, fontSize: 12),
+										),
+									),
+								),
+								const SizedBox(width: 8),
+								Expanded(
+									child: OutlinedButton(
+										style: OutlinedButton.styleFrom(
+											shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+											padding: const EdgeInsets.symmetric(vertical: 10),
+											side: BorderSide(color: colors.border),
+										),
+										onPressed: () {
+											RitmoHaptics.tap();
+											ScaffoldMessenger.of(context).showSnackBar(
+												const SnackBar(
+													content: Text(
+														'قالب هفته سر جایش موند ✓',
+														style: TextStyle(fontFamily: _fontFa),
+													),
+												),
+											);
+										},
+										child: Text(
+											'فقط همین هفته بود',
+											style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary, fontSize: 12),
+										),
+									),
+								),
+							],
+						),
+					] else ...[
+						ElevatedButton(
+							style: ElevatedButton.styleFrom(
+								backgroundColor: CalendarTokens.emerald,
+								foregroundColor: const Color(0xFF042116),
+								shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+								padding: const EdgeInsets.symmetric(vertical: 10),
+							),
+							onPressed: () {
+								RitmoHaptics.tap();
+								RitmoEventBus().fire(
+									RitmoEvent(
+										type: 'week_rhythm_confirmed',
+										timestamp: DateTime.now(),
+										payload: const <String, dynamic>{},
+									),
+								);
+								ScaffoldMessenger.of(context).showSnackBar(
+									const SnackBar(
+										content: Text(
+											'ریتم این هفته تأیید شد! آماده برای هفتهٔ بعد 🚀',
+											style: TextStyle(fontFamily: _fontFa),
+										),
+									),
+								);
+							},
+							child: const Text(
+								'همین ریتم برای هفتهٔ بعد 💚',
+								style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, fontSize: 12.5),
+							),
+						),
+					],
+				],
+			),
+		);
+	}
+
 	Widget _buildRhythmStrip(UnifiedWeekPlan plan, int todaySat0) {
 		final colors = context.colors;
 		return Column(
@@ -450,55 +811,58 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 		);
 	}
 
-	Widget _beat(UnifiedWeekPlan plan, int day, int todaySat0) {
+	Widget _beat(UnifiedWeekPlan plan, int sat0, int todaySat0) {
 		final colors = context.colors;
-		final items = plan.byDay[day];
-		final rest = items.isEmpty;
-		final done = items.isNotEmpty && items.every((e) => e.isCompleted);
-		final height = rest ? 0.0 : (0.4 + (items.length * 0.3)).clamp(0.35, 1.0);
-		Color fill = colors.primary;
-		if (items.any((e) => e.emoji == '⚽' || e.emoji == '🏐' || e.emoji == '🏀')) {
-			fill = const Color(0xFF38BDF8);
-		} else if (items.any((e) => e.emoji == '🥾' || e.emoji == '🌲')) {
-			fill = const Color(0xFFF59E0B);
-		} else if (done) {
-			fill = colors.success;
+		final items = plan.byDay[sat0];
+		final isToday = sat0 == todaySat0;
+		final isPast = sat0 < todaySat0;
+		final bool hasPlan = items.isNotEmpty;
+		final bool allDone = hasPlan && items.every((e) => e.isCompleted);
+		final isDark = Theme.of(context).brightness == Brightness.dark;
+
+		Color bg;
+		Color border;
+		Color text;
+		if (allDone) {
+			bg = colors.primary;
+			border = colors.primary;
+			text = colors.onPrimary;
+		} else if (hasPlan) {
+			bg = colors.primaryContainer.withValues(alpha: isDark ? 0.35 : 0.6);
+			border = isToday ? colors.primary : colors.primary.withValues(alpha: 0.4);
+			text = colors.textPrimary;
+		} else {
+			bg = colors.surfaceSunken;
+			border = isToday ? colors.primary.withValues(alpha: 0.5) : colors.border;
+			text = isPast ? colors.textTertiary : colors.textSecondary;
 		}
-		return Column(
-			children: [
-				Container(
-					width: 10,
-					height: 42,
-					decoration: BoxDecoration(
-						color: rest ? colors.primary.withValues(alpha: 0.08) : colors.surfaceSunken,
-						borderRadius: BorderRadius.circular(99),
-						border: rest ? Border.all(color: colors.primary.withValues(alpha: 0.22)) : null,
-						boxShadow: day == todaySat0
-								? [BoxShadow(color: colors.primary.withValues(alpha: 0.38), blurRadius: 8)]
-								: null,
+
+		final String label = hasPlan ? (items.first.emoji) : (isToday ? 'امروز' : '—');
+
+		return Container(
+			margin: const EdgeInsets.symmetric(horizontal: 2),
+			padding: const EdgeInsets.symmetric(vertical: 6),
+			decoration: BoxDecoration(
+				color: bg,
+				borderRadius: BorderRadius.circular(12),
+				border: Border.all(color: border, width: isToday ? 1.5 : 1.0),
+			),
+			child: Column(
+				mainAxisSize: MainAxisSize.min,
+				children: [
+					Text(_shortDayNames[sat0], style: TextStyle(fontFamily: _fontFa, fontSize: 11, color: text, fontWeight: FontWeight.bold)),
+					const SizedBox(height: 4),
+					Text(
+						label,
+						style: TextStyle(
+							fontFamily: _fontFa,
+							fontSize: hasPlan ? 14 : 10,
+							color: text,
+							fontWeight: FontWeight.w600,
+						),
 					),
-					alignment: Alignment.bottomCenter,
-					child: rest
-							? const SizedBox.shrink()
-							: FractionallySizedBox(
-									heightFactor: height,
-									widthFactor: 1,
-									child: DecoratedBox(
-										decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(99)),
-									),
-								),
-				),
-				const SizedBox(height: 6),
-				Text(
-					_shortDayNames[day],
-					style: TextStyle(
-						fontFamily: _fontFa,
-						fontSize: 10,
-						fontWeight: FontWeight.w800,
-						color: day == todaySat0 ? colors.primary : colors.textSecondary,
-					),
-				),
-			],
+				],
+			),
 		);
 	}
 

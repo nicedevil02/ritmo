@@ -17,8 +17,11 @@ import 'package:ritmo/features/supplementary_sports/movement/domain/movement_cam
 /// شاخص کانونی روز هفته: ۰=شنبه، ۱=یکشنبه، ... ۶=جمعه
 typedef Sat0Weekday = int;
 
-/// تبدیل DateTime.weekday (۱=دوشنبه ... ۷=یکشنبه) به شاخص کانونی.
+/// تبدیل DateTime.weekday (۱=دوشنبه ... ۷=یکشنبه) به شاخص کانونی (۰=شنبه ... ۶=جمعه).
 Sat0Weekday dartWeekdayToSat0(int dartWeekday) => (dartWeekday + 1) % 7;
+
+/// تبدیل شاخص کانونی (۰=شنبه ... ۶=جمعه) به DateTime.weekday (۱=دوشنبه ... ۷=یکشنبه).
+int sat0ToDartWeekday(Sat0Weekday sat0) => sat0 == 0 ? 6 : (sat0 == 1 ? 7 : sat0 - 1);
 
 /// تبدیل dayOfWeek شنبه‌محور ss_workout_plan (۱=شنبه ... ۷=جمعه) به شاخص کانونی.
 Sat0Weekday ssDayOfWeekToSat0(int ssDayOfWeek) => (ssDayOfWeek - 1).clamp(0, 6);

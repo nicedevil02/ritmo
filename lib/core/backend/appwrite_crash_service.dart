@@ -14,6 +14,7 @@ class AppwriteCrashService {
   static const String collectionId = 'crash_reports';
 
   Databases? _databases;
+  bool _isServiceDisabled = false;
 
   void _initDatabases() {
     if (_databases == null && AppConfig.isAppwriteConfigured) {
@@ -32,6 +33,10 @@ class AppwriteCrashService {
     required String sanitizedMessage,
     String? sanitizedStack,
   }) async {
+    if (_isServiceDisabled) {
+      return const AuthResult.failure(AuthErrorCode.serverUnreachable);
+    }
+
     _initDatabases();
     if (_databases == null) {
       return const AuthResult.failure(AuthErrorCode.serverUnreachable);
@@ -60,7 +65,13 @@ class AppwriteCrashService {
         // Permissions not set on crash_reports table yet - suppress log noise
         return const AuthResult.failure(AuthErrorCode.unknown);
       }
-      RitmoLog.error('AppwriteCrashService', 'Appwrite error sending crash report: ${e.message}');
+      final msg = e.message ?? '';
+      if (msg.contains('Project is paused') || msg.contains('inactivity')) {
+        _isServiceDisabled = true;
+        RitmoLog.warning('AppwriteCrashService', 'Appwrite project is paused due to inactivity. Remote crash report sending suspended.');
+        return const AuthResult.failure(AuthErrorCode.serverUnreachable);
+      }
+      RitmoLog.error('AppwriteCrashService', 'Appwrite error sending crash report: $msg');
       return const AuthResult.failure(AuthErrorCode.unknown);
     } catch (e, st) {
       RitmoLog.error('AppwriteCrashService', 'Failed to send crash report to server', e, st);

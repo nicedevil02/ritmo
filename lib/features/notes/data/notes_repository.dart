@@ -1,11 +1,10 @@
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
+import 'package:ritmo/features/notes/data/note_attachment_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/domain/capture_context.dart';
 import 'package:ritmo/features/notes/logic/note_fts_engine.dart';
-
 import 'package:ritmo/core/database/schema/tables/note_tables.dart';
-
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
@@ -19,8 +18,8 @@ class NotesRepository {
   Future<Database> get _db async {
     final db = await DatabaseHelper.instance.database;
     if (!_schemaEnsured) {
-      _schemaEnsured = true;
       await NoteTables.ensureSchema(db);
+      _schemaEnsured = true;
     }
     return db;
   }
@@ -119,13 +118,18 @@ class NotesRepository {
     final nowMs = SystemClock().now().millisecondsSinceEpoch;
     final existing = await getById(note.id);
 
+    final trimmedBody = note.body.trim();
+    final derivedTitle = note.title?.trim().isNotEmpty == true
+        ? note.title!.trim()
+        : (trimmedBody.length > 40 ? '${trimmedBody.substring(0, 40)}...' : trimmedBody);
+
     if (existing != null) {
-      // Check revision creation criteria: body changed > 5% or > 10 min since last revision
-      final textDiff = (existing.body.length - note.body.length).abs();
-      final percentDiff = existing.body.isEmpty ? 1.0 : textDiff / existing.body.length;
+      // Save revision if body or title changed meaningfully or reason is explicitly provided
+      final bodyChanged = existing.body != trimmedBody;
+      final titleChanged = (existing.title ?? '') != derivedTitle;
       final timeDiffMin = (nowMs - existing.updatedAt.millisecondsSinceEpoch) / 60000;
 
-      if (percentDiff > 0.05 || timeDiffMin > 10 || reason == 'AI_EDIT') {
+      if ((bodyChanged && (timeDiffMin > 2 || reason != null)) || (titleChanged && timeDiffMin > 2) || reason == 'AI_EDIT') {
         await db.insert('note_revisions', {
           'id': 'rev_${_uuid.v4()}',
           'noteId': note.id,
@@ -137,11 +141,13 @@ class NotesRepository {
       }
     }
 
-    final wordCount = note.body.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+    final wordCount = trimmedBody.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
     final updatedNote = note.copyWith(
+      title: derivedTitle,
+      body: trimmedBody,
       wordCount: wordCount,
-      titleNormalized: (note.title ?? '').toLowerCase(),
-      bodyNormalized: note.body.toLowerCase(),
+      titleNormalized: derivedTitle.toLowerCase(),
+      bodyNormalized: trimmedBody.toLowerCase(),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(nowMs),
     );
 
@@ -172,10 +178,50 @@ class NotesRepository {
     await NoteFtsEngine.instance.deleteFromIndex(noteId);
   }
 
+  Future<void> restore(String noteId) async {
+    final db = await _db;
+    final nowMs = SystemClock().now().millisecondsSinceEpoch;
+    await db.update(
+      'notes',
+      {
+        'status': 'ACTIVE',
+        'trashedAt': null,
+        'updatedAt': nowMs,
+      },
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+
+    final note = await getById(noteId);
+    if (note != null) {
+      await NoteFtsEngine.instance.indexNote(note);
+    }
+  }
+
+  Future<void> permanentDelete(String noteId) async {
+    final db = await _db;
+    await NoteAttachmentRepository.instance.removeAllForNote(noteId);
+    await NoteFtsEngine.instance.deleteFromIndex(noteId);
+    await db.delete('notes', where: 'id = ?', whereArgs: [noteId]);
+  }
 
   Future<void> purge({int daysOld = 30}) async {
     final db = await _db;
     final thresholdMs = SystemClock().now().subtract(Duration(days: daysOld)).millisecondsSinceEpoch;
+    
+    final toPurge = await db.query(
+      'notes',
+      columns: ['id'],
+      where: 'status = ? AND trashedAt IS NOT NULL AND trashedAt <= ?',
+      whereArgs: ['TRASHED', thresholdMs],
+    );
+
+    for (final row in toPurge) {
+      final id = row['id'] as String;
+      await NoteAttachmentRepository.instance.removeAllForNote(id);
+      await NoteFtsEngine.instance.deleteFromIndex(id);
+    }
+
     await db.delete(
       'notes',
       where: 'status = ? AND trashedAt IS NOT NULL AND trashedAt <= ?',
@@ -193,6 +239,10 @@ class NotesRepository {
     final db = await _db;
     final nowMs = SystemClock().now().millisecondsSinceEpoch;
     await db.update('notes', {'status': 'ACTIVE', 'updatedAt': nowMs}, where: 'id = ?', whereArgs: [noteId]);
+    final note = await getById(noteId);
+    if (note != null) {
+      await NoteFtsEngine.instance.indexNote(note);
+    }
   }
 
   Future<void> pin(String noteId) async {
@@ -205,14 +255,15 @@ class NotesRepository {
     await db.update('notes', {'isPinned': 0}, where: 'id = ?', whereArgs: [noteId]);
   }
 
+  /// Records that the note was opened/read without tampering with `updatedAt`.
   Future<void> markOpened(String noteId) async {
     final db = await _db;
     final nowMs = SystemClock().now().millisecondsSinceEpoch;
     await db.rawUpdate('''
       UPDATE notes
-      SET openCount = openCount + 1, openedAt = ?, updatedAt = ?
+      SET openCount = openCount + 1, openedAt = ?
       WHERE id = ?
-    ''', [nowMs, nowMs, noteId]);
+    ''', [nowMs, noteId]);
   }
 
   Future<List<Note>> listRecent({int limit = 30, int offset = 0}) async {
@@ -246,6 +297,32 @@ class NotesRepository {
       where: 'status = ? AND kind = ?',
       whereArgs: ['ACTIVE', kind.value],
       orderBy: 'updatedAt DESC',
+    );
+    return rows.map((r) => Note.fromMap(r)).toList();
+  }
+
+  Future<List<Note>> listArchived({int limit = 50, int offset = 0}) async {
+    final db = await _db;
+    final rows = await db.query(
+      'notes',
+      where: 'status = ?',
+      whereArgs: ['ARCHIVED'],
+      orderBy: 'updatedAt DESC',
+      limit: limit,
+      offset: offset,
+    );
+    return rows.map((r) => Note.fromMap(r)).toList();
+  }
+
+  Future<List<Note>> listTrashed({int limit = 50, int offset = 0}) async {
+    final db = await _db;
+    final rows = await db.query(
+      'notes',
+      where: 'status = ?',
+      whereArgs: ['TRASHED'],
+      orderBy: 'trashedAt DESC, updatedAt DESC',
+      limit: limit,
+      offset: offset,
     );
     return rows.map((r) => Note.fromMap(r)).toList();
   }
@@ -338,6 +415,11 @@ class NotesRepository {
       },
       conflictAlgorithm: ConflictAlgorithm.ignore,
     );
+
+    final note = await getById(noteId);
+    if (note != null) {
+      await NoteFtsEngine.instance.indexNote(note);
+    }
   }
 
   Future<void> removeTag(String noteId, String tagNormalized) async {
@@ -347,14 +429,48 @@ class NotesRepository {
       where: 'noteId = ? AND tagNormalized = ?',
       whereArgs: [noteId, tagNormalized.toLowerCase()],
     );
+
+    final note = await getById(noteId);
+    if (note != null) {
+      await NoteFtsEngine.instance.indexNote(note);
+    }
   }
 
   Future<void> setTags(String noteId, List<String> tags, {String source = 'USER'}) async {
     final db = await _db;
     await db.delete('note_tags', where: 'noteId = ?', whereArgs: [noteId]);
     for (final t in tags) {
-      await addTag(noteId, t, source: source);
+      final norm = t.trim().toLowerCase();
+      if (norm.isNotEmpty) {
+        await db.insert(
+          'note_tags',
+          {
+            'noteId': noteId,
+            'tag': t.trim(),
+            'tagNormalized': norm,
+            'source': source,
+            'createdAt': SystemClock().now().millisecondsSinceEpoch,
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
     }
+
+    final note = await getById(noteId);
+    if (note != null) {
+      await NoteFtsEngine.instance.indexNote(note);
+    }
+  }
+
+  Future<List<NoteRevision>> listRevisions(String noteId) async {
+    final db = await _db;
+    final rows = await db.query(
+      'note_revisions',
+      where: 'noteId = ?',
+      whereArgs: [noteId],
+      orderBy: 'createdAt DESC',
+    );
+    return rows.map((r) => NoteRevision.fromMap(r)).toList();
   }
 
   Future<void> addLink({

@@ -1,12 +1,14 @@
-// lib/features/supplementary_sports/movement/domain/movement_suggester.dart
-
+import 'package:flutter/material.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/analytics/movement_load_calculator.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/unified_planner_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_budget.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
-import 'package:flutter/foundation.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_reminder_defaults.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 
 class MovementSuggestion {
@@ -25,6 +27,28 @@ class MovementSuggestion {
   final String reasonFa;
   final double confidence;
   final List<MovementKind> alternatives;
+}
+
+class MovementWeekSuggestion {
+  const MovementWeekSuggestion({
+    required this.kind,
+    required this.weekdaySat0,
+    required this.suggestedTime,
+    required this.suggestedMinutes,
+    required this.suggestedIntensity,
+    required this.reasonFa,
+    required this.confidence,
+    required this.reminderMinutes,
+  });
+
+  final MovementKind kind;
+  final int weekdaySat0;
+  final TimeOfDay suggestedTime;
+  final int suggestedMinutes;
+  final MovementIntensity suggestedIntensity;
+  final String reasonFa;
+  final double confidence;
+  final int reminderMinutes;
 }
 
 
@@ -258,5 +282,154 @@ class MovementSuggester {
       confidence: confidence,
       alternatives: alternatives,
     );
+  }
+
+  /// پیشنهاد هوشمند برای روزهای خالی هفتهٔ جاری (حداکثر ۳ پیشنهاد، منطبق بر بودجه و ایمنی).
+  static Future<List<MovementWeekSuggestion>> suggestWeek({MovementBudgetSnapshot? budget}) async {
+    final db = await DatabaseHelper.instance.database;
+
+    // 1. Budget snapshot & gap check
+    final budgetSnapshot = budget ?? await MovementBudgetService.instance.getCurrentWeekSnapshot();
+    final double gap = budgetSnapshot.weeklyMetMinutesTarget - budgetSnapshot.achievedMetMinutes;
+    if (gap <= 0) return const <MovementWeekSuggestion>[];
+
+    // 2. Physical limitations
+    final limitations = <String>{};
+    try {
+      final pRows = await db.query('ss_user_profile', limit: 1);
+      if (pRows.isNotEmpty) {
+        final profile = SsUserProfile.fromMap(pRows.first);
+        if (profile.physicalLimitations.contains(Limitation.kneeProblems)) limitations.add('knee');
+        if (profile.physicalLimitations.contains(Limitation.backProblems)) limitations.add('back');
+        if (profile.physicalLimitations.contains(Limitation.shoulderProblems)) limitations.add('shoulder');
+      }
+    } catch (e) {
+      debugPrint('[ss] movement_suggester.dart: $e');
+    }
+
+    // 3. 14-day history & currently planned kinds this week
+    final recentKindCodes = <String>{};
+    try {
+      final fourteenDaysAgo = DateTime.now().subtract(const Duration(days: 14)).millisecondsSinceEpoch;
+      final rows = await db.query(
+        'workout_logs',
+        columns: ['kindCode'],
+        where: 'loggedAt >= ?',
+        whereArgs: [fourteenDaysAgo],
+      );
+      for (final r in rows) {
+        final code = r['kindCode'] as String?;
+        if (code != null) recentKindCodes.add(code);
+      }
+    } catch (e) {
+      debugPrint('[ss] movement_suggester.dart: $e');
+    }
+
+    final weekPlan = await UnifiedPlannerRepository.instance.loadWeek();
+    for (final day in weekPlan.byDay) {
+      for (final item in day) {
+        final code = item.routineRaw?['movementKind']?.toString();
+        if (code != null) recentKindCodes.add(code);
+      }
+    }
+
+    // 4. Identify empty days (prioritizing today onwards)
+    final now = DateTime.now();
+    final todaySat0 = dartWeekdayToSat0(now.weekday);
+    final emptySat0Days = <int>[];
+
+    for (int i = todaySat0; i < 7; i++) {
+      if (weekPlan.byDay[i].isEmpty) emptySat0Days.add(i);
+    }
+    for (int i = 0; i < todaySat0; i++) {
+      if (weekPlan.byDay[i].isEmpty) emptySat0Days.add(i);
+    }
+
+    if (emptySat0Days.isEmpty) return const <MovementWeekSuggestion>[];
+
+    // 5. Load kinds and rank candidates for empty days
+    final allKinds = await MovementRepository.instance.getKinds();
+    final enabledKinds = allKinds.where((k) => k.isEnabled).toList();
+    if (enabledKinds.isEmpty) return const <MovementWeekSuggestion>[];
+
+    final jalaliMonth = Jalali.now().month;
+    final suggestions = <MovementWeekSuggestion>[];
+    double accumulatedEstMet = 0.0;
+    final maxAllowedMet = gap * 1.15;
+
+    for (final daySat0 in emptySat0Days) {
+      if (suggestions.length >= 3) break;
+
+      final ctx = SuggestionCtx(
+        budget: budgetSnapshot,
+        availableMinutes: 30,
+        energy: 3,
+        soreness: 1,
+        painLevel: 0,
+        limitations: limitations,
+        recentKindCodes14d: recentKindCodes,
+        jalaliMonth: jalaliMonth,
+      );
+
+      final scored = <MapEntry<MovementKind, double>>[];
+      for (final k in enabledKinds) {
+        final s = scoreMovementKind(k, ctx);
+        if (s.isFinite) {
+          scored.add(MapEntry(k, s));
+        }
+      }
+
+      if (scored.isEmpty) continue;
+      scored.sort((a, b) => b.value.compareTo(a.value));
+
+      final topEntry = scored.first;
+      final selectedKind = topEntry.key;
+
+      final double met = MovementLoadCalculator.metFor(
+        baseMet: selectedKind.baseMet,
+        metLow: selectedKind.metLow,
+        metHigh: selectedKind.metHigh,
+        intensity: MovementIntensity.medium,
+      );
+      final double estMet = met * 30;
+
+      if (accumulatedEstMet + estMet > maxAllowedMet && suggestions.isNotEmpty) {
+        break;
+      }
+
+      accumulatedEstMet += estMet;
+      recentKindCodes.add(selectedKind.code); // Diversify next picked day
+
+      final TimeOfDay suggestedTime;
+      if (selectedKind.isOutdoor) {
+        suggestedTime = const TimeOfDay(hour: 7, minute: 0);
+      } else if (selectedKind.isSocial) {
+        suggestedTime = const TimeOfDay(hour: 20, minute: 0);
+      } else {
+        suggestedTime = const TimeOfDay(hour: 18, minute: 30);
+      }
+
+      final reminderMinutes = MovementReminderDefaults.minutesFor(selectedKind);
+      final dayName = kPersianWeekdayNames[daySat0];
+      final reason =
+          '$dayName خلوته — ۳۰ دقیقه ${selectedKind.titleFa} حدود ${toPersianDigits(estMet.round().toString())} MET-min از کسری هفته رو جبران می‌کنه ${selectedKind.emoji}';
+
+      suggestions.add(
+        MovementWeekSuggestion(
+          kind: selectedKind,
+          weekdaySat0: daySat0,
+          suggestedTime: suggestedTime,
+          suggestedMinutes: 30,
+          suggestedIntensity: MovementIntensity.medium,
+          reasonFa: reason,
+          confidence: 0.85,
+          reminderMinutes: reminderMinutes,
+        ),
+      );
+    }
+
+    // Sort suggestions by weekday order (Sat0)
+    suggestions.sort((a, b) => a.weekdaySat0.compareTo(b.weekdaySat0));
+    return suggestions;
   }
 }

@@ -191,6 +191,7 @@ class SupplementarySportsTables {
     await ensurePrescriptionTables(db);
     await ensureLiveMovementSessionTables(db);
     await ensureSlotOverrideTable(db);
+    await ensureMovementMuscleFocus(db);
 
     // 9. ss_decision_log
     await db.execute('''
@@ -545,5 +546,12 @@ class SupplementarySportsTables {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_mso_routine ON movement_slot_overrides(routineId)',
     );
+  }
+
+  /// Tab 1 Phase 2: muscle focus on routines.
+  static Future<void> ensureMovementMuscleFocus(DatabaseExecutor db) async {
+    try {
+      await db.execute('ALTER TABLE routines ADD COLUMN movementMuscleFocus TEXT;');
+    } catch (_) {}
   }
 }

@@ -814,8 +814,8 @@ class NoteScheduleReviewCommand extends RitmoCommand {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
     final stage = (ctx.payload['stage'] as num?)?.toInt() ?? 1;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final ladderDays = [1, 3, 7, 16, 35];
-    final days = stage <= ladderDays.length ? ladderDays[stage - 1] : 35;
+    final ladderDays = [1, 3, 7, 14, 30, 60, 120];
+    final days = stage <= ladderDays.length ? ladderDays[stage - 1] : 120;
     final nextReviewMs = nowMs + (days * 24 * 60 * 60 * 1000);
 
     await ctx.txn.update('notes', {

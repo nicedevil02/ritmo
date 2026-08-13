@@ -32,6 +32,7 @@ class AdService {
   };
 
   bool _initialized = false;
+  bool _initAttempted = false;
 
   bool get _isTapsellSupported {
     if (kIsWeb) return false;
@@ -45,7 +46,13 @@ class AdService {
   Future<void> init() async {
     if (PremiumService.instance.isPremium) return;
     if (!_isTapsellSupported) return;
-    if (_initialized) return;
+    if (_initialized || _initAttempted) return;
+    _initAttempted = true;
+
+    if (_tapsellAppId.trim().isEmpty) {
+      debugPrint('AdService: TAPSELL_APP_ID is empty; skipping Tapsell initialization.');
+      return;
+    }
 
     try {
       await TapsellPlus.instance.initialize(_tapsellAppId);
@@ -72,11 +79,17 @@ class AdService {
           return _buildSimulatedBannerAd(context);
         }
 
-        if (!_initialized) {
+        if (!_initialized && !_initAttempted) {
           init().then((_) {
-            if (context.mounted) setState(() {});
+            if (context.mounted && _initialized) {
+              setState(() {});
+            }
           });
-          return const SizedBox.shrink();
+          return _buildSimulatedBannerAd(context);
+        }
+
+        if (!_initialized || _bannerZoneId.trim().isEmpty) {
+          return _buildSimulatedBannerAd(context);
         }
 
         try {

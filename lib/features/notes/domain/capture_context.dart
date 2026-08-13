@@ -89,9 +89,12 @@ class CaptureContext {
     try {
       final db = await DatabaseHelper.instance.database;
 
-      // 1. Fetch energy / mood
+      // 1. Fetch energy / mood (only if logged in the last 12 hours)
+      final recencyThresholdMs = now.subtract(const Duration(hours: 12)).millisecondsSinceEpoch;
       final energyRows = await db.query(
         'energy_logs',
+        where: 'loggedAt >= ?',
+        whereArgs: [recencyThresholdMs],
         orderBy: 'loggedAt DESC',
         limit: 1,
       );
@@ -101,6 +104,8 @@ class CaptureContext {
 
       final moodRows = await db.query(
         'mood_logs',
+        where: 'loggedAt >= ?',
+        whereArgs: [recencyThresholdMs],
         orderBy: 'loggedAt DESC',
         limit: 1,
       );

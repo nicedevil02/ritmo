@@ -25,9 +25,11 @@ class CreateRoutineCommand extends KernelCommand {
   const CreateRoutineCommand({
     required this.routineData,
     this.scheduleData,
+    this.schedules,
   });
   final Map<String, dynamic> routineData;
   final Map<String, dynamic>? scheduleData;
+  final List<Map<String, dynamic>>? schedules;
 }
 
 class EditRoutineCommand extends KernelCommand {
@@ -35,11 +37,13 @@ class EditRoutineCommand extends KernelCommand {
     required this.routineId,
     required this.routineData,
     this.scheduleData,
+    this.schedules,
     this.applyToAll = false,
   });
   final String routineId;
   final Map<String, dynamic> routineData;
   final Map<String, dynamic>? scheduleData;
+  final List<Map<String, dynamic>>? schedules;
   final bool applyToAll;
 }
 

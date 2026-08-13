@@ -9,6 +9,7 @@ import 'package:ritmo/core/database/seed/seed_service.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/services/end_of_day_sweep.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/movement_reminder_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
@@ -18,7 +19,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 98;
+  static const int _dbVersion = 99;
   static int get dbVersionForTest => _dbVersion;
 
   @visibleForTesting
@@ -63,6 +64,7 @@ class DatabaseHelper {
     try {
       await SeedService.seedSupplementarySports(db);
       await _checkDailySweep(db);
+      unawaited(MovementReminderService.rescheduleWeekReminders());
     } catch (e, st) {
       RitmoLog.error('DatabaseHelper', 'Warmup error', e, st);
     }

@@ -37,6 +37,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v95_movement_
 import 'package:ritmo/core/database/migration/migrations/migration_v96_onboarding_starter_category.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v97_course_session_question_resolved.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v98_movement_slot_overrides.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v99_movement_muscle_focus.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -137,6 +138,7 @@ class MigrationRunner {
     MigrationV96OnboardingStarterCategory(), // Fix: recategorize onboarding starter habits out of fitness (sports)
     MigrationV97SessionQuestionResolved(), // Persist resolved state of course session open questions
     MigrationV98MovementSlotOverrides(), // Tab 1: this-week exceptions for movement slots
+    MigrationV99MovementMuscleFocus(), // Tab 1: muscle focus for strength movements
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

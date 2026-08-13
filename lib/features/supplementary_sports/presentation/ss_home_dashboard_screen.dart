@@ -8,7 +8,6 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/weekly_budget_card.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_budget.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
@@ -35,6 +34,7 @@ import 'package:ritmo/features/supplementary_sports/domain/prescription/session_
 import 'package:ritmo/features/supplementary_sports/data/models/ss_daily_checkin_model.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_readiness_service.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_daily_checkin_widget.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/new_movement_section.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -347,91 +347,12 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
 }
 
 // ─── کلاس کمکی بخش جدید با ۳ زیرتب ───────────────────────────────────────────
-class _NewMovementSection extends StatefulWidget {
+class _NewMovementSection extends StatelessWidget {
   const _NewMovementSection();
 
   @override
-  State<_NewMovementSection> createState() => _NewMovementSectionState();
-}
-
-class _NewMovementSectionState extends State<_NewMovementSection>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    final accent = context.modules.sports;
-
-    return Column(
-      children: [
-        // Tab selector
-        Material(
-          color: colors.surface,
-          child: TabBar(
-            controller: _tabController,
-            labelColor: accent,
-            unselectedLabelColor: colors.textSecondary,
-            indicatorColor: accent,
-            indicatorWeight: 2.5,
-            labelStyle: const TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontWeight: FontWeight.w500,
-              fontSize: 13,
-            ),
-            tabs: const [
-              Tab(text: 'تب ۱'),
-              Tab(text: 'ورزش‌ها'),
-              Tab(text: 'تب ۳'),
-            ],
-          ),
-        ),
-        // Tab content
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              const Center(
-                child: Text(
-                  'محتوای تب ۱',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              const _NewSportsTabContent(),
-              const Center(
-                child: Text(
-                  'محتوای تب ۳',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+    return const NewMovementSection(sportsTab: _NewSportsTabContent());
   }
 }
 

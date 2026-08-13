@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_slot_override_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/unified_planner_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
@@ -94,7 +93,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 			future: _future,
 			builder: (context, snapshot) {
 				if (snapshot.connectionState != ConnectionState.done) {
-					return const Center(child: CircularProgressIndicator());
+					return Center(child: CircularProgressIndicator(color: colors.primary));
 				}
 				if (snapshot.hasError || !snapshot.hasData) {
 					return _buildError();
@@ -105,27 +104,31 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 	}
 
 	Widget _buildError() {
+		final colors = context.colors;
 		return Center(
 			child: Padding(
 				padding: const EdgeInsets.all(24),
 				child: Column(
 					mainAxisSize: MainAxisSize.min,
 					children: [
-						const Icon(Icons.error_outline_rounded, color: Colors.white38, size: 40),
+						Icon(Icons.error_outline_rounded, color: colors.textTertiary, size: 40),
 						const SizedBox(height: 12),
-						const Text(
+						Text(
 							'خواندن برنامهٔ هفته ممکن نشد.',
 							textAlign: TextAlign.center,
-							style: TextStyle(fontFamily: _fontFa, color: Colors.white70, fontSize: 13),
+							style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 13),
 						),
 						const SizedBox(height: 12),
 						ElevatedButton.icon(
-							style: ElevatedButton.styleFrom(backgroundColor: CalendarTokens.emerald),
+							style: ElevatedButton.styleFrom(
+								backgroundColor: colors.primary,
+								foregroundColor: colors.onPrimary,
+							),
 							onPressed: _reload,
-							icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 18),
+							icon: const Icon(Icons.refresh_rounded, size: 18),
 							label: const Text(
 								'تلاش دوباره',
-								style: TextStyle(fontFamily: _fontFa, color: Colors.white),
+								style: TextStyle(fontFamily: _fontFa),
 							),
 						),
 					],
@@ -134,7 +137,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 		);
 	}
 
-	Widget _buildList(UnifiedWeekPlan plan, int todaySat0, dynamic colors) {
+	Widget _buildList(UnifiedWeekPlan plan, int todaySat0, RitmoColors colors) {
 		final next = _nextUp(plan, todaySat0);
 		final children = <Widget>[
 			_buildHero(plan, todaySat0, next),
@@ -172,8 +175,9 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 						height: 52,
 						child: ElevatedButton.icon(
 							style: ElevatedButton.styleFrom(
-								backgroundColor: CalendarTokens.emerald,
-								foregroundColor: const Color(0xFF042116),
+								backgroundColor: colors.primary,
+								foregroundColor: colors.onPrimary,
+								elevation: 3,
 								shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
 							),
 							onPressed: _openNewPlan,
@@ -203,7 +207,8 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 			);
 		}
 		if (next != null && next.weekdaySat0 == todaySat0) {
-			final time = next.timeLabel == null ? '' : toPersianDigits(next.timeLabel!);
+			final timeLabel = next.timeLabel;
+			final time = timeLabel == null ? '' : toPersianDigits(timeLabel);
 			return _heroShell(
 				kicker: 'امروز ${kPersianWeekdayNames[todaySat0]}${time.isEmpty ? '' : ' · $time'}',
 				title: '${next.emoji} ${next.title}',
@@ -248,21 +253,29 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 		required List<Widget> actions,
 		bool rest = false,
 	}) {
+		final colors = context.colors;
+		final isDark = Theme.of(context).brightness == Brightness.dark;
+		final accent = colors.primary;
+
 		return Container(
 			padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
 			decoration: BoxDecoration(
 				borderRadius: BorderRadius.circular(22),
 				border: Border.all(
 					color: rest
-							? const Color(0xFF86EFAC).withValues(alpha: 0.22)
-							: CalendarTokens.emerald.withValues(alpha: 0.28),
+							? colors.success.withValues(alpha: 0.3)
+							: accent.withValues(alpha: 0.3),
 				),
 				gradient: LinearGradient(
 					begin: Alignment.topRight,
 					end: Alignment.bottomLeft,
-					colors: rest
-							? const [Color(0xFF14241C), Color(0xFF10192B)]
-							: const [Color(0xFF163024), Color(0xFF10192B)],
+					colors: isDark
+							? (rest
+									? [colors.primaryContainer.withValues(alpha: 0.25), colors.surfaceElevated]
+									: [colors.primaryContainer.withValues(alpha: 0.35), colors.surfaceElevated])
+							: (rest
+									? [colors.primaryContainer.withValues(alpha: 0.5), colors.surface]
+									: [colors.primaryContainer.withValues(alpha: 0.7), colors.surface]),
 				),
 			),
 			child: Column(
@@ -274,7 +287,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 							fontFamily: _fontFa,
 							fontSize: 11,
 							fontWeight: FontWeight.w700,
-							color: rest ? const Color(0xFF86EFAC) : CalendarTokens.emerald,
+							color: rest ? colors.success : accent,
 						),
 					),
 					const SizedBox(height: 4),
@@ -282,17 +295,22 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 						title,
 						maxLines: 2,
 						overflow: TextOverflow.ellipsis,
-						style: const TextStyle(
+						style: TextStyle(
 							fontFamily: _fontFa,
 							fontSize: 20,
 							fontWeight: FontWeight.w800,
-							color: Colors.white,
+							color: colors.textPrimary,
 						),
 					),
 					const SizedBox(height: 4),
 					Text(
 						body,
-						style: const TextStyle(fontFamily: _fontFa, fontSize: 13, color: Color(0xFFC5D0DE), height: 1.5),
+						style: TextStyle(
+							fontFamily: _fontFa,
+							fontSize: 13,
+							color: colors.textSecondary,
+							height: 1.5,
+						),
 					),
 					if (actions.isNotEmpty) ...[
 						const SizedBox(height: 12),
@@ -304,14 +322,15 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 	}
 
 	Widget _heroBtn(String label, {required VoidCallback onTap, bool primary = false}) {
+		final colors = context.colors;
 		return TextButton(
 			style: TextButton.styleFrom(
-				backgroundColor: primary ? CalendarTokens.emerald : Colors.white.withValues(alpha: 0.06),
-				foregroundColor: primary ? const Color(0xFF042116) : Colors.white,
+				backgroundColor: primary ? colors.primary : colors.surfaceSunken,
+				foregroundColor: primary ? colors.onPrimary : colors.textPrimary,
 				padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
 				shape: RoundedRectangleBorder(
 					borderRadius: BorderRadius.circular(12),
-					side: primary ? BorderSide.none : const BorderSide(color: Colors.white12),
+					side: primary ? BorderSide.none : BorderSide(color: colors.border),
 				),
 			),
 			onPressed: onTap,
@@ -320,7 +339,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 	}
 
 	Widget _buildPulse(UnifiedWeekPlan plan, WeekPlanItem? next) {
-		final ratio = plan.totalItems == 0 ? 0.0 : plan.completedItems / plan.totalItems;
 		return Row(
 			children: [
 				Expanded(
@@ -330,7 +348,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 								? '—'
 								: '${toPersianDigits(plan.completedItems.toString())} از ${toPersianDigits(plan.totalItems.toString())}',
 						label: 'جلسه این هفته',
-						bar: ratio,
+						bar: plan.totalItems == 0 ? 0.0 : plan.completedItems / plan.totalItems,
 					),
 				),
 				const SizedBox(width: 8),
@@ -345,7 +363,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 				Expanded(
 					flex: 7,
 					child: _pulseCard(
-						value: next?.timeLabel == null ? '—' : toPersianDigits(next!.timeLabel!),
+						value: next?.timeLabel == null ? '—' : toPersianDigits(next!.timeLabel),
 						label: 'بعدی',
 					),
 				),
@@ -354,12 +372,13 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 	}
 
 	Widget _pulseCard({required String value, required String label, double? bar}) {
+		final colors = context.colors;
 		return Container(
 			padding: const EdgeInsets.fromLTRB(10, 10, 10, 9),
 			decoration: BoxDecoration(
-				color: const Color(0xFF121A2B),
+				color: colors.surface,
 				borderRadius: BorderRadius.circular(14),
-				border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+				border: Border.all(color: colors.border),
 			),
 			child: Column(
 				crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,10 +387,22 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 						value,
 						maxLines: 1,
 						overflow: TextOverflow.ellipsis,
-						style: const TextStyle(fontFamily: _fontFa, fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white),
+						style: TextStyle(
+							fontFamily: _fontFa,
+							fontSize: 15,
+							fontWeight: FontWeight.w800,
+							color: colors.textPrimary,
+						),
 					),
 					const SizedBox(height: 2),
-					Text(label, style: const TextStyle(fontFamily: _fontFa, fontSize: 10.5, color: Color(0xFF8B97AB))),
+					Text(
+						label,
+						style: TextStyle(
+							fontFamily: _fontFa,
+							fontSize: 10.5,
+							color: colors.textSecondary,
+						),
+					),
 					if (bar != null) ...[
 						const SizedBox(height: 8),
 						ClipRRect(
@@ -379,8 +410,8 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 							child: LinearProgressIndicator(
 								value: bar.clamp(0.0, 1.0),
 								minHeight: 4,
-								backgroundColor: const Color(0xFF1C2738),
-								valueColor: const AlwaysStoppedAnimation<Color>(CalendarTokens.emerald),
+								backgroundColor: colors.surfaceSunken,
+								valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
 							),
 						),
 					],
@@ -390,22 +421,23 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 	}
 
 	Widget _buildRhythmStrip(UnifiedWeekPlan plan, int todaySat0) {
+		final colors = context.colors;
 		return Column(
 			children: [
-				const Row(
+				Row(
 					mainAxisAlignment: MainAxisAlignment.spaceBetween,
 					children: [
-						Text('نوار ریتم', style: TextStyle(fontFamily: _fontFa, fontSize: 12, color: Color(0xFF8B97AB))),
-						Text('هر ستون یک روز', style: TextStyle(fontFamily: _fontFa, fontSize: 12, color: Color(0xFF8B97AB))),
+						Text('نوار ریتم', style: TextStyle(fontFamily: _fontFa, fontSize: 12, color: colors.textSecondary)),
+						Text('هر ستون یک روز', style: TextStyle(fontFamily: _fontFa, fontSize: 12, color: colors.textSecondary)),
 					],
 				),
 				const SizedBox(height: 8),
 				Container(
 					padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
 					decoration: BoxDecoration(
-						color: const Color(0xFF121A2B),
+						color: colors.surface,
 						borderRadius: BorderRadius.circular(18),
-						border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+						border: Border.all(color: colors.border),
 					),
 					child: Row(
 						children: [
@@ -419,17 +451,18 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 	}
 
 	Widget _beat(UnifiedWeekPlan plan, int day, int todaySat0) {
+		final colors = context.colors;
 		final items = plan.byDay[day];
 		final rest = items.isEmpty;
 		final done = items.isNotEmpty && items.every((e) => e.isCompleted);
 		final height = rest ? 0.0 : (0.4 + (items.length * 0.3)).clamp(0.35, 1.0);
-		Color fill = CalendarTokens.emerald;
+		Color fill = colors.primary;
 		if (items.any((e) => e.emoji == '⚽' || e.emoji == '🏐' || e.emoji == '🏀')) {
 			fill = const Color(0xFF38BDF8);
 		} else if (items.any((e) => e.emoji == '🥾' || e.emoji == '🌲')) {
 			fill = const Color(0xFFF59E0B);
 		} else if (done) {
-			fill = const Color(0xFF059669);
+			fill = colors.success;
 		}
 		return Column(
 			children: [
@@ -437,11 +470,11 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 					width: 10,
 					height: 42,
 					decoration: BoxDecoration(
-						color: rest ? const Color(0xFF86EFAC).withValues(alpha: 0.08) : const Color(0xFF1B2536),
+						color: rest ? colors.primary.withValues(alpha: 0.08) : colors.surfaceSunken,
 						borderRadius: BorderRadius.circular(99),
-						border: rest ? Border.all(color: const Color(0xFF86EFAC).withValues(alpha: 0.22)) : null,
+						border: rest ? Border.all(color: colors.primary.withValues(alpha: 0.22)) : null,
 						boxShadow: day == todaySat0
-								? [BoxShadow(color: CalendarTokens.emerald.withValues(alpha: 0.38), blurRadius: 8)]
+								? [BoxShadow(color: colors.primary.withValues(alpha: 0.38), blurRadius: 8)]
 								: null,
 					),
 					alignment: Alignment.bottomCenter,
@@ -462,7 +495,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 						fontFamily: _fontFa,
 						fontSize: 10,
 						fontWeight: FontWeight.w800,
-						color: day == todaySat0 ? CalendarTokens.emerald : const Color(0xFF5C6A80),
+						color: day == todaySat0 ? colors.primary : colors.textSecondary,
 					),
 				),
 			],
@@ -470,6 +503,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 	}
 
 	Widget _buildActiveCampaignCard(UnifiedWeekPlan plan) {
+		final colors = context.colors;
 		final campaign = plan.activeCampaign!;
 		int currentWeek = 1;
 		try {
@@ -485,9 +519,9 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 			margin: const EdgeInsets.only(bottom: 12),
 			padding: const EdgeInsets.all(14),
 			decoration: BoxDecoration(
-				color: const Color(0xFF0F172A),
+				color: colors.surfaceElevated,
 				borderRadius: BorderRadius.circular(16),
-				border: Border.all(color: const Color(0xFF0EA5E9)),
+				border: Border.all(color: colors.primary.withValues(alpha: 0.5)),
 			),
 			child: Column(
 				crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -501,9 +535,9 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 									campaign.titleFa,
 									maxLines: 1,
 									overflow: TextOverflow.ellipsis,
-									style: const TextStyle(
+									style: TextStyle(
 										fontFamily: _fontFa,
-										color: Colors.white,
+										color: colors.textPrimary,
 										fontSize: 13,
 										fontWeight: FontWeight.bold,
 									),
@@ -511,7 +545,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 							),
 							Text(
 								'هفتهٔ ${toPersianDigits(currentWeek.toString())} از ${toPersianDigits(campaign.weeks.toString())}',
-								style: const TextStyle(fontFamily: _fontFa, color: Colors.white60, fontSize: 11),
+								style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 11),
 							),
 						],
 					),
@@ -520,8 +554,8 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 						borderRadius: BorderRadius.circular(10),
 						child: LinearProgressIndicator(
 							value: percent,
-							backgroundColor: Colors.white12,
-							valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0EA5E9)),
+							backgroundColor: colors.surfaceSunken,
+							valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
 							minHeight: 6,
 						),
 					),
@@ -535,9 +569,10 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 		required List<WeekPlanItem> items,
 		required bool isToday,
 		required bool weekHasPlan,
-		required dynamic colors,
+		required RitmoColors colors,
 	}) {
 		final dropping = _dropHighlight == dayIndex;
+		final isDark = Theme.of(context).brightness == Brightness.dark;
 		return DragTarget<WeekPlanItem>(
 			onWillAcceptWithDetails: (details) {
 				setState(() => _dropHighlight = dayIndex);
@@ -555,14 +590,16 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 					margin: const EdgeInsets.only(bottom: 10),
 					padding: const EdgeInsets.all(12),
 					decoration: BoxDecoration(
-						color: isToday ? CalendarTokens.emerald.withValues(alpha: 0.10) : colors.card,
+						color: isToday
+								? colors.primaryContainer.withValues(alpha: isDark ? 0.25 : 0.45)
+								: colors.surface,
 						borderRadius: BorderRadius.circular(16),
 						border: Border.all(
 							color: dropping
-									? CalendarTokens.emerald
+									? colors.primary
 									: (isToday
-											? CalendarTokens.emerald.withValues(alpha: 0.5)
-											: colors.border.withValues(alpha: 0.4)),
+											? colors.primary.withValues(alpha: 0.6)
+											: colors.border),
 						),
 					),
 					child: Column(
@@ -575,9 +612,9 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 											'${kPersianWeekdayNames[dayIndex]}${isToday ? ' · امروز' : ''}',
 											maxLines: 1,
 											overflow: TextOverflow.ellipsis,
-											style: const TextStyle(
+											style: TextStyle(
 												fontFamily: _fontFa,
-												color: Colors.white,
+												color: colors.textPrimary,
 												fontSize: 14,
 												fontWeight: FontWeight.bold,
 											),
@@ -587,7 +624,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 										items.isEmpty
 												? (weekHasPlan ? 'آرامش' : 'خالی')
 												: '${toPersianDigits(items.length.toString())} جلسه',
-										style: const TextStyle(fontFamily: _fontFa, color: Color(0xFF8B97AB), fontSize: 11),
+										style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 11),
 									),
 								],
 							),
@@ -604,36 +641,41 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 	}
 
 	Widget _emptyDayBody(bool weekHasPlan) {
+		final colors = context.colors;
 		if (!weekHasPlan) {
-			return const Text(
+			return Text(
 				'هنوز چیده نشده',
-				style: TextStyle(fontFamily: _fontFa, color: Colors.white38, fontSize: 12),
+				style: TextStyle(fontFamily: _fontFa, color: colors.textTertiary, fontSize: 12),
 			);
 		}
 		return Container(
 			padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
 			decoration: BoxDecoration(
-				color: const Color(0xFF86EFAC).withValues(alpha: 0.10),
+				color: colors.primaryContainer.withValues(alpha: 0.2),
 				borderRadius: BorderRadius.circular(14),
-				border: Border.all(color: const Color(0xFF86EFAC).withValues(alpha: 0.28), style: BorderStyle.solid),
+				border: Border.all(color: colors.primary.withValues(alpha: 0.3), style: BorderStyle.solid),
 			),
-			child: const Row(
+			child: Row(
 				children: [
 					Expanded(
-						child: Text('🌿 ریکاوری', style: TextStyle(fontFamily: _fontFa, color: Color(0xFFBBF7D0), fontSize: 12.5, fontWeight: FontWeight.w700)),
+						child: Text('🌿 ریکاوری', style: TextStyle(fontFamily: _fontFa, color: colors.primary, fontSize: 12.5, fontWeight: FontWeight.w700)),
 					),
-					Text('محافظت‌شده', style: TextStyle(fontFamily: _fontFa, color: Color(0xFF86EFAC), fontSize: 11)),
+					Text('محافظت‌شده', style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 11)),
 				],
 			),
 		);
 	}
 
 	Widget _buildItemTile(WeekPlanItem item) {
+		final colors = context.colors;
+		final timeLabel = item.timeLabel;
+		final targetLabel = item.targetLabel;
+		final detailLabel = item.detailLabel;
 		final subtitleParts = <String>[
 			if (item.isLight) 'نسخه سبک',
-			if (item.timeLabel != null) toPersianDigits(item.timeLabel!),
-			if (item.targetLabel != null) toPersianDigits(item.targetLabel!),
-			if (item.detailLabel != null && item.detailLabel!.isNotEmpty) item.detailLabel!,
+			if (timeLabel != null) toPersianDigits(timeLabel),
+			if (targetLabel != null) toPersianDigits(targetLabel),
+			if (detailLabel != null && detailLabel.isNotEmpty) detailLabel,
 		];
 		final tile = InkWell(
 			borderRadius: BorderRadius.circular(12),
@@ -654,7 +696,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 										overflow: TextOverflow.ellipsis,
 										style: TextStyle(
 											fontFamily: _fontFa,
-											color: Colors.white,
+											color: colors.textPrimary,
 											fontSize: 13,
 											fontWeight: FontWeight.bold,
 											decoration: item.isCompleted ? TextDecoration.lineThrough : null,
@@ -665,7 +707,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 											subtitleParts.join(' · '),
 											maxLines: 2,
 											overflow: TextOverflow.ellipsis,
-											style: const TextStyle(fontFamily: _fontFa, color: Colors.white54, fontSize: 11),
+											style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 11),
 										),
 								],
 							),
@@ -673,16 +715,16 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 						if (item.isMovement && item.dateIso != null)
 							IconButton(
 								tooltip: 'فقط این هفته',
-								icon: const Icon(Icons.more_horiz_rounded, color: Colors.white38, size: 18),
+								icon: Icon(Icons.more_horiz_rounded, color: colors.textTertiary, size: 18),
 								onPressed: () async {
 									final changed = await showMovementSlotActionsSheet(context, item: item);
 									if (changed) _reload();
 								},
 							)
 						else if (item.isCompleted)
-							const Icon(Icons.check_circle_rounded, color: CalendarTokens.emerald, size: 18)
+							Icon(Icons.check_circle_rounded, color: colors.primary, size: 18)
 						else
-							const Icon(Icons.chevron_left_rounded, color: Colors.white24, size: 18),
+							Icon(Icons.chevron_left_rounded, color: colors.textTertiary, size: 18),
 					],
 				),
 			),
@@ -700,11 +742,17 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 				child: Container(
 					padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
 					decoration: BoxDecoration(
-						color: const Color(0xFF163024),
+						color: colors.surfaceElevated,
 						borderRadius: BorderRadius.circular(12),
-						border: Border.all(color: CalendarTokens.emerald),
+						border: Border.all(color: colors.primary),
+						boxShadow: [
+							BoxShadow(
+								color: colors.shadow.withValues(alpha: 0.2),
+								blurRadius: 10,
+							),
+						],
 					),
-					child: Text('${item.emoji} ${item.title}', style: const TextStyle(fontFamily: _fontFa, color: Colors.white, fontSize: 13)),
+					child: Text('${item.emoji} ${item.title}', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary, fontSize: 13)),
 				),
 			),
 			childWhenDragging: Opacity(opacity: 0.35, child: tile),
@@ -756,10 +804,10 @@ class UnifiedWeekPlannerScreen extends StatelessWidget {
 									children: [
 										IconButton(
 											tooltip: 'بازگشت',
-											icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white70),
+											icon: Icon(Icons.arrow_forward_rounded, color: colors.textPrimary),
 											onPressed: () => Navigator.of(context).pop(),
 										),
-										const Expanded(
+										Expanded(
 											child: Text(
 												'برنامهٔ هفته',
 												maxLines: 1,
@@ -768,7 +816,7 @@ class UnifiedWeekPlannerScreen extends StatelessWidget {
 													fontFamily: _fontFa,
 													fontSize: 18,
 													fontWeight: FontWeight.bold,
-													color: Colors.white,
+													color: colors.textPrimary,
 												),
 											),
 										),

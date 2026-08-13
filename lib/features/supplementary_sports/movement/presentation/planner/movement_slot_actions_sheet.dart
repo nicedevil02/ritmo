@@ -1,9 +1,9 @@
 // lib/features/supplementary_sports/movement/presentation/planner/movement_slot_actions_sheet.dart
 
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_slot_override_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
 
@@ -15,9 +15,11 @@ Future<bool> showMovementSlotActionsSheet(
   required WeekPlanItem item,
 }) async {
   if (!item.isMovement || item.dateIso == null) return false;
+  final colors = context.colors;
+  final timeLabel = item.timeLabel;
   final result = await showModalBottomSheet<bool>(
     context: context,
-    backgroundColor: const Color(0xFF121A2B),
+    backgroundColor: colors.surfaceElevated,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
     ),
@@ -34,25 +36,26 @@ Future<bool> showMovementSlotActionsSheet(
                 '${item.emoji} ${item.title}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: _fontFa,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                item.timeLabel == null
+                timeLabel == null
                     ? 'فقط این هفته عوض می‌شود. قالب سر جایش می‌ماند.'
-                    : 'ساعت ${toPersianDigits(item.timeLabel!)} · فقط این هفته',
-                style: const TextStyle(fontFamily: _fontFa, fontSize: 12, color: Color(0xFF8B97AB)),
+                    : 'ساعت ${toPersianDigits(timeLabel)} · فقط این هفته',
+                style: TextStyle(fontFamily: _fontFa, fontSize: 12, color: colors.textSecondary),
               ),
               const SizedBox(height: 14),
               _action(
                 ctx,
                 icon: Icons.nights_stay_outlined,
                 label: 'این هفته نرو',
+                colors: colors,
                 onTap: () async {
                   await MovementSlotOverrideRepository.instance.skip(
                     routineId: item.id,
@@ -65,6 +68,7 @@ Future<bool> showMovementSlotActionsSheet(
                 ctx,
                 icon: Icons.spa_outlined,
                 label: 'نسخهٔ سبک همین امروز',
+                colors: colors,
                 onTap: () async {
                   await MovementSlotOverrideRepository.instance.light(
                     routineId: item.id,
@@ -77,6 +81,7 @@ Future<bool> showMovementSlotActionsSheet(
                 ctx,
                 icon: Icons.schedule_rounded,
                 label: 'عوض کردن ساعت این هفته',
+                colors: colors,
                 onTap: () async {
                   final picked = await showTimePicker(
                     context: ctx,
@@ -107,14 +112,15 @@ Widget _action(
   BuildContext context, {
   required IconData icon,
   required String label,
+  required RitmoColors colors,
   required VoidCallback onTap,
 }) {
   return ListTile(
     contentPadding: EdgeInsets.zero,
-    leading: Icon(icon, color: CalendarTokens.emerald),
+    leading: Icon(icon, color: colors.primary),
     title: Text(
       label,
-      style: const TextStyle(fontFamily: _fontFa, color: Colors.white, fontSize: 14),
+      style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary, fontSize: 14),
     ),
     onTap: onTap,
   );

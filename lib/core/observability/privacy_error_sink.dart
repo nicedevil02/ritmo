@@ -107,9 +107,12 @@ class PrivacyErrorSink implements LogSink {
         final toDeleteCount = files.length - maxCrashReportFiles + 1;
         for (var i = 0; i < toDeleteCount; i++) {
           try {
-            await files[i].delete();
-          } catch (e, st) {
-            debugPrint('[PrivacyErrorSink] Failed to prune old crash report file: $e\n$st');
+            final f = files[i];
+            if (await f.exists()) {
+              await f.delete();
+            }
+          } catch (_) {
+            // Ignore pruning errors (e.g., file already deleted by concurrent call)
           }
         }
       }

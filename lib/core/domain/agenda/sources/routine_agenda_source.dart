@@ -5,6 +5,7 @@ import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/engines/routine_occurrence_generator.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
+import 'package:ritmo/core/domain/medication/medication_identity.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:sqflite/sqflite.dart';
@@ -275,10 +276,23 @@ class RoutineAgendaSource implements AgendaSource {
     final items = <AgendaItem>[];
     final dateCompletions = completionsByDate[dateStr] ?? {};
 
+    // MED-10: medications live in `routines` too, and MedicineAgendaSource now
+    // expands each one into a separate item per scheduled dose. Emitting them
+    // here as well showed every medication twice with two different states,
+    // because taking a dose writes to medication_logs while this source reads
+    // routine_completions — the routine copy stayed pending forever. Only skip
+    // them when the medicine domain is part of this request, so a routine-only
+    // query still returns exactly what it used to.
+    final medicineOwnsDoses = ctx.options.wants(AgendaDomain.medicine);
+
     for (final entry in activeForDate(ctx.date)) {
       final r = entry['routine'] as Map<String, dynamic>;
       final s = entry['schedule'] as Map<String, dynamic>;
       final routineId = r['id'] as String;
+
+      if (medicineOwnsDoses && MedicationIdentity.isMedicationRoutine(r)) {
+        continue;
+      }
 
       final catStr = r['category'] as String;
       final category = Category.values.firstWhere(

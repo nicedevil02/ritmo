@@ -33,7 +33,6 @@ import 'package:ritmo/core/utils/ritmo_date.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
 import 'package:ritmo/features/assistant/logic/mid_day_replan_service.dart';
-import 'package:ritmo/features/assistant/presentation/assistant_screen.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/ai_day_planner_preview_sheet.dart';
 import 'package:ritmo/features/courses/presentation/courses_screen.dart';
 import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
@@ -207,7 +206,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
       }
       return;
     }
-    // Home-screen widget row tapped → open that module's screen directly.
+    // Home-screen widget row tapped -> open that module's screen directly.
     if (launchInfo != null && launchInfo['action'] == 'OPEN_MODULE') {
       final moduleId = launchInfo['moduleId'] as String?;
       if (moduleId != null && moduleId.isNotEmpty && mounted) {
@@ -324,7 +323,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
     final controller = DashboardController();
 
-    // ── P0: critical path (settings → routines → RIE → timeline) ──────────
+    // P0: critical path (settings -> routines -> RIE -> timeline)
     await controller.loadP0();
 
     if (isStale()) return;
@@ -348,7 +347,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
       _lastLoadAt = DateTime.now();
     });
 
-    // ── P1: deferred — runs after first frame is painted ─────────────────
+    // P1: deferred — runs after first frame is painted
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (isStale()) return;
       await controller.loadP1();
@@ -554,34 +553,42 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     );
   }
 
-  /// میان‌برهای صفحهٔ خانه — پرتکرارترین کارها با یک لمس.
-  /// موارد مرتبط با لحظه (چکاین انجامنشده / پیشنهاد بازچینی) خودشان را برجسته میکنند.
-  List<HomeQuickAction> _quickActions(RitmoColors colors, bool isDarkMode) {
+  /// میان‌برهای صفحهٔ خانه.
+  ///
+  /// قاعده: هر مقصد فقط یک ورودی. دستیار اینجا نیست چون داک تب اختصاصی دارد و
+  /// «مدیریت انرژی» هم نیست چون کارت قلمرو دکمهٔ خودش را دارد. دو میان‌بر باقیمانده
+  /// هم اگر هیرو همان کار را پیشنهاد داده باشد، خودشان را کنار میکشند.
+  List<HomeQuickAction> _quickActions(
+    RitmoColors colors,
+    HeroPriorityType heroType,
+  ) {
     return [
-      HomeQuickAction(
-        label: 'افزودن برنامه',
-        icon: CupertinoIcons.add_circled_solid,
-        color: colors.primary,
-        onTap: () {
-          Navigator.push(
-            context,
-            PageRouteBuilder(
-              opaque: false,
-              barrierDismissible: true,
-              pageBuilder: (context, _, _) => UniversalPlannerSheet(
-                onSaved: _loadDashboardData,
+      if (heroType != HeroPriorityType.emptyState)
+        HomeQuickAction(
+          label: 'افزودن برنامه',
+          icon: CupertinoIcons.add_circled_solid,
+          color: colors.primary,
+          onTap: () {
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                opaque: false,
+                barrierDismissible: true,
+                pageBuilder: (context, _, _) => UniversalPlannerSheet(
+                  onSaved: _loadDashboardData,
+                ),
               ),
-            ),
-          );
-        },
-      ),
-      HomeQuickAction(
-        label: 'ارزیابی انرژی',
-        icon: CupertinoIcons.sunrise_fill,
-        color: colors.accent,
-        highlighted: _needCheckin,
-        onTap: _showMorningCheckinSheet,
-      ),
+            );
+          },
+        ),
+      if (heroType != HeroPriorityType.morningCheckIn)
+        HomeQuickAction(
+          label: 'ارزیابی انرژی',
+          icon: CupertinoIcons.sunrise_fill,
+          color: colors.accent,
+          highlighted: _needCheckin,
+          onTap: _showMorningCheckinSheet,
+        ),
       HomeQuickAction(
         label: 'بازچینی روز',
         icon: CupertinoIcons.arrow_2_squarepath,
@@ -590,27 +597,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         onTap: _runReplanFlow,
       ),
       HomeQuickAction(
-        label: 'مدیریت انرژی',
-        icon: CupertinoIcons.bolt_fill,
-        color: colors.energyAccent,
-        onTap: () => _showEnergyManagementSheet(isDarkMode),
-      ),
-      HomeQuickAction(
         label: 'بازتاب روز',
         icon: CupertinoIcons.moon_stars_fill,
         color: colors.sleepAccent,
         onTap: _openReflectionSheet,
-      ),
-      HomeQuickAction(
-        label: 'دستیار ریتمو',
-        icon: CupertinoIcons.sparkles,
-        color: colors.reflectionAccent,
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AssistantScreen()),
-          );
-        },
       ),
     ];
   }
@@ -645,8 +635,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
             userName: _settingsMap['user_name'] ?? 'کاربر',
             avatarPath: _settingsMap['user_avatar_path'],
             avatarFileExists: _avatarFileExists,
-            isAssistantActive: ModuleGate.instance
-                .isEnabledFrom(_settingsMap, 'module_assistant_enabled'),
             unreadInboxCount: _unreadInboxCount,
             onAvatarTap: _showMoreSheet,
             onBellTap: () {
@@ -655,19 +643,13 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                 MaterialPageRoute(builder: (context) => const InboxScreen()),
               ).then((_) => _updateUnreadCount());
             },
-            onAssistantTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AssistantScreen()),
-              );
-            },
           ),
         ),
       ),
     );
   }
 
-  /// اسکلت لودینگ همشکل با چیدمان جدید — بهجای اسپینر (سند طراحی §۴.۲)
+  /// اسکلت لودینگ همشکل با چیدمان جدید — بهجای اسپینر (سند طراحی ۴.۲)
   Widget _buildLoadingSkeleton() {
     return const Scaffold(
       backgroundColor: Colors.transparent,
@@ -679,10 +661,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // هدر: آواتار + دو خط متن + زنگوله
+              // هدر: آواتار + دو خط متن + خوشهٔ اکشن
               Row(
                 children: [
-                  RitmoSkeleton(width: 48, height: 48, borderRadius: 24),
+                  RitmoSkeleton(width: 46, height: 46, borderRadius: 23),
                   SizedBox(width: RitmoSpacing.md),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -693,7 +675,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     ],
                   ),
                   Spacer(),
-                  RitmoSkeleton(width: 44, height: 44, borderRadius: 22),
+                  RitmoSkeleton(width: 92, height: 46, borderRadius: 23),
                 ],
               ),
               SizedBox(height: RitmoSpacing.xl),
@@ -753,7 +735,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     final alerts = _engineOutput?.criticalAlerts ?? const <String>[];
     final progress = _todayProgress();
 
-    // شرطهای دیدهشدن کارتهای اطلاعرسانی — یکجا و صریح، نه داخل build خود کارتها.
+    // یکبار محاسبه میشود و بقیهٔ صفحه از آن تبعیت میکند: هرچه هیرو گفته باشد،
+    // جای دیگری دوباره تکرار نمیشود.
+    final heroData = _buildNextActionHeroData();
+
     final showReflectionCard = DateTime.now().hour >= 22 &&
         !_hasReflection &&
         !_reflectionDismissed;
@@ -764,7 +749,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
           onDismiss: _dismissReplanSuggestion,
           onReplan: _runReplanFlow,
         ),
-      if (_needCheckin) CheckinReminderCard(onTap: _showMorningCheckinSheet),
+      if (_needCheckin && heroData.type != HeroPriorityType.morningCheckIn)
+        CheckinReminderCard(onTap: _showMorningCheckinSheet),
       if (showReflectionCard)
         ReflectionSuggestionCard(
           onDismiss: _dismissReflection,
@@ -819,7 +805,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     _enter(
                       1,
                       HomeFocusHero(
-                        data: _buildNextActionHeroData(),
+                        data: heroData,
                         dayProgress: progress.total > 0 ? progress.ratio : null,
                         progressCaption: progress.total > 0
                             ? '${PersianDigits.convert(progress.remaining.toString())} مورد باقی‌مانده'
@@ -852,7 +838,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                             icon: CupertinoIcons.circle_lefthalf_fill,
                             color: colors.warning,
                           ),
-                          if (_pendingMedDoses > 0)
+                          // اگر هیرو خودش هشدار دارویی است، اینجا تکرار نمیشود.
+                          if (_pendingMedDoses > 0 &&
+                              heroData.type != HeroPriorityType.medicalSafety)
                             HomePulseMetric(
                               label: 'دوز دارو',
                               value: '$_pendingMedDoses باقی‌مانده',
@@ -889,7 +877,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     _enter(
                       3,
                       HomeQuickActions(
-                        actions: _quickActions(colors, isDarkMode),
+                        actions: _quickActions(colors, heroData.type),
                       ),
                     ),
                     const SizedBox(height: RitmoSpacing.xl),
@@ -901,12 +889,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            HomeSectionHeader(
+                            const HomeSectionHeader(
                               title: 'مسیر امروز',
                               subtitle: 'اکنون، بعدی و شکاف‌های آزاد',
                               icon: CupertinoIcons.map_fill,
-                              actionLabel: 'تقویم',
-                              onAction: () => widget.onNavigateToTab?.call(4),
                             ),
                             TodaySchedulePreviewCard(snapshot: _todaySnapshot!),
                           ],
@@ -932,7 +918,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     _enter(6, const TodayExperienceCard()),
                     const SizedBox(height: RitmoSpacing.lg),
 
-                    // ۷. انرژی و قلمرو
+                    // ۷. انرژی و قلمرو — دکمهٔ مدیریت داخل خود کارت است
                     _enter(
                       7,
                       Column(
@@ -945,9 +931,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                                 : 'آخرین ثبت: ${_currentEnergyTimeAgo!}',
                             icon: CupertinoIcons.bolt_horizontal_fill,
                             accent: colors.energyAccent,
-                            actionLabel: 'مدیریت',
-                            onAction: () =>
-                                _showEnergyManagementSheet(isDarkMode),
                           ),
                           ZoneCard(
                             isDarkMode: isDarkMode,
@@ -979,7 +962,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     ),
                     const SizedBox(height: RitmoSpacing.lg),
 
-                    // ۹. دستیار — بریفینگ روز
+                    // ۹. دستیار — فقط بریفینگ؛ ورود به گفتوگو کار داک پایین است
                     _enter(
                       9,
                       Column(
@@ -990,15 +973,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                             subtitle: 'خلاصهٔ امروز و پیشنهاد بعدی',
                             icon: CupertinoIcons.sparkles,
                             accent: colors.reflectionAccent,
-                            actionLabel: 'گفت‌وگو',
-                            onAction: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const AssistantScreen(),
-                                ),
-                              );
-                            },
                           ),
                           AssistantCard(
                             suggestedRoutine: _engineOutput?.suggestedRoutine,
@@ -1107,7 +1081,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     ));
 
     switch (decision.level) {
-      // ── بحران/باقیماندهٔ دارویی ──
+      // بحران/باقیماندهٔ دارویی
       case HomeFocusLevel.medicalCritical:
       case HomeFocusLevel.medicalDue:
         final isCritical = decision.level == HomeFocusLevel.medicalCritical;
@@ -1123,7 +1097,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
           onPrimaryTap: () => _openModuleScreen('medicine'),
         );
 
-      // ── تایمر فعال ──
+      // تایمر فعال
       case HomeFocusLevel.activeTimer:
         final t = activeTimer!;
         final timerTitle = _titleForTimerItem(t.itemId);
@@ -1139,7 +1113,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
           },
         );
 
-      // ── آیتم Agenda (منبع واحد) ──
+      // آیتم Agenda (منبع واحد)
       case HomeFocusLevel.agendaItem:
         final chosen = decision.agendaItem!;
         final timeLabel = PersianDigits.convert(chosen.timeOfDay!);
@@ -1154,7 +1128,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
           onPrimaryTap: () => _openAgendaItem(chosen),
         );
 
-      // ── fallback روتینی (پنجرهٔ قبل از لود P1) ──
+      // fallback روتینی (پنجرهٔ قبل از لود P1)
       case HomeFocusLevel.agendaFallback:
         final now = DateTime.now();
         final nowMinutes = now.hour * 60 + now.minute;
@@ -1190,7 +1164,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
           },
         );
 
-      // ── چکاین صبحگاهی ──
+      // چکاین صبحگاهی
       case HomeFocusLevel.morningCheckIn:
         return NextActionHeroData(
           type: HeroPriorityType.morningCheckIn,
@@ -1200,7 +1174,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
           onPrimaryTap: _showMorningCheckinSheet,
         );
 
-      // ── حالت خالی صادقانه ──
+      // حالت خالی صادقانه
       case HomeFocusLevel.emptyState:
         return NextActionHeroData(
           type: HeroPriorityType.emptyState,

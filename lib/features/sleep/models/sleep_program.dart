@@ -23,10 +23,11 @@ class SleepProgram {
   /// اندازهٔ هر پله به دقیقه (۱۰/۱۵/۲۰).
   final int stepMinutes;
 
-  /// حداقل شب‌های لازم روی هر پله پیش از پیشروی.
+  /// حداقل شب‌های ارزیابی‌شده پیش از شروع پله‌ها (خروج از فاز لنگر).
   final int minNightsPerStep;
 
-  /// روز هفتهٔ شب آزاد (۱ تا ۷)؛ null یعنی تنظیم نشده.
+  /// روز هفتهٔ شب آزاد به‌صورت ISO 8601 (۱=دوشنبه … ۷=یکشنبه — همان
+  /// `DateTime.weekday`)؛ null یعنی تنظیم نشده.
   final int? freeNightWeekday;
   final bool cycleSyncEnabled;
   final int createdAt;

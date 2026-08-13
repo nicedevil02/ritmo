@@ -46,8 +46,9 @@ class BiologicalConstraintsFilter implements RoutineFilter {
 
   @override
   List<Routine> filter(List<Routine> routines, ContextSnapshot snapshot) {
-    final worshipConsent = snapshot.appSettings['cycle_consent_worship'] != 'false';
-    
+    // Consent is strictly opt-in: an absent key must mean "no effect".
+    final worshipConsent = snapshot.appSettings['cycle_consent_worship'] == 'true';
+
     return routines.where((r) {
       // Menstruation suppresses religious routines if consent is enabled
       if (snapshot.isMenstruating && r.category == Category.religious && worshipConsent) {

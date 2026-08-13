@@ -9,15 +9,20 @@ class CycleDataQualityEngine {
   }) async {
     final hasEnoughCycles = periodRows.length >= 3;
 
-    // Check forgotten open period
+    // Defensive: callers pass rows in different orderings (the screen uses
+    // startDate DESC). Find the truly latest period by startDate.
+    // Threshold matches the screen's forgotten-period banner (>= 12 days).
     bool hasForgottenOpenPeriod = false;
     if (periodRows.isNotEmpty) {
-      final latest = periodRows.last;
+      final sorted = [...periodRows]..sort((a, b) => (a['startDate'] ?? '')
+          .toString()
+          .compareTo((b['startDate'] ?? '').toString()));
+      final latest = sorted.last;
       if (latest['endDate'] == null) {
         final start = DateTime.tryParse(latest['startDate'] as String? ?? '');
         if (start != null) {
           final daysOpen = DateTime.now().difference(start).inDays;
-          if (daysOpen > 15) {
+          if (daysOpen >= 12) {
             hasForgottenOpenPeriod = true;
           }
         }
@@ -25,12 +30,13 @@ class CycleDataQualityEngine {
     }
 
     // Query recent day logs count (last 30 days)
+    // NOTE: the column is `logDate` (not `date`).
     final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30)).toIso8601String().substring(0, 10);
     List<Map<String, dynamic>> recentLogs = [];
     try {
       recentLogs = await db.query(
         'cycle_day_logs',
-        where: 'date >= ?',
+        where: 'logDate >= ?',
         whereArgs: [thirtyDaysAgo],
       );
     } catch (_) {}

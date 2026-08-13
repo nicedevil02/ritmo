@@ -181,6 +181,12 @@ class DatabaseHelper {
     }
   }
 
+  /// Creates (or refreshes) a fasting-debt record for the period active on
+  /// [dateStr] — but ONLY for days overlapping Ramadan, since qada is owed
+  /// exclusively for missed Ramadan fasts. Uses the same `fd_<periodId>` id
+  /// scheme as CycleScreen._savePeriod so both write paths stay consistent,
+  /// and preserves an existing `isResolved` flag across idempotent rewrites
+  /// (this runs daily from the intelligence engine while menstruating).
   Future<void> addFastingDebtIfNeeded(DatabaseExecutor db, String dateStr) async {
     try {
       final consentQuery = await db.query(
@@ -196,6 +202,7 @@ class DatabaseHelper {
         'cycle_periods',
         where: 'startDate <= ? AND (endDate IS NULL OR endDate >= ?)',
         whereArgs: [dateStr, dateStr],
+        orderBy: 'startDate DESC',
       );
       if (activePeriods.isEmpty) {
         return;
@@ -209,19 +216,53 @@ class DatabaseHelper {
       final startDateClean = (rawStart != null && rawStart.length >= 10) ? rawStart.substring(0, 10) : dateStr;
       final endDateClean = (rawEnd != null && rawEnd.length >= 10) ? rawEnd.substring(0, 10) : dateStr;
 
-      final startKey = DayKey.tryParse(startDateClean) ?? DayKey.from(DateTime.now());
-      final endKey = DayKey.tryParse(endDateClean) ?? DayKey.from(DateTime.now());
-      final daysOwed = (endKey.differenceInDays(startKey) + 1).clamp(1, 30);
+      final debtId = 'fd_$periodId';
 
-      final debtId = 'fast_debt_$periodId';
+      // Qada is owed only for Ramadan days — compute the overlap between the
+      // period and the recorded Ramadan season (same rule as CycleScreen).
+      final seasons = await db.query(
+        'worship_seasons',
+        where: "id = 'ws_ramadan'",
+        limit: 1,
+      );
+      if (seasons.isEmpty) {
+        await db.delete('fasting_debt', where: 'id = ?', whereArgs: [debtId]);
+        return;
+      }
+      final rStart = DateTime.tryParse(seasons.first['startDate']?.toString() ?? '');
+      final rEnd = DateTime.tryParse(seasons.first['endDate']?.toString() ?? '');
+      if (rStart == null || rEnd == null) {
+        await db.delete('fasting_debt', where: 'id = ?', whereArgs: [debtId]);
+        return;
+      }
+
+      final pStart = DateTime.parse(startDateClean);
+      final pEnd = DateTime.parse(endDateClean);
+      final latestStart = pStart.isAfter(rStart) ? pStart : rStart;
+      final earliestEnd = pEnd.isBefore(rEnd) ? pEnd : rEnd;
+      final overlapDays = earliestEnd.difference(latestStart).inDays + 1;
+
+      if (overlapDays <= 0) {
+        // No Ramadan overlap -> no qada debt for this period.
+        await db.delete('fasting_debt', where: 'id = ?', whereArgs: [debtId]);
+        return;
+      }
+
+      // Preserve resolution state across rewrites.
+      var isResolved = 0;
+      final existing = await db.query('fasting_debt', where: 'id = ?', whereArgs: [debtId], limit: 1);
+      if (existing.isNotEmpty) {
+        isResolved = existing.first['isResolved'] as int? ?? 0;
+      }
+
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       await db.insert(
         'fasting_debt',
         {
           'id': debtId,
-          'dateIso': dateStr,
-          'daysOwed': daysOwed,
-          'isResolved': 0,
+          'dateIso': startDateClean,
+          'daysOwed': overlapDays,
+          'isResolved': isResolved,
           'reason': 'عذر شرعی (دوره ماهانه)',
           'createdAt': nowMs,
           'updatedAt': nowMs,
@@ -266,24 +307,24 @@ class DatabaseHelper {
 
   Future<bool> isUserMenstruating({DatabaseExecutor? executor}) async {
     final exec = executor ?? await database;
-    
+
     final gender = await getUserGender(executor: exec);
     if (gender != 'FEMALE') {
       return false;
     }
-    
+
     final cycleEnabledQuery = await exec.query('app_settings', where: 'key = ?', whereArgs: ['module_cycle_enabled']);
     if (cycleEnabledQuery.isEmpty || cycleEnabledQuery.first['value'].toString().toLowerCase() != 'true') {
       return false;
     }
-    
+
     final todayStr = DayKey.from(DateTime.now()).value;
     final activePeriods = await exec.query(
       'cycle_periods',
       where: 'startDate <= ? AND (endDate IS NULL OR endDate >= ?)',
       whereArgs: [todayStr, todayStr],
     );
-    
+
     return activePeriods.isNotEmpty;
   }
 

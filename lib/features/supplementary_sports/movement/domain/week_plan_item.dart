@@ -56,6 +56,11 @@ class WeekPlanItem {
 		this.detailLabel,
 		this.isCompleted = false,
 		this.routineRaw,
+		this.scheduleId,
+		this.dateIso,
+		this.reminderMinutes = 0,
+		this.isLight = false,
+		this.isOverride = false,
 	});
 
 	final WeekPlanSource source;
@@ -84,8 +89,50 @@ class WeekPlanItem {
 	/// نقشهٔ خام روتین برای ویرایش با MovementPlanSheet (فقط منبع movement)
 	final Map<String, dynamic>? routineRaw;
 
+	/// شناسهٔ ردیف routine_schedules اگر آیتم از یک schedule مشخص آمده باشد.
+	final String? scheduleId;
+
+	/// تاریخ تقویمی این وقوع در هفتهٔ جاری (yyyy-MM-dd).
+	final String? dateIso;
+
+	/// دقیقهٔ یادآوری قبل از شروع؛ ۰ یعنی خاموش.
+	final int reminderMinutes;
+
+	/// نسخهٔ سبک فقط برای این وقوع.
+	final bool isLight;
+
+	/// این وقوع با استثنای این‌هفته عوض شده، نه با قالب.
+	final bool isOverride;
+
 	bool get isMovement => source == WeekPlanSource.movement;
 	bool get isStrength => source == WeekPlanSource.strength;
+
+	WeekPlanItem copyWith({
+		Sat0Weekday? weekdaySat0,
+		String? timeLabel,
+		bool? isCompleted,
+		String? dateIso,
+		bool? isLight,
+		bool? isOverride,
+	}) {
+		return WeekPlanItem(
+			source: source,
+			id: id,
+			weekdaySat0: weekdaySat0 ?? this.weekdaySat0,
+			title: title,
+			emoji: emoji,
+			timeLabel: timeLabel ?? this.timeLabel,
+			targetLabel: targetLabel,
+			detailLabel: detailLabel,
+			isCompleted: isCompleted ?? this.isCompleted,
+			routineRaw: routineRaw,
+			scheduleId: scheduleId,
+			dateIso: dateIso ?? this.dateIso,
+			reminderMinutes: reminderMinutes,
+			isLight: isLight ?? this.isLight,
+			isOverride: isOverride ?? this.isOverride,
+		);
+	}
 }
 
 /// برنامهٔ کامل یک هفته: هفت لیست، شاخص ۰=شنبه تا ۶=جمعه.
@@ -108,4 +155,6 @@ class UnifiedWeekPlan {
 			0,
 			(sum, day) => sum + day.where((item) => item.isCompleted).length,
 		);
+
+	int get restDayCount => byDay.where((day) => day.isEmpty).length;
 }

@@ -5,17 +5,18 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_campaign_repository.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/movement_slot_override_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_campaign.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/week_slot_resolver.dart';
 
 /// مخزن یکپارچهٔ برنامهٔ هفته — دو منبع داده را کنار هم می‌نشاند:
 ///
 ///   ۱. routines + routine_schedules  →  همهٔ ورزش‌ها (شامل قدرتی خانگی/باشگاه)
 ///   ۲. ss_workout_plan               →  روزهای برنامهٔ قدرتی ساختاریافته
 ///
-/// وضعیت انجام از routine_completions و جلسات completed خوانده می‌شود و
-/// کارزار فعال (در صورت وجود) هم لود می‌شود تا کارت آن بالای تقویم بنشیند.
-/// هیچ‌کدام از جداول را تغییر نمی‌دهد؛ فقط می‌خواند و یکپارچه نمایش می‌دهد.
+/// هر ردیف schedule ساعت خودش را دارد. استثناهای این‌هفته از
+/// movement_slot_overrides روی آیتم‌های حرکتی اعمال می‌شوند.
 class UnifiedPlannerRepository {
 	UnifiedPlannerRepository._();
 	static final UnifiedPlannerRepository instance = UnifiedPlannerRepository._();
@@ -29,9 +30,9 @@ class UnifiedPlannerRepository {
 		final activeCampaign = await _loadActiveCampaign();
 
 		await _appendMovementItems(db, byDay, completedRoutineKeys);
+		await _applyMovementOverrides(byDay, completedRoutineKeys);
 		await _appendStrengthItems(db, byDay, completedStrengthDates);
 
-		// مرتب‌سازی داخل هر روز: بر اساس ساعت شروع.
 		for (final day in byDay) {
 			day.sort((a, b) {
 				final aTime = a.timeLabel ?? '99:99';
@@ -42,7 +43,6 @@ class UnifiedPlannerRepository {
 		return UnifiedWeekPlan(byDay: byDay, activeCampaign: activeCampaign);
 	}
 
-	/// کارزار فعال — همان منطق MovementPlanTab قدیمی، این‌بار در یک جای مشترک.
 	Future<MovementCampaign?> _loadActiveCampaign() async {
 		try {
 			final campaign = await MovementCampaignRepository.instance.getActiveCampaign();
@@ -56,7 +56,7 @@ class UnifiedPlannerRepository {
 		return null;
 	}
 
-	/// روتین‌های حرکتی — قرارداد daysOfWeek همان DateTime.weekday است.
+	/// روتین‌های حرکتی — هر schedule ساعت و روزهای خودش را دارد.
 	Future<void> _appendMovementItems(
 		dynamic db,
 		List<List<WeekPlanItem>> byDay,
@@ -82,35 +82,36 @@ class UnifiedPlannerRepository {
 				if (routineSchedules.isEmpty) continue;
 
 				final String title = r['title']?.toString() ?? 'فعالیت حرکتی';
-				final String? timeLabel = routineSchedules.first['timeOfDay']?.toString();
 				final String targetLabel = _movementTargetLabel(r);
+				final reminderMinutes = (r['reminderOffsetMinutes'] as num?)?.toInt() ?? 0;
+				final raw = Map<String, dynamic>.from(r as Map);
 
-				// هر روتین ممکن است چند روز در هفته تکرار شود.
-				final Set<int> weekdays = <int>{};
 				for (final s in routineSchedules) {
+					final String? timeLabel = s['timeOfDay']?.toString();
+					final scheduleId = s['id']?.toString();
 					final daysStr = s['daysOfWeek']?.toString() ?? '';
 					for (final part in daysStr.split(',')) {
 						final w = int.tryParse(part.trim());
-						if (w != null) weekdays.add(w);
+						if (w == null) continue;
+						final sat0 = dartWeekdayToSat0(w);
+						final dateStr = _dateOfWeekdayThisWeek(sat0);
+						byDay[sat0].add(
+							WeekPlanItem(
+								source: WeekPlanSource.movement,
+								id: routineId,
+								weekdaySat0: sat0,
+								title: title,
+								emoji: _movementEmoji(r['movementKind']?.toString()),
+								timeLabel: timeLabel,
+								targetLabel: targetLabel,
+								isCompleted: completedRoutineKeys.contains('$routineId:$dateStr'),
+								routineRaw: raw,
+								scheduleId: scheduleId,
+								dateIso: dateStr,
+								reminderMinutes: reminderMinutes,
+							),
+						);
 					}
-				}
-
-				for (final dartWeekday in weekdays) {
-					final sat0 = dartWeekdayToSat0(dartWeekday);
-					final dateStr = _dateOfWeekdayThisWeek(sat0);
-					byDay[sat0].add(
-						WeekPlanItem(
-							source: WeekPlanSource.movement,
-							id: routineId,
-							weekdaySat0: sat0,
-							title: title,
-							emoji: _movementEmoji(r['movementKind']?.toString()),
-							timeLabel: timeLabel,
-							targetLabel: targetLabel,
-							isCompleted: completedRoutineKeys.contains('$routineId:$dateStr'),
-							routineRaw: Map<String, dynamic>.from(r as Map),
-						),
-					);
 				}
 			}
 		} catch (e) {
@@ -118,7 +119,80 @@ class UnifiedPlannerRepository {
 		}
 	}
 
-	/// روزهای برنامهٔ قدرتی — قرارداد dayOfWeek شنبه‌محور است (۱=شنبه).
+	Future<void> _applyMovementOverrides(
+		List<List<WeekPlanItem>> byDay,
+		Set<String> completedRoutineKeys,
+	) async {
+		try {
+			final now = DateTime.now();
+			final start = weekStartSaturday(now);
+			final end = start.add(const Duration(days: 6));
+			final overrides = await MovementSlotOverrideRepository.instance.forDateRange(
+				formatDateIso(start),
+				formatDateIso(end),
+			);
+			if (overrides.isEmpty) return;
+
+			final templates = <PlannedSlot>[];
+			final rawByKey = <String, WeekPlanItem>{};
+			for (final day in byDay) {
+				for (final item in List<WeekPlanItem>.from(day)) {
+					if (!item.isMovement || item.dateIso == null) continue;
+					templates.add(
+						PlannedSlot(
+							routineId: item.id,
+							weekdaySat0: item.weekdaySat0,
+							dateIso: item.dateIso!,
+							time: item.timeLabel ?? '18:30',
+							title: item.title,
+							emoji: item.emoji,
+							reminderMinutes: item.reminderMinutes,
+						),
+					);
+					rawByKey['${item.id}|${item.dateIso}'] = item;
+				}
+				day.removeWhere((i) => i.isMovement);
+			}
+
+			final resolved = const WeekSlotResolver().resolve(
+				templates: templates,
+				overrides: overrides,
+				now: now,
+			);
+			for (final slot in resolved) {
+				WeekPlanItem? raw = rawByKey['${slot.routineId}|${slot.dateIso}'];
+				if (raw == null) {
+					for (final item in rawByKey.values) {
+						if (item.id == slot.routineId) {
+							raw = item;
+							break;
+						}
+					}
+				}
+				byDay[slot.weekdaySat0].add(
+					WeekPlanItem(
+						source: WeekPlanSource.movement,
+						id: slot.routineId,
+						weekdaySat0: slot.weekdaySat0,
+						title: slot.title.isNotEmpty ? slot.title : (raw?.title ?? 'فعالیت حرکتی'),
+						emoji: slot.emoji,
+						timeLabel: slot.time,
+						targetLabel: raw?.targetLabel,
+						isCompleted: completedRoutineKeys.contains('${slot.routineId}:${slot.dateIso}'),
+						routineRaw: raw?.routineRaw,
+						scheduleId: raw?.scheduleId,
+						dateIso: slot.dateIso,
+						reminderMinutes: slot.reminderMinutes,
+						isLight: slot.isLight,
+						isOverride: slot.isOverride,
+					),
+				);
+			}
+		} catch (e) {
+			debugPrint('[ss] unified_planner_repository.dart: $e');
+		}
+	}
+
 	Future<void> _appendStrengthItems(
 		dynamic db,
 		List<List<WeekPlanItem>> byDay,
@@ -145,6 +219,7 @@ class UnifiedPlannerRepository {
 						targetLabel: '$minutes دقیقه',
 						detailLabel: muscles,
 						isCompleted: completedStrengthDates.contains(dateStr),
+						dateIso: dateStr,
 					),
 				);
 			}
@@ -153,7 +228,6 @@ class UnifiedPlannerRepository {
 		}
 	}
 
-	/// تکمیل‌های روتین در هفتهٔ جاری: کلید '<routineId>:<yyyy-MM-dd>'
 	Future<Set<String>> _loadRoutineCompletions(dynamic db) async {
 		final keys = <String>{};
 		try {
@@ -169,7 +243,6 @@ class UnifiedPlannerRepository {
 		return keys;
 	}
 
-	/// تاریخ‌هایی از هفتهٔ جاری که جلسهٔ قدرتی (SS_SESSION) کامل شده است.
 	Future<Set<String>> _loadCompletedStrengthDates(dynamic db) async {
 		final dates = <String>{};
 		try {
@@ -189,7 +262,6 @@ class UnifiedPlannerRepository {
 		return dates;
 	}
 
-	/// تاریخ (yyyy-MM-dd) متناظر با یک روز از هفتهٔ جاری شمسی.
 	String _dateOfWeekdayThisWeek(Sat0Weekday sat0) {
 		final now = DateTime.now();
 		final todaySat0 = dartWeekdayToSat0(now.weekday);
@@ -198,8 +270,7 @@ class UnifiedPlannerRepository {
 		return _dateStr(dayDate);
 	}
 
-	String _dateStr(DateTime d) =>
-			'${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+	String _dateStr(DateTime d) => formatDateIso(d);
 
 	String _movementTargetLabel(Map<String, dynamic> routine) {
 		final metric = routine['movementTargetMetric']?.toString().toUpperCase() ?? 'DURATION';

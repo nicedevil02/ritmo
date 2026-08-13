@@ -75,7 +75,7 @@ class MoodEngine implements CachedEngine<MoodEngineInput, MoodEngineOutput> {
   @override
   String fingerprint(MoodEngineInput input) {
     final dayStamp = input.today.toIso8601String().substring(0, 10);
-    return '$dayStamp|${input.horizonDays}|${input.moodLogs.length}|${input.energyLogs.length}';
+    return '$dayStamp|${input.horizonDays}|${input.moodLogs.length}|${input.energyLogs.length}|${input.isEnergyTuned}|${input.isUserMenstruating}';
   }
 
   @override

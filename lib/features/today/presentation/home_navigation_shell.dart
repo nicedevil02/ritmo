@@ -8,6 +8,7 @@ import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
+import 'package:ritmo/core/navigation/ritmo_router.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -69,6 +70,14 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
     });
 
     _requestNotificationPermissionIfNeeded();
+
+    // قدم ۳: اگر اپ با تپ روی نوتیف (deep link) باز شده، مسیر معلق را اجرا کن
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final pending = RitmoRouter.consumePendingRoute();
+      if (pending != null) {
+        unawaited(RitmoRouter.open(pending));
+      }
+    });
   }
 
   void _handleModeChange(AppMode newMode) {

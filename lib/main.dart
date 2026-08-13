@@ -12,6 +12,7 @@ import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/engines/ritmo_intelligence_orchestrator.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/navigation/ritmo_router.dart';
 import 'package:ritmo/core/observability/privacy_error_sink.dart';
 import 'package:ritmo/core/observability/ritmo_friendly_error_pane.dart';
 import 'package:ritmo/core/security/app_lock_gate.dart';
@@ -230,6 +231,7 @@ class _RitmoAppState extends State<RitmoApp> {
 
         return MaterialApp(
           title: 'ریتمو',
+          navigatorKey: RitmoRouter.navigatorKey,
           themeMode: prefs.mode,
           theme: _lightCache,
           darkTheme: _darkCache,

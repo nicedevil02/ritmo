@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/navigation/ritmo_router.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -12,6 +15,9 @@ import 'package:timezone/timezone.dart' as tz;
 /// [syncFromSettings] را صدا بزنید.
 class SleepWinddownReminderService {
   static const int _notificationId = 3001;
+
+  /// قدم ۳: تپ روی نوتیف با payload مسیر، کاربر را به بخش خواب می‌برد.
+  static const String _tapPayload = 'route:/sleep';
 
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -31,8 +37,19 @@ class SleepWinddownReminderService {
       iOS: initializationSettingsDarwin,
     );
 
-    await _notificationsPlugin.initialize(settings: initializationSettings);
+    await _notificationsPlugin.initialize(
+      settings: initializationSettings,
+      onDidReceiveNotificationResponse: _onNotificationResponse,
+    );
     _initialized = true;
+  }
+
+  /// تپ روی نوتیف: مسیر را به روتر می‌دهیم. اگر اپ هنوز بالا نیامده باشد،
+  /// روتر آن را صف می‌کند و shell در اولین فریم اجرایش می‌کند.
+  static void _onNotificationResponse(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload == null || !payload.startsWith('route:')) return;
+    unawaited(RitmoRouter.open(payload.substring('route:'.length)));
   }
 
   /// تنظیمات را از `app_settings` می‌خواند و نوتیف روزانه را زمان‌بندی یا لغو می‌کند.
@@ -124,6 +141,7 @@ class SleepWinddownReminderService {
           notificationDetails: details,
           androidScheduleMode: mode,
           matchDateTimeComponents: DateTimeComponents.time,
+          payload: _tapPayload,
         );
 
     try {

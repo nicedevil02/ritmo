@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/time/ritmo_time.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
 
 class SleepLastNightSection extends StatefulWidget {
@@ -33,10 +34,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
     final dt = DateTime.fromMillisecondsSinceEpoch(log.bedtimeAt!);
     final targetMin = target.bedtimeHour * 60 + target.bedtimeMinute;
     final actualMin = dt.hour * 60 + dt.minute;
-
-    var diff = actualMin - targetMin;
-    if (diff > 720) diff -= 1440;
-    if (diff < -720) diff += 1440;
+    final diff = RitmoTime.signedMinuteDiff(actualMin, targetMin);
 
     if (diff.abs() <= 5) return 'دقیقاً سر وقت';
     if (diff > 0) return '${diff.abs()} دقیقه دیرتر از هدف';
@@ -48,10 +46,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
     final dt = DateTime.fromMillisecondsSinceEpoch(log.wakeAt!);
     final targetMin = target.wakeHour * 60 + target.wakeMinute;
     final actualMin = dt.hour * 60 + dt.minute;
-
-    var diff = actualMin - targetMin;
-    if (diff > 720) diff -= 1440;
-    if (diff < -720) diff += 1440;
+    final diff = RitmoTime.signedMinuteDiff(actualMin, targetMin);
 
     if (diff.abs() <= 5) return 'دقیقاً سر وقت';
     if (diff > 0) return '${diff.abs()} دقیقه دیرتر از هدف';

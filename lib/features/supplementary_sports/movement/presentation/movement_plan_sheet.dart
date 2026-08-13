@@ -14,6 +14,7 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/features/routines/domain/routine_recurrence.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
+import 'package:ritmo/features/supplementary_sports/movement/domain/movement_reminder_defaults.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/movement_kind_selector.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_day_of_week_selector.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
@@ -52,9 +53,11 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
   bool get _isEditing => widget.routineToEdit != null;
 
   MovementKind? _selectedKind;
-  List<int> _selectedDays = [6, 7, 1, 2, 3, 4, 5]; // Default: all days
-  TimeOfDay _selectedTime = const TimeOfDay(hour: 7, minute: 0);
+  List<int> _selectedDays = <int>[];
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 18, minute: 30);
   bool _hasReminder = true;
+  int _reminderMinutes = MovementReminderDefaults.venueMinutes;
+  bool _userChangedReminder = false;
   bool _isSaving = false;
 
   // Goals
@@ -67,13 +70,15 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
   @override
   void initState() {
     super.initState();
+    if (widget.routineToEdit == null) {
+      _selectedDays = <int>[DateTime.now().weekday];
+    }
     _initFromRoutine();
   }
 
   Future<void> _initFromRoutine() async {
     final toEdit = widget.routineToEdit;
     if (toEdit == null) {
-      // Default initialization
       return;
     }
 
@@ -84,31 +89,33 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
       orElse: () => kinds.isNotEmpty ? kinds.first : _fallbackKind(),
     );
 
-    // Days extraction
     final daysStr = toEdit['daysOfWeek']?.toString() ?? '';
     List<int> days = [];
     if (daysStr.isNotEmpty) {
       days = daysStr.split(',').map((s) => int.parse(s.trim())).toList();
     } else {
-      days = [6, 7, 1, 2, 3, 4, 5];
+      days = <int>[DateTime.now().weekday];
     }
 
-    // TimeOfDay extraction
-    final timeStr = toEdit['timeOfDay']?.toString() ?? '07:00';
+    final timeStr = toEdit['timeOfDay']?.toString() ?? '18:30';
     final parts = timeStr.split(':');
     final time = parts.length == 2
         ? TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]))
-        : const TimeOfDay(hour: 7, minute: 0);
+        : const TimeOfDay(hour: 18, minute: 30);
 
-    // Targets
     final targetVal = (toEdit['movementTargetValue'] as num? ?? 30.0).toDouble();
     final duration = (toEdit['targetDurationMinutes'] as num? ?? 30).toInt();
+    final storedReminder = (toEdit['reminderOffsetMinutes'] as num? ?? 0).toInt();
 
     setState(() {
       _selectedKind = matchingKind;
       _selectedDays = days;
       _selectedTime = time;
-      _hasReminder = (toEdit['reminderOffsetMinutes'] as num? ?? 15) > 0;
+      _hasReminder = storedReminder > 0;
+      _reminderMinutes = storedReminder > 0
+          ? storedReminder
+          : MovementReminderDefaults.minutesFor(matchingKind);
+      _userChangedReminder = storedReminder > 0;
       _durationMinutes = duration;
 
       if (matchingKind.primaryMetric == MovementMetric.distance) {
@@ -119,6 +126,21 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
         _elevationMeters = targetVal;
       } else if (matchingKind.primaryMetric == MovementMetric.steps) {
         _steps = targetVal.toInt();
+      }
+    });
+  }
+
+  void _onKindSelected(MovementKind kind) {
+    setState(() {
+      _selectedKind = kind;
+      if (!_userChangedReminder) {
+        _reminderMinutes = MovementReminderDefaults.minutesFor(kind);
+        _hasReminder = _reminderMinutes > 0;
+      }
+      if (kind.isOutdoor && _selectedTime.hour == 18 && _selectedTime.minute == 30) {
+        _selectedTime = const TimeOfDay(hour: 7, minute: 0);
+      } else if (kind.isSocial && _selectedTime.hour == 18 && _selectedTime.minute == 30) {
+        _selectedTime = const TimeOfDay(hour: 20, minute: 0);
       }
     });
   }
@@ -219,11 +241,11 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
       'updatedAt': now,
       'dependsOnRoutineId': null,
       'itemType': 'ROUTINE',
-      'reminderOffsetMinutes': _hasReminder ? 15 : 0,
+      'reminderOffsetMinutes': _hasReminder ? _reminderMinutes : 0,
       'movementKind': _selectedKind!.code,
       'movementTargetMetric': _selectedKind!.primaryMetric.name.toUpperCase(),
       'movementTargetValue': targetValue,
-      'movementIsMeetup': 0,
+      'movementIsMeetup': _selectedKind!.isSocial ? 1 : 0,
     };
 
     final recurrence = WeekdaysRecurrence(weekdays: _selectedDays.toSet());
@@ -263,7 +285,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
           ),
         );
       }
-      
+
       if (!_isEditing) {
         RitmoEventBus().fire(RitmoEvent(
           type: 'movement_plan_created',
@@ -364,7 +386,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
         ),
         child: Column(
           children: [
-            // Top Drag Handle
             const SizedBox(height: 12),
             Container(
               width: 36,
@@ -375,8 +396,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               ),
             ),
             const SizedBox(height: 12),
-
-            // Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -400,8 +419,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               ),
             ),
             const Divider(height: 1),
-
-            // Form Fields
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.only(
@@ -413,24 +430,19 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 1. Selector
                     MovementKindSelector(
                       selectedKind: _selectedKind,
-                      onKindSelected: (k) => setState(() => _selectedKind = k),
+                      onKindSelected: _onKindSelected,
                     ),
                     const SizedBox(height: 24),
                     const Divider(),
                     const SizedBox(height: 16),
-
                     if (_selectedKind != null) ...[
-                      // 2. Target metric sliders
                       Text(
                         'هدف برنامه‌ریزی: ${_selectedKind!.emoji} ${_selectedKind!.titleFa}',
                         style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14, color: colors.primary),
                       ),
                       const SizedBox(height: 16),
-
-                      // Duration slider (always needed for targetDurationMinutes)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -450,8 +462,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                         onChanged: (val) => setState(() => _durationMinutes = val.toInt()),
                       ),
                       const SizedBox(height: 12),
-
-                      // Other metrics
                       if (_selectedKind!.primaryMetric == MovementMetric.distance) ...[
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -521,12 +531,9 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                         ),
                         const SizedBox(height: 12),
                       ],
-
                       const Divider(),
                       const SizedBox(height: 16),
                     ],
-
-                    // 3. Days Selection
                     const Text(
                       'روزهای اجرای برنامه در هفته:',
                       style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
@@ -537,8 +544,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                       onChanged: (days) => setState(() => _selectedDays = days),
                     ),
                     const SizedBox(height: 24),
-
-                    // 4. Time Picker
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text(
@@ -565,29 +570,51 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                       onTap: _selectTime,
                     ),
                     const SizedBox(height: 12),
-
-                    // 5. Reminder Switch
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text(
                         'یادآوری قبل از شروع',
                         style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14),
                       ),
-                      subtitle: const Text(
-                        '۱۵ دقیقه قبل از زمان برنامه‌ریزی‌شده مطلع شو',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                      subtitle: Text(
+                        _hasReminder
+                            ? MovementReminderDefaults.labelFa(_reminderMinutes)
+                            : 'خاموش',
+                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
                       ),
                       value: _hasReminder,
                       activeThumbColor: CalendarTokens.emerald,
                       activeTrackColor: CalendarTokens.emerald.withValues(alpha: 0.5),
-                      onChanged: (val) => setState(() => _hasReminder = val),
+                      onChanged: (val) => setState(() {
+                        _hasReminder = val;
+                        _userChangedReminder = true;
+                      }),
                     ),
+                    if (_hasReminder) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final minutes in const [10, 30, 60, 90])
+                            ChoiceChip(
+                              label: Text(
+                                MovementReminderDefaults.labelFa(minutes),
+                                style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                              ),
+                              selected: _reminderMinutes == minutes,
+                              onSelected: (_) => setState(() {
+                                _reminderMinutes = minutes;
+                                _userChangedReminder = true;
+                              }),
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
-
-            // Bottom Buttons Bar
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(

@@ -1,3 +1,4 @@
+import 'package:ritmo/core/time/ritmo_time.dart';
 
 enum SleepQuality {
   terrible,
@@ -118,17 +119,14 @@ class SleepLog {
     return dev <= 30 && durationMinutes >= target.durationMinutes;
   }
 
+  /// انحراف از هدف نهایی (دقیقه). توجه: این مفهوم «نزدیکی به هدف نهایی» است و
+  /// برای «زدن پلهٔ امشب» در برنامهٔ خواب استفاده نمی‌شود (سند، بخش ۲: planHit).
   int deviationMinutes(SleepTarget target) {
     if (bedtimeAt == null) return 0;
     final dt = DateTime.fromMillisecondsSinceEpoch(bedtimeAt!);
     final targetMinutes = target.bedtimeHour * 60 + target.bedtimeMinute;
     final actualMinutes = dt.hour * 60 + dt.minute;
-    
-    var diff = (actualMinutes - targetMinutes).abs();
-    if (diff > 720) {
-      diff = 1440 - diff;
-    }
-    return diff;
+    return RitmoTime.absMinuteDiff(actualMinutes, targetMinutes);
   }
 
   Map<String, dynamic> toMap() {

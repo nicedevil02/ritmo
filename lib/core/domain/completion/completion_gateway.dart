@@ -39,8 +39,12 @@ class CompletionGateway {
         final MovementCompletion req       => _handleMovementCompletion(req),
       };
     } catch (e, st) {
+      // MED-45: a swallowed write failure is worse than a crash, because the UI
+      // shows a checked item that was never persisted. Log with the stack trace
+      // and hand the user a readable message instead of a raw exception string.
+      RitmoLog.error('CompletionGateway', 'Submission failed for ${request.runtimeType}', e, st);
       debugPrint('CompletionGateway submission error: $e\n$st');
-      return CompletionOutcome.failure(e.toString());
+      return CompletionOutcome.failure('ثبت اطلاعات انجام نشد. دوباره تلاش کنید.');
     }
   }
 
@@ -268,21 +272,114 @@ class CompletionGateway {
     return CompletionOutcome.success(undoToken: 'goalStep:${req.goalId}|${req.stepId}');
   }
 
-  Future<CompletionOutcome> _handleMedicationTake(MedicationTake req) async {
+  /// MED-02: an agenda item can carry either a `routines.id` or the id of an
+  /// existing `medication_logs` / `prn_logs` row, because MedicineAgendaSource
+  /// publishes a row id as `sourceId`. Resolve whatever we are handed back to the
+  /// owning routine, and report the scheduled log row when the identifier points
+  /// at one, so the caller can complete that dose in place instead of creating a
+  /// duplicate.
+  Future<({String routineId, String? logId})?> _resolveMedicationTarget(String rawId) async {
+    if (rawId.isEmpty) return null;
     final db = await DatabaseHelper.instance.database;
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final logId = RitmoIdFactory.medicationLog();
 
-    await db.insert('medication_logs', {
-      'id': logId,
-      'medicationId': req.medicationId,
-      'date': req.dateStr,
-      'doseTime': req.doseTime,
-      'takenAt': nowMs,
-    });
+    final routineRows = await db.query('routines', columns: ['id'], where: 'id = ?', whereArgs: [rawId], limit: 1);
+    if (routineRows.isNotEmpty) {
+      final rid = routineRows.first['id'] as String?;
+      if (rid != null) return (routineId: rid, logId: null);
+    }
 
-    _notifySuccess(domain: 'medicine', itemId: req.medicationId, dateStr: req.dateStr, result: 'FULL');
-    return CompletionOutcome.success(undoToken: 'medicine:$logId');
+    final logRows = await db.query('medication_logs', columns: ['routineId'], where: 'id = ?', whereArgs: [rawId], limit: 1);
+    if (logRows.isNotEmpty) {
+      final rid = logRows.first['routineId'] as String?;
+      if (rid != null) return (routineId: rid, logId: rawId);
+    }
+
+    final prnRows = await db.query('prn_logs', columns: ['routineId'], where: 'id = ?', whereArgs: [rawId], limit: 1);
+    if (prnRows.isNotEmpty) {
+      final rid = prnRows.first['routineId'] as String?;
+      if (rid != null) return (routineId: rid, logId: null);
+    }
+
+    return null;
+  }
+
+  /// Builds the epoch-ms timestamp a dose was scheduled for, from the agenda's
+  /// `yyyy-MM-dd` date and an optional `HH:mm` slot. Falls back to midnight when
+  /// no slot is supplied, and to `null` when the date itself is unparsable.
+  int? _resolveScheduledMs(String dateStr, String? doseTime) {
+    final date = DateTime.tryParse(dateStr);
+    if (date == null) return null;
+
+    final slot = doseTime?.trim() ?? '';
+    if (slot.isEmpty) {
+      return DateTime(date.year, date.month, date.day).millisecondsSinceEpoch;
+    }
+
+    final parts = slot.split(':');
+    final hour = int.tryParse(parts.first) ?? 0;
+    final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
+    return DateTime(date.year, date.month, date.day, hour, minute).millisecondsSinceEpoch;
+  }
+
+  Future<CompletionOutcome> _handleMedicationTake(MedicationTake req) async {
+    try {
+      final target = await _resolveMedicationTarget(req.medicationId);
+      if (target == null) {
+        debugPrint('CompletionGateway: no medication routine resolves from id=${req.medicationId}');
+        return CompletionOutcome.failure('این دارو یافت نشد. ثبت مصرف انجام نشد.');
+      }
+
+      final routineId = target.routineId;
+      final scheduledLogId = target.logId;
+      final db = await DatabaseHelper.instance.database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final logId = scheduledLogId ?? RitmoIdFactory.medicationLog();
+      final scheduledMs = _resolveScheduledMs(req.dateStr, req.doseTime) ?? nowMs;
+
+      await db.transaction((txn) async {
+        if (scheduledLogId != null) {
+          // MED-03: the agenda row for this slot already exists. Completing it in
+          // place keeps the original scheduledTime and stops one dose from being
+          // counted twice in the adherence maths.
+          await txn.update(
+            'medication_logs',
+            {'takenTime': nowMs, 'status': 'TAKEN'},
+            where: 'id = ?',
+            whereArgs: [scheduledLogId],
+          );
+        } else {
+          // MED-01: these are the real medication_logs columns. The previous
+          // payload (medicationId / date / doseTime / takenAt) matches no column
+          // in the schema, so sqflite threw on every insert and submit()
+          // swallowed it: each dose logged from the agenda, calendar or a
+          // notification was lost.
+          await txn.insert('medication_logs', {
+            'id': logId,
+            'routineId': routineId,
+            'scheduledTime': scheduledMs,
+            'takenTime': nowMs,
+            'status': 'TAKEN',
+            'createdAt': nowMs,
+          });
+        }
+
+        // MED-14: decrement stock in the same transaction as the log write so two
+        // quick taps cannot lose an update, and never fall below zero.
+        await txn.rawUpdate(
+          'UPDATE routines SET medStockCount = medStockCount - 1, updatedAt = ? '
+          'WHERE id = ? AND medStockCount IS NOT NULL AND medStockCount > 0',
+          [nowMs, routineId],
+        );
+      });
+
+      _notifySuccess(domain: 'medicine', itemId: routineId, dateStr: req.dateStr, result: 'FULL');
+      return CompletionOutcome.success(
+        undoToken: 'medicine:$logId|${scheduledLogId != null ? 'UPDATED' : 'CREATED'}',
+      );
+    } catch (e, st) {
+      RitmoLog.error('CompletionGateway', 'Medication take failed', e, st);
+      return CompletionOutcome.failure('ثبت مصرف دارو انجام نشد. دوباره تلاش کنید.');
+    }
   }
 
   /// Reverts a completion given an undo token.
@@ -437,7 +534,47 @@ class CompletionGateway {
           return CompletionOutcome.failure('شناسه توکن بدهی عبادی غیرمجاز است');
 
         case 'medicine':
-          await db.delete('medication_logs', where: 'id = ?', whereArgs: [idPayload]);
+          // MED-14: undoing a dose has to hand the pill back to the stock counter,
+          // otherwise every mistaken tap permanently burns one unit of inventory.
+          // MED-03: a scheduled dose is reverted to pending; only an ad-hoc take
+          // (token suffix CREATED, or a legacy token with no suffix) is deleted.
+          final medParts = idPayload.split('|');
+          final medLogId = medParts.first;
+          final wasScheduled = medParts.length > 1 && medParts[1] == 'UPDATED';
+
+          final medLogRows = await db.query('medication_logs', columns: ['routineId'], where: 'id = ?', whereArgs: [medLogId], limit: 1);
+          final medRoutineId = medLogRows.isNotEmpty ? medLogRows.first['routineId'] as String? : null;
+
+          await db.transaction((txn) async {
+            if (wasScheduled) {
+              await txn.update(
+                'medication_logs',
+                {'takenTime': null, 'status': 'PENDING'},
+                where: 'id = ?',
+                whereArgs: [medLogId],
+              );
+            } else {
+              await txn.delete('medication_logs', where: 'id = ?', whereArgs: [medLogId]);
+            }
+
+            if (medRoutineId != null) {
+              await txn.rawUpdate(
+                'UPDATE routines SET medStockCount = medStockCount + 1, updatedAt = ? '
+                'WHERE id = ? AND medStockCount IS NOT NULL',
+                [DateTime.now().millisecondsSinceEpoch, medRoutineId],
+              );
+            }
+          });
+
+          if (medRoutineId != null) {
+            RitmoEventBus().fire(
+              RitmoEvent(
+                type: RitmoEventType.completionRecorded.code,
+                timestamp: DateTime.now(),
+                payload: {'domain': 'medicine', 'itemId': medRoutineId, 'result': 'UNDONE', 'didWrite': true},
+              ),
+            );
+          }
           return CompletionOutcome.success();
 
         case 'goalStep':
@@ -462,8 +599,9 @@ class CompletionGateway {
         default:
           return CompletionOutcome.failure('دامنه بازگردانی پشتیبانی نمی‌شود');
       }
-    } catch (e) {
-      return CompletionOutcome.failure('خطا در بازگردانی: $e');
+    } catch (e, st) {
+      RitmoLog.error('CompletionGateway', 'Undo failed for token $undoToken', e, st);
+      return CompletionOutcome.failure('بازگردانی انجام نشد. دوباره تلاش کنید.');
     }
   }
 

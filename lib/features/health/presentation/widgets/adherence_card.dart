@@ -7,8 +7,18 @@ class AdherenceCard extends StatelessWidget {
   const AdherenceCard({
     super.key,
     required this.stats,
+    this.hasData = true,
   });
   final AdherenceStats stats;
+
+  /// Whether any dose actually came due in the analysed window.
+  ///
+  /// MED-06: adherence of 0 has two completely different meanings — "you missed
+  /// everything" and "there is nothing to measure yet". Rendering the second as
+  /// the first blames the user for something they never did, which is the last
+  /// thing a health app should do. Defaults to true so existing call sites keep
+  /// their current behaviour.
+  final bool hasData;
 
   @override
   Widget build(BuildContext context) {
@@ -41,118 +51,134 @@ class AdherenceCard extends StatelessWidget {
               style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                // Circular progress ring
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: CircularProgressIndicator(
-                        value: stats.adherenceRate,
-                        backgroundColor: colors.border,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          ratePct >= 80
-                              ? colors.success
-                              : (ratePct >= 50 ? colors.warning : colors.medicalRed),
-                        ),
-                        strokeWidth: 8,
-                      ),
+            if (!hasData)
+              Row(
+                children: [
+                  Icon(Icons.medication_outlined, color: colors.textSecondary, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'هنوز دُز سررسیدشده‌ای ثبت نشده است. با اولین ثبت مصرف، درصد پایبندی و زنجیره‌ها همین‌جا نمایش داده می‌شود.',
+                      style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5, fontFamily: 'Vazirmatn'),
+                      textAlign: TextAlign.justify,
                     ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _toPersianDigits('${ratePct.toStringAsFixed(0)}٪'),
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
-                        ),
-                        Text(
-                          'پایبندی',
-                          style: TextStyle(fontSize: 9, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 16),
-                // Streaks and details
-                Expanded(
-                  child: Column(
+                  ),
+                ],
+              )
+            else ...[
+              Row(
+                children: [
+                  // Circular progress ring
+                  Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.local_fire_department, color: colors.warning, size: 18),
-                              const SizedBox(width: 4),
-                              Text('زنجیره فعلی:', style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
-                            ],
+                      SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: CircularProgressIndicator(
+                          value: stats.adherenceRate,
+                          backgroundColor: colors.border,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            ratePct >= 80
+                                ? colors.success
+                                : (ratePct >= 50 ? colors.warning : colors.medicalRed),
                           ),
-                          Text(
-                            _toPersianDigits('${stats.currentStreak} روز پیاپی'),
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
-                          ),
-                        ],
+                          strokeWidth: 8,
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Row(
-                            children: [
-                              Icon(Icons.emoji_events_outlined, color: colors.primary, size: 18),
-                              const SizedBox(width: 4),
-                              Text('بهترین زنجیره:', style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
-                            ],
+                          Text(
+                            _toPersianDigits('${ratePct.toStringAsFixed(0)}٪'),
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
                           ),
                           Text(
-                            _toPersianDigits('${stats.longestStreak} روز'),
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            'پایبندی',
+                            style: TextStyle(fontSize: 9, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
                           ),
                         ],
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-            if (stats.missedPattern != null) ...[
-              const Divider(height: 24),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: colors.warning.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: colors.warning.withValues(alpha: 0.15)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.lightbulb_outline, color: colors.warning, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: TextStyle(fontSize: 11, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                  const SizedBox(width: 16),
+                  // Streaks and details
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const TextSpan(text: 'الگوی فراموشی: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                            TextSpan(text: stats.missedPattern),
+                            Row(
+                              children: [
+                                Icon(Icons.local_fire_department, color: colors.warning, size: 18),
+                                const SizedBox(width: 4),
+                                Text('زنجیره فعلی:', style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                              ],
+                            ),
+                            Text(
+                              _toPersianDigits('${stats.currentStreak} روز پیاپی'),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            ),
                           ],
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.emoji_events_outlined, color: colors.primary, size: 18),
+                                const SizedBox(width: 4),
+                                Text('بهترین زنجیره:', style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                              ],
+                            ),
+                            Text(
+                              _toPersianDigits('${stats.longestStreak} روز'),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                ],
+              ),
+              if (stats.missedPattern != null) ...[
+                const Divider(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colors.warning.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: colors.warning.withValues(alpha: 0.15)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.lightbulb_outline, color: colors.warning, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: TextStyle(fontSize: 11, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            children: [
+                              const TextSpan(text: 'الگوی فراموشی: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                              TextSpan(text: stats.missedPattern),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+              ],
+              const Divider(height: 24),
+              Text(
+                message,
+                style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5, fontFamily: 'Vazirmatn'),
+                textAlign: TextAlign.justify,
               ),
             ],
-            const Divider(height: 24),
-            Text(
-              message,
-              style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5, fontFamily: 'Vazirmatn'),
-              textAlign: TextAlign.justify,
-            ),
           ],
         ),
       ),

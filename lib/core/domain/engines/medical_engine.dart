@@ -38,14 +38,26 @@ class MedicalEngine {
   }
 
   /// Pure function to evaluate whether medication refill is needed.
-  /// 
-  /// Returns true if [stockCount] is greater than or equal to 1 and less than or equal to [warningThreshold].
+  ///
+  /// MED-14: the previous implementation required `stockCount >= 1`, which made
+  /// the refill banner disappear at exactly the moment the medication ran out.
+  /// Zero stock is the strongest possible refill signal, so it must be included.
+  ///
+  /// A [warningThreshold] of zero or less means the user never enabled stock
+  /// tracking for this medication, so no refill warning is produced.
   static bool isRefillNeeded({
     required int stockCount,
     required int warningThreshold,
   }) {
-    return stockCount >= 1 && stockCount <= warningThreshold;
+    if (warningThreshold <= 0) return false;
+    return stockCount <= warningThreshold;
   }
+
+  /// True when there is nothing left to take.
+  ///
+  /// Callers should render this as a distinct, stronger state than
+  /// [isRefillNeeded] ("تمام شده" versus "رو به اتمام").
+  static bool isOutOfStock({required int stockCount}) => stockCount <= 0;
 }
 
 class MedicineEngineInput {
@@ -71,9 +83,11 @@ class MedicineEngineOutput {
   MedicineEngineOutput({
     required this.overdoseResult,
     required this.refillNeeded,
+    this.outOfStock = false,
   });
   final OverdoseResult overdoseResult;
   final bool refillNeeded;
+  final bool outOfStock;
 }
 
 class MedicineEngine implements CachedEngine<MedicineEngineInput, MedicineEngineOutput> {
@@ -89,7 +103,11 @@ class MedicineEngine implements CachedEngine<MedicineEngineInput, MedicineEngine
       stockCount: input.stockCount,
       warningThreshold: input.warningThreshold,
     );
-    return MedicineEngineOutput(overdoseResult: overdose, refillNeeded: refill);
+    return MedicineEngineOutput(
+      overdoseResult: overdose,
+      refillNeeded: refill,
+      outOfStock: MedicalEngine.isOutOfStock(stockCount: input.stockCount),
+    );
   }
 
   @override

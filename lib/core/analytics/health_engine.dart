@@ -252,15 +252,38 @@ class HealthEngine implements CachedEngine<HealthEngineInput, HealthEngineOutput
     }
 
     // --- 2. Adherence Calculations ---
-    final activeMedLogs = input.medicationLogs
-        .where((log) => log.createdAt >= cutoffMs)
-        .toList();
+    // MED-06/MED-07/MED-19: adherence answers a single question — "of the doses
+    // that actually came due in this window, how many were taken?". Three
+    // separate bugs made the answer wrong:
+    //   * the rate defaulted to 1.0, so a user with no logged dose at all was
+    //     shown a perfect green 100% ring instead of an empty state;
+    //   * doses were bucketed by `createdAt` (the moment the row hit the DB), so
+    //     a dose confirmed after midnight landed on the next day and silently
+    //     broke the streak;
+    //   * `prn_logs` were injected as taken doses (see below).
+    final horizonMs = cleanToday.add(const Duration(days: 1)).millisecondsSinceEpoch;
 
-    var adherenceRate = 1.0;
-    if (activeMedLogs.isNotEmpty) {
-      final takenCount = activeMedLogs.where((l) => l.status == 'TAKEN').length;
-      adherenceRate = takenCount / activeMedLogs.length;
-    }
+    // The scheduled slot is the dose's identity in time; createdAt is only a
+    // fallback for legacy rows written before scheduledTime was populated.
+    int doseDayMs(MedicationLog log) => log.scheduledTime ?? log.createdAt;
+
+    const takenStatus = 'TAKEN';
+    const missedStatuses = {'SKIPPED', 'MISSED'};
+
+    // Only doses that already came due AND reached a final state count. A row
+    // still sitting in PENDING is not a miss yet, so it must not drag the rate
+    // down the moment it is created.
+    final activeMedLogs = input.medicationLogs.where((log) {
+      final ts = doseDayMs(log);
+      if (ts < cutoffMs || ts >= horizonMs) return false;
+      return log.status == takenStatus || missedStatuses.contains(log.status);
+    }).toList();
+
+    final takenDoses = activeMedLogs.where((l) => l.status == takenStatus).length;
+    final totalDoses = activeMedLogs.length;
+
+    // No due dose in the window means "no data", not "perfect adherence".
+    final adherenceRate = totalDoses == 0 ? 0.0 : takenDoses / totalDoses;
 
     // Streaks (based on daily checklist compliance)
     // Map of date -> taken count, skipped count
@@ -268,28 +291,22 @@ class HealthEngine implements CachedEngine<HealthEngineInput, HealthEngineOutput
     final dailySkipped = <String, int>{};
 
     for (final log in activeMedLogs) {
-      final dateStr = _formatDateIso(DateTime.fromMillisecondsSinceEpoch(log.createdAt));
-      if (log.status == 'TAKEN') {
+      final dateStr = _formatDateIso(DateTime.fromMillisecondsSinceEpoch(doseDayMs(log)));
+      if (log.status == takenStatus) {
         dailyTaken[dateStr] = (dailyTaken[dateStr] ?? 0) + 1;
       } else {
         dailySkipped[dateStr] = (dailySkipped[dateStr] ?? 0) + 1;
       }
     }
 
-    // Also include prn_logs as taken (no skipped)
-    final prnDates = <String>{};
-    for (final log in input.prnLogs) {
-      final takenAt = log['takenAt'] as int?;
-      if (takenAt != null && takenAt >= cutoffMs) {
-        final dateStr = _formatDateIso(DateTime.fromMillisecondsSinceEpoch(takenAt));
-        dailyTaken[dateStr] = (dailyTaken[dateStr] ?? 0) + 1;
-        prnDates.add(dateStr);
-      }
-    }
+    // MED-07: prn_logs used to be folded into dailyTaken here. A PRN dose is
+    // taken "as needed" and has no schedule, so it can be neither adhered to nor
+    // missed. Counting it manufactured streak days on dates where nothing was
+    // scheduled — a painkiller on a rest day used to repair a broken streak.
+    // PRN activity belongs to the overdose guard, not to the adherence score.
 
     // Determine all unique dates with activity
-    final allDates = {...dailyTaken.keys, ...dailySkipped.keys}..toList();
-    final sortedDates = allDates.toList()..sort();
+    final sortedDates = {...dailyTaken.keys, ...dailySkipped.keys}.toList()..sort();
 
     var currentStreak = 0;
     var longestStreak = 0;
@@ -350,7 +367,7 @@ class HealthEngine implements CachedEngine<HealthEngineInput, HealthEngineOutput
     // Missed pattern analysis
     String? missedPattern;
     if (activeMedLogs.isNotEmpty) {
-      final skippedLogs = activeMedLogs.where((l) => l.status == 'SKIPPED').toList();
+      final skippedLogs = activeMedLogs.where((l) => missedStatuses.contains(l.status)).toList();
       if (skippedLogs.isNotEmpty) {
         var morningCount = 0;
         var afternoonCount = 0;
@@ -391,45 +408,27 @@ class HealthEngine implements CachedEngine<HealthEngineInput, HealthEngineOutput
     // --- 3. Health Correlations ---
     final correlationList = <HealthCorrelation>[];
 
-    // Prepare matched daily datasets for Pearson Correlation
-    // Group sleep by date
-    final sleepByDate = <String, double>{};
-    for (final log in input.sleepLogs) {
-      final timestamp = log['updatedAt'] as int? ?? log['createdAt'] as int?;
-      final quality = log['quality'] as int?;
-      if (timestamp != null && quality != null) {
-        final dateStr = _formatDateIso(DateTime.fromMillisecondsSinceEpoch(timestamp));
-        sleepByDate[dateStr] = quality.toDouble();
-      }
-    }
-
-    // Group energy by date
-    final energyByDate = <String, double>{};
-    for (final log in input.energyLogs) {
-      final timestamp = log['updatedAt'] as int? ?? log['createdAt'] as int?;
-      final levelStr = log['value'] as String?; // e.g. 'HIGH', 'MEDIUM', 'LOW'
-      if (timestamp != null && levelStr != null) {
-        final dateStr = _formatDateIso(DateTime.fromMillisecondsSinceEpoch(timestamp));
-        var val = 3.0; // default medium
-        if (levelStr == 'HIGH') val = 5.0;
-        if (levelStr == 'LOW') val = 1.0;
-        energyByDate[dateStr] = val;
-      }
-    }
+    // Prepare matched daily datasets for Pearson Correlation.
+    // MED-29: pairing used to happen per measurement, so three blood sugar
+    // readings on one day produced three duplicated pairs against the same
+    // energy value and inflated the coefficient. Everything is averaged per day
+    // first, then aligned on the sorted intersection of dates.
+    // MED-30: values come from raw DB maps. `log['value'] as String?` threw a
+    // TypeError whenever the column held a number and took the whole insights
+    // page down with it, so both value and timestamp are coerced defensively.
+    final sleepByDate = _dailyMeanFromLogs(input.sleepLogs, _sleepQuality);
+    final energyByDate = _dailyMeanFromLogs(input.energyLogs, _energyLevel);
 
     // 3.1 Blood Sugar correlations
-    if (activeSugarLogs.isNotEmpty) {
+    final sugarByDate = _meanByDate(activeSugarLogs.map((l) => MapEntry(
+      _formatDateIso(DateTime.fromMillisecondsSinceEpoch(l.loggedAt)),
+      l.value.toDouble(),
+    )));
+
+    if (sugarByDate.isNotEmpty) {
       // Sugar vs Energy
-      final sugarVals = <double>[];
-      final energyVals = <double>[];
-      for (final log in activeSugarLogs) {
-        final dateStr = _formatDateIso(DateTime.fromMillisecondsSinceEpoch(log.loggedAt));
-        if (energyByDate.containsKey(dateStr)) {
-          sugarVals.add(log.value.toDouble());
-          energyVals.add(energyByDate[dateStr]!);
-        }
-      }
-      final sugarEnergyCoeff = _calculatePearson(sugarVals, energyVals);
+      final sugarEnergy = _alignByDate(sugarByDate, energyByDate);
+      final sugarEnergyCoeff = _calculatePearson(sugarEnergy[0], sugarEnergy[1]);
       correlationList.add(HealthCorrelation(
         metric: 'sugar_energy',
         coefficient: sugarEnergyCoeff,
@@ -437,16 +436,8 @@ class HealthEngine implements CachedEngine<HealthEngineInput, HealthEngineOutput
       ));
 
       // Sugar vs Sleep
-      final sugarValsS = <double>[];
-      final sleepVals = <double>[];
-      for (final log in activeSugarLogs) {
-        final dateStr = _formatDateIso(DateTime.fromMillisecondsSinceEpoch(log.loggedAt));
-        if (sleepByDate.containsKey(dateStr)) {
-          sugarValsS.add(log.value.toDouble());
-          sleepVals.add(sleepByDate[dateStr]!);
-        }
-      }
-      final sugarSleepCoeff = _calculatePearson(sugarValsS, sleepVals);
+      final sugarSleep = _alignByDate(sugarByDate, sleepByDate);
+      final sugarSleepCoeff = _calculatePearson(sugarSleep[0], sugarSleep[1]);
       correlationList.add(HealthCorrelation(
         metric: 'sugar_sleep',
         coefficient: sugarSleepCoeff,
@@ -455,18 +446,15 @@ class HealthEngine implements CachedEngine<HealthEngineInput, HealthEngineOutput
     }
 
     // 3.2 Blood Pressure (Systolic) correlations
-    if (activeBPLogs.isNotEmpty) {
+    final bpByDate = _meanByDate(activeBPLogs.map((l) => MapEntry(
+      _formatDateIso(DateTime.fromMillisecondsSinceEpoch(l.loggedAt)),
+      l.systolic.toDouble(),
+    )));
+
+    if (bpByDate.isNotEmpty) {
       // BP vs Energy
-      final bpVals = <double>[];
-      final energyVals = <double>[];
-      for (final log in activeBPLogs) {
-        final dateStr = _formatDateIso(DateTime.fromMillisecondsSinceEpoch(log.loggedAt));
-        if (energyByDate.containsKey(dateStr)) {
-          bpVals.add(log.systolic.toDouble());
-          energyVals.add(energyByDate[dateStr]!);
-        }
-      }
-      final bpEnergyCoeff = _calculatePearson(bpVals, energyVals);
+      final bpEnergy = _alignByDate(bpByDate, energyByDate);
+      final bpEnergyCoeff = _calculatePearson(bpEnergy[0], bpEnergy[1]);
       correlationList.add(HealthCorrelation(
         metric: 'bp_energy',
         coefficient: bpEnergyCoeff,
@@ -474,16 +462,8 @@ class HealthEngine implements CachedEngine<HealthEngineInput, HealthEngineOutput
       ));
 
       // BP vs Sleep
-      final bpValsS = <double>[];
-      final sleepVals = <double>[];
-      for (final log in activeBPLogs) {
-        final dateStr = _formatDateIso(DateTime.fromMillisecondsSinceEpoch(log.loggedAt));
-        if (sleepByDate.containsKey(dateStr)) {
-          bpValsS.add(log.systolic.toDouble());
-          sleepVals.add(sleepByDate[dateStr]!);
-        }
-      }
-      final bpSleepCoeff = _calculatePearson(bpValsS, sleepVals);
+      final bpSleep = _alignByDate(bpByDate, sleepByDate);
+      final bpSleepCoeff = _calculatePearson(bpSleep[0], bpSleep[1]);
       correlationList.add(HealthCorrelation(
         metric: 'bp_sleep',
         coefficient: bpSleepCoeff,
@@ -505,6 +485,82 @@ class HealthEngine implements CachedEngine<HealthEngineInput, HealthEngineOutput
     final m = dt.month.toString().padLeft(2, '0');
     final d = dt.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
+  }
+
+  /// Averages every sample that falls on the same `yyyy-MM-dd` bucket.
+  static Map<String, double> _meanByDate(Iterable<MapEntry<String, double>> samples) {
+    final sums = <String, double>{};
+    final counts = <String, int>{};
+    for (final sample in samples) {
+      sums[sample.key] = (sums[sample.key] ?? 0) + sample.value;
+      counts[sample.key] = (counts[sample.key] ?? 0) + 1;
+    }
+    return {
+      for (final entry in sums.entries) entry.key: entry.value / counts[entry.key]!,
+    };
+  }
+
+  /// Same as [_meanByDate] but for raw DB rows, tolerating missing or
+  /// unexpectedly typed timestamp/value columns instead of throwing.
+  static Map<String, double> _dailyMeanFromLogs(
+    List<Map<String, dynamic>> logs,
+    double? Function(Map<String, dynamic> log) valueOf,
+  ) {
+    final samples = <MapEntry<String, double>>[];
+    for (final log in logs) {
+      final timestamp = _asInt(log['updatedAt']) ?? _asInt(log['createdAt']);
+      final value = valueOf(log);
+      if (timestamp == null || value == null) continue;
+      samples.add(MapEntry(
+        _formatDateIso(DateTime.fromMillisecondsSinceEpoch(timestamp)),
+        value,
+      ));
+    }
+    return _meanByDate(samples);
+  }
+
+  /// Aligns two daily series on the dates they share, in chronological order.
+  static List<List<double>> _alignByDate(
+    Map<String, double> a,
+    Map<String, double> b,
+  ) {
+    final dates = a.keys.where(b.containsKey).toList()..sort();
+    return [
+      [for (final date in dates) a[date]!],
+      [for (final date in dates) b[date]!],
+    ];
+  }
+
+  static int? _asInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  static double? _sleepQuality(Map<String, dynamic> log) {
+    final raw = log['quality'];
+    if (raw is num) return raw.toDouble();
+    if (raw is String) return double.tryParse(raw);
+    return null;
+  }
+
+  static double? _energyLevel(Map<String, dynamic> log) {
+    final raw = log['value'];
+    if (raw is num) return raw.toDouble();
+    if (raw is! String) return null;
+    switch (raw.toUpperCase()) {
+      case 'HIGH':
+        return 5.0;
+      case 'MEDIUM':
+        return 3.0;
+      case 'LOW':
+        return 1.0;
+      default:
+        // Unknown label: keep the previous "medium" assumption unless the
+        // column actually holds a numeric string.
+        return double.tryParse(raw) ?? 3.0;
+    }
   }
 
   static bool _isBloodSugarInRange(int value, String type, bool hasDiabetes) {
@@ -574,10 +630,11 @@ class HealthEngine implements CachedEngine<HealthEngineInput, HealthEngineOutput
       sumX2 += x[i] * x[i];
       sumY2 += y[i] * y[i];
     }
-    final num = n * sumXY - sumX * sumY;
+    // Named `num` before, which shadowed Dart's own `num` type inside the method.
+    final numerator = n * sumXY - sumX * sumY;
     final den = sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
     if (den == 0) return null;
-    return num / den;
+    return numerator / den;
   }
 
   static String _generateInsight(String metricA, String metricB, double? coeff) {

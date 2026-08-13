@@ -344,16 +344,6 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
     _saveSessionToPreferences();
   }
 
-  void _startCountdown() {
-    state = state.copyWith(
-      status: SSWorkoutSessionStatus.countdown,
-      timerTotalSeconds: 3,
-      timerRemainingSeconds: 3,
-      timerTargetTimestamp: DateTime.now().millisecondsSinceEpoch + 3000,
-    );
-    _saveSessionToPreferences();
-  }
-
   void _startExercising() {
     if (state.currentExerciseIndex >= state.exercises.length) return;
     final entry = state.exercises[state.currentExerciseIndex];
@@ -792,7 +782,7 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
       String newSessionId = 'session_${resolvedPlanId}_$now';
       bool isResumingToday = false;
       int accumulatedDurationSeconds = 0;
-      Map<String, List<Map<String, dynamic>>> todaySetsMap = {};
+      final Map<String, List<Map<String, dynamic>>> todaySetsMap = {};
 
       if (state.prescriptionId != null) {
         final today = DateTime.now();
@@ -1008,8 +998,8 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
     final rirs = <int>[];
     for (final entry in state.exercises) {
       for (final set in entry.setRows) {
-        if (set.status == SetStatus.done && set.rir != null) {
-          rirs.add(set.rir!);
+        if (set.status == SetStatus.done) {
+          rirs.add(set.rir);
         }
       }
     }
@@ -1177,10 +1167,11 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
     final result = <String, List<Map<String, dynamic>>>{};
     for (final exerciseId in exerciseIds) {
       final lastSessionIdQuery = await db.rawQuery('''
-        SELECT session_id
-        FROM ss_workout_set_log
-        WHERE exercise_id = ?
-        ORDER BY id DESC
+        SELECT s.session_id
+        FROM ss_workout_set_log s
+        JOIN ss_workout_session_log wl ON s.session_id = wl.id
+        WHERE s.exercise_id = ?
+        ORDER BY wl.startedAt DESC
         LIMIT 1
       ''', [exerciseId]);
       
@@ -1202,10 +1193,11 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
     try {
       final db = await DatabaseHelper.instance.database;
       final results = await db.rawQuery('''
-        SELECT note
-        FROM ss_workout_set_log
-        WHERE exercise_id = ? AND note IS NOT NULL AND note != ''
-        ORDER BY id DESC
+        SELECT s.note
+        FROM ss_workout_set_log s
+        JOIN ss_workout_session_log wl ON s.session_id = wl.id
+        WHERE s.exercise_id = ? AND s.note IS NOT NULL AND s.note != ''
+        ORDER BY wl.startedAt DESC
         LIMIT 1
       ''', [exerciseId]);
       return results.isNotEmpty ? results.first['note']?.toString() : null;
@@ -1219,10 +1211,11 @@ class SSWorkoutNotifier extends Notifier<SSWorkoutState> {
     try {
       final db = await DatabaseHelper.instance.database;
       final results = await db.rawQuery('''
-        SELECT weight, reps, feeling, session_id, set_index, rir, note
-        FROM ss_workout_set_log
-        WHERE exercise_id = ?
-        ORDER BY id DESC
+        SELECT s.weight, s.reps, s.feeling, s.session_id, s.set_index, s.rir, s.note
+        FROM ss_workout_set_log s
+        JOIN ss_workout_session_log wl ON s.session_id = wl.id
+        WHERE s.exercise_id = ?
+        ORDER BY wl.startedAt DESC, s.set_index DESC
         LIMIT 1
       ''', [exerciseId]);
       return results.isNotEmpty ? results.first : null;

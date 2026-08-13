@@ -217,23 +217,30 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
 
   Future<void> _loadData() async {
     if (mounted) setState(() => _isLoading = true);
-    final snapshot = await MovementBudgetService.instance.getCurrentWeekSnapshot();
-    final suggestion = await MovementSuggester.suggestToday(budget: snapshot);
-    if (suggestion != null) {
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'movement_suggestion_shown',
-        timestamp: DateTime.now(),
-        payload: {
-          'kindCode': suggestion.kind.code,
-        },
-      ));
-    }
-    if (mounted) {
-      setState(() {
-        _budgetSnapshot = snapshot;
-        _suggestion = suggestion;
-        _isLoading = false;
-      });
+    try {
+      final snapshot = await MovementBudgetService.instance.getCurrentWeekSnapshot();
+      final suggestion = await MovementSuggester.suggestToday(budget: snapshot);
+      if (suggestion != null) {
+        RitmoEventBus().fire(RitmoEvent(
+          type: 'movement_suggestion_shown',
+          timestamp: DateTime.now(),
+          payload: {
+            'kindCode': suggestion.kind.code,
+          },
+        ));
+      }
+      if (mounted) {
+        setState(() {
+          _budgetSnapshot = snapshot;
+          _suggestion = suggestion;
+        });
+      }
+    } catch (e) {
+      debugPrint('[ss_movement_tab_screen] error loading data: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

@@ -187,6 +187,7 @@ class MovementRepository {
         where: 'id = ?',
         whereArgs: [existingId],
       );
+      await _recalculatePrsForKind(txn, fullEvent.kindCode);
       return {'id': existingId, 'isPr': false, 'wasDuplicate': true};
     }
 
@@ -276,7 +277,7 @@ class MovementRepository {
 
       final row = rows.first;
       final sourceModule = row['sourceModule'] as String? ?? 'MOVEMENT';
-      if (sourceModule != 'MOVEMENT') {
+      if (sourceModule != 'MOVEMENT' && sourceModule != 'MOVEMENT_SESSION') {
         throw StateError(
           'DELETE_BLOCKED: workout_logs row $id belongs to sourceModule=$sourceModule; '
           'delete or revert it from that module.',
@@ -287,6 +288,14 @@ class MovementRepository {
 
       await txn.delete('workout_exercise_logs', where: 'workoutLogId = ?', whereArgs: [id]);
       await txn.delete('workout_logs', where: 'id = ?', whereArgs: [id]);
+
+      if (sourceModule == 'MOVEMENT_SESSION') {
+        final sessionId = row['sourceEntityId'] as String?;
+        if (sessionId != null && sessionId.isNotEmpty) {
+          await txn.delete('movement_sessions', where: 'id = ?', whereArgs: [sessionId]);
+          await txn.delete('movement_session_events', where: 'sessionId = ?', whereArgs: [sessionId]);
+        }
+      }
 
       if (kindCode != null && kindCode!.isNotEmpty) {
         // شمارندهٔ استفاده را هماهنگ نگه دار (هرگز منفی نشود).

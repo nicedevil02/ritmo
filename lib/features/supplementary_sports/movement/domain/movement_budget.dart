@@ -86,13 +86,12 @@ class MovementBudgetService {
       debugPrint('[MovementBudget] budget config read failed, using defaults: $e');
     }
 
-    // Calculate Persian week start (Saturday)
     final now = DateTime.now();
     final jalali = Jalali.fromDateTime(now);
     final dayOfWeekIndex = jalali.weekDay - 1; // Jalali weekDay: 1=Shanbe (0 offset) to 7=Jomeh (6 offset)
 
-    final startOfWeekDate = now.subtract(Duration(days: dayOfWeekIndex));
-    final startOfWeek = DateTime(startOfWeekDate.year, startOfWeekDate.month, startOfWeekDate.day);
+    final localToday = DateTime(now.year, now.month, now.day);
+    final startOfWeek = localToday.subtract(Duration(days: dayOfWeekIndex));
     final endOfWeekExclusive = startOfWeek.add(const Duration(days: 7)); // شنبهٔ هفتهٔ بعد، ناشمول
     final events = await MovementRepository.instance.eventsInRangeMs(
       startOfWeek.millisecondsSinceEpoch,

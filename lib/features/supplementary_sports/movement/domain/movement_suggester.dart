@@ -7,6 +7,7 @@ import 'package:ritmo/features/supplementary_sports/movement/data/movement_repos
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_budget.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 
 class MovementSuggestion {
   const MovementSuggestion({
@@ -26,14 +27,7 @@ class MovementSuggestion {
   final List<MovementKind> alternatives;
 }
 
-const _kneeTerms = ['knee', 'زانو'];
-const _backTerms = ['back', 'کمر'];
-const _shoulderTerms = ['shoulder', 'شانه'];
 
-bool _mentionsAny(String source, List<String> terms) {
-  final s = source.toLowerCase();
-  return terms.any(s.contains);
-}
 
 class SuggestionCtx {
   const SuggestionCtx({
@@ -134,10 +128,16 @@ class MovementSuggester {
     try {
       final pRows = await db.query('ss_user_profile', limit: 1);
       if (pRows.isNotEmpty) {
-        final limStr = pRows.first['physicalLimitations']?.toString() ?? '';
-        if (_mentionsAny(limStr, _kneeTerms)) limitations.add('knee');
-        if (_mentionsAny(limStr, _backTerms)) limitations.add('back');
-        if (_mentionsAny(limStr, _shoulderTerms)) limitations.add('shoulder');
+        final profile = SsUserProfile.fromMap(pRows.first);
+        if (profile.physicalLimitations.contains(Limitation.kneeProblems)) {
+          limitations.add('knee');
+        }
+        if (profile.physicalLimitations.contains(Limitation.backProblems)) {
+          limitations.add('back');
+        }
+        if (profile.physicalLimitations.contains(Limitation.shoulderProblems)) {
+          limitations.add('shoulder');
+        }
       }
     } catch (e) { debugPrint('[ss] movement_suggester.dart: $e'); }
 

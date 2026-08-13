@@ -36,8 +36,7 @@ class ModuleSummaryGrid extends StatelessWidget {
             crossAxisCount: 2,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            // P1-5: ارتفاع ثابت بهجای نسبت ابعاد — با بزرگنمایی فونت تا ۱٫۳× سرریز نمیشود.
-            mainAxisExtent: 112,
+            mainAxisExtent: 118,
           ),
           itemBuilder: (context, i) => _ModuleSummaryCard(
             summary: summaries[i],
@@ -186,7 +185,7 @@ class _ImageCard extends StatelessWidget {
               bottom: 0,
               left: 0,
               right: 0,
-              height: 52,
+              height: 54,
               child: ClipRRect(
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(18),
@@ -195,7 +194,7 @@ class _ImageCard extends StatelessWidget {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
                     decoration: BoxDecoration(
                       color: (isDark ? Colors.black : Colors.white).withValues(alpha: isDark ? 0.35 : 0.45),
                       border: Border(
@@ -208,6 +207,7 @@ class _ImageCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           summary.primary,
@@ -215,6 +215,7 @@ class _ImageCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 15,
+                            height: 1.15,
                             fontWeight: FontWeight.w800,
                             color: isDark ? Colors.white : Colors.black87,
                             fontFamily: 'Vazirmatn',
@@ -227,6 +228,7 @@ class _ImageCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 9.5,
+                            height: 1.15,
                             fontWeight: FontWeight.w500,
                             color: isDark ? Colors.white70 : Colors.black54,
                             fontFamily: 'Vazirmatn',
@@ -288,9 +290,10 @@ class _PlainCard extends StatelessWidget {
                 ],
               ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // ردیف آیکون + عنوان
                 Row(
@@ -324,39 +327,43 @@ class _PlainCard extends StatelessWidget {
                   ],
                 ),
 
-                const Spacer(),
-
-                // داده اصلی
-                Text(
-                  summary.primary,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
-                ),
-                const SizedBox(height: 3),
-
-                // داده فرعی
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: summary.accentColor.withValues(alpha: isDark ? 0.14 : 0.08),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    summary.secondary,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      color: colors.textSecondary,
-                      fontFamily: 'Vazirmatn',
+                // داده اصلی و فرعی
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      summary.primary,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.15,
+                        fontWeight: FontWeight.w800,
+                        color: colors.textPrimary,
+                        fontFamily: 'Vazirmatn',
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 2),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: summary.accentColor.withValues(alpha: isDark ? 0.14 : 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        summary.secondary,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          height: 1.15,
+                          color: colors.textSecondary,
+                          fontFamily: 'Vazirmatn',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

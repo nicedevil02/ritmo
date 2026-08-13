@@ -16,7 +16,8 @@ class ReflectionContext {
     this.reflectionEnergyCorrelation,
   });
   /// Average mood score over the reflection horizon (engine scale, ~1..5).
-  final double avgMoodScore;
+  /// Null when no reflection in the window actually recorded a score.
+  final double? avgMoodScore;
 
   final MoodTrendDirection moodTrendDirection;
 
@@ -26,7 +27,8 @@ class ReflectionContext {
   final double? reflectionEnergyCorrelation;
 
   /// True when the engine should bias toward a gentler day: low average mood
-  /// or a clearly downward trend.
+  /// or a clearly downward trend. A missing score is not treated as low.
   bool get wantsGentleMode =>
-      avgMoodScore < 2.6 || moodTrendDirection == MoodTrendDirection.down;
+      (avgMoodScore != null && avgMoodScore! < 2.6) ||
+      moodTrendDirection == MoodTrendDirection.down;
 }

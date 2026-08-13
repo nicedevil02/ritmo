@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
-import 'package:ritmo/core/settings/settings_flags.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:sqflite/sqflite.dart';
@@ -62,6 +61,10 @@ class CycleEngineOutput {
     required this.trendPoints,
     required this.regularityLabel,
     required this.predictionDisclaimer,
+    // Overdue tracking — optional with safe defaults so existing
+    // constructions (tests, legacy adapters) keep compiling.
+    this.isOverdue = false,
+    this.daysOverdue = 0,
   });
   final CyclePhase currentPhase;
   final int dayOfCycle;
@@ -82,13 +85,21 @@ class CycleEngineOutput {
   final DateTime pmsWindowEnd;
   final int regularityScore;
   final List<CycleTrendPoint> trendPoints;
-  
+
   // Simplified Engine Fields
   final String regularityLabel;
   final String predictionDisclaimer;
+
+  // Overdue tracking: an expected period boundary passed with no log
+  final bool isOverdue;
+  final int daysOverdue;
 }
 
 class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
+  /// Normalize to a calendar day so mixed stored formats (date-only vs
+  /// date-time) never skew day-difference math.
+  static DateTime _clean(DateTime d) => DateTime(d.year, d.month, d.day);
+
   @override
   Future<CycleEngineOutput> calculate(CycleEngineInput input) async {
     final db = input.db;
@@ -124,8 +135,8 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     // Average cycle length: difference between consecutive cycle start dates
     final cycleLengths = <int>[];
     for (var i = 0; i < periodRows.length - 1; i++) {
-      final start1 = DateTime.parse(periodRows[i]['startDate'] as String);
-      final start2 = DateTime.parse(periodRows[i + 1]['startDate'] as String);
+      final start1 = _clean(DateTime.parse(periodRows[i]['startDate'] as String));
+      final start2 = _clean(DateTime.parse(periodRows[i + 1]['startDate'] as String));
       final diffDays = start2.difference(start1).inDays;
       if (diffDays >= 15 && diffDays <= 50) { // filter out unrealistic outliers
         cycleLengths.add(diffDays);
@@ -139,10 +150,10 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     // Average period duration
     final periodDurations = <int>[];
     for (final row in periodRows) {
-      final start = DateTime.parse(row['startDate'] as String);
+      final start = _clean(DateTime.parse(row['startDate'] as String));
       final endStr = row['endDate'] as String?;
       if (endStr != null) {
-        final end = DateTime.parse(endStr);
+        final end = _clean(DateTime.parse(endStr));
         final duration = end.difference(start).inDays + 1;
         if (duration >= 1 && duration <= 15) {
           periodDurations.add(duration);
@@ -194,16 +205,16 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     // 7. Trend Points (v2 Upgrades)
     final trendPoints = <CycleTrendPoint>[];
     for (var i = 0; i < periodRows.length; i++) {
-      final start = DateTime.parse(periodRows[i]['startDate'] as String);
+      final start = _clean(DateTime.parse(periodRows[i]['startDate'] as String));
       final endStr = periodRows[i]['endDate'] as String?;
       var pDays = pDuration;
       if (endStr != null) {
-        pDays = DateTime.parse(endStr).difference(start).inDays + 1;
+        pDays = _clean(DateTime.parse(endStr)).difference(start).inDays + 1;
       }
 
       var lenDays = L;
       if (i < periodRows.length - 1) {
-        final nextStart = DateTime.parse(periodRows[i + 1]['startDate'] as String);
+        final nextStart = _clean(DateTime.parse(periodRows[i + 1]['startDate'] as String));
         lenDays = nextStart.difference(start).inDays;
       } else if (cycleLengths.isNotEmpty) {
         lenDays = cycleLengths.last;
@@ -222,7 +233,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     // Latest period starting on or before `now`
     Map<String, dynamic>? currentPeriodRow;
     for (var i = periodRows.length - 1; i >= 0; i--) {
-      final start = DateTime.parse(periodRows[i]['startDate'] as String);
+      final start = _clean(DateTime.parse(periodRows[i]['startDate'] as String));
       if (!start.isAfter(now)) {
         currentPeriodRow = periodRows[i];
         break;
@@ -232,11 +243,11 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     if (currentPeriodRow == null) {
       // All logged periods start in the future relative to `now`
       // Fallback to using the oldest start date and projecting backwards
-      final firstStart = DateTime.parse(periodRows.first['startDate'] as String);
+      final firstStart = _clean(DateTime.parse(periodRows.first['startDate'] as String));
       final daysDiff = firstStart.difference(now).inDays;
       final cyclesToSubtract = (daysDiff / L).ceil();
       final estimatedPrevStart = firstStart.subtract(Duration(days: cyclesToSubtract * L));
-      
+
       return _evaluateWithStart(
         estimatedPrevStart,
         now,
@@ -258,9 +269,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       );
     }
 
-    final currentPeriodStart = DateTime.parse(currentPeriodRow['startDate'] as String);
+    final currentPeriodStart = _clean(DateTime.parse(currentPeriodRow['startDate'] as String));
     final currentPeriodEndStr = currentPeriodRow['endDate'] as String?;
-    final currentPeriodEnd = currentPeriodEndStr != null ? DateTime.parse(currentPeriodEndStr) : null;
+    final currentPeriodEnd = currentPeriodEndStr != null ? _clean(DateTime.parse(currentPeriodEndStr)) : null;
 
     return _evaluateWithStart(
       currentPeriodStart,
@@ -328,9 +339,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     } else {
       // Calculate Ovulation Day relative to current prediction cycle start
       final cyclesElapsed = (daysSinceStart / L).floor();
-      final currentPredictedStart = startDate.add(Duration(days: cyclesElapsed * L));
-      
-      final currentDayOfCycle = now.difference(currentPredictedStart).inDays + 1;
+      final currentPredictedStart = cleanStart.add(Duration(days: cyclesElapsed * L));
+
+      final currentDayOfCycle = cleanNow.difference(currentPredictedStart).inDays + 1;
       dayOfCycle = currentDayOfCycle;
 
       final ovulationDayNum = L - 14;
@@ -343,13 +354,20 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       }
     }
 
+    // Overdue detection: at least one expected period boundary (start + k*L)
+    // has passed with no new period logged. `daysOverdue` counts full days
+    // past the most recent expected boundary.
+    final missedBoundaries = (daysSinceStart / L).floor();
+    final rawOverdueDays = daysSinceStart - missedBoundaries * L;
+    final isOverdue = !isBleeding && missedBoundaries >= 1 && rawOverdueDays >= 1;
+    final daysOverdue = isOverdue ? rawOverdueDays : 0;
+
     // Prediction Dates
-    // We project the next period based on the last actual start date
-    var cyclesElapsedForPrediction = 1;
-    if (daysSinceStart >= L + 14) {
-      cyclesElapsedForPrediction = (daysSinceStart / L).floor() + 1;
-    }
-    final nextPeriodPrediction = startDate.add(Duration(days: cyclesElapsedForPrediction * L));
+    // Always project to the nearest upcoming (or today's) boundary, so the
+    // prediction is never silently stuck in the past.
+    var cyclesElapsedForPrediction = (daysSinceStart / L).ceil();
+    if (cyclesElapsedForPrediction < 1) cyclesElapsedForPrediction = 1;
+    final nextPeriodPrediction = cleanStart.add(Duration(days: cyclesElapsedForPrediction * L));
 
     final predictedOvulation = nextPeriodPrediction.subtract(const Duration(days: 14));
     final fertileStart = nextPeriodPrediction.subtract(const Duration(days: 19));
@@ -358,14 +376,14 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     // Upgraded v2 prediction windows
     DateTime nextPeriodWindowStart;
     DateTime nextPeriodWindowEnd;
-    
+
     if (cycleLengths.isNotEmpty) {
       final minL = cycleLengths.reduce(math.min);
       final maxL = cycleLengths.reduce(math.max);
       final k = cyclesElapsedForPrediction;
-      nextPeriodWindowStart = startDate.add(Duration(days: k * minL));
-      nextPeriodWindowEnd = startDate.add(Duration(days: k * maxL));
-      
+      nextPeriodWindowStart = cleanStart.add(Duration(days: k * minL));
+      nextPeriodWindowEnd = cleanStart.add(Duration(days: k * maxL));
+
       if (nextPeriodWindowEnd.difference(nextPeriodWindowStart).inDays < 2) {
         nextPeriodWindowStart = nextPeriodPrediction.subtract(const Duration(days: 1));
         nextPeriodWindowEnd = nextPeriodPrediction.add(const Duration(days: 1));
@@ -413,6 +431,8 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       trendPoints: trendPoints,
       regularityLabel: regularityLabel,
       predictionDisclaimer: predictionDisclaimer,
+      isOverdue: isOverdue,
+      daysOverdue: daysOverdue,
     );
   }
 
@@ -434,10 +454,12 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       nextPeriodWindowEnd: defaultNextStart.add(const Duration(days: 2)),
       pmsWindowStart: defaultNextStart.subtract(const Duration(days: 4)),
       pmsWindowEnd: defaultNextStart.subtract(const Duration(days: 1)),
-      regularityScore: 100,
+      regularityScore: 0,
       trendPoints: [],
       regularityLabel: 'دادهٔ ناکافی',
       predictionDisclaimer: 'توجه: این پیش‌بینی صرفاً یک تخمین بیولوژیک است و جنبه قطعیت پزشکی ندارد. چرخه بدنی شما تحت تأثیر عوامل مختلفی نظیر استرس، بیماری، تغییرات وزن، سفر و داروها قرار می‌گیرد.',
+      isOverdue: false,
+      daysOverdue: 0,
     );
   }
 
@@ -458,8 +480,13 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
 
   @override
   bool canRun(CycleEngineInput input) {
-    final flags = SettingsFlags.fromMap(input.appSettings);
-    return flags.canShowCycle;
+    // Same gate as calculate(): privacy guard + module toggle.
+    // (Previously this required a 'cycle_consent' settings key that nothing
+    // in the app ever writes, so every RitmoEngineBus execution threw
+    // EngineCannotRunException and the home dashboard never saw cycle data.)
+    final isFemale = CyclePrivacyGuard.isVisible(input.appSettings);
+    final cycleEnabled = ModuleGate.instance.isEnabledFrom(input.appSettings, 'module_cycle_enabled');
+    return isFemale && cycleEnabled;
   }
 
   @override

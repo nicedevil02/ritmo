@@ -18,6 +18,7 @@ import 'package:ritmo/core/security/app_lock_gate.dart';
 import 'package:ritmo/core/services/account_reset_service.dart';
 import 'package:ritmo/core/services/background_worker.dart';
 import 'package:ritmo/core/services/notification_action_dispatcher.dart';
+import 'package:ritmo/core/services/sleep_winddown_reminder_service.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_preferences.dart';
@@ -164,6 +165,9 @@ class _RitmoAppState extends State<RitmoApp> {
 
       // WarmUp database tasks and sweep (BOOT-07)
       await DatabaseHelper.warmUp(db);
+
+      // قدم صفر: همگام‌سازی یادآور پیش‌خواب با تنظیمات در هر شروع اپ
+      unawaited(SleepWinddownReminderService.syncFromSettings());
 
       // Restore any in-progress course study timer (C8)
       await CourseTimerService.instance.initOnAppStart();

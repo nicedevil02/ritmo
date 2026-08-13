@@ -107,8 +107,14 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
       widget.onSaved();
 
       if (mounted) {
+        // Capture the messenger before popping: once the sheet's context is
+        // removed from the tree, calling ScaffoldMessenger.of(context) after
+        // Navigator.pop silently fails to show the SnackBar. The messenger
+        // instance itself stays valid because it belongs to the ancestor
+        // Scaffold, not to this sheet's context.
+        final messenger = ScaffoldMessenger.of(context);
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('ارزیابی وضعیت شما با موفقیت ثبت شد 🌿', style: TextStyle(fontFamily: 'Vazirmatn')),
             backgroundColor: Color(0xffEC4899),

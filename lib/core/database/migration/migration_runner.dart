@@ -36,8 +36,8 @@ import 'package:ritmo/core/database/migration/migrations/migration_v94_worship_d
 import 'package:ritmo/core/database/migration/migrations/migration_v95_movement_live_sessions.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v96_onboarding_starter_category.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v97_course_session_question_resolved.dart';
-import 'package:ritmo/core/database/migration/migrations/migration_v98_movement_slot_overrides.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v99_movement_muscle_focus.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v100_sleep_program.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -139,6 +139,7 @@ class MigrationRunner {
     MigrationV97SessionQuestionResolved(), // Persist resolved state of course session open questions
     MigrationV98MovementSlotOverrides(), // Tab 1: this-week exceptions for movement slots
     MigrationV99MovementMuscleFocus(), // Tab 1: muscle focus for strength movements
+    MigrationV100SleepProgram(), // قدم ۲ مسیر خواب: sleep_programs + sleep_plan_days
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

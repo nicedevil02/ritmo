@@ -84,7 +84,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialSection.index);
 
     RitmoEvents.routineChanges.addListener(_requestReload);
 
@@ -203,6 +203,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         moodLogs: _rawMoodLogs,
         energyLogs: _rawEnergyLogs,
         today: now,
+        horizonDays: _selectedHorizonDays,
       );
       final sleepInput = SleepEngineInput(
         sleepLogs: _rawSleepLogs,
@@ -285,25 +286,42 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
       // Build trend dataset once in _loadAllData
       final dayKeys = RitmoDate.lastNDayKeys(now, _selectedHorizonDays);
-      final energyByDate = <String, double>{};
+
+      // A day can have more than one log. Averaging (instead of letting
+      // whichever entry the loop happens to visit last silently win, which
+      // depended on DB ordering rather than anything meaningful) keeps the
+      // pulse chart's per-day values honest and order-independent.
+      final energyValuesByDate = <String, List<double>>{};
       for (final e in _rawEnergyLogs) {
         final key = RitmoDate.dayKey(DateTime.fromMillisecondsSinceEpoch(e.loggedAt));
         var val = 2.0;
         if (e.energyLevel == EnergyLevel.high) val = 3.0;
         if (e.energyLevel == EnergyLevel.low) val = 1.0;
-        energyByDate[key] = val;
+        energyValuesByDate.putIfAbsent(key, () => []).add(val);
       }
+      final energyByDate = <String, double>{
+        for (final entry in energyValuesByDate.entries)
+          entry.key: entry.value.reduce((a, b) => a + b) / entry.value.length,
+      };
 
-      final sleepByDate = <String, double>{};
+      final sleepValuesByDate = <String, List<double>>{};
       for (final s in _rawSleepLogs) {
-        sleepByDate[s.date] = s.durationHours;
+        sleepValuesByDate.putIfAbsent(s.date, () => []).add(s.durationHours);
       }
+      final sleepByDate = <String, double>{
+        for (final entry in sleepValuesByDate.entries)
+          entry.key: entry.value.reduce((a, b) => a + b) / entry.value.length,
+      };
 
-      final moodByDate = <String, double>{};
+      final moodValuesByDate = <String, List<double>>{};
       for (final m in _rawMoodLogs) {
         final key = RitmoDate.dayKey(DateTime.fromMillisecondsSinceEpoch(m.loggedAt));
-        moodByDate[key] = m.valence.toDouble();
+        moodValuesByDate.putIfAbsent(key, () => []).add(m.valence.toDouble());
       }
+      final moodByDate = <String, double>{
+        for (final entry in moodValuesByDate.entries)
+          entry.key: entry.value.reduce((a, b) => a + b) / entry.value.length,
+      };
 
       final reflectionDates = _reflections.map((r) => r.date).toSet();
 
@@ -325,6 +343,11 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       }
     } catch (e, stack) {
       debugPrint('[WellbeingScreen ERROR] $e\n$stack');
+      if (mounted) {
+        setState(() {
+          _loadFailed = true;
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -785,7 +808,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           children: [
             Expanded(
               child: Text(
-                'ماژول‌های انرژی و خواب غیرفعال هستند.',
+                'ماژول‌های انرژی و خواب فیرفعال هستند.',
                 style: RitmoTextStyles.caption(colors.textPrimary),
               ),
             ),
@@ -964,15 +987,32 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   ),
                 ],
               ),
-              // I-04: Action button on Golden Window card
+              // I-04: Golden Window card now opens an honest explanation instead of
+              // falsely claiming routines were auto-scheduled (nothing here talks
+              // to a scheduler yet).
               TextButton(
                 onPressed: () {
                   RitmoHapticsPolicy.tap();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('برنامه‌ریزی روتین‌ها در پنجره طلایی انجام شد.')),
+                  showDialog<void>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: colors.surface,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.card)),
+                      title: Text('پنجرهٔ طلایی انرژی', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+                      content: Text(
+                        'در بازهٔ ${_energyOutput?.peakPerformanceWindow ?? "نامشخص"} معمولاً بیشترین انرژی را داری. کارهای مهم یا سخت‌تر خودت را از برنامهٔ «امروزِ من» به این بازه منتقل کن تا از این انرژی استفاده کنی.',
+                        style: RitmoTextStyles.body(colors.textSecondary),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: Text('باشه', style: RitmoTextStyles.label(colors.primary)),
+                        ),
+                      ],
+                    ),
                   );
                 },
-                child: Text('انتقال به پنجره طلایی', style: TextStyle(fontSize: 11.5, color: colors.primary, fontFamily: 'Vazirmatn')),
+                child: Text('یعنی چی؟', style: TextStyle(fontSize: 11.5, color: colors.primary, fontFamily: 'Vazirmatn')),
               ),
             ],
           ),
@@ -1024,7 +1064,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           // H-21: Use LifeBalanceEngine.minCompletionsForBalance constant
           if (score == null)
             Text(
-              'برای محاسبهٔ تعادل، حداقل ${RitmoNumber.faInt(LifeBalanceEngine.minCompletionsForBalance)} روتین تکمیل‌شده لازم است.',
+              'برای محاسبهٔ تعادل، داقل ${RitmoNumber.faInt(LifeBalanceEngine.minCompletionsForBalance)} روتین تکمیل‌شده لازم است.',
               style: RitmoTextStyles.caption(colors.textSecondary),
             )
           else ...[

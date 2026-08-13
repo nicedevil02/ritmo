@@ -4,7 +4,11 @@ import 'package:ritmo/core/analytics/mood_engine.dart';
 import 'package:ritmo/core/analytics/reflection_engine.dart';
 import 'package:ritmo/core/analytics/sleep_engine.dart';
 import 'package:ritmo/core/analytics/wellbeing_engine.dart';
+import 'package:ritmo/core/analytics/wellbeing_insight_loop.dart';
+import 'package:ritmo/core/analytics/wellbeing_triple_chain.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/features/energy/models/energy_mood_models.dart';
+import 'package:ritmo/features/sleep/models/sleep_models.dart';
 
 enum WellbeingInsightKind {
   lastNightSleep,
@@ -17,6 +21,8 @@ enum WellbeingInsightKind {
   bestBedtime,
   balanceTrend,
   indexDriver,
+  tripleChain,
+  loopOutcome,
 }
 
 enum WellbeingInsightMaturity { growing, ready }
@@ -84,6 +90,11 @@ class WellbeingInsightInput {
     this.moodLogCount = 0,
     this.sleepLogCount = 0,
     this.reflectionCount = 0,
+    this.sleepLogs = const [],
+    this.energyLogs = const [],
+    this.moodLogs = const [],
+    this.targetSleepHours = 7.5,
+    this.loopPrevious,
   });
 
   final DateTime now;
@@ -98,13 +109,14 @@ class WellbeingInsightInput {
   final int moodLogCount;
   final int sleepLogCount;
   final int reflectionCount;
+  final List<SleepLog> sleepLogs;
+  final List<EnergyLog> energyLogs;
+  final List<MoodLog> moodLogs;
+  final double targetSleepHours;
+  final WellbeingInsightLoopState? loopPrevious;
 }
 
 /// Picks at most one narrative for the Today tab.
-///
-/// Ready insights beat growing ones. Near-ties rotate by calendar day so the
-/// same correlation does not monopolize the card. Growing insights are only
-/// featured when nothing is ready and at least one real sample exists.
 class WellbeingInsightArbiter {
   const WellbeingInsightArbiter();
 
@@ -114,6 +126,8 @@ class WellbeingInsightArbiter {
 
   WellbeingInsightSnapshot evaluate(WellbeingInsightInput input) {
     final candidates = <WellbeingInsight>[
+      ..._loopOutcome(input),
+      ..._tripleChain(input),
       ..._lastNight(input),
       ..._reflectionStreak(input),
       ..._goldenWindow(input),
@@ -133,6 +147,37 @@ class WellbeingInsightArbiter {
       ready: ready,
       growing: growing,
     );
+  }
+
+  static Map<String, double> metricByKind(WellbeingInsightInput input) {
+    final out = <String, double>{};
+    final balanceHours = input.sleep?.sleepBalanceHours;
+    if (balanceHours != null) {
+      out[WellbeingInsightKind.lastNightSleep.name] = balanceHours;
+      out[WellbeingInsightKind.sleepBank.name] = balanceHours;
+      out[WellbeingInsightKind.sleepNextDay.name] = balanceHours;
+      out[WellbeingInsightKind.bestBedtime.name] = balanceHours;
+      out[WellbeingInsightKind.tripleChain.name] = balanceHours;
+    }
+    final streak = input.reflection?.currentStreak;
+    if (streak != null) {
+      out[WellbeingInsightKind.reflectionStreak.name] = streak.toDouble();
+      out[WellbeingInsightKind.reflectionLink.name] = streak.toDouble();
+    }
+    final energyAvg = input.energy?.avgLevel;
+    if (energyAvg != null) {
+      out[WellbeingInsightKind.goldenWindow.name] = energyAvg;
+      out[WellbeingInsightKind.moodEnergyLink.name] = energyAvg;
+    }
+    final score = input.balance?.score;
+    if (score != null) {
+      out[WellbeingInsightKind.balanceTrend.name] = score.toDouble();
+    }
+    final index = input.index?.value;
+    if (index != null) {
+      out[WellbeingInsightKind.indexDriver.name] = index;
+    }
+    return out;
   }
 
   /// Visible for tests.
@@ -158,6 +203,67 @@ class WellbeingInsightArbiter {
     final byScore = b.score.compareTo(a.score);
     if (byScore != 0) return byScore;
     return a.kind.name.compareTo(b.kind.name);
+  }
+
+  List<WellbeingInsight> _loopOutcome(WellbeingInsightInput input) {
+    final outcome = WellbeingInsightLoop.evaluate(
+      previous: input.loopPrevious,
+      now: input.now,
+      currentMetrics: metricByKind(input),
+    );
+    if (outcome == null) return const [];
+    final label = _kindLabel(outcome.previousKindName);
+    if (outcome.improved) {
+      return [
+        WellbeingInsight(
+          kind: WellbeingInsightKind.loopOutcome,
+          maturity: WellbeingInsightMaturity.ready,
+          title: 'روایت هفتهٔ قبل اثر داشت',
+          body: 'بعد از دیدن «$label»، شاخص مرتبط بهتر شده. همین مسیر را یک هفتهٔ دیگر ادامه بده.',
+          score: 1.42,
+          have: outcome.days,
+          need: WellbeingInsightLoop.minDaysBeforeOutcome,
+        ),
+      ];
+    }
+    return [
+      WellbeingInsight(
+        kind: WellbeingInsightKind.loopOutcome,
+        maturity: WellbeingInsightMaturity.ready,
+        title: 'هنوز اثر واضحی دیده نشد',
+        body: 'هفتهٔ پیش «$label» را دیدی. تغییر شاخص هنوز از نویز روزمره بزرگ‌تر نیست — زود است نتیجه بگیریم.',
+        score: 0.74,
+        have: outcome.days,
+        need: WellbeingInsightLoop.minDaysBeforeOutcome,
+      ),
+    ];
+  }
+
+  List<WellbeingInsight> _tripleChain(WellbeingInsightInput input) {
+    if (input.sleepLogs.isEmpty || input.energyLogs.isEmpty || input.moodLogs.isEmpty) {
+      return const [];
+    }
+    final hit = const WellbeingTripleChain().detect(
+      sleepLogs: input.sleepLogs,
+      energyLogs: input.energyLogs,
+      moodLogs: input.moodLogs,
+      targetSleepHours: input.targetSleepHours,
+    );
+    if (hit == null) return const [];
+    return [
+      WellbeingInsight(
+        kind: WellbeingInsightKind.tripleChain,
+        maturity: WellbeingInsightMaturity.ready,
+        title: 'یک زنجیرهٔ سه‌تایی دیده شد',
+        body:
+            'در ${RitmoNumber.faInt(hit.hits)} ${hit.weekdayFa}های اخیر، کم‌خوابی شب قبل با انرژی پایین صبح و حال ضعیف‌تر بعدازظهر همراه بوده. (بر پایهٔ ${RitmoNumber.faInt(hit.hits)} از ${RitmoNumber.faInt(hit.opportunities)} بار)',
+        score: 1.24,
+        have: hit.hits,
+        need: hit.opportunities,
+        action: WellbeingInsightAction.logSleep,
+        actionLabel: 'ثبت خواب',
+      ),
+    ];
   }
 
   List<WellbeingInsight> _lastNight(WellbeingInsightInput input) {
@@ -214,14 +320,17 @@ class WellbeingInsightArbiter {
 
   List<WellbeingInsight> _reflectionStreak(WellbeingInsightInput input) {
     final streak = input.reflection?.currentStreak ?? 0;
+    final forgiven = input.reflection?.forgivenThisWeek ?? false;
     if (streak >= 2) {
       return [
         WellbeingInsight(
           kind: WellbeingInsightKind.reflectionStreak,
           maturity: WellbeingInsightMaturity.ready,
-          title: 'استریک بازتاب زنده است',
-          body: '${RitmoNumber.faInt(streak)} روز پیاپی نوشته‌ای. امروز را از دست نده تا زنجیره نشکند.',
-          score: 1.12,
+          title: forgiven ? 'زنجیره با بخشش هفتگی زنده ماند' : 'استریک بازتاب زنده است',
+          body: forgiven
+              ? 'یک روز در ۷ روز اخیر جا ماند، ولی شمرده نشد. زنجیره ${RitmoNumber.faInt(streak)} روزه است — امروز را از دست نده.'
+              : '${RitmoNumber.faInt(streak)} روز پیاپی نوشته‌ای. امروز را از دست نده تا زنجیره نشکند.',
+          score: forgiven ? 1.16 : 1.12,
           have: streak,
           need: streak,
           action: WellbeingInsightAction.logReflection,
@@ -525,5 +634,34 @@ class WellbeingInsightArbiter {
     return text.contains('کافی نیست') ||
         text.contains('در حال یادگیری') ||
         text.contains('در حال تحلیل');
+  }
+
+  String _kindLabel(String kindName) {
+    switch (kindName) {
+      case 'lastNightSleep':
+        return 'خواب دیشب';
+      case 'reflectionStreak':
+        return 'استریک بازتاب';
+      case 'goldenWindow':
+        return 'پنجرهٔ طلایی';
+      case 'moodEnergyLink':
+        return 'حال و انرژی';
+      case 'sleepNextDay':
+        return 'خواب و روز بعد';
+      case 'reflectionLink':
+        return 'بازتاب و حال';
+      case 'sleepBank':
+        return 'ذخیرهٔ خواب';
+      case 'bestBedtime':
+        return 'ساعت خواب بهتر';
+      case 'balanceTrend':
+        return 'توزیع تلاش';
+      case 'indexDriver':
+        return 'چرا این عدد';
+      case 'tripleChain':
+        return 'زنجیرهٔ سه‌تایی';
+      default:
+        return 'روایت امروز';
+    }
   }
 }

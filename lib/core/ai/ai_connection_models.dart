@@ -46,7 +46,7 @@ const List<AiProviderPreset> kAiProviderPresets = [
     nameFa: 'ژیپو (智谱)',
     taglineFa: 'پیشنهاد ریتمو برای ایران — سریع و ارزان',
     endpoint: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-    models: ['glm-5.2', 'glm-4-plus', 'glm-4-flash'],
+    models: ['glm-4.7-flash', 'glm-4-flash', 'glm-4-plus', 'glm-5.2'],
     keyUrl: 'https://open.bigmodel.cn/usercenter/apikeys',
     brandColor: Color(0xff3B82F6),
     worksInIranWithoutVpn: true,
@@ -71,6 +71,7 @@ const List<AiProviderPreset> kAiProviderPresets = [
     taglineFa: 'سهمیهٔ رایگان روزانه — نیازمند شناسهٔ حساب',
     endpoint: 'https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai/v1/chat/completions',
     models: [
+      '@cf/zai-org/glm-4.7-flash',
       '@cf/meta/llama-3.2-3b-instruct',
       '@cf/meta/llama-3.3-70b-instruct',
       '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',

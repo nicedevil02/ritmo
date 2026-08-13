@@ -203,6 +203,27 @@ class AiConnectionRepository {
 
   /// فقط برای نمایش. هرگز کلید برنمی‌گرداند.
   Future<List<AiChainEntry>> describeChain({AiSlot slot = AiSlot.assistant}) async {
+    final mode = await loadMode();
+    if (mode == AiMode.ritmoServer) {
+      return const [
+        AiChainEntry(
+          labelFa: 'اولویت ۱ (ژیپو GLM-4.7-Flash)',
+          host: 'open.bigmodel.cn',
+          model: 'glm-4.7-flash',
+        ),
+        AiChainEntry(
+          labelFa: 'اولویت ۲ (کلودفلر)',
+          host: 'api.cloudflare.com',
+          model: '@cf/zai-org/glm-4.7-flash',
+        ),
+        AiChainEntry(
+          labelFa: 'اولویت ۳ (پشتیبان اوپن‌کد)',
+          host: 'opencode.ai',
+          model: 'deepseek-v4-flash-free',
+        ),
+      ];
+    }
+
     final config = await load(slot: slot);
     final chain = <AiChainEntry>[];
 

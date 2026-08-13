@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_connection_repository.dart';
@@ -9,7 +8,6 @@ import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
-import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -188,7 +186,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
   }
 
   String get _effectiveModelPreview {
-    if (_mode == AiMode.ritmoServer) return 'مدل پیش‌فرض سرور ریتمو';
+    if (_mode == AiMode.ritmoServer) return 'glm-4.7-flash (ژیپو · سرور ریتمو)';
     final normalized = AiEndpointNormalizer.normalize(_urlController.text);
     return AIGateway.instance.previewEffectiveModel(
       baseUrl: normalized,
@@ -251,6 +249,66 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
     });
 
     await _saveConfig();
+
+    if (_mode == AiMode.ritmoServer) {
+      // Priority 1: Zhipu AI
+      var result = await AIGateway.instance.testConnection(
+        baseUrl: AIGateway.defaultZhipuBaseUrl,
+        apiKey: AIGateway.defaultZhipuApiKey,
+        model: AIGateway.defaultZhipuModel,
+        timeoutMs: 15000,
+      );
+
+      // Priority 2: Cloudflare Workers AI (15s)
+      if (!result.ok) {
+        var cfAccountId = _cloudflareAccountIdController.text.trim();
+        if (cfAccountId.isEmpty) {
+          cfAccountId = 'd30ec37bac346109c0683cb64a420d97';
+        }
+        final cfUrl = AIGateway.defaultCloudflareBaseUrl.replaceAll('{ACCOUNT_ID}', cfAccountId);
+        result = await AIGateway.instance.testConnection(
+          baseUrl: cfUrl,
+          apiKey: AIGateway.defaultCloudflareApiKey,
+          model: AIGateway.defaultCloudflareModel,
+          timeoutMs: 15000,
+        );
+      }
+
+      // Priority 3: OpenCode fallback (30s)
+      if (!result.ok) {
+        result = await AIGateway.instance.testConnection(
+          baseUrl: AIGateway.defaultBaseUrl,
+          apiKey: AIGateway.defaultApiKey,
+          model: AIGateway.defaultModel,
+          timeoutMs: 30000,
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _isTesting = false;
+          _lastTestResult = result;
+        });
+
+        if (result.ok) {
+          RitmoHaptics.tap();
+          RitmoToast.show(
+            context,
+            'اتصال به سرور ریتمو با موفقیت برقرار است',
+            icon: Icons.check_circle_rounded,
+            iconColor: context.colors.success,
+          );
+        } else {
+          RitmoToast.show(
+            context,
+            result.messageFa,
+            icon: Icons.error_outline_rounded,
+            iconColor: context.colors.warning,
+          );
+        }
+      }
+      return;
+    }
 
     var targetUrl = AiEndpointNormalizer.normalize(_urlController.text);
     if (_selectedPresetId == 'cloudflare' && _cloudflareAccountIdController.text.isNotEmpty) {
@@ -353,12 +411,12 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
           future: _loadFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Padding(
-                padding: const EdgeInsets.all(RitmoSpacing.md),
+              return const Padding(
+                padding: EdgeInsets.all(RitmoSpacing.md),
                 child: Column(
                   children: [
                     RitmoSkeletonCard(height: 180),
-                    const SizedBox(height: RitmoSpacing.md),
+                    SizedBox(height: RitmoSpacing.md),
                     RitmoSkeletonCard(height: 240),
                   ],
                 ),
@@ -396,20 +454,115 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                   ),
                   const SizedBox(height: RitmoSpacing.md),
 
-                  // 2. Mode Selector
-                  RitmoSegmentedControl<AiMode>(
-                    segments: const {
-                      AiMode.ritmoServer: 'سرور ریتمو',
-                      AiMode.personalKey: 'کلید شخصی',
-                    },
-                    selected: _mode,
-                    onSelected: (mode) async {
-                      setState(() {
-                        _mode = mode;
-                      });
-                      await AiConnectionRepository.instance.saveMode(mode);
-                      await _saveConfig();
-                    },
+                  // 2. Mode Selector (Premium Custom Cards)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RitmoCard(
+                          isSelected: _mode == AiMode.ritmoServer,
+                          onTap: () async {
+                            setState(() {
+                              _mode = AiMode.ritmoServer;
+                            });
+                            await AiConnectionRepository.instance.saveMode(AiMode.ritmoServer);
+                            await _saveConfig();
+                          },
+                          padding: const EdgeInsets.all(RitmoSpacing.md),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: (_mode == AiMode.ritmoServer ? colors.primary : colors.textSecondary).withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.cloud_done_rounded,
+                                  color: _mode == AiMode.ritmoServer ? colors.primary : colors.textSecondary,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(height: RitmoSpacing.sm),
+                              Text(
+                                'سرور ریتمو',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: _mode == AiMode.ritmoServer ? colors.primary : colors.textPrimary,
+                                  fontFamily: 'Vazirmatn',
+                                ),
+                              ),
+                              const SizedBox(height: RitmoSpacing.xs),
+                              Text(
+                                'اتصال ابری، سریع و رایگان به هوش مصنوعی',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: colors.textSecondary,
+                                  fontFamily: 'Vazirmatn',
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: RitmoSpacing.sm),
+                      Expanded(
+                        child: RitmoCard(
+                          isSelected: _mode == AiMode.personalKey,
+                          onTap: () async {
+                            setState(() {
+                              _mode = AiMode.personalKey;
+                            });
+                            await AiConnectionRepository.instance.saveMode(AiMode.personalKey);
+                            await _saveConfig();
+                          },
+                          padding: const EdgeInsets.all(RitmoSpacing.md),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: (_mode == AiMode.personalKey ? colors.primary : colors.textSecondary).withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.vpn_key_rounded,
+                                  color: _mode == AiMode.personalKey ? colors.primary : colors.textSecondary,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(height: RitmoSpacing.sm),
+                              Text(
+                                'کلید شخصی',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: _mode == AiMode.personalKey ? colors.primary : colors.textPrimary,
+                                  fontFamily: 'Vazirmatn',
+                                ),
+                              ),
+                              const SizedBox(height: RitmoSpacing.xs),
+                              Text(
+                                'پیکربندی اختصاصی و کلیدهای شخصی شما',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: colors.textSecondary,
+                                  fontFamily: 'Vazirmatn',
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: RitmoSpacing.md),
 
@@ -425,7 +578,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                               Icon(Icons.shield_outlined, color: colors.primary, size: 20),
                               const SizedBox(width: RitmoSpacing.xs),
                               Text(
-                                'اتصال ابری امن ریتمو',
+                                'اتصال ابری امن ریتمو (سرویس سه لایه)',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -437,7 +590,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                           ),
                           const SizedBox(height: RitmoSpacing.sm),
                           Text(
-                            'ریتمو درخواست‌ها را از سرور خودش عبور می‌دهد. نیازی به کلید ندارید و هیچ کلیدی روی دستگاه شما ذخیره نمی‌شود. اگر می‌خواهید از سرویس‌دهندهٔ خودتان استفاده کنید، «کلید شخصی» را انتخاب کنید.',
+                            '• اولویت اول: ژیپو (Zhipu AI) با مدل glm-4.7-flash (پاسخ‌دهی آنی و بدون نیاز به تحریم‌شکن، مهلت ۱۵ ثانیه)\n• اولویت دوم: Cloudflare Workers AI با مدل @cf/zai-org/glm-4.7-flash (در صورت وجود شناسه حساب، مهلت ۱۵ ثانیه)\n• اولویت سوم (پشتیبان): OpenCode با مدل deepseek-v4-flash-free (مهلت ۳۰ ثانیه)\n\nدر این حالت سیستم به صورت خودکار سریع‌ترین و پایدارترین مسیر را انتخاب کرده و نیازی به ثبت کلید API توسط شما نیست.',
                             style: TextStyle(
                               fontSize: 13,
                               color: colors.textSecondary,

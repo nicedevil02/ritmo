@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -86,6 +85,18 @@ class AIGateway {
   static const int defaultTimeoutMs =
       int.fromEnvironment('AI_TIMEOUT', defaultValue: 120000);
 
+  // Zhipu AI Default Credentials (Ritmo Server Priority 1)
+  static const String defaultZhipuApiKey = String.fromEnvironment('AI_ZHIPU_API_KEY', defaultValue: '048e18c7dec54278882116d380cd646b.Gyb5WGTwFWWtaoUz');
+  static const String defaultZhipuBaseUrl = String.fromEnvironment('AI_ZHIPU_BASE_URL', defaultValue: 'https://open.bigmodel.cn/api/paas/v4/chat/completions');
+  static const String defaultZhipuModel = String.fromEnvironment('AI_ZHIPU_MODEL', defaultValue: 'glm-4.7-flash');
+
+  // Cloudflare Workers AI Default Credentials (Ritmo Server Priority 2)
+  static const String defaultCloudflareApiKey = String.fromEnvironment('AI_CLOUDFLARE_API_KEY', defaultValue: 'cfut_2Xz1dxkip1movAHy524PsuFC04pcCzhBNjaNnKwj65aa7165');
+  static const String defaultCloudflareModel = String.fromEnvironment('AI_CLOUDFLARE_MODEL', defaultValue: '@cf/zai-org/glm-4.7-flash');
+  static const String defaultCloudflareBaseUrl = String.fromEnvironment('AI_CLOUDFLARE_BASE_URL', defaultValue: 'https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai/v1/chat/completions');
+  static const int defaultRitmoServerTimeoutMs = 15000; // 15 seconds
+  static const int defaultOpenCodeTimeoutMs = 30000; // 30 seconds
+
   // Secondary credentials used as automatic failover when the primary key
   // hits a rate limit (429) or exhausts its daily quota (Cloudflare 4006).
   static const String secondaryApiKey = String.fromEnvironment('AI_API_KEY_2');
@@ -157,19 +168,72 @@ class AIGateway {
     }
   }
 
-  /// Builds the ordered list of credential sets to try: the primary config
-  /// first, followed by the optional secondary credentials. The secondary is
-  /// only appended when it is configured and actually differs from the primary
-  /// (so a single key is never tried twice). Both build-time defines
-  /// (AI_API_KEY_2 / AI_BASE_URL_2) and runtime overrides stored in
-  /// app_settings (ai_api_key_2 / ai_base_url_2) are honoured.
+  /// Builds the ordered list of credential sets to try.
+  /// When in [AiMode.ritmoServer]:
+  ///   - Priority 1: Zhipu AI (glm-4.7-flash, timeout: 15s)
+  ///   - Priority 2: Cloudflare Workers AI (@cf/zai-org/glm-4.7-flash, timeout: 15s - if account ID is set)
+  ///   - Priority 3: OpenCode fallback (deepseek-v4-flash-free, timeout: 30s)
+  /// When in [AiMode.personalKey]:
+  ///   - Uses ONLY user-configured primary, backup, and separate features credentials.
+  ///   - All server defaults (Zhipu, Cloudflare & OpenCode) are IGNORED.
   Future<List<AIGatewayConfig>> _configChain({bool isFeaturesConfig = false}) async {
+    final mode = await AiConnectionRepository.instance.loadMode();
+
+    if (mode == AiMode.ritmoServer) {
+      String cloudflareAccountId = 'd30ec37bac346109c0683cb64a420d97';
+      try {
+        final db = await DatabaseHelper.instance.database;
+        final rows = await db.query('app_settings', where: 'key = ?', whereArgs: ['ai_cloudflare_account_id'], limit: 1);
+        if (rows.isNotEmpty) {
+          final val = (rows.first['value'] as String?) ?? '';
+          if (val.trim().isNotEmpty) {
+            cloudflareAccountId = val;
+          }
+        }
+      } catch (e) {
+        debugPrint('AIGateway: could not read cloudflare_account_id: $e');
+      }
+
+      final chain = <AIGatewayConfig>[];
+
+      // Priority 1: Zhipu AI (glm-4.7-flash, 15s)
+      chain.add(const AIGatewayConfig(
+        baseUrl: defaultZhipuBaseUrl,
+        apiKey: defaultZhipuApiKey,
+        model: defaultZhipuModel,
+        timeoutMs: defaultRitmoServerTimeoutMs,
+      ));
+
+      // Priority 2: Cloudflare Workers AI (15s)
+      final cfUrl = defaultCloudflareBaseUrl
+          .replaceAll('{ACCOUNT_ID}', cloudflareAccountId.trim())
+          .replaceAll('YOUR_ACCOUNT_ID', cloudflareAccountId.trim());
+
+      chain.add(AIGatewayConfig(
+        baseUrl: cfUrl,
+        apiKey: defaultCloudflareApiKey,
+        model: defaultCloudflareModel,
+        timeoutMs: defaultRitmoServerTimeoutMs,
+      ));
+
+      // Priority 3: OpenCode fallback (30s)
+      chain.add(const AIGatewayConfig(
+        baseUrl: defaultBaseUrl,
+        apiKey: defaultApiKey,
+        model: defaultModel,
+        timeoutMs: defaultOpenCodeTimeoutMs,
+      ));
+
+      return chain;
+    }
+
+    // mode == AiMode.personalKey
     final primary = await _loadConfig(isFeaturesConfig: isFeaturesConfig);
 
     var secKey = secondaryApiKey;
     var secUrl = secondaryBaseUrl;
 
-    // T-A5: Check SecureKeyStore first for ai_api_key_2
+    // Check SecureKeyStore first for ai_api_key_2
     final secureSecKey = await SecureKeyStore.getKey('ai_api_key_2');
     if (secureSecKey != null && secureSecKey.isNotEmpty) {
       secKey = secureSecKey;
@@ -201,7 +265,7 @@ class AIGateway {
       if (secKey != primary.apiKey || url != primary.baseUrl) {
         String secModel = primary.model;
         if (url.contains('cloudflare.com') && !secModel.startsWith('@cf/')) {
-          secModel = defaultModel;
+          secModel = defaultCloudflareModel;
         } else if (url.contains('bigmodel.cn') && secModel.startsWith('@cf/')) {
           secModel = defaultFeaturesModel;
         }
@@ -214,40 +278,13 @@ class AIGateway {
       }
     }
 
-    // Append Zhipu AI / BigModel (from features config) as the third fallback for assistants
+    // Append Zhipu AI / BigModel (from features config) as fallback for personal key mode if configured
     if (!isFeaturesConfig) {
       final featuresConfig = await _loadConfig(isFeaturesConfig: true);
       if (featuresConfig.apiKey.isNotEmpty) {
         final isDuplicate = chain.any((c) => c.apiKey == featuresConfig.apiKey && c.baseUrl == featuresConfig.baseUrl);
         if (!isDuplicate) {
           chain.add(featuresConfig);
-        }
-      }
-    } else {
-      // Append assistant primary and secondary configs as fallbacks for features
-      final assistantPrimary = await _loadConfig();
-      if (assistantPrimary.apiKey.isNotEmpty) {
-        final isDuplicate = chain.any((c) => c.apiKey == assistantPrimary.apiKey && c.baseUrl == assistantPrimary.baseUrl);
-        if (!isDuplicate) {
-          chain.add(assistantPrimary);
-        }
-      }
-      if (secKey.isNotEmpty) {
-        final url = secUrl.isNotEmpty ? secUrl : assistantPrimary.baseUrl;
-        final isDuplicate = chain.any((c) => c.apiKey == secKey && c.baseUrl == url);
-        if (!isDuplicate) {
-          String secModel = assistantPrimary.model;
-          if (url.contains('cloudflare.com') && !secModel.startsWith('@cf/')) {
-            secModel = defaultModel;
-          } else if (url.contains('bigmodel.cn') && secModel.startsWith('@cf/')) {
-            secModel = defaultFeaturesModel;
-          }
-          chain.add(AIGatewayConfig(
-            baseUrl: url,
-            apiKey: secKey,
-            model: secModel,
-            timeoutMs: assistantPrimary.timeoutMs,
-          ));
         }
       }
     }
@@ -264,7 +301,7 @@ class AIGateway {
         return '@cf/meta/llama-3.2-3b-instruct';
       }
       if (!config.model.startsWith('@cf/')) {
-        return defaultModel; // '@cf/zai-org/glm-4.7-flash'
+        return defaultCloudflareModel; // '@cf/zai-org/glm-4.7-flash'
       }
     } else if (config.baseUrl.contains('bigmodel.cn')) {
       if (config.model.startsWith('@cf/')) {
@@ -437,12 +474,22 @@ class AIGateway {
       final model = _effectiveModel(config, preferLightCloudflareModel);
       final isLastConfig = i == chain.length - 1;
 
-      var retryCount = 2;
-      var currentDelayMs = 500;
+      debugPrint('''
+
+=================== [🤖 RITMO AI POST REQUEST] ===================
+📍 Attempt: ${i + 1}/${chain.length}
+🌐 Endpoint: ${config.baseUrl}
+🧠 Model:    $model
+⏱️ Timeout:  ${config.timeoutMs} ms
+=================================================================''');
+
+      var retryCount = 0;
+      var currentDelayMs = 300;
       final client = http.Client();
 
       try {
         while (retryCount >= 0) {
+          final stopwatch = Stopwatch()..start();
           try {
             final requestBody = <String, dynamic>{
               'model': model,
@@ -458,16 +505,26 @@ class AIGateway {
               'Content-Type': 'application/json; charset=utf-8',
             };
 
+            final parsedUri = Uri.tryParse(config.baseUrl);
+            if (parsedUri == null || config.baseUrl.contains('{ACCOUNT_ID}') || config.baseUrl.contains('YOUR_ACCOUNT_ID')) {
+              stopwatch.stop();
+              debugPrint('❌ [AI_GATEWAY] Invalid Base URL: "${config.baseUrl}"');
+              last = const _ChatOutcome.failure(errorBody: 'Invalid base URL');
+              break;
+            }
+
             final response = await client
                 .post(
-                  Uri.parse(config.baseUrl),
+                  parsedUri,
                   headers: headers,
                   body: utf8.encode(jsonEncode(requestBody)),
                 )
                 .timeout(Duration(milliseconds: config.timeoutMs + extraTimeoutMs));
 
+            stopwatch.stop();
+
             if (response.statusCode == 400 && tryJson) {
-              debugPrint('AIGateway: error 400 with JSON format, retrying without JSON format');
+              debugPrint('⚠️ [AI_GATEWAY] Error 400 with JSON format, retrying without JSON format...');
               tryJson = false;
               continue;
             }
@@ -488,16 +545,25 @@ class AIGateway {
               final responseJson = jsonDecode(responseString);
               final String aiContent =
                   responseJson['choices']?[0]?['message']?['content']?.toString() ?? '';
+
+              debugPrint('✅ [AI_GATEWAY] Success! Provider: ${parsedUri.host} | Model: $model | Latency: ${stopwatch.elapsedMilliseconds}ms');
+              debugPrint('=================================================================\n');
               return _ChatOutcome.success(aiContent);
-            } else if (response.statusCode == 429) {
-              last = const _ChatOutcome.failure(
-                statusCode: 429,
-                errorBody: 'Rate limit (429) from API',
+            } else if (response.statusCode == 429 || response.body.contains('1302')) {
+              final errBody = utf8.decode(response.bodyBytes);
+              last = _ChatOutcome.failure(
+                statusCode: response.statusCode,
+                errorBody: errBody,
               );
-              debugPrint('AIGateway: Rate limit 429 (key ${i + 1}/${chain.length}), retrying...');
-              await Future.delayed(Duration(milliseconds: currentDelayMs));
-              currentDelayMs *= 2;
-              retryCount--;
+              debugPrint('⚠️ [AI_GATEWAY] Rate limit / Concurrency limit (${response.statusCode}) from ${parsedUri.host} (Model: $model). Body: $errBody');
+              if (retryCount > 0) {
+                debugPrint('🔄 [AI_GATEWAY] Retrying in ${currentDelayMs}ms...');
+                await Future.delayed(Duration(milliseconds: currentDelayMs));
+                currentDelayMs *= 2;
+                retryCount--;
+              } else {
+                break;
+              }
             } else {
               final errBody = utf8.decode(response.bodyBytes);
               final quota = errBody.contains('4006') ||
@@ -507,28 +573,30 @@ class AIGateway {
                 errorBody: errBody,
                 quotaExhausted: quota,
               );
-              debugPrint('AIGateway: HTTP error ${response.statusCode} (key ${i + 1}/${chain.length})');
-              break; // leave retry loop; failover decided below
+              debugPrint('⚠️ [AI_GATEWAY] HTTP Error ${response.statusCode} from ${parsedUri.host}. Body: $errBody');
+              break;
             }
           } catch (e, stack) {
+            stopwatch.stop();
             last = _ChatOutcome.failure(exception: e.toString());
-            debugPrint('AIGateway request failed with exception: $e\n$stack');
-            await Future.delayed(Duration(milliseconds: currentDelayMs));
-            currentDelayMs *= 2;
-            retryCount--;
+            debugPrint('💥 [AI_GATEWAY] Exception on attempt (${config.baseUrl}): $e\n$stack');
+            if (retryCount > 0) {
+              await Future.delayed(Duration(milliseconds: currentDelayMs));
+              currentDelayMs *= 2;
+              retryCount--;
+            } else {
+              break;
+            }
           }
         }
       } finally {
         client.close();
       }
 
-      // Fail over to the next credential set for any non-200 / failed outcome
       final shouldFailover = !last.ok;
       if (!shouldFailover) break;
       if (!isLastConfig) {
-        debugPrint(
-          'AIGateway: failing over to next credentials in chain (${i + 2}/${chain.length}) due to: ${last.errorDetails}',
-        );
+        debugPrint('🔄 [AI_GATEWAY] Failing over to next credentials in chain (${i + 2}/${chain.length}) due to: ${last.errorDetails}\n');
       }
     }
 
@@ -547,25 +615,49 @@ class AIGateway {
     final chain = await _configChain(isFeaturesConfig: isFeaturesConfig);
     var errorTag = 'HTTP Error unknown';
 
+    debugPrint('\n=================== [🤖 RITMO AI STREAM REQUEST] ===================');
+    debugPrint('📍 Total configs in failover chain: ${chain.length}');
+
     for (var i = 0; i < chain.length; i++) {
       final config = chain[i];
       if (config.baseUrl.isEmpty) {
-        debugPrint('AIGateway: baseUrl is empty for key ${i + 1}/${chain.length}');
+        debugPrint('⚠️ [AI_GATEWAY] baseUrl is empty for key ${i + 1}/${chain.length}');
         errorTag = 'Empty base URL';
         if (i < chain.length - 1) continue;
         break;
       }
       if (config.apiKey.isEmpty) {
-        debugPrint('AIGateway: apiKey is empty for key ${i + 1}/${chain.length}');
+        debugPrint('⚠️ [AI_GATEWAY] apiKey is empty for key ${i + 1}/${chain.length}');
         errorTag = 'no_api_key';
         if (i < chain.length - 1) continue;
         break;
       }
       final isLastConfig = i == chain.length - 1;
+      final model = _effectiveModel(config, false);
       final client = http.Client();
+      final stopwatch = Stopwatch()..start();
+
+      debugPrint('''
+-----------------------------------------------------------------
+🔹 Attempt ${i + 1}/${chain.length}
+🌐 Endpoint: ${config.baseUrl}
+🧠 Model:    $model
+⏱️ Timeout:  ${config.timeoutMs} ms
+-----------------------------------------------------------------''');
 
       try {
-        final model = _effectiveModel(config, false);
+        final parsedUri = Uri.tryParse(config.baseUrl);
+        if (parsedUri == null || config.baseUrl.contains('{ACCOUNT_ID}') || config.baseUrl.contains('YOUR_ACCOUNT_ID')) {
+          stopwatch.stop();
+          debugPrint('❌ [AI_GATEWAY] Invalid Base URL: "${config.baseUrl}"');
+          errorTag = 'invalid_url';
+          if (!isLastConfig) {
+            debugPrint('🔄 [AI_GATEWAY] Failing over to next config in chain (${i + 2}/${chain.length})...\n');
+            continue;
+          }
+          break;
+        }
+
         final requestBody = {
           'model': model,
           'messages': messages,
@@ -578,48 +670,51 @@ class AIGateway {
           'Content-Type': 'application/json; charset=utf-8',
         };
 
-        final request = http.Request('POST', Uri.parse(config.baseUrl));
+        final request = http.Request('POST', parsedUri);
         request.headers.addAll(headers);
         request.body = jsonEncode(requestBody);
 
-        // Give connection attempts generous timeout (120s+) so slow VPN/proxies do not cut off early
-        final connectTimeout = math.max(config.timeoutMs, 120000);
+        final connectTimeout = config.timeoutMs;
         final response = await client
             .send(request)
             .timeout(Duration(milliseconds: connectTimeout));
 
+        stopwatch.stop();
+
         if (response.statusCode == 200) {
+          debugPrint('✅ [AI_GATEWAY] Stream Connected! Provider: ${parsedUri.host} | Model: $model | Latency: ${stopwatch.elapsedMilliseconds}ms');
+          debugPrint('=================================================================\n');
           return (ok: true, client: client, response: response, errorTag: '');
         }
 
         // Non-200: read the error body to decide whether to fail over.
         final bodyBytes = await response.stream.toBytes();
-        final errorBody = utf8.decode(bodyBytes);
+        final errorBody = utf8.decode(bodyBytes).trim();
         client.close();
+
+        debugPrint('⚠️ [AI_GATEWAY] HTTP Error ${response.statusCode} from ${parsedUri.host} (Model: $model)');
+        debugPrint('📝 Body: $errorBody');
 
         final quota = errorBody.contains('4006') ||
             errorBody.contains('daily free allocation');
-        final cleanBody = errorBody.trim();
         errorTag = quota 
             ? 'quota_exceeded' 
-            : 'HTTP Error ${response.statusCode}${cleanBody.isNotEmpty ? ': $cleanBody' : ''}';
+            : 'HTTP Error ${response.statusCode}${errorBody.isNotEmpty ? ': $errorBody' : ''}';
 
         if (!isLastConfig) {
-          debugPrint(
-            'AIGateway(stream): HTTP error ${response.statusCode} (key ${i + 1}/${chain.length}), failing over to next credentials in chain (${i + 2}/${chain.length})...',
-          );
+          debugPrint('🔄 [AI_GATEWAY] Failing over to next config in chain (${i + 2}/${chain.length})...\n');
           continue;
         }
         break;
       } catch (e) {
+        stopwatch.stop();
         try {
           client.close();
-        } catch (e, st) {
-          debugPrint('Error closing HTTP client on stream failure: $e\n$st');
-        }
+        } catch (_) {}
+        debugPrint('💥 [AI_GATEWAY] Exception on attempt ${i + 1}/${chain.length}: $e');
         errorTag = 'Exception: $e';
         if (!isLastConfig) {
-          debugPrint('AIGateway(stream): exception ($e), failing over to next credentials in chain (${i + 2}/${chain.length})...');
+          debugPrint('🔄 [AI_GATEWAY] Failing over to next config in chain (${i + 2}/${chain.length})...\n');
           continue;
         }
         break;
@@ -979,10 +1074,16 @@ class AIGateway {
               final jsonChunk = jsonDecode(jsonString);
               if (jsonChunk is Map && jsonChunk['choices'] is List && (jsonChunk['choices'] as List).isNotEmpty) {
                 final delta = jsonChunk['choices'][0]['delta'];
-                if (delta is Map && delta['content'] != null) {
-                  final content = delta['content'].toString();
-                  totalYieldedChars += content.length;
-                  yield content;
+                if (delta is Map) {
+                  final content = delta['content']?.toString();
+                  final reasoning = delta['reasoning_content']?.toString();
+                  final text = (content != null && content.isNotEmpty)
+                      ? content
+                      : (reasoning != null && reasoning.isNotEmpty ? reasoning : null);
+                  if (text != null && text.isNotEmpty) {
+                    totalYieldedChars += text.length;
+                    yield text;
+                  }
                 }
               }
             }

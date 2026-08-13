@@ -36,6 +36,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v94_worship_d
 import 'package:ritmo/core/database/migration/migrations/migration_v95_movement_live_sessions.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v96_onboarding_starter_category.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v97_course_session_question_resolved.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v98_movement_slot_overrides.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v99_movement_muscle_focus.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v100_sleep_program.dart';
 

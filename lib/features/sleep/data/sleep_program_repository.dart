@@ -1,5 +1,7 @@
 import 'package:ritmo/core/analytics/sleep_program_engine.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/schema/tables/sleep_tables.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
 import 'package:ritmo/features/sleep/models/sleep_plan_day.dart';
@@ -19,6 +21,8 @@ class SleepProgramRepository {
   /// DatabaseExecutor تزریق‌شده تا تست‌ها بتوانند دیتابیس in-memory بدهند.
   final DatabaseExecutor _db;
 
+  static bool _schemaEnsured = false;
+
   static Future<SleepProgramRepository> fromHelper() async =>
       SleepProgramRepository(await DatabaseHelper.instance.database);
 
@@ -34,9 +38,20 @@ class SleepProgramRepository {
       ? RitmoDate.dayKey(now.subtract(const Duration(days: 1)))
       : RitmoDate.dayKey(now);
 
+  Future<void> _ensureSchemaIfNeeded() async {
+    if (_schemaEnsured) return;
+    try {
+      await SleepTables.ensureSchema(_db);
+      _schemaEnsured = true;
+    } catch (e, st) {
+      RitmoLog.error('SleepProgramRepository', 'ensureSchema failed', e, st);
+    }
+  }
+
   // ────── خواندن ──────
 
   Future<SleepProgram?> currentProgram() async {
+    await _ensureSchemaIfNeeded();
     final settings = await _db.query(
       'app_settings',
       where: 'key = ?',
@@ -58,6 +73,7 @@ class SleepProgramRepository {
 
   /// اگر برنامه‌ای نیست، یکی در فاز listening می‌سازد و id را در app_settings می‌نویسد.
   Future<SleepProgram> ensureProgram() async {
+    await _ensureSchemaIfNeeded();
     final existing = await currentProgram();
     if (existing != null) return existing;
 
@@ -127,8 +143,10 @@ class SleepProgramRepository {
 
   /// وضعیت کامل برنامه: تسویهٔ شب‌های گذشته، محاسبهٔ پلهٔ امشب و فریز کردن آن.
   Future<SleepProgramState> refreshAndLoadState({DateTime? now}) async {
+    await _ensureSchemaIfNeeded();
     final at = now ?? DateTime.now();
-    final program = await ensureProgram();
+    var program = await ensureProgram();
+    program = await refreshPhase();
     final target = await loadTarget();
     final logs = await loadSleepLogs();
     final plans = await loadPlanDays(program.id);

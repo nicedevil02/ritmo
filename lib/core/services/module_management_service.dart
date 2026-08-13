@@ -301,8 +301,9 @@ class ModuleManagementService {
             break;
 
           case 'module_sleep_enabled':
-            await safeDelete('sleep_logs');
             await safeDelete('bedtime_diagnostics');
+            await safeDelete('sleep_programs');
+            await safeDelete('sleep_plan_days');
             await safeDeleteSettingsLike('sleep_%');
             await safeDeleteSettingsLike('bedtime_%');
             break;

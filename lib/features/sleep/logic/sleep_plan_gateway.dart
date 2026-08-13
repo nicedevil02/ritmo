@@ -1,13 +1,12 @@
 import 'package:ritmo/core/analytics/sleep_program_engine.dart';
 import 'package:ritmo/core/analytics/wellbeing_insight_arbiter.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/sleep/data/sleep_program_repository.dart';
 import 'package:ritmo/features/sleep/logic/sleep_plan_insights.dart';
 
 /// پل میان لایهٔ دادهٔ برنامهٔ خواب و روایت‌های «حال و تعادل».
 ///
 /// صفحه‌ها نه مخزن را می‌شناسند نه موتور را؛ فقط همین دو تابع را صدا می‌زنند.
-/// برنامهٔ خواب قابلیتی اختیاری است، پس هر خطایی همین‌جا بلعیده می‌شود و
-/// نتیجه‌اش فقط نبودن کارت است، نه خراب شدن صفحه.
 class SleepPlanGateway {
   const SleepPlanGateway._();
 
@@ -16,7 +15,8 @@ class SleepPlanGateway {
     try {
       final repo = await SleepProgramRepository.fromHelper();
       return await repo.refreshAndLoadState(now: now);
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.error('SleepPlanGateway', 'loadState failed', e, st);
       return null;
     }
   }

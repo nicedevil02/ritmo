@@ -329,7 +329,7 @@ class WorshipEngine {
   HijriDate hijriFor(DateTime date, {int offsetDays = 0}) =>
       HijriCalendarCalculator.hijriFromGregorian(date, offsetDays: offsetDays);
 
-  /// Loads active scheduled mustahab practices for [date]
+  /// Loads active scheduled mustahab practices for [date] (both daily and specific-day practices)
   Future<List<WorshipPractice>> loadActiveMustahabs(DateTime date) async {
     final db = await DatabaseHelper.instance.database;
     final weekdayIndex = date.weekday;
@@ -345,44 +345,26 @@ class WorshipEngine {
     return allActive.where((p) {
       final freq = (p.reminderFrequency).toUpperCase();
       if (freq.isEmpty || freq == 'DAILY') return true;
-      if (freq == 'WEEKLY') {
+      if (freq == 'WEEKLY' || freq == 'SPECIFIC_DAYS') {
         final days = p.reminderDaysOfWeek;
         if (days == null || days.isEmpty) return true;
         if (days.contains(weekdayStr)) return true;
-        if (weekdayIndex == DateTime.thursday && (days.contains('Thursday') || days.contains('4'))) return true;
-        if (weekdayIndex == DateTime.friday && (days.contains('Friday') || days.contains('5'))) return true;
+        if (weekdayIndex == DateTime.thursday && (days.contains('Thursday') || days.contains('4') || days.contains('پنجشنبه'))) return true;
+        if (weekdayIndex == DateTime.friday && (days.contains('Friday') || days.contains('5') || days.contains('جمعه'))) return true;
+        if (weekdayIndex == DateTime.saturday && (days.contains('Saturday') || days.contains('6') || days.contains('شنبه'))) return true;
+        if (weekdayIndex == DateTime.sunday && (days.contains('Sunday') || days.contains('7') || days.contains('یکشنبه'))) return true;
+        if (weekdayIndex == DateTime.monday && (days.contains('Monday') || days.contains('1') || days.contains('دوشنبه'))) return true;
+        if (weekdayIndex == DateTime.tuesday && (days.contains('Tuesday') || days.contains('2') || days.contains('سه‌شنبه'))) return true;
+        if (weekdayIndex == DateTime.wednesday && (days.contains('Wednesday') || days.contains('3') || days.contains('چهارشنبه'))) return true;
         return false;
       }
       return true;
     }).toList();
   }
 
-  /// Loads active mustahab practices that are specifically scheduled for [date] (excluding general daily mustahabs).
+  /// Alias for [loadActiveMustahabs] for backwards compatibility.
   Future<List<WorshipPractice>> loadSpecificDayMustahabs(DateTime date) async {
-    final db = await DatabaseHelper.instance.database;
-    final weekdayIndex = date.weekday;
-    final weekdayStr = weekdayIndex.toString();
-
-    final results = await db.query(
-      'worship_practices',
-      where: "practiceType = 'MUSTAHAB' AND isActive = 1",
-      orderBy: 'sortOrder ASC, createdAt DESC',
-    );
-    final allActive = results.map(WorshipPractice.fromMap).toList();
-
-    return allActive.where((p) {
-      final freq = (p.reminderFrequency).toUpperCase();
-      if (freq.isEmpty || freq == 'DAILY') return false;
-      if (freq == 'WEEKLY' || freq == 'SPECIFIC_DAYS') {
-        final days = p.reminderDaysOfWeek;
-        if (days == null || days.isEmpty) return false;
-        if (days.contains(weekdayStr)) return true;
-        if (weekdayIndex == DateTime.thursday && (days.contains('Thursday') || days.contains('4'))) return true;
-        if (weekdayIndex == DateTime.friday && (days.contains('Friday') || days.contains('5'))) return true;
-        return false;
-      }
-      return false;
-    }).toList();
+    return loadActiveMustahabs(date);
   }
 
   // ── Prayer times (W-5) ───────────────────────────────────────────────────

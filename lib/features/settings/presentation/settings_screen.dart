@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
@@ -6,6 +7,7 @@ import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
+import 'package:ritmo/features/sleep/data/sleep_program_debug_helper.dart';
 import 'package:ritmo/core/utils/ios26_page_route.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
@@ -54,7 +56,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildPremiumStatusCard(BuildContext context) {
-    final colors = context.colors;
     final isPremium = PremiumService.instance.isPremium;
 
     return Container(
@@ -404,6 +405,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
+            if (kDebugMode) ...[
+              const SizedBox(height: 16),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () async {
+                    await SleepProgramDebugHelper.seedSevenNights();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('۷ شب لاگ خواب نمونه ثبت شد (دیباگ)', style: TextStyle(fontFamily: 'Vazirmatn')),
+                          backgroundColor: Color(0xff8B5CF6),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.bug_report, size: 18, color: Color(0xff8B5CF6)),
+                  label: const Text('تولید ۷ شب لاگ خواب تستی (دیباگ)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Color(0xff8B5CF6))),
+                ),
+              ),
+            ],
             const SizedBox(height: 28),
 
             // ─── بخش نسخه و کپی‌رایت ───

@@ -316,7 +316,7 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
         // 4. Calculate AssistantEngine output for EnergyContext
         final db = await DatabaseHelper.instance.database;
         final energyLogs = await db.query('energy_logs', orderBy: 'loggedAt DESC', limit: 10);
-        final sleepLogs = await db.query('sleep_logs', orderBy: 'date DESC', limit: 10);
+        final sleepLogs = await db.query('bedtime_diagnostics', orderBy: 'date DESC', limit: 10);
         final isFemale = CyclePrivacyGuard.isVisible(_settings);
         final cycleConsent = _settings['cycle_consent_dashboard'] == 'true';
         final isEnergyTuned = _settings['cycle_setup_done'] == 'true';

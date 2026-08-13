@@ -800,9 +800,6 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
 
 
   Widget _buildScheduledMustahabsCard(BuildContext context, RitmoColors colors) {
-    if (_activeMustahabs.isEmpty) {
-      return const SizedBox.shrink();
-    }
     final date = widget.selectedDay.dateTime;
     final isFuture = date.isAfter(DateTime.now());
 

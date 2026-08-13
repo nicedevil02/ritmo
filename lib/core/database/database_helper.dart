@@ -23,8 +23,14 @@ class DatabaseHelper {
   static int get dbVersionForTest => _dbVersion;
 
   @visibleForTesting
-  static set databaseInstance(Database? db) => _database = db;
-  void overrideDatabaseForTesting(Database db) => _database = db;
+  static set databaseInstance(Database? db) {
+    _database = db;
+    _dbInitCompleter = null;
+  }
+  void overrideDatabaseForTesting(Database db) {
+    _database = db;
+    _dbInitCompleter = null;
+  }
   static Database? get rawDatabase => _database;
 
   static Completer<Database>? _dbInitCompleter;

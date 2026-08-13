@@ -177,7 +177,7 @@ class PersonaContextProvider {
 
   static Future<SleepBrief> _buildSleepBrief(dynamic db) async {
     final now = DateTime.now();
-    final sleepRows = await db.query('sleep_logs', orderBy: 'date DESC', limit: 45);
+    final sleepRows = await db.query('bedtime_diagnostics', orderBy: 'date DESC', limit: 45);
     final energyRows = await db.query('energy_logs', orderBy: 'loggedAt DESC', limit: 200);
     final moodRows = await db.query('mood_logs', orderBy: 'loggedAt DESC', limit: 200);
     final logs = _parseSleepLogs(sleepRows);
@@ -198,7 +198,7 @@ class PersonaContextProvider {
     final now = DateTime.now();
     final energyRows = await db.query('energy_logs', orderBy: 'loggedAt DESC', limit: 200);
     final moodRows = await db.query('mood_logs', orderBy: 'loggedAt DESC', limit: 200);
-    final sleepRows = await db.query('sleep_logs', orderBy: 'date DESC', limit: 45);
+    final sleepRows = await db.query('bedtime_diagnostics', orderBy: 'date DESC', limit: 45);
     final reflectionRows = await db.query('daily_reflections', orderBy: 'date DESC', limit: 45);
     final sleepLogs = _parseSleepLogs(sleepRows);
     final target = await _loadSleepTarget(db);

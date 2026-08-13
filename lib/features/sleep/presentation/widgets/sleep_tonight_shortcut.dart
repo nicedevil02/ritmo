@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/analytics/sleep_program_engine.dart';
 import 'package:ritmo/core/analytics/wellbeing_insight_arbiter.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/sleep/data/sleep_program_repository.dart';
 import 'package:ritmo/features/sleep/logic/sleep_plan_insights.dart';
 
@@ -52,8 +53,8 @@ class _SleepTonightShortcutState extends State<SleepTonightShortcut> {
       final repo = await SleepProgramRepository.fromHelper();
       final state = await repo.refreshAndLoadState();
       if (mounted) setState(() => _state = state);
-    } catch (_) {
-      // میانبر اختیاری است؛ خطای آن نباید صفحهٔ خانه را خراب کند.
+    } catch (e, st) {
+      RitmoLog.error('SleepTonightShortcut', 'Failed to load sleep state', e, st);
     }
   }
 

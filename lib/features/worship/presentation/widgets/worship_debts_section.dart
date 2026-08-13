@@ -169,7 +169,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
     if (_isLoading) {
       return SizedBox(
         height: 100,
-        child: Center(child: CircularProgressIndicator(color: colors.textPrimary)),
+        child: Center(child: CircularProgressIndicator(color: colors.primary)),
       );
     }
 
@@ -178,27 +178,43 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ACTIVE DEBTS SECTION
+          // Section Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'جبران و قضای عبادات',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
+              Row(
+                children: [
+                  const Text('⚖️', style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'جبران و قضای عبادات',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                      fontFamily: 'Vazirmatn',
+                    ),
+                  ),
+                ],
               ),
-              GestureDetector(
+              InkWell(
                 onTap: _showAddDebtSheet,
-                child: Text(
-                  '➕ افزودن مورد جبرانی',
-                  style: TextStyle(
-                    color: colors.primary,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Vazirmatn',
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                  ),
+                  child: const Text(
+                    '➕ افزودن مورد جبرانی',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Color(0xFF10B981),
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Vazirmatn',
+                    ),
                   ),
                 ),
               ),
@@ -206,23 +222,59 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
           ),
           const SizedBox(height: 10),
 
+          // Zero-State or Active Debts List
           if (_activeDebts.isEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 18),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xff0b0b0e) : Colors.white.withValues(alpha: 0.52),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? const Color(0xffD4A843).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.68), width: 1.5),
-                boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 16, offset: const Offset(0, 4))],
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [const Color(0xFF062A20), const Color(0xFF111827)]
+                      : [const Color(0xFFF0FDF4), Colors.white],
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                ),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.05),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Center(
                 child: Column(
                   children: [
-                    Icon(CupertinoIcons.checkmark_seal, color: colors.textSecondary.withValues(alpha: 0.4), size: 28),
-                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(CupertinoIcons.checkmark_seal_fill, color: Color(0xFF10B981), size: 30),
+                    ),
+                    const SizedBox(height: 12),
                     Text(
-                      'همه عبادات طبق برنامه انجام شده یا هیچ مورد جبرانی در انتظار نیست ✨',
-                      style: TextStyle(color: colors.textSecondary, fontSize: 14, fontFamily: 'Vazirmatn'),
+                      'کاروان عبادات تسویه و به‌روز است ✨',
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Vazirmatn',
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'هیچ بدهی یا قضای ثبت‌شده‌ای در انتظار نداری. با آرامش به تلاوت و مستحباتت بپرداز.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 12,
+                        fontFamily: 'Vazirmatn',
+                        height: 1.45,
+                      ),
                     ),
                   ],
                 ),
@@ -232,10 +284,22 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xff0b0b0e) : Colors.white.withValues(alpha: 0.52),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? const Color(0xffD4A843).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.68), width: 1.5),
-                boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 16, offset: const Offset(0, 4))],
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [const Color(0xFF0F1E19), const Color(0xFF111827)]
+                      : [const Color(0xFFF8FAFC), Colors.white],
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                ),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
@@ -243,7 +307,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: _activeDebts.length,
-                    separatorBuilder: (context, index) => Divider(color: colors.border, height: 24),
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final debt = _activeDebts[index];
                       final remaining = debt.remainingCount;
@@ -252,116 +316,144 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                       final progress = debt.progressPercent / 100.0;
                       final daysLeft = debt.daysToFinish;
 
-                      // Display type icon
                       var typeIcon = CupertinoIcons.check_mark;
-                      if (debt.debtType == 'FAST') typeIcon = CupertinoIcons.drop;
-                      if (debt.debtType == 'PRAYER') typeIcon = CupertinoIcons.circle_grid_hex;
+                      var typeEmoji = '📿';
+                      if (debt.debtType == 'FAST') {
+                        typeIcon = CupertinoIcons.drop;
+                        typeEmoji = '🌙';
+                      }
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(typeIcon, color: const Color(0xffD4A843), size: 16),
-                              const SizedBox(width: 8),
+                      return Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: isDark ? colors.surfaceSunken : colors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: colors.border.withValues(alpha: 0.25)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              children: [
+                                Text(typeEmoji, style: const TextStyle(fontSize: 16)),
+                                const SizedBox(width: 8),
+                                Text(
+                                  debt.title,
+                                  style: TextStyle(
+                                    color: colors.textPrimary,
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Vazirmatn',
+                                  ),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    toPersianDigits('$completed از $total انجام شده'),
+                                    style: const TextStyle(
+                                      color: Color(0xFF10B981),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Vazirmatn',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Progress bar
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                backgroundColor: colors.border.withValues(alpha: 0.25),
+                                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                                minHeight: 6,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Prediction Note
+                            if (debt.dailyTarget > 0)
                               Text(
-                                debt.title,
+                                toPersianDigits('🎯 با روزی ${debt.dailyTarget} عدد، ظرف $daysLeft روز به پایان می‌رسد.'),
                                 style: TextStyle(
-                                  color: colors.textPrimary,
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.bold,
+                                  color: colors.textSecondary,
+                                  fontSize: 11.5,
                                   fontFamily: 'Vazirmatn',
                                 ),
                               ),
-                              const Spacer(),
-                              Text(
-                                toPersianDigits('$completed از $total انجام شده'),
-                                style: TextStyle(color: colors.textSecondary, fontSize: 12.5, fontFamily: 'Vazirmatn'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
+                            const SizedBox(height: 10),
 
-                          // Timeline Prediction Note
-                          if (debt.dailyTarget > 0)
-                            Text(
-                              toPersianDigits('اگه روزی ${debt.dailyTarget} تا انجام بدی، $daysLeft روزه تموم میشه ✨'),
-                              style: const TextStyle(color: Color(0xffD4A843), fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
-                            ),
-                          const SizedBox(height: 8),
-
-                          // Progress bar
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              backgroundColor: colors.inputBackground,
-                              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xffD4A843)),
-                              minHeight: 4,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Actions Row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // Change target
-                              Row(
-                                children: [
-                                  Text(
-                                    'هدف روزانه: ',
-                                    style: TextStyle(color: colors.textSecondary.withValues(alpha: 0.6), fontSize: 12.5, fontFamily: 'Vazirmatn'),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () => _changeDailyTarget(debt, -1),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(color: colors.border, borderRadius: BorderRadius.circular(6)),
-                                      child: Icon(CupertinoIcons.minus, size: 10, color: colors.iconSecondary),
+                            // Actions Row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Stepper for Daily Target
+                                Row(
+                                  children: [
+                                    Text(
+                                      'هدف روزانه: ',
+                                      style: TextStyle(color: colors.textSecondary, fontSize: 11.5, fontFamily: 'Vazirmatn'),
                                     ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                                    child: Text(
-                                      toPersianDigits('${debt.dailyTarget}'),
-                                      style: TextStyle(color: colors.textPrimary, fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                                    InkWell(
+                                      onTap: () => _changeDailyTarget(debt, -1),
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(color: colors.surfaceSunken, borderRadius: BorderRadius.circular(6)),
+                                        child: Icon(CupertinoIcons.minus, size: 12, color: colors.textSecondary),
+                                      ),
                                     ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () => _changeDailyTarget(debt, 1),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(color: colors.border, borderRadius: BorderRadius.circular(6)),
-                                      child: Icon(CupertinoIcons.plus, size: 10, color: colors.iconSecondary),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      child: Text(
+                                        toPersianDigits('${debt.dailyTarget}'),
+                                        style: TextStyle(color: colors.textPrimary, fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-
-                              // Increment button
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: colors.textSecondary.withValues(alpha: 0.05),
-                                  foregroundColor: colors.textPrimary,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    InkWell(
+                                      onTap: () => _changeDailyTarget(debt, 1),
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(color: colors.surfaceSunken, borderRadius: BorderRadius.circular(6)),
+                                        child: Icon(CupertinoIcons.plus, size: 12, color: colors.textSecondary),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                onPressed: () => _logCompletion(debt),
-                                icon: const Icon(CupertinoIcons.checkmark, size: 12, color: Color(0xffD4A843)),
-                                label: const Text('ثبت انجام قضا', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
-                              ),
-                            ],
-                          ),
-                        ],
+
+                                // Pay +1 Button
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF10B981),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  onPressed: () => _logCompletion(debt),
+                                  icon: const Icon(CupertinoIcons.checkmark_alt, size: 14),
+                                  label: const Text('ثبت ۱ مورد ادا شده', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),
 
                   // Archived Section Toggle
                   if (_archivedDebts.isNotEmpty) ...[
-                    Divider(color: colors.border, height: 24),
+                    Divider(color: colors.border.withValues(alpha: 0.3), height: 24),
                     GestureDetector(
                       onTap: () {
                         setState(() {
@@ -372,8 +464,8 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            _showArchived ? '🔻 پنهان کردن آرشیو' : '🔺 نمایش بدهی‌های پایان‌یافته',
-                            style: TextStyle(color: colors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                            _showArchived ? '🔻 بستن بایگانی' : '🔺 نمایش بدهی‌های پایان‌یافته (${toPersianDigits(_archivedDebts.length.toString())})',
+                            style: TextStyle(color: colors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
                           ),
                         ],
                       ),
@@ -390,26 +482,26 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                             margin: const EdgeInsets.symmetric(vertical: 4),
                             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                             decoration: BoxDecoration(
-                              color: colors.surface,
+                              color: colors.surfaceSunken,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               children: [
-                                const Icon(CupertinoIcons.checkmark_seal_fill, color: Color(0xff10B981), size: 16),
+                                const Icon(CupertinoIcons.checkmark_seal_fill, color: Color(0xFF10B981), size: 16),
                                 const SizedBox(width: 8),
                                 Text(
                                   debt.title,
                                   style: TextStyle(
                                     color: colors.textSecondary,
-                                    fontSize: 14,
+                                    fontSize: 13,
                                     decoration: TextDecoration.lineThrough,
                                     fontFamily: 'Vazirmatn',
                                   ),
                                 ),
                                 const Spacer(),
                                 const Text(
-                                  'شما توانستید تمام کنید ✅',
-                                  style: TextStyle(color: Color(0xff10B981), fontSize: 11.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                                  'تکمیل‌شده ✨',
+                                  style: TextStyle(color: Color(0xFF10B981), fontSize: 11.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
                                 ),
                               ],
                             ),

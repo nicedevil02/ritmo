@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/behavior/behavioral_intelligence_orchestrator.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -7,6 +8,12 @@ import 'package:sqflite/sqflite.dart';
 
 class MockDatabase implements Database {
   final Map<String, List<Map<String, dynamic>>> tables = {};
+
+  @override
+  bool get isOpen => true;
+
+  @override
+  Future<void> close() async {}
 
   @override
   Future<List<Map<String, Object?>>> query(
@@ -36,7 +43,7 @@ class MockDatabase implements Database {
       return [{'count': list.length}];
     }
     if (sql.contains('bedtime_diagnostics')) {
-      final list = tables['sleep_logs'] ?? [];
+      final list = tables['bedtime_diagnostics'] ?? [];
       return [{'count': list.length}];
     }
     if (sql.contains('daily_reflections')) {
@@ -60,13 +67,13 @@ class MockDatabase implements Database {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences.setMockInitialValues({});
 
   group('BehavioralIntelligenceOrchestrator Unit Tests', () {
     late MockDatabase mockDb;
     late EngineRegistry registry;
 
     setUp(() {
+      SharedPreferences.setMockInitialValues({});
       mockDb = MockDatabase();
       DatabaseHelper.databaseInstance = mockDb;
 
@@ -98,7 +105,7 @@ void main() {
         {'date': '2026-06-27', 'rhythmScore': 80},
       ];
 
-      mockDb.tables['sleep_logs'] = [
+      mockDb.tables['bedtime_diagnostics'] = [
         {'date': '2026-06-28', 'durationMinutes': 480, 'qualityScore': 90, 'wasNap': 0},
       ];
 
@@ -115,6 +122,8 @@ void main() {
       mockDb.tables['course_sessions'] = [];
       mockDb.tables['konkur_plan_items'] = [];
       mockDb.tables['konkur_subjects'] = [];
+      mockDb.tables['konkur_study_sessions'] = [];
+      mockDb.tables['worship_practices'] = [];
     });
 
     tearDown(() {
@@ -122,7 +131,8 @@ void main() {
     });
 
     test('Orchestrator calculates BehavioralSnapshot correctly', () async {
-      final snapshot = await BehavioralIntelligenceOrchestrator.buildSnapshot(today: DateTime(2026, 6, 28));
+      final orchestrator = BehavioralIntelligenceOrchestrator();
+      final snapshot = await orchestrator.calculate(BehavioralInput(today: DateTime(2026, 6, 28)));
 
       // Verify metadata versions
       expect(snapshot.engineVersion, equals(BehavioralIntelligenceOrchestrator.engineVersionInt));
@@ -147,13 +157,11 @@ void main() {
     });
 
     test('Fingerprint and behaviorHash is stable for identical data inputs', () async {
-      final snapshot1 = await BehavioralIntelligenceOrchestrator.buildSnapshot(today: DateTime(2026, 6, 28));
+      final orchestrator = BehavioralIntelligenceOrchestrator();
+      final snapshot1 = await orchestrator.calculate(BehavioralInput(today: DateTime(2026, 6, 28)));
       final hash1 = snapshot1.behaviorHash;
 
-      // Invalidate cache to force recalculation and see if hash is identical
-      RitmoEngineBus.instance.cacheStore.invalidate(BehavioralIntelligenceOrchestrator);
-
-      final snapshot2 = await BehavioralIntelligenceOrchestrator.buildSnapshot(today: DateTime(2026, 6, 28));
+      final snapshot2 = await orchestrator.calculate(BehavioralInput(today: DateTime(2026, 6, 28)));
       final hash2 = snapshot2.behaviorHash;
 
       expect(hash1, equals(hash2));

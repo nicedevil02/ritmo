@@ -9,6 +9,7 @@ import 'package:ritmo/core/analytics/life_balance_engine.dart';
 import 'package:ritmo/core/analytics/mood_engine.dart';
 import 'package:ritmo/core/analytics/reflection_engine.dart';
 import 'package:ritmo/core/analytics/sleep_engine.dart';
+import 'package:ritmo/core/analytics/sleep_program_engine.dart';
 import 'package:ritmo/core/analytics/wellbeing_engine.dart';
 import 'package:ritmo/core/analytics/wellbeing_insight_arbiter.dart';
 import 'package:ritmo/core/analytics/wellbeing_insight_loop.dart';
@@ -28,7 +29,9 @@ import 'package:ritmo/features/energy/models/energy_mood_models.dart';
 import 'package:ritmo/features/energy/presentation/widgets/quick_log_sheet.dart';
 import 'package:ritmo/features/reflection/models/reflection_models.dart';
 import 'package:ritmo/features/sleep/logic/sleep_plan_gateway.dart';
+import 'package:ritmo/features/sleep/logic/sleep_plan_insights.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
+import 'package:ritmo/features/sleep/models/sleep_program.dart';
 import 'package:ritmo/features/sleep/presentation/widgets/sleep_log_sheet.dart';
 import 'package:ritmo/features/sleep/presentation/widgets/sleep_target_sheet.dart';
 import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet.dart';
@@ -81,6 +84,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   List<WellbeingPulseDayData> _pulseDays = [];
   WellbeingInsightLoopState? _loopPrevious;
   WellbeingInsightSnapshot _insightSnapshotCache = const WellbeingInsightSnapshot();
+  SleepProgramState? _sleepProgramState;
 
   final TextEditingController _quickReflectionController = TextEditingController();
   bool _isSavingReflection = false;
@@ -355,10 +359,12 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         loopPrevious: _loopPrevious,
       );
       _insightSnapshotCache = const WellbeingInsightArbiter().evaluate(insightInput);
+      _sleepProgramState = await SleepPlanGateway.loadState(now: now);
       _insightSnapshotCache = await SleepPlanGateway.mergeInto(
         _insightSnapshotCache,
         now: now,
         sleepLogCount: _rawSleepLogs.length,
+        state: _sleepProgramState,
       );
       if (!mounted || token != _loadToken) return;
       final featured = _insightSnapshotCache.featured;
@@ -640,6 +646,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 onAction: _onInsightAction,
               ),
               if (snapshot.featured != null) const SizedBox(height: RitmoSpacing.lg),
+              _buildSleepProgramCard(context),
+              const SizedBox(height: RitmoSpacing.lg),
               FrictionlessMoodBar(onLogChanged: _requestReload),
               const SizedBox(height: RitmoSpacing.lg),
               _buildQuickActionsRow(context),
@@ -666,6 +674,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 days: _pulseDays,
                 onDayTap: (day) => _openDayDetailSheet(context, day),
               ),
+              const SizedBox(height: RitmoSpacing.lg),
+              _buildSleepProgramCard(context),
               const SizedBox(height: RitmoSpacing.lg),
               _buildEffortDistributionCard(context),
               const SizedBox(height: RitmoSpacing.lg),
@@ -1180,6 +1190,211 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               }).toList(),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSleepProgramCard(BuildContext context) {
+    final colors = context.colors;
+    final state = _sleepProgramState;
+    if (state == null) return const SizedBox.shrink();
+
+    // ۱. فاز گوش دادن (listening): زیر ۷ شب داده
+    if (state.status == SleepProgramStatus.listening) {
+      final nights = state.nightsLogged;
+      final progress = (nights / 7.0).clamp(0.0, 1.0);
+      return Container(
+        padding: const EdgeInsets.all(RitmoSpacing.lg),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
+          border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.25)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff8B5CF6).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.headphones_rounded, color: Color(0xff8B5CF6), size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'مسیر خواب · در حال شنیدن ریتم شما',
+                        style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${RitmoNumber.faInt(nights)} شب از ۷ شب لازم برای تنظیم الگوی خواب ثبت شده است.',
+                        style: RitmoTextStyles.caption(colors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: colors.border.withValues(alpha: 0.5),
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xff8B5CF6)),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'تا تکمیل این دوره هیچ ساعتی تحمیل نمی‌شود.',
+                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _onInsightAction(WellbeingInsightAction.logSleep),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xff8B5CF6),
+                    side: const BorderSide(color: Color(0xff8B5CF6)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('ثبت خواب دیشب', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ۲. شب آزاد (freeNightTonight)
+    if (state.freeNightTonight) {
+      return Container(
+        padding: const EdgeInsets.all(RitmoSpacing.lg),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
+          border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xff8B5CF6).withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.nightlife_rounded, color: Color(0xff8B5CF6), size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'امشب شب آزاد است 🌙',
+                    style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'هیچ انتظاری از زمان خواب امشب نیست و در سنجش پایبندی شمرده نمی‌شود. استراحت کن و لذت ببر!',
+                    style: RitmoTextStyles.caption(colors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ۳. فاز فعال یا لنگر (anchoring / active)
+    final timeStr = SleepPlanInsights.hhmm(state.tonightBedtimeMin);
+    final targetWakeStr = SleepPlanInsights.hhmm(state.tonightWakeMin);
+    return Container(
+      padding: const EdgeInsets.all(RitmoSpacing.lg),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(RitmoRadius.card),
+        border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xff8B5CF6).withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.bedtime_rounded, color: Color(0xff8B5CF6), size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'پلهٔ امشب · $timeStr',
+                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'هدف بیداری: $targetWakeStr · گام‌های ${RitmoNumber.faInt(state.stepMinutes)} دقیقه‌ای',
+                      style: RitmoTextStyles.caption(colors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            state.holdTonight
+                ? 'امشب روی همین پله می‌مانیم تا بدنت تثبیت شود.'
+                : 'برای رسیدن تدریجی به هدف نهایی، خوابیدن در بازهٔ ۱۵± دقیقه از این پله پیشنهاد می‌شود.',
+            style: RitmoTextStyles.body(colors.textSecondary).copyWith(fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (state.adherence7d != null)
+                Text(
+                  'پایبندی ۷ روزه: ${RitmoNumber.faPercent((state.adherence7d! * 100).round())}',
+                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xff8B5CF6)),
+                )
+              else
+                const SizedBox.shrink(),
+              OutlinedButton.icon(
+                onPressed: () => _onInsightAction(WellbeingInsightAction.logSleep),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xff8B5CF6),
+                  side: const BorderSide(color: Color(0xff8B5CF6)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.check, size: 16),
+                label: const Text('ثبت خواب', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+              ),
+            ],
+          ),
         ],
       ),
     );

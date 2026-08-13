@@ -43,6 +43,7 @@ class SleepProgramState {
     required this.hitsLast7,
     required this.evaluatedLast7,
     required this.stepsRemaining,
+    this.nightsLogged = 0,
     this.adherence7d,
     this.etaWeeksMin,
     this.etaWeeksMax,
@@ -50,6 +51,9 @@ class SleepProgramState {
   });
 
   final SleepProgramStatus status;
+
+  /// تعداد شب‌های ثبت‌شده در تاریخچه.
+  final int nightsLogged;
 
   /// dayKey شبِ برنامهٔ امشب (قبل از ظهر = شبِ در جریانِ دیروز).
   final String tonightDate;
@@ -249,6 +253,7 @@ class SleepProgramEngine
       hitsLast7: hits7,
       evaluatedLast7: last7.length,
       stepsRemaining: stepsRemaining,
+      nightsLogged: totalNights,
       adherence7d: adherence7d,
       etaWeeksMin: etaWeeksMin,
       etaWeeksMax: etaWeeksMax,

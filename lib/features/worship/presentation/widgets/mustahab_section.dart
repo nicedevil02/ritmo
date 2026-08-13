@@ -53,17 +53,7 @@ class _MustahabSectionState extends State<MustahabSection> {
 
   Future<void> _loadMustahabs() async {
     try {
-      final db = await DatabaseHelper.instance.database;
-
-      // Fetch active mustahab practices
-      final results = await db.query(
-        'worship_practices',
-        where: "practiceType = 'MUSTAHAB' AND isActive = 1",
-        orderBy: 'sortOrder ASC, createdAt DESC',
-      );
-
-      final list = results.map(WorshipPractice.fromMap).toList();
-
+      final list = await WorshipEngine.instance.loadActiveMustahabs(_targetDate);
       final statuses = await WorshipCompletionRepository.instance.statusForDate(_targetDateStr);
       if (mounted) {
         setState(() {
@@ -184,7 +174,7 @@ class _MustahabSectionState extends State<MustahabSection> {
     if (_isLoading) {
       return SizedBox(
         height: 100,
-        child: Center(child: CircularProgressIndicator(color: colors.textPrimary)),
+        child: Center(child: CircularProgressIndicator(color: colors.primary)),
       );
     }
 
@@ -193,27 +183,43 @@ class _MustahabSectionState extends State<MustahabSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Section Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'مستحبات و ادعیه',
-                style: TextStyle(
-                  fontSize: 16.5,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
+              Row(
+                children: [
+                  const Text('✨', style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'مستحبات و ادعیه',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                      fontFamily: 'Vazirmatn',
+                    ),
+                  ),
+                ],
               ),
-              GestureDetector(
+              InkWell(
                 onTap: _showManageSheet,
-                child: Text(
-                  '➕ مدیریت',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    color: colors.primary,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Vazirmatn',
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5A00D).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.3)),
+                  ),
+                  child: const Text(
+                    '➕ مدیریت و افزودن',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Color(0xFFE5A00D),
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Vazirmatn',
+                    ),
                   ),
                 ),
               ),
@@ -223,35 +229,61 @@ class _MustahabSectionState extends State<MustahabSection> {
 
           if (_activeMustahabs.isEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 18),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xff0b0b0e) : Colors.white.withValues(alpha: 0.52),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? const Color(0xffD4A843).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.68), width: 1.5),
-                boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 16, offset: const Offset(0, 4))],
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [const Color(0xFF201705), const Color(0xFF111827)]
+                      : [const Color(0xFFFFFDF5), Colors.white],
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                ),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.25), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Center(
                 child: Column(
                   children: [
-                    Icon(CupertinoIcons.heart, color: colors.textSecondary.withValues(alpha: 0.4), size: 28),
-                    const SizedBox(height: 8),
-                    Text(
-                      'هیچ برنامه‌ی مستحبی فعال نیست.',
-                      style: TextStyle(color: colors.textSecondary, fontSize: 14, fontFamily: 'Vazirmatn'),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE5A00D).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(CupertinoIcons.heart_fill, color: Color(0xFFE5A00D), size: 28),
                     ),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
+                    const SizedBox(height: 12),
+                    Text(
+                      'هیچ برنامه‌ی مستحبی برای امروز فعال نیست',
+                      style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'با افزودن نماز شب، زیارت عاشورا، دعای عهد و نوافل، روح روزت را جلا ببخش.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: colors.textSecondary, fontSize: 12, fontFamily: 'Vazirmatn', height: 1.4),
+                    ),
+                    const SizedBox(height: 14),
+                    ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.textSecondary.withValues(alpha: 0.08),
+                        backgroundColor: const Color(0xFFE5A00D),
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: _showManageSheet,
-                      child: const Text(
-                        'فعال‌سازی مستحبات',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                      icon: const Icon(CupertinoIcons.add, size: 16),
+                      label: const Text(
+                        'انتخاب از فهرست مستحبات',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
                       ),
                     ),
                   ],
@@ -260,38 +292,146 @@ class _MustahabSectionState extends State<MustahabSection> {
             )
           else
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xff0b0b0e) : Colors.white.withValues(alpha: 0.52),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? const Color(0xffD4A843).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.68), width: 1.5),
-                boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 16, offset: const Offset(0, 4))],
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [const Color(0xFF1E1708), const Color(0xFF111827)]
+                      : [const Color(0xFFFFFDF8), Colors.white],
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                ),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.25), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _activeMustahabs.length,
-                separatorBuilder: (context, index) => Divider(color: colors.border, height: 16),
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final practice = _activeMustahabs[index];
                   final status = _statuses[practice.id];
                   final isDone = status?.isDone == true;
                   final isSkipped = status?.isSkipped == true;
 
-                  return PrayerAgendaCard(
-                    title: practice.title,
-                    timeStr: practice.notes ?? 'مستحب',
-                    isDone: isDone,
-                    isSkipped: isSkipped,
-                    isSnoozed: false, // We can wire this up later if needed
-                    deferCount: 0,
-                    hasReminder: practice.reminderEnabled,
-                    disableControls: false,
-                    isExpiringSoon: false,
-                    isExpired: false,
-                    isExempt: false,
-                    onToggle: (val) => _toggleDone(practice, val),
-                    onSkip: practice.allowQada ? () => _skipPracticeAndPromptQada(practice) : null,
+                  // Determine appropriate spiritual icon
+                  String emoji = '📿';
+                  if (practice.title.contains('شب')) {
+                    emoji = '🌙';
+                  } else if (practice.title.contains('عاشورا')) {
+                    emoji = '📜';
+                  } else if (practice.title.contains('عهد')) {
+                    emoji = '🤝';
+                  } else if (practice.title.contains('کمیل') || practice.title.contains('ندبه')) {
+                    emoji = '🤲';
+                  } else if (practice.title.contains('طیار')) {
+                    emoji = '🕊️';
+                  } else if (practice.title.contains('نافله')) {
+                    emoji = '✨';
+                  }
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDone
+                          ? (isDark ? const Color(0xFF0D2818) : const Color(0xFFF0FDF4))
+                          : (isDark ? colors.surfaceSunken : colors.surface),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDone
+                            ? const Color(0xFF10B981).withValues(alpha: 0.45)
+                            : colors.border.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(emoji, style: const TextStyle(fontSize: 18)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                practice.title,
+                                style: TextStyle(
+                                  fontFamily: 'Vazirmatn',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDone ? const Color(0xFF10B981) : colors.textPrimary,
+                                  decoration: isDone ? TextDecoration.lineThrough : null,
+                                ),
+                              ),
+                              if (practice.notes != null && practice.notes!.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  practice.notes!,
+                                  style: TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 11.5,
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        if (practice.reminderEnabled) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE5A00D).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(CupertinoIcons.bell_fill, size: 10, color: Color(0xFFE5A00D)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  practice.reminderTime != null ? toPersianDigits(practice.reminderTime!) : 'یادآور',
+                                  style: const TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFE5A00D),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        // Interactive Checkmark Pod
+                        InkWell(
+                          onTap: () => _toggleDone(practice, !isDone),
+                          borderRadius: BorderRadius.circular(12),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: isDone ? const Color(0xFF10B981) : Colors.transparent,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isDone ? const Color(0xFF10B981) : colors.textSecondary.withValues(alpha: 0.35),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Icon(
+                              CupertinoIcons.checkmark,
+                              size: 14,
+                              color: isDone ? Colors.white : Colors.transparent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),

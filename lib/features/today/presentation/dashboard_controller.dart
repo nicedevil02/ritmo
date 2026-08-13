@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart'; // برای CupertinoIcons
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/ai/ai_briefing_service.dart';
-import 'package:ritmo/core/analytics/energy_analytics_engine.dart';
+import 'package:ritmo/core/analytics/energy_model.dart';
 import 'package:ritmo/core/analytics/reflection_engine.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
@@ -45,6 +45,10 @@ class DashboardController {
 
 
   // Timeline list representation
+  //
+  // P3-1: در P0 فقط از روتینهای دارای occurrence پر میشود (رنگآمیزی سریع اولین فریم)
+  // و در P1 از روی همان Agenda بازسازی میشود تا تمرین ورزشی، کار ساده و دوز دارو
+  // هم دیده شوند. قبلاً هر چیزی که مالکش ماژول دیگری بود اینجا گم میشد.
   List<Map<String, dynamic>> timelineItems = [];
 
   // 🔑 Single source of truth for "today" — fed by DayAgendaService.
@@ -52,6 +56,9 @@ class DashboardController {
 
   // P1-1: اسنپشات «مسیر امروز» — از همان Agenda ساخته میشود (اکنون/بعدی/پیشنهاد).
   DayAgendaSnapshot? todaySnapshot;
+
+  // P3-1: تعداد تداخلهای واقعی امروز؛ دکمهٔ «رفع تداخل» فقط با مقدار > 0 معنا دارد.
+  int todayConflictCount = 0;
 
   // Typed adapter views over [agenda] so existing Home widgets keep working.
   List<Map<String, dynamic>> todaysGoalSteps = [];
@@ -69,6 +76,10 @@ class DashboardController {
   Map<String, String> prayerTimes = {};
   List<Map<String, dynamic>> medicationRoutines = [];
   Map<String, int> medicationCompletionsToday = {};
+
+  // P3-1: برای ساخت کارتهای «کارهای امروز» و برچسبگذاری دستهٔ تکمیلها.
+  final Map<String, Routine> _routinesById = {};
+  final Map<String, String> _categoryByRoutineId = {};
 
   int get pendingMedicationDoseCount {
     final totalDoses = medicationRoutines.fold<int>(
@@ -91,12 +102,16 @@ class DashboardController {
   bool reflectionDismissed = false;
 
   // Dynamic Energy State fields
-  // G-3: null یعنی «هنوز هیچ لاگ انرژی ثبت نشده» — عدد ساختگی ۶۵ حذف شد.
+  // G-3: null یعنی «هنوز دادهای برای تخمین نداریم» — عدد ساختگی نمایش داده نمیشود.
   double? currentEnergyPercent;
-  String currentEnergyLabel = 'متوسط';
-  String currentEnergyDesc = 'مناسب برای مطالعه، پروژه‌ها و روتین‌ها';
-  String currentEnergyTimeAgo = 'بر اساس پیش‌فرض';
+  String currentEnergyLabel = 'نامشخص';
+  String currentEnergyDesc = 'برای شروع، یک بار سطح انرژی امروزت را ثبت کن';
+  String currentEnergyTimeAgo = 'هنوز دادهای برای تخمین نداریم';
   List<String> currentEnergyExplanation = [];
+  // P3-2: صادقانه بگوییم عدد از کجا آمده و چقدر پشتوانه دارد.
+  bool currentEnergyIsEstimated = true;
+  double currentEnergyConfidence = 0;
+  String currentEnergyRecommendation = '';
   String? peakPerformanceWindow;
   String? mostFatiguedWindow;
   String? mostProductiveWeekday;
@@ -203,6 +218,8 @@ class DashboardController {
       final activeTasks = <RoutineTask>[];
       final medRoutines = <Map<String, dynamic>>[];
       final routineList = <Routine>[];
+      _routinesById.clear();
+      _categoryByRoutineId.clear();
 
       for (final rMap in routinesMapList) {
         final rId = rMap['id'] as String;
@@ -211,6 +228,7 @@ class DashboardController {
           (e) => e.name.toLowerCase() == categoryStr.toLowerCase(),
           orElse: () => Category.custom,
         );
+        _categoryByRoutineId[rId] = category.name;
 
         // Separate medical routines
         if (category == Category.medical) {
@@ -261,6 +279,7 @@ class DashboardController {
 
         if (moduleEnabled) {
           routineList.add(routine);
+          _routinesById[rId] = routine;
           final hasOccurrence = occurrenceMap.containsKey(rId);
           if (hasOccurrence) {
             final occ = occurrenceMap[rId]!;
@@ -418,6 +437,8 @@ class DashboardController {
           'isCompleted': isCompleted,
           'category': t.routine.category.name,
           'routine': t.routine,
+          'domainLabel': 'روتین',
+          'hasConflict': false,
         };
       }).toList();
 
@@ -460,6 +481,15 @@ class DashboardController {
       // Update current energy state dynamically from DB
       await updateCurrentEnergyState(db);
 
+      // P3-2: سطح انرژی برای ویجت و نوتیفیکیشن از همان محاسبهٔ واقعی میآید،
+      // نه از مقدار پیشفرض تنظیمات.
+      final energyBandKey = currentEnergyPercent == null
+          ? energyStr.toLowerCase()
+          : EnergyModel.bandKey(currentEnergyPercent!);
+      final energyBandLabel = currentEnergyPercent == null
+          ? (energyStr == 'LOW' ? 'پایین' : (energyStr == 'HIGH' ? 'بالا' : 'متوسط'))
+          : currentEnergyLabel;
+
       // DailyBehavior (uses RIE gentle mode signal)
       dailyBehavior = await RitmoIntelligenceEngine.resolveDailyBehavior(
         date: nowTime,
@@ -472,7 +502,7 @@ class DashboardController {
         nextActionTitle: nextTask?.routine.title ?? 'استراحت 🌿',
         // P2-4: بدون داده ⇒ null ⇒ در JSON بهصورت -1 (سنتینل «بدون داده»)
         rhythmScore: rhythmScoreHasData ? rhythmScore : null,
-        currentEnergyLevel: energyStr.toLowerCase(),
+        currentEnergyLevel: energyBandKey,
       );
 
       // Update foreground service Status Notification if enabled
@@ -480,7 +510,7 @@ class DashboardController {
       if (persistentNotifEnabled) {
         await sl<NotificationPlatform>().startStatusMode(
           zone: actZoneName,
-          energy: energyStr == 'LOW' ? 'پایین' : (energyStr == 'HIGH' ? 'بالا' : 'متوسط'),
+          energy: energyBandLabel,
           proposedTask: nextTask?.routine.title ?? 'استراحت 🌿',
           proposedTaskId: nextTask?.routine.id,
         );
@@ -565,8 +595,10 @@ class DashboardController {
             ? '—'
             : '${fa(currentEnergyPercent!.round())}٪',
         secondary: currentEnergyPercent == null
-            ? 'هنوز انرژی ثبت نشده'
-            : 'سطح: $currentEnergyLabel',
+            ? 'هنوز دادهای برای تخمین نیست'
+            : (currentEnergyIsEstimated
+                ? 'تخمینی · سطح: $currentEnergyLabel'
+                : 'ثبت خودت · سطح: $currentEnergyLabel'),
         backgroundImage: 'assets/images/energy_card_top.png',
       ));
     }
@@ -826,98 +858,248 @@ class DashboardController {
       } else {
         cycleEngineOutput = null;
       }
+
+      // P3-1: «کارهای امروز» از همین Agenda ساخته میشود + تشخیص تداخل واقعی.
+      var tempEvents = const <Map<String, Object?>>[];
+      try {
+        tempEvents = await db.query(
+          'temporary_events',
+          where: 'date = ?',
+          whereArgs: [now.toIso8601String().substring(0, 10)],
+        );
+      } catch (e) {
+        debugPrint('temporary_events query note: $e');
+      }
+      _buildTodayTaskCards(tempEvents);
     } catch (e, st) {
       debugPrint('Error loading agenda sections: $e\n$st');
     }
   }
 
+  // دامنههایی که واقعاً «کارِ قابل انجام امروز» هستند. دوره، کنکور و گامهای هدف
+  // کارت اختصاصی خودشان را دارند و عبادت هم بخش جداگانه دارد، پس تکرارشان نمیکنیم.
+  static const Set<AgendaDomain> _taskListDomains = <AgendaDomain>{
+    AgendaDomain.routine,
+    AgendaDomain.sport,
+    AgendaDomain.task,
+    AgendaDomain.medicine,
+    AgendaDomain.event,
+  };
+
+  static String _domainLabel(AgendaDomain domain) {
+    switch (domain) {
+      case AgendaDomain.sport:
+        return 'ورزش';
+      case AgendaDomain.medicine:
+        return 'دارو';
+      case AgendaDomain.task:
+        return 'کارها';
+      case AgendaDomain.event:
+        return 'رویداد';
+      case AgendaDomain.routine:
+        return 'روتین';
+      default:
+        return 'برنامه';
+    }
+  }
+
+  static int? _minutesOfTime(String? hhmm) {
+    if (hhmm == null || !hhmm.contains(':')) return null;
+    final parts = hhmm.split(':');
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null) return null;
+    return h * 60 + m;
+  }
+
+  /// تداخلهای واقعی امروز: همپوشانی دو آیتم زماندار، یا همپوشانی یک آیتم با
+  /// رویداد موقتِ ثبتشده. خروجی: شناسهٔ آیتم → عنوان چیزی که با آن تداخل دارد.
+  Map<String, String> _detectConflicts(
+    List<AgendaItem> items,
+    List<Map<String, Object?>> tempEvents,
+  ) {
+    final out = <String, String>{};
+    final timed = items
+        .where((i) => i.hasValidTimeOfDay && !i.isCompleted)
+        .toList(growable: false);
+
+    for (var a = 0; a < timed.length; a++) {
+      final aStart = _minutesOfTime(timed[a].timeOfDay);
+      if (aStart == null) continue;
+      final aEnd = aStart + (timed[a].durationMinutes ?? 30);
+
+      for (var b = a + 1; b < timed.length; b++) {
+        final bStart = _minutesOfTime(timed[b].timeOfDay);
+        if (bStart == null) continue;
+        final bEnd = bStart + (timed[b].durationMinutes ?? 30);
+        if (bStart < aEnd && aStart < bEnd) {
+          out.putIfAbsent(timed[a].id, () => timed[b].title);
+          out.putIfAbsent(timed[b].id, () => timed[a].title);
+        }
+      }
+
+      for (final event in tempEvents) {
+        final eStart = _minutesOfTime(event['startTime'] as String?);
+        if (eStart == null) continue;
+        final eEnd = eStart + ((event['durationMinutes'] as int?) ?? 60);
+        if (eStart < aEnd && aStart < eEnd) {
+          out[timed[a].id] =
+              (event['title'] as String?) ?? 'رویداد موقت';
+        }
+      }
+    }
+
+    return out;
+  }
+
+  /// بازسازی «کارهای امروز» از Agenda. ساختار Map عمداً مثل قبل است تا صفحه و
+  /// ویجت بدون تغییر کار کنند؛ فقط کلیدهای تازه (agendaItem/domainLabel/…) اضافه شده.
+  void _buildTodayTaskCards(List<Map<String, Object?>> tempEvents) {
+    final actionable = agenda
+        .where((i) => _taskListDomains.contains(i.domain))
+        .toList(growable: false);
+
+    final conflicts = _detectConflicts(actionable, tempEvents);
+    todayConflictCount = conflicts.length;
+
+    if (actionable.isEmpty) {
+      // Agenda چیزی ندارد؛ لیست P0 (روتینهای occurrence دار) را نگه میداریم.
+      return;
+    }
+
+    final completedRoutineIds = completionsToday
+        .where((c) =>
+            c['resultType'] != 'SNOOZED' &&
+            c['resultType'] != 'CANNOT_NOW' &&
+            c['resultType'] != 'SKIPPED')
+        .map((c) => c['routineId'] as String)
+        .toSet();
+
+    final cards = <Map<String, dynamic>>[];
+    for (final item in actionable) {
+      final routine = item.domain == AgendaDomain.routine
+          ? _routinesById[item.sourceId]
+          : null;
+      final isCompleted = item.isCompleted ||
+          (routine != null && completedRoutineIds.contains(routine.id));
+
+      cards.add(<String, dynamic>{
+        'type': 'task',
+        'id': item.id,
+        'title': item.title,
+        'subtitle': item.subtitle,
+        'time': item.hasValidTimeOfDay ? item.timeOfDay : '--:--',
+        'durationMinutes': item.durationMinutes,
+        'status': isCompleted ? '✓ انجام' : 'منتظر',
+        'isCompleted': isCompleted,
+        'category': item.category.name,
+        'domain': item.domain.name,
+        'domainLabel': _domainLabel(item.domain),
+        'routine': routine,
+        'agendaItem': item,
+        'hasConflict': conflicts.containsKey(item.id),
+        'conflictWith': conflicts[item.id],
+      });
+    }
+
+    // Agenda از قبل مرتب است (زماندارها به ترتیب ساعت، بعد بدونزمانها).
+    timelineItems = cards;
+  }
+
+  /// محاسبهٔ سطح انرژی فعلی.
+  ///
+  /// P3-2: مسیر قبلی کل تاریخچهٔ energy_logs / routine_completions / daily_rhythm
+  /// را در هر بار لود میخواند و بعد آن را به مسیر سادهٔ موتور آنالیتیکس میداد؛
+  /// مسیری که خواب را نادیده میگرفت، «تعویق» را مثل «انجامشده» مثبت حساب میکرد و
+  /// وقتی هیچ لاگی نبود هم ادعا میکرد «آخرین ثبت شما…». حالا پنجرهٔ ۳۰ روزه
+  /// میخوانیم و محاسبه در [EnergyModel] انجام میشود.
   Future<void> updateCurrentEnergyState(DatabaseExecutor db) async {
     try {
-      final energyLogs = await db.query('energy_logs');
-      final completions = await db.query('routine_completions');
-      final dailyRhythm = await db.query('daily_rhythm');
-
-      final validityMinutes = int.tryParse(settingsMap['energy_validity_minutes'] ?? '180') ?? 180;
-      final defaultLevel = settingsMap['default_energy_level'] ?? 'MEDIUM';
       final now = DateTime.now();
+      final validityMinutes =
+          int.tryParse(settingsMap['energy_validity_minutes'] ?? '180') ?? 180;
+      final defaultLevel = settingsMap['default_energy_level'] ?? 'MEDIUM';
 
-      // Query bedtime diagnostics in the last 24 hours
-      final oneDayAgo = now.subtract(const Duration(hours: 24)).millisecondsSinceEpoch;
-      final sleepDiagList = await db.query(
+      final windowStartMs =
+          now.subtract(const Duration(days: 30)).millisecondsSinceEpoch;
+
+      final energyLogsRaw = await db.query(
+        'energy_logs',
+        where: 'loggedAt >= ?',
+        whereArgs: [windowStartMs],
+        orderBy: 'loggedAt DESC',
+      );
+      final energyLogs =
+          energyLogsRaw.map(Map<String, dynamic>.from).toList();
+
+      final completionsRaw = await db.query(
+        'routine_completions',
+        where: 'completionTime >= ?',
+        whereArgs: [windowStartMs],
+      );
+      // دستهٔ روتین را ضمیمه میکنیم تا مدل بتواند اثر ورزش را از اثر کار جدا کند.
+      final completions = completionsRaw.map((c) {
+        final m = Map<String, dynamic>.from(c);
+        m['category'] ??= _categoryByRoutineId[m['routineId']];
+        return m;
+      }).toList();
+
+      final threeHoursAgo =
+          now.subtract(const Duration(hours: 3)).millisecondsSinceEpoch;
+      final recentCompletions = completions
+          .where((c) => ((c['completionTime'] as int?) ?? 0) >= threeHoursAgo)
+          .toList();
+
+      // خواب دیشب — قبلاً کوئری میشد ولی هیچوقت در محاسبه استفاده نمیشد.
+      final oneDayAgo =
+          now.subtract(const Duration(hours: 24)).millisecondsSinceEpoch;
+      final sleepRows = await db.query(
         'bedtime_diagnostics',
         where: 'createdAt >= ?',
         whereArgs: [oneDayAgo],
         orderBy: 'createdAt DESC',
+        limit: 1,
       );
 
-      final energyOut = await RitmoEngineBus.instance.execute<EnergyAnalyticsEngineInput, EnergyAnalyticsOutput>(
-        EnergyAnalyticsEngine,
-        EnergyAnalyticsEngineInput(
-          energyLogs: energyLogs,
-          routineCompletions: completions,
-          dailyRhythm: dailyRhythm,
-          sleepDiagList: sleepDiagList,
-          now: now,
-          validityMinutes: validityMinutes,
-          defaultEnergyLevel: defaultLevel,
-        ),
+      final peak = EnergyModel.peakWindow(
+        energyLogs: energyLogs,
+        completions: completions,
       );
 
-      final finalPercent = energyOut.currentDynamicEnergy;
-      final explanations = energyOut.currentDynamicEnergyExplanations;
+      final estimate = EnergyModel.estimate(
+        now: now,
+        energyLogs: energyLogs,
+        recentCompletions: recentCompletions,
+        todayCompletionCount: completionsToday.length,
+        lastNightSleep: sleepRows.isEmpty
+            ? null
+            : Map<String, dynamic>.from(sleepRows.first),
+        validityMinutes: validityMinutes,
+        defaultLevel: defaultLevel,
+        peakWindow: peak,
+      );
 
-      // Determine label & description based on the final percentage
-      var label = 'متوسط';
-      var desc = 'مناسب برای مطالعه، پروژه‌ها و روتین‌ها';
+      peakPerformanceWindow = peak;
+      mostFatiguedWindow = EnergyModel.fatigueWindow(
+        energyLogs: energyLogs,
+        completions: completions,
+      );
+      mostProductiveWeekday =
+          EnergyModel.productiveWeekday(completions: completions);
 
-      if (finalPercent >= 75.0) {
-        label = 'بالا';
-        desc = 'آماده برای کارهای عمیق و تمرکز سنگین';
-      } else if (finalPercent < 45.0) {
-        label = 'پایین';
-        desc = 'زمان مناسب برای استراحت و کار سبک';
-      }
-
-      // Update state — G-3: فقط وقتی دستکم یک لاگ انرژی وجود دارد عدد نمایش بده؛
-      // در غیر این صورت null بماند تا UI حالت «ثبتنشده» را نشان دهد.
-      currentEnergyPercent = energyLogs.isNotEmpty ? finalPercent : null;
-      currentEnergyLabel = label;
-      currentEnergyDesc = desc;
-      currentEnergyExplanation = explanations;
-
-      // Cache analytical windows in state
-      peakPerformanceWindow = energyOut.peakPerformanceWindow;
-      mostFatiguedWindow = energyOut.mostFatiguedWindow;
-      mostProductiveWeekday = energyOut.mostProductiveWeekday;
-
-      // Find the latest log manually from energyLogs to determine lastManualTime
-      int? lastManualTime;
-      if (energyLogs.isNotEmpty) {
-        var latestLog = energyLogs.first;
-        for (final log in energyLogs) {
-          if ((log['loggedAt'] as int? ?? 0) > (latestLog['loggedAt'] as int? ?? 0)) {
-            latestLog = log;
-          }
-        }
-        final loggedAt = latestLog['loggedAt']! as int;
-        final differenceMinutes = now.difference(DateTime.fromMillisecondsSinceEpoch(loggedAt)).inMinutes;
-
-        if (differenceMinutes <= validityMinutes) {
-          lastManualTime = loggedAt;
-        }
-      }
-
-      if (lastManualTime != null) {
-        final diffMin = now.difference(DateTime.fromMillisecondsSinceEpoch(lastManualTime)).inMinutes;
-        final lastLog = energyLogs.firstWhere((log) => log['loggedAt'] == lastManualTime);
-        final note = lastLog['note'] as String?;
-        final noteSuffix = (note != null && note.isNotEmpty) ? ' ($note)' : '';
-        currentEnergyTimeAgo = 'ثبت شده در $diffMin دقیقه پیش$noteSuffix';
-      } else {
-        currentEnergyTimeAgo = 'بر اساس محاسبات و مقادیر پیش‌فرض';
-      }
-    } catch (e) {
-      debugPrint('Error updating energy state: $e');
+      final trustworthy = estimate.isTrustworthy;
+      currentEnergyPercent = trustworthy ? estimate.percent : null;
+      currentEnergyLabel = trustworthy ? estimate.label : 'نامشخص';
+      currentEnergyDesc = trustworthy
+          ? estimate.description
+          : 'برای شروع، یک بار سطح انرژی امروزت را ثبت کن';
+      currentEnergyRecommendation = trustworthy ? estimate.recommendation : '';
+      currentEnergyIsEstimated = estimate.isEstimated;
+      currentEnergyConfidence = estimate.confidence;
+      currentEnergyExplanation = estimate.explanationLines;
+      currentEnergyTimeAgo = estimate.sourceLine;
+    } catch (e, st) {
+      debugPrint('Error updating energy state: $e\n$st');
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -13,34 +15,57 @@ class CyclePersonalPatternEngine {
       final dayLogs = await db.query('cycle_day_logs');
       if (dayLogs.isEmpty) return [];
 
+      // Normalize period starts (ascending) for cycle-day attribution.
+      final periodStarts = <DateTime>[];
+      for (final p in periodRows) {
+        final pStart = DateTime.tryParse(p['startDate'] as String? ?? '');
+        if (pStart != null) {
+          periodStarts.add(DateTime(pStart.year, pStart.month, pStart.day));
+        }
+      }
+      if (periodStarts.isEmpty) return [];
+      periodStarts.sort();
+
       // Group symptoms by cycle day
       final symptomDayCounts = <String, Map<int, int>>{};
 
       for (final log in dayLogs) {
-        final dateStr = log['date'] as String?;
+        // NOTE: the column is `logDate` (not `date`), and symptoms live in
+        // `symptomsJson` as a JSON-encoded array (not a CSV string).
+        final dateStr = log['logDate'] as String?;
         if (dateStr == null) continue;
-        final logDate = DateTime.tryParse(dateStr);
-        if (logDate == null) continue;
+        final logDateRaw = DateTime.tryParse(dateStr);
+        if (logDateRaw == null) continue;
+        final logDate = DateTime(logDateRaw.year, logDateRaw.month, logDateRaw.day);
 
-        // Find which period this date belongs to
-        for (final p in periodRows) {
-          final pStart = DateTime.tryParse(p['startDate'] as String? ?? '');
-          if (pStart == null) continue;
-          if (logDate.isAfter(pStart) || logDate.isAtSameMomentAs(pStart)) {
-            final cycleDay = logDate.difference(pStart).inDays + 1;
-            if (cycleDay >= 1 && cycleDay <= avgCycleLength + 5) {
-              final symptomsStr = log['symptoms'] as String? ?? '';
-              if (symptomsStr.isNotEmpty) {
-                final symptoms = symptomsStr.split(',');
-                for (final sym in symptoms) {
-                  final key = sym.trim();
-                  if (key.isEmpty) continue;
-                  symptomDayCounts.putIfAbsent(key, () => {});
-                  symptomDayCounts[key]![cycleDay] = (symptomDayCounts[key]![cycleDay] ?? 0) + 1;
-                }
-              }
-            }
-          }
+        // Attribute the log to the LATEST period start <= logDate, exactly once.
+        DateTime? activeStart;
+        for (final pStart in periodStarts) {
+          if (pStart.isAfter(logDate)) break;
+          activeStart = pStart;
+        }
+        if (activeStart == null) continue;
+
+        final cycleDay = logDate.difference(activeStart).inDays + 1;
+        if (cycleDay < 1 || cycleDay > avgCycleLength + 5) continue;
+
+        final symptomsRaw = log['symptomsJson'] as String? ?? '';
+        if (symptomsRaw.isEmpty) continue;
+
+        List<String> symptoms;
+        try {
+          final decoded = jsonDecode(symptomsRaw);
+          if (decoded is! List) continue;
+          symptoms = decoded.map((e) => e.toString()).toList();
+        } catch (_) {
+          continue;
+        }
+
+        for (final sym in symptoms) {
+          final key = sym.trim();
+          if (key.isEmpty) continue;
+          symptomDayCounts.putIfAbsent(key, () => {});
+          symptomDayCounts[key]![cycleDay] = (symptomDayCounts[key]![cycleDay] ?? 0) + 1;
         }
       }
 

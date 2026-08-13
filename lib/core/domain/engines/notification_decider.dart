@@ -14,7 +14,8 @@ class NotificationDecider {
     }
 
     // 2. Menstruation Suspension (تعلیق حیض):
-    final worshipConsent = appSettings['cycle_consent_worship'] != 'false';
+    // Consent is strictly opt-in: an absent key must mean "no effect".
+    final worshipConsent = appSettings['cycle_consent_worship'] == 'true';
     if (isMenstruating && routine.category == Category.religious && worshipConsent) {
       return DecisionOutcome.ignore;
     }

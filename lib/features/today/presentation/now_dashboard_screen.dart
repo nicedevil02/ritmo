@@ -54,6 +54,7 @@ import 'package:ritmo/features/today/presentation/dashboard_controller.dart';
 import 'package:ritmo/features/today/presentation/home_focus_ranker.dart';
 import 'package:ritmo/features/notes/presentation/widgets/today_experience_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/ai_day_planner_launcher.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/assistant_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_header.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_module_summary.dart';
@@ -555,46 +556,65 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
   /// میان‌برهای صفحهٔ خانه.
   ///
-  /// قاعده: هر مقصد فقط یک ورودی. دستیار اینجا نیست چون داک تب اختصاصی دارد و
-  /// «مدیریت انرژی» هم نیست چون کارت قلمرو دکمهٔ خودش را دارد. دو میان‌بر باقیمانده
-  /// هم اگر هیرو همان کار را پیشنهاد داده باشد، خودشان را کنار میکشند.
-  List<HomeQuickAction> _quickActions(
-    RitmoColors colors,
-    HeroPriorityType heroType,
-  ) {
+  /// ردیف عمداً ثابت است: هر میان‌بر همیشه سر جای خودش می‌ماند تا حافظهٔ عضلانی
+  /// کاربر حفظ شود. فوریت با هایلایت اعلام می‌شود، نه با پنهان‌کردن همسایه‌ها —
+  /// چون نوار افقی اسکرول می‌شود و تعداد میان‌برها هیچوقت محدودیت فضایی نداشته.
+  ///
+  /// تنها استثنای قاعدهٔ «یک مقصد، یک ورودی» دستیار است که تب اختصاصی در داک
+  /// پایین دارد و کارت بریفینگش هم پایین صفحه هست.
+  List<HomeQuickAction> _quickActions(RitmoColors colors, bool isDarkMode) {
     return [
-      if (heroType != HeroPriorityType.emptyState)
-        HomeQuickAction(
-          label: 'افزودن برنامه',
-          icon: CupertinoIcons.add_circled_solid,
-          color: colors.primary,
-          onTap: () {
-            Navigator.push(
-              context,
-              PageRouteBuilder(
-                opaque: false,
-                barrierDismissible: true,
-                pageBuilder: (context, _, _) => UniversalPlannerSheet(
-                  onSaved: _loadDashboardData,
-                ),
+      HomeQuickAction(
+        label: 'افزودن برنامه',
+        icon: CupertinoIcons.add_circled_solid,
+        color: colors.primary,
+        onTap: () {
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              opaque: false,
+              barrierDismissible: true,
+              pageBuilder: (context, _, _) => UniversalPlannerSheet(
+                onSaved: _loadDashboardData,
               ),
-            );
-          },
-        ),
-      if (heroType != HeroPriorityType.morningCheckIn)
-        HomeQuickAction(
-          label: 'ارزیابی انرژی',
-          icon: CupertinoIcons.sunrise_fill,
-          color: colors.accent,
-          highlighted: _needCheckin,
-          onTap: _showMorningCheckinSheet,
-        ),
+            ),
+          );
+        },
+      ),
+      HomeQuickAction(
+        label: 'ارزیابی انرژی',
+        icon: CupertinoIcons.sunrise_fill,
+        color: colors.accent,
+        highlighted: _needCheckin,
+        onTap: _showMorningCheckinSheet,
+      ),
       HomeQuickAction(
         label: 'بازچینی روز',
         icon: CupertinoIcons.arrow_2_squarepath,
         color: colors.goldAccent,
         highlighted: _showReplanBanner,
         onTap: _runReplanFlow,
+      ),
+      HomeQuickAction(
+        label: 'برنامه‌ریز هوشمند',
+        icon: CupertinoIcons.sparkles,
+        color: colors.reflectionAccent,
+        onTap: () => AiDayPlannerLauncher.open(
+          context,
+          onSaved: _loadDashboardData,
+        ),
+      ),
+      HomeQuickAction(
+        label: 'مدیریت انرژی',
+        icon: CupertinoIcons.bolt_fill,
+        color: colors.energyAccent,
+        onTap: () => _showEnergyManagementSheet(isDarkMode),
+      ),
+      HomeQuickAction(
+        label: 'تقویم امروز',
+        icon: CupertinoIcons.calendar,
+        color: colors.primary,
+        onTap: () => widget.onNavigateToTab?.call(4),
       ),
       HomeQuickAction(
         label: 'بازتاب روز',
@@ -877,7 +897,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     _enter(
                       3,
                       HomeQuickActions(
-                        actions: _quickActions(colors, heroData.type),
+                        actions: _quickActions(colors, isDarkMode),
                       ),
                     ),
                     const SizedBox(height: RitmoSpacing.xl),

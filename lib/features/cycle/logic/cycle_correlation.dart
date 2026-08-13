@@ -87,35 +87,33 @@ class CycleCorrelationAnalyzer {
       }
     }
 
-    // Compute vectors
-    final flowVector = <double>[];
+    // Compute vectors — HONEST pairing: only days where BOTH sides exist.
+    // (Previously missing energy/sleep values were imputed with constants
+    // 65/3, which fabricates data and dilutes the real correlation.)
+    final flowForEnergy = <double>[];
     final energyVector = <double>[];
+    final flowForSleep = <double>[];
     final sleepVector = <double>[];
+    final flowVector = <double>[];
     final completionVector = <double>[];
 
     mergedData.forEach((date, map) {
       final flow = map['flowLevel'] as double;
       if (flow > 0) {
         flowVector.add(flow);
+        completionVector.add(map['completionCount'] as double);
 
-        // Average energy for the day
         final energyList = map['energy'] as List<double>;
         if (energyList.isNotEmpty) {
+          flowForEnergy.add(flow);
           energyVector.add(energyList.reduce((a, b) => a + b) / energyList.length);
-        } else {
-          energyVector.add(65); // default fallback
         }
 
-        // Average sleep for the day
         final sleepList = map['sleepQuality'] as List<double>;
         if (sleepList.isNotEmpty) {
+          flowForSleep.add(flow);
           sleepVector.add(sleepList.reduce((a, b) => a + b) / sleepList.length);
-        } else {
-          sleepVector.add(3); // default fallback
         }
-
-        // completions
-        completionVector.add(map['completionCount'] as double);
       }
     });
 
@@ -123,9 +121,13 @@ class CycleCorrelationAnalyzer {
     double? sleepCorr;
     double? compCorr;
 
+    if (flowForEnergy.length >= 3) {
+      energyCorr = _calculatePearson(flowForEnergy, energyVector);
+    }
+    if (flowForSleep.length >= 3) {
+      sleepCorr = _calculatePearson(flowForSleep, sleepVector);
+    }
     if (flowVector.length >= 3) {
-      energyCorr = _calculatePearson(flowVector, energyVector);
-      sleepCorr = _calculatePearson(flowVector, sleepVector);
       compCorr = _calculatePearson(flowVector, completionVector);
     }
 
@@ -189,7 +191,9 @@ class CycleCorrelationAnalyzer {
     }
 
     final denominator = math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-    if (denominator == 0) return 0;
+    // Zero variance on either side means "not computable", not "zero
+    // correlation" — report null so the UI stays honest.
+    if (denominator == 0) return null;
     return (n * sumXY - sumX * sumY) / denominator;
   }
 
@@ -225,11 +229,12 @@ class CycleCorrelationAnalyzer {
         }
       }
 
-      var cycleDay = 1;
-      if (activePeriod != null) {
-        final start = DateTime.parse(activePeriod['startDate'] as String);
-        cycleDay = logDate.difference(start).inDays + 1;
-      }
+      // Skip logs recorded before tracking started — previously these were
+      // silently attributed to "cycle day 1" and polluted the statistics.
+      if (activePeriod == null) continue;
+      final start = DateTime.parse(activePeriod['startDate'] as String);
+      final cycleDay = logDate.difference(start).inDays + 1;
+      if (cycleDay < 1) continue;
 
       for (final sym in symptoms) {
         final key = sym.toString();

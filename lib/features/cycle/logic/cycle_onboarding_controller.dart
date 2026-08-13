@@ -111,7 +111,11 @@ class CycleOnboardingController {
       DateTime startDate = DateTime.now().subtract(const Duration(days: 10));
       CyclePeriodStatusChoice statusChoice = CyclePeriodStatusChoice.endedWithKnownStart;
 
-      if (settingsMap['cycle_is_pregnant'] == 'true') {
+      // Accept both key spellings — the screen/pregnancy flow writes
+      // `cycle_pregnancy_mode`, older controller builds wrote `cycle_is_pregnant`.
+      final isPregnant = settingsMap['cycle_pregnancy_mode'] == 'true' ||
+          settingsMap['cycle_is_pregnant'] == 'true';
+      if (isPregnant) {
         statusChoice = CyclePeriodStatusChoice.currentlyPregnant;
       } else if (periods.isNotEmpty) {
         final p = periods.first;
@@ -175,11 +179,11 @@ class CycleOnboardingController {
       'cycle_onboarding_just_completed': 'true',
     };
 
-    if (data.periodStatus == CyclePeriodStatusChoice.currentlyPregnant) {
-      settingsToSave['cycle_is_pregnant'] = 'true';
-    } else {
-      settingsToSave['cycle_is_pregnant'] = 'false';
-    }
+    // Write BOTH pregnancy key spellings so the dashboard view, the consent
+    // bridge, and future edit-mode loads all observe the same state.
+    final isPregnant = data.periodStatus == CyclePeriodStatusChoice.currentlyPregnant;
+    settingsToSave['cycle_is_pregnant'] = isPregnant ? 'true' : 'false';
+    settingsToSave['cycle_pregnancy_mode'] = isPregnant ? 'true' : 'false';
 
     for (final entry in settingsToSave.entries) {
       batch.insert(
@@ -189,15 +193,12 @@ class CycleOnboardingController {
       );
     }
 
-    // 2. Handle Lock Preference
+    // 2. Handle Lock Preference — only the PIN lock flag. Biometric unlock is
+    // the user's separate choice in the lock settings and must NOT be forced
+    // on/off by this wizard.
     batch.insert(
       'app_settings',
       {'key': 'cycle_lock_enabled', 'value': data.enableLock ? 'true' : 'false', 'updatedAt': nowMs},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-    batch.insert(
-      'app_settings',
-      {'key': 'cycle_biometric_enabled', 'value': data.enableLock ? 'true' : 'false', 'updatedAt': nowMs},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
 
@@ -223,7 +224,7 @@ class CycleOnboardingController {
           where: 'id = ?',
           whereArgs: [existing.first['id']],
         );
-      } else {
+      } else if (existing.isEmpty) {
         batch.insert('cycle_periods', {
           'id': 'period_$nowMs',
           'startDate': cleanStartStr,
@@ -235,6 +236,7 @@ class CycleOnboardingController {
           'updatedAt': nowMs,
         });
       }
+      // Non-edit mode with an already-matching row: no-op (idempotent).
     } else if (data.periodStatus == CyclePeriodStatusChoice.endedWithKnownStart) {
       // Calculate end date based on bleeding duration
       final calcEndDate = data.startDate.add(Duration(days: data.periodDuration - 1));
@@ -262,7 +264,7 @@ class CycleOnboardingController {
           where: 'id = ?',
           whereArgs: [existing.first['id']],
         );
-      } else {
+      } else if (existing.isEmpty) {
         batch.insert('cycle_periods', {
           'id': 'period_$nowMs',
           'startDate': cleanStartStr,
@@ -274,6 +276,7 @@ class CycleOnboardingController {
           'updatedAt': nowMs,
         });
       }
+      // Non-edit mode with an already-matching row: no-op (idempotent).
     }
     // If status == dontKnow or currentlyPregnant, NO period row is added (Bug چ-۱, چ-۶, چ-۱۱).
 

@@ -277,7 +277,7 @@ class PersonaContextProvider {
       sampleSize: energyScores.length +
           moodScores.length +
           sleepLogs.length +
-          reflectionRows.length,
+          (reflectionRows.length as int),
       computedAt: now,
       wellbeingScore: index.value,
       energyLevelAvg: avgEnergy,

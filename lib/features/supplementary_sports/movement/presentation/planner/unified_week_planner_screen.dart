@@ -12,6 +12,7 @@ import 'package:ritmo/features/supplementary_sports/movement/data/unified_planne
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_slot_resolver.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_plan_sheet.dart';
+import 'package:ritmo/features/supplementary_sports/movement/presentation/planner/movement_slot_actions_sheet.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_plan_day_detail_screen.dart';
 
 const String _fontFa = 'Vazirmatn';
@@ -669,7 +670,16 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 								],
 							),
 						),
-						if (item.isCompleted)
+						if (item.isMovement && item.dateIso != null)
+							IconButton(
+								tooltip: 'فقط این هفته',
+								icon: const Icon(Icons.more_horiz_rounded, color: Colors.white38, size: 18),
+								onPressed: () async {
+									final changed = await showMovementSlotActionsSheet(context, item: item);
+									if (changed) _reload();
+								},
+							)
+						else if (item.isCompleted)
 							const Icon(Icons.check_circle_rounded, color: CalendarTokens.emerald, size: 18)
 						else
 							const Icon(Icons.chevron_left_rounded, color: Colors.white24, size: 18),

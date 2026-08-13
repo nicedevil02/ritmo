@@ -41,7 +41,9 @@ class ReflectionEngineOutput {
   final int longestStreak;
   final int entryCount;
   final double completionRate;
-  final double avgMoodScore;
+  /// Mean of reflections that actually recorded a mood. Null if none did —
+  /// never a synthetic 3.0 stand-in for a missing score.
+  final double? avgMoodScore;
   final List<double> moodTrend;
   final Map<String, int> themeFrequency;
   final double? reflectionEnergyCorrelation;
@@ -51,7 +53,7 @@ class ReflectionEngineOutput {
 }
 
 class ReflectionEngine implements CachedEngine<ReflectionEngineInput, ReflectionEngineOutput> {
-  static const int minPointsForCorrelation = 3;
+  static const int minPointsForCorrelation = 30;
 
   @override
   Future<ReflectionEngineOutput> calculate(ReflectionEngineInput input) async {
@@ -113,12 +115,15 @@ class ReflectionEngine implements CachedEngine<ReflectionEngineInput, Reflection
       if (currentRun > longestStreak) longestStreak = currentRun;
     }
 
-    // 3. Avg mood score
-    double totalMood = 0;
+    // 3. Avg mood score — only from reflections that actually have one.
+    final scoredMoods = <double>[];
     for (final r in activeReflections) {
-      totalMood += (r.readDouble('mood_score') ?? 3.0);
+      final score = r.readDouble('mood_score');
+      if (score != null) scoredMoods.add(score);
     }
-    final avgMood = activeReflections.isNotEmpty ? totalMood / activeReflections.length : 0.0;
+    final avgMood = scoredMoods.isEmpty
+        ? null
+        : scoredMoods.reduce((a, b) => a + b) / scoredMoods.length;
 
     // 4. Completion rate (T-3.3 / W-10: never exceeds 1.0)
     final compRate = dayKeys.isNotEmpty
@@ -131,9 +136,11 @@ class ReflectionEngine implements CachedEngine<ReflectionEngineInput, Reflection
       final db = b.readString('date') ?? '';
       return da.compareTo(db);
     });
-    final moodTrendList = activeReflections
-        .map((r) => (r.readDouble('mood_score') ?? 3.0))
-        .toList();
+    final moodTrendList = <double>[];
+    for (final r in activeReflections) {
+      final score = r.readDouble('mood_score');
+      if (score != null) moodTrendList.add(score);
+    }
 
     // 6. Theme frequency (T-2.6 / W-35: guarded by input.computeThemes)
     Map<String, int> themeFreq = const {};
@@ -165,7 +172,8 @@ class ReflectionEngine implements CachedEngine<ReflectionEngineInput, Reflection
       themeFreq = Map<String, int>.fromEntries(sortedFreq.take(10));
     }
 
-    // 7. Pearson Correlations (T-1.5: 30 point gate)
+    // 7. Pearson Correlations — skip rows with missing scores instead of
+    // inventing a fake-neutral 3.0 / MEDIUM that would pull the coefficient.
     final reflectionScoresForEnergy = <double>[];
     final dayEnergies = <double>[];
     final reflectionScoresForMood = <double>[];
@@ -176,8 +184,19 @@ class ReflectionEngine implements CachedEngine<ReflectionEngineInput, Reflection
       final epoch = e.readInt('loggedAt') ?? e.readInt('timestamp') ?? 0;
       if (epoch == 0) continue;
       final eDate = RitmoDate.dayKeyFromMillis(epoch);
-      final level = (e.readString('energyLevel') ?? 'MEDIUM').toUpperCase();
-      final score = level == 'HIGH' ? 3.0 : (level == 'LOW' ? 1.0 : 2.0);
+      final level = e.readString('energyLevel');
+      if (level == null) continue;
+      final normalized = level.toUpperCase();
+      final double score;
+      if (normalized == 'HIGH') {
+        score = 3.0;
+      } else if (normalized == 'LOW') {
+        score = 1.0;
+      } else if (normalized == 'MEDIUM') {
+        score = 2.0;
+      } else {
+        continue;
+      }
       energyGrouping.putIfAbsent(eDate, () => []).add(score);
     }
     final avgEnergyMap = energyGrouping.map((key, list) => MapEntry(key, list.reduce((a, b) => a + b) / list.length));
@@ -186,16 +205,18 @@ class ReflectionEngine implements CachedEngine<ReflectionEngineInput, Reflection
     for (final m in input.moodLogs) {
       final epoch = m.readInt('loggedAt') ?? m.readInt('timestamp') ?? 0;
       if (epoch == 0) continue;
+      final valence = m.readDouble('valence');
+      if (valence == null) continue;
       final mDate = RitmoDate.dayKeyFromMillis(epoch);
-      final val = m.readDouble('valence') ?? 3.0;
-      moodGrouping.putIfAbsent(mDate, () => []).add(val);
+      moodGrouping.putIfAbsent(mDate, () => []).add(valence);
     }
     final avgMoodMap = moodGrouping.map((key, list) => MapEntry(key, list.reduce((a, b) => a + b) / list.length));
 
     for (final r in input.dailyReflections) {
       final rDate = r.readString('date');
       if (rDate == null) continue;
-      final rScore = r.readDouble('mood_score') ?? 3.0;
+      final rScore = r.readDouble('mood_score');
+      if (rScore == null) continue;
 
       final energyVal = avgEnergyMap[rDate];
       if (energyVal != null) {
@@ -253,7 +274,7 @@ class ReflectionEngine implements CachedEngine<ReflectionEngineInput, Reflection
   @override
   String fingerprint(ReflectionEngineInput input) {
     final dayStamp = input.today.toIso8601String().substring(0, 10);
-    return '$dayStamp|${input.horizonDays}|${input.dailyReflections.length}';
+    return '$dayStamp|${input.horizonDays}|${input.dailyReflections.length}|${input.dailyCheckins.length}|${input.energyLogs.length}|${input.moodLogs.length}|${input.computeThemes}';
   }
 
   @override

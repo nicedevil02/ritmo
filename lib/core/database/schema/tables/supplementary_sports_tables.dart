@@ -190,6 +190,7 @@ class SupplementarySportsTables {
     await ensureUserProfileSchema(db);
     await ensurePrescriptionTables(db);
     await ensureLiveMovementSessionTables(db);
+    await ensureSlotOverrideTable(db);
 
     // 9. ss_decision_log
     await db.execute('''
@@ -523,6 +524,26 @@ class SupplementarySportsTables {
       ''');
     } catch (_) {}
   }
+
+  /// Tab 1 this-week exceptions. Mirrors migration v98 for fresh installs.
+  static Future<void> ensureSlotOverrideTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS movement_slot_overrides (
+        id TEXT PRIMARY KEY,
+        routineId TEXT NOT NULL,
+        dateIso TEXT NOT NULL,
+        action TEXT NOT NULL,
+        newDateIso TEXT,
+        newTime TEXT,
+        createdAt INTEGER NOT NULL,
+        UNIQUE(routineId, dateIso)
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_mso_date ON movement_slot_overrides(dateIso)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_mso_routine ON movement_slot_overrides(routineId)',
+    );
+  }
 }
-
-

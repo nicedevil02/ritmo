@@ -73,6 +73,14 @@ class MedicineAgendaSource implements AgendaSource {
     final items = <AgendaItem>[];
     for (final log in logs) {
       final id = log['id']?.toString() ?? 'med_${ctx.dateStr}';
+      // MED-02: ActionRouter forwards `sourceId` to CompletionGateway as the
+      // medication identity, and the gateway writes it into
+      // medication_logs.routineId. Publishing the log row id here made every
+      // completion target a routine that does not exist, so the write was lost.
+      // The join already carries m.routineId, so use that as the identity and
+      // keep the log row id in meta for callers that need the specific dose.
+      final routineId = log['routineId']?.toString();
+      final targetId = routineId ?? id;
       final title = log['medicationName'] as String? ?? 'یادآور دارو';
       
       String? timeOfDay;
@@ -87,7 +95,7 @@ class MedicineAgendaSource implements AgendaSource {
 
       items.add(AgendaItem(
         id: buildAgendaItemId(AgendaDomain.medicine, id, ctx.dateStr),
-        sourceId: id,
+        sourceId: targetId,
         domain: AgendaDomain.medicine,
         itemType: AgendaItemType.fixed,
         title: title,
@@ -98,9 +106,13 @@ class MedicineAgendaSource implements AgendaSource {
         category: Category.medical,
         priority: 2.0,
         isEssential: true,
-        deepLink: AgendaDeepLink(domain: AgendaDomain.medicine, targetId: id),
+        deepLink: AgendaDeepLink(domain: AgendaDomain.medicine, targetId: targetId),
         completion: isDone ? AgendaCompletion.done : AgendaCompletion.pending,
-        meta: {'medicationLog': log},
+        meta: {
+          'medicationLog': log,
+          'medicationLogId': id,
+          'routineId': routineId,
+        },
       ));
     }
 

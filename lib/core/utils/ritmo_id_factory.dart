@@ -35,4 +35,5 @@ class RitmoIdFactory {
   static String movementCustomKind(String slug) => 'mvk_custom_${slug}_${_stamp()}';
   static String movementPr() => 'mvpr_${_stamp()}';
   static String movementSession() => 'mvsess_${_stamp()}';
+  static String movementSlotOverride() => 'mso_${_stamp()}';
 }

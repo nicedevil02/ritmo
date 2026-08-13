@@ -10,12 +10,14 @@ class SleepTrendsSection extends StatelessWidget {
     this.sleepEnergyCorrelation,
     this.sleepMoodCorrelation,
     required this.correlationInsight,
+    this.tonightBedtimeMin,
   });
   final List<double> durationTrend; // in minutes
   final List<double> qualityTrend;  // 1..5
   final double? sleepEnergyCorrelation;
   final double? sleepMoodCorrelation;
   final String correlationInsight;
+  final int? tonightBedtimeMin;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +62,10 @@ class SleepTrendsSection extends StatelessWidget {
                           _buildLegendDot(const Color(0xff8B5CF6), 'مدت خواب', colors),
                           const SizedBox(width: 12),
                           _buildLegendDot(const Color(0xffF59E0B), 'کیفیت', colors),
+                          if (tonightBedtimeMin != null) ...[
+                            const SizedBox(width: 12),
+                            _buildLegendDot(const Color(0xff8B5CF6).withValues(alpha: 0.7), 'پلهٔ امشب', colors),
+                          ],
                         ],
                       ),
                     ],
@@ -83,6 +89,7 @@ class SleepTrendsSection extends StatelessWidget {
                           qualities: qualityTrend,
                           gridColor: colors.glassBorder,
                           dotOuterColor: colors.card,
+                          tonightBedtimeMin: tonightBedtimeMin,
                         ),
                       ),
                     ),
@@ -262,11 +269,13 @@ class SleepTrendPainter extends CustomPainter {
     required this.qualities,
     required this.gridColor,
     required this.dotOuterColor,
+    this.tonightBedtimeMin,
   });
   final List<double> durations; // in minutes
   final List<double> qualities; // 1..5
   final Color gridColor;
   final Color dotOuterColor;
+  final int? tonightBedtimeMin;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -282,6 +291,30 @@ class SleepTrendPainter extends CustomPainter {
     for (var i = 0; i <= gridLines; i++) {
       final y = (size.height / gridLines) * i;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    // 1.5 Draw ghost dashed line for tonight step / bedtime
+    if (tonightBedtimeMin != null) {
+      // Scale tonight bedtime minute (modulo 720 for chart height)
+      const maxDuration = 720.0;
+      final stepMin = tonightBedtimeMin!.toDouble().clamp(0.0, maxDuration);
+      final yStep = size.height - (stepMin / maxDuration) * size.height;
+      final ghostPaint = Paint()
+        ..color = const Color(0xff8B5CF6).withValues(alpha: 0.6)
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke;
+
+      const dashWidth = 6.0;
+      const dashSpace = 4.0;
+      double startX = 0;
+      while (startX < size.width) {
+        canvas.drawLine(
+          Offset(startX, yStep),
+          Offset((startX + dashWidth).clamp(0, size.width), yStep),
+          ghostPaint,
+        );
+        startX += dashWidth + dashSpace;
+      }
     }
 
     // 2. Find min/max values for scaling

@@ -97,7 +97,7 @@ class SleepPlanInsights {
   // ────── نامزدها ──────
 
   static WellbeingInsight _listening(int nights) {
-    final need = SleepProgramEngine.minNightsForListening;
+    const need = SleepProgramEngine.minNightsForListening;
     final have = nights > need ? need : nights;
     return WellbeingInsight(
       kind: WellbeingInsightKind.sleepPlanStep,
@@ -151,7 +151,7 @@ class SleepPlanInsights {
       title = 'پلهٔ امشب: $time';
       lead = diff == 0
           ? 'امشب دقیقاً روی هدف خودت هستی؛ کافی است همین را نگه داری.'
-          : '${RitmoNumber.faInt(state.stepMinutes)} دقیقه ${diff < 0 ? 'زودتر' : 'دیرتر'} از پلهٔ قبلی. اگر تا نیم‌ساعت بعد هم خوابت نبرد، شب از دست نرفته.';
+          : '${RitmoNumber.faInt(state.stepMinutes)} دقیقه ${diff < 0 ? 'زودتر' : 'دیرتر'} از پلهٔ قبلی؛ اگر تا نیم‌ساعت بعد هم خوابت نبرد، شب از دست نرفته.';
     }
 
     return WellbeingInsight(

@@ -30,7 +30,7 @@ enum WellbeingInsightKind {
 
 /// گروه انحصار روایت‌ها: در هر روز حداکثر یک روایت از هر گروه به مرحلهٔ
 /// نهایی می‌رسد (سند «مسیر خواب»، بخش ۳.ج — جلوگیری از سیل روایت‌های خواب).
-enum InsightGroup { sleep, energyMood, reflection, balance, index }
+enum InsightGroup { sleep, energyMood, reflection, balance, wellbeingIndex }
 
 enum WellbeingInsightMaturity { growing, ready }
 
@@ -269,13 +269,13 @@ class WellbeingInsightArbiter {
       case WellbeingInsightKind.indexDriver:
       case WellbeingInsightKind.loopOutcome:
         // loopOutcome هنگام ساخت، گروه روایتِ مرجعش را می‌گیرد؛ این فقط fallback است
-        return InsightGroup.index;
+        return InsightGroup.wellbeingIndex;
     }
   }
 
   static InsightGroup _groupOfKindName(String kindName) {
     final kind = WellbeingInsightKind.values.asNameMap()[kindName];
-    return kind == null ? InsightGroup.index : groupOf(kind);
+    return kind == null ? InsightGroup.wellbeingIndex : groupOf(kind);
   }
 
   int _byScoreThenKind(WellbeingInsight a, WellbeingInsight b) {
@@ -354,7 +354,7 @@ class WellbeingInsightArbiter {
     final night = input.sleep?.lastNight;
     if (night == null) {
       if (input.sleepLogCount == 0) {
-        return [
+        return const [
           WellbeingInsight(
             kind: WellbeingInsightKind.lastNightSleep,
             maturity: WellbeingInsightMaturity.growing,
@@ -368,7 +368,7 @@ class WellbeingInsightArbiter {
           ),
         ];
       }
-      return [
+      return const [
         WellbeingInsight(
           kind: WellbeingInsightKind.lastNightSleep,
           maturity: WellbeingInsightMaturity.ready,
@@ -443,6 +443,7 @@ class WellbeingInsightArbiter {
   }
 
   List<WellbeingInsight> _goldenWindow(WellbeingInsightInput input) {
+    if (input.energy == null) return const [];
     final samples = input.energy?.sampleCount ?? input.energyLogCount;
     final window = input.energy?.peakPerformanceWindow;
     if (samples >= minEnergyForGoldenWindow && window != null && window.isNotEmpty) {

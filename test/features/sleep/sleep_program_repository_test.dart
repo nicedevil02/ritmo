@@ -3,7 +3,7 @@ import 'package:ritmo/core/database/schema/tables/sleep_tables.dart';
 import 'package:ritmo/features/sleep/data/sleep_program_repository.dart';
 import 'package:ritmo/features/sleep/models/sleep_plan_day.dart';
 import 'package:ritmo/features/sleep/models/sleep_program.dart';
-import 'package:sqflite_common_ffi/sqflite_common_ffi.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
   setUpAll(() {

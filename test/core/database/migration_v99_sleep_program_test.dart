@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v100_sleep_program.dart';
 import 'package:ritmo/features/sleep/data/sleep_program_repository.dart';
 import 'package:ritmo/features/sleep/models/sleep_program.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -13,7 +12,7 @@ void main() {
 
   /// دیتابیس in-memory با دو پیش‌نیاز واقعی اپ: app_settings و bedtime_diagnostics.
   Future<Database> migratedDb() async {
-    final db = await openDatabase(inMemoryDatabasePath);
+    final db = await databaseFactory.openDatabase(inMemoryDatabasePath);
     await db.execute(
         'CREATE TABLE app_settings (key TEXT PRIMARY KEY, value TEXT, updatedAt INTEGER);');
     await db.execute('''

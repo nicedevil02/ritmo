@@ -228,7 +228,7 @@ void main() {
       expect(state.tonightBedtimeMin, 585);
       expect(state.adherence7d, 0.75);
       expect(state.etaWeeksMin, isNotNull);
-      expect(state.etaWeeksMax!, greaterThanOrEqualTo(state.etaWeeksMin!));
+      expect(state.etaWeeksMax, greaterThanOrEqualTo(state.etaWeeksMin!));
     });
 
     test('بدون شب ارزیابی‌شده ETA نداریم', () async {

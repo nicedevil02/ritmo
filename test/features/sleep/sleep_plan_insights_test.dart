@@ -123,7 +123,7 @@ void main() {
 
   test('داخل پنجره، پلهٔ امشب از یادآوری ثبت خواب جلو می‌زند', () async {
     final state = await frozenState();
-    final base = WellbeingInsightSnapshot(ready: [
+    const base = WellbeingInsightSnapshot(ready: [
       WellbeingInsight(
         kind: WellbeingInsightKind.lastNightSleep,
         maturity: WellbeingInsightMaturity.ready,

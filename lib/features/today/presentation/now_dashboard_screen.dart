@@ -40,6 +40,7 @@ import 'package:ritmo/features/goals/presentation/goals_screen.dart';
 import 'package:ritmo/features/health/presentation/health_screen.dart';
 import 'package:ritmo/features/inbox/logic/inbox_navigator.dart';
 import 'package:ritmo/features/inbox/presentation/inbox_screen.dart';
+import 'package:ritmo/features/sleep/presentation/widgets/sleep_tonight_shortcut.dart';
 import 'package:ritmo/features/study/study_module_entry.dart';
 import 'package:ritmo/features/settings/presentation/settings_screen.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
@@ -142,10 +143,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   String _currentEnergyLabel = 'متوسط';
   String _currentEnergyDesc = 'مناسب برای مطالعه، پروژه‌ها و روتین‌ها';
   String? _currentEnergyTimeAgo;
-  List<String> _currentEnergyExplanation = [];
   String? _peakPerformanceWindow;
-  String? _mostFatiguedWindow;
-  String? _mostProductiveWeekday;
   List<DashboardModuleSummary> _moduleSummaries = [];
 
   @override
@@ -393,10 +391,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         _currentEnergyLabel = controller.currentEnergyLabel;
         _currentEnergyDesc = controller.currentEnergyDesc;
         _currentEnergyTimeAgo = controller.currentEnergyTimeAgo;
-        _currentEnergyExplanation = controller.currentEnergyExplanation;
         _peakPerformanceWindow = controller.peakPerformanceWindow;
-        _mostFatiguedWindow = controller.mostFatiguedWindow;
-        _mostProductiveWeekday = controller.mostProductiveWeekday;
         _moduleSummaries = controller.moduleSummaries;
         _recentInboxItems = recentInbox;
         _showReplanBanner = showReplan;
@@ -820,6 +815,12 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                       _enter(0, CriticalAlertsCard(alerts: alerts)),
                       const SizedBox(height: RitmoSpacing.lg),
                     ],
+
+                    // ۰.۵ میانبر شبانه — فقط در پنجرهٔ پیش‌خواب دیده می‌شود
+                    SleepTonightShortcut(
+                      padding: const EdgeInsets.only(bottom: RitmoSpacing.md),
+                      onOpen: () => _openModuleScreen('sleep'),
+                    ),
 
                     // ۱. تمرکز اکنون — تنها اقدام مهم این لحظه
                     _enter(

@@ -27,6 +27,7 @@ import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/energy/models/energy_mood_models.dart';
 import 'package:ritmo/features/energy/presentation/widgets/quick_log_sheet.dart';
 import 'package:ritmo/features/reflection/models/reflection_models.dart';
+import 'package:ritmo/features/sleep/logic/sleep_plan_gateway.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
 import 'package:ritmo/features/sleep/presentation/widgets/sleep_log_sheet.dart';
 import 'package:ritmo/features/sleep/presentation/widgets/sleep_target_sheet.dart';
@@ -154,7 +155,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         db.query('app_settings', where: "key LIKE 'sleep_target_%'").catchError((_) => <Map<String, dynamic>>[]),
         db.query('energy_logs', where: 'loggedAt >= ?', whereArgs: [horizonMs], orderBy: 'loggedAt DESC', limit: 200).catchError((_) => <Map<String, dynamic>>[]),
         db.query('mood_logs', where: 'loggedAt >= ?', whereArgs: [horizonMs], orderBy: 'loggedAt DESC', limit: 200).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('sleep_logs', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: 45).catchError((_) => <Map<String, dynamic>>[]),
+        db.query('bedtime_diagnostics', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: 45).catchError((_) => <Map<String, dynamic>>[]),
         db.query('daily_reflections', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: 45).catchError((_) => <Map<String, dynamic>>[]),
         db.query('daily_checkins', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: 45).catchError((_) => <Map<String, dynamic>>[]),
         db.query('routines', where: 'isArchived = 0').catchError((_) => <Map<String, dynamic>>[]),
@@ -354,6 +355,12 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         loopPrevious: _loopPrevious,
       );
       _insightSnapshotCache = const WellbeingInsightArbiter().evaluate(insightInput);
+      _insightSnapshotCache = await SleepPlanGateway.mergeInto(
+        _insightSnapshotCache,
+        now: now,
+        sleepLogCount: _rawSleepLogs.length,
+      );
+      if (!mounted || token != _loadToken) return;
       final featured = _insightSnapshotCache.featured;
       if (featured != null) {
         final metrics = WellbeingInsightArbiter.metricByKind(insightInput);

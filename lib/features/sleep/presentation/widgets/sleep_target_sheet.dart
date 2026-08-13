@@ -5,6 +5,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/services/sleep_winddown_reminder_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/sleep/data/sleep_program_repository.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -32,6 +33,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
   int _targetDuration = 450; // 7.5 hours
   bool _winddownEnabled = false;
   int _winddownMinutes = 30;
+  int? _freeNightWeekday;
   bool _isSaving = false;
 
   @override
@@ -46,6 +48,19 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
     }
     _winddownEnabled = widget.isWinddownEnabled;
     _winddownMinutes = widget.winddownMinutes;
+    _loadFreeNightWeekday();
+  }
+
+  Future<void> _loadFreeNightWeekday() async {
+    try {
+      final repo = await SleepProgramRepository.fromHelper();
+      final program = await repo.currentProgram();
+      if (mounted && program != null) {
+        setState(() {
+          _freeNightWeekday = program.freeNightWeekday;
+        });
+      }
+    } catch (_) {}
   }
 
   void _recalculateDuration() {
@@ -131,6 +146,10 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
 
       // قدم صفر: یادآور پیش‌خواب حالا واقعاً خوانده و زمان‌بندی می‌شود
       await SleepWinddownReminderService.syncFromSettings();
+
+      // شب آزاد در برنامهٔ خواب ذخیره می‌شود
+      final repo = await SleepProgramRepository.fromHelper();
+      await repo.setFreeNightWeekday(_freeNightWeekday);
 
       // Fire event to invalidate cache
       RitmoEventBus().fire(RitmoEvent(
@@ -363,6 +382,68 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                     },
                   ),
                 ],
+                const SizedBox(height: 20),
+
+                // Free night ChoiceChip
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'شب آزاد هفتگی',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.cardTitle, fontFamily: 'Vazirmatn'),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'یک شب در هفته که برنامه هیچ انتظاری از شما ندارد و از سنجش پایبندی حذف می‌شود.',
+                      style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    ),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          ChoiceChip(
+                            label: const Text('بدون شب آزاد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                            selected: _freeNightWeekday == null,
+                            selectedColor: const Color(0xff8B5CF6).withValues(alpha: 0.2),
+                            onSelected: (selected) {
+                              if (selected) {
+                                HapticFeedback.selectionClick();
+                                setState(() => _freeNightWeekday = null);
+                              }
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          ...[
+                            {'day': DateTime.saturday, 'name': 'شنبه'},
+                            {'day': DateTime.sunday, 'name': 'یکشنبه'},
+                            {'day': DateTime.monday, 'name': 'دوشنبه'},
+                            {'day': DateTime.tuesday, 'name': 'سه‌شنبه'},
+                            {'day': DateTime.wednesday, 'name': 'چهارشنبه'},
+                            {'day': DateTime.thursday, 'name': 'پنج‌شنبه'},
+                            {'day': DateTime.friday, 'name': 'جمعه'},
+                          ].map((w) {
+                            final day = w['day'] as int;
+                            final name = w['name'] as String;
+                            final isSelected = _freeNightWeekday == day;
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 6),
+                              child: ChoiceChip(
+                                label: Text(name, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: isSelected ? const Color(0xff8B5CF6) : colors.textPrimary)),
+                                selected: isSelected,
+                                selectedColor: const Color(0xff8B5CF6).withValues(alpha: 0.2),
+                                onSelected: (selected) {
+                                  HapticFeedback.selectionClick();
+                                  setState(() => _freeNightWeekday = selected ? day : null);
+                                },
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 24),
 
                 // Save button

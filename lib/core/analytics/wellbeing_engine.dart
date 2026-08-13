@@ -135,7 +135,12 @@ class WellbeingEngine {
   static const int fullReflectionEntries = 7;
 
   /// اگر مجموع وزن مؤثر از این کمتر باشد، شاخص null است.
-  static const double minTotalEffectiveWeight = 0.5;
+  /// برابر با کمینهٔ حالت‌های معتبر است: یا خواب به‌تنهایی با اطمینان کامل
+  /// (wSleep) یا هر دو سیگنال دیگر با اطمینان کامل (کمینه‌شان wMood+wReflection
+  /// که تصادفاً برابر wSleep است). قبلاً ۰٫۵ بود که حتی خواب با اطمینان کامل
+  /// هم به آن نمی‌رسید و متن حالت خالی («ثبت خواب یا دو سیگنال دیگر») را
+  /// عملاً غیرممکن می‌کرد.
+  static const double minTotalEffectiveWeight = wSleep;
 
   static const double sigmaUnder = 2.0; // کم‌خوابی
   static const double sigmaOver = 2.5;  // پرخوابی

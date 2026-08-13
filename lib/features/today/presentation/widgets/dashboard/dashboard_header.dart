@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -10,31 +9,40 @@ import 'package:ritmo/features/search/presentation/global_search_screen.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
-/// هدر هیروی داشبورد: سلامِ زمان‌محور + تاریخ جلالی + آواتار با هاله‌ی گرادیان
-/// + زنگوله و دکمه‌ی دستیار. فقط لایه‌ی نمایش.
+/// هدر صفحهٔ خانه: سلامِ زمان‌محور + تاریخ جلالی + آواتار با هالهٔ گرادیان
+/// و یک خوشهٔ اکشن (جستجو + اعلان‌ها). فقط لایهٔ نمایش.
+///
+/// دکمهٔ دستیار عمداً اینجا نیست: داک پایین یک تب اختصاصی دستیار دارد و
+/// صفحهٔ خانه هم کارت بریفینگ دستیار را نشان میدهد؛ دکمهٔ سوم تکرار بود.
 class DashboardHeader extends StatelessWidget {
   const DashboardHeader({
     super.key,
     required this.userName,
     this.avatarPath,
     this.avatarFileExists = false,
-    required this.isAssistantActive,
     required this.unreadInboxCount,
     required this.onAvatarTap,
     required this.onBellTap,
-    required this.onAssistantTap,
     this.onSearchTap,
+    @Deprecated('دستیار از داک پایین باز میشود؛ این پارامتر بیاثر است.')
+    this.isAssistantActive = false,
+    @Deprecated('دستیار از داک پایین باز میشود؛ این پارامتر بیاثر است.')
+    this.onAssistantTap,
   });
 
   final String userName;
   final String? avatarPath;
   final bool avatarFileExists;
-  final bool isAssistantActive;
   final int unreadInboxCount;
   final VoidCallback onAvatarTap;
   final VoidCallback onBellTap;
-  final VoidCallback onAssistantTap;
   final VoidCallback? onSearchTap;
+
+  /// نگهداشته شده فقط برای سازگاری با فراخوان‌های قدیمی.
+  final bool isAssistantActive;
+
+  /// نگهداشته شده فقط برای سازگاری با فراخوان‌های قدیمی.
+  final VoidCallback? onAssistantTap;
 
   /// سلام زمان‌محور: صبح/ظهر/عصر/شب بخیر
   static ({String greeting, String emoji}) timeGreeting(DateTime now) {
@@ -45,37 +53,72 @@ class DashboardHeader extends StatelessWidget {
     return (greeting: 'شب بخیر', emoji: '🌙');
   }
 
-  Widget _iconButton({
-    required BuildContext context,
+  /// یک دکمهٔ داخل خوشهٔ شیشهای.
+  Widget _pillAction({
     required Widget child,
     required VoidCallback onTap,
     String? semanticLabel,
   }) {
-    final colors = context.colors;
     return Semantics(
       button: true,
       label: semanticLabel,
       child: Material(
         color: Colors.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () {
             RitmoHaptics.tap();
             onTap();
           },
-          customBorder: const CircleBorder(),
-          child: Container(
-            height: 48,
-            width: 48,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: colors.card.withValues(alpha: 0.55),
-              shape: BoxShape.circle,
-              border: Border.all(color: colors.border),
-            ),
-            child: child,
+          child: SizedBox(
+            height: 44,
+            width: 44,
+            child: Center(child: child),
           ),
         ),
       ),
+    );
+  }
+
+  /// زنگوله با نشان شمارش — بالای ۹ به «۹+» خلاصه میشود.
+  Widget _bellGlyph(BuildContext context) {
+    final colors = context.colors;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(CupertinoIcons.bell, color: colors.textPrimary, size: 20),
+        if (unreadInboxCount > 0)
+          Positioned(
+            top: -5,
+            right: -6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
+              decoration: BoxDecoration(
+                color: colors.primary,
+                borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                border: Border.all(
+                  color: colors.bg.withValues(alpha: 0.9),
+                  width: 1.5,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  unreadInboxCount > 9
+                      ? '۹+'
+                      : toPersianDigits(unreadInboxCount.toString()),
+                  style: TextStyle(
+                    color: colors.onPrimary,
+                    fontSize: 9.5,
+                    height: 1.1,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -126,185 +169,150 @@ class DashboardHeader extends StatelessWidget {
 
     // G-4: وجود فایل بهصورت async در صفحه محاسبه و بهعنوان پارامتر پاس داده میشود؛
     // existsSync داخل build حذف شد (I/O دیسک در هر rebuild).
-    final hasAvatarFile = avatarFileExists &&
-        avatarPath != null &&
-        avatarPath!.isNotEmpty;
+    final hasAvatarFile =
+        avatarFileExists && avatarPath != null && avatarPath!.isNotEmpty;
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // راست: آواتار + سلام و تاریخ
-        Expanded(
-          child: Row(
-            children: [
-              // آواتار با هاله‌ی گرادیان انرژی
-              Semantics(
-                button: true,
-                label: 'پروفایل',
-                child: GestureDetector(
-                  onTap: () {
-                    RitmoHaptics.tap();
-                    onAvatarTap();
-                  },
-                  child: Container(
-                    height: 48,
-                    width: 48,
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(colors: colors.energyGradient),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colors.bg,
-                        image: hasAvatarFile
-                            ? DecorationImage(
-                                image: FileImage(File(avatarPath!)),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                      ),
-                      child: hasAvatarFile
-                          ? null
-                          : Center(
-                              child: Text(
-                                userName.isNotEmpty ? userName[0] : '؟',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: colors.primary,
-                                ),
-                              ),
-                            ),
-                    ),
+        // آواتار با هالهٔ گرادیان انرژی
+        Semantics(
+          button: true,
+          label: 'پروفایل و تنظیمات',
+          child: GestureDetector(
+            onTap: () {
+              RitmoHaptics.tap();
+              onAvatarTap();
+            },
+            child: Container(
+              height: 46,
+              width: 46,
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(colors: colors.energyGradient),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.energyGradient.first.withValues(alpha: 0.28),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
-                ),
+                ],
               ),
-              const SizedBox(width: RitmoSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            greetingLine,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: colors.textPrimary,
-                            ),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.bg,
+                  image: hasAvatarFile
+                      ? DecorationImage(
+                          image: FileImage(File(avatarPath!)),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: hasAvatarFile
+                    ? null
+                    : Center(
+                        child: Text(
+                          userName.isNotEmpty ? userName[0] : '؟',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: colors.primary,
                           ),
                         ),
-                        const SizedBox(width: RitmoSpacing.xs),
-                        Text(tg.emoji, style: const TextStyle(fontSize: 15)),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      toPersianDigits(dateStr),
+                      ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: RitmoSpacing.md),
+
+        // سلام و تاریخ
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      greetingLine,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13,
-                        color: colors.textSecondary,
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w800,
+                        height: 1.25,
+                        color: colors.textPrimary,
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: RitmoSpacing.xs),
+                  Text(tg.emoji, style: const TextStyle(fontSize: 14)),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                toPersianDigits(dateStr),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  height: 1.25,
+                  letterSpacing: 0.1,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
           ),
         ),
+        const SizedBox(width: RitmoSpacing.sm),
 
-        // چپ: جستجو + دستیار + زنگوله
-        Row(
-          children: [
-            _iconButton(
-              context: context,
-              semanticLabel: 'جستجو',
-              onTap: () {
-                RitmoHaptics.tap();
-                if (onSearchTap != null) {
-                  onSearchTap!();
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const GlobalSearchScreen(),
-                    ),
-                  );
-                }
-              },
-              child: Icon(
-                CupertinoIcons.search,
-                color: colors.textSecondary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: RitmoSpacing.sm),
-            if (isAssistantActive) ...[
-              _iconButton(
-                context: context,
-                semanticLabel: 'گفتگو با دستیار',
-                onTap: onAssistantTap,
+        // خوشهٔ اکشن: جستجو + اعلان‌ها در یک قرص شیشهای واحد
+        Container(
+          height: 46,
+          decoration: BoxDecoration(
+            color: colors.card.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(RitmoRadius.pill),
+            border: Border.all(color: colors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _pillAction(
+                semanticLabel: 'جستجو',
+                onTap: () {
+                  if (onSearchTap != null) {
+                    onSearchTap!();
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const GlobalSearchScreen(),
+                      ),
+                    );
+                  }
+                },
                 child: Icon(
-                  CupertinoIcons.sparkles,
-                  color: colors.primary,
-                  size: 20,
+                  CupertinoIcons.search,
+                  color: colors.textSecondary,
+                  size: 19,
                 ),
               ),
-              const SizedBox(width: RitmoSpacing.sm),
+              Container(
+                width: 1,
+                height: 20,
+                color: colors.border,
+              ),
+              _pillAction(
+                semanticLabel: 'اعلان‌ها',
+                onTap: onBellTap,
+                child: _bellGlyph(context),
+              ),
             ],
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                _iconButton(
-                  context: context,
-                  semanticLabel: 'اعلان‌ها',
-                  onTap: onBellTap,
-                  child: Icon(
-                    Icons.notifications_none,
-                    color: colors.textPrimary,
-                    size: 20,
-                  ),
-                ),
-                if (unreadInboxCount > 0)
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: colors.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: colors.bg.withValues(alpha: 0.8),
-                          width: 1.5,
-                        ),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 18,
-                        minHeight: 18,
-                      ),
-                      child: Center(
-                        child: Text(
-                          toPersianDigits(unreadInboxCount.toString()),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ],
+          ),
         ),
       ],
     );

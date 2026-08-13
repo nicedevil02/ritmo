@@ -30,6 +30,13 @@ class WellbeingPulseChart extends StatelessWidget {
   final List<WellbeingPulseDayData> days;
   final ValueChanged<WellbeingPulseDayData>? onDayTap;
 
+  // Bars are never rendered narrower than this, so large day ranges (e.g. a
+  // 90-day view) scroll horizontally instead of collapsing to a negative or
+  // near-zero width, which previously crashed the layout.
+  static const double _minBarWidth = 14.0;
+  static const double _maxBarWidth = 40.0;
+  static const double _barGap = 4.0;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -63,11 +70,35 @@ class WellbeingPulseChart extends StatelessWidget {
             height: 160,
             child: LayoutBuilder(
               builder: (ctx, constraints) {
-                final barWidth = (constraints.maxWidth - (days.length - 1) * 4) / days.length;
-                return Row(
+                if (days.isEmpty) return const SizedBox.shrink();
+
+                // Width each bar would get if all days were squeezed into the
+                // available width with a fixed gap between them.
+                final fitWidth = (constraints.maxWidth - (days.length - 1) * _barGap) / days.length;
+                final barWidth = fitWidth.clamp(_minBarWidth, _maxBarWidth);
+                final needsScroll = fitWidth < _minBarWidth;
+
+                final bars = <Widget>[];
+                for (var i = 0; i < days.length; i++) {
+                  if (i > 0) bars.add(const SizedBox(width: _barGap));
+                  bars.add(_buildDayBar(context, days[i], barWidth));
+                }
+
+                final row = Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: days.map((d) => _buildDayBar(context, d, barWidth)).toList(),
+                  mainAxisAlignment: needsScroll ? MainAxisAlignment.start : MainAxisAlignment.spaceBetween,
+                  children: bars,
+                );
+
+                if (!needsScroll) return row;
+
+                // Too many days to fit at the minimum readable bar width:
+                // scroll horizontally instead of shrinking bars further (which
+                // previously produced a negative width and crashed).
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true,
+                  child: row,
                 );
               },
             ),

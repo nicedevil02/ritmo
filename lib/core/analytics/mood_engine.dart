@@ -65,6 +65,10 @@ class MoodEngineOutput {
 
 /// Analytics engine for mood trend and energy correlation.
 class MoodEngine implements CachedEngine<MoodEngineInput, MoodEngineOutput> {
+  /// Minimum number of paired mood/energy samples required before a
+  /// correlation coefficient is considered statistically meaningful.
+  static const int minPointsForCorrelation = 30;
+
   @override
   Duration get ttl => const Duration(minutes: 30);
 
@@ -188,7 +192,7 @@ class MoodEngine implements CachedEngine<MoodEngineInput, MoodEngineOutput> {
       }
     }
 
-    if (valences.length >= 3) {
+    if (valences.length >= minPointsForCorrelation) {
       correlation = _calculatePearsonCorrelation(valences, energyScores);
     }
 
@@ -244,7 +248,7 @@ class MoodEngine implements CachedEngine<MoodEngineInput, MoodEngineOutput> {
       denY += diffY * diffY;
     }
 
-    if (denX == 0.0 || denY == 0.0) return 0.0;
+    if (denX == 0.0 || denY == 0.0) return null;
     return num / sqrt(denX * denY);
   }
 }

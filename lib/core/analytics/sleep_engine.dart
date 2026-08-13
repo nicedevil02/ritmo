@@ -52,8 +52,8 @@ class SleepEngineOutput {
 }
 
 class SleepEngine implements CachedEngine<SleepEngineInput, SleepEngineOutput> {
-  static const int minLogsForConsistency = 2;
-  static const int minPointsForCorrelation = 3;
+  static const int minLogsForConsistency = 5;
+  static const int minPointsForCorrelation = 30;
   static const int minSamplesPerBedtimeWindow = 4;
   static const double halfLifeDays = 7.0;
 

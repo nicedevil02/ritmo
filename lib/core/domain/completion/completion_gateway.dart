@@ -274,21 +274,31 @@ class CompletionGateway {
 
   /// MED-02: an agenda item can carry either a `routines.id` or the id of an
   /// existing `medication_logs` / `prn_logs` row, because MedicineAgendaSource
-  /// publishes the log row id as `sourceId`. Resolve whatever we are handed back
-  /// to the owning routine so we never write an orphan row that violates the
-  /// medication_logs -> routines foreign key.
-  Future<String?> _resolveMedicationRoutineId(String rawId) async {
+  /// publishes a row id as `sourceId`. Resolve whatever we are handed back to the
+  /// owning routine, and report the scheduled log row when the identifier points
+  /// at one, so the caller can complete that dose in place instead of creating a
+  /// duplicate.
+  Future<({String routineId, String? logId})?> _resolveMedicationTarget(String rawId) async {
     if (rawId.isEmpty) return null;
     final db = await DatabaseHelper.instance.database;
 
     final routineRows = await db.query('routines', columns: ['id'], where: 'id = ?', whereArgs: [rawId], limit: 1);
-    if (routineRows.isNotEmpty) return routineRows.first['id'] as String?;
+    if (routineRows.isNotEmpty) {
+      final rid = routineRows.first['id'] as String?;
+      if (rid != null) return (routineId: rid, logId: null);
+    }
 
     final logRows = await db.query('medication_logs', columns: ['routineId'], where: 'id = ?', whereArgs: [rawId], limit: 1);
-    if (logRows.isNotEmpty) return logRows.first['routineId'] as String?;
+    if (logRows.isNotEmpty) {
+      final rid = logRows.first['routineId'] as String?;
+      if (rid != null) return (routineId: rid, logId: rawId);
+    }
 
     final prnRows = await db.query('prn_logs', columns: ['routineId'], where: 'id = ?', whereArgs: [rawId], limit: 1);
-    if (prnRows.isNotEmpty) return prnRows.first['routineId'] as String?;
+    if (prnRows.isNotEmpty) {
+      final rid = prnRows.first['routineId'] as String?;
+      if (rid != null) return (routineId: rid, logId: null);
+    }
 
     return null;
   }
@@ -313,33 +323,48 @@ class CompletionGateway {
 
   Future<CompletionOutcome> _handleMedicationTake(MedicationTake req) async {
     try {
-      final routineId = await _resolveMedicationRoutineId(req.medicationId);
-      if (routineId == null) {
+      final target = await _resolveMedicationTarget(req.medicationId);
+      if (target == null) {
         debugPrint('CompletionGateway: no medication routine resolves from id=${req.medicationId}');
         return CompletionOutcome.failure('این دارو یافت نشد. ثبت مصرف انجام نشد.');
       }
 
+      final routineId = target.routineId;
+      final scheduledLogId = target.logId;
       final db = await DatabaseHelper.instance.database;
       final nowMs = DateTime.now().millisecondsSinceEpoch;
-      final logId = RitmoIdFactory.medicationLog();
+      final logId = scheduledLogId ?? RitmoIdFactory.medicationLog();
       final scheduledMs = _resolveScheduledMs(req.dateStr, req.doseTime) ?? nowMs;
 
       await db.transaction((txn) async {
-        // MED-01: these are the real medication_logs columns. The previous payload
-        // (medicationId / date / doseTime / takenAt) matches no column in the
-        // schema, so sqflite threw on every insert and submit() swallowed it:
-        // each dose logged from the agenda, calendar or a notification was lost.
-        await txn.insert('medication_logs', {
-          'id': logId,
-          'routineId': routineId,
-          'scheduledTime': scheduledMs,
-          'takenTime': nowMs,
-          'status': 'TAKEN',
-          'createdAt': nowMs,
-        });
+        if (scheduledLogId != null) {
+          // MED-03: the agenda row for this slot already exists. Completing it in
+          // place keeps the original scheduledTime and stops one dose from being
+          // counted twice in the adherence maths.
+          await txn.update(
+            'medication_logs',
+            {'takenTime': nowMs, 'status': 'TAKEN'},
+            where: 'id = ?',
+            whereArgs: [scheduledLogId],
+          );
+        } else {
+          // MED-01: these are the real medication_logs columns. The previous
+          // payload (medicationId / date / doseTime / takenAt) matches no column
+          // in the schema, so sqflite threw on every insert and submit()
+          // swallowed it: each dose logged from the agenda, calendar or a
+          // notification was lost.
+          await txn.insert('medication_logs', {
+            'id': logId,
+            'routineId': routineId,
+            'scheduledTime': scheduledMs,
+            'takenTime': nowMs,
+            'status': 'TAKEN',
+            'createdAt': nowMs,
+          });
+        }
 
-        // MED-14: decrement stock in the same transaction as the log insert so
-        // two quick taps cannot lose an update, and never fall below zero.
+        // MED-14: decrement stock in the same transaction as the log write so two
+        // quick taps cannot lose an update, and never fall below zero.
         await txn.rawUpdate(
           'UPDATE routines SET medStockCount = medStockCount - 1, updatedAt = ? '
           'WHERE id = ? AND medStockCount IS NOT NULL AND medStockCount > 0',
@@ -348,7 +373,9 @@ class CompletionGateway {
       });
 
       _notifySuccess(domain: 'medicine', itemId: routineId, dateStr: req.dateStr, result: 'FULL');
-      return CompletionOutcome.success(undoToken: 'medicine:$logId');
+      return CompletionOutcome.success(
+        undoToken: 'medicine:$logId|${scheduledLogId != null ? 'UPDATED' : 'CREATED'}',
+      );
     } catch (e, st) {
       RitmoLog.error('CompletionGateway', 'Medication take failed', e, st);
       return CompletionOutcome.failure('ثبت مصرف دارو انجام نشد. دوباره تلاش کنید.');
@@ -509,11 +536,27 @@ class CompletionGateway {
         case 'medicine':
           // MED-14: undoing a dose has to hand the pill back to the stock counter,
           // otherwise every mistaken tap permanently burns one unit of inventory.
-          final medLogRows = await db.query('medication_logs', columns: ['routineId'], where: 'id = ?', whereArgs: [idPayload], limit: 1);
+          // MED-03: a scheduled dose is reverted to pending; only an ad-hoc take
+          // (token suffix CREATED, or a legacy token with no suffix) is deleted.
+          final medParts = idPayload.split('|');
+          final medLogId = medParts.first;
+          final wasScheduled = medParts.length > 1 && medParts[1] == 'UPDATED';
+
+          final medLogRows = await db.query('medication_logs', columns: ['routineId'], where: 'id = ?', whereArgs: [medLogId], limit: 1);
           final medRoutineId = medLogRows.isNotEmpty ? medLogRows.first['routineId'] as String? : null;
 
           await db.transaction((txn) async {
-            await txn.delete('medication_logs', where: 'id = ?', whereArgs: [idPayload]);
+            if (wasScheduled) {
+              await txn.update(
+                'medication_logs',
+                {'takenTime': null, 'status': 'PENDING'},
+                where: 'id = ?',
+                whereArgs: [medLogId],
+              );
+            } else {
+              await txn.delete('medication_logs', where: 'id = ?', whereArgs: [medLogId]);
+            }
+
             if (medRoutineId != null) {
               await txn.rawUpdate(
                 'UPDATE routines SET medStockCount = medStockCount + 1, updatedAt = ? '

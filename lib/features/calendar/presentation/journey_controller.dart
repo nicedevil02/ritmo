@@ -79,6 +79,16 @@ class JourneyController extends ChangeNotifier {
   int? get previewDurationMinutes => _previewDurationMinutes;
   bool get isDisposed => _isDisposed;
   AgendaLoadStatus get agendaLoadStatus => _agendaService.lastLoadStatus;
+  Set<AgendaDomain> get activeDegradedSources {
+    if (_snapshot != null && _snapshot!.degradedSources.isNotEmpty) {
+      return _snapshot!.degradedSources;
+    }
+    final all = <AgendaDomain>{};
+    for (final snap in _rangeSnapshots.values) {
+      all.addAll(snap.degradedSources);
+    }
+    return all;
+  }
 
   @override
   void notifyListeners() {

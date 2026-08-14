@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/agenda_load_status.dart';
 import 'package:ritmo/core/domain/agenda/agenda_source_registry.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
@@ -298,7 +299,9 @@ class DayAgendaService {
         final k = r['kind']?.toString();
         if (d != null && k != null) dayMarksByDate[d] = k;
       }
-    } catch (e, st) { RitmoLog.error('DayAgendaService', 'day_marks load error', e, st); }
+    } catch (e, st) {
+      debugPrint('[AgendaDayMarks] day_marks load error: $e\n$st');
+    }
 
     return _AgendaContext(
       settingsMap: settingsMap,
@@ -367,18 +370,15 @@ class DayAgendaService {
       options: opts,
     );
 
-    // C-FIX-2 (تقویم خالی) — هر منبع باید جداگانه ایزوله شود.
-    //
-    // قبلاً `_guardSource` فقط *بارگذاری* منابع را محافظت می‌کرد، ولی همین‌جا
-    // `itemsForDate` نُه منبع پشت‌سرهم و بدون محافظ صدا زده می‌شد. روتین‌ها اول
-    // به لیست اضافه می‌شدند، پس اگر یک منبعِ بعدی (معمولاً منبعِ ماژول خاموش مثل
-    // عبادت/ورزش/دارو) استثنا می‌داد، کل روز — از جمله روتین‌های سالم — دور
-    // ریخته می‌شد و `agendaForRange` برای آن روز `DayAgenda.empty` ذخیره می‌کرد؛
-    // یعنی هر ۶۰ روز تقویم خالی، در حالی که صفحهٔ اصلی با مسیر جایگزین P0 هنوز
-    // کارها را نشان می‌داد. اکنون خرابی یک دامنه فقط همان دامنه را حذف می‌کند.
-    void addFrom(String label, List<AgendaItem> Function() produce) {
+    final degradedDomains = <AgendaDomain>{};
+
+    void safeCollect(
+      String label,
+      Set<AgendaDomain> domains,
+      List<AgendaItem> Function() collect,
+    ) {
       try {
-        items.addAll(produce());
+        items.addAll(collect());
       } catch (e, st) {
         RitmoLog.error(
           'DayAgendaService',
@@ -388,6 +388,7 @@ class DayAgendaService {
         );
         final key = 'items:$label';
         if (!failures.contains(key)) failures.add(key);
+        degradedDomains.addAll(domains);
       }
     }
 
@@ -413,32 +414,60 @@ class DayAgendaService {
       );
     }
 
-    addFrom('routine', () {
+    safeCollect('routine', {AgendaDomain.routine}, () {
       final routines = ctx.routineSource.itemsForDate(agendaCtx);
       return routines
           .where((r) => !activeWorshipTitles.contains(r.title.trim()))
           .toList();
     });
 
-    addFrom('worship', () => ctx.worshipSource.itemsForDate(agendaCtx));
-    addFrom('sports', () => ctx.sportsSource.itemsForDate(agendaCtx));
-    addFrom('medicine', () => ctx.medicineSource.itemsForDate(agendaCtx));
-    addFrom('goalSteps', () => ctx.goalStepsSource.itemsForDate(agendaCtx));
+    safeCollect(
+      'worship',
+      {AgendaDomain.prayer, AgendaDomain.mustahab, AgendaDomain.worshipDebt},
+      () => ctx.worshipSource.itemsForDate(agendaCtx),
+    );
+    safeCollect(
+      'sports',
+      {AgendaDomain.sport},
+      () => ctx.sportsSource.itemsForDate(agendaCtx),
+    );
+    safeCollect(
+      'medicine',
+      {AgendaDomain.medicine},
+      () => ctx.medicineSource.itemsForDate(agendaCtx),
+    );
+    safeCollect(
+      'goalSteps',
+      {AgendaDomain.goalStep},
+      () => ctx.goalStepsSource.itemsForDate(agendaCtx),
+    );
 
     final taskSource = ctx.taskSource;
     if (taskSource != null) {
-      addFrom('task', () => taskSource.itemsForDate(agendaCtx));
+      safeCollect('task', {AgendaDomain.task}, () => taskSource.itemsForDate(agendaCtx));
     }
 
-    addFrom('course', () => ctx.courseSource.itemsForDate(agendaCtx));
-    addFrom('konkur', () => ctx.konkurSource.itemsForDate(agendaCtx));
-    addFrom('cycle', () => ctx.cycleSource.itemsForDate(agendaCtx));
+    safeCollect(
+      'course',
+      {AgendaDomain.course},
+      () => ctx.courseSource.itemsForDate(agendaCtx),
+    );
+    safeCollect(
+      'konkur',
+      {AgendaDomain.konkur},
+      () => ctx.konkurSource.itemsForDate(agendaCtx),
+    );
+    safeCollect(
+      'cycle',
+      {AgendaDomain.cycle},
+      () => ctx.cycleSource.itemsForDate(agendaCtx),
+    );
 
     // Additional / custom registered sources (e.g. from tests or new modules)
     const standardKeys = {'routine', 'worship', 'sports', 'medicine', 'goalSteps', 'task', 'course', 'konkur', 'cycle'};
     for (final entry in ctx.allSources.entries) {
       if (!standardKeys.contains(entry.key)) {
-        items.addAll(entry.value.itemsForDate(agendaCtx));
+        safeCollect(entry.key, entry.value.domains, () => entry.value.itemsForDate(agendaCtx));
       }
     }
 
@@ -468,6 +497,7 @@ class DayAgendaService {
       dateStr: dateStr,
       items: filtered,
       enabledDomains: enabledDomains,
+      degradedSources: degradedDomains,
     );
   }
 

@@ -23,6 +23,7 @@ import 'package:ritmo/features/calendar/presentation/widgets/calendar_search_del
 import 'package:ritmo/features/calendar/presentation/widgets/day_review_sheet.dart';
 import 'package:ritmo/features/calendar/presentation/logic/timeline_snapping.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/day_summary_bar.dart';
+import 'package:ritmo/features/calendar/presentation/widgets/agenda_degraded_banner.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/go_to_date_dialog.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_agenda_view.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_month_view.dart';
@@ -612,6 +613,12 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                         ],
                       ),
                       const SizedBox(height: RitmoSpacing.xs),
+
+                      // Shared degraded warning banner
+                      AgendaDegradedBanner(
+                        degradedDomains: _controller.activeDegradedSources,
+                        onRetry: _controller.refresh,
+                      ),
 
                       // [Control 2] Scale Switcher Segmented Control
                       JourneyScaleSwitcher(

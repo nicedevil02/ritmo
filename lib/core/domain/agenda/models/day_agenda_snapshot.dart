@@ -34,4 +34,5 @@ class DayAgendaSnapshot {
   String get dateStr => dayAgenda.dateStr;
   List<AgendaItem> get items => dayAgenda.items;
   int get rhythmScore => dayAgenda.rhythmScore;
+  Set<AgendaDomain> get degradedSources => dayAgenda.degradedSources;
 }

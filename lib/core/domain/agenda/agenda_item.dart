@@ -272,6 +272,7 @@ class DayAgenda {
     required this.items,
     this.rhythmScore = 0,
     this.enabledDomains = const {},
+    this.degradedSources = const {},
   });
   final String dateStr;
   final List<AgendaItem> items;
@@ -279,6 +280,9 @@ class DayAgenda {
 
   /// Which domains were actually enabled (module-gated / consented) for this day.
   final Map<AgendaDomain, bool> enabledDomains;
+
+  /// Domains whose source failed during assembly/loading for this day.
+  final Set<AgendaDomain> degradedSources;
 
   List<AgendaItem> itemsForDomain(AgendaDomain domain) =>
       items.where((i) => i.domain == domain).toList();

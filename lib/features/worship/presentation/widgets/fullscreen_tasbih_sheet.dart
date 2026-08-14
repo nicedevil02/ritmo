@@ -115,10 +115,10 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
   bool _showRemaining = false;
   final FocusNode _focusNode = FocusNode();
 
-  final List<_TasbihStage> _fatimaStages = const [
-    _TasbihStage('اللهُ أَکْبَرُ', 'الله اکبر', 34, Color(0xFFC98F23)),
-    _TasbihStage('الْحَمْدُ لِلَّهِ', 'الحمد لله', 33, Color(0xFF059669)),
-    _TasbihStage('سُبْحَانَ اللَّهِ', 'سبحان الله', 33, Color(0xFF0284C7)),
+  List<_TasbihStage> _getFatimaStages(RitmoColors colors) => [
+    _TasbihStage('اللهُ أَکْبَرُ', 'الله اکبر', 34, colors.accent),
+    _TasbihStage('الْحَمْدُ لِلَّهِ', 'الحمد لله', 33, colors.success),
+    _TasbihStage('سُبْحَانَ اللَّهِ', 'سبحان الله', 33, colors.primary),
   ];
 
   @override
@@ -171,19 +171,20 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
     }
 
     if (_isZahra) {
-      final currentStage = _fatimaStages[_stageIndex];
+      final fatimaStages = _getFatimaStages(Theme.of(context).extension<RitmoColors>()!);
+      final target = fatimaStages[_stageIndex].target;
       setState(() {
         _currentCount++;
       });
 
-      if (_currentCount >= currentStage.target) {
+      if (_currentCount >= target) {
         // Milestone Haptic: Always on (double heavy pulse)
         unawaited(HapticFeedback.heavyImpact());
         Future.delayed(const Duration(milliseconds: 120), () {
           HapticFeedback.vibrate();
         });
 
-        if (_stageIndex < _fatimaStages.length - 1) {
+        if (_stageIndex < fatimaStages.length - 1) {
           setState(() {
             _stageIndex++;
             _currentCount = 0;
@@ -388,7 +389,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
           ),
           CupertinoDialogAction(
             isDefaultAction: true,
-            child: const Text('پایان و بستن', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+            child: Text('پایان و بستن', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
             onPressed: () {
               Navigator.pop(context);
               _onPop();
@@ -403,10 +404,11 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fatimaStages = _getFatimaStages(colors);
 
     final active = _activePractice;
-    final stage = _isZahra ? _fatimaStages[_stageIndex] : null;
-    final activeColor = stage?.accentColor ?? (isDark ? const Color(0xFFE8C46D) : const Color(0xFFC38D29));
+    final stage = _isZahra ? fatimaStages[_stageIndex] : null;
+    final activeColor = stage?.accentColor ?? (colors.accent);
     final dhikrArabic = stage?.arabicText ?? active.title;
     final dhikrTitle = stage?.titleFa ?? 'ذکر روزانه';
     final target = stage?.target ?? active.dailyTarget;
@@ -434,7 +436,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
           }
         },
         child: Scaffold(
-          backgroundColor: isDark ? const Color(0xFF101614) : const Color(0xFFFAF7F0),
+          backgroundColor: colors.background,
           body: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: _onTap,
@@ -469,26 +471,26 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                         if (_isZahra) ...[
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(_fatimaStages.length, (i) {
-                              final st = _fatimaStages[i];
+                            children: List.generate(fatimaStages.length, (i) {
+                              final st = fatimaStages[i];
                               final isActive = i == _stageIndex;
                               final isDone = i < _stageIndex;
                               return AnimatedContainer(
-                                duration: const Duration(milliseconds: 280),
-                                margin: const EdgeInsets.symmetric(horizontal: 5),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                duration: Duration(milliseconds: 280),
+                                margin: EdgeInsets.symmetric(horizontal: 5),
+                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
                                   color: isActive
                                       ? (isDark
                                           ? st.accentColor.withValues(alpha: 0.22)
-                                          : const Color(0xFFFFF8E7))
+                                          : colors.primaryContainer)
                                       : isDone
                                           ? (isDark
-                                              ? const Color(0xFF16241E)
-                                              : const Color(0xFFF0EFE9))
+                                              ? colors.surfaceSunken
+                                              : colors.surfaceSunken)
                                           : (isDark
-                                              ? const Color(0xFF121A17)
-                                              : const Color(0xFFF7F5EE)),
+                                              ? colors.surfaceSunken
+                                              : colors.surfaceSunken),
                                   borderRadius: BorderRadius.circular(22),
                                   border: Border.all(
                                     color: isActive
@@ -502,7 +504,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                     BoxShadow(
                                       color: st.accentColor.withValues(alpha: isActive ? 0.18 : 0.0),
                                       blurRadius: isActive ? 12 : 0,
-                                      offset: isActive ? const Offset(0, 3) : Offset.zero,
+                                      offset: isActive ? Offset(0, 3) : Offset.zero,
                                     ),
                                   ],
                                 ),
@@ -513,7 +515,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                     fontSize: 13.5,
                                     fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
                                     color: isActive
-                                        ? (isDark ? st.accentColor : const Color(0xFF916510))
+                                        ? (st.accentColor)
                                         : isDone
                                             ? colors.textSecondary
                                             : colors.textSecondary.withValues(alpha: 0.45),
@@ -522,12 +524,12 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                               );
                             }),
                           ),
-                          const SizedBox(height: 32),
+                          SizedBox(height: 32),
                         ],
 
                         // Arabic / Main Dhikr Phrase (Majestic & Large)
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
                             dhikrArabic,
                             textAlign: TextAlign.center,
@@ -541,7 +543,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
 
                         Text(
                           _isZahra
@@ -552,13 +554,13 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                           style: TextStyle(
                             fontSize: 15,
                             color: isDark
-                                ? const Color(0xFFC8AA66)
-                                : const Color(0xFF8C6D23),
+                                ? colors.accent
+                                : colors.accent,
                             fontFamily: 'Vazirmatn',
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 44),
+                        SizedBox(height: 44),
 
                         // Large Counter Circle Progress Ring (260x260)
                         GestureDetector(
@@ -574,21 +576,21 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: isDark
-                                  ? const Color(0xFF131C18)
-                                  : const Color(0xFFFFFEFA),
+                                  ? colors.surface
+                                  : colors.surface,
                               border: Border.all(
                                 color: isDark
-                                    ? const Color(0xFF264035)
-                                    : const Color(0xFFE8E0CD),
+                                    ? colors.border
+                                    : colors.border,
                                 width: 1.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: isDark
                                       ? Colors.black.withValues(alpha: 0.35)
-                                      : const Color(0xFFB79B62).withValues(alpha: 0.12),
+                                      : colors.shadow.withValues(alpha: 0.12),
                                   blurRadius: 36,
-                                  offset: const Offset(0, 10),
+                                  offset: Offset(0, 10),
                                 ),
                               ],
                             ),
@@ -604,7 +606,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                     strokeWidth: 12,
                                     backgroundColor: isDark
                                         ? Colors.white.withValues(alpha: 0.06)
-                                        : const Color(0xFFEDE9DE),
+                                        : colors.border,
                                     valueColor: AlwaysStoppedAnimation<Color>(activeColor),
                                     strokeCap: StrokeCap.round,
                                   ),
@@ -639,7 +641,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w800,
-                                          color: isDark ? activeColor : const Color(0xFF916510),
+                                          color: activeColor,
                                           fontFamily: 'Vazirmatn',
                                         ),
                                       ),
@@ -650,20 +652,20 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 42),
+                        SizedBox(height: 42),
 
                         // Touch Hint Pill
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 11),
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFF16241E)
-                                : const Color(0xFFF2ECE0),
+                                ? colors.surfaceSunken
+                                : colors.surfaceSunken,
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
                               color: isDark
-                                  ? const Color(0xFF284638)
-                                  : const Color(0xFFE2D9C8),
+                                  ? colors.border
+                                  : colors.border,
                             ),
                           ),
                           child: Row(
@@ -672,9 +674,9 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                               Icon(
                                 Icons.touch_app_rounded,
                                 size: 18,
-                                color: isDark ? const Color(0xFFE8C46D) : const Color(0xFFB8831F),
+                                color: colors.accent,
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 'برای افزایش شمارش، هر جای صفحه را لمس کنید یا کلید ولوم را بزنید',
                                 style: TextStyle(
@@ -715,29 +717,29 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                           if (_dhikrs.length > 1)
                             Container(
                               height: 44,
-                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              padding: EdgeInsets.symmetric(horizontal: 14),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF16231E) : Colors.white,
+                                color: colors.surfaceElevated,
                                 borderRadius: BorderRadius.circular(22),
                                 border: Border.all(
-                                  color: isDark ? const Color(0xFF2B4C3E) : const Color(0xFFE5DDCB),
+                                  color: colors.border,
                                   width: 1.2,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
                                     blurRadius: 14,
-                                    offset: const Offset(0, 3),
+                                    offset: Offset(0, 3),
                                   ),
                                 ],
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
                                   value: _selectedPracticeId,
-                                  dropdownColor: isDark ? const Color(0xFF16231E) : Colors.white,
+                                  dropdownColor: colors.surfaceElevated,
                                   borderRadius: BorderRadius.circular(18),
                                   icon: Padding(
-                                    padding: const EdgeInsets.only(right: 8),
+                                    padding: EdgeInsets.only(right: 8),
                                     child: Icon(
                                       Icons.keyboard_arrow_down_rounded,
                                       size: 18,
@@ -784,7 +786,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                     ? Icons.vibration_rounded
                                     : Icons.mobile_off_rounded,
                                 iconColor: _hapticEnabled
-                                    ? (isDark ? const Color(0xFFE8C46D) : const Color(0xFFB8831F))
+                                    ? (colors.accent)
                                     : colors.textSecondary.withValues(alpha: 0.4),
                                 size: 21,
                                 tooltip: _hapticEnabled ? 'ویبره هر لمس روشن است' : 'ویبره هر لمس خاموش است',
@@ -802,12 +804,12 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                         ? Icons.vibration_rounded
                                         : Icons.mobile_off_rounded,
                                     iconColor: _hapticEnabled
-                                        ? const Color(0xFF10B981)
-                                        : const Color(0xFFF59E0B),
+                                        ? colors.success
+                                        : colors.warning,
                                   );
                                 },
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
 
                               // Reset Badge
                               _buildTopActionBadge(
@@ -853,9 +855,9 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
           height: 44,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isDark ? const Color(0xFF16231E) : Colors.white,
+            color: colors.surfaceElevated,
             border: Border.all(
-              color: isDark ? const Color(0xFF2B4C3E) : const Color(0xFFE5DDCB),
+              color: colors.border,
               width: 1.2,
             ),
             boxShadow: [

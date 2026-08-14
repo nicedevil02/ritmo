@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_glass_surface.dart';
 
 class NotesActionItem {
   final IconData icon;
@@ -30,23 +29,37 @@ class NotesActionRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoGlassSurface(
-        borderRadius: BorderRadius.circular(RitmoRadius.pill),
-        padding: const EdgeInsets.symmetric(
-          horizontal: RitmoSpacing.sm,
-          vertical: RitmoSpacing.xs,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: colors.surface.withValues(alpha: isDark ? 0.92 : 0.95),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: colors.border,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: colors.shadow.withValues(alpha: isDark ? 0.3 : 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             for (int i = 0; i < items.length; i++) ...[
-              _buildActionItem(context, items[i]),
-              if (i < items.length - 1) const SizedBox(width: RitmoSpacing.xs),
+              _buildActionItem(context, items[i], colors, isDark),
+              if (i < items.length - 1) const SizedBox(width: 4),
             ],
             if (trailing != null) ...[
-              const SizedBox(width: RitmoSpacing.xs),
+              const SizedBox(width: 4),
               trailing!,
             ],
           ],
@@ -55,8 +68,7 @@ class NotesActionRail extends StatelessWidget {
     );
   }
 
-  Widget _buildActionItem(BuildContext context, NotesActionItem item) {
-    final colors = context.colors;
+  Widget _buildActionItem(BuildContext context, NotesActionItem item, RitmoColors colors, bool isDark) {
     final itemColor = item.color ?? (item.isPrimary ? colors.primary : colors.textSecondary);
 
     return Material(
@@ -66,29 +78,35 @@ class NotesActionRail extends StatelessWidget {
           RitmoHapticsPolicy.selection();
           item.onTap();
         },
-        borderRadius: BorderRadius.circular(RitmoRadius.pill),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: RitmoSpacing.md,
-            vertical: RitmoSpacing.sm,
+            horizontal: 10,
+            vertical: 6,
           ),
           decoration: item.isPrimary
               ? BoxDecoration(
-                  color: itemColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                  color: itemColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: itemColor.withValues(alpha: 0.35),
+                    width: 1,
+                  ),
                 )
               : null,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(item.icon, size: 16, color: itemColor),
-              const SizedBox(width: RitmoSpacing.xs),
+              Icon(item.icon, size: 15, color: itemColor),
+              const SizedBox(width: 5),
               Text(
                 item.label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontWeight: item.isPrimary ? FontWeight.bold : FontWeight.normal,
-                      color: itemColor,
-                    ),
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 11.5,
+                  fontWeight: item.isPrimary ? FontWeight.bold : FontWeight.w500,
+                  color: itemColor,
+                ),
               ),
             ],
           ),

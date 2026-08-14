@@ -85,37 +85,48 @@ class NoteLinkTile extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: RitmoSpacing.xs - 1),
-        padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.sm),
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: colors.surfaceSunken,
-          borderRadius: BorderRadius.circular(RitmoRadius.field),
-          border: Border.all(color: colors.border.withValues(alpha: 0.3)),
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: colors.border,
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
             Icon(_getModuleIcon(link.linkModule), size: 16, color: colors.primary),
-            const SizedBox(width: RitmoSpacing.sm),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'مرتبط با $moduleLabel ($shortEntityId)',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 12,
+                  color: colors.textPrimary,
+                ),
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm, vertical: RitmoSpacing.xs / 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                color: colors.primaryContainer,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.35),
+                  width: 0.8,
+                ),
               ),
               child: Text(
                 relationLabel,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colors.primary,
-                    ),
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: colors.primary,
+                ),
               ),
             ),
           ],
@@ -124,4 +135,3 @@ class NoteLinkTile extends StatelessWidget {
     );
   }
 }
-

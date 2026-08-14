@@ -18,6 +18,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/worship/logic/prayer_timeline.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
@@ -180,13 +181,14 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
     }
 
     final isTraveller = widget.day.context.isTraveller;
+    final colors = context.colors;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 600),
-        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        padding: const EdgeInsets.fromLTRB(6, 10, 6, 10),
+        duration: Duration(milliseconds: 600),
+        margin: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        padding: EdgeInsets.fromLTRB(6, 10, 6, 10),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topRight,
@@ -198,7 +200,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
             BoxShadow(
               color: sky.gradient.first.withValues(alpha: 0.4),
               blurRadius: 24,
-              offset: const Offset(0, 10),
+              offset: Offset(0, 10),
             ),
           ],
         ),
@@ -223,7 +225,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                       behavior: HitTestBehavior.opaque,
                       onTap: widget.onOpenCityPicker,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                        padding: EdgeInsets.symmetric(horizontal: 11, vertical: 6),
                         decoration: BoxDecoration(
                           color: sky.textColor.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(14),
@@ -234,9 +236,9 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                             Icon(
                               CupertinoIcons.location_solid,
                               size: 13,
-                              color: times.isFallbackLocation ? const Color(0xFFFF8A65) : sky.goldColor,
+                              color: times.isFallbackLocation ? colors.warning : sky.goldColor,
                             ),
-                            const SizedBox(width: 5),
+                            SizedBox(width: 5),
                             Text(
                               times.isFallbackLocation ? 'تهران (پیش‌فرض)' : _persianCityName,
                               style: TextStyle(
@@ -258,7 +260,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                         widget.onTravellerToggle(!isTraveller);
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                        padding: EdgeInsets.symmetric(horizontal: 11, vertical: 6),
                         decoration: BoxDecoration(
                           color: isTraveller
                               ? sky.goldColor.withValues(alpha: 0.25)
@@ -275,7 +277,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                               size: 13,
                               color: isTraveller ? sky.goldColor : sky.textColor.withValues(alpha: 0.7),
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               isTraveller ? 'مسافر (قصر)' : 'مقیم',
                               style: TextStyle(
@@ -395,7 +397,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                                                 color: sky.textColor,
                                               ),
                                             ),
-                                            const SizedBox(height: 3),
+                                            SizedBox(height: 3),
 
                                             // Countdown text with Roll-up upward animation
                                             _RollUpText(
@@ -409,7 +411,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                                               ),
                                             ),
 
-                                            const SizedBox(height: 4),
+                                            SizedBox(height: 4),
                                             Divider(
                                               height: 5,
                                               indent: 14,
@@ -427,7 +429,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                                                 color: sky.textColor,
                                               ),
                                             ),
-                                            const SizedBox(height: 1),
+                                            SizedBox(height: 1),
                                             _RollUpText(
                                               text: hijriStr,
                                               textAlign: TextAlign.center,
@@ -437,7 +439,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                                                 color: sky.goldColor,
                                               ),
                                             ),
-                                            const SizedBox(height: 1),
+                                            SizedBox(height: 1),
                                             _RollUpText(
                                               text: gregorianStr,
                                               textAlign: TextAlign.center,
@@ -469,7 +471,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                      padding: EdgeInsets.symmetric(horizontal: 11, vertical: 6),
                       decoration: BoxDecoration(
                         color: sky.textColor.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(14),
@@ -479,7 +481,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(sky.periodIcon, size: 14, color: sky.goldColor),
-                          const SizedBox(width: 5),
+                          SizedBox(width: 5),
                           Text(
                             sky.periodName,
                             style: TextStyle(
@@ -550,22 +552,22 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: isDone
-                    ? const LinearGradient(
+                    ? LinearGradient(
                         begin: Alignment.topRight,
                         end: Alignment.bottomLeft,
-                        colors: [Color(0xFFFFD700), Color(0xFFFF9800)],
+                        colors: [sky.goldColor, sky.accentColor],
                       )
                     : LinearGradient(
                         begin: Alignment.topRight,
                         end: Alignment.bottomLeft,
                         colors: [
                           sky.gradient.first.withValues(alpha: 0.95),
-                          const Color(0xFF070A12).withValues(alpha: 0.96),
+                          sky.gradient.last.withValues(alpha: 0.96),
                         ],
                       ),
                 border: Border.all(
                   color: isDone
-                      ? const Color(0xFFFFF59D)
+                      ? sky.goldColor
                       : isPrayer
                           ? sky.goldColor.withValues(alpha: 0.65)
                           : sky.textColor.withValues(alpha: 0.35),
@@ -574,10 +576,10 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                 boxShadow: [
                   BoxShadow(
                     color: isDone
-                        ? const Color(0xFFFFD700).withValues(alpha: 0.45)
+                        ? sky.goldColor.withValues(alpha: 0.45)
                         : Colors.black.withValues(alpha: 0.60),
                     blurRadius: isDone ? 11 : 7,
-                    offset: const Offset(0, 3),
+                    offset: Offset(0, 3),
                   ),
                 ],
               ),
@@ -1102,11 +1104,11 @@ class _TwentyFourHourOrbitPainter extends CustomPainter {
       final pulseRadius = (18.0 + pulseValue * 4.0) * moonScale;
 
       final glowPaint = Paint()
-        ..color = const Color(0xFF9FA8DA).withValues(alpha: 0.50 * moonOpacity)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
+        ..color = Color(0xFF9FA8DA).withValues(alpha: 0.50 * moonOpacity)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 14);
       canvas.drawCircle(bodyCenter, pulseRadius, glowPaint);
 
-      final moonPaint = Paint()..color = const Color(0xFFFFF9C4).withValues(alpha: moonOpacity);
+      final moonPaint = Paint()..color = Color(0xFFFFF9C4).withValues(alpha: moonOpacity);
       canvas.drawCircle(bodyCenter, 12 * moonScale, moonPaint);
 
       final shadowPaint = Paint()..color = sky.gradient.first.withValues(alpha: moonOpacity);

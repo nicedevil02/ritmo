@@ -76,6 +76,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
 
   Future<void> _logBatchCompletion(WorshipDebt debt, int delta) async {
     if (delta <= 0) return;
+    final colors = context.colors;
     unawaited(HapticFeedback.mediumImpact());
     final actualDelta = delta.clamp(1, debt.remainingCount);
 
@@ -138,7 +139,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
               ? 'تمام قضای "${debt.title}" با موفقیت ادا شد'
               : '$actualDelta مورد از قضای "${debt.title}" ثبت شد',
           icon: Icons.check_circle_rounded,
-          iconColor: const Color(0xFF10B981),
+          iconColor: colors.success,
         );
       }
     } catch (e) {
@@ -156,7 +157,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            backgroundColor: isDark ? const Color(0xFF1B2420) : Colors.white,
+            backgroundColor: colors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
             title: Text(
               'ثبت چندتایی قضای ${debt.title}',
@@ -179,14 +180,14 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                     fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 TextField(
                   controller: controller,
                   keyboardType: TextInputType.number,
                   autofocus: true,
                   style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16),
                   decoration: InputDecoration(
-                    fillColor: isDark ? const Color(0xFF131A17) : const Color(0xFFF3F5F2),
+                    fillColor: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                     filled: true,
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -194,11 +195,11 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                      borderSide: BorderSide(color: colors.success, width: 1.8),
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 // Quick Increment Chips
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -210,19 +211,19 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                       },
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                          color: colors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+                          border: Border.all(color: colors.success.withValues(alpha: 0.25)),
                         ),
                         child: Text(
                           toPersianDigits('+$n'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Vazirmatn',
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF10B981),
+                            color: colors.success,
                           ),
                         ),
                       ),
@@ -238,7 +239,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
+                  backgroundColor: colors.success,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
@@ -287,6 +288,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
   }
 
   Future<void> _deleteDebt(WorshipDebt debt) async {
+    final colors = context.colors;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -295,9 +297,9 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            backgroundColor: isDark ? const Color(0xFF1B2420) : Colors.white,
+            backgroundColor: colors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-            title: const Text(
+            title: Text(
               'حذف مورد قضای عبادات',
               style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
             ),
@@ -312,12 +314,12 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEF4444),
+                  backgroundColor: colors.error,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('حذف دائم', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                child: Text('حذف دائم', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -337,7 +339,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
             context,
             'مورد "${debt.title}" حذف شد',
             icon: Icons.delete_outline_rounded,
-            iconColor: const Color(0xFFEF4444),
+            iconColor: colors.error,
           );
         }
       } catch (e) {
@@ -347,6 +349,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
   }
 
   Future<void> _restoreDebt(WorshipDebt debt) async {
+    final colors = context.colors;
     try {
       final db = await DatabaseHelper.instance.database;
       final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -367,7 +370,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
           context,
           'مورد "${debt.title}" به لیست فعال بازگردانده شد',
           icon: Icons.restore_rounded,
-          iconColor: const Color(0xFF10B981),
+          iconColor: colors.success,
         );
       }
     } catch (e) {
@@ -426,23 +429,23 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(32),
           color: isDark
-              ? const Color(0xFF151A18)
-              : const Color(0xFFFFFEFB),
+              ? colors.surface
+              : colors.surface,
           border: Border.all(
             color: isDark
-                ? const Color(0xFF25443A)
-                : const Color(0xFFE8E0CD),
+                ? colors.border
+                : colors.border,
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
               color: isDark
                   ? Colors.black.withValues(alpha: 0.28)
-                  : const Color(0xFFB79B62).withValues(alpha: 0.08),
+                  : colors.shadow.withValues(alpha: 0.08),
               blurRadius: 35,
               spreadRadius: 0,
               offset: const Offset(0, 12),
@@ -452,7 +455,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(32),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+            padding: EdgeInsets.fromLTRB(18, 18, 18, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -472,28 +475,28 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: isDark
-                                    ? const [
-                                        Color(0xFF1C3A2F),
-                                        Color(0xFF10251E),
+                                    ? [
+                                        colors.primaryContainer,
+                                        colors.surface,
                                       ]
-                                    : const [
-                                        Color(0xFFE8F8F2),
-                                        Color(0xFFD6F3E7),
+                                    : [
+                                        colors.surface,
+                                        colors.surfaceSunken,
                                       ],
                               ),
                               border: Border.all(
                                 color: isDark
-                                    ? const Color(0xFF2C5E4C)
-                                    : const Color(0xFFB8E8D4),
+                                    ? colors.primary
+                                    : colors.primaryContainer,
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.balance_rounded,
                               size: 20,
-                              color: Color(0xFF10B981),
+                              color: colors.success,
                             ),
                           ),
-                          const SizedBox(width: 11),
+                          SizedBox(width: 11),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,7 +510,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                     color: colors.textPrimary,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
+                                SizedBox(height: 2),
                                 Text(
                                   'پیگیری و جبران نماز و روزه قضا',
                                   style: TextStyle(
@@ -525,36 +528,36 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                       ),
                     ),
 
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
 
                     // Add Debt Button
                     InkWell(
                       onTap: _showAddDebtSheet,
                       borderRadius: BorderRadius.circular(18),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 13,
                           vertical: 9,
                         ),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? const Color(0xFF162C24)
-                              : const Color(0xFFEDF9F4),
+                              ? colors.surfaceSunken
+                              : colors.surfaceSunken,
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: const Color(0xFF10B981)
+                            color: colors.success
                                 .withValues(alpha: 0.35),
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               CupertinoIcons.add,
                               size: 15,
-                              color: Color(0xFF059669),
+                              color: colors.success,
                             ),
-                            const SizedBox(width: 5),
+                            SizedBox(width: 5),
                             Text(
                               'افزودن مورد جبرانی',
                               style: TextStyle(
@@ -562,8 +565,8 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                                 color: isDark
-                                    ? const Color(0xFF34D399)
-                                    : const Color(0xFF059669),
+                                    ? colors.success
+                                    : colors.success,
                               ),
                             ),
                           ],
@@ -573,12 +576,12 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                   ],
                 ),
 
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
 
                 // Card Content (Zero-State or Debts List)
                 if (_activeDebts.isEmpty)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+                    padding: EdgeInsets.symmetric(vertical: 24, horizontal: 12),
                     child: Center(
                       child: Column(
                         children: [
@@ -592,7 +595,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                   shape: BoxShape.circle,
                                   gradient: RadialGradient(
                                     colors: [
-                                      const Color(0xFF10B981).withValues(alpha: 0.15),
+                                      colors.success.withValues(alpha: 0.15),
                                       Colors.transparent,
                                     ],
                                   ),
@@ -602,38 +605,38 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                 width: 56,
                                 height: 56,
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF13221C) : Colors.white,
+                                  color: colors.surface,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                      color: colors.success.withValues(alpha: 0.15),
                                       blurRadius: 20,
-                                      offset: const Offset(0, 4),
+                                      offset: Offset(0, 4),
                                     ),
                                   ],
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Icon(
                                     CupertinoIcons.checkmark_seal_fill,
-                                    color: Color(0xFF10B981),
+                                    color: colors.success,
                                     size: 30,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20),
                           Text(
                             'کاروان عبادات تسویه و به‌روز است ✨',
                             style: TextStyle(
-                              color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                              color: isDark ? colors.success : colors.success,
                               fontSize: 17,
                               fontWeight: FontWeight.w900,
                               fontFamily: 'Vazirmatn',
                               letterSpacing: -0.3,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Text(
                             'هیچ بدهی یا قضای ثبت‌شده‌ای در انتظار نداری. با آرامش و سبک‌بالی به مسیرت ادامه بده.',
                             textAlign: TextAlign.center,
@@ -652,9 +655,9 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                 else ...[
                   ListView.separated(
                     shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
+                    physics: NeverScrollableScrollPhysics(),
                     itemCount: _activeDebts.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 14),
+                    separatorBuilder: (context, index) => SizedBox(height: 14),
                     itemBuilder: (context, index) {
                       final debt = _activeDebts[index];
                       final remaining = debt.remainingCount;
@@ -671,14 +674,14 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                       }
 
                       return Container(
-                        padding: const EdgeInsets.all(15),
+                        padding: EdgeInsets.all(15),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF17201C) : const Color(0xFFF9FDFB),
+                          color: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isDark
-                                ? const Color(0xFF244438)
-                                : const Color(0xFFD4EFE4),
+                                ? colors.border
+                                : colors.border,
                           ),
                         ),
                         child: Column(
@@ -686,8 +689,8 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                           children: [
                             Row(
                               children: [
-                                Text(typeEmoji, style: const TextStyle(fontSize: 16)),
-                                const SizedBox(width: 8),
+                                Text(typeEmoji, style: TextStyle(fontSize: 16)),
+                                SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     debt.title,
@@ -704,7 +707,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                   onTap: () => _showEditDebtSheet(debt),
                                   borderRadius: BorderRadius.circular(12),
                                   child: Padding(
-                                    padding: const EdgeInsets.all(4),
+                                    padding: EdgeInsets.all(4),
                                     child: Icon(
                                       CupertinoIcons.ellipsis_vertical,
                                       size: 16,
@@ -712,17 +715,17 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 6),
+                                SizedBox(width: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                                  padding: EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                    color: colors.success.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
                                     toPersianDigits('$completed از $total ادا شده'),
-                                    style: const TextStyle(
-                                      color: Color(0xFF10B981),
+                                    style: TextStyle(
+                                      color: colors.success,
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w800,
                                       fontFamily: 'Vazirmatn',
@@ -731,7 +734,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
 
                             // Progress bar
                             ClipRRect(
@@ -741,11 +744,11 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                 backgroundColor: isDark
                                     ? Colors.white.withValues(alpha: 0.08)
                                     : Colors.black.withValues(alpha: 0.06),
-                                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                                valueColor: AlwaysStoppedAnimation<Color>(colors.success),
                                 minHeight: 7,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
 
                             // Prediction Note
                             if (debt.dailyTarget > 0)
@@ -758,7 +761,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
 
                             // Actions Row
                             Row(
@@ -775,16 +778,16 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       onTap: () => _changeDailyTarget(debt, -1),
                                       borderRadius: BorderRadius.circular(6),
                                       child: Container(
-                                        padding: const EdgeInsets.all(4),
+                                        padding: EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: isDark ? const Color(0xFF22312A) : const Color(0xFFE8F2EC),
+                                          color: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Icon(CupertinoIcons.minus, size: 12, color: colors.textSecondary),
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      padding: EdgeInsets.symmetric(horizontal: 8),
                                       child: Text(
                                         toPersianDigits('${debt.dailyTarget}'),
                                         style: TextStyle(color: colors.textPrimary, fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
@@ -794,9 +797,9 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       onTap: () => _changeDailyTarget(debt, 1),
                                       borderRadius: BorderRadius.circular(6),
                                       child: Container(
-                                        padding: const EdgeInsets.all(4),
+                                        padding: EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: isDark ? const Color(0xFF22312A) : const Color(0xFFE8F2EC),
+                                          color: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Icon(CupertinoIcons.plus, size: 12, color: colors.textSecondary),
@@ -813,37 +816,37 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       onTap: () => _showCustomCountDialog(debt),
                                       borderRadius: BorderRadius.circular(10),
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                          color: colors.success.withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+                                          border: Border.all(color: colors.success.withValues(alpha: 0.25)),
                                         ),
-                                        child: const Text(
+                                        child: Text(
                                           'ثبت چندتایی',
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
-                                            color: Color(0xFF10B981),
+                                            color: colors.success,
                                             fontFamily: 'Vazirmatn',
                                           ),
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: 8),
 
                                     // Quick +1 button
                                     ElevatedButton.icon(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF10B981),
+                                        backgroundColor: colors.success,
                                         foregroundColor: Colors.white,
                                         elevation: 0,
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                       ),
                                       onPressed: () => _logBatchCompletion(debt, 1),
-                                      icon: const Icon(CupertinoIcons.checkmark_alt, size: 14),
-                                      label: const Text('ثبت ۱ ادا', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                                      icon: Icon(CupertinoIcons.checkmark_alt, size: 14),
+                                      label: Text('ثبت ۱ ادا', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
                                     ),
                                   ],
                                 ),
@@ -866,14 +869,14 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                         });
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        padding: EdgeInsets.symmetric(vertical: 6),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               _showArchived ? '🔻 بستن بایگانی' : '🔺 نمایش بدهی‌های پایان‌یافته (${toPersianDigits(_archivedDebts.length.toString())})',
                               style: TextStyle(
-                                color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                                color: isDark ? colors.success : colors.success,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: 'Vazirmatn',
@@ -884,25 +887,25 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                       ),
                     ),
                     if (_showArchived) ...[
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       ListView.builder(
                         shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
+                        physics: NeverScrollableScrollPhysics(),
                         itemCount: _archivedDebts.length,
                         itemBuilder: (context, index) {
                           final debt = _archivedDebts[index];
                           return Container(
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                            margin: EdgeInsets.symmetric(vertical: 4),
+                            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF131A17) : const Color(0xFFF3F6F4),
+                              color: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(color: colors.border.withValues(alpha: 0.2)),
                             ),
                             child: Row(
                               children: [
-                                const Icon(CupertinoIcons.checkmark_seal_fill, color: Color(0xFF10B981), size: 18),
-                                const SizedBox(width: 8),
+                                Icon(CupertinoIcons.checkmark_seal_fill, color: colors.success, size: 18),
+                                SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     debt.title,
@@ -919,28 +922,28 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                   onTap: () => _restoreDebt(debt),
                                   borderRadius: BorderRadius.circular(8),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                                      color: colors.success.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: const Row(
+                                    child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(CupertinoIcons.arrow_counterclockwise, size: 12, color: Color(0xFF10B981)),
+                                        Icon(CupertinoIcons.arrow_counterclockwise, size: 12, color: colors.success),
                                         SizedBox(width: 4),
-                                        Text('بازگردانی', style: TextStyle(fontSize: 11, color: Color(0xFF10B981), fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                                        Text('بازگردانی', style: TextStyle(fontSize: 11, color: colors.success, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
                                       ],
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: 8),
                                 // Delete Permanently
                                 InkWell(
                                   onTap: () => _deleteDebt(debt),
                                   borderRadius: BorderRadius.circular(8),
                                   child: Padding(
-                                    padding: const EdgeInsets.all(4),
+                                    padding: EdgeInsets.all(4),
                                     child: Icon(CupertinoIcons.trash, size: 15, color: colors.textSecondary.withValues(alpha: 0.6)),
                                   ),
                                 ),
@@ -978,7 +981,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
   final TextEditingController _targetController = TextEditingController(text: '1');
   String _debtType = 'PRAYER'; // PRAYER, FAST, ATONEMENT
 
-  final List<String> _prayerPresets = const [
+  final List<String> _prayerPresets = [
     'نماز صبح',
     'نماز ظهر و عصر',
     'نماز مغرب و عشا',
@@ -1007,6 +1010,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
   }
 
   Future<void> _save() async {
+    final colors = context.colors;
     final title = _titleController.text.trim();
     final count = int.tryParse(_countController.text) ?? 0;
     final target = int.tryParse(_targetController.text) ?? 1;
@@ -1016,7 +1020,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
         context,
         'لطفاً عنوان و تعداد کل معتبر وارد کنید',
         icon: Icons.info_outline_rounded,
-        iconColor: const Color(0xFFF59E0B),
+        iconColor: colors.warning,
       );
       return;
     }
@@ -1050,7 +1054,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
           context,
           'بدهی "$title" با موفقیت ثبت شد',
           icon: Icons.check_circle_rounded,
-          iconColor: const Color(0xFF10B981),
+          iconColor: colors.success,
         );
       }
     } catch (e) {
@@ -1072,10 +1076,10 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
       child: Container(
         padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF161F1B) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          color: isDark ? colors.surface : Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           border: Border.all(
-            color: isDark ? const Color(0xFF28483B) : const Color(0xFFDFEAE3),
+            color: isDark ? colors.border : colors.border,
           ),
         ),
         child: Column(
@@ -1088,14 +1092,14 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                        color: colors.success.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.balance_rounded, size: 20, color: Color(0xFF10B981)),
+                      child: Icon(Icons.balance_rounded, size: 20, color: colors.success),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Text(
                       'ثبت بدهی (قضای) جدید',
                       style: TextStyle(
@@ -1121,11 +1125,11 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                 _buildTypeOption('PRAYER', 'نماز قضا', '📿'),
                 const SizedBox(width: 8),
                 _buildTypeOption('FAST', 'روزه قضا', '🌙'),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _buildTypeOption('ATONEMENT', 'کفاره / سایر', '⚖️'),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Presets Chips
             SingleChildScrollView(
@@ -1133,7 +1137,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
               child: Row(
                 children: presets.map((p) {
                   return Padding(
-                    padding: const EdgeInsets.only(left: 6),
+                    padding: EdgeInsets.only(left: 6),
                     child: InkWell(
                       onTap: () {
                         unawaited(HapticFeedback.selectionClick());
@@ -1143,11 +1147,11 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                        padding: EdgeInsets.symmetric(horizontal: 11, vertical: 6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                          color: colors.success.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2)),
+                          border: Border.all(color: colors.success.withValues(alpha: 0.2)),
                         ),
                         child: Text(
                           p,
@@ -1155,7 +1159,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                             fontFamily: 'Vazirmatn',
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                            color: isDark ? colors.success : colors.success,
                           ),
                         ),
                       ),
@@ -1164,7 +1168,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Title Field
             TextField(
@@ -1173,7 +1177,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
               decoration: InputDecoration(
                 hintText: 'عنوان بدهی (مثلاً: نماز قضای صبح)',
                 hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
-                fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                fillColor: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                 filled: true,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -1181,11 +1185,11 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                  borderSide: BorderSide(color: colors.success, width: 1.8),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
 
             // Total count & Target Count Row
             Row(
@@ -1198,7 +1202,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                     decoration: InputDecoration(
                       hintText: 'تعداد کل قضاها',
                       hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
-                      fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                      fillColor: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                       filled: true,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -1206,12 +1210,12 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                        borderSide: BorderSide(color: colors.success, width: 1.8),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: TextField(
                     controller: _targetController,
@@ -1220,7 +1224,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                     decoration: InputDecoration(
                       hintText: 'هدف انجام در روز',
                       hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
-                      fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                      fillColor: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                       filled: true,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -1228,25 +1232,25 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                        borderSide: BorderSide(color: colors.success, width: 1.8),
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 22),
+            SizedBox(height: 22),
 
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
+                backgroundColor: colors.success,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
               onPressed: _save,
-              child: const Text('ثبت بدهی جدید', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+              child: Text('ثبت بدهی جدید', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
             ),
           ],
         ),
@@ -1255,6 +1259,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
   }
 
   Widget _buildTypeOption(String value, String label, String emoji) {
+    final colors = context.colors;
     final isSelected = _debtType == value;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
@@ -1266,30 +1271,30 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
           });
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          duration: Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.12)
-                : (isDark ? const Color(0xFF121A16) : const Color(0xFFF4F7F5)),
+                ? colors.success.withValues(alpha: isDark ? 0.2 : 0.12)
+                : (isDark ? colors.surfaceSunken : colors.surfaceSunken),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isSelected ? const Color(0xFF10B981) : Colors.transparent,
+              color: isSelected ? colors.success : Colors.transparent,
               width: isSelected ? 1.5 : 1,
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 14)),
-              const SizedBox(width: 5),
+              Text(emoji, style: TextStyle(fontSize: 14)),
+              SizedBox(width: 5),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                   color: isSelected
-                      ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
+                      ? (isDark ? colors.success : colors.success)
                       : context.colors.textSecondary,
                   fontFamily: 'Vazirmatn',
                 ),
@@ -1345,6 +1350,7 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
   }
 
   Future<void> _update() async {
+    final colors = context.colors;
     final title = _titleController.text.trim();
     final total = int.tryParse(_totalController.text) ?? widget.debt.totalCount;
     final remaining = int.tryParse(_remainingController.text) ?? widget.debt.remainingCount;
@@ -1379,7 +1385,7 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
           context,
           'تغییرات "$title" با موفقیت ذخیره شد',
           icon: Icons.check_circle_rounded,
-          iconColor: const Color(0xFF10B981),
+          iconColor: colors.success,
         );
       }
     } catch (e) {
@@ -1397,10 +1403,10 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
       child: Container(
         padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF161F1B) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          color: isDark ? colors.surface : Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           border: Border.all(
-            color: isDark ? const Color(0xFF28483B) : const Color(0xFFDFEAE3),
+            color: isDark ? colors.border : colors.border,
           ),
         ),
         child: Column(
@@ -1425,7 +1431,7 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Title
             TextField(
@@ -1434,7 +1440,7 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
               decoration: InputDecoration(
                 labelText: 'عنوان',
                 labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
-                fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                fillColor: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                 filled: true,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -1442,11 +1448,11 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                  borderSide: BorderSide(color: colors.success, width: 1.8),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
 
             // Total & Remaining
             Row(
@@ -1459,7 +1465,7 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                     decoration: InputDecoration(
                       labelText: 'تعداد کل',
                       labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
-                      fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                      fillColor: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                       filled: true,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -1467,12 +1473,12 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                        borderSide: BorderSide(color: colors.success, width: 1.8),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: TextField(
                     controller: _remainingController,
@@ -1481,7 +1487,7 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                     decoration: InputDecoration(
                       labelText: 'باقیمانده',
                       labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
-                      fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                      fillColor: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                       filled: true,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -1489,14 +1495,14 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                        borderSide: BorderSide(color: colors.success, width: 1.8),
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
 
             // Daily Target
             TextField(
@@ -1506,7 +1512,7 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
               decoration: InputDecoration(
                 labelText: 'هدف روزانه',
                 labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
-                fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                fillColor: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                 filled: true,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -1514,11 +1520,11 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                  borderSide: BorderSide(color: colors.success, width: 1.8),
                 ),
               ),
             ),
-            const SizedBox(height: 22),
+            SizedBox(height: 22),
 
             Row(
               children: [
@@ -1530,22 +1536,22 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                   },
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                      color: colors.error.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.3)),
+                      border: Border.all(color: colors.error.withValues(alpha: 0.3)),
                     ),
-                    child: const Icon(CupertinoIcons.trash, color: Color(0xFFEF4444), size: 20),
+                    child: Icon(CupertinoIcons.trash, color: colors.error, size: 20),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
 
                 // Save Button
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
+                      backgroundColor: colors.success,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

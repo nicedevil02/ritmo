@@ -176,20 +176,20 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
       children: [
         // Main Premium Solar Calendar Surface Card
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+          margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          padding: EdgeInsets.fromLTRB(18, 18, 18, 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),
-            color: isDark ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
+            color: isDark ? colors.surface : colors.surface,
             border: Border.all(
-              color: isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD),
+              color: isDark ? colors.border : colors.border,
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
                 color: isDark
                     ? Colors.black.withValues(alpha: 0.28)
-                    : const Color(0xFFB79B62).withValues(alpha: 0.08),
+                    : colors.shadow.withValues(alpha: 0.08),
                 blurRadius: 35,
                 spreadRadius: 0,
                 offset: const Offset(0, 12),
@@ -226,21 +226,19 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                                   fontFamily: 'Vazirmatn',
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               // Today Button Shortcut (Active whenever selected day is not today)
                               if (!isSelectedToday)
                                 InkWell(
                                   onTap: _goToToday,
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                                     decoration: BoxDecoration(
-                                      color: isDark ? const Color(0xFF23382D) : const Color(0xFFF1E8D5),
+                                      color: colors.primaryContainer,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: isDark
-                                            ? const Color(0xFF3B6B55)
-                                            : const Color(0xFFD4A843).withValues(alpha: 0.5),
+                                        color: colors.primary.withValues(alpha: 0.5),
                                         width: 1,
                                       ),
                                     ),
@@ -250,15 +248,15 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                                         Icon(
                                           CupertinoIcons.arrow_counterclockwise,
                                           size: 11,
-                                          color: isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018),
+                                          color: colors.primary,
                                         ),
-                                        const SizedBox(width: 4),
+                                        SizedBox(width: 4),
                                         Text(
                                           'امروز',
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w800,
-                                            color: isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018),
+                                            color: colors.primary,
                                             fontFamily: 'Vazirmatn',
                                           ),
                                         ),
@@ -268,7 +266,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                                 ),
                             ],
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             '${_monthData.gregorianRangeText}  •  ${_monthData.hijriRangeText}',
                             style: TextStyle(
@@ -303,7 +301,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                         isDark: isDark,
                         colors: colors,
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       _buildNavBadge(
                         icon: CupertinoIcons.chevron_back,
                         tooltip: 'ماه قبل',
@@ -316,13 +314,13 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                 ],
               ),
 
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
 
               // 2. WEEKDAY BAR (Saturday to Friday) with full names
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 7),
+                padding: EdgeInsets.symmetric(vertical: 7),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF101614) : const Color(0xFFF7F4EC),
+                  color: colors.surfaceSunken,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Row(
@@ -397,10 +395,10 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF19221E) : const Color(0xFFF4F0E6),
+              color: colors.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+                color: colors.border,
                 width: 1,
               ),
             ),
@@ -421,14 +419,14 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
+            padding: EdgeInsets.symmetric(horizontal: 2),
             child: Text(
               label,
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w800,
                 color: isFriday
-                    ? const Color(0xFFEF4444)
+                    ? colors.error
                     : colors.textSecondary.withValues(alpha: 0.8),
                 fontFamily: 'Vazirmatn',
               ),
@@ -456,20 +454,20 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
       if (isHoliday) {
         // Luxury Rose/Coral Gradient for Holiday/Friday selection
         decoration = BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFFF43F5E),
-              Color(0xFFBE123C),
+              colors.error,
+              colors.error,
             ],
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFF43F5E).withValues(alpha: 0.35),
+              color: colors.error.withValues(alpha: 0.35),
               blurRadius: 10,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         );
@@ -477,20 +475,20 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
       } else {
         // Luxury Warm Gold Gradient for standard day selection
         decoration = BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFFC38D29),
-              Color(0xFF9E7018),
+              colors.primary,
+              colors.primaryPressed,
             ],
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFC38D29).withValues(alpha: 0.35),
+              color: colors.primary.withValues(alpha: 0.35),
               blurRadius: 10,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         );
@@ -499,23 +497,23 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
     } else if (isToday && isCurrentMonth) {
       // Elegant Today indicator when not selected
       decoration = BoxDecoration(
-        color: isDark ? const Color(0xFF1E2F26) : const Color(0xFFF8F3E5),
+        color: colors.primaryContainer,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF437A61) : const Color(0xFFD4A843),
+          color: colors.primary,
           width: 1.5,
         ),
       );
-      mainTextColor = isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018);
+      mainTextColor = colors.primary;
     } else {
-      decoration = const BoxDecoration(color: Colors.transparent);
+      decoration = BoxDecoration(color: Colors.transparent);
 
       if (!isCurrentMonth) {
         mainTextColor = isHoliday
-            ? const Color(0xFFEF4444).withValues(alpha: 0.28)
+            ? colors.error.withValues(alpha: 0.28)
             : colors.textSecondary.withValues(alpha: 0.25);
       } else if (isHoliday) {
-        mainTextColor = isDark ? const Color(0xFFFB7185) : const Color(0xFFEF4444);
+        mainTextColor = isDark ? colors.error : colors.error;
       } else {
         mainTextColor = colors.textPrimary;
       }
@@ -545,7 +543,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
               ),
             ),
 
-            const SizedBox(height: 3),
+            SizedBox(height: 3),
 
             // Occasion Micro-Dots
             if (isCurrentMonth && day.hasOccasions)
@@ -558,17 +556,17 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                   } else {
                     switch (occ.category) {
                       case WorshipOccasionCategory.celebration:
-                        dotColor = const Color(0xFF10B981);
+                        dotColor = colors.success;
                         break;
                       case WorshipOccasionCategory.mourning:
-                        dotColor = const Color(0xFFEF4444);
+                        dotColor = colors.error;
                         break;
                       case WorshipOccasionCategory.fasting:
                       case WorshipOccasionCategory.worshipDeed:
-                        dotColor = const Color(0xFFD4A843);
+                        dotColor = colors.accent;
                         break;
                       case WorshipOccasionCategory.national:
-                        dotColor = const Color(0xFF6366F1);
+                        dotColor = colors.primary;
                         break;
                     }
                   }

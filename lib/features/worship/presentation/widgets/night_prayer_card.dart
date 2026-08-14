@@ -1,13 +1,9 @@
-// lib/features/worship/presentation/widgets/night_prayer_card.dart
-// Night Prayer Ritual ("نماز شب به عنوان آیین شبانه") — Section 5 New Feature #3 (F-3)
-// Dynamic card that appears after Shari Midnight (W-5) with 11-rak'ah stepper
-// (8 Rak'ah Nafilat al-Layl + 2 Rak'ah Shaf' + 1 Rak'ah Witr).
-
 import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 
 class NightPrayerCard extends StatefulWidget {
@@ -25,7 +21,7 @@ class NightPrayerCard extends StatefulWidget {
 }
 
 class _NightPrayerCardState extends State<NightPrayerCard> {
-  int _currentRakah = 0; // 0 to 11
+  int _currentRakah = 0;
   Timer? _tickerTimer;
 
   @override
@@ -52,46 +48,29 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
     final isNightTime = now.isAfter(midnight) || now.isBefore(fajr);
 
     if (!isNightTime) {
-      return const SizedBox.shrink(); // Hide during day
+      return SizedBox.shrink(); // Hide during day
     }
 
-    final isCompleted = _currentRakah >= 11;
-    final progress = (_currentRakah / 11).clamp(0.0, 1.0);
-
+    final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final progress = (_currentRakah / 11.0).clamp(0.0, 1.0);
+    final isCompleted = _currentRakah >= 11;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      padding: const EdgeInsets.all(18),
+      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: isDark
-              ? const [
-                  Color(0xFF192420),
-                  Color(0xFF101715),
-                ]
-              : const [
-                  Color(0xFFFFFDF8),
-                  Color(0xFFF7F3E9),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(32),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark
-              ? const Color(0xFF2E4D40)
-              : const Color(0xFFE8E0CD),
+          color: colors.border,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.28)
-                : const Color(0xFFB79B62).withValues(alpha: 0.08),
-            blurRadius: 35,
-            spreadRadius: 0,
-            offset: const Offset(0, 12),
+            color: colors.shadow.withValues(alpha: isDark ? 0.28 : 0.08),
+            blurRadius: 28,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -104,52 +83,59 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
             children: [
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     CupertinoIcons.moon_stars_fill,
                     size: 20,
-                    color: Color(0xFFFFD700),
+                    color: colors.accent,
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
+                  SizedBox(width: 8),
+                  Text(
                     'آیین نماز شب (نافله شب)',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: colors.textPrimary,
+                      fontFamily: 'Vazirmatn',
                     ),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+                  color: colors.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: colors.accent.withValues(alpha: 0.3),
+                    width: 0.8,
+                  ),
                 ),
-                child: const Text(
-                  '۱۱ رکعت',
+                child: Text(
+                  '${PersianDigits.convert('11')} رکعت',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFFFD700),
+                    color: colors.accent,
+                    fontFamily: 'Vazirmatn',
                   ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           Text(
             'وَمِنَ اللَّيْلِ فَتَهَجَّدْ بِهِ نَافِلَةً لَكَ عَسَىٰ أَنْ يَبْعَثَكَ رَبُّكَ مَقَامًا مَحْمُودًا',
             style: TextStyle(
-              fontSize: 11,
-              color: Colors.white.withValues(alpha: 0.7),
-              height: 1.4,
+              fontSize: 11.5,
+              color: colors.textSecondary,
+              height: 1.45,
+              fontFamily: 'Vazirmatn',
             ),
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // Stepper Counter Row
           Row(
@@ -160,18 +146,20 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
                 children: [
                   Text(
                     _rakahStageText(_currentRakah),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: colors.textPrimary,
+                      fontFamily: 'Vazirmatn',
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
-                    '$_currentRakah از ۱۱ رکعت خوانده شده',
+                    '${PersianDigits.convert(_currentRakah.toString())} از ${PersianDigits.convert('11')} رکعت خوانده شده',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: colors.textTertiary,
+                      fontFamily: 'Vazirmatn',
                     ),
                   ),
                 ],
@@ -182,7 +170,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
                 children: [
                   if (_currentRakah > 0)
                     IconButton(
-                      icon: const Icon(CupertinoIcons.minus_circle, color: Colors.white70),
+                      icon: Icon(CupertinoIcons.minus_circle, color: colors.textSecondary),
                       onPressed: () {
                         unawaited(HapticFeedback.lightImpact());
                         setState(() {
@@ -193,16 +181,17 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
 
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isCompleted ? const Color(0xFF4CAF50) : const Color(0xFFFFD700),
-                      foregroundColor: Colors.black,
+                      backgroundColor: isCompleted ? colors.success : colors.accent,
+                      foregroundColor: isCompleted ? Colors.white : Colors.black87,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      elevation: 0,
                     ),
                     onPressed: () {
                       unawaited(HapticFeedback.mediumImpact());
                       if (_currentRakah < 11) {
                         setState(() {
-                          _currentRakah += 2; // Step 2 rak'ahs
+                          _currentRakah += 2;
                           if (_currentRakah > 11) _currentRakah = 11;
                         });
                         if (_currentRakah >= 11) {
@@ -212,7 +201,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
                     },
                     child: Text(
                       isCompleted ? 'تکمیل شد 🎉' : '+ ۲ رکعت',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, fontFamily: 'Vazirmatn'),
                     ),
                   ),
                 ],
@@ -220,7 +209,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
             ],
           ),
 
-          const SizedBox(height: 10),
+          SizedBox(height: 12),
 
           // Progress Bar
           ClipRRect(
@@ -228,8 +217,8 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 4,
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
+              backgroundColor: colors.surfaceSunken,
+              valueColor: AlwaysStoppedAnimation<Color>(colors.accent),
             ),
           ),
         ],

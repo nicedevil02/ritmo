@@ -1,7 +1,3 @@
-// lib/features/routines/domain/strategies/sports_strategy.dart
-
-import 'dart:convert';
-
 import 'package:flutter/material.dart' show BuildContext;
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/domain/models.dart';

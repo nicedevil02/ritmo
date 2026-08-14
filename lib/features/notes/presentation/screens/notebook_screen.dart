@@ -296,10 +296,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF19221E) : const Color(0xFFF4F0E6),
+                                color: colors.surfaceSunken,
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+                                  color: colors.border,
                                   width: 1,
                                 ),
                               ),
@@ -340,56 +340,51 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       ],
                     ),
 
-                    // Left side: AI Assistant Badge & Archive/Trash Shortcut
-                    Row(
-                      children: [
-                        // AI Assistant Luxury Pill
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: _openAiAssistantSheet,
+                    // Left side: AI Assistant Badge
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _openAiAssistantSheet,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: colors.primaryContainer,
                             borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E2F26) : const Color(0xFFF1EAD9),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: isDark ? const Color(0xFF3D6E57) : const Color(0xFFD4A843).withValues(alpha: 0.6),
-                                  width: 1,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFD4A843).withValues(alpha: isDark ? 0.12 : 0.08),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    CupertinoIcons.sparkles,
-                                    size: 14,
-                                    color: Color(0xFFC48A1A),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    'دستیار هوش مصنوعی',
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018),
-                                      fontFamily: 'Vazirmatn',
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            border: Border.all(
+                              color: colors.primary.withValues(alpha: isDark ? 0.45 : 0.35),
+                              width: 1,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: colors.primary.withValues(alpha: isDark ? 0.12 : 0.08),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                CupertinoIcons.sparkles,
+                                size: 14,
+                                color: colors.primary,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'دستیار هوش مصنوعی',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: colors.primary,
+                                  fontFamily: 'Vazirmatn',
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -397,24 +392,22 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
 
               const SizedBox(height: 4),
 
-              // 2. Modern 2026 Segmented Glass Tab Bar
+              // 2. Modern Segmented Tab Bar
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: Container(
                   height: 46,
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
+                    color: colors.surface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD),
+                      color: colors.border,
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: isDark
-                            ? Colors.black.withValues(alpha: 0.2)
-                            : const Color(0xFFB79B62).withValues(alpha: 0.06),
+                        color: colors.shadow.withValues(alpha: isDark ? 0.2 : 0.06),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
@@ -425,21 +418,21 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     indicatorSize: TabBarIndicatorSize.tab,
                     dividerColor: Colors.transparent,
                     indicator: BoxDecoration(
-                      color: isDark ? const Color(0xFF23382D) : const Color(0xFFEFE8D6),
+                      color: colors.primaryContainer,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF3B6B55) : const Color(0xFFD4A843).withValues(alpha: 0.5),
+                        color: colors.primary.withValues(alpha: 0.4),
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark ? Colors.black.withValues(alpha: 0.25) : const Color(0xFFD4A843).withValues(alpha: 0.15),
+                          color: colors.shadow.withValues(alpha: isDark ? 0.25 : 0.12),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    labelColor: isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018),
+                    labelColor: isDark ? colors.accent : colors.primary,
                     unselectedLabelColor: colors.textSecondary.withValues(alpha: 0.7),
                     labelStyle: const TextStyle(
                       fontFamily: 'Vazirmatn',
@@ -449,23 +442,16 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     unselectedLabelStyle: const TextStyle(
                       fontFamily: 'Vazirmatn',
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                     tabs: [
                       Tab(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.edit_note_rounded, size: 16),
-                            const SizedBox(width: 4),
-                            const Text('یادداشت‌ها'),
-                            if (totalActiveCount > 0) ...[
-                              const SizedBox(width: 4),
-                              Text(
-                                '(${PersianDigits.convert(totalActiveCount.toString())})',
-                                style: const TextStyle(fontSize: 10),
-                              ),
-                            ],
+                            const Icon(CupertinoIcons.doc_text_fill, size: 14),
+                            const SizedBox(width: 5),
+                            Text('یادداشت‌ها (${PersianDigits.convert(totalActiveCount.toString())})'),
                           ],
                         ),
                       ),
@@ -473,16 +459,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.lightbulb_rounded, size: 15),
-                            const SizedBox(width: 4),
-                            const Text('درس‌های زندگی'),
-                            if (_experiences.isNotEmpty) ...[
-                              const SizedBox(width: 4),
-                              Text(
-                                '(${PersianDigits.convert(_experiences.length.toString())})',
-                                style: const TextStyle(fontSize: 10),
-                              ),
-                            ],
+                            const Icon(CupertinoIcons.lightbulb_fill, size: 14),
+                            const SizedBox(width: 5),
+                            Text('درس‌ها و تجارب (${PersianDigits.convert(_experiences.length.toString())})'),
                           ],
                         ),
                       ),
@@ -490,24 +469,17 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.psychology_rounded, size: 16),
-                            const SizedBox(width: 4),
+                            const Icon(CupertinoIcons.arrow_2_circlepath_circle_fill, size: 14),
+                            const SizedBox(width: 5),
                             const Text('مرور و تحلیل'),
                             if (_dueNotesCount > 0) ...[
                               const SizedBox(width: 4),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                width: 6,
+                                height: 6,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFEF4444),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  PersianDigits.convert(_dueNotesCount.toString()),
-                                  style: const TextStyle(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
+                                  color: colors.error,
+                                  shape: BoxShape.circle,
                                 ),
                               ),
                             ],
@@ -519,18 +491,21 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 ),
               ),
 
-              // 3. Tab Views
+              const SizedBox(height: 4),
+
+              // 3. Tab Views Content
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
+                  physics: const BouncingScrollPhysics(),
                   children: [
-                    // Tab 0: Notes & Ideas
+                    // Tab 0: Notes
                     _buildNotesTab(context, colors, isDark),
 
-                    // Tab 1: Life Lessons & Experiences Hub
+                    // Tab 1: Experiences & Lessons
                     _buildExperiencesTab(context, colors, isDark),
 
-                    // Tab 2: Spaced Repetition & Reviews Hub
+                    // Tab 2: Spaced Repetition & Reviews
                     _buildReviewTab(context, colors, isDark),
                   ],
                 ),
@@ -543,7 +518,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   }
 
   // ==========================================
-  // TAB 0: NOTES & IDEAS VIEW
+  // TAB 0: ALL NOTES & NOTEBOOK VIEW
   // ==========================================
   Widget _buildNotesTab(BuildContext context, RitmoColors colors, bool isDark) {
     final pinnedNotes = _notes.where((n) => n.isPinned).toList();
@@ -573,12 +548,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       child: Container(
                         height: 44,
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
+                          color: colors.surface,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: _isSearchingFocused
-                                ? (isDark ? const Color(0xFF3B6B55) : const Color(0xFFD4A843))
-                                : (isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD)),
+                            color: _isSearchingFocused ? colors.primary : colors.border,
                             width: _isSearchingFocused ? 1.4 : 1.0,
                           ),
                         ),
@@ -652,10 +625,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                             height: 44,
                             width: 44,
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
+                              color: colors.surface,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD),
+                                color: colors.border,
                                 width: 1,
                               ),
                             ),
@@ -764,7 +737,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     padding: const EdgeInsets.only(bottom: 8, top: 4),
                     child: Row(
                       children: [
-                        const Icon(CupertinoIcons.pin_fill, size: 14, color: Color(0xFFC48A1A)),
+                        Icon(CupertinoIcons.pin_fill, size: 14, color: colors.accent),
                         const SizedBox(width: 6),
                         Text(
                           'سنجاق‌شده (${PersianDigits.convert(pinnedNotes.length.toString())})',
@@ -810,7 +783,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   // TAB 1: LIFE LESSONS & EXPERIENCES VIEW
   // ==========================================
   Widget _buildExperiencesTab(BuildContext context, RitmoColors colors, bool isDark) {
-    final insightsColor = const Color(0xFFD4A843);
+    final insightsColor = context.modules.insights;
 
     final filtered = _selectedCategory == null
         ? _experiences
@@ -963,18 +936,20 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
 
   // --- SRS Hero Card Widget ---
   Widget _buildSrsHeroCard(BuildContext context, RitmoColors colors, bool isDark) {
+    final insightsColor = context.modules.insights;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD),
+          color: colors.border,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withValues(alpha: 0.28) : const Color(0xFFB79B62).withValues(alpha: 0.08),
+            color: colors.shadow.withValues(alpha: isDark ? 0.28 : 0.08),
             blurRadius: 28,
             offset: const Offset(0, 8),
           ),
@@ -992,16 +967,16 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E2F26) : const Color(0xFFF1EAD9),
+                      color: colors.primaryContainer,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF3B6B55) : const Color(0xFFD4A843).withValues(alpha: 0.5),
+                        color: colors.primary.withValues(alpha: 0.4),
                         width: 1,
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.psychology_rounded,
-                      color: Color(0xFFC48A1A),
+                      color: colors.primary,
                       size: 22,
                     ),
                   ),
@@ -1036,17 +1011,17 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+                    color: colors.error.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.4), width: 1),
+                    border: Border.all(color: colors.error.withValues(alpha: 0.4), width: 1),
                   ),
                   child: Text(
                     '${PersianDigits.convert(_dueNotesCount.toString())} سررسید امروز',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFFEF4444),
+                      color: colors.error,
                     ),
                   ),
                 ),
@@ -1079,32 +1054,28 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFC38D29), Color(0xFF9E7018)],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
+                color: colors.primary,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFC38D29).withValues(alpha: 0.3),
+                    color: colors.primary.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(CupertinoIcons.play_circle_fill, size: 18, color: Colors.white),
-                  SizedBox(width: 8),
+                  Icon(CupertinoIcons.play_circle_fill, size: 18, color: colors.onPrimary),
+                  const SizedBox(width: 8),
                   Text(
                     'شروع مرور فلش‌کارت‌ها',
                     style: TextStyle(
                       fontFamily: 'Vazirmatn',
                       fontSize: 13.5,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: colors.onPrimary,
                     ),
                   ),
                 ],
@@ -1124,15 +1095,15 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD),
+          color: colors.border,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withValues(alpha: 0.28) : const Color(0xFFB79B62).withValues(alpha: 0.08),
+            color: colors.shadow.withValues(alpha: isDark ? 0.28 : 0.08),
             blurRadius: 28,
             offset: const Offset(0, 8),
           ),
@@ -1151,16 +1122,16 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF16241E) : const Color(0xFFE7F3ED),
+                      color: colors.success.withValues(alpha: isDark ? 0.2 : 0.12),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF2E5946) : const Color(0xFF10B981).withValues(alpha: 0.4),
+                        color: colors.success.withValues(alpha: 0.4),
                         width: 1,
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       CupertinoIcons.chart_bar_alt_fill,
-                      color: Color(0xFF10B981),
+                      color: colors.success,
                       size: 22,
                     ),
                   ),
@@ -1184,7 +1155,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                           fontFamily: 'Vazirmatn',
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF10B981),
+                          color: colors.success,
                         ),
                       ),
                     ],
@@ -1195,17 +1166,17 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4A843).withValues(alpha: 0.15),
+                    color: colors.accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFD4A843).withValues(alpha: 0.4), width: 1),
+                    border: Border.all(color: colors.accent.withValues(alpha: 0.4), width: 1),
                   ),
                   child: Text(
                     '${PersianDigits.convert(_dustyNotes.length.toString())} خاک‌خورده',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFFC48A1A),
+                      color: colors.accent,
                     ),
                   ),
                 ),
@@ -1220,10 +1191,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF19221E) : const Color(0xFFF7F5EE),
+                    color: colors.surfaceSunken,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+                      color: colors.border,
                       width: 1,
                     ),
                   ),
@@ -1258,24 +1229,24 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF19221E) : const Color(0xFFF7F5EE),
+                    color: colors.surfaceSunken,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+                      color: colors.border,
                       width: 1,
                     ),
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.lightbulb_outline_rounded, size: 18, color: Color(0xFFD4A843)),
+                      Icon(Icons.lightbulb_outline_rounded, size: 18, color: context.modules.insights),
                       const SizedBox(height: 4),
                       Text(
                         PersianDigits.convert((stats?.experiencesAddedCount ?? 0).toString()),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Vazirmatn',
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFFD4A843),
+                          color: context.modules.insights,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -1296,24 +1267,24 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF19221E) : const Color(0xFFF7F5EE),
+                    color: colors.surfaceSunken,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+                      color: colors.border,
                       width: 1,
                     ),
                   ),
                   child: Column(
                     children: [
-                      const Icon(CupertinoIcons.pencil, size: 18, color: Color(0xFF10B981)),
+                      Icon(CupertinoIcons.pencil, size: 18, color: colors.success),
                       const SizedBox(height: 4),
                       Text(
                         PersianDigits.convert((stats?.wordCountSum ?? 0).toString()),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Vazirmatn',
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF10B981),
+                          color: colors.success,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -1352,10 +1323,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E2F26) : const Color(0xFFF1EAD9),
+                    color: colors.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF3B6B55) : const Color(0xFFD4A843).withValues(alpha: 0.4),
+                      color: colors.primary.withValues(alpha: 0.35),
                       width: 1,
                     ),
                   ),
@@ -1365,7 +1336,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       fontFamily: 'Vazirmatn',
                       fontSize: 11.5,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018),
+                      color: colors.primary,
                     ),
                   ),
                 );
@@ -1400,7 +1371,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: _dustyNotes.isEmpty ? const Color(0xFF10B981) : const Color(0xFFD4A843),
+                  color: _dustyNotes.isEmpty ? colors.success : colors.accent,
                 ),
               ),
             ],
@@ -1422,15 +1393,15 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF16241E) : const Color(0xFFE7F3ED),
+                color: colors.success.withValues(alpha: isDark ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isDark ? const Color(0xFF2E5946) : const Color(0xFF10B981).withValues(alpha: 0.3),
+                  color: colors.success.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(CupertinoIcons.checkmark_seal_fill, size: 20, color: Color(0xFF10B981)),
+                  Icon(CupertinoIcons.checkmark_seal_fill, size: 20, color: colors.success),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -1439,7 +1410,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                         fontFamily: 'Vazirmatn',
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFF34D399) : const Color(0xFF0C6253),
+                        color: colors.success,
                       ),
                     ),
                   ),
@@ -1461,10 +1432,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF19221E) : const Color(0xFFF7F5EE),
+        color: colors.surfaceSunken,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+          color: colors.border,
           width: 1,
         ),
       ),
@@ -1545,7 +1516,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 ),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
-                  foregroundColor: const Color(0xFFC48A1A),
+                  foregroundColor: colors.accent,
                 ),
               ),
               const SizedBox(width: 4),
@@ -1561,7 +1532,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 ),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
-                  foregroundColor: const Color(0xFFEF4444),
+                  foregroundColor: colors.error,
                 ),
               ),
             ],
@@ -1576,15 +1547,15 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD),
+          color: colors.border,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withValues(alpha: 0.28) : const Color(0xFFB79B62).withValues(alpha: 0.08),
+            color: colors.shadow.withValues(alpha: isDark ? 0.28 : 0.08),
             blurRadius: 28,
             offset: const Offset(0, 8),
           ),
@@ -1619,16 +1590,16 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF19221E) : const Color(0xFFF7F5EE),
+                      color: colors.surfaceSunken,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+                        color: colors.border,
                         width: 1,
                       ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(CupertinoIcons.archivebox, size: 20, color: Color(0xFFC48A1A)),
+                        Icon(CupertinoIcons.archivebox, size: 20, color: colors.accent),
                         const SizedBox(width: 10),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1663,16 +1634,16 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF19221E) : const Color(0xFFF7F5EE),
+                      color: colors.surfaceSunken,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+                        color: colors.border,
                         width: 1,
                       ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(CupertinoIcons.trash, size: 20, color: Color(0xFFEF4444)),
+                        Icon(CupertinoIcons.trash, size: 20, color: colors.error),
                         const SizedBox(width: 10),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1712,7 +1683,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
       // Experience tab
       fabIcon = CupertinoIcons.lightbulb_fill;
       fabLabel = 'ثبت آموزه زندگی';
-      fabBg = const Color(0xFFC38D29);
+      fabBg = context.modules.insights;
       fabAction = () async {
         RitmoHapticsPolicy.tap();
         await Navigator.push(
@@ -1725,7 +1696,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
       // Review tab
       fabIcon = CupertinoIcons.play_circle_fill;
       fabLabel = 'شروع مرور امروز';
-      fabBg = const Color(0xFF10B981);
+      fabBg = colors.primary;
       fabAction = () async {
         RitmoHapticsPolicy.tap();
         await Navigator.push(
@@ -1758,13 +1729,13 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
         elevation: 4,
         highlightElevation: 8,
         backgroundColor: fabBg,
-        icon: Icon(fabIcon, color: Colors.white, size: 20),
+        icon: Icon(fabIcon, color: colors.onPrimary, size: 20),
         label: Text(
           fabLabel,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Vazirmatn',
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: colors.onPrimary,
           ),
         ),
       ),
@@ -1774,20 +1745,20 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   // --- Featured Hero Card for Experiences ---
   Widget _buildFeaturedHeroCard(BuildContext context, Experience exp, bool isDark) {
     final colors = context.colors;
-    final insightsColor = const Color(0xFFD4A843);
+    final insightsColor = context.modules.insights;
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD),
+          color: colors.border,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withValues(alpha: 0.28) : const Color(0xFFB79B62).withValues(alpha: 0.08),
+            color: colors.shadow.withValues(alpha: isDark ? 0.28 : 0.08),
             blurRadius: 28,
             offset: const Offset(0, 8),
           ),
@@ -1802,10 +1773,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF23382D) : const Color(0xFFF1E8D5),
+                  color: insightsColor.withValues(alpha: isDark ? 0.2 : 0.12),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF3B6B55) : const Color(0xFFD4A843).withValues(alpha: 0.5),
+                    color: insightsColor.withValues(alpha: 0.4),
                     width: 1,
                   ),
                 ),
@@ -1820,7 +1791,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                         fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
-                        color: isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018),
+                        color: insightsColor,
                       ),
                     ),
                   ],
@@ -1874,7 +1845,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   // --- Wisdom Card Widget ---
   Widget _buildWisdomCard(BuildContext context, Experience exp, bool isDark) {
     final colors = context.colors;
-    final insightsColor = const Color(0xFFD4A843);
+    final insightsColor = context.modules.insights;
 
     return RitmoCard(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -1899,8 +1870,12 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E2F26) : const Color(0xFFF1EAD9),
+                  color: insightsColor.withValues(alpha: isDark ? 0.2 : 0.12),
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: insightsColor.withValues(alpha: 0.35),
+                    width: 0.8,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1913,7 +1888,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                         fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
-                        color: isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018),
+                        color: insightsColor,
                       ),
                     ),
                   ],

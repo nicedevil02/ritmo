@@ -280,16 +280,16 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
 
               // Segmented Tab bar
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(4),
+                padding: EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF151A18) : colors.card,
+                  color: isDark ? colors.surface : colors.card,
                   borderRadius: BorderRadius.circular(14),
-                  border: isDark ? Border.all(color: const Color(0xffD4A843).withValues(alpha: 0.15), width: 1.2) : null,
+                  border: isDark ? Border.all(color: colors.accent.withValues(alpha: 0.15), width: 1.2) : null,
                 ),
                 child: Row(
                   children: [
@@ -302,7 +302,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                           });
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          padding: EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
                             color: _activeTab == 0
                                 ? (isDark ? Colors.white.withValues(alpha: 0.1) : colors.bg)
@@ -332,7 +332,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                           });
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          padding: EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
                             color: _activeTab == 1
                                 ? (isDark ? Colors.white.withValues(alpha: 0.1) : colors.bg)
@@ -356,7 +356,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               // Content Area
               Expanded(
@@ -388,7 +388,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
             prefixIcon: Icon(CupertinoIcons.search, color: colors.textSecondary, size: 20),
             fillColor: colors.textSecondary.withValues(alpha: 0.02),
             filled: true,
-            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            contentPadding: EdgeInsets.symmetric(vertical: 10),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(color: colors.textSecondary.withValues(alpha: 0.06)),
@@ -399,7 +399,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
 
         // List of Cities
         Expanded(
@@ -420,21 +420,21 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                     final isSelected = cityId == _currentCityId;
 
                     return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      margin: EdgeInsets.symmetric(vertical: 4),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xffD4A843).withValues(alpha: 0.1)
+                            ? colors.accent.withValues(alpha: 0.1)
                             : colors.textSecondary.withValues(alpha: 0.01),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xffD4A843).withValues(alpha: 0.4)
+                              ? colors.accent.withValues(alpha: 0.4)
                               : colors.textSecondary.withValues(alpha: 0.04),
                         ),
                       ),
                       child: ListTile(
                         dense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                         title: Text(
                           cityName,
                           style: TextStyle(
@@ -453,7 +453,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                           ),
                         ),
                         trailing: isSelected
-                            ? const Icon(CupertinoIcons.checkmark_alt, color: Color(0xffD4A843), size: 18)
+                            ? Icon(CupertinoIcons.checkmark_alt, color: colors.accent, size: 18)
                             : Icon(CupertinoIcons.location, color: colors.textSecondary.withValues(alpha: 0.4), size: 16),
                         onTap: () => _selectCity(cityId),
                       ),
@@ -481,7 +481,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               fontFamily: 'Vazirmatn',
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           ..._methods.map((method) {
             final isSelected = _selectedMethod == method['key'];
 
@@ -493,16 +493,16 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                 });
               },
               child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                margin: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? const Color(0xffD4A843).withValues(alpha: 0.08)
+                      ? colors.accent.withValues(alpha: 0.08)
                       : colors.textSecondary.withValues(alpha: 0.02),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: isSelected
-                        ? const Color(0xffD4A843).withValues(alpha: 0.4)
+                        ? colors.accent.withValues(alpha: 0.4)
                         : colors.textSecondary.withValues(alpha: 0.06),
                   ),
                 ),
@@ -515,27 +515,27 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                           fontSize: 14,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           color: isSelected 
-                              ? (isDark ? Colors.white : const Color(0xffB48A23)) 
+                              ? (isDark ? Colors.white : colors.accent) 
                               : colors.textPrimary,
                           fontFamily: 'Vazirmatn',
                         ),
                       ),
                     ),
                     if (isSelected)
-                      const Icon(CupertinoIcons.checkmark_alt, color: Color(0xffD4A843), size: 18),
+                      Icon(CupertinoIcons.checkmark_alt, color: colors.accent, size: 18),
                   ],
                 ),
               ),
             );
           }),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // Online API Refresh Button
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xffD4A843),
+              backgroundColor: colors.accent,
               foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
@@ -570,7 +570,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               }
             },
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Show Asr and Isha Switch Row
           Row(
@@ -587,7 +587,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               ),
               Switch(
                 value: _showAsrIsha,
-                activeThumbColor: const Color(0xffD4A843),
+                activeThumbColor: colors.accent,
                 onChanged: (val) {
                   setState(() {
                     _showAsrIsha = val;
@@ -596,7 +596,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // Hijri Offset Section
           Row(
@@ -615,23 +615,23 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                 _hijriOffset == 0
                     ? 'بدون تغییر'
                     : toPersianDigits('${_hijriOffset > 0 ? "+" : ""}$_hijriOffset روز'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xffD4A843),
+                  color: colors.accent,
                   fontFamily: 'Vazirmatn',
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xffD4A843),
+              activeTrackColor: colors.accent,
               inactiveTrackColor: Colors.white12,
-              thumbColor: const Color(0xffD4A843),
-              overlayColor: const Color(0xffD4A843).withValues(alpha: 0.2),
-              valueIndicatorColor: const Color(0xffD4A843),
+              thumbColor: colors.accent,
+              overlayColor: colors.accent.withValues(alpha: 0.2),
+              valueIndicatorColor: colors.accent,
               valueIndicatorTextStyle: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
             ),
             child: Slider(
@@ -647,12 +647,12 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               },
             ),
           ),
-          const SizedBox(height: 30),
+          SizedBox(height: 30),
 
           // Save button
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xffD4A843),
+              backgroundColor: colors.accent,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

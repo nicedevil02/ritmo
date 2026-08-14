@@ -41,7 +41,7 @@ class PlannerCategoryGrid extends StatelessWidget {
       {'cat': Category.religious, 'title': 'عبادت', 'icon': Icons.mosque_rounded, 'color': const Color(0xffFBBF24)},
       {'cat': Category.medical, 'title': 'دارو', 'icon': Icons.vaccines_rounded, 'color': const Color(0xff06B6D4)},
       {'cat': Category.free, 'title': 'مطالعه', 'icon': Icons.menu_book_rounded, 'color': const Color(0xff3B82F6)},
-      {'cat': Category.personal, 'title': 'یادداشت', 'icon': Icons.note_alt_rounded, 'color': const Color(0xff8B5CF6), 'type': 'REFLECT'},
+      {'cat': Category.personal, 'title': 'یادداشت', 'icon': Icons.note_alt_rounded, 'color': const Color(0xFFC38D29), 'type': 'REFLECT'},
       {'cat': Category.learning, 'title': 'دوره', 'icon': Icons.school_rounded, 'color': const Color(0xff6366F1)},
       {'cat': Category.custom, 'title': 'هدف', 'icon': Icons.track_changes_rounded, 'color': const Color(0xffF97316)},
       {'cat': Category.personal, 'title': 'رویداد', 'icon': Icons.event_note_rounded, 'color': const Color(0xffEF4444), 'type': 'EVENT'},

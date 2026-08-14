@@ -70,14 +70,6 @@ class _PrayerSheetState extends State<PrayerSheet> {
     if (_deadlineTime != null && now.isAfter(_deadlineTime!)) {
       _isDeadlinePassed = true;
     }
-    // For past days (not today), deadline is always passed
-    final today = DateTime.now();
-    final targetDay = widget.target.date;
-    if (targetDay.year < today.year ||
-        (targetDay.year == today.year && targetDay.month < today.month) ||
-        (targetDay.year == today.year && targetDay.month == today.month && targetDay.day < today.day)) {
-      _isDeadlinePassed = true;
-    }
     
     if (mounted) {
       setState(() {
@@ -85,88 +77,85 @@ class _PrayerSheetState extends State<PrayerSheet> {
       });
     }
   }
-  
-  Future<void> _submitQuality(PrayerLogQuality quality) async {
-    final dateStr = widget.target.date.toIso8601String().substring(0, 10);
-    bool allSuccess = true;
-    String? errorMsg;
-
-    for (final pId in widget.target.practiceIds) {
-      final completion = PrayerCompletion(
-        prayerKey: pId,
-        dateStr: dateStr,
-        mode: quality.code,
-      );
-      final outcome = await CompletionGateway.instance.submit(completion);
-      if (!outcome.isSuccess) {
-        allSuccess = false;
-        errorMsg = outcome.errorMessage ?? 'خطا در ثبت کیفیت نماز';
-        break;
-      }
-    }
-
-    if (!mounted) return;
-
-    if (allSuccess) {
-      Navigator.of(context).pop(true);
-    } else {
-      RitmoSnackbar.warning(context, errorMsg ?? 'ثبت انجام نشد.');
-    }
-  }
 
   String _formatTime(DateTime? dt) {
-    if (dt == null) return '';
+    if (dt == null) return '--:--';
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return toPersianDigits('$h:$m');
+  }
+
+  Future<void> _submitQuality(PrayerLogQuality quality) async {
+    final nav = Navigator.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final dateStr = widget.target.date.toIso8601String().substring(0, 10);
+    
+    for (final practiceId in widget.target.practiceIds) {
+      final req = PrayerCompletion(
+        prayerKey: practiceId,
+        dateStr: dateStr,
+        mode: quality.code,
+      );
+
+      final res = await CompletionGateway.instance.submit(req);
+      if (!res.isSuccess) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(res.errorMessage ?? 'خطا در ثبت وضعیت')),
+        );
+        return;
+      }
+    }
+
+    WorshipEngine.instance.invalidate();
+    nav.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    final borderRadius = const BorderRadius.vertical(top: Radius.circular(32));
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF151A18).withValues(alpha: 0.96) : const Color(0xFFFFFEFB).withValues(alpha: 0.98),
-        borderRadius: borderRadius,
-        border: Border.all(
-          color: isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
-            blurRadius: 32,
-            offset: const Offset(0, -8),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(20, 16, 20, 32),
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            border: Border.all(
+              color: colors.border,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colors.shadow.withValues(alpha: isDark ? 0.4 : 0.12),
+                blurRadius: 30,
+                offset: Offset(0, -6),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: borderRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: SafeArea(
             top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle Bar
-                  Container(
-                    width: 42,
-                    height: 4.5,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(999),
+                  // Grab Handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colors.border.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
+                  SizedBox(height: 16),
 
-                  // Header Title
+                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -174,7 +163,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'ثبت وضعیت ${widget.target.titleFa}',
+                            widget.target.titleFa,
                             style: TextStyle(
                               fontFamily: 'Vazirmatn',
                               fontSize: 19,
@@ -182,7 +171,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                               color: colors.textPrimary,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2),
                           Text(
                             _startTime != null ? 'اذان: ${_formatTime(_startTime)}' : 'ثبت مستقیم با لمس گزینه',
                             style: TextStyle(
@@ -198,52 +187,52 @@ class _PrayerSheetState extends State<PrayerSheet> {
                         icon: Icon(Icons.close_rounded, color: colors.textSecondary),
                         style: IconButton.styleFrom(
                           backgroundColor: colors.surfaceSunken,
-                          padding: const EdgeInsets.all(8),
+                          padding: EdgeInsets.all(8),
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
 
                   if (_isLoading)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(),
+                      child: CircularProgressIndicator(color: colors.primary),
                     )
                   else ...[
                     if (_isExempt)
                       Container(
-                        padding: const EdgeInsets.all(14),
-                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: EdgeInsets.all(14),
+                        margin: EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                          color: colors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.3)),
+                          border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.shield_moon_rounded, color: Color(0xFF8B5CF6), size: 24),
+                            Icon(Icons.shield_rounded, color: colors.primary, size: 22),
                             SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'معافیت شرعی (پریود) ثبت شده است',
+                                    'وضعیت معافیت شرعی فعال است',
                                     style: TextStyle(
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF8B5CF6),
+                                      color: colors.primary,
                                       fontFamily: 'Vazirmatn',
                                     ),
                                   ),
                                   SizedBox(height: 2),
                                   Text(
-                                    'برای این روز نیازی به خواندن یا قضای نمازهای واجب نیست.',
+                                    'در این دوران خواندن نماز تکلیف شرعی ندارد.',
                                     style: TextStyle(
                                       fontSize: 11.5,
-                                      color: Color(0xFF8B5CF6),
+                                      color: colors.primary,
                                       fontFamily: 'Vazirmatn',
                                     ),
                                   ),
@@ -255,36 +244,36 @@ class _PrayerSheetState extends State<PrayerSheet> {
                       ),
                     if (_isFuture)
                       Container(
-                        padding: const EdgeInsets.all(14),
-                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: EdgeInsets.all(14),
+                        margin: EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.12),
+                          color: colors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                          border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.info_outline_rounded, color: Colors.blue, size: 22),
-                            const SizedBox(width: 10),
+                            Icon(Icons.info_outline_rounded, color: colors.primary, size: 22),
+                            SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'هنوز وقت این نماز نرسیده است',
                                     style: TextStyle(
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.blue,
+                                      color: colors.primary,
                                       fontFamily: 'Vazirmatn',
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  SizedBox(height: 2),
                                   Text(
                                     'زمان اذان: ${_formatTime(_startTime)}',
                                     style: TextStyle(
                                       fontSize: 11.5,
-                                      color: Colors.blue.withValues(alpha: 0.8),
+                                      color: colors.primary.withValues(alpha: 0.8),
                                       fontFamily: 'Vazirmatn',
                                     ),
                                   ),
@@ -300,22 +289,22 @@ class _PrayerSheetState extends State<PrayerSheet> {
                       title: 'اول وقت (فضیلت)',
                       subtitle: 'خوندن در بازه زمانی طلایی فضیلت اول وقت',
                       icon: Icons.stars_rounded,
-                      accentColor: const Color(0xFF10B981),
+                      accentColor: colors.success,
                       isDisabled: _isFuture,
                       disabledReason: 'وقت اذان نرسیده',
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     _buildOptionCard(
                       context,
                       quality: PrayerLogQuality.inTime,
                       title: 'در وقت مقرر',
                       subtitle: 'خوندن ادا قبل از پایان زمان شرعی',
                       icon: Icons.check_circle_rounded,
-                      accentColor: const Color(0xFFF59E0B),
+                      accentColor: colors.warning,
                       isDisabled: _isFuture,
                       disabledReason: 'وقت اذان نرسیده',
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     _buildOptionCard(
                       context,
                       quality: PrayerLogQuality.qada,
@@ -324,7 +313,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                           ? 'ثبت به عنوان نماز قضاشده بعد از وقت'
                           : 'هنوز وقت خواندن نماز باقیست (مهلت: ${_formatTime(_deadlineTime)})',
                       icon: Icons.history_rounded,
-                      accentColor: const Color(0xFFEF4444),
+                      accentColor: colors.error,
                       isDisabled: !_isDeadlinePassed,
                       disabledReason: 'هنوز وقت خواندن نماز باقیست',
                     ),
@@ -362,7 +351,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
           splashColor: isDisabled ? null : accentColor.withValues(alpha: 0.15),
           highlightColor: isDisabled ? null : accentColor.withValues(alpha: 0.08),
           child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: isDark ? colors.surfaceSunken.withValues(alpha: 0.7) : colors.surface,
               borderRadius: BorderRadius.circular(16),
@@ -393,7 +382,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                     size: 22,
                   ),
                 ),
-                const SizedBox(width: 14),
+                SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,7 +396,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                           color: isDisabled ? colors.textTertiary : colors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         subtitle,
                         style: TextStyle(
@@ -422,7 +411,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                 Icon(
                   isDisabled ? Icons.lock_outline_rounded : Icons.arrow_back_ios_new_rounded,
                   size: 14,
-                  color: isDisabled ? colors.textTertiary : colors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ],
             ),

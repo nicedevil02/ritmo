@@ -72,8 +72,8 @@ class PrayerAgendaCard extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
-      margin: const EdgeInsets.symmetric(vertical: 3),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      margin: EdgeInsets.symmetric(vertical: 3),
+      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(12),
@@ -87,7 +87,7 @@ class PrayerAgendaCard extends StatelessWidget {
               // Checkbox / State Indicator
               if (isExempt)
                 Padding(
-                  padding: const EdgeInsets.only(left: 8.0),
+                  padding: EdgeInsets.only(left: 8.0),
                   child: Icon(
                     CupertinoIcons.minus_circle,
                     color: colors.textTertiary,
@@ -117,7 +117,7 @@ class PrayerAgendaCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
 
               // Title & Time Detail
               Expanded(
@@ -137,7 +137,7 @@ class PrayerAgendaCard extends StatelessWidget {
                         decoration: isDone ? TextDecoration.lineThrough : null,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Row(
                       children: [
                         Text(
@@ -148,9 +148,9 @@ class PrayerAgendaCard extends StatelessWidget {
                           ),
                         ),
                         if (snoozeText != null && !isDone && !isSkipped && !isExempt) ...[
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: colors.accent.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
@@ -166,9 +166,9 @@ class PrayerAgendaCard extends StatelessWidget {
                           ),
                         ],
                         if (isSkipped) ...[
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: colors.error.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
@@ -184,9 +184,9 @@ class PrayerAgendaCard extends StatelessWidget {
                           ),
                         ],
                         if (isExempt) ...[
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: colors.surfaceSunken,
                               borderRadius: BorderRadius.circular(6),
@@ -211,9 +211,9 @@ class PrayerAgendaCard extends StatelessWidget {
 
           // Expired Banner Action
           if (isExpired && !isDone && !isSkipped && !isExempt) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: colors.error.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(8),
@@ -221,7 +221,7 @@ class PrayerAgendaCard extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(CupertinoIcons.exclamationmark_circle, color: colors.error, size: 14),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       expiredTimeDetail ?? 'وقت این نماز گذشته است.',

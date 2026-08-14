@@ -60,38 +60,55 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
               maxLines: 3,
               maxLength: widget.maxLength,
               textDirection: TextDirection.rtl,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colors.textPrimary,
-                  ),
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 13,
+                color: colors.textPrimary,
+              ),
               onChanged: widget.onChanged,
               decoration: InputDecoration(
                 hintText: widget.hintFa,
-                hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.textSecondary.withValues(alpha: 0.6),
-                    ),
-                counterText: '', // Custom counter below
+                hintStyle: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 12,
+                  color: colors.textSecondary.withValues(alpha: 0.6),
+                ),
+                counterText: '',
                 filled: true,
                 fillColor: colors.surfaceSunken,
-                contentPadding: const EdgeInsets.fromLTRB(RitmoSpacing.xxl + 8, RitmoSpacing.md, RitmoSpacing.md, RitmoSpacing.md),
+                contentPadding: const EdgeInsets.fromLTRB(44, 12, 14, 12),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(RitmoRadius.field),
-                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.2)),
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: colors.border,
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: colors.border,
+                    width: 1,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(RitmoRadius.field),
-                  borderSide: BorderSide(color: colors.primary, width: 1.5),
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: colors.primary,
+                    width: 1.4,
+                  ),
                 ),
               ),
             ),
             Positioned(
-              top: RitmoSpacing.xs,
-              left: RitmoSpacing.xs,
+              top: 4,
+              left: 4,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (widget.controller.text.isNotEmpty)
                     IconButton(
-                      icon: Icon(Icons.clear, size: 18, color: colors.textSecondary),
+                      icon: Icon(Icons.clear, size: 16, color: colors.textSecondary),
                       onPressed: () {
                         widget.controller.clear();
                         widget.onChanged?.call('');
@@ -100,7 +117,7 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
                     ),
                   if (widget.onPromote != null && widget.controller.text.trim().isNotEmpty)
                     IconButton(
-                      icon: Icon(Icons.menu_book_rounded, size: 18, color: colors.primary),
+                      icon: Icon(Icons.menu_book_rounded, size: 16, color: colors.primary),
                       onPressed: widget.onPromote,
                       tooltip: 'تبدیل به یادداشت دفترچه',
                     ),
@@ -111,13 +128,15 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
         ),
         if (showCounter)
           Padding(
-            padding: const EdgeInsets.only(top: RitmoSpacing.xs, left: RitmoSpacing.xs),
+            padding: const EdgeInsets.only(top: 4, left: 6),
             child: Text(
               PersianDigits.convert('$textLength/${widget.maxLength}'),
               textAlign: TextAlign.left,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: textLength >= widget.maxLength ? colors.error : colors.textSecondary,
-                  ),
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 10.5,
+                color: textLength >= widget.maxLength ? colors.error : colors.textSecondary,
+              ),
             ),
           ),
       ],

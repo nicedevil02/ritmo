@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/features/notes/data/experience_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
@@ -120,6 +119,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDone = !_isLoading && (_dueNotes.isEmpty || _currentIndex >= _dueNotes.length);
     final progress = _dueNotes.isNotEmpty ? (_currentIndex / _dueNotes.length).clamp(0.0, 1.0) : 1.0;
 
@@ -127,92 +127,196 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
       textDirection: TextDirection.rtl,
       child: RitmoPageScaffold(
         padding: EdgeInsets.zero,
-        appBar: AppBar(
-          backgroundColor: colors.surface,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: colors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            'مرور فاصله‌دار یادگیری و حکمت‌ها',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-          ),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: colors.surfaceSunken,
-              valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
-              minHeight: 3,
-            ),
-          ),
-          actions: [
-            if (!_isLoading && _dueNotes.isNotEmpty && _currentIndex < _dueNotes.length)
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              // Top Luxury App Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg, vertical: RitmoSpacing.md),
-                child: Text(
-                  '${PersianDigits.convert((_currentIndex + 1).toString())} از ${PersianDigits.convert(_dueNotes.length.toString())}',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              RitmoHapticsPolicy.tap();
+                              Navigator.pop(context);
+                            },
+                            borderRadius: BorderRadius.circular(14),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: colors.surfaceSunken,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: colors.border,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Icon(
+                                CupertinoIcons.arrow_right,
+                                size: 18,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'مرور فاصله‌دار هوشمند',
+                          style: TextStyle(
+                            fontSize: 18.5,
+                            fontWeight: FontWeight.w900,
+                            color: colors.textPrimary,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (!_isLoading && _dueNotes.isNotEmpty && _currentIndex < _dueNotes.length)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: colors.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: colors.primary.withValues(alpha: 0.4),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          '${PersianDigits.convert((_currentIndex + 1).toString())} از ${PersianDigits.convert(_dueNotes.length.toString())}',
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? colors.accent : colors.primary,
+                          ),
+                        ),
                       ),
+                  ],
                 ),
               ),
-          ],
+
+              // Progress Bar
+              if (!_isLoading && _dueNotes.isNotEmpty && !isDone)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: colors.surfaceSunken,
+                      valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
+                      minHeight: 4,
+                    ),
+                  ),
+                ),
+
+              // Main Body
+              Expanded(
+                child: _isLoading
+                    ? const RitmoShimmerList(count: 3)
+                    : isDone
+                        ? _buildCompletionView(context, colors, isDark)
+                        : _buildReviewCardView(context, colors, isDark),
+              ),
+            ],
+          ),
         ),
-        body: _isLoading
-            ? const RitmoShimmerList(count: 3)
-            : isDone
-                ? _buildCompletionView(context)
-                : _buildReviewCardView(context),
       ),
     );
   }
 
-  Widget _buildCompletionView(BuildContext context) {
-    final colors = context.colors;
-
+  Widget _buildCompletionView(BuildContext context, RitmoColors colors, bool isDark) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(RitmoSpacing.xl),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(RitmoSpacing.xl),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.12),
+                color: colors.primaryContainer,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.45),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: 0.2),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-              child: Icon(CupertinoIcons.sparkles, size: 56, color: colors.primary),
+              child: Icon(CupertinoIcons.sparkles, size: 52, color: colors.primary),
             ),
-            const SizedBox(height: RitmoSpacing.lg),
+            const SizedBox(height: 20),
             Text(
               'همه موارد امروز مرور شدند!',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: colors.textPrimary,
+              ),
             ),
-            const SizedBox(height: RitmoSpacing.sm),
+            const SizedBox(height: 8),
             Text(
               'تمام یادداشت‌ها و درس‌های معوقه امروز با موفقیت مرور و در تقویم حافظه ثبت شدند.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colors.textSecondary,
-                    height: 1.5,
-                  ),
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 13,
+                color: colors.textSecondary.withValues(alpha: 0.8),
+                height: 1.5,
+              ),
             ),
-            const SizedBox(height: RitmoSpacing.xl),
-            RitmoPrimaryButton(
-              label: 'بازگشت به دفترچه',
-              icon: CupertinoIcons.checkmark_alt,
-              onPressed: () => Navigator.pop(context),
-              fullWidth: false,
+            const SizedBox(height: 24),
+            InkWell(
+              onTap: () {
+                RitmoHapticsPolicy.tap();
+                Navigator.pop(context);
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.primary.withValues(alpha: 0.3),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(CupertinoIcons.checkmark_alt, size: 18, color: colors.onPrimary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'بازگشت به دفترچه',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: colors.onPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -220,13 +324,13 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
     );
   }
 
-  Widget _buildReviewCardView(BuildContext context) {
+  Widget _buildReviewCardView(BuildContext context, RitmoColors colors, bool isDark) {
     final note = _dueNotes[_currentIndex];
     final isExp = note.kind == NoteKind.experience || _currentExp != null;
     final style = NoteUiHelper.getKindStyle(context, isExp ? NoteKind.experience : note.kind);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(RitmoSpacing.lg, RitmoSpacing.md, RitmoSpacing.lg, RitmoSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -246,29 +350,31 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                       ..setEntry(3, 2, 0.001)
                       ..rotateY(angle),
                     child: isShowingFront
-                        ? _buildCardFront(context, note, style)
+                        ? _buildCardFront(context, note, style, isDark, colors)
                         : Transform(
                             alignment: Alignment.center,
                             transform: Matrix4.identity()..rotateY(pi),
-                            child: _buildCardBack(context, note, style),
+                            child: _buildCardBack(context, note, style, isDark, colors),
                           ),
                   );
                 },
               ),
             ),
           ),
-          const SizedBox(height: RitmoSpacing.md),
+          const SizedBox(height: 16),
 
           // 4 Tactile Feedback Buttons
           Text(
             'میزان تسلط و به خاطرسپاری:',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: context.colors.textSecondary,
-                ),
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontSize: 12.5,
+              fontWeight: FontWeight.bold,
+              color: colors.textSecondary,
+            ),
           ),
-          const SizedBox(height: RitmoSpacing.sm),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -276,37 +382,37 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                   label: 'فراموش شد',
                   subtext: 'مرحله ۱',
                   icon: CupertinoIcons.clear,
-                  color: context.colors.error,
+                  color: colors.error,
                   onTap: () => _submitFeedback(ReviewFeedback.forgotten),
                 ),
               ),
-              const SizedBox(width: RitmoSpacing.xs),
+              const SizedBox(width: 8),
               Expanded(
                 child: _SrsFeedbackButton(
                   label: 'سخت بود',
                   subtext: 'تکرار',
                   icon: CupertinoIcons.exclamationmark_triangle,
-                  color: context.colors.warning,
+                  color: colors.warning,
                   onTap: () => _submitFeedback(ReviewFeedback.hard),
                 ),
               ),
-              const SizedBox(width: RitmoSpacing.xs),
+              const SizedBox(width: 8),
               Expanded(
                 child: _SrsFeedbackButton(
                   label: 'خوب بود',
                   subtext: '+۱ مرحله',
                   icon: CupertinoIcons.hand_thumbsup,
-                  color: context.colors.success,
+                  color: colors.success,
                   onTap: () => _submitFeedback(ReviewFeedback.good),
                 ),
               ),
-              const SizedBox(width: RitmoSpacing.xs),
+              const SizedBox(width: 8),
               Expanded(
                 child: _SrsFeedbackButton(
                   label: 'آسان بود',
                   subtext: '+۲ مرحله',
                   icon: CupertinoIcons.bolt_fill,
-                  color: context.modules.goals,
+                  color: colors.primary,
                   onTap: () => _submitFeedback(ReviewFeedback.easy),
                 ),
               ),
@@ -317,20 +423,21 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
     );
   }
 
-  Widget _buildCardFront(BuildContext context, Note note, NoteKindStyle style) {
-    final colors = context.colors;
-
+  Widget _buildCardFront(BuildContext context, Note note, NoteKindStyle style, bool isDark, RitmoColors colors) {
     return Container(
-      padding: const EdgeInsets.all(RitmoSpacing.xl),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: style.bgTint,
-        borderRadius: BorderRadius.circular(RitmoRadius.hero),
-        border: Border.all(color: style.accentColor.withValues(alpha: 0.45), width: 1.5),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: colors.border,
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: style.accentColor.withValues(alpha: 0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: colors.shadow.withValues(alpha: isDark ? 0.3 : 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -341,28 +448,36 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.xs),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: style.accentColor.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                  color: style.accentColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: style.accentColor.withValues(alpha: 0.3), width: 1),
                 ),
                 child: Row(
                   children: [
-                    Icon(style.icon, size: 14, color: style.accentColor),
-                    const SizedBox(width: RitmoSpacing.xs),
+                    Icon(style.icon, size: 13, color: style.accentColor),
+                    const SizedBox(width: 5),
                     Text(
                       _currentExp != null ? _currentExp!.category.labelFa : style.labelFa,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: style.accentColor,
-                          ),
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: style.accentColor,
+                      ),
                     ),
                   ],
                 ),
               ),
               Text(
                 'مرحله مرور: ${PersianDigits.convert(note.reviewStage.toString())}',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.textSecondary),
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
+                ),
               ),
             ],
           ),
@@ -373,11 +488,13 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
             child: Text(
               '« ${_currentExp?.lesson ?? note.title ?? note.body} »',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                    height: 1.5,
-                  ),
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 19,
+                fontWeight: FontWeight.w900,
+                color: colors.textPrimary,
+                height: 1.5,
+              ),
             ),
           ),
           const Spacer(),
@@ -388,12 +505,15 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(CupertinoIcons.arrow_2_circlepath, size: 14, color: style.accentColor),
-                const SizedBox(width: RitmoSpacing.xs),
+                const SizedBox(width: 6),
                 Text(
                   'برای مشاهده جزئیات و پاسخ، کارت را لمس کنید',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: style.accentColor,
-                      ),
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                    color: style.accentColor,
+                  ),
                 ),
               ],
             ),
@@ -403,20 +523,21 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
     );
   }
 
-  Widget _buildCardBack(BuildContext context, Note note, NoteKindStyle style) {
-    final colors = context.colors;
-
+  Widget _buildCardBack(BuildContext context, Note note, NoteKindStyle style, bool isDark, RitmoColors colors) {
     return Container(
-      padding: const EdgeInsets.all(RitmoSpacing.xl),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(RitmoRadius.hero),
-        border: Border.all(color: style.accentColor.withValues(alpha: 0.45), width: 1.5),
+        color: colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: colors.border,
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: colors.shadow.withValues(alpha: isDark ? 0.3 : 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -428,48 +549,78 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
             children: [
               Text(
                 'جزئیات و متن کامل',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: style.accentColor,
-                    ),
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: style.accentColor,
+                ),
               ),
-              TextButton.icon(
-                onPressed: () async {
+              InkWell(
+                onTap: () async {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
                   );
                   await _loadDueReviews();
                 },
-                icon: const Icon(Icons.edit, size: 14),
-                label: Text('ویرایش', style: Theme.of(context).textTheme.labelSmall),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, size: 12, color: colors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'ویرایش',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
-          const Divider(),
+          const SizedBox(height: 10),
+          Divider(color: colors.divider, height: 1),
+          const SizedBox(height: 12),
           Expanded(
             child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               child: Text(
                 note.body,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colors.textPrimary,
-                      height: 1.7,
-                    ),
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 13.5,
+                  color: colors.textPrimary,
+                  height: 1.65,
+                ),
               ),
             ),
           ),
-          const SizedBox(height: RitmoSpacing.sm),
+          const SizedBox(height: 10),
           Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(CupertinoIcons.arrow_2_circlepath, size: 13, color: colors.textSecondary),
-                const SizedBox(width: RitmoSpacing.xs),
+                const SizedBox(width: 6),
                 Text(
                   'لمس کارت برای بازگشت به روی کارت',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: colors.textSecondary,
-                      ),
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 11,
+                    color: colors.textSecondary.withValues(alpha: 0.8),
+                  ),
                 ),
               ],
             ),
@@ -504,6 +655,8 @@ class _SrsFeedbackButtonState extends State<_SrsFeedbackButton> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AnimatedScale(
       scale: _isPressed ? 0.94 : 1.0,
       duration: RitmoMotion.press,
@@ -516,30 +669,41 @@ class _SrsFeedbackButtonState extends State<_SrsFeedbackButton> {
             setState(() => _isPressed = false);
             widget.onTap();
           },
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
+          borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm),
+            padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              color: widget.color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-              border: Border.all(color: widget.color.withValues(alpha: 0.35)),
+              color: isDark
+                  ? widget.color.withValues(alpha: 0.15)
+                  : widget.color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: widget.color.withValues(alpha: 0.35),
+                width: 1,
+              ),
             ),
             child: Column(
               children: [
                 Icon(widget.icon, size: 16, color: widget.color),
-                const SizedBox(height: RitmoSpacing.xs / 2),
+                const SizedBox(height: 4),
                 Text(
                   widget.label,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: widget.color,
-                      ),
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                    color: widget.color,
+                  ),
                 ),
+                const SizedBox(height: 1),
                 Text(
                   widget.subtext,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: widget.color.withValues(alpha: 0.8),
-                      ),
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w600,
+                    color: widget.color.withValues(alpha: 0.8),
+                  ),
                 ),
               ],
             ),
@@ -549,4 +713,3 @@ class _SrsFeedbackButtonState extends State<_SrsFeedbackButton> {
     );
   }
 }
-

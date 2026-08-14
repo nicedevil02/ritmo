@@ -75,28 +75,25 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
     if (_isLoading || _candidate == null) return const SizedBox.shrink();
 
     final colors = context.colors;
-    final isDark = context.isDark;
+    final insightsColor = context.modules.insights;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final exp = _candidate!.experience;
     final note = _candidate!.note;
-    final insightsColor = context.modules.insights;
 
     final cardContent = Container(
-      margin: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm),
-      padding: const EdgeInsets.all(RitmoSpacing.lg),
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [insightsColor.withValues(alpha: 0.16), colors.surface]
-              : [insightsColor.withValues(alpha: 0.08), colors.surface],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: colors.border,
+          width: 1,
         ),
-        borderRadius: BorderRadius.circular(RitmoRadius.hero),
-        border: Border.all(color: insightsColor.withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
-            color: insightsColor.withValues(alpha: 0.08),
-            blurRadius: 14,
+            color: colors.shadow.withValues(alpha: isDark ? 0.25 : 0.08),
+            blurRadius: 18,
             offset: const Offset(0, 4),
           ),
         ],
@@ -109,66 +106,83 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(exp.category.emoji, style: Theme.of(context).textTheme.titleSmall),
-                  const SizedBox(width: RitmoSpacing.xs),
-                  Text(
-                    'درس امروز • ${exp.category.labelFa}',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: insightsColor,
-                        ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: insightsColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: insightsColor.withValues(alpha: 0.4),
+                    width: 0.8,
                   ),
-                ],
+                ),
+                child: Row(
+                  children: [
+                    Text(exp.category.emoji, style: const TextStyle(fontSize: 12)),
+                    const SizedBox(width: 5),
+                    Text(
+                      'درس امروز • ${exp.category.labelFa}',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: insightsColor,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               Row(
                 children: [
                   ...List.generate(5, (idx) {
                     return Icon(
                       idx < exp.importance ? CupertinoIcons.star_fill : CupertinoIcons.star,
-                      size: 11,
-                      color: idx < exp.importance ? insightsColor : colors.textTertiary,
+                      size: 12,
+                      color: idx < exp.importance ? insightsColor : colors.textTertiary.withValues(alpha: 0.35),
                     );
                   }),
-                  const SizedBox(width: RitmoSpacing.xs),
+                  const SizedBox(width: 6),
                   InkWell(
                     onTap: _showReasonDialog,
-                    borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
+                    borderRadius: BorderRadius.circular(12),
                     child: Padding(
-                      padding: const EdgeInsets.all(RitmoSpacing.xs / 2),
-                      child: Icon(CupertinoIcons.question_circle, size: 14, color: colors.textSecondary),
+                      padding: const EdgeInsets.all(2),
+                      child: Icon(CupertinoIcons.question_circle, size: 14, color: colors.textSecondary.withValues(alpha: 0.7)),
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: RitmoSpacing.sm),
+          const SizedBox(height: 12),
 
           // Lesson text
           Text(
             '« ${exp.lesson} »',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                  height: 1.45,
-                ),
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+              color: colors.textPrimary,
+              height: 1.45,
+            ),
           ),
 
           if (exp.contextText != null && exp.contextText!.isNotEmpty) ...[
-            const SizedBox(height: RitmoSpacing.xs),
+            const SizedBox(height: 6),
             Text(
               exp.contextText!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.textSecondary,
-                    height: 1.35,
-                  ),
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 12,
+                color: colors.textSecondary.withValues(alpha: 0.75),
+                height: 1.4,
+              ),
             ),
           ],
-          const SizedBox(height: RitmoSpacing.md),
+          const SizedBox(height: 14),
 
           // Actions row
           Row(
@@ -184,28 +198,38 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                     setState(() => _isAcknowledgingPressed = false);
                     _handleAcknowledge();
                   },
-                  borderRadius: BorderRadius.circular(RitmoRadius.field),
+                  borderRadius: BorderRadius.circular(12),
                   child: AnimatedContainer(
                     duration: RitmoMotion.state,
-                    padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.xs + 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: _acknowledged ? colors.success.withValues(alpha: 0.15) : insightsColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(RitmoRadius.field),
+                      color: _acknowledged
+                          ? colors.success.withValues(alpha: isDark ? 0.2 : 0.12)
+                          : colors.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _acknowledged
+                            ? colors.success.withValues(alpha: 0.4)
+                            : colors.primary.withValues(alpha: 0.45),
+                        width: 1,
+                      ),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           _acknowledged ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.lightbulb_fill,
                           size: 14,
-                          color: _acknowledged ? colors.success : insightsColor,
+                          color: _acknowledged ? colors.success : colors.primary,
                         ),
-                        const SizedBox(width: RitmoSpacing.xs),
+                        const SizedBox(width: 5),
                         Text(
-                          _acknowledged ? 'به خاطر سپردم' : 'به خاطر سپردم',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: _acknowledged ? colors.success : insightsColor,
-                              ),
+                          _acknowledged ? 'به خاطر سپرده شد' : 'به خاطر سپردم',
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: _acknowledged ? colors.success : colors.primary,
+                          ),
                         ),
                       ],
                     ),
@@ -223,12 +247,15 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'مشاهده یادداشت',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: colors.textSecondary,
-                          ),
+                      'مشاهده متن کامل',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
                     ),
-                    const SizedBox(width: RitmoSpacing.xs / 2),
+                    const SizedBox(width: 4),
                     Icon(CupertinoIcons.chevron_left, size: 12, color: colors.textSecondary),
                   ],
                 ),

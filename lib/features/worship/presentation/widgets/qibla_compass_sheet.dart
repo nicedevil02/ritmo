@@ -61,10 +61,10 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
 
     return Container(
       height: 440,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         children: [
@@ -77,7 +77,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // Title
           Text(
@@ -88,7 +88,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
               color: colors.textPrimary,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
 
           Text(
             'موقعیت: ${widget.cityName} ($degreesStr° نسبت به شمال)',
@@ -97,7 +97,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
               color: colors.textSecondary,
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           // Compass Rose UI
           Expanded(
@@ -131,15 +131,15 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
                     top: 14,
                     child: Text('N', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.red)),
                   ),
-                  const Positioned(
+                  Positioned(
                     bottom: 14,
                     child: Text('S', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
-                  const Positioned(
+                  Positioned(
                     left: 14,
                     child: Text('W', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
-                  const Positioned(
+                  Positioned(
                     right: 14,
                     child: Text('E', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
@@ -155,16 +155,16 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFD700),
+                            color: colors.accent,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                                color: colors.accent.withValues(alpha: 0.4),
                                 blurRadius: 10,
                               ),
                             ],
                           ),
-                          child: const Icon(
+                          child: Icon(
                             CupertinoIcons.location_fill,
                             size: 18,
                             color: Colors.black,
@@ -173,9 +173,9 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
                         Container(
                           width: 3,
                           height: 70,
-                          color: const Color(0xFFFFD700),
+                          color: colors.accent,
                         ),
-                        const SizedBox(height: 70), // Center pivot offset
+                        SizedBox(height: 70), // Center pivot offset
                       ],
                     ),
                   ),
@@ -195,7 +195,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
             ),
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           Text(
             'جهت قبله با علامت طلایی مشخص شده است 🕋',

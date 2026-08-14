@@ -1394,7 +1394,7 @@ class PlannerController extends ChangeNotifier {
             'سقف $limit روتین فعال پر شده. برای افزودن بیشتر به ریتمو پلاس ارتقا دهید.',
             icon: Icons.lock_outline,
           );
-          PremiumUpgradeSheet.show(context);
+          unawaited(PremiumUpgradeSheet.show(context));
         }
         return;
       }
@@ -1411,6 +1411,7 @@ class PlannerController extends ChangeNotifier {
         selectedCategory,
         itemType: itemType,
       );
+      if (!context.mounted) return;
       await strategy.save(saveCtx, context);
 
       showSuccessAnim = true;

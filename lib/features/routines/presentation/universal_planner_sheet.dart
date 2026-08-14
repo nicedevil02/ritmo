@@ -19,6 +19,7 @@ import 'package:ritmo/features/routines/presentation/forms/sports_step2_form.dar
 import 'package:ritmo/features/routines/presentation/planner_controller.dart';
 import 'package:ritmo/features/routines/presentation/widgets/confetti_widget.dart';
 import 'package:ritmo/features/routines/presentation/widgets/dedicated_builder_sheet.dart';
+import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_log_sheet.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_category_grid.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_header.dart';
@@ -214,19 +215,25 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
       );
     });
 
-    _controller.setReflectionSheetOpener(() {
+    _controller.setReflectionSheetOpener(() async {
       if (!mounted) return;
-      DedicatedBuilderSheet.show(
-        context: context,
-        title: '✨ ثبت یادداشت و بازتاب',
-        subtitle: 'ثبت احوال، دستاوردها و یادداشت‌های روزانه',
-        controller: _controller,
-        formWidget: ReflectionStep2Form(controller: _controller),
-        onSaved: () {
-          widget.onSaved?.call();
-          if (mounted) Navigator.of(context).pop();
-        },
+      final nav = Navigator.of(context);
+      final rawText = _controller.inputController.text.trim();
+      final initialTitle = rawText.isNotEmpty ? rawText : null;
+
+      // Close the planner sheet
+      nav.pop();
+
+      // Launch NoteEditorScreen with prefilled title
+      await nav.push(
+        MaterialPageRoute(
+          builder: (_) => NoteEditorScreen(
+            initialTitle: initialTitle,
+            sourceModule: 'planner',
+          ),
+        ),
       );
+      widget.onSaved?.call();
     });
 
     _controller.setGenericSheetOpener(() {

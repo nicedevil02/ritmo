@@ -195,16 +195,15 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
 
     // 1. Explicitly logged as Qada or Missed -> RED badge
     if (anyQada || anyMissed) {
-      const redColor = Color(0xFFEF4444);
-      return const GroupStateResult(
+      return GroupStateResult(
         isDone: false,
         isSkipped: false,
         isPartial: false,
         isOverdue: true,
         statusText: 'قضا شد',
-        bgBadge: Color(0x1FEF4444),
-        textBadgeColor: redColor,
-        borderColor: redColor,
+        bgBadge: colors.error.withValues(alpha: 0.12),
+        textBadgeColor: colors.error,
+        borderColor: colors.error,
         badgeIcon: CupertinoIcons.xmark_circle_fill,
       );
     }
@@ -216,27 +215,25 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
           m.quality == 'ONTIME' ||
           m.quality == 'EARLY');
       if (isOnTime) {
-        const greenColor = Color(0xFF10B981);
-        return const GroupStateResult(
+        return GroupStateResult(
           isDone: true,
           isSkipped: false,
           isPartial: false,
           statusText: 'اول وقت',
-          bgBadge: Color(0x1F10B981),
-          textBadgeColor: greenColor,
-          borderColor: Color(0x6610B981),
+          bgBadge: colors.success.withValues(alpha: 0.12),
+          textBadgeColor: colors.success,
+          borderColor: colors.success.withValues(alpha: 0.4),
           badgeIcon: CupertinoIcons.checkmark_alt_circle_fill,
         );
       } else {
-        const yellowColor = Color(0xFFF59E0B);
-        return const GroupStateResult(
+        return GroupStateResult(
           isDone: true,
           isSkipped: false,
           isPartial: false,
           statusText: 'در وقت مقرر',
-          bgBadge: Color(0x1FF59E0B),
-          textBadgeColor: yellowColor,
-          borderColor: Color(0x66F59E0B),
+          bgBadge: colors.warning.withValues(alpha: 0.12),
+          textBadgeColor: colors.warning,
+          borderColor: colors.warning.withValues(alpha: 0.4),
           badgeIcon: CupertinoIcons.checkmark_alt_circle_fill,
         );
       }
@@ -273,22 +270,20 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     }
 
     if (isGroupExempt || allSkipped) {
-      const purpleColor = Color(0xFF8B5CF6);
-      return const GroupStateResult(
+      return GroupStateResult(
         isDone: false,
         isSkipped: true,
         isPartial: false,
         statusText: 'معافیت شرعی',
-        bgBadge: Color(0x1F8B5CF6),
-        textBadgeColor: purpleColor,
-        borderColor: Color(0x668B5CF6),
+        bgBadge: colors.primary.withValues(alpha: 0.12),
+        textBadgeColor: colors.primary,
+        borderColor: colors.primary.withValues(alpha: 0.4),
         badgeIcon: CupertinoIcons.shield_lefthalf_fill,
       );
     }
 
     // 3. Overdue
     if (isOverdue) {
-      const textRed = Color(0xFFEF4444);
       return GroupStateResult(
         isDone: false,
         isSkipped: false,
@@ -297,7 +292,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
         statusText: isToday ? 'در انتظار' : 'ثبت‌نشده',
         bgBadge: colors.textPrimary.withValues(alpha: 0.05),
         textBadgeColor: colors.textSecondary,
-        borderColor: textRed,
+        borderColor: colors.error,
         badgeIcon: CupertinoIcons.circle,
       );
     }
@@ -326,6 +321,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
 
 
   Future<void> _handleExplicitQada(String pKey) async {
+    final colors = context.colors;
     final targetDate = widget.selectedDay.dateTime;
     final isFuture = targetDate.isAfter(DateTime.now());
     if (isFuture) return;
@@ -333,16 +329,16 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('ثبت نماز قضا', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-        content: const Text('آیا می‌خواهید این نماز به عنوان نماز قضاشده ثبت گردد؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+        title: Text('ثبت نماز قضا', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+        content: Text('آیا می‌خواهید این نماز به عنوان نماز قضاشده ثبت گردد؟', style: TextStyle(fontFamily: 'Vazirmatn')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+            child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
+            style: ElevatedButton.styleFrom(backgroundColor: colors.error),
             child: const Text('ثبت قضا', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
           ),
         ],
@@ -382,30 +378,30 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 250),
+      duration: Duration(milliseconds: 250),
       child: Container(
         key: ValueKey('${j.year}-${j.month}-${j.day}'),
-        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        padding: const EdgeInsets.all(20),
+        margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(32),
           color: isDark
-              ? const Color(0xFF151A18)
-              : const Color(0xFFFFFEFB),
+              ? colors.surface
+              : colors.surface,
           border: Border.all(
             color: isDark
-                ? const Color(0xFF25443A)
-                : const Color(0xFFE8E0CD),
+                ? colors.border
+                : colors.border,
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
               color: isDark
                   ? Colors.black.withValues(alpha: 0.28)
-                  : const Color(0xFFB79B62).withValues(alpha: 0.08),
+                  : colors.shadow.withValues(alpha: 0.08),
               blurRadius: 35,
               spreadRadius: 0,
-              offset: const Offset(0, 12),
+              offset: Offset(0, 12),
             ),
           ],
         ),
@@ -429,7 +425,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                     color: colors.primary,
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,7 +439,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                           fontFamily: 'Vazirmatn',
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         fullDateText,
                         style: TextStyle(
@@ -459,7 +455,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                 // Badges: Today / Qamari Night
                 if (selectedDay.isToday) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: colors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
@@ -481,10 +477,10 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
 
             // Qamari Night Badge (if active for today after Maghrib)
             if (selectedDay.isToday && widget.qamariNightText != null) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: colors.surfaceElevated,
                   borderRadius: BorderRadius.circular(10),
@@ -493,7 +489,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                 child: Row(
                   children: [
                     Icon(CupertinoIcons.moon_stars_fill, size: 14, color: colors.warning),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       widget.qamariNightText!,
                       style: TextStyle(
@@ -508,7 +504,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               ),
             ],
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Divider(height: 1, color: colors.textPrimary.withValues(alpha: 0.08)),
             const SizedBox(height: 14),
 
@@ -594,7 +590,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
   Widget _buildObligatoryPrayersCard(BuildContext context, RitmoColors colors) {
     if (_worshipDay == null) {
       return Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: colors.surfaceElevated.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(16),
@@ -625,7 +621,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     final maghribState = _computeGroupState('MAGHRIB_ISHA', practiceMap, isFuture, isToday, colors);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.surfaceElevated.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
@@ -640,7 +636,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               Row(
                 children: [
                   Icon(CupertinoIcons.checkmark_seal_fill, size: 15, color: colors.primary),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(
                     'وضعیت نمازهای واجب این روز',
                     style: TextStyle(
@@ -662,9 +658,9 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
           ),
 
           if (isExempt) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: colors.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
@@ -672,7 +668,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               child: Row(
                 children: [
                   Icon(CupertinoIcons.info_circle_fill, size: 13, color: colors.accent),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(
                     'معافیت شرعی (پریود) اعمال شده است.',
                     style: TextStyle(fontSize: 11, color: colors.accent, fontFamily: 'Vazirmatn'),
@@ -745,8 +741,8 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
         _handleExplicitQada(groupKey);
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+        duration: Duration(milliseconds: 250),
+        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 6),
         decoration: BoxDecoration(
           color: state.bgBadge,
           borderRadius: BorderRadius.circular(14),
@@ -772,7 +768,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             // Azan Time
             Text(
               'اذان $azanTime',
@@ -814,7 +810,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     final isFuture = date.isAfter(DateTime.now());
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.surfaceElevated.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
@@ -829,7 +825,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               Row(
                 children: [
                   Icon(CupertinoIcons.heart_fill, size: 15, color: colors.primary),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(
                     'مستحبات برنامه‌ریزی‌شده',
                     style: TextStyle(
@@ -853,7 +849,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                 },
                 borderRadius: BorderRadius.circular(6),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   child: Text(
                     '➕ مدیریت',
                     style: TextStyle(
@@ -867,12 +863,12 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
 
           if (_activeMustahabs.isEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: colors.textPrimary.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(10),
@@ -883,7 +879,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                     'هیچ برنامه مستحبی برای این روز فعال نیست.',
                     style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   ElevatedButton(
                     onPressed: () {
                       ManageMustahabSheet.present(
@@ -1003,11 +999,11 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     }
 
     if (recommendations.isEmpty) {
-      return const SizedBox.shrink();
+      return SizedBox.shrink();
     }
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
@@ -1019,7 +1015,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
           Row(
             children: [
               Icon(CupertinoIcons.book_fill, size: 15, color: colors.primary),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Text(
                 'توصیه‌های امروز',
                 style: TextStyle(
@@ -1031,20 +1027,20 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
 
           ...recommendations.map((rec) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
+                padding: EdgeInsets.only(bottom: 8.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      margin: const EdgeInsets.only(top: 4),
+                      margin: EdgeInsets.only(top: 4),
                       width: 6,
                       height: 6,
                       decoration: BoxDecoration(color: colors.primary, shape: BoxShape.circle),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1086,13 +1082,13 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     switch (occ.category) {
       case WorshipOccasionCategory.celebration:
         icon = CupertinoIcons.sparkles;
-        iconColor = const Color(0xFF10B981);
-        bgBadge = const Color(0xFF10B981).withValues(alpha: 0.1);
+        iconColor = colors.success;
+        bgBadge = colors.success.withValues(alpha: 0.1);
         break;
       case WorshipOccasionCategory.mourning:
         icon = CupertinoIcons.moon_fill;
-        iconColor = const Color(0xFFE53935);
-        bgBadge = const Color(0xFFE53935).withValues(alpha: 0.1);
+        iconColor = colors.error;
+        bgBadge = colors.error.withValues(alpha: 0.1);
         break;
       case WorshipOccasionCategory.fasting:
         icon = CupertinoIcons.sun_max_fill;
@@ -1101,21 +1097,21 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
         break;
       case WorshipOccasionCategory.worshipDeed:
         icon = CupertinoIcons.book_fill;
-        iconColor = const Color(0xFF6366F1);
-        bgBadge = const Color(0xFF6366F1).withValues(alpha: 0.1);
+        iconColor = colors.primary;
+        bgBadge = colors.primary.withValues(alpha: 0.1);
         break;
       case WorshipOccasionCategory.national:
         icon = CupertinoIcons.flag_fill;
-        iconColor = const Color(0xFF0284C7);
-        bgBadge = const Color(0xFF0284C7).withValues(alpha: 0.08);
+        iconColor = colors.accent;
+        bgBadge = colors.accent.withValues(alpha: 0.08);
         break;
     }
 
     final displayTitle = occ.isHoliday ? '${occ.title} - تعطیل' : occ.title;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: bgBadge,
         borderRadius: BorderRadius.circular(12),
@@ -1124,7 +1120,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
       child: Row(
         children: [
           Icon(icon, size: 16, color: iconColor),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Text(
               displayTitle,
@@ -1143,7 +1139,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
 
   Widget _buildEmptyOccasionsCard(BuildContext context, RitmoColors colors) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 14),
       decoration: BoxDecoration(
         color: colors.textPrimary.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(12),
@@ -1151,7 +1147,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
       child: Row(
         children: [
           Icon(CupertinoIcons.info_circle, size: 16, color: colors.textTertiary),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Text(
               'مناسبت عبادی خاصی برای این روز ثبت نشده است.',
@@ -1171,7 +1167,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     final targetCount = _parseZikrTargetCount(widget.selectedDay.dailyZikr);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -1193,7 +1189,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                 Row(
                   children: [
                     Icon(CupertinoIcons.circle_grid_hex_fill, size: 14, color: colors.primary),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Text(
                       'ذکر روز هفته',
                       style: TextStyle(
@@ -1205,7 +1201,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   widget.selectedDay.dailyZikr,
                   style: TextStyle(
@@ -1232,7 +1228,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
             },
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: colors.primary,
                 borderRadius: BorderRadius.circular(10),
@@ -1311,12 +1307,12 @@ class WorshipDayDetailSheet extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           // Drag handle
           Container(
             width: 36,

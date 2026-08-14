@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_dialog.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_empty_state.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
@@ -132,72 +131,167 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: RitmoPageScaffold(
         padding: EdgeInsets.zero,
-        appBar: AppBar(
-          backgroundColor: colors.surface,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: colors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            'سطل زباله و بایگانی',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-          ),
-          actions: [
-            if (_tabController.index == 0 && _trashedNotes.isNotEmpty)
-              TextButton.icon(
-                onPressed: _confirmPurgeAll,
-                icon: Icon(CupertinoIcons.trash_slash, size: 16, color: colors.error),
-                label: Text(
-                  'تخلیه',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: colors.error,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              // Top Luxury App Bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              RitmoHapticsPolicy.tap();
+                              Navigator.pop(context);
+                            },
+                            borderRadius: BorderRadius.circular(14),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: colors.surfaceSunken,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: colors.border,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Icon(
+                                CupertinoIcons.arrow_right,
+                                size: 18,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'سطل زباله و بایگانی',
+                          style: TextStyle(
+                            fontSize: 18.5,
+                            fontWeight: FontWeight.w900,
+                            color: colors.textPrimary,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_tabController.index == 0 && _trashedNotes.isNotEmpty)
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _confirmPurgeAll,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: colors.error.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: colors.error.withValues(alpha: 0.35),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(CupertinoIcons.trash_slash, size: 14, color: colors.error),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'تخلیه کامل',
+                                  style: TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.error,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
+                  ],
                 ),
               ),
-            const SizedBox(width: RitmoSpacing.xs),
-          ],
-          bottom: TabBar(
-            controller: _tabController,
-            indicatorColor: colors.primary,
-            labelColor: colors.primary,
-            unselectedLabelColor: colors.textSecondary,
-            labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold),
-            onTap: (_) => setState(() {}),
-            tabs: [
-              Tab(text: 'سطل زباله (${PersianDigits.convert(_trashedNotes.length.toString())})'),
-              Tab(text: 'بایگانی (${PersianDigits.convert(_archivedNotes.length.toString())})'),
+
+              // Segmented Tab Bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: colors.border,
+                      width: 1,
+                    ),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    indicator: BoxDecoration(
+                      color: colors.primaryContainer,
+                      borderRadius: BorderRadius.circular(13),
+                      border: Border.all(
+                        color: colors.primary.withValues(alpha: 0.45),
+                        width: 1,
+                      ),
+                    ),
+                    labelColor: isDark ? colors.accent : colors.primary,
+                    unselectedLabelColor: colors.textSecondary.withValues(alpha: 0.7),
+                    labelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5, fontWeight: FontWeight.bold),
+                    unselectedLabelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.w600),
+                    tabs: [
+                      Tab(text: 'سطل زباله (${PersianDigits.convert(_trashedNotes.length.toString())})'),
+                      Tab(text: 'بایگانی (${PersianDigits.convert(_archivedNotes.length.toString())})'),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Content View
+              Expanded(
+                child: _isLoading
+                    ? const RitmoShimmerList(count: 4)
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildList(
+                            items: _trashedNotes,
+                            emptyText: 'سطل زباله خالی است',
+                            isTrash: true,
+                            isDark: isDark,
+                            colors: colors,
+                          ),
+                          _buildList(
+                            items: _archivedNotes,
+                            emptyText: 'هیچ یادداشتی در بایگانی نیست',
+                            isTrash: false,
+                            isDark: isDark,
+                            colors: colors,
+                          ),
+                        ],
+                      ),
+              ),
             ],
           ),
         ),
-        body: _isLoading
-            ? const RitmoShimmerList(count: 4)
-            : TabBarView(
-                controller: _tabController,
-                children: [
-                  // Tab 1: Trashed Notes
-                  _buildList(
-                    items: _trashedNotes,
-                    emptyText: 'سطل زباله خالی است',
-                    isTrash: true,
-                  ),
-
-                  // Tab 2: Archived Notes
-                  _buildList(
-                    items: _archivedNotes,
-                    emptyText: 'هیچ یادداشتی در بایگانی نیست',
-                    isTrash: false,
-                  ),
-                ],
-              ),
       ),
     );
   }
@@ -206,29 +300,46 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
     required List<Note> items,
     required String emptyText,
     required bool isTrash,
+    required bool isDark,
+    required RitmoColors colors,
   }) {
-    final colors = context.colors;
-
     if (items.isEmpty) {
       return RitmoEmptyState(
         icon: isTrash ? CupertinoIcons.trash : CupertinoIcons.archivebox,
         title: emptyText,
-        description: isTrash ? 'یادداشت‌های حذف شده در اینجا قرار می‌گیرند.' : 'یادداشت‌های بایگانی‌شده در اینجا نمایش داده می‌شوند.',
+        description: isTrash
+            ? 'یادداشت‌های حذف‌شده در اینجا قرار می‌گیرند.'
+            : 'یادداشت‌های بایگانی‌شده در اینجا نمایش داده می‌شوند.',
       );
     }
 
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView.builder(
-        padding: const EdgeInsets.all(RitmoSpacing.md),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 40),
         itemCount: items.length,
         itemBuilder: (ctx, idx) {
           final note = items[idx];
           final style = NoteUiHelper.getKindStyle(context, note.kind);
 
-          return RitmoCard(
-            margin: const EdgeInsets.symmetric(vertical: RitmoSpacing.xs),
-            padding: const EdgeInsets.all(RitmoSpacing.md),
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: colors.border,
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.shadow.withValues(alpha: isDark ? 0.2 : 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -238,68 +349,82 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
                     Row(
                       children: [
                         Icon(style.icon, size: 14, color: style.accentColor),
-                        const SizedBox(width: RitmoSpacing.xs),
+                        const SizedBox(width: 6),
                         Text(
                           note.title ?? 'بدون عنوان',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
-                              ),
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
                         ),
                       ],
                     ),
                     Text(
                       _formatDate(note.trashedAt ?? note.updatedAt),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: colors.textTertiary,
-                          ),
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 11,
+                        color: colors.textTertiary,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: RitmoSpacing.xs),
+                const SizedBox(height: 6),
                 Text(
                   note.body,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.textSecondary,
-                        height: 1.4,
-                      ),
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 12,
+                    color: colors.textSecondary.withValues(alpha: 0.8),
+                    height: 1.4,
+                  ),
                 ),
-                const SizedBox(height: RitmoSpacing.sm),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     if (isTrash) ...[
                       TextButton.icon(
                         onPressed: () => _restoreNote(note.id),
-                        icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 14),
-                        label: Text('بازیابی', style: Theme.of(context).textTheme.labelSmall),
+                        icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 13),
+                        label: const Text('بازیابی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold)),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          foregroundColor: colors.success,
+                        ),
                       ),
+                      const SizedBox(width: 4),
                       TextButton.icon(
                         onPressed: () => _confirmPermanentDelete(note),
-                        icon: Icon(CupertinoIcons.delete, size: 14, color: colors.error),
-                        label: Text(
-                          'حذف قطعی',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: colors.error,
-                              ),
+                        icon: const Icon(CupertinoIcons.delete, size: 13),
+                        label: const Text('حذف قطعی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold)),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          foregroundColor: colors.error,
                         ),
                       ),
                     ] else ...[
                       TextButton.icon(
                         onPressed: () => _unarchiveNote(note.id),
-                        icon: const Icon(CupertinoIcons.arrow_up_doc, size: 14),
-                        label: Text('خروج از بایگانی', style: Theme.of(context).textTheme.labelSmall),
+                        icon: const Icon(CupertinoIcons.arrow_up_doc, size: 13),
+                        label: const Text('خروج از بایگانی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold)),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          foregroundColor: colors.accent,
+                        ),
                       ),
+                      const SizedBox(width: 4),
                       TextButton.icon(
                         onPressed: () => _trashNote(note.id),
-                        icon: Icon(CupertinoIcons.trash, size: 14, color: colors.error),
-                        label: Text(
-                          'انتقال به زباله‌دان',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: colors.error,
-                              ),
+                        icon: const Icon(CupertinoIcons.trash, size: 13),
+                        label: const Text('انتقال به سطل زباله', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold)),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          foregroundColor: colors.error,
                         ),
                       ),
                     ],
@@ -313,4 +438,3 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
     );
   }
 }
-

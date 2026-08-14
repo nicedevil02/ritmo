@@ -155,6 +155,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
@@ -165,12 +166,12 @@ class _WorshipScreenState extends State<WorshipScreen> {
           backgroundColor: Colors.transparent,
           body: SafeArea(
             child: RefreshIndicator(
-              color: const Color(0xffD4A843),
-              backgroundColor: isDarkMode ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
+              color: colors.primary,
+              backgroundColor: colors.surface,
               onRefresh: _refresh,
               child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 40),
+                physics: AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.only(bottom: 40),
                 child: Column(
                   children: [
                     // 1. MODULE APP BAR WITH QUICK ACTIONS & STATUS BADGES
@@ -181,17 +182,17 @@ class _WorshipScreenState extends State<WorshipScreen> {
                           : 'در حال بارگذاری...',
                       actions: [
                         IconButton(
-                          icon: const Icon(CupertinoIcons.sparkles, color: Color(0xffD4A843)),
+                          icon: Icon(CupertinoIcons.sparkles, color: colors.primary),
                           tooltip: 'دستیار معنوی هوشمند',
                           onPressed: _openAiAssistantSheet,
                         ),
                         IconButton(
-                          icon: const Icon(CupertinoIcons.compass, color: Color(0xffC4953B)),
+                          icon: Icon(CupertinoIcons.compass, color: colors.accent),
                           tooltip: 'قبله‌نما',
                           onPressed: _openQiblaCompass,
                         ),
                         IconButton(
-                          icon: Icon(CupertinoIcons.settings, color: isDarkMode ? Colors.white70 : Colors.black87),
+                          icon: Icon(CupertinoIcons.settings, color: colors.textSecondary),
                           tooltip: 'تنظیمات محاسبه',
                           onPressed: () => _openCityPicker(1),
                         ),

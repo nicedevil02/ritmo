@@ -830,6 +830,16 @@ class SettingsRegistry {
       searchTerms: ['نمایش کارها', 'تسک', 'کارها'],
     ),
     SettingDescriptor(
+      key: 'calendar_show_events',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: true,
+      labelFa: 'نمایش رویدادها در تقویم',
+      group: SettingsGroup.calendar,
+      descriptionFa: 'نمایش رویدادهای موقت و زمان‌دار در خط زمان و نمای برنامه',
+      searchTerms: ['نمایش رویدادها', 'رویداد', 'ایونت', 'جلسه'],
+    ),
+    SettingDescriptor(
       key: 'calendar_compress_recurring',
       type: SettingType.boolean,
       scope: SettingScope.db,

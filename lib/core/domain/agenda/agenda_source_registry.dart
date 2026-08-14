@@ -3,6 +3,7 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/course_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/cycle_agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/event_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/goal_steps_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/konkur_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/medicine_agenda_source.dart';
@@ -245,6 +246,26 @@ class AgendaSourceRegistry {
           'cycle',
           () => CycleAgendaSource.load(ctx.db, ctx.settingsMap, cycleAllowed),
           () => const CycleAgendaSource(cycleOutput: null, cycleAllowed: false),
+        );
+      },
+    ));
+
+    // 10. Event Agenda Source (Temporary Events)
+    _entries.add(AgendaSourceEntry(
+      id: 'event',
+      domains: {AgendaDomain.event},
+      loader: (ctx) async {
+        final routinesEnabled =
+            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_today_routines');
+        final eventsEnabled =
+            routinesEnabled && ctx.settingsMap['calendar_show_events'] != 'false';
+        if (!eventsEnabled || !ctx.options.wants(AgendaDomain.event)) {
+          return EventAgendaSource.disabled();
+        }
+        return ctx.guardSource<AgendaSource>(
+          'event',
+          () => EventAgendaSource.load(ctx.db, ctx.startStr, ctx.endStr),
+          () => EventAgendaSource.disabled(),
         );
       },
     ));

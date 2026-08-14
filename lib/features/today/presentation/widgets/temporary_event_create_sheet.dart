@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 class TemporaryEventCreateSheet extends StatefulWidget {
@@ -95,6 +96,8 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
         'createdAt': nowMs,
       });
 
+      DayAgendaService.instance.invalidateAll();
+
       unawaited(HapticFeedback.mediumImpact());
       widget.onSaved();
       if (mounted) {
@@ -131,7 +134,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                   children: [
                     Text(
                       'ثبت رویداد موقت جدید',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.cardTitle, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.cardTitle),
                     ),
                     IconButton(
                       icon: Icon(CupertinoIcons.xmark, color: colors.iconSecondary, size: 20),
@@ -142,14 +145,14 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                 const SizedBox(height: 4),
                 Text(
                   'یک رویداد ناگهانی یا موقت (مثلاً ناهار کاری غیرمنتظره) ثبت کنید تا برنامه امروز بر اساس آن فشرده‌سازی شود.',
-                  style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 20),
 
                 // Title Input
                 TextField(
                   controller: _titleController,
-                  style: TextStyle(color: colors.cardTitle, fontSize: 13, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(color: colors.cardTitle, fontSize: 13),
                   decoration: InputDecoration(
                     hintText: 'عنوان رویداد (مثلاً: جلسه کاری اضطراری)',
                     hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 12),
@@ -165,7 +168,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('زمان شروع رویداد:', style: TextStyle(fontSize: 12, color: colors.cardTitle, fontFamily: 'Vazirmatn')),
+                    Text('زمان شروع رویداد:', style: TextStyle(fontSize: 12, color: colors.cardTitle)),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colors.cardFill,
@@ -185,7 +188,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                 const SizedBox(height: 16),
 
                 // Duration Selector
-                Text('مدت زمان رویداد (دقیقه):', style: TextStyle(fontSize: 12, color: colors.cardTitle, fontFamily: 'Vazirmatn')),
+                Text('مدت زمان رویداد (دقیقه):', style: TextStyle(fontSize: 12, color: colors.cardTitle)),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
@@ -214,8 +217,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                             fontSize: 11,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             color: isSelected ? colors.primary : colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ),
                     );
@@ -234,7 +236,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                   onPressed: _isSaving ? null : _saveEvent,
                   child: _isSaving
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('ثبت رویداد موقت', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                      : const Text('ثبت رویداد موقت', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),

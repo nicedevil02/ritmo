@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/analysis/agenda_conflict_detector.dart';
 import 'package:ritmo/core/domain/agenda/analysis/agenda_gap_calculator.dart';
@@ -19,6 +20,15 @@ class DayAgendaSnapshotBuilder {
   final AgendaOverloadDetector overloadDetector;
   final AgendaSuggestionRanker suggestionRanker;
 
+  /// C-FIX-1 — تحلیل‌های روز هرگز نباید آیتم‌های روز را قربانی کنند.
+  ///
+  /// قبلاً چهار تحلیل‌گر (تداخل، فرصت خالی، اضافه‌بار، پیشنهاد) بدون محافظ صدا
+  /// زده می‌شدند. صفحهٔ اصلی کل فراخوانی را try/catch می‌کرد و فقط
+  /// `todaySnapshot` را از دست می‌داد، ولی تقویم ۶۰ اسنپشات را در یک حلقه در
+  /// `JourneyController.loadAgendaRange` می‌ساخت؛ پس تنها یک روزِ خطادار کل
+  /// بازه را نابود می‌کرد و نتیجه «برنامه‌ای در بازهٔ پیش‌رو ثبت نشده.» بود،
+  /// بدون هیچ پیام خطا. حالا هر تحلیل جدا ایزوله است: در خطا همان بخش خالی
+  /// می‌ماند و آیتم‌ها سالم به UI می‌رسند.
   DayAgendaSnapshot buildSnapshot(
     DayAgenda dayAgenda, {
     DateTime? now,
@@ -26,6 +36,7 @@ class DayAgendaSnapshotBuilder {
   }) {
     final currentTime = now ?? DateTime.now();
     final items = dayAgenda.items;
+    final ds = dayAgenda.dateStr;
 
     var completed = 0;
     var remaining = 0;
@@ -38,47 +49,74 @@ class DayAgendaSnapshotBuilder {
       }
     }
 
-    final conflicts = conflictDetector.detectConflicts(items);
-    final freeGaps = gapCalculator.calculateFreeGaps(
-      items,
-      now: currentTime,
-      sleepWindow: sleepWindow,
-    );
-    final overloadScore = overloadDetector.calculateOverloadScore(items);
-    final suggestions = suggestionRanker.generateSuggestions(
-      items: items,
-      conflicts: conflicts,
-      freeGaps: freeGaps,
-      overloadScore: overloadScore,
-      now: currentTime,
-      sleepWindow: sleepWindow,
-    );
+    var conflicts = const <AgendaConflict>[];
+    try {
+      conflicts = conflictDetector.detectConflicts(items);
+    } catch (e, st) {
+      debugPrint('[DayAgendaSnapshotBuilder] conflicts failed for $ds: $e\n$st');
+    }
+
+    var freeGaps = const <TimeGap>[];
+    try {
+      freeGaps = gapCalculator.calculateFreeGaps(
+        items,
+        now: currentTime,
+        sleepWindow: sleepWindow,
+      );
+    } catch (e, st) {
+      debugPrint('[DayAgendaSnapshotBuilder] freeGaps failed for $ds: $e\n$st');
+    }
+
+    var overloadScore = 0.0;
+    try {
+      overloadScore = overloadDetector.calculateOverloadScore(items);
+    } catch (e, st) {
+      debugPrint('[DayAgendaSnapshotBuilder] overload failed for $ds: $e\n$st');
+    }
+
+    var suggestions = const <AgendaSuggestion>[];
+    try {
+      suggestions = suggestionRanker.generateSuggestions(
+        items: items,
+        conflicts: conflicts,
+        freeGaps: freeGaps,
+        overloadScore: overloadScore,
+        now: currentTime,
+        sleepWindow: sleepWindow,
+      );
+    } catch (e, st) {
+      debugPrint('[DayAgendaSnapshotBuilder] suggestions failed for $ds: $e\n$st');
+    }
 
     AgendaItem? current;
     AgendaItem? next;
 
-    final timedItems = items.where((i) => i.isTimed).toList();
-    timedItems.sort((a, b) {
-      final aM = _parseMinutes(a.timeOfDay);
-      final bM = _parseMinutes(b.timeOfDay);
-      return aM.compareTo(bM);
-    });
+    try {
+      final timedItems = items.where((i) => i.isTimed).toList();
+      timedItems.sort((a, b) {
+        final aM = _parseMinutes(a.timeOfDay);
+        final bM = _parseMinutes(b.timeOfDay);
+        return aM.compareTo(bM);
+      });
 
-    final currentMinutes = (currentTime.hour * 60) + currentTime.minute;
+      final currentMinutes = (currentTime.hour * 60) + currentTime.minute;
 
-    for (final item in timedItems) {
-      final startMinutes = _parseMinutes(item.timeOfDay);
-      var duration = item.durationMinutes ?? 30;
-      if (duration <= 0) duration = 30;
-      final endMinutes = startMinutes + duration;
+      for (final item in timedItems) {
+        final startMinutes = _parseMinutes(item.timeOfDay);
+        var duration = item.durationMinutes ?? 30;
+        if (duration <= 0) duration = 30;
+        final endMinutes = startMinutes + duration;
 
-      if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
-        current ??= item;
-      } else if (startMinutes > currentMinutes) {
-        if (!item.isCompleted && next == null) {
-          next = item;
+        if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+          current ??= item;
+        } else if (startMinutes > currentMinutes) {
+          if (!item.isCompleted && next == null) {
+            next = item;
+          }
         }
       }
+    } catch (e, st) {
+      debugPrint('[DayAgendaSnapshotBuilder] now/next failed for $ds: $e\n$st');
     }
 
     return DayAgendaSnapshot(

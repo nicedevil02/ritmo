@@ -42,13 +42,20 @@ class DayAgendaService {
   /// events only invalidate the cache (no double refresh).
   static const Set<String> _uiRefreshEvents = {
     'CourseSessionCompleted',
+    'CourseCreated',
+    'CourseUpdated',
     'GoalStepToggled',
+    'GoalUpdated',
     'TaskToggled',
     'TaskUpdated',
+    'TaskCreated',
     'PrayerCompleted',
     'WorshipUpdated',
+    'WorshipPracticeChanged',
     'RoutineCreated',
     'RoutineEdited',
+    'RoutineUpdated',
+    'RoutineChanged',
     'RoutineDeleted',
     'DataImported',
     'DayRolledOver',
@@ -56,19 +63,27 @@ class DayAgendaService {
     'AgendaItemToggled',
     'commitmentChanged',
     'planningCycleActivated',
+    'ReshuffleApplied',
   };
 
   static const Set<String> _cacheInvalidatingEvents = {
     'CourseSessionCompleted',
+    'CourseCreated',
+    'CourseUpdated',
     'GoalStepToggled',
+    'GoalUpdated',
     'TaskToggled',
     'TaskUpdated',
+    'TaskCreated',
     'PrayerCompleted',
     'WorshipUpdated',
+    'WorshipPracticeChanged',
     'RoutineCompleted',
     'RoutineSkipped',
     'RoutineCreated',
     'RoutineEdited',
+    'RoutineUpdated',
+    'RoutineChanged',
     'RoutineDeleted',
     'CycleStarted',
     'CycleEnded',
@@ -78,6 +93,7 @@ class DayAgendaService {
     'AgendaItemToggled',
     'commitmentChanged',
     'planningCycleActivated',
+    'ReshuffleApplied',
   };
 
   void _subscribeToEvents() {

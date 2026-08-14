@@ -721,7 +721,10 @@ class _JourneyScreenState extends State<JourneyScreen> {
           rangeSnapshots: _controller.rangeSnapshots,
           now: DateTime.now(),
           onItemTap: _openItemDetails,
-          onAddTap: () => UniversalPlannerSheet.show(context: context),
+          onAddTap: () => UniversalPlannerSheet.show(
+            context: context,
+            onSaved: _controller.refresh,
+          ),
         );
       case JourneyScale.day:
         return (snapshot == null || snapshot.items.isEmpty)
@@ -785,7 +788,11 @@ class _JourneyScreenState extends State<JourneyScreen> {
                           },
                           onSlotTap: (slotMinutes) {
                             final prefilledTime = TimeOfDay(hour: slotMinutes ~/ 60, minute: slotMinutes % 60);
-                            UniversalPlannerSheet.show(context: context, prefilledTime: prefilledTime);
+                            UniversalPlannerSheet.show(
+                              context: context,
+                              prefilledTime: prefilledTime,
+                              onSaved: _controller.refresh,
+                            );
                           },
                           onScheduleUntimed: (item, startMinutes, durMinutes) async {
                             await _controller.scheduleItem(item, startMinutes, durMinutes);

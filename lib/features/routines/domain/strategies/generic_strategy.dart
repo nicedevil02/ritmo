@@ -1,8 +1,5 @@
-// lib/features/routines/domain/strategies/generic_strategy.dart
-
-import 'dart:convert';
-
 import 'package:flutter/material.dart' show BuildContext;
+import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/domain/models.dart';
@@ -108,6 +105,8 @@ class GenericStrategy implements PlannerCategoryStrategy {
         ),
       );
     }
+    DayAgendaService.instance.invalidateAll();
+    RitmoEvents.notifyRoutineChanged();
     RitmoEventBus().fire(RitmoEvent(
       type: 'RoutineChanged',
       timestamp: DateTime.now(),

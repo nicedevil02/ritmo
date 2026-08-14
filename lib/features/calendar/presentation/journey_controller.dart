@@ -8,6 +8,7 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_snapshot_builder.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
+import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/commands/command_stack.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
@@ -34,6 +35,7 @@ class JourneyController extends ChangeNotifier {
         _actionHandler = actionHandler ?? AgendaActionHandler.instance,
         _kernel = kernel ?? RitmoExecutionKernel.instance {
     _subscription = _eventBus.onEvents.listen(_handleEvent);
+    RitmoEvents.routineChangedNotifier.addListener(_onRoutineChangedNotification);
   }
 
   final DayAgendaService _agendaService;
@@ -443,6 +445,11 @@ class JourneyController extends ChangeNotifier {
     await loadForActiveScale(isBackgroundRefresh: true);
   }
 
+  void _onRoutineChangedNotification() {
+    if (_isDisposed) return;
+    refresh();
+  }
+
   void _handleEvent(RitmoEvent event) {
     if (_isDisposed) return;
     if (event.type == 'RoutineCompleted' ||
@@ -450,16 +457,22 @@ class JourneyController extends ChangeNotifier {
         event.type == 'RoutineUpdated' ||
         event.type == 'RoutineCreated' ||
         event.type == 'RoutineEdited' ||
+        event.type == 'RoutineChanged' ||
         event.type == 'RoutineDeleted' ||
         event.type == 'DataImported' ||
         event.type == 'DayRolledOver' ||
         event.type == 'PrayerCompleted' ||
         event.type == 'WorshipUpdated' ||
+        event.type == 'WorshipPracticeChanged' ||
         event.type == 'CourseSessionCompleted' ||
+        event.type == 'CourseCreated' ||
+        event.type == 'CourseUpdated' ||
         event.type == 'AgendaItemToggled' ||
         event.type == 'TaskToggled' ||
         event.type == 'TaskUpdated' ||
+        event.type == 'TaskCreated' ||
         event.type == 'GoalStepToggled' ||
+        event.type == 'GoalUpdated' ||
         event.type == 'completion_recorded' ||
         event.type == 'ReshuffleApplied') {
       refresh();
@@ -469,6 +482,7 @@ class JourneyController extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
+    RitmoEvents.routineChangedNotifier.removeListener(_onRoutineChangedNotification);
     _subscription?.cancel();
     _subscription = null;
     super.dispose();

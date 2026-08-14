@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -95,8 +94,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     final stopwatch = Stopwatch()..start();
 
     try {
-      // Wait for the app's database/configuration loads with a 3-second safety timeout
-      await widget.initializationFuture.timeout(const Duration(seconds: 3));
+      // Wait for the app's database/configuration loads
+      await widget.initializationFuture;
     } catch (e) {
       // Log error internally and fall through to prevent bricking the app startup
       debugPrint('Ritmo Startup Sync Warning: $e');
@@ -105,8 +104,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     stopwatch.stop();
     final elapsedMs = stopwatch.elapsedMilliseconds;
 
-    // In debug mode (development & Hot Restart), bypass artificial delay for instant reload
-    const minDurationMs = kDebugMode ? 0 : 1200;
+    const minDurationMs = 1200;
     if (elapsedMs < minDurationMs) {
       final remainingMs = minDurationMs - elapsedMs;
       await Future.delayed(Duration(milliseconds: remainingMs));
@@ -118,9 +116,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     } catch (_) {}
 
     // Small delay to let the haptic response and cross-fade register naturally
-    if (!kDebugMode) {
-      await Future.delayed(const Duration(milliseconds: 150));
-    }
+    await Future.delayed(const Duration(milliseconds: 150));
 
     // Complete transition
     if (mounted) {

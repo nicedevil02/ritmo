@@ -916,36 +916,25 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Right Side: 3D Artwork of Holy Quran (With seamless feathered fade)
+                  // Right Side: Artwork of Holy Quran (Transparent PNG with full fidelity)
                   GestureDetector(
                     onTap: _showQuranSettingsSheet,
                     child: SizedBox(
                       width: 145,
                       height: 135,
-                      child: ShaderMask(
-                        shaderCallback: (bounds) => const RadialGradient(
-                          center: Alignment.center,
-                          radius: 0.75,
-                          colors: [Colors.white, Colors.white, Colors.transparent],
-                          stops: [0.0, 0.72, 1.0],
-                        ).createShader(bounds),
-                        blendMode: BlendMode.dstIn,
-                        child: Image.asset(
-                          isDark
-                              ? 'assets/images/quran_icon_dark.png'
-                              : 'assets/images/quran_icon_light.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0C6253).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                CupertinoIcons.book_fill,
-                                color: Color(0xFF0C6253),
-                                size: 48,
-                              ),
+                      child: Image.asset(
+                        'assets/images/quran_icon.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0C6253).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              CupertinoIcons.book_fill,
+                              color: Color(0xFF0C6253),
+                              size: 48,
                             ),
                           ),
                         ),

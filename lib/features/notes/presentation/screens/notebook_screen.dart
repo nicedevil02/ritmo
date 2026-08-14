@@ -19,7 +19,8 @@ import 'package:ritmo/features/notes/logic/weekly_review_engine.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_srs_review_screen.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_trash_archive_screen.dart';
-import 'package:ritmo/features/notes/presentation/screens/weekly_review_screen.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/features/notes/presentation/utils/note_actions.dart';
 import 'package:ritmo/features/notes/presentation/utils/note_ui_helper.dart';
 import 'package:ritmo/features/notes/presentation/widgets/note_card.dart';
 import 'package:ritmo/features/notes/presentation/widgets/ritmo_shimmer.dart';
@@ -60,6 +61,8 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
 
   // --- Tab 2 (Review & Analytics) State ---
   bool _isLoadingReview = true;
+  WeeklyReviewStats? _weeklyStats;
+  List<Note> _dustyNotes = [];
   int _dueNotesCount = 0;
   int _dustyNotesCount = 0;
   int _createdThisWeekCount = 0;
@@ -219,13 +222,16 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
     try {
       final due = await SpacedRepetitionEngine.instance.listDueReviews();
       final stats = await WeeklyReviewEngine.instance.generateWeeklyStats();
+      final orphans = await NotesRepository.instance.listOrphans(minDays: 30);
       final archived = await NotesRepository.instance.listArchived();
       final trash = await NotesRepository.instance.listTrashed();
 
       if (mounted) {
         setState(() {
           _dueNotesCount = due.length;
-          _dustyNotesCount = stats.orphansCount;
+          _weeklyStats = stats;
+          _dustyNotes = orphans;
+          _dustyNotesCount = orphans.length;
           _createdThisWeekCount = stats.notesCreatedCount;
           _archivedCount = archived.length;
           _trashCount = trash.length;
@@ -1110,8 +1116,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
     );
   }
 
-  // --- Weekly Review Card Widget ---
+  // --- Consolidated Weekly Review Section Widget ---
   Widget _buildWeeklyReviewCard(BuildContext context, RitmoColors colors, bool isDark) {
+    final stats = _weeklyStats;
+    final topTags = stats?.topTags ?? [];
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -1132,79 +1141,111 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. Header: Icon, Title, and Review Status Badge
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF16241E) : const Color(0xFFE7F3ED),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF2E5946) : const Color(0xFF10B981).withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                ),
-                child: const Icon(
-                  CupertinoIcons.chart_bar_alt_fill,
-                  color: Color(0xFF10B981),
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  Text(
-                    'مرور هفتگی و یادداشت‌های خاک‌خورده',
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w800,
-                      color: colors.textPrimary,
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF16241E) : const Color(0xFFE7F3ED),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF2E5946) : const Color(0xFF10B981).withValues(alpha: 0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.chart_bar_alt_fill,
+                      color: Color(0xFF10B981),
+                      size: 22,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${PersianDigits.convert(_dustyNotesCount.toString())} یادداشت نیازمند بازبینی',
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF10B981),
-                    ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'مرور و تحلیل هفتگی',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w800,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'گزارش جامع دستاوردهای ۷ روز اخیر',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF10B981),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
+              if (_dustyNotes.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD4A843).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFD4A843).withValues(alpha: 0.4), width: 1),
+                  ),
+                  child: Text(
+                    '${PersianDigits.convert(_dustyNotes.length.toString())} خاک‌خورده',
+                    style: const TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFFC48A1A),
+                    ),
+                  ),
+                ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
+
+          // 2. 7-Day Achievement Metrics Row (3 Equal Cards)
           Row(
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF19221E) : const Color(0xFFF7F5EE),
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+                      width: 1,
+                    ),
                   ),
                   child: Column(
                     children: [
+                      Icon(CupertinoIcons.doc_text, size: 18, color: colors.primary),
+                      const SizedBox(height: 4),
                       Text(
-                        PersianDigits.convert(_createdThisWeekCount.toString()),
+                        PersianDigits.convert((stats?.notesCreatedCount ?? _createdThisWeekCount).toString()),
                         style: TextStyle(
                           fontFamily: 'Vazirmatn',
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.w900,
                           color: colors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'ثبت این هفته',
+                        'یادداشت جدید',
                         style: TextStyle(
                           fontFamily: 'Vazirmatn',
-                          fontSize: 11,
+                          fontSize: 10.5,
                           color: colors.textSecondary,
                         ),
                       ),
@@ -1212,31 +1253,75 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF19221E) : const Color(0xFFF7F5EE),
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+                      width: 1,
+                    ),
                   ),
                   child: Column(
                     children: [
+                      const Icon(Icons.lightbulb_outline_rounded, size: 18, color: Color(0xFFD4A843)),
+                      const SizedBox(height: 4),
                       Text(
-                        PersianDigits.convert(_dustyNotesCount.toString()),
+                        PersianDigits.convert((stats?.experiencesAddedCount ?? 0).toString()),
                         style: const TextStyle(
                           fontFamily: 'Vazirmatn',
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.w900,
                           color: Color(0xFFD4A843),
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'خاک‌خورده (>۳۰ روز)',
+                        'درس زندگی',
                         style: TextStyle(
                           fontFamily: 'Vazirmatn',
-                          fontSize: 11,
+                          fontSize: 10.5,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF19221E) : const Color(0xFFF7F5EE),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(CupertinoIcons.pencil, size: 18, color: Color(0xFF10B981)),
+                      const SizedBox(height: 4),
+                      Text(
+                        PersianDigits.convert((stats?.wordCountSum ?? 0).toString()),
+                        style: const TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF10B981),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'کلمه ثبت‌شده',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 10.5,
                           color: colors.textSecondary,
                         ),
                       ),
@@ -1246,45 +1331,240 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          InkWell(
-            onTap: () async {
-              RitmoHapticsPolicy.tap();
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const WeeklyReviewScreen()),
-              );
-              await _loadReviewStats();
-            },
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF19221E) : const Color(0xFFF4F0E6),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
-                  width: 1,
-                ),
+
+          // 3. Top Weekly Tags Section
+          if (topTags.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'موضوعات و برچسب‌های پرکاربرد هفته',
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: colors.textSecondary,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(CupertinoIcons.arrow_right_circle_fill, size: 16, color: colors.textPrimary),
-                  const SizedBox(width: 8),
-                  Text(
-                    'ورود به اتاق مرور هفتگی',
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: topTags.map((tag) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E2F26) : const Color(0xFFF1EAD9),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF3B6B55) : const Color(0xFFD4A843).withValues(alpha: 0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    '#$tag',
                     style: TextStyle(
                       fontFamily: 'Vazirmatn',
-                      fontSize: 13,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+
+          const SizedBox(height: 20),
+
+          // 4. In-Place Dusty Notes Review Queue
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(CupertinoIcons.archivebox_fill, size: 16, color: colors.textPrimary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'صف مرور یادداشت‌های خاک‌خورده (>۳۰ روز)',
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 13.5,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
                     ),
                   ),
                 ],
               ),
+              Text(
+                '${PersianDigits.convert(_dustyNotes.length.toString())} مورد',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: _dustyNotes.isEmpty ? const Color(0xFF10B981) : const Color(0xFFD4A843),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'یادداشت‌هایی که مدتی است بازبینی نشده‌اند و نیازمند تعیین تکلیف هستند.',
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontSize: 11,
+              color: colors.textSecondary.withValues(alpha: 0.7),
             ),
+          ),
+          const SizedBox(height: 12),
+
+          // Dusty Notes Items or Celebratory Clean State
+          if (_dustyNotes.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF16241E) : const Color(0xFFE7F3ED),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF2E5946) : const Color(0xFF10B981).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(CupertinoIcons.checkmark_seal_fill, size: 20, color: Color(0xFF10B981)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'آفرین! هیچ یادداشت خاک‌خورده‌ای نداری و تمام دفترچه‌ات به‌روز و مرتب است.',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFF34D399) : const Color(0xFF0C6253),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ..._dustyNotes.map((note) => _buildDustyNoteCard(context, note, colors, isDark)),
+        ],
+      ),
+    );
+  }
+
+  // --- Dusty Note In-Place Action Card ---
+  Widget _buildDustyNoteCard(BuildContext context, Note note, RitmoColors colors, bool isDark) {
+    final style = NoteUiHelper.getKindStyle(context, note.kind);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF19221E) : const Color(0xFFF7F5EE),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(style.icon, size: 15, color: style.accentColor),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  note.title ?? 'بدون عنوان',
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (note.body.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              note.body,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 12,
+                color: colors.textSecondary.withValues(alpha: 0.8),
+                height: 1.4,
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Edit Button
+              TextButton.icon(
+                onPressed: () async {
+                  await NotesRepository.instance.markOpened(note.id);
+                  if (!context.mounted) return;
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
+                  );
+                  await _loadAllData();
+                },
+                icon: const Icon(CupertinoIcons.pencil, size: 13),
+                label: const Text(
+                  'ویرایش',
+                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold),
+                ),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  foregroundColor: colors.primary,
+                ),
+              ),
+              const SizedBox(width: 4),
+              // Archive Button
+              TextButton.icon(
+                onPressed: () async {
+                  RitmoHapticsPolicy.selection();
+                  await NotesRepository.instance.archive(note.id);
+                  if (context.mounted) {
+                    RitmoToast.show(context, 'یادداشت با موفقیت بایگانی شد 📦');
+                  }
+                  await _loadAllData();
+                },
+                icon: const Icon(CupertinoIcons.archivebox, size: 13),
+                label: const Text(
+                  'بایگانی',
+                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold),
+                ),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  foregroundColor: const Color(0xFFC48A1A),
+                ),
+              ),
+              const SizedBox(width: 4),
+              // Trash Button
+              TextButton.icon(
+                onPressed: () {
+                  NoteActions.confirmAndTrash(context, note, _loadAllData);
+                },
+                icon: const Icon(CupertinoIcons.trash, size: 13),
+                label: const Text(
+                  'حذف',
+                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold),
+                ),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  foregroundColor: const Color(0xFFEF4444),
+                ),
+              ),
+            ],
           ),
         ],
       ),

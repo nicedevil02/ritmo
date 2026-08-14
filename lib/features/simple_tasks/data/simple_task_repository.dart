@@ -1,5 +1,7 @@
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
@@ -159,6 +161,12 @@ class SimpleTaskRepository {
     );
 
     await db.insert('simple_tasks', task.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    RitmoEventBus().fire(RitmoEvent(
+      type: 'TaskCreated',
+      timestamp: DateTime.now(),
+      payload: {'date': task.dueDate ?? '', 'taskId': task.id},
+    ));
+    RitmoEvents.notifyRoutineChanged();
     return task;
   }
 
@@ -176,6 +184,7 @@ class SimpleTaskRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
+    RitmoEvents.notifyRoutineChanged();
   }
 
   /// Toggle task completion status + cancel alarm if completed
@@ -216,6 +225,12 @@ class SimpleTaskRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
+    RitmoEventBus().fire(RitmoEvent(
+      type: 'TaskToggled',
+      timestamp: DateTime.now(),
+      payload: {'date': task.dueDate ?? '', 'taskId': id, 'isDone': done},
+    ));
+    RitmoEvents.notifyRoutineChanged();
   }
 
   /// Update full task data
@@ -228,6 +243,12 @@ class SimpleTaskRepository {
       where: 'id = ?',
       whereArgs: [task.id],
     );
+    RitmoEventBus().fire(RitmoEvent(
+      type: 'TaskUpdated',
+      timestamp: DateTime.now(),
+      payload: {'date': task.dueDate ?? '', 'taskId': task.id},
+    ));
+    RitmoEvents.notifyRoutineChanged();
   }
 
   /// Returns a single task by ID, or null if not found.
@@ -295,32 +316,44 @@ class SimpleTaskRepository {
         } catch (_) {}
       }
     }
+    RitmoEventBus().fire(RitmoEvent(
+      type: 'TaskUpdated',
+      timestamp: DateTime.now(),
+      payload: {'date': snapshot.task.dueDate ?? '', 'taskId': snapshot.task.id},
+    ));
+    RitmoEvents.notifyRoutineChanged();
   }
 
-  /// Delete task + steps + attachments + cancel alarm
-  Future<TaskSnapshot?> delete(String id) async {
-    final db = await _db;
-    final rows = await db.query('simple_tasks', where: 'id = ?', whereArgs: [id], limit: 1);
-    SimpleTask? task;
-    
-    if (rows.isNotEmpty) {
-      task = SimpleTask.fromMap(rows.first);
-      if (task.reminderId != null && task.reminderId!.isNotEmpty) {
-        try {
-          await sl<AlarmPlatform>().cancelAlarm(task.reminderId!);
-        } catch (_) {}
-      }
-    }
+  /// Delete task + steps + attachments + cancel alarm (alias for deleteTask)
+  Future<TaskSnapshot?> delete(String id) => deleteTask(id);
 
+  /// Delete task and related steps + attachments (returns snapshot for undo)
+  Future<TaskSnapshot?> deleteTask(String id) async {
+    final db = await _db;
+    final task = await getById(id);
     if (task == null) return null;
 
     final steps = await TaskStepRepository.instance.getForTask(id);
     final attachments = await TaskAttachmentRepository.instance.getForTask(id);
 
+    // Cancel alarm if active
+    if (task.reminderId != null && task.reminderId!.isNotEmpty) {
+      try {
+        await sl<AlarmPlatform>().cancelAlarm(task.reminderId!);
+      } catch (_) {}
+    }
+
     await TaskStepRepository.instance.deleteForTask(id);
     await TaskAttachmentRepository.instance.deleteForTask(id);
     await db.delete('simple_tasks', where: 'id = ?', whereArgs: [id]);
     
+    RitmoEventBus().fire(RitmoEvent(
+      type: 'TaskUpdated',
+      timestamp: DateTime.now(),
+      payload: {'date': task.dueDate ?? '', 'taskId': task.id},
+    ));
+    RitmoEvents.notifyRoutineChanged();
+
     return TaskSnapshot(
       task: task,
       steps: steps,

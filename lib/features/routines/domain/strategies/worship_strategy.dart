@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart' show BuildContext;
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/features/routines/domain/strategies/planner_category_strategy.dart';
@@ -69,6 +70,8 @@ class WorshipStrategy implements PlannerCategoryStrategy {
         'updatedAt': now,
       });
     }
+    DayAgendaService.instance.invalidateAll();
+    RitmoEvents.notifyRoutineChanged();
     RitmoEventBus().fire(RitmoEvent(
       type: 'WorshipPracticeChanged',
       timestamp: DateTime.now(),

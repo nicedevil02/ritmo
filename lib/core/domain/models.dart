@@ -303,6 +303,7 @@ class CustomCategory {
 
 class RitmoEvents {
   static final ValueNotifier<int> routineChanges = ValueNotifier<int>(0);
+  static ValueNotifier<int> get routineChangedNotifier => routineChanges;
 
   static void notifyRoutineChanged() {
     routineChanges.value++;

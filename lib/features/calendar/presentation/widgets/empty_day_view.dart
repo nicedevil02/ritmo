@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
@@ -69,7 +68,10 @@ class EmptyDayView extends StatelessWidget {
             _EmptyDayActionButton(
               label: 'افزودن',
               icon: Icons.add_rounded,
-              onTap: () => UniversalPlannerSheet.show(context: context),
+              onTap: () => UniversalPlannerSheet.show(
+                context: context,
+                onSaved: onRefreshRequested,
+              ),
               isPrimary: true,
             ),
           ],

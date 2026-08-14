@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart' hide Category;
+import 'package:ritmo/core/domain/agenda/agenda_load_status.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
@@ -35,6 +37,9 @@ class DayAgendaService {
 
   /// Small per-date cache (invalidated reactively via the event bus).
   final Map<String, DayAgenda> _cache = {};
+
+  AgendaLoadStatus _lastStatus = const AgendaLoadStatus.ok();
+  AgendaLoadStatus get lastLoadStatus => _lastStatus;
 
   /// Completion-style events fired outside the routine kernel. The kernel
   /// already refreshes the UI for its own routine events, so for these we both
@@ -148,43 +153,52 @@ class DayAgendaService {
       d = d.add(const Duration(days: 1));
     }
 
+    final failures = <String>[];
+    _AgendaContext ctx;
     try {
-      final ctx = await _buildContext(start, end, opts);
-      
-      DateTime? appStartDate;
-      if (ctx.settingsMap['app_start_date'] != null) {
-        final parsed = DateTime.tryParse(ctx.settingsMap['app_start_date']!);
-        if (parsed != null) {
-          appStartDate = DateTime(parsed.year, parsed.month, parsed.day);
-        }
-      }
-
-      for (final date in dates) {
-        final ds = _dateStr(date);
-        
-        // ROOT FIX: Avoid generating routines/prayers for days before the app was installed.
-        if (appStartDate != null && date.isBefore(appStartDate)) {
-          result[ds] = DayAgenda.empty(ds);
-          continue;
-        }
-
-        // Cache only the full, unfiltered agenda; filtered queries are rebuilt.
-        if (opts.domains.isEmpty && opts.includeCompleted && _cache.containsKey(ds)) {
-          result[ds] = _cache[ds]!;
-          continue;
-        }
-        final agenda = await _assembleDay(date, ds, ctx, opts);
-        if (opts.domains.isEmpty && opts.includeCompleted) {
-          _cache[ds] = agenda;
-        }
-        result[ds] = agenda;
-      }
+      ctx = await _buildContext(start, end, opts, failures);
     } catch (e, st) {
-      debugPrint('DayAgendaService.agendaForRange error: $e\n$st');
+      RitmoLog.error('DayAgendaService', 'fatal context build failure', e, st);
+      _lastStatus = AgendaLoadStatus(failedSources: failures, fatal: true);
       for (final date in dates) {
         result.putIfAbsent(_dateStr(date), () => DayAgenda.empty(_dateStr(date)));
       }
+      return result;
     }
+
+    DateTime? appStartDate;
+    if (ctx.settingsMap['app_start_date'] != null) {
+      final parsed = DateTime.tryParse(ctx.settingsMap['app_start_date']!);
+      if (parsed != null) {
+        appStartDate = DateTime(parsed.year, parsed.month, parsed.day);
+      }
+    }
+
+    for (final date in dates) {
+      final ds = _dateStr(date);
+
+      // ROOT FIX: Avoid generating routines/prayers for days before the app was installed.
+      if (appStartDate != null && date.isBefore(appStartDate)) {
+        result[ds] = DayAgenda.empty(ds);
+        continue;
+      }
+
+      // Cache only the full, unfiltered agenda; filtered queries are rebuilt.
+      if (opts.domains.isEmpty && opts.includeCompleted && _cache.containsKey(ds)) {
+        result[ds] = _cache[ds]!;
+        continue;
+      }
+      try {
+        final agenda = await _assembleDay(date, ds, ctx, opts);
+        if (opts.domains.isEmpty && opts.includeCompleted) _cache[ds] = agenda;
+        result[ds] = agenda;
+      } catch (e, st) {
+        RitmoLog.error('DayAgendaService', 'assembleDay failed for $ds', e, st);
+        failures.add('day:$ds');
+        result[ds] = DayAgenda.empty(ds);
+      }
+    }
+    _lastStatus = AgendaLoadStatus(failedSources: failures, fatal: false);
 
     return result;
   }
@@ -197,6 +211,7 @@ class DayAgendaService {
     DateTime start,
     DateTime end,
     AgendaQueryOptions opts,
+    List<String> failures,
   ) async {
     final db = await DatabaseHelper.instance.database;
 
@@ -223,29 +238,81 @@ class DayAgendaService {
     final startStr = _dateStr(start);
     final endStr = _dateStr(end);
 
-    final routineSource = await RoutineAgendaSource.load(db, settingsMap, startStr, endStr);
-    final worshipSource = await WorshipAgendaSource.load(db, settingsMap, start, end);
-    final sportsSource = await SportsAgendaSource.load(db, settingsMap);
-    final medicineSource = await MedicineAgendaSource.load(db, settingsMap, start, end);
-    final goalStepsSource = await GoalStepsAgendaSource.load(db, start, end);
+    final routineSource = await _guardSource(
+      'routine', failures,
+      () => RoutineAgendaSource.load(db, settingsMap, startStr, endStr),
+      () => RoutineAgendaSource.disabled(),
+    );
+
+    final worshipSource = religionEnabled
+        ? await _guardSource(
+            'worship', failures,
+            () => WorshipAgendaSource.load(db, settingsMap, start, end),
+            () => WorshipAgendaSource.disabled(settingsMap, db),
+          )
+        : WorshipAgendaSource.disabled(settingsMap, db);
+
+    final sportsSource = sportsEnabled
+        ? await _guardSource(
+            'sports', failures,
+            () => SportsAgendaSource.load(db, settingsMap),
+            () => SportsAgendaSource.disabled(db),
+          )
+        : SportsAgendaSource.disabled(db);
+
+    final medicineSource = medicineEnabled
+        ? await _guardSource(
+            'medicine', failures,
+            () => MedicineAgendaSource.load(db, settingsMap, start, end),
+            () => MedicineAgendaSource.disabled(),
+          )
+        : MedicineAgendaSource.disabled();
+
+    final goalStepsSource = await _guardSource(
+      'goalSteps', failures,
+      () => GoalStepsAgendaSource.load(db, start, end),
+      () => GoalStepsAgendaSource.empty(),
+    );
 
     TaskAgendaSource? taskSource;
     final tasksEnabled = settingsMap['calendar_show_tasks'] != 'false';
     if (tasksEnabled && opts.wants(AgendaDomain.task)) {
-      taskSource = await TaskAgendaSource.load(
-        db, 
-        start, 
-        end, 
-        _dateStr(DateTime.now()),
-        settingsMap['app_start_date'],
+      taskSource = await _guardSource<TaskAgendaSource?>(
+        'task', failures,
+        () => TaskAgendaSource.load(
+          db,
+          start,
+          end,
+          _dateStr(DateTime.now()),
+          settingsMap['app_start_date'],
+        ),
+        () => null,
       );
     }
 
-    final courseSource = await CourseAgendaSource.load(db, coursesEnabled, startStr, endStr);
+    final courseSource = coursesEnabled
+        ? await _guardSource(
+            'course', failures,
+            () => CourseAgendaSource.load(db, coursesEnabled, startStr, endStr),
+            () => CourseAgendaSource.disabled(),
+          )
+        : CourseAgendaSource.disabled();
 
-    final konkurSource = await KonkurAgendaSource.load(konkurEnabled);
+    final konkurSource = konkurEnabled
+        ? await _guardSource(
+            'konkur', failures,
+            () => KonkurAgendaSource.load(konkurEnabled),
+            () => KonkurAgendaSource.disabled(),
+          )
+        : KonkurAgendaSource.disabled();
 
-    final cycleSource = await CycleAgendaSource.load(db, settingsMap, cycleAllowed);
+    final cycleSource = cycleAllowed
+        ? await _guardSource(
+            'cycle', failures,
+            () => CycleAgendaSource.load(db, settingsMap, cycleAllowed),
+            () => const CycleAgendaSource(cycleOutput: null, cycleAllowed: false),
+          )
+        : const CycleAgendaSource(cycleOutput: null, cycleAllowed: false);
 
     final cityId = settingsMap['prayer_city_id'] ??
         settingsMap['home_city_id'] ??
@@ -261,8 +328,10 @@ class DayAgendaService {
     var longitude = 51.3890;
 
     if (cityResult.isNotEmpty) {
-      latitude = cityResult.first['latitude']! as double;
-      longitude = cityResult.first['longitude']! as double;
+      final lat = cityResult.first['latitude'];
+      final lng = cityResult.first['longitude'];
+      if (lat is num) latitude = lat.toDouble();
+      if (lng is num) longitude = lng.toDouble();
     }
 
     final ihtiyatMinutes = int.tryParse(settingsMap['ihtiyat_minutes'] ?? '0') ?? 0;
@@ -280,7 +349,7 @@ class DayAgendaService {
         final k = r['kind']?.toString();
         if (d != null && k != null) dayMarksByDate[d] = k;
       }
-    } catch (e, st) { debugPrint('Error in day_agenda_service.dart: $e\n$st'); }
+    } catch (e, st) { RitmoLog.error('DayAgendaService', 'day_marks load error', e, st); }
 
     return _AgendaContext(
       settingsMap: settingsMap,
@@ -441,7 +510,22 @@ class DayAgendaService {
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
-  // (time parsing helpers live in individual source/sheet files that need them)
+
+  /// Runs [load]; on failure logs, adds [label] to [failures], and returns [fallback()].
+  Future<T> _guardSource<T>(
+    String label,
+    List<String> failures,
+    Future<T> Function() load,
+    T Function() fallback,
+  ) async {
+    try {
+      return await load();
+    } catch (e, st) {
+      RitmoLog.error('DayAgendaService', 'source "$label" failed', e, st);
+      failures.add(label);
+      return fallback();
+    }
+  }
 }
 
 
@@ -515,7 +599,7 @@ class _AgendaContext {
       _prayerCache[key] = times;
       return times;
     } catch (e) {
-      debugPrint('DayAgendaService prayer times error: $e');
+      RitmoLog.error('DayAgendaService', 'prayer times error', e);
       _prayerCache[key] = const {};
       return const {};
     }

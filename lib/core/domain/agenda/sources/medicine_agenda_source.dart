@@ -39,6 +39,13 @@ class MedicineAgendaSource implements AgendaSource {
   @override
   bool get isEnabled => medicineEnabled;
 
+  /// Returns an empty, disabled source (fallback when module is off or load fails).
+  static MedicineAgendaSource disabled() => MedicineAgendaSource(
+    medicationRoutines: const [],
+    logsByRoutineAndDate: const {},
+    medicineEnabled: false,
+  );
+
   static Future<MedicineAgendaSource> load(
     Database db,
     Map<String, String> settingsMap,

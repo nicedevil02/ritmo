@@ -18,6 +18,10 @@ class GoalStepsAgendaSource implements AgendaSource {
   @override
   bool get isEnabled => true;
 
+  /// Returns an empty source (fallback on load failure).
+  static GoalStepsAgendaSource empty() =>
+      GoalStepsAgendaSource(goalStepsByDate: const {});
+
   static Future<GoalStepsAgendaSource> load(
     Database db,
     DateTime start,

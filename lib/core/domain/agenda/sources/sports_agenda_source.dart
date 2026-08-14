@@ -33,6 +33,17 @@ class SportsAgendaSource implements AgendaSource {
   @override
   bool get isEnabled => sportsEnabled;
 
+  /// Returns an empty, disabled source (fallback when module is off or load fails).
+  static SportsAgendaSource disabled(Database db) => SportsAgendaSource(
+    prescriptionsByDate: const {},
+    sportsEnabled: false,
+    programStartDate: DateTime(2000),
+    totalWeeks: 4,
+    db: db,
+    hasWeekCol: false,
+    legacyPlans: const [],
+  );
+
   static Future<SportsAgendaSource> load(
     Database db,
     Map<String, String> settingsMap,

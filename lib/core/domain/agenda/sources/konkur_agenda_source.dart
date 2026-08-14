@@ -22,6 +22,13 @@ class KonkurAgendaSource implements AgendaSource {
   @override
   bool get isEnabled => konkurEnabled;
 
+  /// Returns an empty, disabled source (fallback when module is off or load fails).
+  static KonkurAgendaSource disabled() => const KonkurAgendaSource(
+    konkurByDate: {},
+    konkurSubjectNames: {},
+    konkurEnabled: false,
+  );
+
   static Future<KonkurAgendaSource> load(
     bool konkurEnabled,
   ) async {

@@ -25,6 +25,14 @@ class CourseAgendaSource implements AgendaSource {
   @override
   bool get isEnabled => coursesEnabled;
 
+  /// Returns an empty, disabled source (fallback when module is off or load fails).
+  static CourseAgendaSource disabled() => const CourseAgendaSource(
+    courseTitles: {},
+    coursesMap: {},
+    sessionsByDate: {},
+    coursesEnabled: false,
+  );
+
   static Future<CourseAgendaSource> load(
     Database db,
     bool coursesEnabled,

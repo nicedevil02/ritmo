@@ -44,15 +44,9 @@ class WorshipAgendaSource implements AgendaSource {
   @override
   bool get isEnabled => religionEnabled;
 
-  static Future<WorshipAgendaSource> load(
-    Database db,
-    Map<String, String> settingsMap,
-    DateTime start,
-    DateTime end,
-  ) async {
-    final religionEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled');
-    if (!religionEnabled) {
-      return WorshipAgendaSource(
+  /// Returns an empty, disabled source (fallback on load failure or module off).
+  static WorshipAgendaSource disabled(Map<String, String> settingsMap, Database db) =>
+      WorshipAgendaSource(
         prayerPractices: const [],
         mustahabPractices: const [],
         worshipDebts: const [],
@@ -64,6 +58,16 @@ class WorshipAgendaSource implements AgendaSource {
         hasLunarMonthly: false,
         db: db,
       );
+
+  static Future<WorshipAgendaSource> load(
+    Database db,
+    Map<String, String> settingsMap,
+    DateTime start,
+    DateTime end,
+  ) async {
+    final religionEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled');
+    if (!religionEnabled) {
+      return disabled(settingsMap, db);
     }
     final prayerPractices = await db.query(
       'worship_practices',

@@ -137,7 +137,9 @@ class JourneyController extends ChangeNotifier {
         break;
       case JourneyScale.year:
         final j = Jalali.fromDateTime(_selectedDate);
-        final nextJ = Jalali(j.year + offset, j.month, j.day.clamp(1, 29));
+        final targetYear = j.year + offset;
+        final maxDay = Jalali(targetYear, j.month, 1).monthLength;
+        final nextJ = Jalali(targetYear, j.month, j.day.clamp(1, maxDay));
         _selectedDate = nextJ.toDateTime();
         break;
     }
@@ -149,7 +151,7 @@ class JourneyController extends ChangeNotifier {
 
     // K21: Agenda scale uses its own dedicated range loader
     if (_activeScale == JourneyScale.agenda) {
-      await loadAgendaRange();
+      await loadAgendaRange(anchorDate: _selectedDate);
       return;
     }
 
@@ -209,7 +211,7 @@ class JourneyController extends ChangeNotifier {
         await _kernel.execute(CompleteOccurrenceCommand(
           routineId: item.sourceId,
           dateStr: item.dateStr,
-          resultType: 'COMPLETED',
+          resultType: OccurrenceResultType.full,
           durationMinutes: item.durationMinutes ?? 30,
         ));
       } else {
@@ -404,18 +406,23 @@ class JourneyController extends ChangeNotifier {
   /// Performance target: < 250ms for the initial load.
   /// Uses a single agendaForRange call — NOT one query per day.
   /// Must start with if (_isDisposed) return; — guaranteed by spec (067.md §K21).
-  Future<void> loadAgendaRange({int daysBack = 14, int daysForward = 45}) async {
+  Future<void> loadAgendaRange({
+    DateTime? anchorDate,
+    int daysBack = 14,
+    int daysForward = 45,
+  }) async {
     if (_isDisposed) return;
     if (_snapshot == null) {
       _isLoading = true;
-      notifyListeners();
     }
+    _errorMessage = null;
+    notifyListeners();
 
     try {
       final sw = Stopwatch()..start();
-      final today = DateTime.now();
-      final start = today.subtract(Duration(days: daysBack));
-      final end = today.add(Duration(days: daysForward));
+      final anchor = anchorDate ?? _selectedDate;
+      final start = anchor.subtract(Duration(days: daysBack));
+      final end = anchor.add(Duration(days: daysForward));
 
       // Single range call — never N-per-day calls
       final daysMap = await _agendaService.agendaForRange(start, end);
@@ -427,11 +434,13 @@ class JourneyController extends ChangeNotifier {
       }
       _rangeSnapshots = newSnapshots;
       final selectedKey = _formatDateKey(_selectedDate);
-      _snapshot = _rangeSnapshots[selectedKey];
+      _snapshot = _rangeSnapshots[selectedKey] ??
+          _snapshotBuilder.buildSnapshot(DayAgenda(dateStr: selectedKey, items: const []));
       sw.stop();
       debugPrint('[JourneyController] loadAgendaRange: ${sw.elapsedMilliseconds}ms');
     } catch (e, st) {
       if (_isDisposed) return;
+      _errorMessage = 'خطا در بارگذاری برنامه‌ها: $e';
       debugPrint('[JourneyController] loadAgendaRange error: $e\n$st');
     } finally {
       if (!_isDisposed) {

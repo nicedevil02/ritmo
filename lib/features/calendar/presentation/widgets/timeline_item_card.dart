@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_chip.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_time_range.dart';
 import 'package:ritmo/features/calendar/presentation/logic/timeline_layout_engine.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
@@ -107,19 +108,18 @@ class TimelineItemCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Single-day override indicator dot
+                    // Single-day override indicator chip
                     if (item.hasOverride)
                       Positioned(
-                        top: 4,
-                        left: 4,
-                        child: Tooltip(
-                          message: 'فقط امروز تغییر کرده',
-                          child: Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: colors.accent,
-                              shape: BoxShape.circle,
+                        top: 2,
+                        left: 2,
+                        child: IgnorePointer(
+                          child: Transform.scale(
+                            scale: 0.8,
+                            alignment: Alignment.topLeft,
+                            child: const RitmoChip(
+                              label: 'فقط امروز',
+                              isSelected: true,
                             ),
                           ),
                         ),

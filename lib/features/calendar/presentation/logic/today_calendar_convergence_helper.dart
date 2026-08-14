@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/domain/agenda/agenda_action_handler.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
@@ -6,6 +7,8 @@ import 'package:ritmo/core/domain/agenda/day_agenda_snapshot_builder.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
+import 'package:ritmo/core/domain/models/completion_result.dart';
+import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/features/calendar/utils/calendar_defaults.dart';
 
 /// Central helper for convergence and cross-feature workflows between Calendar and Today Dashboard.
@@ -28,12 +31,15 @@ class TodayCalendarConvergenceHelper {
   final RitmoExecutionKernel _kernel;
   final RitmoEventBus _eventBus;
 
-  /// Fetches a unified execution snapshot for today, shared between Today and Calendar.
-  Future<DayAgendaSnapshot> fetchTodaySnapshot({DateTime? now}) async {
-    final targetDate = now ?? DateTime.now();
+  /// Loads current unified snapshot for today or specified date.
+  Future<DayAgendaSnapshot> getUnifiedSnapshot({DateTime? date}) async {
+    final targetDate = date ?? DateTime.now();
     final todayAgenda = await _agendaService.agendaForDate(targetDate);
     return _snapshotBuilder.buildSnapshot(todayAgenda, now: targetDate);
   }
+
+  /// Fetches a unified execution snapshot for today, shared between Today and Calendar.
+  Future<DayAgendaSnapshot> fetchTodaySnapshot({DateTime? now}) => getUnifiedSnapshot(date: now);
 
   /// Opens the Calendar screen tab focused on a specific date and optional item.
   void openCalendarInContext(
@@ -42,8 +48,10 @@ class TodayCalendarConvergenceHelper {
     String? itemId,
   }) {
     final targetDate = date ?? DateTime.now();
+    final mode = AppModeService.instance.current;
+    final calendarIndex = RitmoShellMetrics.calendarTabIndexFor(mode);
     final payload = <String, dynamic>{
-      'index': 4, // Calendar Tab Index
+      'index': calendarIndex,
       'date': targetDate.toIso8601String(),
     };
     if (itemId != null) payload['itemId'] = itemId;
@@ -70,9 +78,7 @@ class TodayCalendarConvergenceHelper {
       await _kernel.execute(CompleteOccurrenceCommand(
         routineId: item.sourceId,
         dateStr: item.dateStr,
-        // P1-6: موتور امتیاز فقط FULL/LIGHT/MINIMAL را میشناسد؛ 'COMPLETED'
-        // قبلاً باعث امتیاز صفر برای تکمیل کامل میشد.
-        resultType: 'FULL',
+        resultType: OccurrenceResultType.full,
         durationMinutes: item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes,
       ));
     } else {

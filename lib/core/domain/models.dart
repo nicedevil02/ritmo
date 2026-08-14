@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+export 'models/completion_result.dart';
 
 enum Category {
   medical,

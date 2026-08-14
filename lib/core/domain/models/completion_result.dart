@@ -29,3 +29,11 @@ enum CompletionResult {
   bool get keepsStreak => this != CompletionResult.skipped;
   bool get advancesProgression => this == CompletionResult.full;
 }
+
+abstract final class OccurrenceResultType {
+  static const full = 'FULL';
+  static const light = 'LIGHT';
+  static const minimal = 'MINIMAL';
+  static const partial = 'PARTIAL';
+  static const skipped = 'SKIPPED';
+}

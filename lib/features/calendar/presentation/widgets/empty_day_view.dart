@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
-import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 
 /// K25 — Actionable Empty Day View
 /// Displayed when a day has no items scheduled.
@@ -89,6 +91,7 @@ class EmptyDayView extends StatelessWidget {
       return;
     }
 
+    final parentContext = context;
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -96,6 +99,7 @@ class EmptyDayView extends StatelessWidget {
       builder: (ctx) => _SomedayTasksPickerSheet(
         tasks: somedayTasks,
         targetDateStr: _dateStr,
+        parentContext: parentContext,
         onScheduled: () {
           DayAgendaService.instance.invalidateDate(_dateStr);
           onRefreshRequested();
@@ -115,7 +119,7 @@ class EmptyDayView extends StatelessWidget {
           style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16),
         ),
         content: const Text(
-          'برنامه‌ها و کارهای دیروز به امروز اضافه شوند؟',
+          'کارهای دیروز به این روز اضافه شوند؟',
           style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
         ),
         actions: [
@@ -133,10 +137,53 @@ class EmptyDayView extends StatelessWidget {
 
     if (confirmed == true && context.mounted) {
       RitmoHaptics.tap();
-      // Invalidate target date and refresh
+      final yesterday = date.subtract(const Duration(days: 1));
+      final yesterdayStr =
+          '${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
+
+      final db = await DatabaseHelper.instance.database;
+      final yesterdayTasks = await db.query(
+        'simple_tasks',
+        where: 'dueDate = ?',
+        whereArgs: [yesterdayStr],
+      );
+
+      if (!context.mounted) return;
+
+      if (yesterdayTasks.isEmpty) {
+        RitmoToast.show(context, 'چیزی برای کپی کردن نبود');
+        return;
+      }
+
+      final createdIds = <String>[];
+      for (final row in yesterdayTasks) {
+        final task = SimpleTask.fromMap(row);
+        final newTask = await SimpleTaskRepository.instance.create(
+          title: task.title,
+          dueDate: _dateStr,
+          dueTime: task.dueTime,
+          note: task.note,
+          isImportant: task.isImportant,
+        );
+        createdIds.add(newTask.id);
+      }
+
       DayAgendaService.instance.invalidateDate(_dateStr);
       onRefreshRequested();
-      RitmoToast.show(context, 'برنامه‌ها کپی شدند');
+
+      final countStr = toPersianDigits(yesterdayTasks.length.toString());
+      if (!context.mounted) return;
+      RitmoToast.show(
+        context,
+        '$countStr مورد کپی شد',
+        onUndo: () async {
+          for (final id in createdIds) {
+            await SimpleTaskRepository.instance.deleteTask(id);
+          }
+          DayAgendaService.instance.invalidateDate(_dateStr);
+          onRefreshRequested();
+        },
+      );
     }
   }
 }
@@ -191,11 +238,13 @@ class _SomedayTasksPickerSheet extends StatelessWidget {
   const _SomedayTasksPickerSheet({
     required this.tasks,
     required this.targetDateStr,
+    required this.parentContext,
     required this.onScheduled,
   });
 
   final List<SimpleTask> tasks;
   final String targetDateStr;
+  final BuildContext parentContext;
   final VoidCallback onScheduled;
 
   @override
@@ -215,58 +264,60 @@ class _SomedayTasksPickerSheet extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(CalendarTokens.spacingL),
         child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'کارهای بدون تاریخ',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Vazirmatn',
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'کارهای بدون تاریخ',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Vazirmatn',
+                  ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded, size: 20),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: tasks.length,
-              itemBuilder: (ctx, i) {
-                final task = tasks[i];
-                return ListTile(
-                  title: Text(
-                    task.title,
-                    style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
-                  ),
-                  trailing: TextButton(
-                    onPressed: () async {
-                      final updated = task.copyWith(dueDate: targetDateStr);
-                      await SimpleTaskRepository.instance.updateTask(updated);
-                      if (ctx.mounted) {
-                        Navigator.pop(ctx);
-                        onScheduled();
-                        RitmoToast.show(ctx, 'کار به امروز منتقل شد');
-                      }
-                    },
-                    child: const Text('افزودن به امروز',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
-                  ),
-                );
-              },
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: tasks.length,
+                itemBuilder: (ctx, i) {
+                  final task = tasks[i];
+                  return ListTile(
+                    title: Text(
+                      task.title,
+                      style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
+                    ),
+                    trailing: TextButton(
+                      onPressed: () async {
+                        final updated = task.copyWith(dueDate: targetDateStr);
+                        await SimpleTaskRepository.instance.updateTask(updated);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                        }
+                        onScheduled();
+                        if (parentContext.mounted) {
+                          RitmoToast.show(parentContext, 'کار به تاریخ انتخابی منتقل شد');
+                        }
+                      },
+                      child: const Text('افزودن به این روز',
+                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }

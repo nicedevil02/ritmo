@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
+import 'package:ritmo/features/calendar/presentation/logic/split_day_scroll_helper.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_motion.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_column_header.dart';
@@ -84,14 +85,10 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
       return;
     }
 
-    final isMorning = minutes < CalendarTokens.splitBoundaryMinutes;
-    final rangeStart = isMorning ? 0 : CalendarTokens.splitBoundaryMinutes;
-    final minuteInRange = minutes - rangeStart;
-
-    final offset = ((minuteInRange - 60).clamp(0, 720)) * CalendarTokens.pxPerMinuteSplit;
+    final target = splitDayScrollTargetFor(minutes);
     final maxScroll = _sharedScrollController.position.maxScrollExtent;
     _sharedScrollController.animateTo(
-      offset.clamp(0.0, maxScroll),
+      target.offset.clamp(0.0, maxScroll),
       duration: CalendarMotion.d(context, CalendarTokens.durationEmphasis),
       curve: CalendarTokens.curveEmphasis,
     );
@@ -102,8 +99,15 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
     final nowMinutes = (now.hour * 60) + now.minute;
 
     if (widget.isToday) {
-      final rangeStart = nowMinutes < CalendarTokens.splitBoundaryMinutes ? 0 : CalendarTokens.splitBoundaryMinutes;
-      _scrollToMinutesInController(_sharedScrollController, nowMinutes, rangeStart);
+      if (_sharedScrollController.hasClients) {
+        final target = splitDayScrollTargetFor(nowMinutes);
+        final maxScroll = _sharedScrollController.position.maxScrollExtent;
+        _sharedScrollController.animateTo(
+          target.offset.clamp(0.0, maxScroll),
+          duration: CalendarMotion.d(context, CalendarTokens.durationEmphasis),
+          curve: CalendarTokens.curveEmphasis,
+        );
+      }
       if (_singleColumnController.hasClients) {
         final offset = ((nowMinutes - 60).clamp(0, 1440)) * CalendarTokens.pxPerMinute;
         final maxScroll = _singleColumnController.position.maxScrollExtent;
@@ -119,17 +123,6 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
         _scrollToFirstItemOrDefault(_singleColumnController, 0, 1440, isSingle: true);
       }
     }
-  }
-
-  void _scrollToMinutesInController(ScrollController controller, int minutes, int rangeStart) {
-    if (!controller.hasClients) return;
-    final offset = ((minutes - rangeStart - 60).clamp(0, 720)) * CalendarTokens.pxPerMinuteSplit;
-    final maxScroll = controller.position.maxScrollExtent;
-    controller.animateTo(
-      offset.clamp(0.0, maxScroll),
-      duration: CalendarMotion.d(context, CalendarTokens.durationEmphasis),
-      curve: CalendarTokens.curveEmphasis,
-    );
   }
 
   void _scrollToFirstItemOrDefault(ScrollController controller, int rangeStart, int rangeEnd, {bool isSingle = false}) {

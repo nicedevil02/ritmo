@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/domain/agenda/action_feedback.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_snapshot_builder.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
+import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -20,7 +22,6 @@ import 'package:ritmo/features/calendar/presentation/models/now_pill_view_model.
 import 'package:ritmo/features/calendar/presentation/utils/calendar_date_formatter.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/calendar_search_delegate.dart';
-import 'package:ritmo/features/calendar/utils/calendar_defaults.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/day_summary_bar.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/empty_day_view.dart';
@@ -106,22 +107,27 @@ class _JourneyScreenState extends State<JourneyScreen> {
 
   void _handleNavigationEvent(RitmoEvent event) {
     if (!mounted) return;
-    if (event.type == 'navigate_tab' && event.payload['index'] == 4) {
+    final mode = AppModeService.instance.current;
+    final calendarIndex = RitmoShellMetrics.calendarTabIndexFor(mode);
+    if (event.type == 'navigate_tab' && event.payload['index'] == calendarIndex) {
       final dateStr = event.payload['date'] as String?;
       final itemId = event.payload['itemId'] as String?;
 
-      if (dateStr != null) {
-        try {
-          final targetDate = DateTime.parse(dateStr);
-          _controller.selectDate(targetDate, scaleToSet: JourneyScale.day);
-        } catch (_) {}
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (dateStr != null) {
+          try {
+            final targetDate = DateTime.parse(dateStr);
+            _controller.selectDate(targetDate, scaleToSet: JourneyScale.day);
+          } catch (_) {}
+        }
 
-      if (itemId != null) {
-        _focusItemById(itemId);
-      } else {
-        _autoScrollToNow();
-      }
+        if (itemId != null) {
+          _focusItemById(itemId);
+        } else {
+          _autoScrollToNow();
+        }
+      });
     }
   }
 
@@ -765,13 +771,16 @@ class _JourneyScreenState extends State<JourneyScreen> {
                           highlightedItemId: _controller.highlightedItemId,
                           onItemTap: _openItemDetails,
                           onItemMove: (item, newStartMinutes) async {
-                            final dur = item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
-                            await _controller.scheduleItem(item, newStartMinutes, dur);
+                            final timeStr = TimelineSnappingHelper.minutesToTimeString(newStartMinutes);
+                            await _controller.commitItemDrag(
+                              item,
+                              timeStr,
+                              scope: CalendarEditScope.thisDayOnly,
+                            );
                             if (mounted) {
-                              final timeStr = TimelineSnappingHelper.minutesToTimeString(newStartMinutes);
                               RitmoToast.show(
                                 context,
-                                'زمان رویداد به ${toPersianDigits(timeStr)} تغییر یافت',
+                                'فقط برای امروز جابه‌جا شد',
                                 onUndo: () => _controller.undoLastAction(),
                               );
                             }

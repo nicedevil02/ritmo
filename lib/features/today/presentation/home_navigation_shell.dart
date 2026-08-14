@@ -9,6 +9,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/navigation/ritmo_router.dart';
+import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -31,6 +32,8 @@ class HomeNavigationShell extends StatefulWidget {
   final VoidCallback onLogout;
   final ThemeRepository themeRepository;
   final LocaleRepository localeRepository;
+
+  static int calendarTabIndexFor(AppMode mode) => RitmoShellMetrics.calendarTabIndexFor(mode);
 
   @override
   State<HomeNavigationShell> createState() => _HomeNavigationShellState();

@@ -89,7 +89,8 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
 
         final todayStr = DateTime.now().toIso8601String().substring(0, 10);
         final todayHits = hits.where((h) => h.dateStr == todayStr).toList();
-        final otherHits = hits.where((h) => h.dateStr != todayStr).toList();
+        final recurringHits = hits.where((h) => h.isRecurring).toList();
+        final otherHits = hits.where((h) => !h.isRecurring && h.dateStr != todayStr).toList();
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -101,6 +102,13 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
                   title: 'امروز (${toPersianDigits(todayHits.length)})',
                 ),
                 ...todayHits.map((h) => _HitTile(hit: h, onSelected: close)),
+                const SizedBox(height: 12),
+              ],
+              if (recurringHits.isNotEmpty) ...[
+                _SearchSectionHeader(
+                  title: 'برنامه‌های تکرارشونده (${toPersianDigits(recurringHits.length)})',
+                ),
+                ...recurringHits.map((h) => _HitTile(hit: h, onSelected: close)),
                 const SizedBox(height: 12),
               ],
               if (otherHits.isNotEmpty) ...[
@@ -117,7 +125,6 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
   }
 
   Widget _buildTodayList(BuildContext context, String q) {
-    final theme = Theme.of(context);
     final todayResults = q.isEmpty
         ? items
         : items
@@ -194,7 +201,9 @@ class _HitTile extends StatelessWidget {
         style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
-        '${hit.dateStr}${hit.subtitle != null ? ' · ${hit.subtitle}' : ''}',
+        hit.isRecurring
+            ? 'تکرارشونده${hit.subtitle != null ? ' · ${hit.subtitle}' : ''}'
+            : '${hit.dateStr != null ? toPersianDigits(hit.dateStr) : 'بدون تاریخ'}${hit.subtitle != null ? ' · ${hit.subtitle}' : ''}',
         style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
       ),
       onTap: () {
@@ -204,7 +213,7 @@ class _HitTile extends StatelessWidget {
           domain: hit.domain,
           sourceId: hit.sourceId,
           title: hit.title,
-          dateStr: hit.dateStr,
+          dateStr: hit.dateStr ?? DateTime.now().toIso8601String().substring(0, 10),
           category: Category.personal,
           deepLink: AgendaDeepLink(domain: hit.domain, targetId: hit.sourceId),
         );

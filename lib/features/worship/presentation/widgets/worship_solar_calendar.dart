@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/worship/logic/worship_calendar_logic.dart';
 import 'package:ritmo/features/worship/logic/worship_occasions_data.dart';
-import 'package:ritmo/features/worship/models/worship_models.dart';
+import 'package:ritmo/features/worship/models/worship_models.dart' hide toPersianDigits;
 import 'package:ritmo/features/worship/presentation/widgets/worship_day_detail_panel.dart';
 
 class WorshipSolarCalendar extends StatefulWidget {
@@ -35,7 +38,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
 
   late WorshipCalendarMonthData _monthData;
   late WorshipCalendarDay _selectedDay;
-  bool _isCollapsed = false;
+  bool _isCollapsed = true;
 
   @override
   void initState() {
@@ -108,6 +111,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
   }
 
   void _goToToday() {
+    unawaited(HapticFeedback.selectionClick());
     final nowJ = Jalali.now();
     setState(() {
       _selectedYear = nowJ.year;
@@ -134,6 +138,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
   }
 
   void _onSelectDay(WorshipCalendarDay day) {
+    unawaited(HapticFeedback.selectionClick());
     setState(() {
       _selectedDay = day;
     });
@@ -148,7 +153,8 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
 
     // Calculate displayed days: Full month or selected week row
     final selectedIdx = _monthData.days.indexWhere(
-      (d) => d.jalali.year == _selectedDay.jalali.year &&
+      (d) =>
+          d.jalali.year == _selectedDay.jalali.year &&
           d.jalali.month == _selectedDay.jalali.month &&
           d.jalali.day == _selectedDay.jalali.day,
     );
@@ -164,163 +170,178 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
         _selectedYear == nowJ.year &&
         _selectedMonth == nowJ.month;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       children: [
         // Main Premium Solar Calendar Surface Card
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
           decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(32),
+            color: isDark ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
             border: Border.all(
-              color: colors.border.withValues(alpha: 0.5),
+              color: isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD),
+              width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.05),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.28)
+                    : const Color(0xFFB79B62).withValues(alpha: 0.08),
+                blurRadius: 35,
+                spreadRadius: 0,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: Navigation, Month Title & Subtitle + Collapse Toggle
+              // 1. HEADER: Month Title & Subtitle + Modern Navigation Badges
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Title & Subtitle Range + Today Button
+                  // Title + Subtitle Range + Today Shortcut (Tap to Toggle Collapse)
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              '${_monthData.monthName} ${toPersianDigits(_monthData.year.toString())}',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
-                                fontFamily: 'Vazirmatn',
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            // Today Button Shortcut (Active whenever selected day is not today)
-                            if (!isSelectedToday)
-                              InkWell(
-                                onTap: _goToToday,
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: colors.primary.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: colors.primary.withValues(alpha: 0.25),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        CupertinoIcons.arrow_counterclockwise,
-                                        size: 11,
-                                        color: colors.primary,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'امروز',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.primary,
-                                          fontFamily: 'Vazirmatn',
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                    child: GestureDetector(
+                      onTap: () {
+                        unawaited(HapticFeedback.selectionClick());
+                        setState(() => _isCollapsed = !_isCollapsed);
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                '${_monthData.monthName} ${toPersianDigits(_monthData.year.toString())}',
+                                style: TextStyle(
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.5,
+                                  color: colors.textPrimary,
+                                  fontFamily: 'Vazirmatn',
                                 ),
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${_monthData.gregorianRangeText}  •  ${_monthData.hijriRangeText}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
+                              const SizedBox(width: 8),
+                              // Today Button Shortcut (Active whenever selected day is not today)
+                              if (!isSelectedToday)
+                                InkWell(
+                                  onTap: _goToToday,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? const Color(0xFF23382D) : const Color(0xFFF1E8D5),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isDark
+                                            ? const Color(0xFF3B6B55)
+                                            : const Color(0xFFD4A843).withValues(alpha: 0.5),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          CupertinoIcons.arrow_counterclockwise,
+                                          size: 11,
+                                          color: isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'امروز',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            color: isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018),
+                                            fontFamily: 'Vazirmatn',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text(
+                            '${_monthData.gregorianRangeText}  •  ${_monthData.hijriRangeText}',
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: colors.textSecondary.withValues(alpha: 0.85),
+                              fontFamily: 'Vazirmatn',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
-                  // Collapse Toggle + Prev / Next Month Controls
+                  // 36x36 Modern Navigation Badges (Collapse Toggle + Prev / Next Month)
                   Row(
                     children: [
-                      // Collapse / Expand Toggle Button
-                      IconButton(
-                        onPressed: () => setState(() => _isCollapsed = !_isCollapsed),
-                        icon: Icon(
-                          _isCollapsed ? CupertinoIcons.chevron_down : CupertinoIcons.chevron_up,
-                          size: 20,
-                        ),
-                        color: colors.textPrimary,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                        tooltip: _isCollapsed ? 'باز کردن تقویم' : 'جمع کردن تقویم',
+                      _buildNavBadge(
+                        icon: _isCollapsed ? CupertinoIcons.chevron_down : CupertinoIcons.chevron_up,
+                        tooltip: _isCollapsed ? 'نمای کامل ماه' : 'نمای هفته',
+                        onTap: () => setState(() => _isCollapsed = !_isCollapsed),
+                        isDark: isDark,
+                        colors: colors,
                       ),
-                      const SizedBox(width: 2),
-                      IconButton(
-                        onPressed: _goToNextMonth,
-                        icon: const Icon(CupertinoIcons.chevron_forward, size: 20),
-                        color: colors.textPrimary,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                      const SizedBox(width: 6),
+                      _buildNavBadge(
+                        icon: CupertinoIcons.chevron_forward,
                         tooltip: 'ماه بعد',
+                        onTap: _goToNextMonth,
+                        isDark: isDark,
+                        colors: colors,
                       ),
-                      IconButton(
-                        onPressed: _goToPrevMonth,
-                        icon: const Icon(CupertinoIcons.chevron_back, size: 20),
-                        color: colors.textPrimary,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                      const SizedBox(width: 6),
+                      _buildNavBadge(
+                        icon: CupertinoIcons.chevron_back,
                         tooltip: 'ماه قبل',
+                        onTap: _goToPrevMonth,
+                        isDark: isDark,
+                        colors: colors,
                       ),
                     ],
                   ),
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
-              // 7-Column Weekday Headers (Saturday to Friday)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildWeekdayHeader('ش', colors, isFriday: false),
-                  _buildWeekdayHeader('ی', colors, isFriday: false),
-                  _buildWeekdayHeader('د', colors, isFriday: false),
-                  _buildWeekdayHeader('س', colors, isFriday: false),
-                  _buildWeekdayHeader('چ', colors, isFriday: false),
-                  _buildWeekdayHeader('پ', colors, isFriday: false),
-                  _buildWeekdayHeader('ج', colors, isFriday: true),
-                ],
+              // 2. WEEKDAY BAR (Saturday to Friday) with full names
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF101614) : const Color(0xFFF7F4EC),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildWeekdayHeader('شنبه', colors, isFriday: false),
+                    _buildWeekdayHeader('یکشنبه', colors, isFriday: false),
+                    _buildWeekdayHeader('دوشنبه', colors, isFriday: false),
+                    _buildWeekdayHeader('سه‌شنبه', colors, isFriday: false),
+                    _buildWeekdayHeader('چهارشنبه', colors, isFriday: false),
+                    _buildWeekdayHeader('پنج‌شنبه', colors, isFriday: false),
+                    _buildWeekdayHeader('جمعه', colors, isFriday: true),
+                  ],
+                ),
               ),
 
-              const SizedBox(height: 10),
-              Divider(height: 1, color: colors.divider),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
 
-              // 7-Column Grid (Month View or Collapsed Week View)
+              // 3. MONTH GRID (7 Columns) with Modern Squircle Selection
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 child: GridView.builder(
@@ -330,13 +351,13 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                   itemCount: displayedDays.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 7,
-                    mainAxisSpacing: 6,
-                    crossAxisSpacing: 6,
-                    childAspectRatio: 1.05,
+                    mainAxisSpacing: 5,
+                    crossAxisSpacing: 5,
+                    childAspectRatio: 0.98,
                   ),
                   itemBuilder: (context, index) {
                     final day = displayedDays[index];
-                    return _buildDayCell(context, colors, day);
+                    return _buildDayCell(context, colors, day, isDark);
                   },
                 ),
               ),
@@ -355,23 +376,70 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
     );
   }
 
-  Widget _buildWeekdayHeader(String label, RitmoColors colors, {required bool isFriday}) {
-    return Expanded(
-      child: Center(
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: isFriday ? colors.error : colors.textTertiary,
-            fontFamily: 'Vazirmatn',
+  Widget _buildNavBadge({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+    required bool isDark,
+    required RitmoColors colors,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          unawaited(HapticFeedback.selectionClick());
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Tooltip(
+          message: tooltip,
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF19221E) : const Color(0xFFF4F0E6),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? const Color(0xFF28463B) : const Color(0xFFE2D9C5),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              icon,
+              size: 17,
+              color: colors.textPrimary,
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDayCell(BuildContext context, RitmoColors colors, WorshipCalendarDay day) {
+  Widget _buildWeekdayHeader(String label, RitmoColors colors, {required bool isFriday}) {
+    return Expanded(
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+                color: isFriday
+                    ? const Color(0xFFEF4444)
+                    : colors.textSecondary.withValues(alpha: 0.8),
+                fontFamily: 'Vazirmatn',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDayCell(BuildContext context, RitmoColors colors, WorshipCalendarDay day, bool isDark) {
     final isSelected = day.jalali.year == _selectedDay.jalali.year &&
         day.jalali.month == _selectedDay.jalali.month &&
         day.jalali.day == _selectedDay.jalali.day;
@@ -381,64 +449,73 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
     final isHoliday = day.isHoliday;
 
     // Card background, border, shadow, text color
-    Color bgColor;
-    Border? border;
-    List<BoxShadow>? boxShadow;
+    Decoration decoration;
     Color mainTextColor;
 
     if (isSelected) {
       if (isHoliday) {
-        // Modern Red Accent / Glow for Holiday selection
-        bgColor = colors.error;
-        border = Border.all(
-          color: colors.error.withValues(alpha: 0.9),
-          width: 1.8,
-        );
-        boxShadow = [
-          BoxShadow(
-            color: colors.error.withValues(alpha: 0.40),
-            blurRadius: 10,
-            spreadRadius: 1,
-            offset: const Offset(0, 3),
+        // Luxury Rose/Coral Gradient for Holiday/Friday selection
+        decoration = BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFF43F5E),
+              Color(0xFFBE123C),
+            ],
           ),
-        ];
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFF43F5E).withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        );
         mainTextColor = Colors.white;
       } else {
-        // Dynamic Theme Primary Color for standard day selection
-        bgColor = colors.primary;
-        border = Border.all(
-          color: colors.primary.withValues(alpha: 0.6),
-          width: 1.5,
-        );
-        boxShadow = [
-          BoxShadow(
-            color: colors.primary.withValues(alpha: 0.35),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+        // Luxury Warm Gold Gradient for standard day selection
+        decoration = BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFC38D29),
+              Color(0xFF9E7018),
+            ],
           ),
-        ];
-        mainTextColor = colors.onPrimary;
-      }
-    } else {
-      if (isToday) {
-        bgColor = (isHoliday ? colors.error : colors.primary).withValues(alpha: 0.08);
-        border = Border.all(
-          color: isHoliday ? colors.error : colors.primary,
-          width: 1.6,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFC38D29).withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         );
-        boxShadow = null;
-      } else {
-        bgColor = Colors.transparent;
-        border = null;
-        boxShadow = null;
+        mainTextColor = Colors.white;
       }
+    } else if (isToday && isCurrentMonth) {
+      // Elegant Today indicator when not selected
+      decoration = BoxDecoration(
+        color: isDark ? const Color(0xFF1E2F26) : const Color(0xFFF8F3E5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF437A61) : const Color(0xFFD4A843),
+          width: 1.5,
+        ),
+      );
+      mainTextColor = isDark ? const Color(0xFFE8C46D) : const Color(0xFF9E7018);
+    } else {
+      decoration = const BoxDecoration(color: Colors.transparent);
 
       if (!isCurrentMonth) {
         mainTextColor = isHoliday
-            ? colors.error.withValues(alpha: 0.40)
-            : colors.textTertiary.withValues(alpha: 0.35);
+            ? const Color(0xFFEF4444).withValues(alpha: 0.28)
+            : colors.textSecondary.withValues(alpha: 0.25);
       } else if (isHoliday) {
-        mainTextColor = colors.error;
+        mainTextColor = isDark ? const Color(0xFFFB7185) : const Color(0xFFEF4444);
       } else {
         mainTextColor = colors.textPrimary;
       }
@@ -446,59 +523,59 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
 
     return GestureDetector(
       onTap: () => _onSelectDay(day),
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-          border: border,
-          boxShadow: boxShadow,
-        ),
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        decoration: decoration,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Single Primary Solar Day Number (20pt)
+            // Single Primary Solar Day Number
             Text(
               toPersianDigits(day.jalali.day.toString()),
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: (isToday || isSelected || isHoliday) ? FontWeight.bold : FontWeight.w600,
+                fontSize: 18.5,
+                fontWeight: (isToday || isSelected)
+                    ? FontWeight.w900
+                    : (isHoliday ? FontWeight.w800 : FontWeight.w700),
                 color: mainTextColor,
                 fontFamily: 'Vazirmatn',
+                height: 1.1,
               ),
             ),
 
             const SizedBox(height: 3),
 
-            // Occasion Dot Indicators (Max 2 dots)
+            // Occasion Micro-Dots
             if (isCurrentMonth && day.hasOccasions)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: day.occasions.take(2).map((occ) {
+                children: day.occasions.take(3).map((occ) {
                   Color dotColor;
                   if (isSelected) {
-                    dotColor = isHoliday ? Colors.white : colors.onPrimary;
+                    dotColor = Colors.white.withValues(alpha: 0.9);
                   } else {
                     switch (occ.category) {
                       case WorshipOccasionCategory.celebration:
-                        dotColor = colors.success;
+                        dotColor = const Color(0xFF10B981);
                         break;
                       case WorshipOccasionCategory.mourning:
-                        dotColor = colors.error;
+                        dotColor = const Color(0xFFEF4444);
                         break;
                       case WorshipOccasionCategory.fasting:
                       case WorshipOccasionCategory.worshipDeed:
-                        dotColor = colors.warning;
+                        dotColor = const Color(0xFFD4A843);
                         break;
                       case WorshipOccasionCategory.national:
-                        dotColor = colors.accent;
+                        dotColor = const Color(0xFF6366F1);
                         break;
                     }
                   }
                   return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                    width: 5,
-                    height: 5,
+                    width: 4.5,
+                    height: 4.5,
                     decoration: BoxDecoration(
                       color: dotColor,
                       shape: BoxShape.circle,
@@ -507,7 +584,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                 }).toList(),
               )
             else
-              const SizedBox(height: 5),
+              const SizedBox(height: 4.5),
           ],
         ),
       ),

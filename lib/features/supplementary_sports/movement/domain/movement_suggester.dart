@@ -333,6 +333,30 @@ class MovementSuggester {
       }
     }
 
+    // 3.5. Read today's check-in (energy, soreness, painLevel, availableMinutes)
+    int todayAvailableMinutes = 30;
+    int todayEnergy = 3;
+    int todaySoreness = 1;
+    int todayPainLevel = 0;
+    try {
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      final cRows = await db.query(
+        'ss_daily_checkin',
+        where: 'dateIso = ?',
+        whereArgs: [todayStr],
+        limit: 1,
+      );
+      if (cRows.isNotEmpty) {
+        final r = cRows.first;
+        todayAvailableMinutes = (r['availableMinutes'] as num? ?? 30).toInt().clamp(10, 120);
+        todayEnergy = (r['energy'] as num? ?? 3).toInt().clamp(1, 5);
+        todaySoreness = (r['soreness'] as num? ?? 1).toInt().clamp(1, 5);
+        todayPainLevel = (r['painLevel'] as num? ?? 0).toInt().clamp(0, 10);
+      }
+    } catch (e) {
+      debugPrint('[ss] movement_suggester.dart: $e');
+    }
+
     // 4. Identify empty days (prioritizing today onwards)
     final now = DateTime.now();
     final todaySat0 = dartWeekdayToSat0(now.weekday);
@@ -360,12 +384,18 @@ class MovementSuggester {
     for (final daySat0 in emptySat0Days) {
       if (suggestions.length >= 3) break;
 
+      final isToday = daySat0 == todaySat0;
+      final int effectiveEnergy = isToday ? todayEnergy : 3;
+      final int effectiveSoreness = isToday ? todaySoreness : 1;
+      final int effectivePain = isToday ? todayPainLevel : 0;
+      final int effectiveMinutes = isToday ? todayAvailableMinutes : 30;
+
       final ctx = SuggestionCtx(
         budget: budgetSnapshot,
-        availableMinutes: 30,
-        energy: 3,
-        soreness: 1,
-        painLevel: 0,
+        availableMinutes: effectiveMinutes,
+        energy: effectiveEnergy,
+        soreness: effectiveSoreness,
+        painLevel: effectivePain,
         limitations: limitations,
         recentKindCodes14d: recentKindCodes,
         jalaliMonth: jalaliMonth,
@@ -391,7 +421,7 @@ class MovementSuggester {
         metHigh: selectedKind.metHigh,
         intensity: MovementIntensity.medium,
       );
-      final double estMet = met * 30;
+      final double estMet = met * effectiveMinutes;
 
       if (accumulatedEstMet + estMet > maxAllowedMet && suggestions.isNotEmpty) {
         break;
@@ -411,15 +441,16 @@ class MovementSuggester {
 
       final reminderMinutes = MovementReminderDefaults.minutesFor(selectedKind);
       final dayName = kPersianWeekdayNames[daySat0];
-      final reason =
-          '$dayName خلوته — ۳۰ دقیقه ${selectedKind.titleFa} حدود ${toPersianDigits(estMet.round().toString())} MET-min از کسری هفته رو جبران می‌کنه ${selectedKind.emoji}';
+      final reason = isToday && (effectiveEnergy <= 2 || effectiveSoreness >= 4)
+          ? '$dayName — با توجه به احساس خستگی امروز، $effectiveMinutes دقیقه ${selectedKind.titleFa} سبک و بازیابی‌محور پیشنهاد می‌شود 🌿'
+          : '$dayName خلوته — $effectiveMinutes دقیقه ${selectedKind.titleFa} حدود ${toPersianDigits(estMet.round().toString())} MET-min از کسری هفته رو جبران می‌کنه ${selectedKind.emoji}';
 
       suggestions.add(
         MovementWeekSuggestion(
           kind: selectedKind,
           weekdaySat0: daySat0,
           suggestedTime: suggestedTime,
-          suggestedMinutes: 30,
+          suggestedMinutes: effectiveMinutes,
           suggestedIntensity: MovementIntensity.medium,
           reasonFa: reason,
           confidence: 0.85,

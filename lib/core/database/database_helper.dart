@@ -68,6 +68,9 @@ class DatabaseHelper {
   /// Explicitly warms up background database tasks and seed verification (BOOT-07).
   static Future<void> warmUp(Database db) async {
     try {
+      try {
+        await db.execute('ALTER TABLE worship_practices ADD COLUMN showInCalendar INTEGER DEFAULT 0;');
+      } catch (_) {}
       await SeedService.seedSupplementarySports(db);
       await _checkDailySweep(db);
       unawaited(MovementReminderService.rescheduleWeekReminders());

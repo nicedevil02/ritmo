@@ -449,7 +449,10 @@ class JourneyController extends ChangeNotifier {
         event.type == 'RoutineSkipped' ||
         event.type == 'RoutineUpdated' ||
         event.type == 'RoutineCreated' ||
+        event.type == 'RoutineEdited' ||
         event.type == 'RoutineDeleted' ||
+        event.type == 'DataImported' ||
+        event.type == 'DayRolledOver' ||
         event.type == 'PrayerCompleted' ||
         event.type == 'WorshipUpdated' ||
         event.type == 'CourseSessionCompleted' ||

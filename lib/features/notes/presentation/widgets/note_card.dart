@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
+import 'package:ritmo/core/widgets/ritmo_swipeable_row.dart';
 import 'package:ritmo/features/notes/data/notes_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
-import 'package:ritmo/features/notes/presentation/utils/note_actions.dart';
 import 'package:ritmo/features/notes/presentation/utils/note_ui_helper.dart';
 
-class NoteCard extends StatefulWidget {
+class NoteCard extends StatelessWidget {
   final Note note;
   final VoidCallback onChanged;
   final bool isGrid;
@@ -25,344 +25,236 @@ class NoteCard extends StatefulWidget {
     this.searchQuery,
   });
 
-  @override
-  State<NoteCard> createState() => _NoteCardState();
-}
+  Future<void> _togglePin(BuildContext context) async {
+    RitmoHapticsPolicy.selection();
+    final newPinned = !note.isPinned;
+    if (newPinned) {
+      await NotesRepository.instance.pin(note.id);
+    } else {
+      await NotesRepository.instance.unpin(note.id);
+    }
+    onChanged();
+    if (context.mounted) {
+      RitmoToast.show(
+        context,
+        newPinned ? 'یادداشت سنجاق شد 📌' : 'سنجاق برداشته شد',
+      );
+    }
+  }
 
-class _NoteCardState extends State<NoteCard> {
-  bool _isPressed = false;
-
-  void _handleDelete(BuildContext context) {
-    NoteActions.confirmAndTrash(context, widget.note, widget.onChanged);
+  Future<void> _archiveNote(BuildContext context) async {
+    RitmoHapticsPolicy.selection();
+    await NotesRepository.instance.archive(note.id);
+    onChanged();
+    if (context.mounted) {
+      RitmoToast.show(
+        context,
+        'یادداشت بایگانی شد 📦',
+        actionLabel: 'برگردان',
+        onAction: () async {
+          await NotesRepository.instance.unarchive(note.id);
+          onChanged();
+        },
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final style = NoteUiHelper.getKindStyle(context, widget.note.kind);
-    final relativeDate = NoteUiHelper.formatRelativeDate(widget.note.updatedAt);
-    final query = widget.searchQuery ?? '';
+    final isDark = context.isDark;
+    final style = NoteUiHelper.getKindStyle(context, note.kind);
+    final relativeDate = NoteUiHelper.formatRelativeDate(note.updatedAt);
+    final query = searchQuery ?? '';
 
-    final highlightBg = style.accentColor.withValues(alpha: isDark ? 0.35 : 0.22);
-    final highlightColor = isDark ? Colors.white : Colors.black87;
+    final highlightBg = colors.primary.withValues(alpha: isDark ? 0.35 : 0.22);
+    final highlightColor = isDark ? colors.textPrimary : colors.textPrimary;
 
-    final titleStyle = TextStyle(
-      fontFamily: 'Vazirmatn',
-      fontSize: 15,
-      fontWeight: FontWeight.w600,
-      color: colors.textPrimary,
-      height: 1.35,
-    );
+    final titleTextStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
+          color: colors.textPrimary,
+          height: 1.35,
+        ) ??
+        TextStyle(color: colors.textPrimary, height: 1.35);
 
-    final bodyStyle = TextStyle(
-      fontFamily: 'Vazirmatn',
-      fontSize: 13,
-      color: colors.textSecondary,
-      height: 1.6,
-      letterSpacing: widget.note.isPrivate ? 2.5 : 0.0,
-    );
+    final bodyTextStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: colors.textSecondary,
+          height: 1.55,
+          letterSpacing: note.isPrivate ? 2.5 : 0.0,
+        ) ??
+        TextStyle(color: colors.textSecondary, height: 1.55);
 
-    final cardContent = AnimatedScale(
-      scale: _isPressed ? 0.97 : 1.0,
-      duration: const Duration(milliseconds: 140),
-      curve: Curves.easeOutCubic,
-      child: Container(
-        margin: EdgeInsets.symmetric(
-          vertical: widget.isGrid ? 4 : 5,
-          horizontal: widget.isGrid ? 2 : 0,
-        ),
-        decoration: BoxDecoration(
-          color: isDark
-              ? colors.surfaceSunken.withValues(alpha: 0.8)
-              : (style.bgTint != colors.primary.withValues(alpha: 0.04) ? style.bgTint : colors.surface),
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
-          border: Border.all(
-            color: widget.note.isPinned
-                ? style.accentColor.withValues(alpha: 0.45)
-                : colors.border.withValues(alpha: isDark ? 0.18 : 0.12),
-            width: widget.note.isPinned ? 1.2 : 0.8,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.04),
-              blurRadius: 14,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(RitmoRadius.card),
-            onTapDown: (_) => setState(() => _isPressed = true),
-            onTapCancel: () => setState(() => _isPressed = false),
-            onTap: () async {
-              setState(() => _isPressed = false);
-              RitmoHaptics.selection();
-              await NotesRepository.instance.markOpened(widget.note.id);
-              if (!context.mounted) return;
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => NoteEditorScreen(note: widget.note)),
-              );
-              widget.onChanged();
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header: Kind Badge, Privacy lock & Angled Pin & Menu
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                        decoration: BoxDecoration(
-                          color: style.accentColor.withValues(alpha: isDark ? 0.18 : 0.12),
-                          borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(style.icon, size: 11, color: style.accentColor),
-                            const SizedBox(width: 4),
-                            Text(
-                              style.labelFa,
-                              style: TextStyle(
-                                fontFamily: 'Vazirmatn',
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: style.accentColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Spacer(),
-                      if (widget.note.isPrivate) ...[
-                        Icon(CupertinoIcons.lock_fill, size: 12, color: colors.textTertiary),
-                        const SizedBox(width: 6),
-                      ],
-                      if (widget.note.isPinned) ...[
-                        Transform.rotate(
-                          angle: 30 * math.pi / 180,
-                          child: Icon(
-                            CupertinoIcons.pin_fill,
-                            size: 14,
+    final metaTextStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: colors.textTertiary,
+        ) ??
+        TextStyle(color: colors.textTertiary);
+
+    final int bodyMaxLines = isGrid
+        ? math.min(7, math.max(3, (note.body.length / 40).round()))
+        : 2;
+
+    final card = RitmoCard(
+      margin: EdgeInsets.symmetric(
+        vertical: isGrid ? RitmoSpacing.xs : RitmoSpacing.xs + 1,
+        horizontal: isGrid ? RitmoSpacing.xs / 2 : 0,
+      ),
+      padding: const EdgeInsets.all(RitmoSpacing.md),
+      borderRadius: BorderRadius.circular(RitmoRadius.card),
+      onTap: () async {
+        await NotesRepository.instance.markOpened(note.id);
+        if (!context.mounted) return;
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
+        );
+        onChanged();
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 1. Kind Badge & Pinned Indicator Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: RitmoSpacing.sm,
+                  vertical: RitmoSpacing.xs - 1,
+                ),
+                decoration: BoxDecoration(
+                  color: style.bgTint,
+                  borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                  border: Border.all(
+                    color: style.accentColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(style.icon, size: 12, color: style.accentColor),
+                    const SizedBox(width: RitmoSpacing.xs),
+                    Text(
+                      style.labelFa,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: style.accentColor,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                      ],
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: PopupMenuButton<String>(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(Icons.more_horiz, size: 18, color: colors.textTertiary),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          onSelected: (val) async {
-                            RitmoHaptics.selection();
-                            if (val == 'pin') {
-                              if (widget.note.isPinned) {
-                                await NotesRepository.instance.unpin(widget.note.id);
-                              } else {
-                                await NotesRepository.instance.pin(widget.note.id);
-                              }
-                              widget.onChanged();
-                            } else if (val == 'archive') {
-                              await NotesRepository.instance.archive(widget.note.id);
-                              if (context.mounted) {
-                                RitmoToast.show(
-                                  context,
-                                  'یادداشت بایگانی شد 📦',
-                                  actionLabel: 'برگردان',
-                                  onAction: () async {
-                                    await NotesRepository.instance.unarchive(widget.note.id);
-                                    widget.onChanged();
-                                  },
-                                );
-                              }
-                              widget.onChanged();
-                            } else if (val == 'delete') {
-                              _handleDelete(context);
-                            }
-                          },
-                          itemBuilder: (ctx) => [
-                            PopupMenuItem(
-                              value: 'pin',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    widget.note.isPinned ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
-                                    size: 15,
-                                    color: colors.textPrimary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    widget.note.isPinned ? 'برداشتن سنجاق' : 'سنجاق کردن',
-                                    style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'archive',
-                              child: Row(
-                                children: [
-                                  Icon(CupertinoIcons.archivebox, size: 15, color: colors.textPrimary),
-                                  const SizedBox(width: 8),
-                                  const Text('آرشیو', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
-                                ],
-                              ),
-                            ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(CupertinoIcons.trash, size: 15, color: Colors.redAccent),
-                                  SizedBox(width: 8),
-                                  Text('انتقال به زباله', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.redAccent)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Title (with highlight if search query active)
-                  if (widget.note.title != null && widget.note.title!.trim().isNotEmpty) ...[
-                    RichText(
-                      maxLines: widget.isGrid ? 2 : 1,
-                      overflow: TextOverflow.ellipsis,
-                      text: TextSpan(
-                        children: NoteUiHelper.buildHighlightedTextSpans(
-                          text: widget.note.title!,
-                          query: query,
-                          baseStyle: titleStyle,
-                          highlightBg: highlightBg,
-                          highlightColor: highlightColor,
-                        ),
-                      ),
                     ),
-                    const SizedBox(height: 4),
                   ],
-
-                  // Body Excerpt (with highlight if search query active, masked if private)
-                  RichText(
-                    maxLines: widget.isGrid ? 4 : 2,
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(
-                      children: widget.note.isPrivate
-                          ? [TextSpan(text: '••••••••••••', style: bodyStyle)]
-                          : NoteUiHelper.buildHighlightedTextSpans(
-                              text: widget.note.body,
-                              query: query,
-                              baseStyle: bodyStyle,
-                              highlightBg: highlightBg,
-                              highlightColor: highlightColor,
-                            ),
-                    ),
+                ),
+              ),
+              if (note.isPinned)
+                Transform.rotate(
+                  angle: 30 * math.pi / 180,
+                  child: Icon(
+                    CupertinoIcons.pin_fill,
+                    size: 14,
+                    color: context.modules.insights,
                   ),
-                  const SizedBox(height: 10),
+                ),
+            ],
+          ),
+          const SizedBox(height: RitmoSpacing.sm),
 
-                  // Footer: Relative date & word count
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        relativeDate,
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 10.5,
-                          color: colors.textTertiary,
-                        ),
+          // 2. Title
+          if (note.title != null && note.title!.trim().isNotEmpty) ...[
+            if (query.isNotEmpty)
+              RichText(
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                text: TextSpan(
+                  children: NoteUiHelper.buildHighlightedTextSpans(
+                    text: note.title!,
+                    query: query,
+                    baseStyle: titleTextStyle,
+                    highlightBg: highlightBg,
+                    highlightColor: highlightColor,
+                  ),
+                ),
+              )
+            else
+              Text(
+                note.title!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: titleTextStyle,
+              ),
+            const SizedBox(height: RitmoSpacing.xs),
+          ],
+
+          // 3. Body
+          if (note.isPrivate)
+            Text(
+              '••••••••••••••••',
+              style: bodyTextStyle,
+            )
+          else if (note.body.trim().isNotEmpty) ...[
+            if (query.isNotEmpty)
+              RichText(
+                maxLines: bodyMaxLines,
+                overflow: TextOverflow.ellipsis,
+                text: TextSpan(
+                  children: NoteUiHelper.buildHighlightedTextSpans(
+                    text: note.body,
+                    query: query,
+                    baseStyle: bodyTextStyle,
+                    highlightBg: highlightBg,
+                    highlightColor: highlightColor,
+                  ),
+                ),
+              )
+            else
+              Text(
+                note.body,
+                maxLines: bodyMaxLines,
+                overflow: TextOverflow.ellipsis,
+                style: bodyTextStyle,
+              ),
+          ],
+          const SizedBox(height: RitmoSpacing.sm),
+
+          // 4. Single-line Metadata: Date + Max 1 indicator
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                relativeDate,
+                style: metaTextStyle,
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (note.isPrivate)
+                    Padding(
+                      padding: const EdgeInsets.only(left: RitmoSpacing.xs),
+                      child: Icon(
+                        CupertinoIcons.lock_fill,
+                        size: 11,
+                        color: colors.textTertiary,
                       ),
-                      if (widget.note.wordCount > 0)
-                        Text(
-                          '${PersianDigits.convert(widget.note.wordCount.toString())} کلمه',
-                          style: TextStyle(
-                            fontFamily: 'Vazirmatn',
-                            fontSize: 10.5,
-                            color: colors.textTertiary,
-                          ),
-                        ),
-                    ],
-                  ),
+                    )
+                  else if (note.wordCount > 0)
+                    Text(
+                      '${PersianDigits.convert(note.wordCount.toString())} کلمه',
+                      style: metaTextStyle,
+                    ),
                 ],
               ),
-            ),
+            ],
           ),
-        ),
+        ],
       ),
     );
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Dismissible(
-        key: ValueKey('note_card_${widget.note.id}'),
-        direction: DismissDirection.horizontal,
-        confirmDismiss: (direction) async {
-          if (direction == DismissDirection.startToEnd) {
-            // Swipe right in RTL -> Toggle Pin
-            RitmoHaptics.selection();
-            if (widget.note.isPinned) {
-              await NotesRepository.instance.unpin(widget.note.id);
-            } else {
-              await NotesRepository.instance.pin(widget.note.id);
-            }
-            widget.onChanged();
-          } else {
-            // Swipe left in RTL -> Archive
-            RitmoHaptics.selection();
-            await NotesRepository.instance.archive(widget.note.id);
-            if (context.mounted) {
-              RitmoToast.show(
-                context,
-                'یادداشت بایگانی شد 📦',
-                actionLabel: 'برگردان',
-                onAction: () async {
-                  await NotesRepository.instance.unarchive(widget.note.id);
-                  widget.onChanged();
-                },
-              );
-            }
-            widget.onChanged();
-          }
-          return false; // Snap back smoothly without removing from tree
-        },
-        background: Container(
-          margin: const EdgeInsets.symmetric(vertical: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          alignment: Alignment.centerRight,
-          decoration: BoxDecoration(
-            color: style.accentColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(RitmoRadius.card),
-          ),
-          child: Icon(
-            widget.note.isPinned ? CupertinoIcons.pin_slash : CupertinoIcons.pin_fill,
-            color: style.accentColor,
-            size: 22,
-          ),
-        ),
-        secondaryBackground: Container(
-          margin: const EdgeInsets.symmetric(vertical: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          alignment: Alignment.centerLeft,
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(RitmoRadius.card),
-          ),
-          child: Icon(CupertinoIcons.archivebox_fill, color: colors.primary, size: 22),
-        ),
-        child: cardContent,
-      ),
+    if (isGrid) {
+      return card;
+    }
+
+    return RitmoSwipeableRow(
+      itemId: note.id,
+      onSwipeComplete: () => _togglePin(context),
+      onSwipeManage: () => _archiveNote(context),
+      child: card,
     );
   }
 }

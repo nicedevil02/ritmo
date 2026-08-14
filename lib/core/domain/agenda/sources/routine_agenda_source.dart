@@ -67,8 +67,8 @@ class RoutineAgendaSource implements AgendaSource {
     for (final c in comps) {
       final resType = c['resultType'] as String?;
       if (resType == 'SNOOZED' || resType == 'CANNOT_NOW') continue;
-      final dateStr = c['completionDate'] as String?;
-      final routineId = c['routineId'] as String?;
+      final dateStr = (c['completionDate'] ?? c['completion_date']) as String?;
+      final routineId = (c['routineId'] ?? c['routine_id']) as String?;
       if (dateStr == null || routineId == null) continue;
       completionsByDate
           .putIfAbsent(dateStr, () => {})[routineId] =
@@ -85,7 +85,7 @@ class RoutineAgendaSource implements AgendaSource {
         GROUP BY routineId
       ''');
       for (final row in list) {
-        final rId = row['routineId']! as String;
+        final rId = (row['routineId'] ?? row['routine_id'])! as String;
         final avg = (row['avgDur'] as num?)?.toDouble();
         if (avg != null && avg > 0) {
           avgDurations[rId] = avg;
@@ -100,7 +100,7 @@ class RoutineAgendaSource implements AgendaSource {
       final list = await db.rawQuery('''
         SELECT r.category, AVG(COALESCE(c.actual_duration_minutes, c.durationMinutes)) as avgDur 
         FROM routine_completions c
-        JOIN routines r ON c.routineId = r.id
+        JOIN routines r ON (c.routineId = r.id OR c.routine_id = r.id)
         WHERE (c.actual_duration_minutes IS NOT NULL AND c.actual_duration_minutes > 0)
            OR (c.durationMinutes IS NOT NULL AND c.durationMinutes > 0)
         GROUP BY r.category
@@ -158,15 +158,16 @@ class RoutineAgendaSource implements AgendaSource {
       if (!_isCategoryModuleEnabled(cat)) continue;
 
       final s = schedules.firstWhere(
-        (sched) => sched['routineId'] == r['id'],
+        (sched) => (sched['routineId'] ?? sched['routine_id']) == r['id'],
         orElse: () => <String, dynamic>{},
       );
 
       if (s.isEmpty) continue;
 
       // 1. Check database occurrences in memory.
-      final hasOcc = occurrences
-          .any((occ) => occ['routineId'] == r['id'] && occ['date'] == dateStr);
+      final hasOcc = occurrences.any(
+        (occ) => (occ['routine_id'] ?? occ['routineId']) == r['id'] && occ['date'] == dateStr,
+      );
       if (hasOcc) {
         active.add({'routine': r, 'schedule': s});
         continue;

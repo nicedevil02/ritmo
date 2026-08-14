@@ -21,6 +21,7 @@ import 'package:ritmo/core/domain/models/daily_behavior.dart';
 import 'package:ritmo/core/domain/models/reflection_context.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
+import 'package:ritmo/core/services/sync/sync_module_gate.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/persian_digits.dart'; // toPersianDigits
 import 'package:ritmo/core/utils/snapshot_helper.dart';
@@ -118,9 +119,7 @@ class DashboardController {
 
   // Check if a category module is enabled
   bool _isModuleEnabled(Category category, Map<String, String> settings) {
-    if (category == Category.custom) return true;
-    final prefix = 'module_${category.name}_enabled';
-    return settings[prefix] == 'true';
+    return SyncModuleGate.isModuleEnabled(category, settings);
   }
 
   // ─────────────────────────────────────────────────────────

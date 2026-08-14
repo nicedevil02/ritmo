@@ -180,148 +180,146 @@ class _MustahabSectionState extends State<MustahabSection> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Section Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Text('✨', style: TextStyle(fontSize: 15)),
-                  const SizedBox(width: 6),
-                  Text(
-                    'مستحبات و ادعیه',
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
-                  ),
-                ],
-              ),
-              InkWell(
-                onTap: _showManageSheet,
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD4A843).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    '➕ مدیریت و افزودن',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Color(0xFFB48528),
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Vazirmatn',
-                    ),
-                  ),
-                ),
-              ),
-            ],
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          color: isDark
+              ? const Color(0xFF151A18)
+              : const Color(0xFFFFFEFB),
+          border: Border.all(
+            color: isDark
+                ? const Color(0xFF25443A)
+                : const Color(0xFFE8E0CD),
+            width: 1,
           ),
-          const SizedBox(height: 10),
-
-          if (_activeMustahabs.isEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(32),
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [const Color(0xFF16181D), const Color(0xFF111216)]
-                      : [const Color(0xFFFCFDFD), const Color(0xFFF4F6F9)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFF000000).withValues(alpha: 0.02),
-                    blurRadius: 40,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Column(
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.28)
+                  : const Color(0xFFB79B62).withValues(alpha: 0.08),
+              blurRadius: 35,
+              spreadRadius: 0,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Integrated Header Inside the Card
+                Row(
                   children: [
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                const Color(0xFFD4A843).withValues(alpha: 0.15),
-                                Colors.transparent,
+                    // right side: icon + title + subtitle
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: isDark
+                                    ? const [
+                                        Color(0xFF332B1A),
+                                        Color(0xFF1E1A11),
+                                      ]
+                                    : const [
+                                        Color(0xFFFFF9ED),
+                                        Color(0xFFF9ECD2),
+                                      ],
+                              ),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF574624)
+                                    : const Color(0xFFEDD8B3),
+                              ),
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.sparkles,
+                              size: 20,
+                              color: Color(0xFFC38D29),
+                            ),
+                          ),
+                          const SizedBox(width: 11),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'مستحبات و ادعیه',
+                                  style: TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'اعمال، زیارات و نوافل روزانه',
+                                  style: TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: colors.textSecondary
+                                        .withValues(alpha: 0.62),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E2026) : Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFD4A843).withValues(alpha: 0.1),
-                                blurRadius: 20,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(CupertinoIcons.heart_fill, color: Color(0xFFC48A1A), size: 28),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'امروز برنامه‌ی مستحبی نداری',
-                      style: TextStyle(color: colors.textPrimary, fontSize: 17, fontWeight: FontWeight.w800, fontFamily: 'Vazirmatn'),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'با افزودن نماز شب، زیارت عاشورا، دعای عهد یا نوافل، به روزت برکت و آرامش ببخش.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: colors.textSecondary.withValues(alpha: 0.7), fontSize: 13.5, fontFamily: 'Vazirmatn', height: 1.6, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 28),
+
+                    const SizedBox(width: 10),
+
+                    // Add / Manage Button
                     InkWell(
                       onTap: _showManageSheet,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(18),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFD4A843), Color(0xFFC48A1A)],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFD4A843).withValues(alpha: 0.3),
-                              blurRadius: 16,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 13,
+                          vertical: 9,
                         ),
-                        child: const Row(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF1D2824)
+                              : const Color(0xFFF8F3E8),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: const Color(0xFFCFA344)
+                                .withValues(alpha: 0.28),
+                          ),
+                        ),
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(CupertinoIcons.add, size: 18, color: Colors.white),
-                            SizedBox(width: 8),
+                            const Icon(
+                              CupertinoIcons.slider_horizontal_3,
+                              size: 15,
+                              color: Color(0xFFC28C29),
+                            ),
+                            const SizedBox(width: 5),
                             Text(
-                              'انتخاب از فهرست مستحبات',
-                              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: Colors.white),
+                              'مدیریت و افزودن',
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? const Color(0xFFE8C46D)
+                                    : const Color(0xFFB78320),
+                              ),
                             ),
                           ],
                         ),
@@ -329,8 +327,114 @@ class _MustahabSectionState extends State<MustahabSection> {
                     ),
                   ],
                 ),
-              ),
-            )
+
+                const SizedBox(height: 20),
+
+                // Card Content (Empty state or Practices List)
+                if (_activeMustahabs.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      const Color(0xFFD4A843).withValues(alpha: 0.15),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF19221E) : Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFD4A843).withValues(alpha: 0.1),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(CupertinoIcons.heart_fill, color: Color(0xFFC48A1A), size: 28),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'امروز برنامه‌ی مستحبی نداری',
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'Vazirmatn',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'با افزودن نماز شب، زیارت عاشورا، دعای عهد یا نوافل، به روزت برکت و آرامش ببخش.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colors.textSecondary.withValues(alpha: 0.7),
+                              fontSize: 13,
+                              fontFamily: 'Vazirmatn',
+                              height: 1.55,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          InkWell(
+                            onTap: _showManageSheet,
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFD4A843), Color(0xFFC48A1A)],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFD4A843).withValues(alpha: 0.3),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(CupertinoIcons.add, size: 17, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'انتخاب از فهرست مستحبات',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Vazirmatn',
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
           else
             ListView.separated(
               shrinkWrap: true,
@@ -368,17 +472,21 @@ class _MustahabSectionState extends State<MustahabSection> {
                 return GestureDetector(
                   onTap: () => _toggleDone(practice, !isDone),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 250),
                     curve: Curves.easeOutCubic,
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF16181D) : Colors.white,
+                      color: isDark ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
                       borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD),
+                        width: 1,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: isDone
                               ? iconColor.withValues(alpha: 0.15)
-                              : (isDark ? Colors.black.withValues(alpha: 0.25) : const Color(0xFF000000).withValues(alpha: 0.02)),
+                              : (isDark ? Colors.black.withValues(alpha: 0.25) : const Color(0xFFB79B62).withValues(alpha: 0.08)),
                           blurRadius: isDone ? 24 : 16,
                           offset: const Offset(0, 6),
                         ),
@@ -393,9 +501,13 @@ class _MustahabSectionState extends State<MustahabSection> {
                           decoration: BoxDecoration(
                             color: isDone ? iconColor : iconBg,
                             borderRadius: BorderRadius.circular(16),
-                            boxShadow: isDone
-                                ? [BoxShadow(color: iconColor.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4))]
-                                : null,
+                            boxShadow: [
+                              BoxShadow(
+                                color: iconColor.withValues(alpha: isDone ? 0.4 : 0.0),
+                                blurRadius: isDone ? 12 : 0,
+                                offset: isDone ? const Offset(0, 4) : Offset.zero,
+                              ),
+                            ],
                           ),
                           child: Icon(vectorIcon, color: isDone ? Colors.white : iconColor, size: 22),
                         ),
@@ -468,20 +580,24 @@ class _MustahabSectionState extends State<MustahabSection> {
 
                         // 2026 Fluid Toggle Checkbox
                         AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOutBack,
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOutCubic,
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: isDone ? iconColor : (isDark ? const Color(0xFF1E2026) : const Color(0xFFF3F4F6)),
+                            color: isDone ? iconColor : (isDark ? const Color(0xFF19221E) : const Color(0xFFF3F4F6)),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isDone ? iconColor : (isDark ? const Color(0xFF2A2C33) : const Color(0xFFE5E7EB)),
+                              color: isDone ? iconColor : (isDark ? const Color(0xFF28463B) : const Color(0xFFE5E7EB)),
                               width: 1.5,
                             ),
-                            boxShadow: isDone
-                                ? [BoxShadow(color: iconColor.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))]
-                                : null,
+                            boxShadow: [
+                              BoxShadow(
+                                color: iconColor.withValues(alpha: isDone ? 0.3 : 0.0),
+                                blurRadius: isDone ? 8 : 0,
+                                offset: isDone ? const Offset(0, 2) : Offset.zero,
+                              ),
+                            ],
                           ),
                           child: isDone
                               ? const Center(
@@ -499,10 +615,13 @@ class _MustahabSectionState extends State<MustahabSection> {
                 );
               },
             ),
-        ],
+          ],
+        ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 }
 
 class ManageMustahabSheet extends StatefulWidget {
@@ -1079,7 +1198,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
             return Container(
               margin: const EdgeInsets.symmetric(vertical: 4),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xff0b0b0e) : colors.card,
+                color: isDark ? const Color(0xFF151A18) : colors.card,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isDark ? const Color(0xffD4A843).withValues(alpha: 0.15) : colors.border,
@@ -1136,7 +1255,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
           return Container(
             margin: const EdgeInsets.symmetric(vertical: 4),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xff0b0b0e) : colors.card,
+              color: isDark ? const Color(0xFF151A18) : colors.card,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isDark ? const Color(0xffD4A843).withValues(alpha: 0.15) : colors.border,
@@ -1197,7 +1316,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 14),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xff0b0b0e) : colors.textSecondary.withValues(alpha: 0.04),
+              color: isDark ? const Color(0xFF151A18) : colors.textSecondary.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isDark ? const Color(0xffD4A843).withValues(alpha: 0.15) : colors.textSecondary.withValues(alpha: 0.1),
@@ -1376,7 +1495,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                 decoration: InputDecoration(
                   hintText: 'مثلا: دعای توسل، نماز باران...',
                   hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.4), fontSize: 13),
-                  fillColor: isDark ? const Color(0xff0b0b0e) : colors.textSecondary.withValues(alpha: 0.02),
+                  fillColor: isDark ? const Color(0xFF151A18) : colors.textSecondary.withValues(alpha: 0.02),
                   filled: true,
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -1402,7 +1521,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                 decoration: InputDecoration(
                   hintText: 'مثلا: سه شنبه شب ها، هدیه به اموات...',
                   hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.4), fontSize: 13),
-                  fillColor: isDark ? const Color(0xff0b0b0e) : colors.textSecondary.withValues(alpha: 0.02),
+                  fillColor: isDark ? const Color(0xFF151A18) : colors.textSecondary.withValues(alpha: 0.02),
                   filled: true,
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -1549,7 +1668,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xff0b0b0e) : colors.textSecondary.withValues(alpha: 0.04),
+                      color: isDark ? const Color(0xFF151A18) : colors.textSecondary.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: isDark ? const Color(0xffD4A843).withValues(alpha: 0.15) : colors.textSecondary.withValues(alpha: 0.1)),
                     ),

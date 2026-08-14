@@ -399,7 +399,7 @@ class _NewSportsTabContentState extends State<_NewSportsTabContent> {
     }
 
     final colors = context.colors;
-    final families = MovementFamily.values;
+    const families = MovementFamily.values;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -559,7 +559,7 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
 
   Widget _buildStrengthSubcategoriesGrid(BuildContext context) {
     final colors = context.colors;
-    final strengthCategories = [
+    const strengthCategories = [
       _CustomStrengthCategory('سینه و بالاتنه', '💪', 'chest'),
       _CustomStrengthCategory('پشت و زیربغل', '🛡️', 'back'),
       _CustomStrengthCategory('پا و باسن', '🦵', 'legs'),

@@ -75,7 +75,8 @@ class WorshipTables {
           reminderTimes TEXT,
           createdAt INTEGER NOT NULL,
           updatedAt INTEGER NOT NULL,
-          userDisabledAt TEXT
+          userDisabledAt TEXT,
+          showInCalendar INTEGER DEFAULT 0
       );
     ''');
     await db.execute('CREATE INDEX idx_wp_type ON worship_practices(practiceType);');

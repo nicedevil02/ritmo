@@ -20,11 +20,19 @@ class MovementReminderService {
   static const String channelDescription =
       'اعلان‌های یادآوری قبل از شروع جلسات ورزشی و تمرین';
 
+  static const int startNotificationId = 10000;
+  static const int maxNotificationSlots = 200;
+
   static Future<void> _ensureInitialized() async {
     if (_initialized) return;
 
     try {
       tz.initializeTimeZones();
+      try {
+        if (tz.local.name == 'UTC') {
+          tz.setLocalLocation(tz.getLocation('Asia/Tehran'));
+        }
+      } catch (_) {}
 
       const initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -46,7 +54,7 @@ class MovementReminderService {
   static Future<void> cancelAll() async {
     try {
       await _ensureInitialized();
-      for (int i = 10000; i < 10100; i++) {
+      for (int i = startNotificationId; i < startNotificationId + maxNotificationSlots; i++) {
         await _notificationsPlugin.cancel(id: i);
       }
     } catch (e) {
@@ -64,7 +72,8 @@ class MovementReminderService {
       final plan = await UnifiedPlannerRepository.instance.loadWeek();
       final now = DateTime.now();
 
-      int notifIdCounter = 10000;
+      int notifIdCounter = startNotificationId;
+      const int maxNotifId = startNotificationId + maxNotificationSlots;
 
       for (int dayIndex = 0; dayIndex < 7; dayIndex++) {
         final items = plan.byDay[dayIndex];
@@ -105,6 +114,8 @@ class MovementReminderService {
           }
 
           if (reminderTime.isAfter(now)) {
+            if (notifIdCounter >= maxNotifId) break;
+
             final String bodyText;
             if (item.isLight) {
               bodyText = 'نسخه سبک ${item.title} امروز 🌿';

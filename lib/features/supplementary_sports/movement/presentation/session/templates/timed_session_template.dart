@@ -119,7 +119,7 @@ class _PhaseSelector extends StatelessWidget {
 			spacing: 8,
 			runSpacing: 8,
 			alignment: WrapAlignment.center,
-			children: _phases.map((_Phase p) {
+			children: _phases.map((p) {
 				final bool isActive = current == p.code;
 				return Semantics(
 					button: true,

@@ -3,18 +3,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/domain/agenda/action_feedback.dart';
-import 'package:ritmo/core/domain/completion/completion_gateway.dart';
-import 'package:ritmo/core/domain/completion/completion_request.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/features/worship/models/worship_models.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/features/worship/models/worship_models.dart' hide toPersianDigits;
+import 'package:sqflite/sqflite.dart';
 
 class WorshipDebtsSection extends StatefulWidget {
-
   const WorshipDebtsSection({
     super.key,
     required this.onChanged,
   });
+
   final VoidCallback onChanged;
 
   @override
@@ -43,7 +43,6 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
     try {
       final db = await DatabaseHelper.instance.database;
 
-      // Load Debts
       final results = await db.query('worship_debts');
       final list = results.map(WorshipDebt.fromMap).toList();
 
@@ -75,49 +74,191 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
     }
   }
 
-  Future<void> _logCompletion(WorshipDebt debt) async {
+  Future<void> _logBatchCompletion(WorshipDebt debt, int delta) async {
+    if (delta <= 0) return;
     unawaited(HapticFeedback.mediumImpact());
-    if (debt.remainingCount <= 0) return;
+    final actualDelta = delta.clamp(1, debt.remainingCount);
 
     try {
-      final outcome = await CompletionGateway.instance.submit(
-        WorshipDebtProgress(debtId: debt.id, delta: 1),
+      final db = await DatabaseHelper.instance.database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      final newRemaining = (debt.remainingCount - actualDelta).clamp(0, 999999);
+      final isNowArchived = newRemaining == 0;
+
+      await db.update(
+        'worship_debts',
+        {
+          'remainingCount': newRemaining,
+          'isArchived': isNowArchived ? 1 : 0,
+          'updatedAt': nowMs,
+        },
+        where: 'id = ?',
+        whereArgs: [debt.id],
       );
 
-      if (outcome.didWrite) {
-        final db = await DatabaseHelper.instance.database;
-        final nowMs = DateTime.now().millisecondsSinceEpoch;
-        final isNowArchived = debt.remainingCount <= 1;
+      // Record in worship_completions
+      await db.insert(
+        'worship_completions',
+        {
+          'id': 'comp_${debt.id}_$todayStr',
+          'practiceId': debt.id,
+          'dateStr': todayStr,
+          'practiceType': 'QADA_${debt.debtType}',
+          'resultType': isNowArchived ? 'DONE' : 'PARTIAL',
+          'countDone': actualDelta,
+          'countTarget': debt.dailyTarget,
+          'loggedAt': nowMs,
+          'createdAt': nowMs,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
 
-        if (debt.id.startsWith('debt_cycle_fast_')) {
-          final cycleDebtId = debt.id.replaceFirst('debt_cycle_fast_', '');
-          await db.update(
-            'fasting_debt',
-            {
-              'isResolved': isNowArchived ? 1 : 0,
-              'updatedAt': nowMs,
-            },
-            where: 'id = ?',
-            whereArgs: [cycleDebtId],
-          );
-        }
+      // Fasting debt sync if cycle fast
+      if (debt.id.startsWith('debt_cycle_fast_')) {
+        final cycleDebtId = debt.id.replaceFirst('debt_cycle_fast_', '');
+        await db.update(
+          'fasting_debt',
+          {
+            'isResolved': isNowArchived ? 1 : 0,
+            'updatedAt': nowMs,
+          },
+          where: 'id = ?',
+          whereArgs: [cycleDebtId],
+        );
+      }
 
-        await _loadDebts();
-        widget.onChanged();
+      await _loadDebts();
+      widget.onChanged();
 
-        if (mounted) {
-          ActionFeedback.success(
-            context,
-            message: isNowArchived
-                ? 'تبریک! بدهی عبادی "${debt.title}" را کامل کردید 🎉'
-                : 'یک واحد از بدهی "${debt.title}" کسر شد',
-            dateStr: DateTime.now().toIso8601String().split('T').first,
-            undoToken: outcome.undoToken,
-          );
-        }
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          isNowArchived
+              ? 'تمام قضای "${debt.title}" با موفقیت ادا شد'
+              : '$actualDelta مورد از قضای "${debt.title}" ثبت شد',
+          icon: Icons.check_circle_rounded,
+          iconColor: const Color(0xFF10B981),
+        );
       }
     } catch (e) {
-      debugPrint('Error logging debt completion: $e');
+      debugPrint('Error logging batch completion: $e');
+    }
+  }
+
+  Future<void> _showCustomCountDialog(WorshipDebt debt) async {
+    final controller = TextEditingController(text: '1');
+    final count = await showDialog<int>(
+      context: context,
+      builder: (context) {
+        final colors = context.colors;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF1B2420) : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+            title: Text(
+              'ثبت چندتایی قضای ${debt.title}',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontFamily: 'Vazirmatn',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'تعداد ادای امروز (حداکثر ${toPersianDigits(debt.remainingCount.toString())} مورد):',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16),
+                  decoration: InputDecoration(
+                    fillColor: isDark ? const Color(0xFF131A17) : const Color(0xFFF3F5F2),
+                    filled: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Quick Increment Chips
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [1, 2, 3, 5, 10].map((n) {
+                    return InkWell(
+                      onTap: () {
+                        unawaited(HapticFeedback.selectionClick());
+                        controller.text = '$n';
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+                        ),
+                        child: Text(
+                          toPersianDigits('+$n'),
+                          style: const TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF10B981),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                ),
+                onPressed: () {
+                  final val = int.tryParse(controller.text) ?? 0;
+                  if (val > 0) {
+                    Navigator.pop(context, val);
+                  }
+                },
+                child: const Text('ثبت ادا', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (count != null && count > 0) {
+      await _logBatchCompletion(debt, count);
     }
   }
 
@@ -145,6 +286,95 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
     }
   }
 
+  Future<void> _deleteDebt(WorshipDebt debt) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final colors = context.colors;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF1B2420) : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+            title: const Text(
+              'حذف مورد قضای عبادات',
+              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              'آیا از حذف "${debt.title}" اطمینان دارید؟ تمام سوابق مربوط به این بدهی پاک خواهد شد.',
+              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13.5, color: colors.textSecondary),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEF4444),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('حذف دائم', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (confirm == true) {
+      try {
+        final db = await DatabaseHelper.instance.database;
+        await db.delete('worship_debts', where: 'id = ?', whereArgs: [debt.id]);
+        await db.delete('worship_completions', where: 'practiceId = ?', whereArgs: [debt.id]);
+        await _loadDebts();
+        widget.onChanged();
+        if (mounted) {
+          RitmoToast.show(
+            context,
+            'مورد "${debt.title}" حذف شد',
+            icon: Icons.delete_outline_rounded,
+            iconColor: const Color(0xFFEF4444),
+          );
+        }
+      } catch (e) {
+        debugPrint('Error deleting debt: $e');
+      }
+    }
+  }
+
+  Future<void> _restoreDebt(WorshipDebt debt) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      await db.update(
+        'worship_debts',
+        {
+          'isArchived': 0,
+          'remainingCount': debt.remainingCount > 0 ? debt.remainingCount : 1,
+          'updatedAt': nowMs,
+        },
+        where: 'id = ?',
+        whereArgs: [debt.id],
+      );
+      await _loadDebts();
+      widget.onChanged();
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'مورد "${debt.title}" به لیست فعال بازگردانده شد',
+          icon: Icons.restore_rounded,
+          iconColor: const Color(0xFF10B981),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error restoring debt: $e');
+    }
+  }
+
   void _showAddDebtSheet() {
     showModalBottomSheet(
       context: context,
@@ -155,6 +385,26 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
           onSaved: () {
             _loadDebts();
             widget.onChanged();
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditDebtSheet(WorshipDebt debt) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return _EditDebtSheet(
+          debt: debt,
+          onSaved: () {
+            _loadDebts();
+            widget.onChanged();
+          },
+          onDeleted: () {
+            _deleteDebt(debt);
           },
         );
       },
@@ -175,172 +425,236 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Section Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Text('⚖️', style: TextStyle(fontSize: 15)),
-                  const SizedBox(width: 6),
-                  Text(
-                    'جبران و قضای عبادات',
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
-                  ),
-                ],
-              ),
-              InkWell(
-                onTap: _showAddDebtSheet,
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    '➕ افزودن مورد جبرانی',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Color(0xFF059669),
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Vazirmatn',
-                    ),
-                  ),
-                ),
-              ),
-            ],
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          color: isDark
+              ? const Color(0xFF151A18)
+              : const Color(0xFFFFFEFB),
+          border: Border.all(
+            color: isDark
+                ? const Color(0xFF25443A)
+                : const Color(0xFFE8E0CD),
+            width: 1,
           ),
-          const SizedBox(height: 10),
-
-          // 2026 Minimal Luxury Status Card (Zero-State)
-          if (_activeDebts.isEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(32),
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [const Color(0xFF0D1612), const Color(0xFF111216)]
-                      : [const Color(0xFFF3FAF7), const Color(0xFFF9FDFB)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.05 : 0.08),
-                    blurRadius: 40,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Column(
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.28)
+                  : const Color(0xFFB79B62).withValues(alpha: 0.08),
+              blurRadius: 35,
+              spreadRadius: 0,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Integrated Header Inside Card
+                Row(
                   children: [
-                    // Status Badge with Ambient Glowing Aura
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                const Color(0xFF10B981).withValues(alpha: 0.15),
-                                Colors.transparent,
+                    // right side: icon + title + subtitle
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: isDark
+                                    ? const [
+                                        Color(0xFF1C3A2F),
+                                        Color(0xFF10251E),
+                                      ]
+                                    : const [
+                                        Color(0xFFE8F8F2),
+                                        Color(0xFFD6F3E7),
+                                      ],
+                              ),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF2C5E4C)
+                                    : const Color(0xFFB8E8D4),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.balance_rounded,
+                              size: 20,
+                              color: Color(0xFF10B981),
+                            ),
+                          ),
+                          const SizedBox(width: 11),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'جبران و قضای عبادات',
+                                  style: TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'پیگیری و جبران نماز و روزه قضا',
+                                  style: TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: colors.textSecondary
+                                        .withValues(alpha: 0.62),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        ),
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF13221C) : Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                                blurRadius: 20,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              CupertinoIcons.checkmark_seal_fill,
-                              color: Color(0xFF10B981),
-                              size: 30,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'کاروان عبادات تسویه و به‌روز است ✨',
-                      style: TextStyle(
-                        color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        fontFamily: 'Vazirmatn',
-                        letterSpacing: -0.3,
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'هیچ بدهی یا قضای ثبت‌شده‌ای در انتظار نداری. با آرامش و سبک‌بالی به مسیرت ادامه بده.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: colors.textSecondary.withValues(alpha: 0.8),
-                        fontSize: 14,
-                        fontFamily: 'Vazirmatn',
-                        height: 1.6,
-                        fontWeight: FontWeight.w500,
+
+                    const SizedBox(width: 10),
+
+                    // Add Debt Button
+                    InkWell(
+                      onTap: _showAddDebtSheet,
+                      borderRadius: BorderRadius.circular(18),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 13,
+                          vertical: 9,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF162C24)
+                              : const Color(0xFFEDF9F4),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: const Color(0xFF10B981)
+                                .withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              CupertinoIcons.add,
+                              size: 15,
+                              color: Color(0xFF059669),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              'افزودن مورد جبرانی',
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? const Color(0xFF34D399)
+                                    : const Color(0xFF059669),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            )
-          else
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [const Color(0xFF0F1E19), const Color(0xFF111827)]
-                      : [const Color(0xFFF8FAFC), Colors.white],
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                ),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
+
+                const SizedBox(height: 20),
+
+                // Card Content (Zero-State or Debts List)
+                if (_activeDebts.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      const Color(0xFF10B981).withValues(alpha: 0.15),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF13221C) : Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    CupertinoIcons.checkmark_seal_fill,
+                                    color: Color(0xFF10B981),
+                                    size: 30,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'کاروان عبادات تسویه و به‌روز است ✨',
+                            style: TextStyle(
+                              color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'Vazirmatn',
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'هیچ بدهی یا قضای ثبت‌شده‌ای در انتظار نداری. با آرامش و سبک‌بالی به مسیرت ادامه بده.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colors.textSecondary.withValues(alpha: 0.8),
+                              fontSize: 13,
+                              fontFamily: 'Vazirmatn',
+                              height: 1.55,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else ...[
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: _activeDebts.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    separatorBuilder: (context, index) => const SizedBox(height: 14),
                     itemBuilder: (context, index) {
                       final debt = _activeDebts[index];
                       final remaining = debt.remainingCount;
@@ -349,19 +663,23 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                       final progress = debt.progressPercent / 100.0;
                       final daysLeft = debt.daysToFinish;
 
-                      var typeIcon = CupertinoIcons.check_mark;
                       var typeEmoji = '📿';
                       if (debt.debtType == 'FAST') {
-                        typeIcon = CupertinoIcons.drop;
                         typeEmoji = '🌙';
+                      } else if (debt.debtType == 'ATONEMENT') {
+                        typeEmoji = '⚖️';
                       }
 
                       return Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(15),
                         decoration: BoxDecoration(
-                          color: isDark ? colors.surfaceSunken : colors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: colors.border.withValues(alpha: 0.25)),
+                          color: isDark ? const Color(0xFF17201C) : const Color(0xFFF9FDFB),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF244438)
+                                : const Color(0xFFD4EFE4),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -370,44 +688,61 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                               children: [
                                 Text(typeEmoji, style: const TextStyle(fontSize: 16)),
                                 const SizedBox(width: 8),
-                                Text(
-                                  debt.title,
-                                  style: TextStyle(
-                                    color: colors.textPrimary,
-                                    fontSize: 14.5,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Vazirmatn',
+                                Expanded(
+                                  child: Text(
+                                    debt.title,
+                                    style: TextStyle(
+                                      color: colors.textPrimary,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      fontFamily: 'Vazirmatn',
+                                    ),
                                   ),
                                 ),
-                                const Spacer(),
+                                // Edit/Settings Icon
+                                InkWell(
+                                  onTap: () => _showEditDebtSheet(debt),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4),
+                                    child: Icon(
+                                      CupertinoIcons.ellipsis_vertical,
+                                      size: 16,
+                                      color: colors.textSecondary.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
-                                    toPersianDigits('$completed از $total انجام شده'),
+                                    toPersianDigits('$completed از $total ادا شده'),
                                     style: const TextStyle(
                                       color: Color(0xFF10B981),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w800,
                                       fontFamily: 'Vazirmatn',
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 12),
 
                             // Progress bar
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(8),
                               child: LinearProgressIndicator(
                                 value: progress,
-                                backgroundColor: colors.border.withValues(alpha: 0.25),
+                                backgroundColor: isDark
+                                    ? Colors.white.withValues(alpha: 0.08)
+                                    : Colors.black.withValues(alpha: 0.06),
                                 valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
-                                minHeight: 6,
+                                minHeight: 7,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -417,12 +752,13 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                               Text(
                                 toPersianDigits('🎯 با روزی ${debt.dailyTarget} عدد، ظرف $daysLeft روز به پایان می‌رسد.'),
                                 style: TextStyle(
-                                  color: colors.textSecondary,
+                                  color: colors.textSecondary.withValues(alpha: 0.75),
                                   fontSize: 11.5,
                                   fontFamily: 'Vazirmatn',
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 12),
 
                             // Actions Row
                             Row(
@@ -440,7 +776,10 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       borderRadius: BorderRadius.circular(6),
                                       child: Container(
                                         padding: const EdgeInsets.all(4),
-                                        decoration: BoxDecoration(color: colors.surfaceSunken, borderRadius: BorderRadius.circular(6)),
+                                        decoration: BoxDecoration(
+                                          color: isDark ? const Color(0xFF22312A) : const Color(0xFFE8F2EC),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
                                         child: Icon(CupertinoIcons.minus, size: 12, color: colors.textSecondary),
                                       ),
                                     ),
@@ -456,25 +795,57 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       borderRadius: BorderRadius.circular(6),
                                       child: Container(
                                         padding: const EdgeInsets.all(4),
-                                        decoration: BoxDecoration(color: colors.surfaceSunken, borderRadius: BorderRadius.circular(6)),
+                                        decoration: BoxDecoration(
+                                          color: isDark ? const Color(0xFF22312A) : const Color(0xFFE8F2EC),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
                                         child: Icon(CupertinoIcons.plus, size: 12, color: colors.textSecondary),
                                       ),
                                     ),
                                   ],
                                 ),
 
-                                // Pay +1 Button
-                                ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF10B981),
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  ),
-                                  onPressed: () => _logCompletion(debt),
-                                  icon: const Icon(CupertinoIcons.checkmark_alt, size: 14),
-                                  label: const Text('ثبت ۱ مورد ادا شده', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                                // Pay Buttons (Batch + Single)
+                                Row(
+                                  children: [
+                                    // Custom/Batch button
+                                    InkWell(
+                                      onTap: () => _showCustomCountDialog(debt),
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+                                        ),
+                                        child: const Text(
+                                          'ثبت چندتایی',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF10B981),
+                                            fontFamily: 'Vazirmatn',
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+
+                                    // Quick +1 button
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF10B981),
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                      onPressed: () => _logBatchCompletion(debt, 1),
+                                      icon: const Icon(CupertinoIcons.checkmark_alt, size: 14),
+                                      label: const Text('ثبت ۱ ادا', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -486,21 +857,30 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
 
                   // Archived Section Toggle
                   if (_archivedDebts.isNotEmpty) ...[
-                    Divider(color: colors.border.withValues(alpha: 0.3), height: 24),
+                    Divider(color: colors.border.withValues(alpha: 0.3), height: 28),
                     GestureDetector(
                       onTap: () {
+                        unawaited(HapticFeedback.selectionClick());
                         setState(() {
                           _showArchived = !_showArchived;
                         });
                       },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _showArchived ? '🔻 بستن بایگانی' : '🔺 نمایش بدهی‌های پایان‌یافته (${toPersianDigits(_archivedDebts.length.toString())})',
-                            style: TextStyle(color: colors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
-                          ),
-                        ],
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _showArchived ? '🔻 بستن بایگانی' : '🔺 نمایش بدهی‌های پایان‌یافته (${toPersianDigits(_archivedDebts.length.toString())})',
+                              style: TextStyle(
+                                color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Vazirmatn',
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     if (_showArchived) ...[
@@ -513,28 +893,56 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                           final debt = _archivedDebts[index];
                           return Container(
                             margin: const EdgeInsets.symmetric(vertical: 4),
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                             decoration: BoxDecoration(
-                              color: colors.surfaceSunken,
-                              borderRadius: BorderRadius.circular(12),
+                              color: isDark ? const Color(0xFF131A17) : const Color(0xFFF3F6F4),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: colors.border.withValues(alpha: 0.2)),
                             ),
                             child: Row(
                               children: [
-                                const Icon(CupertinoIcons.checkmark_seal_fill, color: Color(0xFF10B981), size: 16),
+                                const Icon(CupertinoIcons.checkmark_seal_fill, color: Color(0xFF10B981), size: 18),
                                 const SizedBox(width: 8),
-                                Text(
-                                  debt.title,
-                                  style: TextStyle(
-                                    color: colors.textSecondary,
-                                    fontSize: 13,
-                                    decoration: TextDecoration.lineThrough,
-                                    fontFamily: 'Vazirmatn',
+                                Expanded(
+                                  child: Text(
+                                    debt.title,
+                                    style: TextStyle(
+                                      color: colors.textSecondary,
+                                      fontSize: 13.5,
+                                      decoration: TextDecoration.lineThrough,
+                                      fontFamily: 'Vazirmatn',
+                                    ),
                                   ),
                                 ),
-                                const Spacer(),
-                                const Text(
-                                  'تکمیل‌شده ✨',
-                                  style: TextStyle(color: Color(0xFF10B981), fontSize: 11.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                                // Restore Button
+                                InkWell(
+                                  onTap: () => _restoreDebt(debt),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(CupertinoIcons.arrow_counterclockwise, size: 12, color: Color(0xFF10B981)),
+                                        SizedBox(width: 4),
+                                        Text('بازگردانی', style: TextStyle(fontSize: 11, color: Color(0xFF10B981), fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // Delete Permanently
+                                InkWell(
+                                  onTap: () => _deleteDebt(debt),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4),
+                                    child: Icon(CupertinoIcons.trash, size: 15, color: colors.textSecondary.withValues(alpha: 0.6)),
+                                  ),
                                 ),
                               ],
                             ),
@@ -544,16 +952,19 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                     ],
                   ],
                 ],
-              ),
+              ],
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
 }
 
+// -----------------------------------------------------------------------------
+// ADD DEBT SHEET (With Presets & Emerald Luxury Theme)
+// -----------------------------------------------------------------------------
 class _AddDebtSheet extends StatefulWidget {
-
   const _AddDebtSheet({required this.onSaved});
   final VoidCallback onSaved;
 
@@ -566,6 +977,26 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
   final TextEditingController _countController = TextEditingController();
   final TextEditingController _targetController = TextEditingController(text: '1');
   String _debtType = 'PRAYER'; // PRAYER, FAST, ATONEMENT
+
+  final List<String> _prayerPresets = const [
+    'نماز صبح',
+    'نماز ظهر و عصر',
+    'نماز مغرب و عشا',
+    'یک شبانه‌روز کامل (۱۷ رکعت)',
+    'نماز آیات',
+  ];
+
+  final List<String> _fastPresets = const [
+    'روزه ماه رمضان',
+    'روزه نذر',
+    'روزه اعتکاف',
+  ];
+
+  final List<String> _atonementPresets = const [
+    'کفاره عمد روزه (۶۰ روز)',
+    'فدیه / کفاره عذر',
+    'کفاره شکستن عهد یا قسم',
+  ];
 
   @override
   void dispose() {
@@ -580,7 +1011,15 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
     final count = int.tryParse(_countController.text) ?? 0;
     final target = int.tryParse(_targetController.text) ?? 1;
 
-    if (title.isEmpty || count <= 0) return;
+    if (title.isEmpty || count <= 0) {
+      RitmoToast.show(
+        context,
+        'لطفاً عنوان و تعداد کل معتبر وارد کنید',
+        icon: Icons.info_outline_rounded,
+        iconColor: const Color(0xFFF59E0B),
+      );
+      return;
+    }
 
     unawaited(HapticFeedback.mediumImpact());
     try {
@@ -596,7 +1035,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
           'title': title,
           'totalCount': count,
           'remainingCount': count,
-          'dailyTarget': target,
+          'dailyTarget': target.clamp(1, 100),
           'autoCreated': 0,
           'isArchived': 0,
           'createdAt': nowMs,
@@ -607,6 +1046,12 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
       widget.onSaved();
       if (mounted) {
         Navigator.pop(context);
+        RitmoToast.show(
+          context,
+          'بدهی "$title" با موفقیت ثبت شد',
+          icon: Icons.check_circle_rounded,
+          iconColor: const Color(0xFF10B981),
+        );
       }
     } catch (e) {
       debugPrint('Error saving custom debt: $e');
@@ -616,124 +1061,238 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final presets = _debtType == 'PRAYER'
+        ? _prayerPresets
+        : (_debtType == 'FAST' ? _fastPresets : _atonementPresets);
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoTheme.glassCardLight(
-        borderRadius: 28,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF161F1B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border.all(
+            color: isDark ? const Color(0xFF28483B) : const Color(0xFFDFEAE3),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.balance_rounded, size: 20, color: Color(0xFF10B981)),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'ثبت بدهی (قضای) جدید',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: colors.textPrimary,
+                        fontFamily: 'Vazirmatn',
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            // Debt Type Picker
+            Row(
+              children: [
+                _buildTypeOption('PRAYER', 'نماز قضا', '📿'),
+                const SizedBox(width: 8),
+                _buildTypeOption('FAST', 'روزه قضا', '🌙'),
+                const SizedBox(width: 8),
+                _buildTypeOption('ATONEMENT', 'کفاره / سایر', '⚖️'),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Presets Chips
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: presets.map((p) {
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: InkWell(
+                      onTap: () {
+                        unawaited(HapticFeedback.selectionClick());
+                        setState(() {
+                          _titleController.text = p;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2)),
+                        ),
+                        child: Text(
+                          p,
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Title Field
+            TextField(
+              controller: _titleController,
+              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.w600),
+              decoration: InputDecoration(
+                hintText: 'عنوان بدهی (مثلاً: نماز قضای صبح)',
+                hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
+                fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                filled: true,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.25)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Total count & Target Count Row
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _countController,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      hintText: 'تعداد کل قضاها',
+                      hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
+                      fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                      filled: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: colors.border.withValues(alpha: 0.25)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _targetController,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      hintText: 'هدف انجام در روز',
+                      hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
+                      fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                      filled: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: colors.border.withValues(alpha: 0.25)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
+
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+              ),
+              onPressed: _save,
+              child: const Text('ثبت بدهی جدید', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTypeOption(String value, String label, String emoji) {
+    final isSelected = _debtType == value;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          unawaited(HapticFeedback.selectionClick());
+          setState(() {
+            _debtType = value;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.12)
+                : (isDark ? const Color(0xFF121A16) : const Color(0xFFF4F7F5)),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF10B981) : Colors.transparent,
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'ثبت بدهی (قضای) جدید',
-                    style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
-                  ),
-                  IconButton(
-                    icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 18),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Title
-              TextField(
-                controller: _titleController,
-                style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn'),
-                decoration: InputDecoration(
-                  hintText: 'عنوان بدهی (مثلا: نماز قضای صبح)',
-                  hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
-                  fillColor: colors.textSecondary.withValues(alpha: 0.02),
-                  filled: true,
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: colors.textSecondary.withValues(alpha: 0.06)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xffD4A843)),
-                  ),
+              Text(emoji, style: const TextStyle(fontSize: 14)),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                  color: isSelected
+                      ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
+                      : context.colors.textSecondary,
+                  fontFamily: 'Vazirmatn',
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              // Debt Type Picker
-              Row(
-                children: [
-                  _buildTypeOption('PRAYER', 'نماز قضا'),
-                  const SizedBox(width: 8),
-                  _buildTypeOption('FAST', 'روزه قضا'),
-                  const SizedBox(width: 8),
-                  _buildTypeOption('ATONEMENT', 'کفاره / سایر'),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Total count & Target Count Row
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _countController,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn'),
-                      decoration: InputDecoration(
-                        hintText: 'تعداد کل قضاها',
-                        hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
-                        fillColor: colors.textSecondary.withValues(alpha: 0.02),
-                        filled: true,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: colors.textSecondary.withValues(alpha: 0.06)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Color(0xffD4A843)),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: _targetController,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn'),
-                      decoration: InputDecoration(
-                        hintText: 'هدف انجام در روز',
-                        hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
-                        fillColor: colors.textSecondary.withValues(alpha: 0.02),
-                        filled: true,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: colors.textSecondary.withValues(alpha: 0.06)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Color(0xffD4A843)),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xffD4A843),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                onPressed: _save,
-                child: const Text('ثبت بدهی جدید', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
               ),
             ],
           ),
@@ -741,38 +1300,264 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
       ),
     );
   }
+}
 
-  Widget _buildTypeOption(String value, String label) {
-    final colors = context.colors;
-    final isSelected = _debtType == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          setState(() {
-            _debtType = value;
-          });
+// -----------------------------------------------------------------------------
+// EDIT DEBT SHEET
+// -----------------------------------------------------------------------------
+class _EditDebtSheet extends StatefulWidget {
+  const _EditDebtSheet({
+    required this.debt,
+    required this.onSaved,
+    required this.onDeleted,
+  });
+
+  final WorshipDebt debt;
+  final VoidCallback onSaved;
+  final VoidCallback onDeleted;
+
+  @override
+  State<_EditDebtSheet> createState() => _EditDebtSheetState();
+}
+
+class _EditDebtSheetState extends State<_EditDebtSheet> {
+  late TextEditingController _titleController;
+  late TextEditingController _totalController;
+  late TextEditingController _remainingController;
+  late TextEditingController _targetController;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.debt.title);
+    _totalController = TextEditingController(text: widget.debt.totalCount.toString());
+    _remainingController = TextEditingController(text: widget.debt.remainingCount.toString());
+    _targetController = TextEditingController(text: widget.debt.dailyTarget.toString());
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _totalController.dispose();
+    _remainingController.dispose();
+    _targetController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _update() async {
+    final title = _titleController.text.trim();
+    final total = int.tryParse(_totalController.text) ?? widget.debt.totalCount;
+    final remaining = int.tryParse(_remainingController.text) ?? widget.debt.remainingCount;
+    final target = int.tryParse(_targetController.text) ?? widget.debt.dailyTarget;
+
+    if (title.isEmpty || total <= 0) return;
+
+    unawaited(HapticFeedback.mediumImpact());
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final isArchived = remaining <= 0;
+
+      await db.update(
+        'worship_debts',
+        {
+          'title': title,
+          'totalCount': total,
+          'remainingCount': remaining.clamp(0, total),
+          'dailyTarget': target.clamp(1, 100),
+          'isArchived': isArchived ? 1 : 0,
+          'updatedAt': nowMs,
         },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xffD4A843).withValues(alpha: 0.15) : colors.textSecondary.withValues(alpha: 0.02),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected ? const Color(0xffD4A843).withValues(alpha: 0.5) : colors.textSecondary.withValues(alpha: 0.06),
-            ),
+        where: 'id = ?',
+        whereArgs: [widget.debt.id],
+      );
+
+      widget.onSaved();
+      if (mounted) {
+        Navigator.pop(context);
+        RitmoToast.show(
+          context,
+          'تغییرات "$title" با موفقیت ذخیره شد',
+          icon: Icons.check_circle_rounded,
+          iconColor: const Color(0xFF10B981),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error updating debt: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF161F1B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border.all(
+            color: isDark ? const Color(0xFF28483B) : const Color(0xFFDFEAE3),
           ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? const Color(0xffC4953B) : colors.textSecondary,
-                fontFamily: 'Vazirmatn',
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'ویرایش و مدیریت بدهی',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: colors.textPrimary,
+                    fontFamily: 'Vazirmatn',
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Title
+            TextField(
+              controller: _titleController,
+              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.w600),
+              decoration: InputDecoration(
+                labelText: 'عنوان',
+                labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                filled: true,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.25)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 12),
+
+            // Total & Remaining
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _totalController,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      labelText: 'تعداد کل',
+                      labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                      fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                      filled: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: colors.border.withValues(alpha: 0.25)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _remainingController,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      labelText: 'باقیمانده',
+                      labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                      fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                      filled: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: colors.border.withValues(alpha: 0.25)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Daily Target
+            TextField(
+              controller: _targetController,
+              keyboardType: TextInputType.number,
+              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
+                labelText: 'هدف روزانه',
+                labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                fillColor: isDark ? const Color(0xFF111815) : const Color(0xFFF4F7F5),
+                filled: true,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.25)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.8),
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+
+            Row(
+              children: [
+                // Delete Button
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                    widget.onDeleted();
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.3)),
+                    ),
+                    child: const Icon(CupertinoIcons.trash, color: Color(0xFFEF4444), size: 20),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Save Button
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    onPressed: _update,
+                    child: const Text('ذخیره تغییرات', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

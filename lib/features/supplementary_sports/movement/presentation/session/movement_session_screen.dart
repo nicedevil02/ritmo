@@ -15,7 +15,6 @@ import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart'
 import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_workout_session_screen.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_screen_awake.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/session_surface.dart';
 

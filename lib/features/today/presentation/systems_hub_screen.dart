@@ -684,7 +684,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
         _buildGridItem(
           index: cardIndex++,
           icon: CupertinoIcons.doc_text_fill,
-          iconColor: const Color(0xffF59E0B),
+          iconColor: colors.warning,
           title: 'دفترچه و تجربه‌ها',
           description: 'یادداشت‌ها و درس‌های زندگی',
           status: _notesStatus,
@@ -1117,7 +1117,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
         title: 'فعال‌سازی سیستم دفترچه و تجربه‌ها',
         description: 'با فعال‌سازی این ماژول، می‌توانید یادداشت‌های آزاد، ایده‌ها و درس‌های زندگی خود را ثبت و در زمان‌های طلایی بازخوانی کنید.',
         icon: CupertinoIcons.doc_text_fill,
-        iconColor: const Color(0xffF59E0B),
+        iconColor: colors.warning,
         settingKey: 'module_notes_enabled',
         onActivated: () {
           Navigator.push(

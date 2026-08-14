@@ -108,6 +108,7 @@ class WorshipPractice {
     this.sortOrder = 0,
     this.isActive = true,
     this.allowQada = false,
+    this.showInCalendar = false,
     this.reminderFrequency = 'DAILY',
     this.notes,
     this.dailyDoneDate,
@@ -136,6 +137,7 @@ class WorshipPractice {
       sortOrder: map['sortOrder'] as int? ?? 0,
       isActive: (map['isActive'] as int? ?? 1) == 1,
       allowQada: (map['allowQada'] as int? ?? 0) == 1,
+      showInCalendar: (map['showInCalendar'] as int? ?? 0) == 1,
       reminderFrequency: map['reminderFrequency'] as String? ?? 'DAILY',
       notes: map['notes'] as String?,
       dailyDoneDate: map['dailyDoneDate'] as String?,
@@ -167,6 +169,7 @@ class WorshipPractice {
   final int sortOrder;
   final bool isActive;
   final bool allowQada;
+  final bool showInCalendar;
   final String reminderFrequency; // 'DAILY' / 'WEEKLY' / 'MONTHLY'
   final String? notes;
   final String? dailyDoneDate;
@@ -199,6 +202,7 @@ class WorshipPractice {
     int? sortOrder,
     bool? isActive,
     bool? allowQada,
+    bool? showInCalendar,
     String? reminderFrequency,
     String? notes,
     String? dailyDoneDate,
@@ -225,6 +229,7 @@ class WorshipPractice {
       sortOrder: sortOrder ?? this.sortOrder,
       isActive: isActive ?? this.isActive,
       allowQada: allowQada ?? this.allowQada,
+      showInCalendar: showInCalendar ?? this.showInCalendar,
       reminderFrequency: reminderFrequency ?? this.reminderFrequency,
       notes: notes ?? this.notes,
       dailyDoneDate: dailyDoneDate ?? this.dailyDoneDate,
@@ -254,6 +259,7 @@ class WorshipPractice {
       'sortOrder': sortOrder,
       'isActive': isActive ? 1 : 0,
       'allowQada': allowQada ? 1 : 0,
+      'showInCalendar': showInCalendar ? 1 : 0,
       'reminderFrequency': reminderFrequency,
       'notes': notes,
       'dailyDoneDate': dailyDoneDate,

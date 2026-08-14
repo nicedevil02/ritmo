@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
+const Duration _kShimmerPeriod = Duration(milliseconds: 1400);
+
 class RitmoShimmer extends StatefulWidget {
   final Widget child;
 
@@ -18,7 +20,7 @@ class _RitmoShimmerState extends State<RitmoShimmer> with SingleTickerProviderSt
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: _kShimmerPeriod,
     )..repeat();
   }
 
@@ -187,3 +189,22 @@ class RitmoShimmerGrid extends StatelessWidget {
     );
   }
 }
+
+class RitmoShimmerList extends StatelessWidget {
+  final int count;
+
+  const RitmoShimmerList({super.key, this.count = 4});
+
+  @override
+  Widget build(BuildContext context) {
+    return RitmoShimmer(
+      child: ListView.separated(
+        padding: const EdgeInsets.all(RitmoSpacing.lg),
+        itemCount: count,
+        separatorBuilder: (context, index) => const SizedBox(height: RitmoSpacing.md),
+        itemBuilder: (context, index) => const RitmoShimmerCard(height: 100),
+      ),
+    );
+  }
+}
+

@@ -173,15 +173,18 @@ class _WorshipReminderSettingsSheetState
     final picked = await showTimePicker(
       context: context,
       initialTime: initial,
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: _gold,
-            surface: Color(0xff2A2D3D),
+      builder: (ctx, child) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return Theme(
+          data: Theme.of(ctx).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: _gold,
+              surface: isDark ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
+            ),
           ),
-        ),
-        child: child!,
-      ),
+          child: child!,
+        );
+      },
     );
     if (picked == null) return;
     setState(() {
@@ -639,7 +642,7 @@ class _WorshipReminderSettingsSheetState
                         _selectedDays.first <= 31
                     ? _selectedDays.first
                     : 1,
-                dropdownColor: isDark ? const Color(0xff0b0b0e) : colors.sheetBackground,
+                dropdownColor: isDark ? const Color(0xFF151A18) : colors.sheetBackground,
                 iconEnabledColor: _gold,
                 style: TextStyle(
                     color: colors.textPrimary,

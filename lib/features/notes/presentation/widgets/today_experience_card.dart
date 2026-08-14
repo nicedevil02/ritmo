@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_dialog.dart';
 import 'package:ritmo/features/notes/data/experience_repository.dart';
 import 'package:ritmo/features/notes/logic/resurfacing_engine.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
@@ -45,7 +45,7 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
 
   Future<void> _handleAcknowledge() async {
     if (_candidate == null || _acknowledged) return;
-    RitmoHaptics.success();
+    RitmoHapticsPolicy.success();
     await ExperienceRepository.instance.recordAcknowledged(_candidate!.experience.noteId);
     if (mounted) {
       setState(() {
@@ -56,64 +56,17 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
 
   void _showReasonDialog() {
     if (_candidate == null) return;
-    final colors = context.colors;
     final exp = _candidate!.experience;
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Row(
-          children: [
-            const Text('💡', style: TextStyle(fontSize: 20)),
-            const SizedBox(width: 8),
-            Text(
-              'چرا این درس پیشنهاد شد؟',
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'سیستم بازخوانی هوشمند بر اساس عوامل زیر این درس را برای امروز انتخاب کرده است:',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary, height: 1.5),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colors.surfaceSunken,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('• ${_candidate!.reasonFa}', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textPrimary)),
-                  const SizedBox(height: 4),
-                  Text('• تعداد مرورهای قبلی: ${PersianDigits.convert(exp.showCount.toString())} بار', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary)),
-                  const SizedBox(height: 4),
-                  Text('• تعداد تاییدها: ${PersianDigits.convert(exp.acknowledgedCount.toString())} بار', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary)),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('متوجه شدم', style: TextStyle(fontFamily: 'Vazirmatn')),
-          ),
-        ],
-      ),
+    RitmoDialog.show(
+      context,
+      title: 'چرا این درس پیشنهاد شد؟',
+      content: 'سیستم بازخوانی هوشمند بر اساس عوامل زیر این درس را برای امروز انتخاب کرده است:\n\n'
+          '• ${_candidate!.reasonFa}\n'
+          '• تعداد مرورهای قبلی: ${PersianDigits.convert(exp.showCount.toString())} بار\n'
+          '• تعداد تاییدها: ${PersianDigits.convert(exp.acknowledgedCount.toString())} بار',
+      confirmLabel: 'متوجه شدم',
+      cancelLabel: '',
     );
   }
 
@@ -122,26 +75,27 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
     if (_isLoading || _candidate == null) return const SizedBox.shrink();
 
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDark;
     final exp = _candidate!.experience;
     final note = _candidate!.note;
+    final insightsColor = context.modules.insights;
 
     final cardContent = Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm),
+      padding: const EdgeInsets.all(RitmoSpacing.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
-              ? [const Color(0xFF2B2006), colors.card]
-              : [const Color(0xFFFFFBEB), colors.card],
+              ? [insightsColor.withValues(alpha: 0.16), colors.surface]
+              : [insightsColor.withValues(alpha: 0.08), colors.surface],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(RitmoRadius.hero),
-        border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.35)),
+        border: Border.all(color: insightsColor.withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFE5A00D).withValues(alpha: 0.08),
+            color: insightsColor.withValues(alpha: 0.08),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -157,16 +111,14 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
             children: [
               Row(
                 children: [
-                  Text(exp.category.emoji, style: const TextStyle(fontSize: 16)),
-                  const SizedBox(width: 6),
+                  Text(exp.category.emoji, style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(width: RitmoSpacing.xs),
                   Text(
                     'درس امروز • ${exp.category.labelFa}',
-                    style: const TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFE5A00D),
-                    ),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: insightsColor,
+                        ),
                   ),
                 ],
               ),
@@ -176,15 +128,15 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                     return Icon(
                       idx < exp.importance ? CupertinoIcons.star_fill : CupertinoIcons.star,
                       size: 11,
-                      color: idx < exp.importance ? Colors.amber : colors.textTertiary,
+                      color: idx < exp.importance ? insightsColor : colors.textTertiary,
                     );
                   }),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: RitmoSpacing.xs),
                   InkWell(
                     onTap: _showReasonDialog,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
                     child: Padding(
-                      padding: const EdgeInsets.all(2.0),
+                      padding: const EdgeInsets.all(RitmoSpacing.xs / 2),
                       child: Icon(CupertinoIcons.question_circle, size: 14, color: colors.textSecondary),
                     ),
                   ),
@@ -192,35 +144,31 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: RitmoSpacing.sm),
 
           // Lesson text
           Text(
             '« ${exp.lesson} »',
-            style: TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontSize: 14.5,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-              height: 1.45,
-            ),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                  height: 1.45,
+                ),
           ),
 
           if (exp.contextText != null && exp.contextText!.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: RitmoSpacing.xs),
             Text(
               exp.contextText!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 12,
-                color: colors.textSecondary,
-                height: 1.35,
-              ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                    height: 1.35,
+                  ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: RitmoSpacing.md),
 
           // Actions row
           Row(
@@ -228,7 +176,7 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
             children: [
               AnimatedScale(
                 scale: _isAcknowledgingPressed ? 0.95 : 1.0,
-                duration: const Duration(milliseconds: 100),
+                duration: RitmoMotion.press,
                 child: InkWell(
                   onTapDown: (_) => setState(() => _isAcknowledgingPressed = true),
                   onTapCancel: () => setState(() => _isAcknowledgingPressed = false),
@@ -236,52 +184,54 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                     setState(() => _isAcknowledgingPressed = false);
                     _handleAcknowledge();
                   },
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(RitmoRadius.field),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    duration: RitmoMotion.state,
+                    padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.xs + 2),
                     decoration: BoxDecoration(
-                      color: _acknowledged ? Colors.green.withValues(alpha: 0.15) : const Color(0xFFE5A00D).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
+                      color: _acknowledged ? colors.success.withValues(alpha: 0.15) : insightsColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(RitmoRadius.field),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           _acknowledged ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.lightbulb_fill,
                           size: 14,
-                          color: _acknowledged ? Colors.green : const Color(0xFFE5A00D),
+                          color: _acknowledged ? colors.success : insightsColor,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: RitmoSpacing.xs),
                         Text(
-                          _acknowledged ? 'به خاطر سپردم ✓' : '💡 به خاطر سپردم',
-                          style: TextStyle(
-                            fontFamily: 'Vazirmatn',
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: _acknowledged ? Colors.green : const Color(0xFFE5A00D),
-                          ),
+                          _acknowledged ? 'به خاطر سپردم' : 'به خاطر سپردم',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: _acknowledged ? colors.success : insightsColor,
+                              ),
                         ),
                       ],
                     ),
                   ),
                 ),
               ),
-              TextButton.icon(
-                onPressed: () {
+              GestureDetector(
+                onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
                   );
                 },
-                icon: Text(
-                  'مشاهده یادداشت',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 11,
-                    color: colors.textSecondary,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'مشاهده یادداشت',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                    ),
+                    const SizedBox(width: RitmoSpacing.xs / 2),
+                    Icon(CupertinoIcons.chevron_left, size: 12, color: colors.textSecondary),
+                  ],
                 ),
-                label: Icon(CupertinoIcons.chevron_left, size: 12, color: colors.textSecondary),
               ),
             ],
           ),
@@ -293,8 +243,8 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
       textDirection: TextDirection.rtl,
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.0, end: 1.0),
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutCubic,
+        duration: RitmoMotion.sheet,
+        curve: RitmoMotion.enter,
         builder: (context, value, child) {
           return Opacity(
             opacity: value,

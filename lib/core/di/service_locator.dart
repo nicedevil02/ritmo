@@ -58,7 +58,7 @@ class AppBootstrapper {
   /// Standalone initializer that registers all core singletons.
   /// Decoupled from WidgetsFlutterBinding and runApp for isolate compatibility (BOOT-01).
   static Future<void> init() {
-    if (_initialized) return Future<void>.value();
+    if (_initialized && sl.isRegistered<RitmoEventBus>()) return Future<void>.value();
     return _initFuture ??= _doInit();
   }
 

@@ -73,7 +73,7 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
           muscleFocus: s.kind.family == MovementFamily.strength ? 'FULL_BODY' : null,
           dayTimesDartWeekday: {dartWeekday: s.suggestedTime},
           targetDurationMinutes: s.suggestedMinutes,
-          targetValue: s.suggestedMinutes.toDouble(),
+          targetValue: s.kind.defaultTargetValue(durationMinutes: s.suggestedMinutes),
           reminderMinutes: s.reminderMinutes,
         );
       }
@@ -259,9 +259,16 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
                                 visualDensity: VisualDensity.compact,
                               ),
                               onPressed: () {
+                                final dartWk = sat0ToDartWeekday(s.weekdaySat0);
                                 Navigator.of(context).pop();
                                 showMovementPlanSheet(
                                   context,
+                                  initialKind: s.kind,
+                                  initialDays: [dartWk],
+                                  initialDayTimes: {dartWk: s.suggestedTime},
+                                  initialDurationMinutes: s.suggestedMinutes,
+                                  initialReminderMinutes: s.reminderMinutes,
+                                  initialMuscleFocus: s.kind.family == MovementFamily.strength ? 'FULL_BODY' : null,
                                   onSaved: widget.onApplied,
                                 );
                               },

@@ -348,8 +348,11 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
         final activePractice = _dhikrs.firstWhere((p) => p.id == 'wp_dhikr_zahra');
         final db = await DatabaseHelper.instance.database;
         final nowMs = DateTime.now().millisecondsSinceEpoch;
+        final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+        final newDone = activePractice.dailyDone + 1;
         final updated = activePractice.copyWith(
-          dailyDone: activePractice.dailyDone + 1,
+          dailyDone: newDone,
+          dailyDoneDate: todayStr,
           updatedAt: nowMs,
         );
 
@@ -358,6 +361,23 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
           updated.toMap(),
           where: 'id = ?',
           whereArgs: [updated.id],
+        );
+
+        // Record in worship_completions
+        await db.insert(
+          'worship_completions',
+          {
+            'id': 'comp_${updated.id}_$todayStr',
+            'practiceId': updated.id,
+            'dateStr': todayStr,
+            'practiceType': 'DHIKR',
+            'resultType': 'DONE',
+            'countDone': newDone,
+            'countTarget': updated.dailyTarget,
+            'loggedAt': nowMs,
+            'createdAt': nowMs,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
         );
 
         await _loadData();
@@ -383,16 +403,39 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     });
   }
 
-  void _openFullscreenTasbih({String? title, int target = 100, bool isFatima = false}) {
-    FullscreenTasbihSheet.present(
+  Future<void> _openFullscreenTasbih() async {
+    if (_dhikrs.isEmpty) return;
+
+    final activePractice = _dhikrs.firstWhere(
+      (p) => p.id == _selectedDhikrId,
+      orElse: () => _dhikrs.first,
+    );
+    final isZahra = activePractice.id == 'wp_dhikr_zahra';
+
+    final res = await FullscreenTasbihSheet.present(
       context,
-      initialDhikrTitle: title ?? 'تسبیحات حضرت زهرا (س)',
-      targetCount: target,
-      isFatimaTasbih: isFatima,
-    ).then((_) {
-      _loadData();
-      widget.onChanged();
-    });
+      practices: _dhikrs,
+      initialPracticeId: activePractice.id,
+      initialStep: _zahraStep,
+      initialCount: isZahra ? _zahraCount : activePractice.dailyDone,
+    );
+
+    if (res != null) {
+      final pid = res['practiceId'] as String? ?? activePractice.id;
+      final step = res['step'] as int? ?? 0;
+      final count = res['count'] as int? ?? 0;
+
+      setState(() {
+        _selectedDhikrId = pid;
+        if (pid == 'wp_dhikr_zahra') {
+          _zahraStep = step;
+          _zahraCount = count;
+        }
+      });
+    }
+
+    await _loadData();
+    widget.onChanged();
   }
 
   // --- OTHER DHIKRS ACTIONS ---
@@ -403,9 +446,11 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     try {
       final db = await DatabaseHelper.instance.database;
       final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
 
       final updated = practice.copyWith(
         dailyDone: newDone,
+        dailyDoneDate: todayStr,
         updatedAt: nowMs,
       );
 
@@ -414,6 +459,23 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
         updated.toMap(),
         where: 'id = ?',
         whereArgs: [practice.id],
+      );
+
+      // Record in worship_completions
+      await db.insert(
+        'worship_completions',
+        {
+          'id': 'comp_${updated.id}_$todayStr',
+          'practiceId': updated.id,
+          'dateStr': todayStr,
+          'practiceType': 'DHIKR',
+          'resultType': newDone >= updated.dailyTarget ? 'DONE' : 'PARTIAL',
+          'countDone': newDone,
+          'countTarget': updated.dailyTarget,
+          'loggedAt': nowMs,
+          'createdAt': nowMs,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
       await _loadData();
@@ -428,9 +490,11 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     try {
       final db = await DatabaseHelper.instance.database;
       final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
 
       final updated = practice.copyWith(
         dailyDone: 0,
+        dailyDoneDate: todayStr,
         updatedAt: nowMs,
       );
 
@@ -439,6 +503,12 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
         updated.toMap(),
         where: 'id = ?',
         whereArgs: [practice.id],
+      );
+
+      await db.delete(
+        'worship_completions',
+        where: 'practiceId = ? AND dateStr = ?',
+        whereArgs: [practice.id, todayStr],
       );
 
       await _loadData();
@@ -535,16 +605,42 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
       try {
         final db = await DatabaseHelper.instance.database;
         final nowMs = DateTime.now().millisecondsSinceEpoch;
+        final todayStr = DateTime.now().toIso8601String().substring(0, 10);
 
         await db.update(
           'worship_practices',
           {
             'dailyDone': value,
+            'dailyDoneDate': todayStr,
             'updatedAt': nowMs,
           },
           where: 'id = ?',
           whereArgs: [practice.id],
         );
+
+        if (value > 0) {
+          await db.insert(
+            'worship_completions',
+            {
+              'id': 'comp_${practice.id}_$todayStr',
+              'practiceId': practice.id,
+              'dateStr': todayStr,
+              'practiceType': 'DHIKR',
+              'resultType': value >= practice.dailyTarget ? 'DONE' : 'PARTIAL',
+              'countDone': value,
+              'countTarget': practice.dailyTarget,
+              'loggedAt': nowMs,
+              'createdAt': nowMs,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        } else {
+          await db.delete(
+            'worship_completions',
+            where: 'practiceId = ? AND dateStr = ?',
+            whereArgs: [practice.id, todayStr],
+          );
+        }
 
         if (practice.id == 'wp_dhikr_zahra') {
           setState(() {
@@ -577,6 +673,32 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     );
   }
 
+  void _showDhikrSettingsSheet(WorshipPractice practice) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return _DhikrSettingsSheet(
+          practice: practice,
+          onSaved: () {
+            _loadData();
+            widget.onChanged();
+          },
+          onDeleted: () {
+            setState(() {
+              _selectedDhikrId = 'wp_dhikr_zahra';
+              _zahraStep = 0;
+              _zahraCount = 0;
+            });
+            _loadData();
+            widget.onChanged();
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -593,29 +715,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Section Title
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'قرآن و اذکار',
-                style: TextStyle(
-                  fontSize: 16.5,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
-              ),
-              IconButton(
-                icon: Icon(CupertinoIcons.settings, color: colors.textSecondary, size: 20),
-                onPressed: _showQuranSettingsSheet,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
           // 1. QURAN CARD
           if (_quranPractice != null) _buildQuranCard(colors),
           const SizedBox(height: 16),
@@ -678,17 +777,24 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? colors.surface : Colors.white,
         borderRadius: BorderRadius.circular(32),
+        color: isDark
+            ? const Color(0xFF151A18)
+            : const Color(0xFFFFFEFB),
         border: Border.all(
-          color: colors.border.withValues(alpha: isDark ? 0.35 : 0.4),
+          color: isDark
+              ? const Color(0xFF25443A)
+              : const Color(0xFFE8E0CD),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: isDark ? 0.25 : 0.04),
-            blurRadius: 32,
-            offset: const Offset(0, 8),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.28)
+                : const Color(0xFFB79B62).withValues(alpha: 0.08),
+            blurRadius: 35,
+            spreadRadius: 0,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -896,7 +1002,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                     padding: const EdgeInsets.all(5),
                                     decoration: BoxDecoration(
                                       color: isDark
-                                          ? const Color(0xFF1E2026)
+                                          ? const Color(0xFF19221E)
                                           : colors.border.withValues(alpha: 0.3),
                                       shape: BoxShape.circle,
                                     ),
@@ -1291,7 +1397,35 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                         ),
                       ),
 
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
+
+                      // Settings button for active dhikr
+                      InkWell(
+                        onTap: () => _showDhikrSettingsSheet(activePractice),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF1D2824)
+                                : const Color(0xFFF8F3E8),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFCFA344)
+                                  .withValues(alpha: 0.28),
+                            ),
+                          ),
+                          child: Icon(
+                            CupertinoIcons.slider_horizontal_3,
+                            size: 15,
+                            color: isDark
+                                ? const Color(0xFFE8C46D)
+                                : const Color(0xFFB78320),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
 
                       // Add button
                       InkWell(
@@ -1299,8 +1433,8 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                         borderRadius: BorderRadius.circular(18),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 13,
-                            vertical: 9,
+                            horizontal: 11,
+                            vertical: 8,
                           ),
                           decoration: BoxDecoration(
                             color: isDark
@@ -1317,12 +1451,12 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                             children: [
                               const Icon(
                                 CupertinoIcons.add,
-                                size: 15,
+                                size: 14,
                                 color: Color(0xFFC28C29),
                               ),
-                              const SizedBox(width: 5),
+                              const SizedBox(width: 4),
                               Text(
-                                'افزودن ذکر',
+                                'افزودن',
                                 style: TextStyle(
                                   fontFamily: 'Vazirmatn',
                                   fontSize: 11.5,
@@ -1739,13 +1873,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                           icon: CupertinoIcons.fullscreen,
                           label: 'تمام‌صفحه',
                           color: const Color(0xFFB8831F),
-                          onTap: () => _openFullscreenTasbih(
-                            title: isZahra
-                                ? 'تسبیحات حضرت زهرا (س)'
-                                : activePractice.title,
-                            target: isZahra ? 100 : activePractice.dailyTarget,
-                            isFatima: isZahra,
-                          ),
+                          onTap: _openFullscreenTasbih,
                         ),
                       ),
 
@@ -1865,11 +1993,13 @@ class _QuranSettingsSheet extends StatefulWidget {
 
 class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
   late int _targetPages;
+  late bool _showInCalendar;
 
   @override
   void initState() {
     super.initState();
     _targetPages = widget.practice.dailyTarget;
+    _showInCalendar = widget.practice.showInCalendar;
   }
 
   Future<void> _save() async {
@@ -1882,6 +2012,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
         'worship_practices',
         {
           'dailyTarget': _targetPages,
+          'showInCalendar': _showInCalendar ? 1 : 0,
           'updatedAt': nowMs,
         },
         where: 'id = ?',
@@ -2045,8 +2176,8 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
                           padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0C6253),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF0C6253),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(CupertinoIcons.plus, color: Colors.white, size: 18),
@@ -2094,6 +2225,58 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+
+            // Calendar Toggle Switch
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: colors.surfaceSunken.withValues(alpha: isDark ? 0.4 : 0.6),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: colors.border.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'نمایش در تقویم و برنامه روزانه',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'قرائت قرآن به عنوان تسک روزانه در تقویم ظاهر شود',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.textSecondary.withValues(alpha: 0.8),
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  CupertinoSwitch(
+                    value: _showInCalendar,
+                    activeTrackColor: const Color(0xFF0C6253),
+                    onChanged: (val) {
+                      setState(() {
+                        _showInCalendar = val;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Save Button
@@ -2130,6 +2313,7 @@ class _AddDhikrSheet extends StatefulWidget {
 class _AddDhikrSheetState extends State<_AddDhikrSheet> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _targetController = TextEditingController(text: '100');
+  bool _showInCalendar = false;
 
   @override
   void dispose() {
@@ -2161,6 +2345,7 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
           'dailyDone': 0,
           'reminderEnabled': 0,
           'isActive': 1,
+          'showInCalendar': _showInCalendar ? 1 : 0,
           'dailyDoneDate': todayStr,
           'createdAt': nowMs,
           'updatedAt': nowMs,
@@ -2246,6 +2431,47 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
                   ),
                 ),
               ),
+              const SizedBox(height: 14),
+
+              // Calendar Toggle Switch
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: colors.inputBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colors.glassBorder),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'نمایش در تقویم و برنامه روزانه',
+                            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'این ذکر در لیست کارهای روزانه تقویم ظاهر شود',
+                            style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.8), fontFamily: 'Vazirmatn'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CupertinoSwitch(
+                      value: _showInCalendar,
+                      activeTrackColor: const Color(0xffD4A843),
+                      onChanged: (val) {
+                        setState(() {
+                          _showInCalendar = val;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 20),
 
               ElevatedButton(
@@ -2260,6 +2486,290 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DhikrSettingsSheet extends StatefulWidget {
+  const _DhikrSettingsSheet({
+    required this.practice,
+    required this.onSaved,
+    required this.onDeleted,
+  });
+
+  final WorshipPractice practice;
+  final VoidCallback onSaved;
+  final VoidCallback onDeleted;
+
+  @override
+  State<_DhikrSettingsSheet> createState() => _DhikrSettingsSheetState();
+}
+
+class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
+  late TextEditingController _targetController;
+  late bool _showInCalendar;
+
+  @override
+  void initState() {
+    super.initState();
+    _targetController = TextEditingController(text: widget.practice.dailyTarget.toString());
+    _showInCalendar = widget.practice.showInCalendar;
+  }
+
+  @override
+  void dispose() {
+    _targetController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final target = int.tryParse(_targetController.text) ?? widget.practice.dailyTarget;
+    unawaited(HapticFeedback.mediumImpact());
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+      await db.update(
+        'worship_practices',
+        {
+          'dailyTarget': target > 0 ? target : 1,
+          'showInCalendar': _showInCalendar ? 1 : 0,
+          'updatedAt': nowMs,
+        },
+        where: 'id = ?',
+        whereArgs: [widget.practice.id],
+      );
+
+      widget.onSaved();
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      debugPrint('Error saving dhikr settings: $e');
+    }
+  }
+
+  Future<void> _delete() async {
+    final colors = context.colors;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: colors.card,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text('حذف ذکر', style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          content: Text('آیا از حذف «${widget.practice.title}» اطمینان دارید؟', style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('انصراف', style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('حذف', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        final db = await DatabaseHelper.instance.database;
+        await db.delete('worship_practices', where: 'id = ?', whereArgs: [widget.practice.id]);
+        if (mounted) Navigator.pop(context);
+        widget.onDeleted();
+      } catch (e) {
+        debugPrint('Error deleting dhikr: $e');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isZahra = widget.practice.id == 'wp_dhikr_zahra';
+    final isCustom = widget.practice.subType == 'CUSTOM';
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border.all(
+            color: colors.border.withValues(alpha: isDark ? 0.3 : 0.4),
+            width: 1,
+          ),
+        ),
+        padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.border.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Header Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD4A843).withValues(alpha: isDark ? 0.2 : 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(CupertinoIcons.slider_horizontal_3, color: isDark ? const Color(0xFFE8C46D) : const Color(0xFFB78320), size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'تنظیمات ${isZahra ? 'تسبیحات حضرت زهرا (س)' : widget.practice.title}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                        fontFamily: 'Vazirmatn',
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textTertiary, size: 22),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Target Count Field (if not Zahra)
+            if (!isZahra) ...[
+              Text(
+                'هدف روزانه (تعداد مرتبه):',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
+                  fontFamily: 'Vazirmatn',
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _targetController,
+                keyboardType: TextInputType.number,
+                style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn'),
+                decoration: InputDecoration(
+                  fillColor: colors.inputBackground,
+                  filled: true,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFD4A843)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Calendar Toggle Switch
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: colors.surfaceSunken.withValues(alpha: isDark ? 0.4 : 0.6),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: colors.border.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'نمایش در تقویم و برنامه روزانه',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'این ذکر در تسک‌های تقویم نمایش داده شود',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.textSecondary.withValues(alpha: 0.8),
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  CupertinoSwitch(
+                    value: _showInCalendar,
+                    activeTrackColor: const Color(0xFFD4A843),
+                    onChanged: (val) {
+                      setState(() {
+                        _showInCalendar = val;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Save and Delete Buttons
+            Row(
+              children: [
+                if (isCustom) ...[
+                  IconButton(
+                    onPressed: _delete,
+                    icon: const Icon(CupertinoIcons.trash, color: Color(0xFFEF4444)),
+                    tooltip: 'حذف ذکر',
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD4A843),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    onPressed: _save,
+                    child: const Text(
+                      'ذخیره تنظیمات',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

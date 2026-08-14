@@ -130,15 +130,15 @@ class _PrayerSheetState extends State<PrayerSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF121824).withValues(alpha: 0.94) : colors.surfaceElevated,
+        color: isDark ? const Color(0xFF151A18).withValues(alpha: 0.96) : const Color(0xFFFFFEFB).withValues(alpha: 0.98),
         borderRadius: borderRadius,
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.12) : colors.border.withValues(alpha: 0.5),
-          width: 1.5,
+          color: isDark ? const Color(0xFF25443A) : const Color(0xFFE8E0CD),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.2),
+            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
             blurRadius: 32,
             offset: const Offset(0, -8),
           ),

@@ -3,40 +3,85 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/features/worship/models/worship_models.dart' hide toPersianDigits;
+import 'package:sqflite/sqflite.dart';
 
 class FullscreenTasbihSheet extends StatefulWidget {
   const FullscreenTasbihSheet({
     super.key,
-    this.initialDhikrTitle = 'تسبیحات حضرت زهرا (س)',
-    this.dhikrSubtitle,
-    this.targetCount = 100,
-    this.isFatimaTasbih = true,
+    required this.practices,
+    required this.initialPracticeId,
+    this.initialStep = 0,
+    this.initialCount = 0,
   });
 
-  final String initialDhikrTitle;
-  final String? dhikrSubtitle;
-  final int targetCount;
-  final bool isFatimaTasbih;
+  final List<WorshipPractice> practices;
+  final String initialPracticeId;
+  final int initialStep;
+  final int initialCount;
 
-  static Future<void> present(
+  static Future<Map<String, dynamic>?> present(
     BuildContext context, {
-    String initialDhikrTitle = 'تسبیحات حضرت زهرا (س)',
+    List<WorshipPractice>? practices,
+    String? initialPracticeId,
+    String? initialDhikrTitle,
     String? dhikrSubtitle,
-    int targetCount = 100,
-    bool isFatimaTasbih = true,
+    int? targetCount,
+    bool isFatimaTasbih = false,
+    int initialStep = 0,
+    int initialCount = 0,
   }) {
-    return Navigator.push(
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    List<WorshipPractice> effectivePractices =
+        practices != null ? List.from(practices) : [];
+    String effectiveId = initialPracticeId ?? '';
+
+    if (effectivePractices.isEmpty) {
+      if (isFatimaTasbih) {
+        effectiveId = 'wp_dhikr_zahra';
+        effectivePractices = [
+          WorshipPractice(
+            id: 'wp_dhikr_zahra',
+            practiceType: 'DHIKR',
+            title: 'تسبیحات حضرت زهرا (س)',
+            dailyTarget: 100,
+            createdAt: nowMs,
+            updatedAt: nowMs,
+          ),
+        ];
+      } else {
+        effectiveId = 'wp_dhikr_custom_$nowMs';
+        effectivePractices = [
+          WorshipPractice(
+            id: effectiveId,
+            practiceType: 'DHIKR',
+            title: initialDhikrTitle ?? 'ذکر روز',
+            subType: dhikrSubtitle,
+            dailyTarget: targetCount ?? 100,
+            createdAt: nowMs,
+            updatedAt: nowMs,
+          ),
+        ];
+      }
+    } else if (effectiveId.isEmpty) {
+      effectiveId = effectivePractices.first.id;
+    }
+
+    return Navigator.push<Map<String, dynamic>>(
       context,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 380),
         reverseTransitionDuration: const Duration(milliseconds: 280),
-        pageBuilder: (context, animation, secondaryAnimation) => FullscreenTasbihSheet(
-          initialDhikrTitle: initialDhikrTitle,
-          dhikrSubtitle: dhikrSubtitle,
-          targetCount: targetCount,
-          isFatimaTasbih: isFatimaTasbih,
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            FullscreenTasbihSheet(
+          practices: effectivePractices,
+          initialPracticeId: effectiveId,
+          initialStep: initialStep,
+          initialCount: initialCount,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           final curved = CurvedAnimation(
@@ -47,7 +92,7 @@ class FullscreenTasbihSheet extends StatefulWidget {
           return FadeTransition(
             opacity: curved,
             child: ScaleTransition(
-              scale: Tween<double>(begin: 0.86, end: 1.0).animate(curved),
+              scale: Tween<double>(begin: 0.90, end: 1.0).animate(curved),
               alignment: Alignment.center,
               child: child,
             ),
@@ -62,26 +107,82 @@ class FullscreenTasbihSheet extends StatefulWidget {
 }
 
 class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
-  int _currentCount = 0;
-  int _stageIndex = 0; // 0 = Allahu Akbar (34), 1 = Alhamdulillah (33), 2 = SubhanAllah (33)
+  late List<WorshipPractice> _dhikrs;
+  late String _selectedPracticeId;
+  late int _currentCount;
+  late int _stageIndex; // For Zahra Tasbih (0, 1, 2)
+  bool _hapticEnabled = true;
+  bool _showRemaining = false;
+  final FocusNode _focusNode = FocusNode();
 
   final List<_TasbihStage> _fatimaStages = const [
-    _TasbihStage('اللهُ أَکْبَرُ', 'الله اکبر', 34, Color(0xFFFFD700)),
-    _TasbihStage('الْحَمْدُ لِلَّهِ', 'الحمد لله', 33, Color(0xFF4CAF50)),
-    _TasbihStage('سُبْحَانَ اللَّهِ', 'سبحان الله', 33, Color(0xFF2196F3)),
+    _TasbihStage('اللهُ أَکْبَرُ', 'الله اکبر', 34, Color(0xFFC98F23)),
+    _TasbihStage('الْحَمْدُ لِلَّهِ', 'الحمد لله', 33, Color(0xFF059669)),
+    _TasbihStage('سُبْحَانَ اللَّهِ', 'سبحان الله', 33, Color(0xFF0284C7)),
   ];
 
-  void _onTap() {
-    unawaited(HapticFeedback.lightImpact());
+  @override
+  void initState() {
+    super.initState();
+    _dhikrs = List.from(widget.practices);
+    _selectedPracticeId = widget.initialPracticeId;
+    _stageIndex = widget.initialStep;
+    _currentCount = widget.initialCount;
+  }
 
-    if (widget.isFatimaTasbih) {
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  WorshipPractice get _activePractice {
+    return _dhikrs.firstWhere(
+      (p) => p.id == _selectedPracticeId,
+      orElse: () => _dhikrs.isNotEmpty ? _dhikrs.first : _defaultPractice,
+    );
+  }
+
+  bool get _isZahra => _selectedPracticeId == 'wp_dhikr_zahra';
+
+  WorshipPractice get _defaultPractice {
+    return WorshipPractice(
+      id: 'wp_dhikr_zahra',
+      practiceType: 'DHIKR',
+      title: 'تسبیحات حضرت زهرا (س)',
+      dailyTarget: 100,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+  }
+
+  void _onPop() {
+    Navigator.pop(context, {
+      'practiceId': _selectedPracticeId,
+      'step': _stageIndex,
+      'count': _currentCount,
+    });
+  }
+
+  Future<void> _onTap() async {
+    // 1. Per-tap haptic (if enabled)
+    if (_hapticEnabled) {
+      unawaited(HapticFeedback.lightImpact());
+    }
+
+    if (_isZahra) {
       final currentStage = _fatimaStages[_stageIndex];
       setState(() {
         _currentCount++;
       });
 
       if (_currentCount >= currentStage.target) {
+        // Milestone Haptic: Always on (double heavy pulse)
         unawaited(HapticFeedback.heavyImpact());
+        Future.delayed(const Duration(milliseconds: 120), () {
+          HapticFeedback.vibrate();
+        });
+
         if (_stageIndex < _fatimaStages.length - 1) {
           setState(() {
             _stageIndex++;
@@ -89,27 +190,185 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
           });
         } else {
           // Completed full 100!
+          setState(() {
+            _stageIndex = 0;
+            _currentCount = 0;
+          });
+          await _saveZahraFullRound();
           _showCompletionDialog();
         }
       }
     } else {
+      final active = _activePractice;
+      final newDone = _currentCount + 1;
       setState(() {
-        _currentCount++;
+        _currentCount = newDone;
       });
-      if (_currentCount % 33 == 0) {
+
+      if (newDone % 33 == 0 || newDone >= active.dailyTarget) {
+        // Milestone Haptic: Always on
         unawaited(HapticFeedback.heavyImpact());
       }
-      if (_currentCount >= widget.targetCount) {
+
+      await _saveOtherDhikr(active, newDone);
+
+      if (newDone == active.dailyTarget) {
         _showCompletionDialog();
       }
     }
   }
 
-  void _reset() {
+  Future<void> _saveZahraFullRound() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      final active = _activePractice;
+      final newDone = active.dailyDone + 1;
+
+      final updated = active.copyWith(
+        dailyDone: newDone,
+        dailyDoneDate: todayStr,
+        updatedAt: nowMs,
+      );
+
+      final index = _dhikrs.indexWhere((p) => p.id == active.id);
+      if (index >= 0) {
+        _dhikrs[index] = updated;
+      }
+
+      await db.update(
+        'worship_practices',
+        updated.toMap(),
+        where: 'id = ?',
+        whereArgs: [updated.id],
+      );
+
+      await db.insert(
+        'worship_completions',
+        {
+          'id': 'comp_${updated.id}_$todayStr',
+          'practiceId': updated.id,
+          'dateStr': todayStr,
+          'practiceType': 'DHIKR',
+          'resultType': 'DONE',
+          'countDone': newDone,
+          'countTarget': updated.dailyTarget,
+          'loggedAt': nowMs,
+          'createdAt': nowMs,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e) {
+      debugPrint('Error saving Zahra round in fullscreen: $e');
+    }
+  }
+
+  Future<void> _saveOtherDhikr(WorshipPractice practice, int newDone) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+
+      final updated = practice.copyWith(
+        dailyDone: newDone,
+        dailyDoneDate: todayStr,
+        updatedAt: nowMs,
+      );
+
+      final index = _dhikrs.indexWhere((p) => p.id == practice.id);
+      if (index >= 0) {
+        _dhikrs[index] = updated;
+      }
+
+      await db.update(
+        'worship_practices',
+        updated.toMap(),
+        where: 'id = ?',
+        whereArgs: [practice.id],
+      );
+
+      await db.insert(
+        'worship_completions',
+        {
+          'id': 'comp_${updated.id}_$todayStr',
+          'practiceId': updated.id,
+          'dateStr': todayStr,
+          'practiceType': 'DHIKR',
+          'resultType': newDone >= updated.dailyTarget ? 'DONE' : 'PARTIAL',
+          'countDone': newDone,
+          'countTarget': updated.dailyTarget,
+          'loggedAt': nowMs,
+          'createdAt': nowMs,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e) {
+      debugPrint('Error saving dhikr in fullscreen: $e');
+    }
+  }
+
+  Future<void> _reset() async {
     unawaited(HapticFeedback.mediumImpact());
     setState(() {
       _currentCount = 0;
-      _stageIndex = 0;
+      if (_isZahra) {
+        _stageIndex = 0;
+      }
+    });
+
+    if (!_isZahra) {
+      try {
+        final db = await DatabaseHelper.instance.database;
+        final nowMs = DateTime.now().millisecondsSinceEpoch;
+        final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+        final active = _activePractice;
+
+        final updated = active.copyWith(
+          dailyDone: 0,
+          dailyDoneDate: todayStr,
+          updatedAt: nowMs,
+        );
+
+        final index = _dhikrs.indexWhere((p) => p.id == active.id);
+        if (index >= 0) {
+          _dhikrs[index] = updated;
+        }
+
+        await db.update(
+          'worship_practices',
+          updated.toMap(),
+          where: 'id = ?',
+          whereArgs: [active.id],
+        );
+
+        await db.delete(
+          'worship_completions',
+          where: 'practiceId = ? AND dateStr = ?',
+          whereArgs: [active.id, todayStr],
+        );
+      } catch (e) {
+        debugPrint('Error resetting dhikr in fullscreen: $e');
+      }
+    }
+  }
+
+  void _switchDhikr(String newId) {
+    if (newId == _selectedPracticeId) return;
+    unawaited(HapticFeedback.selectionClick());
+
+    setState(() {
+      _selectedPracticeId = newId;
+      if (newId == 'wp_dhikr_zahra') {
+        _stageIndex = 0;
+        _currentCount = 0;
+      } else {
+        final active = _dhikrs.firstWhere(
+          (p) => p.id == newId,
+          orElse: () => _defaultPractice,
+        );
+        _currentCount = active.dailyDone;
+      }
     });
   }
 
@@ -117,11 +376,11 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('قبول باشد 🤲'),
-        content: const Text('ذکر به پایان رسید. خدا از شما قبول بفرماید.'),
+        title: const Text('قبول باشد 🤲', style: TextStyle(fontFamily: 'Vazirmatn')),
+        content: const Text('ذکر به پایان رسید. ان‌شاءالله قبول حق باشد ✨', style: TextStyle(fontFamily: 'Vazirmatn')),
         actions: [
           CupertinoDialogAction(
-            child: const Text('تکرار مجدد'),
+            child: const Text('تکرار مجدد', style: TextStyle(fontFamily: 'Vazirmatn')),
             onPressed: () {
               Navigator.pop(context);
               _reset();
@@ -129,10 +388,10 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
           ),
           CupertinoDialogAction(
             isDefaultAction: true,
-            child: const Text('بستن'),
+            child: const Text('پایان و بستن', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pop(context);
+              _onPop();
             },
           ),
         ],
@@ -143,176 +402,472 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final stage = widget.isFatimaTasbih ? _fatimaStages[_stageIndex] : null;
-    final activeColor = stage?.accentColor ?? const Color(0xffD4A843);
-    final dhikrArabic = stage?.arabicText ?? widget.initialDhikrTitle;
-    final dhikrTitle = stage?.titleFa ?? 'ذکر و تسبیح';
-    final target = stage?.target ?? widget.targetCount;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final active = _activePractice;
+    final stage = _isZahra ? _fatimaStages[_stageIndex] : null;
+    final activeColor = stage?.accentColor ?? (isDark ? const Color(0xFFE8C46D) : const Color(0xFFC38D29));
+    final dhikrArabic = stage?.arabicText ?? active.title;
+    final dhikrTitle = stage?.titleFa ?? 'ذکر روزانه';
+    final target = stage?.target ?? active.dailyTarget;
     final progress = (target > 0) ? (_currentCount / target).clamp(0.0, 1.0) : 0.0;
+    final remaining = (target - _currentCount).clamp(0, 99999);
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: _onTap,
-        child: SafeArea(
-          child: Stack(
-            children: [
-              // ── Fullscreen Touch Surface ──
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Stage indicator pill (for Fatima Tasbih)
-                    if (widget.isFatimaTasbih) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(_fatimaStages.length, (i) {
-                          final st = _fatimaStages[i];
-                          final isActive = i == _stageIndex;
-                          final isDone = i < _stageIndex;
-                          return Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? st.accentColor.withValues(alpha: 0.2)
-                                  : isDone
-                                      ? colors.textSecondary.withValues(alpha: 0.1)
-                                      : colors.surface,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isActive ? st.accentColor : Colors.transparent,
-                              ),
-                            ),
-                            child: Text(
-                              st.titleFa,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                                color: isActive
-                                    ? st.accentColor
-                                    : isDone
-                                        ? colors.textSecondary
-                                        : colors.textSecondary.withValues(alpha: 0.6),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 32),
-                    ],
-
-                    // Arabic / Main Dhikr Phrase
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Text(
-                        dhikrArabic,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Vazirmatn',
-                          color: colors.textPrimary,
-                          height: 1.4,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _onPop();
+        }
+      },
+      child: KeyboardListener(
+        focusNode: _focusNode,
+        autofocus: true,
+        onKeyEvent: (event) {
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.audioVolumeUp ||
+                event.logicalKey == LogicalKeyboardKey.audioVolumeDown ||
+                event.logicalKey == LogicalKeyboardKey.space ||
+                event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              _onTap();
+            }
+          }
+        },
+        child: Scaffold(
+          backgroundColor: isDark ? const Color(0xFF101614) : const Color(0xFFFAF7F0),
+          body: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _onTap,
+            child: SafeArea(
+              child: Stack(
+                children: [
+                  // ── Ambient Background Glow ──
+                  Positioned.fill(
+                    child: Center(
+                      child: Container(
+                        width: 320,
+                        height: 320,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              activeColor.withValues(alpha: isDark ? 0.08 : 0.07),
+                              Colors.transparent,
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                  ),
 
-                    if (widget.isFatimaTasbih || widget.dhikrSubtitle != null)
-                      Text(
-                        widget.dhikrSubtitle ?? dhikrTitle,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
-                      ),
-                    const SizedBox(height: 48),
+                  // ── Central Counter & Interaction Area ──
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Stage indicator pills (for Fatima Tasbih)
+                        if (_isZahra) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(_fatimaStages.length, (i) {
+                              final st = _fatimaStages[i];
+                              final isActive = i == _stageIndex;
+                              final isDone = i < _stageIndex;
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 280),
+                                margin: const EdgeInsets.symmetric(horizontal: 5),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? (isDark
+                                          ? st.accentColor.withValues(alpha: 0.22)
+                                          : const Color(0xFFFFF8E7))
+                                      : isDone
+                                          ? (isDark
+                                              ? const Color(0xFF16241E)
+                                              : const Color(0xFFF0EFE9))
+                                          : (isDark
+                                              ? const Color(0xFF121A17)
+                                              : const Color(0xFFF7F5EE)),
+                                  borderRadius: BorderRadius.circular(22),
+                                  border: Border.all(
+                                    color: isActive
+                                        ? st.accentColor
+                                        : isDone
+                                            ? colors.textSecondary.withValues(alpha: 0.3)
+                                            : colors.border.withValues(alpha: 0.3),
+                                    width: isActive ? 1.8 : 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: st.accentColor.withValues(alpha: isActive ? 0.18 : 0.0),
+                                      blurRadius: isActive ? 12 : 0,
+                                      offset: isActive ? const Offset(0, 3) : Offset.zero,
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  st.titleFa,
+                                  style: TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 13.5,
+                                    fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+                                    color: isActive
+                                        ? (isDark ? st.accentColor : const Color(0xFF916510))
+                                        : isDone
+                                            ? colors.textSecondary
+                                            : colors.textSecondary.withValues(alpha: 0.45),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                          const SizedBox(height: 32),
+                        ],
 
-                    // Counter Circle Progress Ring
-                    SizedBox(
-                      width: 200,
-                      height: 200,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Progress Ring
-                          SizedBox(
-                            width: 190,
-                            height: 190,
-                            child: CircularProgressIndicator(
-                              value: progress,
-                              strokeWidth: 10,
-                              backgroundColor: colors.textPrimary.withValues(alpha: 0.08),
-                              valueColor: AlwaysStoppedAnimation<Color>(activeColor),
-                              strokeCap: StrokeCap.round,
+                        // Arabic / Main Dhikr Phrase (Majestic & Large)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            dhikrArabic,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 42,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'Vazirmatn',
+                              color: colors.textPrimary,
+                              height: 1.3,
+                              letterSpacing: -0.8,
                             ),
                           ),
+                        ),
+                        const SizedBox(height: 8),
 
-                          // Count Number
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        Text(
+                          _isZahra
+                              ? dhikrTitle
+                              : (active.subType != null && active.subType!.isNotEmpty)
+                                  ? active.subType!
+                                  : 'تعداد دور انجام‌شده: ${toPersianDigits(active.dailyDone.toString())}',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: isDark
+                                ? const Color(0xFFC8AA66)
+                                : const Color(0xFF8C6D23),
+                            fontFamily: 'Vazirmatn',
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 44),
+
+                        // Large Counter Circle Progress Ring (260x260)
+                        GestureDetector(
+                          onTap: () {
+                            unawaited(HapticFeedback.selectionClick());
+                            setState(() {
+                              _showRemaining = !_showRemaining;
+                            });
+                          },
+                          child: Container(
+                            width: 260,
+                            height: 260,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isDark
+                                  ? const Color(0xFF131C18)
+                                  : const Color(0xFFFFFEFA),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF264035)
+                                    : const Color(0xFFE8E0CD),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isDark
+                                      ? Colors.black.withValues(alpha: 0.35)
+                                      : const Color(0xFFB79B62).withValues(alpha: 0.12),
+                                  blurRadius: 36,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Progress Ring
+                                SizedBox(
+                                  width: 246,
+                                  height: 246,
+                                  child: CircularProgressIndicator(
+                                    value: progress,
+                                    strokeWidth: 12,
+                                    backgroundColor: isDark
+                                        ? Colors.white.withValues(alpha: 0.06)
+                                        : const Color(0xFFEDE9DE),
+                                    valueColor: AlwaysStoppedAnimation<Color>(activeColor),
+                                    strokeCap: StrokeCap.round,
+                                  ),
+                                ),
+
+                                // Count Number & Subtitle
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      toPersianDigits(_showRemaining ? '$remaining' : '$_currentCount'),
+                                      style: TextStyle(
+                                        fontSize: 76,
+                                        fontWeight: FontWeight.w900,
+                                        color: colors.textPrimary,
+                                        fontFamily: 'Vazirmatn',
+                                        height: 1.05,
+                                        letterSpacing: -1.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: activeColor.withValues(alpha: isDark ? 0.18 : 0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        _showRemaining
+                                            ? 'باقیمانده تا هدف'
+                                            : toPersianDigits('از $target'),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
+                                          color: isDark ? activeColor : const Color(0xFF916510),
+                                          fontFamily: 'Vazirmatn',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 42),
+
+                        // Touch Hint Pill
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF16241E)
+                                : const Color(0xFFF2ECE0),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF284638)
+                                  : const Color(0xFFE2D9C8),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
+                              Icon(
+                                Icons.touch_app_rounded,
+                                size: 18,
+                                color: isDark ? const Color(0xFFE8C46D) : const Color(0xFFB8831F),
+                              ),
+                              const SizedBox(width: 8),
                               Text(
-                                toPersianDigits('$_currentCount'),
+                                'برای افزایش شمارش، هر جای صفحه را لمس کنید یا کلید ولوم را بزنید',
                                 style: TextStyle(
-                                  fontSize: 60,
-                                  fontWeight: FontWeight.w900,
-                                  color: colors.textPrimary,
+                                  fontSize: 12.5,
                                   fontFamily: 'Vazirmatn',
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.textPrimary.withValues(alpha: 0.85),
                                 ),
                               ),
-                              Text(
-                                toPersianDigits('از $target'),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: colors.textSecondary,
-                                  fontFamily: 'Vazirmatn',
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── Top Bar: Premium Luxury Actions ──
+                  Positioned(
+                    top: 14,
+                    right: 18,
+                    left: 18,
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Close Button (Premium Badge)
+                          _buildTopActionBadge(
+                            isDark: isDark,
+                            colors: colors,
+                            icon: Icons.close_rounded,
+                            iconColor: colors.textPrimary,
+                            size: 22,
+                            onTap: _onPop,
+                          ),
+
+                          // In-Screen Dhikr Switcher Dropdown
+                          if (_dhikrs.length > 1)
+                            Container(
+                              height: 44,
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF16231E) : Colors.white,
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF2B4C3E) : const Color(0xFFE5DDCB),
+                                  width: 1.2,
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _selectedPracticeId,
+                                  dropdownColor: isDark ? const Color(0xFF16231E) : Colors.white,
+                                  borderRadius: BorderRadius.circular(18),
+                                  icon: Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      size: 18,
+                                      color: activeColor,
+                                    ),
+                                  ),
+                                  isDense: true,
+                                  style: TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.textPrimary,
+                                  ),
+                                  items: _dhikrs.map((d) {
+                                    return DropdownMenuItem<String>(
+                                      value: d.id,
+                                      child: Text(
+                                        d.id == 'wp_dhikr_zahra' ? 'تسبیحات حضرت زهرا' : d.title,
+                                        style: TextStyle(
+                                          fontFamily: 'Vazirmatn',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
+                                          color: colors.textPrimary,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    if (val != null) _switchDhikr(val);
+                                  },
+                                ),
+                              ),
+                            ),
+
+                          // Top Left: Haptic Toggle & Reset Badges
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Vibration Toggle Badge
+                              _buildTopActionBadge(
+                                isDark: isDark,
+                                colors: colors,
+                                icon: _hapticEnabled
+                                    ? Icons.vibration_rounded
+                                    : Icons.mobile_off_rounded,
+                                iconColor: _hapticEnabled
+                                    ? (isDark ? const Color(0xFFE8C46D) : const Color(0xFFB8831F))
+                                    : colors.textSecondary.withValues(alpha: 0.4),
+                                size: 21,
+                                tooltip: _hapticEnabled ? 'ویبره هر لمس روشن است' : 'ویبره هر لمس خاموش است',
+                                onTap: () {
+                                  unawaited(HapticFeedback.mediumImpact());
+                                  setState(() {
+                                    _hapticEnabled = !_hapticEnabled;
+                                  });
+                                  RitmoToast.show(
+                                    context,
+                                    _hapticEnabled
+                                        ? 'ویبره هر لمس فعال شد'
+                                        : 'ویبره هر لمس غیرفعال شد',
+                                    icon: _hapticEnabled
+                                        ? Icons.vibration_rounded
+                                        : Icons.mobile_off_rounded,
+                                    iconColor: _hapticEnabled
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFF59E0B),
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 8),
+
+                              // Reset Badge
+                              _buildTopActionBadge(
+                                isDark: isDark,
+                                colors: colors,
+                                icon: Icons.refresh_rounded,
+                                iconColor: colors.textSecondary,
+                                size: 22,
+                                tooltip: 'بازنشانی شمارنده',
+                                onTap: _reset,
                               ),
                             ],
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 40),
-
-                    // Touch Hint
-                    Text(
-                      'برای افزایش شمارش، هر جای صفحه را لمس کنید',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textSecondary.withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-              // ── Top Bar: Close & Reset Buttons ──
-              Positioned(
-                top: 16,
-                right: 16,
-                left: 16,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.xmark_circle_fill, size: 28),
-                      color: colors.textSecondary.withValues(alpha: 0.6),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.arrow_counterclockwise_circle_fill, size: 28),
-                      color: colors.textSecondary.withValues(alpha: 0.6),
-                      onPressed: _reset,
-                    ),
-                  ],
-                ),
+  Widget _buildTopActionBadge({
+    required bool isDark,
+    required dynamic colors,
+    required IconData icon,
+    required Color iconColor,
+    required double size,
+    required VoidCallback onTap,
+    String? tooltip,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isDark ? const Color(0xFF16231E) : Colors.white,
+            border: Border.all(
+              color: isDark ? const Color(0xFF2B4C3E) : const Color(0xFFE5DDCB),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
             ],
+          ),
+          child: Center(
+            child: Icon(icon, size: size, color: iconColor),
           ),
         ),
       ),

@@ -128,7 +128,7 @@ class SsProgramBuilder {
       }
       
       final p = SessionPrescription(
-        id: existing?.id ?? 'pres_${dateIso}_${nowMs}_${d}',
+        id: existing?.id ?? 'pres_${dateIso}_${nowMs}_$d',
         dateIso: dateIso,
         cycleWeek: cycleWeek,
         slotType: slotType,

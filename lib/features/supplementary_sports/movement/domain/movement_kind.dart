@@ -159,4 +159,24 @@ class MovementKind {
       'sessionModeOverride': sessionModeOverride,
     };
   }
+
+  /// مقدار پیش‌فرض هدف متناسب با متریک اصلی حرکت (کیلومتر، دور، ارتفاع، گام، دقیقه).
+  double defaultTargetValue({int? durationMinutes}) {
+    switch (primaryMetric) {
+      case MovementMetric.distance:
+        if (code == 'CYCLING') return 10.0;
+        if (code == 'RUNNING') return 5.0;
+        return 3.0;
+      case MovementMetric.laps:
+        return 10.0;
+      case MovementMetric.elevation:
+        return 100.0;
+      case MovementMetric.steps:
+        return 4000.0;
+      case MovementMetric.duration:
+      case MovementMetric.sets:
+      case MovementMetric.none:
+        return (durationMinutes ?? 30).toDouble();
+    }
+  }
 }

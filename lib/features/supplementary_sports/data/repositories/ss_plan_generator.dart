@@ -386,9 +386,6 @@ class SSPlanGenerator {
     if (isDeload || week == 4) {
       baseSets = max(1, baseSets - 1);
       baseReps = max(3, baseReps - 2);
-      if (baseWeight != null) {
-        baseWeight = max(1.0, (baseWeight! * 0.8).roundToDouble());
-      }
     } else if (week == 2) {
       baseReps = baseReps + 2;
     } else if (week == 3) {
@@ -418,7 +415,7 @@ class SSPlanGenerator {
       
       var exerciseSets = isWarmupOrCool ? 1 : baseSets;
       var exerciseReps = isWarmupOrCool ? 12 : baseReps;
-      var exerciseWeight = (isWarmupOrCool || !isWeightSupported || !hasWeights) ? null : baseWeight;
+      final exerciseWeight = (isWarmupOrCool || !isWeightSupported || !hasWeights) ? null : baseWeight;
 
       // Apply Progressive Overload signals (only maintain or decrease allowed during deload)
       if (!isWarmupOrCool && progressionSignals != null && progressionSignals.containsKey(ex['id'])) {

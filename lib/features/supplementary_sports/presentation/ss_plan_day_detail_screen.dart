@@ -170,55 +170,6 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
     });
   }
 
-  Future<void> _createDefaultPlan() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final db = await DatabaseHelper.instance.database;
-      
-      // Load user profile
-      final profileMapList = await db.query('ss_user_profile', limit: 1);
-      if (profileMapList.isEmpty) {
-        throw Exception('User profile not found. Complete onboarding first.');
-      }
-      final profile = SsUserProfile.fromMap(profileMapList.first);
-
-      // Determine active week from existing plans or default to 1
-      var week = 1;
-      final existingPlans = await db.query('ss_workout_plan');
-      for (final p in existingPlans) {
-        final pid = p['id'].toString();
-        if (pid.startsWith('plan_w')) {
-          final parts = pid.split('_');
-          if (parts.length >= 2 && parts[1].startsWith('w')) {
-            final wNum = int.tryParse(parts[1].substring(1));
-            if (wNum != null) {
-              week = wNum;
-              break;
-            }
-          }
-        }
-      }
-
-      // Generate the single day plan using SSPlanGenerator
-      await SSPlanGenerator.generateSingleDayPlan(
-        db,
-        profile,
-        week: week,
-        dayOfWeek: widget.dayOfWeek,
-      );
-
-      await _logVersionHistory(db, 'ایجاد برنامه جدید روز ${widget.dayName}');
-      await _loadDayDetails();
-    } catch (e) {
-      debugPrint('Error creating default plan: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
 
   Future<void> _applyAiSuggestion() async {
     if (_aiSuggestion == null) return;

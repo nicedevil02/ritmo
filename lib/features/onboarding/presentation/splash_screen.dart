@@ -95,8 +95,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     final stopwatch = Stopwatch()..start();
 
     try {
-      // Wait for the app's database/configuration loads
-      await widget.initializationFuture;
+      // Wait for the app's database/configuration loads with a 3-second safety timeout
+      await widget.initializationFuture.timeout(const Duration(seconds: 3));
     } catch (e) {
       // Log error internally and fall through to prevent bricking the app startup
       debugPrint('Ritmo Startup Sync Warning: $e');
@@ -106,20 +106,26 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     final elapsedMs = stopwatch.elapsedMilliseconds;
 
     // In debug mode (development & Hot Restart), bypass artificial delay for instant reload
-    const minDurationMs = kDebugMode ? 0 : 1500;
+    const minDurationMs = kDebugMode ? 0 : 1200;
     if (elapsedMs < minDurationMs) {
       final remainingMs = minDurationMs - elapsedMs;
       await Future.delayed(Duration(milliseconds: remainingMs));
     }
 
     // Trigger premium Haptic Impact
-    await HapticFeedback.lightImpact();
+    try {
+      await HapticFeedback.lightImpact();
+    } catch (_) {}
 
     // Small delay to let the haptic response and cross-fade register naturally
-    await Future.delayed(const Duration(milliseconds: 150));
+    if (!kDebugMode) {
+      await Future.delayed(const Duration(milliseconds: 150));
+    }
 
     // Complete transition
-    widget.onInitializationComplete();
+    if (mounted) {
+      widget.onInitializationComplete();
+    }
   }
 
   @override

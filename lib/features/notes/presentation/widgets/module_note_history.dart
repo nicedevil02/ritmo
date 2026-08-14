@@ -2,6 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
+import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
+import 'package:ritmo/features/notes/presentation/widgets/ritmo_shimmer.dart';
 import 'package:ritmo/features/notes/data/note_bridge.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -50,117 +53,79 @@ class ModuleNoteHistoryTile extends StatelessWidget {
 
   void _showNoteBottomSheet(BuildContext context) {
     final colors = context.colors;
-    showModalBottomSheet(
+    RitmoSheetScaffold.present(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: colors.textSecondary.withValues(alpha: 0.15)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+      title: note.title ?? 'یادداشت',
+      subtitle: _formatJalali(note.createdAt),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(RitmoSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (note.isPromoted)
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm, vertical: RitmoSpacing.xs / 2),
+                  margin: const EdgeInsets.only(bottom: RitmoSpacing.md),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(_getModuleIcon(note.sourceModule), size: 18, color: colors.primary),
-                      const SizedBox(width: 8),
+                      Icon(Icons.menu_book_rounded, size: 12, color: colors.primary),
+                      const SizedBox(width: RitmoSpacing.xs),
                       Text(
-                        _formatJalali(note.createdAt),
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 13,
-                          color: colors.textSecondary,
-                        ),
+                        'دفترچه',
+                        style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                              color: colors.primary,
+                            ),
                       ),
                     ],
                   ),
-                  if (note.isPromoted)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '📓 دفترچه',
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 11,
-                          color: colors.primary,
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
-              const SizedBox(height: 12),
-              if (note.title != null && note.title!.isNotEmpty) ...[
-                Text(
-                  note.title!,
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            Text(
+              note.text,
+              textDirection: TextDirection.rtl,
+              style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                    height: 1.6,
                     color: colors.textPrimary,
                   ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              Text(
-                note.text,
-                textDirection: TextDirection.rtl,
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 14,
-                  height: 1.6,
-                  color: colors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('بستن', style: TextStyle(fontFamily: 'Vazirmatn')),
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+            const SizedBox(height: RitmoSpacing.xl),
+            RitmoPrimaryButton(
+              label: 'بستن',
+              onPressed: () => Navigator.pop(ctx),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDarkMode = context.isDark;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      margin: const EdgeInsets.symmetric(vertical: RitmoSpacing.xs),
       child: RitmoTheme.glassCardLight(
         blurSigma: 10,
-        color: colors.card.withValues(alpha: isDarkMode ? 0.7 : 0.85),
+        color: colors.surface.withValues(alpha: isDarkMode ? 0.7 : 0.85),
         child: InkWell(
           onTap: onTap ?? () => _showNoteBottomSheet(context),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(RitmoSpacing.md),
             child: Row(
               children: [
                 Icon(_getModuleIcon(note.sourceModule), size: 18, color: colors.primary),
-                const SizedBox(width: 10),
+                const SizedBox(width: RitmoSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,20 +135,16 @@ class ModuleNoteHistoryTile extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         textDirection: TextDirection.rtl,
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 13,
-                          color: colors.textPrimary,
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: colors.textPrimary,
+                            ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: RitmoSpacing.xs),
                       Text(
                         _formatJalali(note.createdAt),
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 11,
-                          color: colors.textSecondary,
-                        ),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: colors.textSecondary,
+                            ),
                       ),
                     ],
                   ),
@@ -244,24 +205,19 @@ class _ModuleNoteHistorySectionState extends State<ModuleNoteHistorySection> {
       future: _notesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: CupertinoActivityIndicator(),
-          ));
+          return const RitmoShimmerList(count: 2);
         }
 
         final notes = snapshot.data ?? [];
         if (notes.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.md),
             child: Text(
               'هنوز یادداشتی برای این مورد ثبت نکردی.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 12,
-                color: colors.textSecondary,
-              ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                  ),
             ),
           );
         }

@@ -27,6 +27,13 @@ const String _fontFa = 'Vazirmatn';
 Future<void> showMovementPlanSheet(
   BuildContext context, {
   Map<String, dynamic>? routineToEdit,
+  MovementKind? initialKind,
+  List<int>? initialDays,
+  Map<int, TimeOfDay>? initialDayTimes,
+  int? initialDurationMinutes,
+  int? initialReminderMinutes,
+  String? initialMuscleFocus,
+  int initialStep = 0,
   VoidCallback? onSaved,
 }) {
   return showModalBottomSheet(
@@ -35,6 +42,13 @@ Future<void> showMovementPlanSheet(
     backgroundColor: Colors.transparent,
     builder: (ctx) => MovementPlanSheet(
       routineToEdit: routineToEdit,
+      initialKind: initialKind,
+      initialDays: initialDays,
+      initialDayTimes: initialDayTimes,
+      initialDurationMinutes: initialDurationMinutes,
+      initialReminderMinutes: initialReminderMinutes,
+      initialMuscleFocus: initialMuscleFocus,
+      initialStep: initialStep,
       onSaved: onSaved,
     ),
   );
@@ -44,10 +58,24 @@ class MovementPlanSheet extends StatefulWidget {
   const MovementPlanSheet({
     super.key,
     this.routineToEdit,
+    this.initialKind,
+    this.initialDays,
+    this.initialDayTimes,
+    this.initialDurationMinutes,
+    this.initialReminderMinutes,
+    this.initialMuscleFocus,
+    this.initialStep = 0,
     this.onSaved,
   });
 
   final Map<String, dynamic>? routineToEdit;
+  final MovementKind? initialKind;
+  final List<int>? initialDays;
+  final Map<int, TimeOfDay>? initialDayTimes;
+  final int? initialDurationMinutes;
+  final int? initialReminderMinutes;
+  final String? initialMuscleFocus;
+  final int initialStep;
   final VoidCallback? onSaved;
 
   @override
@@ -79,9 +107,42 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
   void initState() {
     super.initState();
     if (widget.routineToEdit == null) {
-      final todayDart = DateTime.now().weekday;
-      _selectedDays = <int>[todayDart];
-      _dayTimes[todayDart] = const TimeOfDay(hour: 18, minute: 30);
+      if (widget.initialKind != null) {
+        _selectedKind = widget.initialKind;
+        _currentStep = widget.initialStep;
+        if (widget.initialKind!.primaryMetric == MovementMetric.distance) {
+          _distanceKm = widget.initialKind!.defaultTargetValue();
+        } else if (widget.initialKind!.primaryMetric == MovementMetric.laps) {
+          _laps = widget.initialKind!.defaultTargetValue().toInt();
+        } else if (widget.initialKind!.primaryMetric == MovementMetric.elevation) {
+          _elevationMeters = widget.initialKind!.defaultTargetValue();
+        } else if (widget.initialKind!.primaryMetric == MovementMetric.steps) {
+          _steps = widget.initialKind!.defaultTargetValue().toInt();
+        }
+      }
+      if (widget.initialMuscleFocus != null) {
+        _muscleFocus = widget.initialMuscleFocus;
+      }
+      if (widget.initialDays != null && widget.initialDays!.isNotEmpty) {
+        _selectedDays = List<int>.from(widget.initialDays!);
+      } else {
+        final todayDart = DateTime.now().weekday;
+        _selectedDays = <int>[todayDart];
+      }
+      if (widget.initialDayTimes != null && widget.initialDayTimes!.isNotEmpty) {
+        _dayTimes.addAll(widget.initialDayTimes!);
+      } else {
+        for (final d in _selectedDays) {
+          _dayTimes[d] = _defaultTimeForKind(_selectedKind);
+        }
+      }
+      if (widget.initialDurationMinutes != null) {
+        _durationMinutes = widget.initialDurationMinutes!;
+      }
+      if (widget.initialReminderMinutes != null) {
+        _reminderMinutes = widget.initialReminderMinutes!;
+        _hasReminder = widget.initialReminderMinutes! > 0 || widget.initialReminderMinutes == -1;
+      }
     }
     _initFromRoutine();
   }

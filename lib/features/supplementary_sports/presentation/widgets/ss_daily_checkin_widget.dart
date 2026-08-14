@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -138,7 +138,7 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
         _isSaving = false;
         _justSubmitted = true;
       });
-      _collapseController.forward();
+      unawaited(_collapseController.forward());
 
       // If user has sore body parts, offer exercise swap after a short delay
       if (_soreBodyParts.isNotEmpty) {
@@ -165,7 +165,7 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
     }
 
     if (mounted) {
-      _collapseController.reverse();
+      unawaited(_collapseController.reverse());
       setState(() {
         _justSubmitted = false;
         if (_previousCheckin != null) {
@@ -251,7 +251,7 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
     // Find exercises that target sore muscles
     final conflicting = <Map<String, dynamic>>[];
     for (final ex in crossRefs) {
-      final category = ex['category']?.toString()?.toLowerCase() ?? '';
+      final category = ex['category']?.toString().toLowerCase() ?? '';
       final muscleJson = ex['muscleIntensity']?.toString();
 
       bool conflicts = false;
@@ -296,7 +296,7 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
     for (final altEx in allExercises) {
       if (usedExerciseIds.contains(altEx['id']?.toString())) continue;
 
-      final altCat = altEx['category']?.toString()?.toLowerCase() ?? '';
+      final altCat = altEx['category']?.toString().toLowerCase() ?? '';
       bool altConflicts = false;
 
       for (final cat in soreCategories) {
@@ -332,18 +332,20 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
         .map((code) => MuscleGroup.taxonomy[code]?.titleFa ?? code)
         .join('، ');
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _ExerciseSwapSheet(
-        conflicting: conflicting,
-        alternatives: alternatives,
-        sorePartNames: sorePartNames,
-        planId: planId,
-        onSwapped: () {
-          if (mounted) widget.onSaved();
-        },
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => _ExerciseSwapSheet(
+          conflicting: conflicting,
+          alternatives: alternatives,
+          sorePartNames: sorePartNames,
+          planId: planId,
+          onSwapped: () {
+            if (mounted) widget.onSaved();
+          },
+        ),
       ),
     );
   }

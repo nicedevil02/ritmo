@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_dialog.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_empty_state.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/features/notes/data/notes_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/presentation/utils/note_ui_helper.dart';
+import 'package:ritmo/features/notes/presentation/widgets/ritmo_shimmer.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class NoteTrashArchiveScreen extends StatefulWidget {
@@ -62,30 +66,17 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
   }
 
   Future<void> _confirmPurgeAll() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('تخلیه کامل سطل زباله', style: TextStyle(fontFamily: 'Vazirmatn')),
-        content: const Text(
-          'آیا از حذف قطعی تمامی یادداشت‌های سطل زباله و فایل‌های پیوست آن‌ها اطمینان دارید؟ این عمل غیرقابل بازگشت است.',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-            child: const Text('تخلیه کامل', style: TextStyle(fontFamily: 'Vazirmatn')),
-          ),
-        ],
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'تخلیه کامل سطل زباله',
+      content: 'آیا از حذف قطعی تمامی یادداشت‌های سطل زباله و فایل‌های پیوست آن‌ها اطمینان دارید؟ این عمل غیرقابل بازگشت است.',
+      confirmLabel: 'تخلیه کامل',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
 
     if (confirmed == true && mounted) {
-      RitmoHaptics.confirm();
+      RitmoHapticsPolicy.tap();
       await NotesRepository.instance.purge(daysOld: 0);
       if (mounted) {
         RitmoToast.show(context, 'سطل زباله پاکسازی شد 🧹');
@@ -95,30 +86,17 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
   }
 
   Future<void> _confirmPermanentDelete(Note note) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('حذف دائمی یادداشت', style: TextStyle(fontFamily: 'Vazirmatn')),
-        content: Text(
-          'یادداشت «${note.title ?? "بدون عنوان"}» و پیوست‌های آن برای همیشه حذف خواهند شد.',
-          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-            child: const Text('حذف دائمی', style: TextStyle(fontFamily: 'Vazirmatn')),
-          ),
-        ],
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'حذف دائمی یادداشت',
+      content: 'یادداشت «${note.title ?? "بدون عنوان"}» و پیوست‌های آن برای همیشه حذف خواهند شد.',
+      confirmLabel: 'حذف دائمی',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
 
     if (confirmed == true && mounted) {
-      RitmoHaptics.confirm();
+      RitmoHapticsPolicy.tap();
       await NotesRepository.instance.permanentDelete(note.id);
       if (mounted) {
         RitmoToast.show(context, 'یادداشت برای همیشه حذف شد');
@@ -128,7 +106,7 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
   }
 
   Future<void> _restoreNote(String id) async {
-    RitmoHaptics.selection();
+    RitmoHapticsPolicy.selection();
     await NotesRepository.instance.restore(id);
     if (!mounted) return;
     RitmoToast.show(context, 'یادداشت بازیابی شد 🔄');
@@ -136,7 +114,7 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
   }
 
   Future<void> _unarchiveNote(String id) async {
-    RitmoHaptics.selection();
+    RitmoHapticsPolicy.selection();
     await NotesRepository.instance.unarchive(id);
     if (!mounted) return;
     RitmoToast.show(context, 'از بایگانی خارج شد 📤');
@@ -144,7 +122,7 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
   }
 
   Future<void> _trashNote(String id) async {
-    RitmoHaptics.selection();
+    RitmoHapticsPolicy.selection();
     await NotesRepository.instance.delete(id);
     if (!mounted) return;
     RitmoToast.show(context, 'به سطل زباله منتقل شد 🗑️');
@@ -157,8 +135,8 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: colors.background,
+      child: RitmoPageScaffold(
+        padding: EdgeInsets.zero,
         appBar: AppBar(
           backgroundColor: colors.surface,
           elevation: 0,
@@ -167,31 +145,32 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            'سطل زباله و بایگانی 📦',
-            style: TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-            ),
+            'سطل زباله و بایگانی',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
           ),
           actions: [
             if (_tabController.index == 0 && _trashedNotes.isNotEmpty)
               TextButton.icon(
                 onPressed: _confirmPurgeAll,
-                icon: const Icon(CupertinoIcons.trash_slash, size: 16, color: Colors.redAccent),
-                label: const Text(
+                icon: Icon(CupertinoIcons.trash_slash, size: 16, color: colors.error),
+                label: Text(
                   'تخلیه',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.redAccent),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: colors.error,
+                      ),
                 ),
               ),
+            const SizedBox(width: RitmoSpacing.xs),
           ],
           bottom: TabBar(
             controller: _tabController,
             indicatorColor: colors.primary,
             labelColor: colors.primary,
             unselectedLabelColor: colors.textSecondary,
-            labelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+            labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold),
             onTap: (_) => setState(() {}),
             tabs: [
               Tab(text: 'سطل زباله (${PersianDigits.convert(_trashedNotes.length.toString())})'),
@@ -200,21 +179,21 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
           ),
         ),
         body: _isLoading
-            ? Center(child: CircularProgressIndicator(color: colors.primary))
+            ? const RitmoShimmerList(count: 4)
             : TabBarView(
                 controller: _tabController,
                 children: [
                   // Tab 1: Trashed Notes
                   _buildList(
                     items: _trashedNotes,
-                    emptyText: 'سطل زباله خالی است 🌿',
+                    emptyText: 'سطل زباله خالی است',
                     isTrash: true,
                   ),
 
                   // Tab 2: Archived Notes
                   _buildList(
                     items: _archivedNotes,
-                    emptyText: 'هیچ یادداشتی در بایگانی نیست 📦',
+                    emptyText: 'هیچ یادداشتی در بایگانی نیست',
                     isTrash: false,
                   ),
                 ],
@@ -231,99 +210,102 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
     final colors = context.colors;
 
     if (items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(isTrash ? CupertinoIcons.trash : CupertinoIcons.archivebox, size: 48, color: colors.textTertiary),
-            const SizedBox(height: 12),
-            Text(
-              emptyText,
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
-            ),
-          ],
-        ),
+      return RitmoEmptyState(
+        icon: isTrash ? CupertinoIcons.trash : CupertinoIcons.archivebox,
+        title: emptyText,
+        description: isTrash ? 'یادداشت‌های حذف شده در اینجا قرار می‌گیرند.' : 'یادداشت‌های بایگانی‌شده در اینجا نمایش داده می‌شوند.',
       );
     }
 
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView.builder(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(RitmoSpacing.md),
         itemCount: items.length,
         itemBuilder: (ctx, idx) {
           final note = items[idx];
           final style = NoteUiHelper.getKindStyle(context, note.kind);
 
-          return Container(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            decoration: BoxDecoration(
-              color: style.bgTint,
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-              border: Border.all(color: colors.border.withValues(alpha: 0.25)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(style.icon, size: 14, color: style.accentColor),
-                          const SizedBox(width: 6),
-                          Text(
-                            note.title ?? 'بدون عنوان',
-                            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        _formatDate(note.trashedAt ?? note.updatedAt),
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textTertiary),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    note.body,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, color: colors.textSecondary, height: 1.4),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (isTrash) ...[
-                        TextButton.icon(
-                          onPressed: () => _restoreNote(note.id),
-                          icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 14),
-                          label: const Text('بازیابی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
-                        ),
-                        TextButton.icon(
-                          onPressed: () => _confirmPermanentDelete(note),
-                          icon: const Icon(CupertinoIcons.delete, size: 14, color: Colors.redAccent),
-                          label: const Text('حذف قطعی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.redAccent)),
-                        ),
-                      ] else ...[
-                        TextButton.icon(
-                          onPressed: () => _unarchiveNote(note.id),
-                          icon: const Icon(CupertinoIcons.arrow_up_doc, size: 14),
-                          label: const Text('خروج از بایگانی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
-                        ),
-                        TextButton.icon(
-                          onPressed: () => _trashNote(note.id),
-                          icon: const Icon(CupertinoIcons.trash, size: 14, color: Colors.redAccent),
-                          label: const Text('انتقال به زباله‌دان', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.redAccent)),
+          return RitmoCard(
+            margin: const EdgeInsets.symmetric(vertical: RitmoSpacing.xs),
+            padding: const EdgeInsets.all(RitmoSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(style.icon, size: 14, color: style.accentColor),
+                        const SizedBox(width: RitmoSpacing.xs),
+                        Text(
+                          note.title ?? 'بدون عنوان',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
                         ),
                       ],
+                    ),
+                    Text(
+                      _formatDate(note.trashedAt ?? note.updatedAt),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: colors.textTertiary,
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: RitmoSpacing.xs),
+                Text(
+                  note.body,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.textSecondary,
+                        height: 1.4,
+                      ),
+                ),
+                const SizedBox(height: RitmoSpacing.sm),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (isTrash) ...[
+                      TextButton.icon(
+                        onPressed: () => _restoreNote(note.id),
+                        icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 14),
+                        label: Text('بازیابی', style: Theme.of(context).textTheme.labelSmall),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => _confirmPermanentDelete(note),
+                        icon: Icon(CupertinoIcons.delete, size: 14, color: colors.error),
+                        label: Text(
+                          'حذف قطعی',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: colors.error,
+                              ),
+                        ),
+                      ),
+                    ] else ...[
+                      TextButton.icon(
+                        onPressed: () => _unarchiveNote(note.id),
+                        icon: const Icon(CupertinoIcons.arrow_up_doc, size: 14),
+                        label: Text('خروج از بایگانی', style: Theme.of(context).textTheme.labelSmall),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => _trashNote(note.id),
+                        icon: Icon(CupertinoIcons.trash, size: 14, color: colors.error),
+                        label: Text(
+                          'انتقال به زباله‌دان',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: colors.error,
+                              ),
+                        ),
+                      ),
                     ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           );
         },
@@ -331,3 +313,4 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
     );
   }
 }
+

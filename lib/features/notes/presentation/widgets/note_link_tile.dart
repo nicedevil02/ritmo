@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 
@@ -84,41 +85,37 @@ class NoteLinkTile extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 3),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        margin: const EdgeInsets.symmetric(vertical: RitmoSpacing.xs - 1),
+        padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.sm),
         decoration: BoxDecoration(
           color: colors.surfaceSunken,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(RitmoRadius.field),
           border: Border.all(color: colors.border.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
             Icon(_getModuleIcon(link.linkModule), size: 16, color: colors.primary),
-            const SizedBox(width: 8),
+            const SizedBox(width: RitmoSpacing.sm),
             Expanded(
               child: Text(
                 'مرتبط با $moduleLabel ($shortEntityId)',
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 12,
-                  color: colors.textPrimary,
-                ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.textPrimary,
+                    ),
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm, vertical: RitmoSpacing.xs / 2),
               decoration: BoxDecoration(
                 color: colors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(RitmoRadius.badge),
               ),
               child: Text(
                 relationLabel,
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                  color: colors.primary,
-                ),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
+                    ),
               ),
             ),
           ],

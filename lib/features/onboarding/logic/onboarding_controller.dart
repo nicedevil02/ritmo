@@ -18,6 +18,7 @@ import 'package:ritmo/features/onboarding/logic/onboarding_gate.dart';
 import 'package:ritmo/features/onboarding/logic/onboarding_module_map.dart';
 import 'package:ritmo/features/onboarding/logic/starter_pack_catalog.dart';
 import 'package:ritmo/features/onboarding/models/focus_area.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:sqflite/sqflite.dart';
 
 class OnboardingController extends ChangeNotifier {
@@ -344,8 +345,16 @@ class OnboardingController extends ChangeNotifier {
 
       await AlarmSchedulerService.scheduleNextAlarms();
 
+      DayAgendaService.instance.invalidateAll();
+      RitmoEvents.notifyRoutineChanged();
+
       RitmoEventBus().fire(RitmoEvent(
         type: 'DataImported',
+        timestamp: DateTime.now(),
+        payload: {},
+      ));
+      RitmoEventBus().fire(RitmoEvent(
+        type: 'RoutineCreated',
         timestamp: DateTime.now(),
         payload: {},
       ));

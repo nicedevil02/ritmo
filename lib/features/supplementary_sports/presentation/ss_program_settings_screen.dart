@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -6,7 +5,6 @@ import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_program_builder.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/primary_button.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/ss_program_diff_sheet.dart';
-import 'package:sqflite/sqflite.dart';
 
 class SsProgramSettingsScreen extends StatefulWidget {
   const SsProgramSettingsScreen({super.key});

@@ -173,6 +173,10 @@ class MovementSlotOverrideRepository {
         } else if (o.action == MovementSlotAction.retime &&
             o.newTime != null &&
             o.newTime!.isNotEmpty) {
+          final targetDate = DateTime.tryParse(o.dateIso);
+          if (targetDate == null) continue;
+          final targetDartWeekday = targetDate.weekday;
+
           final schedules = await txn.query(
             'routine_schedules',
             where: 'routineId = ?',
@@ -185,30 +189,83 @@ class MovementSlotOverrideRepository {
                 .split(',')
                 .map((p) => int.tryParse(p.trim()))
                 .whereType<int>()
-                .toSet();
+                .toList();
 
-            final recurrence = WeekdaysRecurrence(
-              weekdays: days.isEmpty ? {DateTime.now().weekday} : days,
-            );
-            final (schedType, daysOfWeek) = deriveScheduleParams(recurrence);
-            final recurrenceJson = encodeRecurrenceRule(
-              recurrence: recurrence,
-              startDate: DateTime.now(),
-              reminderTimes: [o.newTime!],
-            );
+            if (days.contains(targetDartWeekday)) {
+              if (days.length == 1) {
+                // Only this day in schedule row -> update time directly
+                final recurrence = WeekdaysRecurrence(weekdays: {targetDartWeekday});
+                final (schedType, daysOfWeek) = deriveScheduleParams(recurrence);
+                final recurrenceJson = encodeRecurrenceRule(
+                  recurrence: recurrence,
+                  startDate: DateTime.now(),
+                  reminderTimes: [o.newTime!],
+                );
 
-            await txn.update(
-              'routine_schedules',
-              {
-                'scheduleType': schedType,
-                'daysOfWeek': daysOfWeek,
-                'timeOfDay': o.newTime,
-                'recurrenceRule': recurrenceJson,
-                'updatedAt': nowMs,
-              },
-              where: 'id = ?',
-              whereArgs: [s['id']],
-            );
+                await txn.update(
+                  'routine_schedules',
+                  {
+                    'scheduleType': schedType,
+                    'daysOfWeek': daysOfWeek,
+                    'timeOfDay': o.newTime,
+                    'recurrenceRule': recurrenceJson,
+                    'updatedAt': nowMs,
+                  },
+                  where: 'id = ?',
+                  whereArgs: [s['id']],
+                );
+              } else {
+                // Multiple days in schedule row -> split this day out
+                days.remove(targetDartWeekday);
+                days.sort();
+
+                final remainingRecurrence = WeekdaysRecurrence(weekdays: days.toSet());
+                final (remSchedType, remDaysOfWeek) = deriveScheduleParams(remainingRecurrence);
+                final originalTime = s['timeOfDay']?.toString() ?? '18:30';
+                final remainingRecurrenceJson = encodeRecurrenceRule(
+                  recurrence: remainingRecurrence,
+                  startDate: DateTime.now(),
+                  reminderTimes: [originalTime],
+                );
+
+                // Update original schedule with remaining days and original time
+                await txn.update(
+                  'routine_schedules',
+                  {
+                    'scheduleType': remSchedType,
+                    'daysOfWeek': remDaysOfWeek,
+                    'recurrenceRule': remainingRecurrenceJson,
+                    'updatedAt': nowMs,
+                  },
+                  where: 'id = ?',
+                  whereArgs: [s['id']],
+                );
+
+                // Insert new schedule specifically for targetDartWeekday with newTime
+                final newRecurrence = WeekdaysRecurrence(weekdays: {targetDartWeekday});
+                final (newSchedType, newDaysOfWeek) = deriveScheduleParams(newRecurrence);
+                final newRecurrenceJson = encodeRecurrenceRule(
+                  recurrence: newRecurrence,
+                  startDate: DateTime.now(),
+                  reminderTimes: [o.newTime!],
+                );
+
+                await txn.insert('routine_schedules', {
+                  'id': RitmoIdFactory.schedule(o.routineId),
+                  'routineId': o.routineId,
+                  'scheduleType': newSchedType,
+                  'daysOfWeek': newDaysOfWeek,
+                  'timeOfDay': o.newTime,
+                  'recurrenceRule': newRecurrenceJson,
+                  'notificationLevel': s['notificationLevel'] ?? 'NORMAL',
+                  'advanceReminderMinutes': s['advanceReminderMinutes'] ?? 0,
+                  'durationMinutes': s['durationMinutes'] ?? 30,
+                  'isActive': 1,
+                  'createdAt': nowMs,
+                  'updatedAt': nowMs,
+                });
+              }
+            }
           }
 
           // Remove consumed override

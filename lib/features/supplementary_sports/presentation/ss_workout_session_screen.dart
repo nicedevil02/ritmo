@@ -655,7 +655,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final barWeight = 20.0;
+        const barWeight = 20.0;
         final perSide = max(0.0, (totalWeight - barWeight) / 2.0);
         final availablePlates = [25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25];
         final platesPerSide = <double, int>{};
@@ -1514,12 +1514,23 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       textDirection: TextDirection.rtl,
                       children: [
-                        Icon(Icons.history_rounded, size: 15, color: Color(0xFF06B6D4)),
-                        SizedBox(width: 4),
-                        Text('دفعه قبل', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xFF06B6D4))),
+                        const Icon(Icons.history_rounded, size: 15, color: Color(0xFF06B6D4)),
+                        const SizedBox(width: 4),
+                        const Text('دفعه قبل', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xFF06B6D4))),
+                        const Spacer(),
+                        InkWell(
+                          onTap: () => _copyPreviousRecord(entry),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: Text(
+                              'کپی روی ست‌ها 📋',
+                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Color(0xFF38BDF8), fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),

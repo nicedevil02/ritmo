@@ -24,51 +24,56 @@ class NoteUiHelper {
   NoteUiHelper._();
 
   static NoteKindStyle getKindStyle(BuildContext context, NoteKind kind) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final modules = context.modules;
+    final colors = context.colors;
+
+    final Color accent;
+    final IconData icon;
+    final String labelFa;
+    final String emoji;
 
     switch (kind) {
       case NoteKind.experience:
-        return NoteKindStyle(
-          accentColor: const Color(0xFFE5A00D), // Warm Amber Gold
-          bgTint: isDark ? const Color(0xFF261E08) : const Color(0xFFFFFBF0),
-          icon: Icons.lightbulb_rounded,
-          labelFa: 'درس زندگی',
-          emoji: '💡',
-        );
+        accent = modules.insights;
+        icon = Icons.lightbulb_rounded;
+        labelFa = 'درس زندگی';
+        emoji = '💡';
+        break;
       case NoteKind.idea:
-        return NoteKindStyle(
-          accentColor: const Color(0xFF00B4D8), // Vibrant Cyan/Electric
-          bgTint: isDark ? const Color(0xFF06202A) : const Color(0xFFF0FAFD),
-          icon: Icons.bolt_rounded,
-          labelFa: 'ایده نو',
-          emoji: '⚡',
-        );
+        accent = modules.study;
+        icon = Icons.bolt_rounded;
+        labelFa = 'ایده نو';
+        emoji = '⚡';
+        break;
       case NoteKind.decision:
-        return NoteKindStyle(
-          accentColor: const Color(0xFF10B981), // Emerald Green
-          bgTint: isDark ? const Color(0xFF062419) : const Color(0xFFF0FDF4),
-          icon: Icons.check_circle_rounded,
-          labelFa: 'تصمیم قطعی',
-          emoji: '🎯',
-        );
+        accent = modules.goals;
+        icon = Icons.check_circle_rounded;
+        labelFa = 'تصمیم قطعی';
+        emoji = '🎯';
+        break;
       case NoteKind.daily:
-        return NoteKindStyle(
-          accentColor: const Color(0xFFEC4899), // Soft Rose / Journal
-          bgTint: isDark ? const Color(0xFF280B1B) : const Color(0xFFFDF2F8),
-          icon: Icons.auto_stories_rounded,
-          labelFa: 'ژورنال روزانه',
-          emoji: '📅',
-        );
+        accent = modules.health;
+        icon = Icons.auto_stories_rounded;
+        labelFa = 'ژورنال روزانه';
+        emoji = '📅';
+        break;
       case NoteKind.note:
-        final primary = context.colors.primary;
-        return NoteKindStyle(
-          accentColor: primary,
-          bgTint: isDark ? primary.withValues(alpha: 0.08) : primary.withValues(alpha: 0.04),
-          icon: Icons.description_rounded,
-          labelFa: 'یادداشت',
-          emoji: '📓',
-        );
+        accent = colors.primary;
+        icon = Icons.description_rounded;
+        labelFa = 'یادداشت';
+        emoji = '📓';
+        break;
     }
+
+    final bgTint = accent.withValues(alpha: context.isDark ? 0.16 : 0.10);
+
+    return NoteKindStyle(
+      accentColor: accent,
+      bgTint: bgTint,
+      icon: icon,
+      labelFa: labelFa,
+      emoji: emoji,
+    );
   }
 
   static String formatRelativeDate(DateTime dt) {

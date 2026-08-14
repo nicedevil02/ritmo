@@ -9,7 +9,6 @@ import 'package:ritmo/features/supplementary_sports/data/models/ss_session_model
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_analytics_screen.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/bottom_sheet_container.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/continuity_bar.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/empty_state_view.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_lottie_player.dart';
@@ -121,7 +120,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
         } else {
           // Fallback manual calc
           final durationMins = log['durationMinutes'] as int? ?? 0;
-          final met = 5.0; // Moderate default for sports
+          const met = 5.0; // Moderate default for sports
           totalCalories += MovementLoadCalculator.calories(
             met: met,
             weightKg: weightVal,

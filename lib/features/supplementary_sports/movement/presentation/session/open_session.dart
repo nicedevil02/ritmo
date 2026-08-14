@@ -97,7 +97,9 @@ Future<void> startMovementSessionFlow(BuildContext context, MovementKind kind) a
       ),
     );
   } else {
-    await _startAndOpenNewSession(context, kind);
+    if (context.mounted) {
+      await _startAndOpenNewSession(context, kind);
+    }
   }
 }
 

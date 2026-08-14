@@ -9,6 +9,8 @@ import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/backend/auth_service.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
+import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_intelligence_orchestrator.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
@@ -99,24 +101,52 @@ void main() async {
   };
 
   // 1. Initialize service locator & settings cache (AgendaRenderers registered inside AppBootstrapper.init - BOOT-09)
-  await AppBootstrapper.init();
-  await SettingsService.instance.init();
+  try {
+    await AppBootstrapper.init().timeout(const Duration(seconds: 4));
+  } catch (e) {
+    RitmoLog.warning('Boot', 'AppBootstrapper.init error/timeout: $e');
+  }
+
+  try {
+    await SettingsService.instance.init().timeout(const Duration(seconds: 3));
+  } catch (e) {
+    RitmoLog.warning('Boot', 'SettingsService.init error/timeout: $e');
+  }
 
   // 2. Initialize database and repositories before runApp
-  final themeRepository = sl<ThemeRepository>();
-  await themeRepository.init();
+  final themeRepository = sl.isRegistered<ThemeRepository>() ? sl<ThemeRepository>() : ThemeRepository();
+  try {
+    await themeRepository.init().timeout(const Duration(seconds: 3));
+  } catch (e) {
+    RitmoLog.warning('Boot', 'ThemeRepository.init error/timeout: $e');
+  }
 
-  final localeRepository = sl<LocaleRepository>();
-  await localeRepository.init();
+  final localeRepository = sl.isRegistered<LocaleRepository>() ? sl<LocaleRepository>() : LocaleRepository();
+  try {
+    await localeRepository.init().timeout(const Duration(seconds: 3));
+  } catch (e) {
+    RitmoLog.warning('Boot', 'LocaleRepository.init error/timeout: $e');
+  }
 
-  await AppModeService.instance.load();
+  try {
+    await AppModeService.instance.load().timeout(const Duration(seconds: 3));
+  } catch (e) {
+    RitmoLog.warning('Boot', 'AppModeService.load error/timeout: $e');
+  }
+
+  final orchestrator = sl.isRegistered<RitmoIntelligenceOrchestrator>()
+      ? sl<RitmoIntelligenceOrchestrator>()
+      : RitmoIntelligenceOrchestrator(
+          engineBus: RitmoEngineBus.instance,
+          eventBus: RitmoEventBus(),
+        );
 
   runApp(RestartWidget(
     child: ProviderScope(
       child: RitmoApp(
         themeRepository: themeRepository,
         localeRepository: localeRepository,
-        orchestrator: sl<RitmoIntelligenceOrchestrator>(),
+        orchestrator: orchestrator,
       ),
     ),
   ));
@@ -161,20 +191,34 @@ class _RitmoAppState extends State<RitmoApp> {
 
   Future<void> _initialize() async {
     try {
-      setState(() => _initError = null);
-      final db = await DatabaseHelper.instance.database;
+      if (mounted) setState(() => _initError = null);
+      final db = await DatabaseHelper.instance.database.timeout(
+        const Duration(seconds: 4),
+        onTimeout: () => throw TimeoutException('DatabaseHelper.database timeout on startup'),
+      );
 
       // WarmUp database tasks and sweep (BOOT-07)
-      await DatabaseHelper.warmUp(db);
+      try {
+        await DatabaseHelper.warmUp(db).timeout(const Duration(seconds: 3));
+      } catch (e) {
+        RitmoLog.warning('Init', 'DatabaseHelper.warmUp warning: $e');
+      }
 
       // قدم صفر: همگام‌سازی یادآور پیش‌خواب با تنظیمات در هر شروع اپ
       unawaited(SleepWinddownReminderService.syncFromSettings());
 
       // Restore any in-progress course study timer (C8)
-      await CourseTimerService.instance.initOnAppStart();
+      try {
+        await CourseTimerService.instance.initOnAppStart().timeout(const Duration(seconds: 2));
+      } catch (e) {
+        RitmoLog.warning('Init', 'CourseTimerService.initOnAppStart warning: $e');
+      }
 
       // Check if onboarding is completed via OnboardingGate
-      _onboardingCompleted = await OnboardingGate.isCompleted(db);
+      _onboardingCompleted = await OnboardingGate.isCompleted(db).timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => true,
+      );
     } catch (e, st) {
       await PrivacyErrorSink.instance.logError('Init', 'Critical startup error in _initialize (BOOT-04)', e, st);
       RitmoLog.error('Init', 'Critical startup error in _initialize (BOOT-04)', e, st);
@@ -183,7 +227,6 @@ class _RitmoAppState extends State<RitmoApp> {
           _initError = e;
         });
       }
-      rethrow;
     }
   }
 

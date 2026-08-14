@@ -58,27 +58,40 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
     final isCompleted = _currentRakah >= 11;
     final progress = (_currentRakah / 11).clamp(0.0, 1.0);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
-          colors: [
-            const Color(0xFF1E1E38), // Night sky theme
-            const Color(0xFF121224),
-          ],
+          colors: isDark
+              ? const [
+                  Color(0xFF192420),
+                  Color(0xFF101715),
+                ]
+              : const [
+                  Color(0xFFFFFDF8),
+                  Color(0xFFF7F3E9),
+                ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(32),
         border: Border.all(
-          color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+          color: isDark
+              ? const Color(0xFF2E4D40)
+              : const Color(0xFFE8E0CD),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.28)
+                : const Color(0xFFB79B62).withValues(alpha: 0.08),
+            blurRadius: 35,
+            spreadRadius: 0,
+            offset: const Offset(0, 12),
           ),
         ],
       ),

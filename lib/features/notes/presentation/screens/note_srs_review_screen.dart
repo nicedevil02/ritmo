@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/features/notes/data/experience_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/logic/spaced_repetition_engine.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
 import 'package:ritmo/features/notes/presentation/utils/note_ui_helper.dart';
+import 'package:ritmo/features/notes/presentation/widgets/ritmo_shimmer.dart';
 
 class NoteSrsReviewScreen extends StatefulWidget {
   const NoteSrsReviewScreen({super.key});
@@ -33,10 +35,10 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
     super.initState();
     _flipController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 380),
+      duration: RitmoMotion.sheet,
     );
     _flipAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _flipController, curve: Curves.easeInOutCubic),
+      CurvedAnimation(parent: _flipController, curve: RitmoMotion.enter),
     );
     _loadDueReviews();
   }
@@ -48,7 +50,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
   }
 
   void _flipCard() {
-    RitmoHaptics.selection();
+    RitmoHapticsPolicy.selection();
     if (_isFront) {
       _flipController.forward();
     } else {
@@ -87,11 +89,11 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
     if (_dueNotes.isEmpty || _currentIndex >= _dueNotes.length) return;
 
     if (feedback == ReviewFeedback.easy) {
-      RitmoHaptics.success();
+      RitmoHapticsPolicy.success();
     } else if (feedback == ReviewFeedback.good) {
-      RitmoHaptics.confirm();
+      RitmoHapticsPolicy.tap();
     } else {
-      RitmoHaptics.selection();
+      RitmoHapticsPolicy.selection();
     }
 
     final currentNote = _dueNotes[_currentIndex];
@@ -123,8 +125,8 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: colors.background,
+      child: RitmoPageScaffold(
+        padding: EdgeInsets.zero,
         appBar: AppBar(
           backgroundColor: colors.surface,
           elevation: 0,
@@ -133,13 +135,11 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            'مرور فاصله‌دار یادگیری و حکمت‌ها 🧠',
-            style: TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-            ),
+            'مرور فاصله‌دار یادگیری و حکمت‌ها',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
           ),
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(4),
@@ -153,21 +153,19 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
           actions: [
             if (!_isLoading && _dueNotes.isNotEmpty && _currentIndex < _dueNotes.length)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg, vertical: RitmoSpacing.md),
                 child: Text(
                   '${PersianDigits.convert((_currentIndex + 1).toString())} از ${PersianDigits.convert(_dueNotes.length.toString())}',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: colors.primary,
-                  ),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
                 ),
               ),
           ],
         ),
         body: _isLoading
-            ? Center(child: CircularProgressIndicator(color: colors.primary))
+            ? const RitmoShimmerList(count: 3)
             : isDone
                 ? _buildCompletionView(context)
                 : _buildReviewCardView(context),
@@ -180,61 +178,41 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(RitmoSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.8, end: 1.0),
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.elasticOut,
-              builder: (context, scale, child) {
-                return Transform.scale(
-                  scale: scale,
-                  child: child,
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(CupertinoIcons.sparkles, size: 56, color: Colors.amber),
+            Container(
+              padding: const EdgeInsets.all(RitmoSpacing.xl),
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
               ),
+              child: Icon(CupertinoIcons.sparkles, size: 56, color: colors.primary),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: RitmoSpacing.lg),
             Text(
-              'همه موارد امروز مرور شدند! 🌱',
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-              ),
+              'همه موارد امروز مرور شدند!',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: RitmoSpacing.sm),
             Text(
               'تمام یادداشت‌ها و درس‌های معوقه امروز با موفقیت مرور و در تقویم حافظه ثبت شدند.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 13,
-                color: colors.textSecondary,
-                height: 1.5,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.textSecondary,
+                    height: 1.5,
+                  ),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
+            const SizedBox(height: RitmoSpacing.xl),
+            RitmoPrimaryButton(
+              label: 'بازگشت به دفترچه',
+              icon: CupertinoIcons.checkmark_alt,
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(CupertinoIcons.checkmark_alt, size: 18),
-              label: const Text('بازگشت به دفترچه', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
+              fullWidth: false,
             ),
           ],
         ),
@@ -248,7 +226,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
     final style = NoteUiHelper.getKindStyle(context, isExp ? NoteKind.experience : note.kind);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: const EdgeInsets.fromLTRB(RitmoSpacing.lg, RitmoSpacing.md, RitmoSpacing.lg, RitmoSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -265,7 +243,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                   return Transform(
                     alignment: Alignment.center,
                     transform: Matrix4.identity()
-                      ..setEntry(3, 2, 0.001) // Perspective effect
+                      ..setEntry(3, 2, 0.001)
                       ..rotateY(angle),
                     child: isShowingFront
                         ? _buildCardFront(context, note, style)
@@ -279,58 +257,56 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: RitmoSpacing.md),
 
           // 4 Tactile Feedback Buttons
           Text(
             'میزان تسلط و به خاطرسپاری:',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontSize: 11.5,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).textTheme.bodySmall?.color,
-            ),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.textSecondary,
+                ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: RitmoSpacing.sm),
           Row(
             children: [
               Expanded(
                 child: _SrsFeedbackButton(
                   label: 'فراموش شد',
                   subtext: 'مرحله ۱',
-                  emoji: '❌',
-                  color: Colors.redAccent,
+                  icon: CupertinoIcons.clear,
+                  color: context.colors.error,
                   onTap: () => _submitFeedback(ReviewFeedback.forgotten),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: RitmoSpacing.xs),
               Expanded(
                 child: _SrsFeedbackButton(
                   label: 'سخت بود',
                   subtext: 'تکرار',
-                  emoji: '⚠️',
-                  color: Colors.orange,
+                  icon: CupertinoIcons.exclamationmark_triangle,
+                  color: context.colors.warning,
                   onTap: () => _submitFeedback(ReviewFeedback.hard),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: RitmoSpacing.xs),
               Expanded(
                 child: _SrsFeedbackButton(
                   label: 'خوب بود',
                   subtext: '+۱ مرحله',
-                  emoji: '👍',
-                  color: Colors.lightGreen,
+                  icon: CupertinoIcons.hand_thumbsup,
+                  color: context.colors.success,
                   onTap: () => _submitFeedback(ReviewFeedback.good),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: RitmoSpacing.xs),
               Expanded(
                 child: _SrsFeedbackButton(
                   label: 'آسان بود',
                   subtext: '+۲ مرحله',
-                  emoji: '⚡',
-                  color: const Color(0xFF10B981),
+                  icon: CupertinoIcons.bolt_fill,
+                  color: context.modules.goals,
                   onTap: () => _submitFeedback(ReviewFeedback.easy),
                 ),
               ),
@@ -345,7 +321,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
     final colors = context.colors;
 
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(RitmoSpacing.xl),
       decoration: BoxDecoration(
         color: style.bgTint,
         borderRadius: BorderRadius.circular(RitmoRadius.hero),
@@ -365,30 +341,28 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.xs),
                 decoration: BoxDecoration(
                   color: style.accentColor.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(RitmoRadius.badge),
                 ),
                 child: Row(
                   children: [
                     Icon(style.icon, size: 14, color: style.accentColor),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: RitmoSpacing.xs),
                     Text(
-                      _currentExp != null ? '💡 ${_currentExp!.category.labelFa}' : style.labelFa,
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: style.accentColor,
-                      ),
+                      _currentExp != null ? _currentExp!.category.labelFa : style.labelFa,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: style.accentColor,
+                          ),
                     ),
                   ],
                 ),
               ),
               Text(
                 'مرحله مرور: ${PersianDigits.convert(note.reviewStage.toString())}',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),
@@ -396,20 +370,14 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
 
           // Key Lesson or Title
           Center(
-            child: Column(
-              children: [
-                Text(
-                  '« ${_currentExp?.lesson ?? note.title ?? note.body} »',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 18,
+            child: Text(
+              '« ${_currentExp?.lesson ?? note.title ?? note.body} »',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
                     height: 1.5,
                   ),
-                ),
-              ],
             ),
           ),
           const Spacer(),
@@ -420,14 +388,12 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(CupertinoIcons.arrow_2_circlepath, size: 14, color: style.accentColor),
-                const SizedBox(width: 6),
+                const SizedBox(width: RitmoSpacing.xs),
                 Text(
                   'برای مشاهده جزئیات و پاسخ، کارت را لمس کنید',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 11,
-                    color: style.accentColor,
-                  ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: style.accentColor,
+                      ),
                 ),
               ],
             ),
@@ -441,9 +407,9 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
     final colors = context.colors;
 
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(RitmoSpacing.xl),
       decoration: BoxDecoration(
-        color: colors.card,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(RitmoRadius.hero),
         border: Border.all(color: style.accentColor.withValues(alpha: 0.45), width: 1.5),
         boxShadow: [
@@ -462,12 +428,10 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
             children: [
               Text(
                 'جزئیات و متن کامل',
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: style.accentColor,
-                ),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: style.accentColor,
+                    ),
               ),
               TextButton.icon(
                 onPressed: () async {
@@ -478,7 +442,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                   await _loadDueReviews();
                 },
                 icon: const Icon(Icons.edit, size: 14),
-                label: const Text('ویرایش', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                label: Text('ویرایش', style: Theme.of(context).textTheme.labelSmall),
               ),
             ],
           ),
@@ -487,29 +451,25 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
             child: SingleChildScrollView(
               child: Text(
                 note.body,
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 14,
-                  color: colors.textPrimary,
-                  height: 1.7,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.textPrimary,
+                      height: 1.7,
+                    ),
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: RitmoSpacing.sm),
           Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(CupertinoIcons.arrow_2_circlepath, size: 13, color: colors.textSecondary),
-                const SizedBox(width: 6),
+                const SizedBox(width: RitmoSpacing.xs),
                 Text(
                   'لمس کارت برای بازگشت به روی کارت',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 10,
-                    color: colors.textSecondary,
-                  ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.textSecondary,
+                      ),
                 ),
               ],
             ),
@@ -523,14 +483,14 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
 class _SrsFeedbackButton extends StatefulWidget {
   final String label;
   final String subtext;
-  final String emoji;
+  final IconData icon;
   final Color color;
   final VoidCallback onTap;
 
   const _SrsFeedbackButton({
     required this.label,
     required this.subtext,
-    required this.emoji,
+    required this.icon,
     required this.color,
     required this.onTap,
   });
@@ -546,7 +506,7 @@ class _SrsFeedbackButtonState extends State<_SrsFeedbackButton> {
   Widget build(BuildContext context) {
     return AnimatedScale(
       scale: _isPressed ? 0.94 : 1.0,
-      duration: const Duration(milliseconds: 100),
+      duration: RitmoMotion.press,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -556,34 +516,30 @@ class _SrsFeedbackButtonState extends State<_SrsFeedbackButton> {
             setState(() => _isPressed = false);
             widget.onTap();
           },
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm),
             decoration: BoxDecoration(
               color: widget.color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(RitmoRadius.card),
               border: Border.all(color: widget.color.withValues(alpha: 0.35)),
             ),
             child: Column(
               children: [
-                Text(widget.emoji, style: const TextStyle(fontSize: 16)),
-                const SizedBox(height: 2),
+                Icon(widget.icon, size: 16, color: widget.color),
+                const SizedBox(height: RitmoSpacing.xs / 2),
                 Text(
                   widget.label,
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.bold,
-                    color: widget.color,
-                  ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: widget.color,
+                      ),
                 ),
                 Text(
                   widget.subtext,
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 9,
-                    color: widget.color.withValues(alpha: 0.8),
-                  ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: widget.color.withValues(alpha: 0.8),
+                      ),
                 ),
               ],
             ),
@@ -593,3 +549,4 @@ class _SrsFeedbackButtonState extends State<_SrsFeedbackButton> {
     );
   }
 }
+

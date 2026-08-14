@@ -73,8 +73,7 @@ class WorshipAgendaSource implements AgendaSource {
     );
     final mustahabPractices = await db.query(
       'worship_practices',
-      where: 'practiceType != ? AND ${WorshipEngine.activePracticesWhere}',
-      whereArgs: ['PRAYER'],
+      where: "(practiceType = 'MUSTAHAB' OR ((practiceType = 'DHIKR' OR practiceType = 'QURAN') AND showInCalendar = 1)) AND ${WorshipEngine.activePracticesWhere}",
       orderBy: WorshipEngine.activePracticesOrderBy,
     );
     // Worship debts are no longer shown in the calendar per user request
@@ -631,7 +630,10 @@ class WorshipAgendaSource implements AgendaSource {
         }
 
         final status = statuses[id];
-        final completion = status?.isDone == true ? AgendaCompletion.done : AgendaCompletion.pending;
+        final dailyDone = p['dailyDone'] as int? ?? 0;
+        final dailyTarget = p['dailyTarget'] as int? ?? 1;
+        final isCompleted = status?.isDone == true || (dailyTarget > 0 && dailyDone >= dailyTarget);
+        final completion = isCompleted ? AgendaCompletion.done : AgendaCompletion.pending;
 
         final anchor = p['reminderAnchor'] as String? ?? 'NONE';
         final offsetMinutes = p['reminderOffsetMinutes'] as int? ?? 0;
@@ -678,8 +680,7 @@ class WorshipAgendaSource implements AgendaSource {
           resolvedTimes.add(null); // fallback (no fixed time)
         }
 
-        final dailyTarget = p['dailyTarget'] as int? ?? 1;
-        final countDone = status?.countDone ?? 0;
+        final countDone = status?.countDone ?? (dailyDone > 0 ? dailyDone : 0);
         
         String? subtitle;
         if (dailyTarget > 1) {

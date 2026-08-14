@@ -287,7 +287,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xff0b0b0e) : colors.card,
+                  color: isDark ? const Color(0xFF151A18) : colors.card,
                   borderRadius: BorderRadius.circular(14),
                   border: isDark ? Border.all(color: const Color(0xffD4A843).withValues(alpha: 0.15), width: 1.2) : null,
                 ),

@@ -20,7 +20,6 @@ class SsProgramDiffSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final sportsAccent = context.modules.sports;
 
     return Directionality(
       textDirection: TextDirection.rtl,

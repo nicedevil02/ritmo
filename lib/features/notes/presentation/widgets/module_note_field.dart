@@ -60,36 +60,32 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
               maxLines: 3,
               maxLength: widget.maxLength,
               textDirection: TextDirection.rtl,
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 14,
-                color: colors.textPrimary,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.textPrimary,
+                  ),
               onChanged: widget.onChanged,
               decoration: InputDecoration(
                 hintText: widget.hintFa,
-                hintStyle: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 13,
-                  color: colors.textSecondary.withValues(alpha: 0.6),
-                ),
+                hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary.withValues(alpha: 0.6),
+                    ),
                 counterText: '', // Custom counter below
                 filled: true,
-                fillColor: colors.card.withValues(alpha: 0.5),
-                contentPadding: const EdgeInsets.fromLTRB(40, 12, 12, 12),
+                fillColor: colors.surfaceSunken,
+                contentPadding: const EdgeInsets.fromLTRB(RitmoSpacing.xxl + 8, RitmoSpacing.md, RitmoSpacing.md, RitmoSpacing.md),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.textSecondary.withValues(alpha: 0.2)),
+                  borderRadius: BorderRadius.circular(RitmoRadius.field),
+                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.2)),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(RitmoRadius.field),
                   borderSide: BorderSide(color: colors.primary, width: 1.5),
                 ),
               ),
             ),
             Positioned(
-              top: 4,
-              left: 4,
+              top: RitmoSpacing.xs,
+              left: RitmoSpacing.xs,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -104,7 +100,7 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
                     ),
                   if (widget.onPromote != null && widget.controller.text.trim().isNotEmpty)
                     IconButton(
-                      icon: const Text('📓', style: TextStyle(fontSize: 18)),
+                      icon: Icon(Icons.menu_book_rounded, size: 18, color: colors.primary),
                       onPressed: widget.onPromote,
                       tooltip: 'تبدیل به یادداشت دفترچه',
                     ),
@@ -115,15 +111,13 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
         ),
         if (showCounter)
           Padding(
-            padding: const EdgeInsets.only(top: 4, left: 4),
+            padding: const EdgeInsets.only(top: RitmoSpacing.xs, left: RitmoSpacing.xs),
             child: Text(
               PersianDigits.convert('$textLength/${widget.maxLength}'),
               textAlign: TextAlign.left,
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 11,
-                color: textLength >= widget.maxLength ? colors.medicalRed : colors.textSecondary,
-              ),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: textLength >= widget.maxLength ? colors.error : colors.textSecondary,
+                  ),
             ),
           ),
       ],

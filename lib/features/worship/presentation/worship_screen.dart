@@ -166,7 +166,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
           body: SafeArea(
             child: RefreshIndicator(
               color: const Color(0xffD4A843),
-              backgroundColor: isDarkMode ? const Color(0xff2A2D3D) : Colors.white,
+              backgroundColor: isDarkMode ? const Color(0xFF151A18) : const Color(0xFFFFFEFB),
               onRefresh: _refresh,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),

@@ -107,9 +107,9 @@ class RoutineAgendaSource implements AgendaSource {
         GROUP BY r.category
       ''');
       for (final row in list) {
-        final cat = row['category']! as String;
+        final cat = row['category']?.toString();
         final avg = (row['avgDur'] as num?)?.toDouble();
-        if (avg != null && avg > 0) {
+        if (cat != null && avg != null && avg > 0) {
           categoryAvgDurations[cat] = avg;
         }
       }
@@ -146,15 +146,27 @@ class RoutineAgendaSource implements AgendaSource {
     activeModules: const {},
   );
 
-  bool _isCategoryModuleEnabled(String category) {
-    // Removed hardcoded 'religious' check for routines
-    if (category == 'medical' && !(activeModules['medicine'] ?? false)) {
-      return false;
-    }
-    if (category == 'learning' && !(activeModules['courses'] ?? false)) {
-      return false;
-    }
-    return true;
+  /// Builds a weekly rule from the plain `daysOfWeek` column.
+  ///
+  /// Used both when a schedule has no `recurrenceRule` and when the stored
+  /// rule JSON cannot be parsed. Invalid weekday tokens are dropped instead of
+  /// being coerced to Monday; an empty weekday list means "every day" in
+  /// [RoutineOccurrenceGenerator.shouldOccurOnDate], which is the safe
+  /// (visible) failure mode.
+  static RecurrenceRule _ruleFromDaysOfWeek(Map<String, dynamic> s) {
+    final daysStr = s['daysOfWeek']?.toString() ?? '6,7,1,2,3,4,5';
+    final days = daysStr
+        .split(',')
+        .map((d) => int.tryParse(d.trim()))
+        .whereType<int>()
+        .where((d) => d >= 1 && d <= 7)
+        .toList();
+    final rawTime = s['timeOfDay']?.toString();
+    return RecurrenceRule(
+      weekdays: days,
+      reminderTimes:
+          (rawTime != null && rawTime.isNotEmpty) ? [rawTime] : ['08:00'],
+    );
   }
 
   /// Active routines (raw `{routine, schedule}` maps) for [date].
@@ -166,8 +178,8 @@ class RoutineAgendaSource implements AgendaSource {
     final dateStr = _dateStr(date);
 
     for (final r in routines) {
-      final cat = r['category']?.toString() ?? 'personal';
       final routineId = r['id']?.toString() ?? '';
+      if (routineId.isEmpty) continue;
       // Build a settings-compatible map from the stored module flags.
       final settingsForVisibility = <String, String>{
         'module_religion_enabled': (activeModules['religion'] ?? false).toString(),
@@ -178,16 +190,24 @@ class RoutineAgendaSource implements AgendaSource {
 
       Map<String, dynamic>? matchedSchedule;
       for (final sched in schedules) {
-        if ((sched['routineId'] ?? sched['routine_id']) == r['id']) {
+        final schedRoutineId =
+            (sched['routineId'] ?? sched['routine_id'])?.toString();
+        if (schedRoutineId == routineId) {
           matchedSchedule = sched;
           break;
         }
       }
 
-      // 1. Check database occurrences in memory.
-      final hasOcc = occurrences.any(
-        (occ) => (occ['routine_id'] ?? occ['routineId']) == r['id'] && occ['date'] == dateStr,
-      );
+      // 1. Check database occurrences in memory (normalised comparison: the id
+      //    may be int/String and the date may carry a time suffix).
+      final hasOcc = occurrences.any((occ) {
+        final occRoutineId =
+            (occ['routine_id'] ?? occ['routineId'])?.toString();
+        if (occRoutineId != routineId) return false;
+        final occDate = occ['date']?.toString();
+        if (occDate == null || occDate.length < 10) return false;
+        return occDate.substring(0, 10) == dateStr;
+      });
 
       if (matchedSchedule == null || matchedSchedule.isEmpty) {
         // No schedule row: only include if there is an explicit occurrence for this date.
@@ -206,22 +226,37 @@ class RoutineAgendaSource implements AgendaSource {
       }
 
       // 2. Fallback: RecurrenceRule calculation.
-      RecurrenceRule rule;
-      final ruleStr = s['recurrenceRule'] as String?;
+      //
+      // C-FIX-3: this used to be `RecurrenceRule.fromMap(jsonDecode(ruleStr))`
+      // with no guard. One malformed/legacy JSON row threw a TypeError all the
+      // way up through itemsForDate into _assembleDay, which discarded the
+      // entire day. Now a bad rule degrades to the daysOfWeek column.
+      RecurrenceRule? rule;
+      final ruleStr = s['recurrenceRule']?.toString();
       if (ruleStr != null && ruleStr.isNotEmpty) {
-        rule = RecurrenceRule.fromMap(jsonDecode(ruleStr));
-      } else {
-        final daysStr = s['daysOfWeek'] as String? ?? '6,7,1,2,3,4,5';
-        final days =
-            daysStr.split(',').map((d) => int.tryParse(d.trim()) ?? 1).toList();
-        rule = RecurrenceRule(
-          weekdays: days,
-          reminderTimes:
-              s['timeOfDay'] != null ? [s['timeOfDay'] as String] : ['08:00'],
+        try {
+          final decoded = jsonDecode(ruleStr);
+          if (decoded is Map) {
+            rule = RecurrenceRule.fromMap(Map<String, dynamic>.from(decoded));
+          }
+        } catch (e, st) {
+          debugPrint(
+            '[RoutineAgendaSource] bad recurrenceRule for $routineId: $e\n$st',
+          );
+        }
+      }
+      rule ??= _ruleFromDaysOfWeek(s);
+
+      var occursToday = false;
+      try {
+        occursToday = RoutineOccurrenceGenerator.shouldOccurOnDate(date, rule);
+      } catch (e, st) {
+        debugPrint(
+          '[RoutineAgendaSource] shouldOccurOnDate failed for $routineId: $e\n$st',
         );
       }
 
-      if (RoutineOccurrenceGenerator.shouldOccurOnDate(date, rule)) {
+      if (occursToday) {
         active.add({'routine': r, 'schedule': s});
       }
     }
@@ -316,7 +351,8 @@ class RoutineAgendaSource implements AgendaSource {
     for (final entry in activeForDate(ctx.date)) {
       final r = entry['routine'] as Map<String, dynamic>;
       final s = entry['schedule'] as Map<String, dynamic>;
-      final routineId = r['id'] as String;
+      final routineId = r['id']?.toString() ?? '';
+      if (routineId.isEmpty) continue;
 
       final isEvent = (r['itemType'] as String?) == 'EVENT';
       final itemDomain = isEvent ? AgendaDomain.event : AgendaDomain.routine;

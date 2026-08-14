@@ -137,7 +137,7 @@ class OnboardingController extends ChangeNotifier {
           entityId: 'skip_identity',
           eventType: 'setup_profile',
           title: 'تکمیل پروفایل کاربری',
-          body: 'نام و مشخصات خود را در تنظیمات تکمیل کنید.',
+          body: 'نام و مشخصات خود را در تنطیمات تکمیل کنید.',
           priority: 1,
         );
       case 'DAY_ARC':
@@ -146,8 +146,8 @@ class OnboardingController extends ChangeNotifier {
           sourceSystem: 'onboarding_skip',
           entityId: 'skip_day_arc',
           eventType: 'setup_day_arc',
-          title: 'تنظیم قوس روز',
-          body: 'ساعات خواب و بیداری خود را تنظیم کنید.',
+          title: 'تنطیم قوس روز',
+          body: 'ساعات خواب و بیداری خود را تنطیم کنید.',
           priority: 1,
         );
       case 'FOCUS':
@@ -323,6 +323,18 @@ class OnboardingController extends ChangeNotifier {
         return;
       }
 
+      // ── C-FIX-4: drop any agenda assembled BEFORE these routines existed ──
+      //
+      // Anything that touched DayAgendaService while onboarding was still open
+      // (widget snapshot, alarm scheduling, a background refresh) cached an
+      // empty day for today. The Calendar reads that cache (it queries with
+      // default options); Home does not (it passes an explicit domain set).
+      // If we leave the stale entries in place the Calendar stays blank for the
+      // whole session while Home looks correct. This MUST run synchronously,
+      // before onFinished() lets the user navigate, and it must never depend on
+      // the best-effort side effects below, which can throw on a fresh install.
+      DayAgendaService.instance.invalidateAll();
+
       // Clear draft store immediately after successful transaction
       await OnboardingDraftStore.clear();
 
@@ -341,20 +353,13 @@ class OnboardingController extends ChangeNotifier {
     }
   }
 
+  /// Post-save side effects. Every step is isolated: a failure in one (missing
+  /// widget channel, denied alarm permission, …) must never prevent the agenda
+  /// refresh signals that follow it.
   Future<void> _postSaveBestEffort() async {
+    // 1. Agenda cache + refresh signals first — these are what make the newly
+    //    created routines visible on Home and in the Calendar.
     try {
-      final firstRoutineTitle = selectedStarterRoutines.isNotEmpty
-          ? selectedStarterRoutines.first.titleFa
-          : 'ریتمو';
-
-      await SnapshotHelper.updateWidgetSnapshot(
-        nextActionTitle: firstRoutineTitle,
-        rhythmScore: 100,
-        currentEnergyLevel: energyProfile,
-      );
-
-      await AlarmSchedulerService.scheduleNextAlarms();
-
       DayAgendaService.instance.invalidateAll();
       RitmoEvents.notifyRoutineChanged();
 
@@ -369,7 +374,29 @@ class OnboardingController extends ChangeNotifier {
         payload: {},
       ));
     } catch (e, st) {
-      RitmoLog.error('OnboardingController', 'Best-effort post-save side effects error', e, st);
+      RitmoLog.error('OnboardingController', 'Agenda invalidation/refresh failed', e, st);
+    }
+
+    // 2. Home-screen widget snapshot (platform channel — may be unavailable).
+    try {
+      final firstRoutineTitle = selectedStarterRoutines.isNotEmpty
+          ? selectedStarterRoutines.first.titleFa
+          : 'ریتمو';
+
+      await SnapshotHelper.updateWidgetSnapshot(
+        nextActionTitle: firstRoutineTitle,
+        rhythmScore: 100,
+        currentEnergyLevel: energyProfile,
+      );
+    } catch (e, st) {
+      RitmoLog.error('OnboardingController', 'Widget snapshot update failed', e, st);
+    }
+
+    // 3. Alarm scheduling (needs notification / exact-alarm permission).
+    try {
+      await AlarmSchedulerService.scheduleNextAlarms();
+    } catch (e, st) {
+      RitmoLog.error('OnboardingController', 'Alarm scheduling failed', e, st);
     }
   }
 }

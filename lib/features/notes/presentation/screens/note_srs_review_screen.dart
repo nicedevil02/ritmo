@@ -69,7 +69,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
       });
       _flipController.reset();
       if (_dueNotes.isNotEmpty) {
-        _loadExperienceMeta(_dueNotes.first.id);
+        await _loadExperienceMeta(_dueNotes.first.id);
       }
     }
   }
@@ -86,7 +86,14 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
   Future<void> _submitFeedback(ReviewFeedback feedback) async {
     if (_dueNotes.isEmpty || _currentIndex >= _dueNotes.length) return;
 
-    RitmoHaptics.confirm();
+    if (feedback == ReviewFeedback.easy) {
+      RitmoHaptics.success();
+    } else if (feedback == ReviewFeedback.good) {
+      RitmoHaptics.confirm();
+    } else {
+      RitmoHaptics.selection();
+    }
+
     final currentNote = _dueNotes[_currentIndex];
     await SpacedRepetitionEngine.instance.scheduleNextReview(currentNote.id, feedback);
 
@@ -98,7 +105,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
           _currentExp = null;
         });
         _flipController.reset();
-        _loadExperienceMeta(_dueNotes[_currentIndex].id);
+        await _loadExperienceMeta(_dueNotes[_currentIndex].id);
       } else {
         setState(() {
           _currentIndex++;
@@ -177,13 +184,24 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.8, end: 1.0),
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.elasticOut,
+              builder: (context, scale, child) {
+                return Transform.scale(
+                  scale: scale,
+                  child: child,
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(CupertinoIcons.sparkles, size: 56, color: Colors.amber),
               ),
-              child: const Icon(CupertinoIcons.sparkles, size: 56, color: Colors.amber),
             ),
             const SizedBox(height: 20),
             Text(
@@ -269,7 +287,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Vazirmatn',
-              fontSize: 11,
+              fontSize: 11.5,
               fontWeight: FontWeight.bold,
               color: Theme.of(context).textTheme.bodySmall?.color,
             ),
@@ -278,7 +296,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
           Row(
             children: [
               Expanded(
-                child: _buildFeedbackButton(
+                child: _SrsFeedbackButton(
                   label: 'فراموش شد',
                   subtext: 'مرحله ۱',
                   emoji: '❌',
@@ -288,7 +306,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: _buildFeedbackButton(
+                child: _SrsFeedbackButton(
                   label: 'سخت بود',
                   subtext: 'تکرار',
                   emoji: '⚠️',
@@ -298,7 +316,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: _buildFeedbackButton(
+                child: _SrsFeedbackButton(
                   label: 'خوب بود',
                   subtext: '+۱ مرحله',
                   emoji: '👍',
@@ -308,7 +326,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: _buildFeedbackButton(
+                child: _SrsFeedbackButton(
                   label: 'آسان بود',
                   subtext: '+۲ مرحله',
                   emoji: '⚡',
@@ -457,7 +475,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                     context,
                     MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
                   );
-                  _loadDueReviews();
+                  await _loadDueReviews();
                 },
                 icon: const Icon(Icons.edit, size: 14),
                 label: const Text('ویرایش', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
@@ -500,46 +518,76 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
       ),
     );
   }
+}
 
-  Widget _buildFeedbackButton({
-    required String label,
-    required String subtext,
-    required String emoji,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
+class _SrsFeedbackButton extends StatefulWidget {
+  final String label;
+  final String subtext;
+  final String emoji;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _SrsFeedbackButton({
+    required this.label,
+    required this.subtext,
+    required this.emoji,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  State<_SrsFeedbackButton> createState() => _SrsFeedbackButtonState();
+}
+
+class _SrsFeedbackButtonState extends State<_SrsFeedbackButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: _isPressed ? 0.94 : 1.0,
+      duration: const Duration(milliseconds: 100),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTapDown: (_) => setState(() => _isPressed = true),
+          onTapCancel: () => setState(() => _isPressed = false),
+          onTap: () {
+            setState(() => _isPressed = false);
+            widget.onTap();
+          },
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.35)),
-        ),
-        child: Column(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: widget.color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: widget.color.withValues(alpha: 0.35)),
             ),
-            Text(
-              subtext,
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 8.5,
-                color: color.withValues(alpha: 0.8),
-              ),
+            child: Column(
+              children: [
+                Text(widget.emoji, style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 2),
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: widget.color,
+                  ),
+                ),
+                Text(
+                  widget.subtext,
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 9,
+                    color: widget.color.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

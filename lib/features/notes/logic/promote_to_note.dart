@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
@@ -16,7 +15,7 @@ class NotePromoter {
   static const _uuid = Uuid();
 
   Future<String?> promote({
-    required BuildContext context,
+    BuildContext? context,
     required String module,
     required String entityId,
     required String text,
@@ -94,7 +93,7 @@ class NotePromoter {
 
       await NoteFtsEngine.instance.indexNote(createdNote);
 
-      if (context.mounted) {
+      if (context != null && context.mounted) {
         RitmoToast.show(
           context,
           'به دفترچه منتقل شد 📓',
@@ -111,7 +110,7 @@ class NotePromoter {
 
       return noteId;
     } catch (e) {
-      if (context.mounted) {
+      if (context != null && context.mounted) {
         RitmoToast.show(
           context,
           'خطا در ثبت دفترچه',

@@ -138,4 +138,54 @@ class NoteUiHelper {
     }
     return '${PersianDigits.convert(minutes.toString())} دقیقه مطالعه';
   }
+
+  static List<TextSpan> buildHighlightedTextSpans({
+    required String text,
+    required String query,
+    required TextStyle baseStyle,
+    required Color highlightBg,
+    required Color highlightColor,
+  }) {
+    if (query.trim().isEmpty || text.isEmpty) {
+      return [TextSpan(text: text, style: baseStyle)];
+    }
+
+    final spans = <TextSpan>[];
+    final q = query.trim().toLowerCase();
+    final lowerText = text.toLowerCase();
+
+    int start = 0;
+    int index = lowerText.indexOf(q, start);
+
+    while (index != -1) {
+      if (index > start) {
+        spans.add(TextSpan(
+          text: text.substring(start, index),
+          style: baseStyle,
+        ));
+      }
+
+      final matchText = text.substring(index, index + q.length);
+      spans.add(TextSpan(
+        text: matchText,
+        style: baseStyle.copyWith(
+          backgroundColor: highlightBg,
+          color: highlightColor,
+          fontWeight: FontWeight.bold,
+        ),
+      ));
+
+      start = index + q.length;
+      index = lowerText.indexOf(q, start);
+    }
+
+    if (start < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(start),
+        style: baseStyle,
+      ));
+    }
+
+    return spans;
+  }
 }

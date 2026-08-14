@@ -23,6 +23,7 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
   ResurfacingCandidate? _candidate;
   bool _isLoading = true;
   bool _acknowledged = false;
+  bool _isAcknowledgingPressed = false;
 
   @override
   void initState() {
@@ -69,7 +70,12 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
             const SizedBox(width: 8),
             Text(
               'چرا این درس پیشنهاد شد؟',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
             ),
           ],
         ),
@@ -113,118 +119,123 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const SizedBox.shrink();
-    if (_candidate == null) return const SizedBox.shrink();
+    if (_isLoading || _candidate == null) return const SizedBox.shrink();
 
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final exp = _candidate!.experience;
     final note = _candidate!.note;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark
-                ? [const Color(0xFF2B2006), colors.card]
-                : [const Color(0xFFFFFBEB), colors.card],
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-          ),
-          borderRadius: BorderRadius.circular(RitmoRadius.hero),
-          border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.35)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFE5A00D).withValues(alpha: 0.08),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
-            ),
-          ],
+    final cardContent = Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF2B2006), colors.card]
+              : [const Color(0xFFFFFBEB), colors.card],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header: Emoji + Category + Stars + Why Icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(exp.category.emoji, style: const TextStyle(fontSize: 16)),
-                    const SizedBox(width: 6),
-                    Text(
-                      'درس امروز • ${exp.category.labelFa}',
-                      style: const TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFE5A00D),
-                      ),
+        borderRadius: BorderRadius.circular(RitmoRadius.hero),
+        border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE5A00D).withValues(alpha: 0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header: Emoji + Category + Stars + Why Icon
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(exp.category.emoji, style: const TextStyle(fontSize: 16)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'درس امروز • ${exp.category.labelFa}',
+                    style: const TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFE5A00D),
                     ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    ...List.generate(5, (idx) {
-                      return Icon(
-                        idx < exp.importance ? CupertinoIcons.star_fill : CupertinoIcons.star,
-                        size: 11,
-                        color: idx < exp.importance ? Colors.amber : colors.textTertiary,
-                      );
-                    }),
-                    const SizedBox(width: 4),
-                    InkWell(
-                      onTap: _showReasonDialog,
-                      borderRadius: BorderRadius.circular(12),
-                      child: Padding(
-                        padding: const EdgeInsets.all(2.0),
-                        child: Icon(CupertinoIcons.question_circle, size: 14, color: colors.textSecondary),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // Lesson text
-            Text(
-              '« ${exp.lesson} »',
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 14.5,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-                height: 1.45,
+                  ),
+                ],
               ),
-            ),
-
-            if (exp.contextText != null && exp.contextText!.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                exp.contextText!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 12,
-                  color: colors.textSecondary,
-                  height: 1.35,
-                ),
+              Row(
+                children: [
+                  ...List.generate(5, (idx) {
+                    return Icon(
+                      idx < exp.importance ? CupertinoIcons.star_fill : CupertinoIcons.star,
+                      size: 11,
+                      color: idx < exp.importance ? Colors.amber : colors.textTertiary,
+                    );
+                  }),
+                  const SizedBox(width: 4),
+                  InkWell(
+                    onTap: _showReasonDialog,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(2.0),
+                      child: Icon(CupertinoIcons.question_circle, size: 14, color: colors.textSecondary),
+                    ),
+                  ),
+                ],
               ),
             ],
-            const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 10),
 
-            // Actions row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                InkWell(
-                  onTap: _handleAcknowledge,
+          // Lesson text
+          Text(
+            '« ${exp.lesson} »',
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontSize: 14.5,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+              height: 1.45,
+            ),
+          ),
+
+          if (exp.contextText != null && exp.contextText!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              exp.contextText!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 12,
+                color: colors.textSecondary,
+                height: 1.35,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+
+          // Actions row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              AnimatedScale(
+                scale: _isAcknowledgingPressed ? 0.95 : 1.0,
+                duration: const Duration(milliseconds: 100),
+                child: InkWell(
+                  onTapDown: (_) => setState(() => _isAcknowledgingPressed = true),
+                  onTapCancel: () => setState(() => _isAcknowledgingPressed = false),
+                  onTap: () {
+                    setState(() => _isAcknowledgingPressed = false);
+                    _handleAcknowledge();
+                  },
                   borderRadius: BorderRadius.circular(10),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -254,27 +265,46 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                     ),
                   ),
                 ),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
-                    );
-                  },
-                  icon: Text(
-                    'مشاهده یادداشت',
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 11,
-                      color: colors.textSecondary,
-                    ),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
+                  );
+                },
+                icon: Text(
+                  'مشاهده یادداشت',
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 11,
+                    color: colors.textSecondary,
                   ),
-                  label: Icon(CupertinoIcons.chevron_left, size: 12, color: colors.textSecondary),
                 ),
-              ],
+                label: Icon(CupertinoIcons.chevron_left, size: 12, color: colors.textSecondary),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Opacity(
+            opacity: value,
+            child: Transform.scale(
+              scale: 0.96 + (0.04 * value),
+              child: child,
             ),
-          ],
-        ),
+          );
+        },
+        child: cardContent,
       ),
     );
   }

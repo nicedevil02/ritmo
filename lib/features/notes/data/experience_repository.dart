@@ -1,5 +1,4 @@
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/features/notes/data/notes_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:sqflite/sqflite.dart';

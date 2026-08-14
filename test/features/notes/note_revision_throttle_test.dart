@@ -53,7 +53,7 @@ void main() {
         ''');
       });
 
-      DatabaseHelper.instance.setDatabaseForTesting(db);
+      DatabaseHelper.instance.overrideDatabaseForTesting(db);
     });
 
     tearDown(() async {

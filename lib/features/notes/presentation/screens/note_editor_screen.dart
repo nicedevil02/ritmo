@@ -45,6 +45,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   late TextEditingController _lessonController;
   final TextEditingController _tagInputController = TextEditingController();
 
+  final FocusNode _titleFocusNode = FocusNode();
+  final FocusNode _bodyFocusNode = FocusNode();
+
   late NoteKind _selectedKind;
   bool _isPinned = false;
   bool _isPrivate = false;
@@ -60,6 +63,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   Note? _activeNote;
   Timer? _autosaveTimer;
+  Timer? _focusModeTimer;
+  bool _isFocusModeDimmed = false;
   bool _isSaving = false;
   String? _saveStatusText;
   int _wordCount = 0;
@@ -94,6 +99,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   @override
   void dispose() {
     _autosaveTimer?.cancel();
+    _focusModeTimer?.cancel();
     _titleController.removeListener(_onContentChanged);
     _bodyController.removeListener(_onContentChanged);
     _lessonController.removeListener(_onContentChanged);
@@ -101,6 +107,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _bodyController.dispose();
     _lessonController.dispose();
     _tagInputController.dispose();
+    _titleFocusNode.dispose();
+    _bodyFocusNode.dispose();
     super.dispose();
   }
 
@@ -117,6 +125,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     setState(() {
       _calculateStats();
       _saveStatusText = 'در حال نوشتن...';
+      _isFocusModeDimmed = true;
+    });
+
+    _focusModeTimer?.cancel();
+    _focusModeTimer = Timer(const Duration(milliseconds: 2500), () {
+      if (mounted) {
+        setState(() => _isFocusModeDimmed = false);
+      }
     });
 
     _autosaveTimer?.cancel();
@@ -157,6 +173,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   Future<void> _save({bool isAutosave = false}) async {
     if (_isSaving) return;
+
     final titleText = _titleController.text.trim();
     final bodyText = _bodyController.text.trim();
     final lessonText = _lessonController.text.trim();
@@ -226,9 +243,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           final min = PersianDigits.convert(now.minute.toString().padLeft(2, '0'));
           _saveStatusText = 'ذخیره شد ✓ $hour:$min';
         });
-        if (!isAutosave) {
-          RitmoToast.show(context, 'یادداشت با موفقیت ذخیره شد 💾');
-        }
+      }
+    } catch (e, st) {
+      debugPrint('Save error: $e\n$st');
+      if (mounted) {
+        setState(() {
+          _saveStatusText = 'خطا در ذخیره‌سازی';
+        });
       }
     } finally {
       _isSaving = false;
@@ -239,22 +260,32 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     RitmoHaptics.selection();
     final text = _bodyController.text;
     final selection = _bodyController.selection;
-    final start = selection.start >= 0 ? selection.start : text.length;
-    final end = selection.end >= 0 ? selection.end : text.length;
 
-    final selectedText = text.substring(start, end);
-    final replacement = '$prefix$selectedText$suffix';
-
-    final newText = text.replaceRange(start, end, replacement);
-    _bodyController.value = TextEditingValue(
-      text: newText,
-      selection: TextSelection.collapsed(offset: start + prefix.length + selectedText.length),
-    );
+    if (selection.isValid && !selection.isCollapsed) {
+      final selectedText = text.substring(selection.start, selection.end);
+      final newText = text.replaceRange(selection.start, selection.end, '$prefix$selectedText$suffix');
+      _bodyController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection(
+          baseOffset: selection.start + prefix.length,
+          extentOffset: selection.end + prefix.length,
+        ),
+      );
+    } else {
+      final cursorPosition = selection.isValid ? selection.start : text.length;
+      final newText = text.replaceRange(cursorPosition, cursorPosition, '$prefix$suffix');
+      _bodyController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: cursorPosition + prefix.length),
+      );
+    }
+    _onContentChanged();
   }
 
-  void _addTag(String rawTag) {
-    final clean = rawTag.replaceAll('#', '').trim();
+  void _addTag(String tag) {
+    final clean = tag.trim().replaceAll('#', '');
     if (clean.isEmpty || _tags.contains(clean)) return;
+    RitmoHaptics.selection();
     setState(() {
       _tags.add(clean);
       _tagInputController.clear();
@@ -263,6 +294,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   void _removeTag(String tag) {
+    RitmoHaptics.selection();
     setState(() {
       _tags.remove(tag);
     });
@@ -270,25 +302,38 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   Future<void> _pickAttachment() async {
-    if (_activeNote == null) {
-      await _save();
-      if (_activeNote == null) return;
-    }
-    final res = await FilePickerPlatform.instance.pickFiles();
-    if (res != null && res.files.single.path != null && _activeNote != null) {
-      try {
-        final att = await NoteAttachmentRepository.instance.add(
-          noteId: _activeNote!.id,
-          sourceFile: File(res.files.single.path!),
-          fileName: res.files.single.name,
-        );
-        if (mounted) {
-          setState(() => _attachments.add(att));
+    RitmoHaptics.selection();
+    try {
+      final result = await FilePickerPlatform.instance.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'mp3', 'm4a', 'wav'],
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.isNotEmpty && result.files.first.path != null) {
+        final pickedFile = File(result.files.first.path!);
+
+        if (_activeNote == null) {
+          await _save();
         }
-      } catch (e) {
-        if (mounted) {
-          RitmoToast.show(context, e.toString());
+
+        if (_activeNote != null) {
+          final created = await NoteAttachmentRepository.instance.add(
+            noteId: _activeNote!.id,
+            sourceFile: pickedFile,
+            fileName: result.files.first.name,
+          );
+          setState(() {
+            _attachments.add(created);
+          });
+          if (mounted) {
+            RitmoToast.show(context, 'پیوست اضافه شد 📎');
+          }
         }
+      }
+    } catch (e) {
+      if (mounted) {
+        RitmoToast.show(context, 'خطا در انتخاب فایل');
       }
     }
   }
@@ -333,6 +378,25 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _addSrs() async {
+    if (_activeNote == null) return;
+    final nextReviewMs = DateTime.now().add(const Duration(days: 1)).millisecondsSinceEpoch;
+    await NotesRepository.instance.setReview(_activeNote!.id, 1, nextReviewMs);
+    final fresh = await NotesRepository.instance.getById(_activeNote!.id);
+    if (!mounted) return;
+    setState(() => _activeNote = fresh);
+    RitmoToast.show(context, 'به صف مرور فاصله‌دار اضافه شد 🧠');
+  }
+
+  Future<void> _removeSrs() async {
+    if (_activeNote == null) return;
+    await NotesRepository.instance.setReview(_activeNote!.id, 0, null);
+    final fresh = await NotesRepository.instance.getById(_activeNote!.id);
+    if (!mounted) return;
+    setState(() => _activeNote = fresh);
+    RitmoToast.show(context, 'از صف مرور فاصله‌دار حذف شد');
   }
 
   void _showKindPickerSheet() {
@@ -430,8 +494,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentStyle = NoteUiHelper.getKindStyle(context, _isExperience ? NoteKind.experience : _selectedKind);
     final readingTime = NoteUiHelper.calculateReadingTime(_wordCount);
+    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
+    final isKeyboardOpen = keyboardHeight > 0;
 
     return PopScope(
       canPop: false,
@@ -445,167 +512,148 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         textDirection: TextDirection.rtl,
         child: Scaffold(
           backgroundColor: colors.background,
-          appBar: AppBar(
-            backgroundColor: colors.surface,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: colors.textPrimary),
-              tooltip: 'ذخیره و بازگشت',
-              onPressed: () async {
-                RitmoHaptics.confirm();
-                final nav = Navigator.of(context);
-                await _save();
-                if (mounted) nav.pop();
-              },
-            ),
-            title: InkWell(
-              onTap: _showKindPickerSheet,
-              borderRadius: BorderRadius.circular(RitmoRadius.pill),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: currentStyle.accentColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                  border: Border.all(color: currentStyle.accentColor.withValues(alpha: 0.3)),
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: AnimatedOpacity(
+              opacity: _isFocusModeDimmed ? 0.2 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              child: AppBar(
+                backgroundColor: colors.surface,
+                elevation: 0,
+                leading: IconButton(
+                  icon: Icon(Icons.arrow_back, color: colors.textPrimary),
+                  tooltip: 'ذخیره و بازگشت',
+                  onPressed: () async {
+                    RitmoHaptics.confirm();
+                    final nav = Navigator.of(context);
+                    await _save();
+                    if (mounted) nav.pop();
+                  },
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(currentStyle.icon, size: 14, color: currentStyle.accentColor),
-                    const SizedBox(width: 6),
-                    Text(
-                      currentStyle.labelFa,
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: currentStyle.accentColor,
+                title: const SizedBox.shrink(),
+                centerTitle: false,
+                actions: [
+                  // Animated Save Status Text
+                  if (_saveStatusText != null)
+                    Center(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: Text(
+                          _saveStatusText!,
+                          key: ValueKey(_saveStatusText),
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 11.5,
+                            color: colors.textTertiary,
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.keyboard_arrow_down, size: 14, color: currentStyle.accentColor),
-                  ],
-                ),
-              ),
-            ),
-            centerTitle: true,
-            actions: [
-              IconButton(
-                icon: Icon(
-                  _isPrivate ? CupertinoIcons.lock_fill : CupertinoIcons.lock,
-                  color: _isPrivate ? currentStyle.accentColor : colors.textSecondary,
-                  size: 20,
-                ),
-                tooltip: _isPrivate ? 'یادداشت خصوصی است' : 'یادداشت عمومی است',
-                onPressed: () {
-                  RitmoHaptics.selection();
-                  setState(() => _isPrivate = !_isPrivate);
-                  _onContentChanged();
-                },
-              ),
-              if (_activeNote != null) ...[
-                IconButton(
-                  icon: Icon(Icons.history_rounded, color: colors.textSecondary, size: 22),
-                  tooltip: 'تاریخچه نسخه‌ها',
-                  onPressed: _showRevisionsSheet,
-                ),
-                PopupMenuButton<String>(
-                  icon: Icon(
-                    _activeNote?.reviewAt != null ? CupertinoIcons.bolt_horizontal_circle_fill : CupertinoIcons.bolt_horizontal_circle,
-                    color: _activeNote?.reviewAt != null ? const Color(0xFF10B981) : colors.textSecondary,
-                    size: 20,
-                  ),
-                  tooltip: 'مرور فاصله‌دار (SRS)',
-                  onSelected: (action) async {
-                    RitmoHaptics.selection();
-                    if (action == 'add_srs') {
-                      final nextReviewMs = DateTime.now().add(const Duration(days: 1)).millisecondsSinceEpoch;
-                      await NotesRepository.instance.setReview(_activeNote!.id, 1, nextReviewMs);
-                      final fresh = await NotesRepository.instance.getById(_activeNote!.id);
-                      if (!mounted) return;
-                      setState(() => _activeNote = fresh);
-                      RitmoToast.show(context, 'به صف مرور فاصله‌دار اضافه شد 🧠');
-                    } else if (action == 'remove_srs') {
-                      await NotesRepository.instance.setReview(_activeNote!.id, 0, null);
-                      final fresh = await NotesRepository.instance.getById(_activeNote!.id);
-                      if (!mounted) return;
-                      setState(() => _activeNote = fresh);
-                      RitmoToast.show(context, 'از صف مرور فاصله‌دار حذف شد');
-                    }
-                  },
-                  itemBuilder: (ctx) {
-                    final isEnrolled = _activeNote?.reviewAt != null;
-                    if (!isEnrolled) {
-                      return [
-                        const PopupMenuItem(
-                          value: 'add_srs',
-                          child: Row(
-                            children: [
-                              Icon(Icons.psychology_outlined, size: 16, color: Color(0xFF10B981)),
-                              SizedBox(width: 8),
-                              Text('افزودن به مرور فاصله‌دار', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                      ];
-                    } else {
-                      final revDate = _activeNote!.reviewAt!;
-                      final j = Jalali.fromDateTime(revDate);
-                      final dateStr = '${PersianDigits.convert(j.day.toString())} ${NoteUiHelper.monthName(j.month)}';
+                  const SizedBox(width: 8),
+
+                  // Integrated ⋯ Menu
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.more_horiz, color: colors.textPrimary, size: 22),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    onSelected: (action) async {
+                      RitmoHaptics.selection();
+                      if (action == 'kind') {
+                        _showKindPickerSheet();
+                      } else if (action == 'pin') {
+                        setState(() => _isPinned = !_isPinned);
+                        _onContentChanged();
+                      } else if (action == 'private') {
+                        setState(() => _isPrivate = !_isPrivate);
+                        _onContentChanged();
+                      } else if (action == 'revisions') {
+                        await _showRevisionsSheet();
+                      } else if (action == 'add_srs') {
+                        await _addSrs();
+                      } else if (action == 'remove_srs') {
+                        await _removeSrs();
+                      }
+                    },
+                    itemBuilder: (ctx) {
+                      final hasSrs = _activeNote?.reviewAt != null;
                       return [
                         PopupMenuItem(
-                          enabled: false,
+                          value: 'kind',
                           child: Row(
                             children: [
-                              const Icon(CupertinoIcons.calendar, size: 16, color: Color(0xFF10B981)),
-                              const SizedBox(width: 8),
-                              Text('مرور بعدی: $dateStr', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold)),
+                              Icon(currentStyle.icon, size: 16, color: currentStyle.accentColor),
+                              const SizedBox(width: 10),
+                              Text('نوع: ${currentStyle.labelFa}', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5)),
                             ],
                           ),
                         ),
-                        const PopupMenuItem(
-                          value: 'remove_srs',
+                        PopupMenuItem(
+                          value: 'pin',
                           child: Row(
                             children: [
-                              Icon(CupertinoIcons.xmark_circle, size: 16, color: Colors.redAccent),
-                              SizedBox(width: 8),
-                              Text('حذف از مرور فاصله‌دار', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.redAccent)),
+                              Icon(_isPinned ? CupertinoIcons.pin_slash : CupertinoIcons.pin, size: 16),
+                              const SizedBox(width: 10),
+                              Text(_isPinned ? 'برداشتن سنجاق' : 'سنجاق کردن', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5)),
                             ],
                           ),
                         ),
+                        PopupMenuItem(
+                          value: 'private',
+                          child: Row(
+                            children: [
+                              Icon(_isPrivate ? CupertinoIcons.lock_slash : CupertinoIcons.lock, size: 16),
+                              const SizedBox(width: 10),
+                              Text(_isPrivate ? 'عمومی کردن' : 'خصوصی کردن', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5)),
+                            ],
+                          ),
+                        ),
+                        if (_activeNote != null) ...[
+                          PopupMenuItem(
+                            value: hasSrs ? 'remove_srs' : 'add_srs',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  hasSrs ? CupertinoIcons.xmark_circle : Icons.psychology_outlined,
+                                  size: 16,
+                                  color: hasSrs ? Colors.redAccent : const Color(0xFF10B981),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  hasSrs ? 'خروج از مرور فاصله‌دار' : 'افزودن به مرور فاصله‌دار',
+                                  style: TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 12.5,
+                                    color: hasSrs ? Colors.redAccent : colors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'revisions',
+                            child: Row(
+                              children: [
+                                Icon(Icons.history_rounded, size: 16),
+                                SizedBox(width: 10),
+                                Text('تاریخچه نسخه‌ها', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5)),
+                              ],
+                            ),
+                          ),
+                        ],
                       ];
-                    }
-                  },
-                ),
-              ],
-              IconButton(
-                icon: Icon(
-                  _isPinned ? CupertinoIcons.pin_fill : CupertinoIcons.pin,
-                  color: _isPinned ? currentStyle.accentColor : colors.textSecondary,
-                  size: 20,
-                ),
-                tooltip: _isPinned ? 'برداشتن سنجاق' : 'سنجاق کردن',
-                onPressed: () {
-                  RitmoHaptics.selection();
-                  setState(() => _isPinned = !_isPinned);
-                  _onContentChanged();
-                },
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                ],
               ),
-              IconButton(
-                icon: Icon(Icons.check, color: colors.primary),
-                tooltip: 'ذخیره فوری',
-                onPressed: () async {
-                  RitmoHaptics.confirm();
-                  await _save();
-                },
-              ),
-            ],
+            ),
           ),
           body: Column(
             children: [
               // Canvas Area
               Expanded(
                 child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -625,7 +673,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                               const SizedBox(width: 6),
                               Text(
                                 'ثبت در موقعیت: ${NoteUiHelper.timeOfDayLabelFa(_captureContext!.timeOfDay)}${_captureContext!.energy != null ? ' • انرژی ${PersianDigits.convert(_captureContext!.energy.toString())}/۱۰' : ''}',
-                                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.primary),
+                                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10.5, color: colors.primary),
                               ),
                             ],
                           ),
@@ -636,10 +684,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                       // Note Title Field
                       TextField(
                         controller: _titleController,
+                        focusNode: _titleFocusNode,
                         textDirection: TextDirection.rtl,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) => _bodyFocusNode.requestFocus(),
                         style: TextStyle(
                           fontFamily: 'Vazirmatn',
-                          fontSize: 20,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
                           height: 1.3,
@@ -648,46 +699,46 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           hintText: 'عنوان یادداشت...',
                           hintStyle: TextStyle(
                             fontFamily: 'Vazirmatn',
-                            fontSize: 18,
+                            fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: colors.textTertiary.withValues(alpha: 0.6),
+                            color: colors.textTertiary.withValues(alpha: 0.4),
                           ),
                           border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 16),
 
-                      // Golden Wisdom Card Inspector (When isExperience is Active)
+                      // Golden Experience Card (if experience kind)
                       if (_isExperience) ...[
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
+                        Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [
-                                const Color(0xFFE5A00D).withValues(alpha: 0.12),
-                                colors.card,
-                              ],
                               begin: Alignment.topRight,
                               end: Alignment.bottomLeft,
+                              colors: isDark
+                                  ? [const Color(0xFF332607), const Color(0xFF1E1705)]
+                                  : [const Color(0xFFFFFBEB), const Color(0xFFFEF3C7)],
                             ),
                             borderRadius: BorderRadius.circular(RitmoRadius.card),
-                            border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.45)),
+                            border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.35)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
-                                  const Text('💡', style: TextStyle(fontSize: 16)),
-                                  const SizedBox(width: 8),
+                                  const Icon(Icons.lightbulb_rounded, color: Color(0xFFE5A00D), size: 16),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    'آموزه کلیدی و درس حاصل از این تجربه',
+                                    'درس کلیدی و ماندگار تجربه',
                                     style: TextStyle(
                                       fontFamily: 'Vazirmatn',
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: const Color(0xFFE5A00D),
+                                      color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
                                     ),
                                   ),
                                 ],
@@ -696,9 +747,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                               TextField(
                                 controller: _lessonController,
                                 textDirection: TextDirection.rtl,
+                                maxLines: 2,
+                                minLines: 1,
                                 style: TextStyle(
                                   fontFamily: 'Vazirmatn',
-                                  fontSize: 13,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: colors.textPrimary,
                                 ),
@@ -706,7 +759,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                   hintText: 'یک جمله درس ماندگار (مثلاً: تصمیم‌گیری در خستگی همیشه اشتباه است)...',
                                   hintStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textTertiary),
                                   filled: true,
-                                  fillColor: colors.surfaceSunken,
+                                  fillColor: isDark ? colors.surfaceSunken.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.8),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
                                     borderSide: BorderSide.none,
@@ -740,7 +793,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                   ),
                                   Row(
                                     children: [
-                                      Text('میزان اهمیت: ', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary)),
+                                      Text('اهمیت: ', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary)),
                                       ...List.generate(5, (idx) {
                                         final starVal = idx + 1;
                                         return InkWell(
@@ -749,12 +802,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                             setState(() => _expImportance = starVal);
                                             _onContentChanged();
                                           },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(2.0),
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: SizedBox(
+                                            width: 32,
+                                            height: 32,
                                             child: Icon(
                                               starVal <= _expImportance ? CupertinoIcons.star_fill : CupertinoIcons.star,
-                                              size: 16,
-                                              color: starVal <= _expImportance ? Colors.amber : colors.textTertiary,
+                                              size: 18,
+                                              color: starVal <= _expImportance ? const Color(0xFFE5A00D) : colors.textTertiary,
                                             ),
                                           ),
                                         );
@@ -772,23 +827,25 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                       // Note Body Field
                       TextField(
                         controller: _bodyController,
+                        focusNode: _bodyFocusNode,
                         maxLines: null,
-                        minLines: 10,
+                        minLines: 12,
                         textDirection: TextDirection.rtl,
                         style: TextStyle(
                           fontFamily: 'Vazirmatn',
-                          fontSize: 14.5,
+                          fontSize: 15,
                           color: colors.textPrimary,
-                          height: 1.7,
+                          height: 1.8,
                         ),
                         decoration: InputDecoration(
                           hintText: 'شروع به نوشتن متن یا اندیشه‌هایت کن...',
                           hintStyle: TextStyle(
                             fontFamily: 'Vazirmatn',
-                            fontSize: 14,
-                            color: colors.textTertiary.withValues(alpha: 0.5),
+                            fontSize: 14.5,
+                            color: colors.textTertiary.withValues(alpha: 0.4),
                           ),
                           border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -796,7 +853,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                       // Tags Bar
                       Row(
                         children: [
-                          Icon(CupertinoIcons.tag, size: 14, color: currentStyle.accentColor),
+                          Icon(CupertinoIcons.tag, size: 13, color: currentStyle.accentColor),
                           const SizedBox(width: 6),
                           Text(
                             'برچسب‌ها',
@@ -809,7 +866,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
@@ -826,10 +883,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                             child: TextField(
                               controller: _tagInputController,
                               textDirection: TextDirection.rtl,
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textPrimary),
+                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, color: colors.textPrimary),
                               decoration: InputDecoration(
                                 hintText: '+ برچسب جدید',
-                                hintStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textTertiary),
+                                hintStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, color: colors.textTertiary),
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
@@ -846,30 +903,80 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           'پیوست‌ها (${PersianDigits.convert(_attachments.length.toString())})',
                           style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                         ),
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _attachments.map((att) {
-                            final isImg = att.kind == 'IMAGE';
-                            return InkWell(
-                              onTap: isImg ? () => _viewImageAttachment(att) : null,
-                              borderRadius: BorderRadius.circular(10),
-                              child: Chip(
-                                avatar: isImg
-                                    ? const Icon(CupertinoIcons.photo, size: 16)
-                                    : const Icon(CupertinoIcons.doc, size: 16),
-                                label: Text(
-                                  '${att.fileName} (${PersianDigits.convert((att.fileSizeBytes / 1024).toStringAsFixed(0))} KB)',
-                                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textPrimary),
-                                ),
-                                onDeleted: () async {
-                                  await NoteAttachmentRepository.instance.remove(att.id);
-                                  setState(() => _attachments.remove(att));
-                                },
-                              ),
-                            );
-                          }).toList(),
+                        const SizedBox(height: 8),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          child: Row(
+                            children: _attachments.map((att) {
+                              final isImg = att.kind == 'IMAGE';
+                              if (isImg) {
+                                return FutureBuilder<String>(
+                                  future: NoteAttachmentRepository.instance.resolveAbsolutePath(att.relativePath),
+                                  builder: (context, snapshot) {
+                                    final path = snapshot.data;
+                                    return Container(
+                                      margin: const EdgeInsets.only(left: 10),
+                                      width: 80,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: colors.border.withValues(alpha: 0.2)),
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          if (path != null && File(path).existsSync())
+                                            InkWell(
+                                              onTap: () => _viewImageAttachment(att),
+                                              child: Image.file(File(path), fit: BoxFit.cover),
+                                            )
+                                          else
+                                            const Center(child: Icon(CupertinoIcons.photo, size: 24)),
+                                          Positioned(
+                                            top: 4,
+                                            left: 4,
+                                            child: InkWell(
+                                              onTap: () async {
+                                                RitmoHaptics.selection();
+                                                await NoteAttachmentRepository.instance.remove(att.id);
+                                                setState(() => _attachments.remove(att));
+                                              },
+                                              child: Container(
+                                                padding: const EdgeInsets.all(3),
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.black54,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(Icons.close, color: Colors.white, size: 12),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
+                              } else {
+                                return Container(
+                                  margin: const EdgeInsets.only(left: 8),
+                                  child: Chip(
+                                    avatar: const Icon(CupertinoIcons.doc, size: 15),
+                                    label: Text(
+                                      att.fileName,
+                                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textPrimary),
+                                    ),
+                                    onDeleted: () async {
+                                      RitmoHaptics.selection();
+                                      await NoteAttachmentRepository.instance.remove(att.id);
+                                      setState(() => _attachments.remove(att));
+                                    },
+                                  ),
+                                );
+                              }
+                            }).toList(),
+                          ),
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -883,73 +990,48 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                         const SizedBox(height: 6),
                         ..._links.map((link) => NoteLinkTile(link: link)),
                       ],
+                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
               ),
 
-              // Floating Bottom Action & Formatting Bar
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  border: Border(top: BorderSide(color: colors.border.withValues(alpha: 0.2))),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, -3),
-                    ),
-                  ],
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: Row(
-                    children: [
-                      // Word count & Reading Time Indicator
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${PersianDigits.convert(_wordCount.toString())} کلمه',
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            _saveStatusText ?? readingTime,
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontSize: 9,
-                              color: colors.textTertiary,
-                            ),
-                          ),
-                        ],
+              // Bottom Area: Floating Toolbar above keyboard OR One-line footer
+              if (isKeyboardOpen)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 140),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    border: Border(top: BorderSide(color: colors.border.withValues(alpha: 0.15))),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
                       ),
-                      const Spacer(),
-
-                      // Markdown Formatting Shortcuts
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
                       IconButton(
-                        icon: const Icon(Icons.format_bold, size: 19),
+                        icon: const Icon(Icons.format_bold, size: 20),
                         tooltip: 'Bold',
                         onPressed: () => _insertMarkdown('**', '**'),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.title, size: 19),
+                        icon: const Icon(Icons.title, size: 20),
                         tooltip: 'Heading',
                         onPressed: () => _insertMarkdown('\n## '),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.check_box_outlined, size: 19),
+                        icon: const Icon(Icons.check_box_outlined, size: 20),
                         tooltip: 'Checklist',
                         onPressed: () => _insertMarkdown('\n- [ ] '),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.format_list_bulleted, size: 19),
+                        icon: const Icon(Icons.format_list_bulleted, size: 20),
                         tooltip: 'List',
                         onPressed: () => _insertMarkdown('\n- '),
                       ),
@@ -960,8 +1042,33 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                       ),
                     ],
                   ),
+                )
+              else
+                AnimatedOpacity(
+                  opacity: _isFocusModeDimmed ? 0.2 : 1.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      border: Border(top: BorderSide(color: colors.border.withValues(alpha: 0.1))),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${PersianDigits.convert(_wordCount.toString())} کلمه • $readingTime',
+                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textTertiary),
+                        ),
+                        if (_saveStatusText != null)
+                          Text(
+                            _saveStatusText!,
+                            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textTertiary),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -1140,7 +1247,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                       onPressed: () async {
                                         Navigator.pop(ctx);
                                         RitmoHaptics.confirm();
-                                        // Save current state as RESTORE before overwriting if body differed
                                         if (_bodyController.text.trim() != rev.body.trim() && _activeNote != null) {
                                           await NotesRepository.instance.update(_activeNote!, reason: 'RESTORE');
                                         }

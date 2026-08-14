@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:shamsi_date/shamsi_date.dart';
-import 'package:sqflite/sqflite.dart';
 
 @immutable
 class CaptureContext {

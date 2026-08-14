@@ -8,6 +8,7 @@ import 'package:ritmo/features/notes/data/notes_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_srs_review_screen.dart';
+import 'package:ritmo/features/notes/presentation/widgets/ritmo_shimmer.dart';
 
 class ExperienceHubScreen extends StatefulWidget {
   const ExperienceHubScreen({super.key});
@@ -61,7 +62,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final filtered = _selectedCategory == null
         ? _experiences
@@ -81,17 +81,17 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            'بانک درس‌ها و تجربه‌ها 💡',
+            'بانک درس‌ها و تجربه‌ها',
             style: TextStyle(
               fontFamily: 'Vazirmatn',
-              fontSize: 16,
+              fontSize: 17,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
             ),
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.psychology, color: Color(0xFFE5A00D)),
+              icon: const Icon(Icons.psychology_outlined, color: Color(0xFFE5A00D), size: 22),
               tooltip: 'مرور فاصله‌دار درس‌ها',
               onPressed: () {
                 Navigator.push(
@@ -115,28 +115,34 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
             if (mounted) await _loadData();
           },
           backgroundColor: const Color(0xFFE5A00D),
-          icon: const Icon(CupertinoIcons.add, color: Colors.white, size: 20),
+          icon: const Icon(CupertinoIcons.pencil, color: Colors.white, size: 18),
           label: const Text(
             'ثبت تجربه جدید',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 13,
+            ),
           ),
         ),
         body: Column(
           children: [
-            // Category Horizontal Selector
+            // Category Horizontal Sliding Selector
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
               color: colors.surface,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
                 child: Row(
                   children: [
                     _buildCategoryPill('همه', null, '🌟', _experiences.length),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     ...ExperienceCategory.values.map((cat) {
                       final count = _experiences.where((e) => e.category == cat).length;
                       return Padding(
-                        padding: const EdgeInsets.only(left: 6),
+                        padding: const EdgeInsets.only(left: 8),
                         child: _buildCategoryPill(cat.labelFa, cat, cat.emoji, count),
                       );
                     }),
@@ -148,31 +154,38 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
             // Main Content Area
             Expanded(
               child: _isLoading
-                  ? Center(child: CircularProgressIndicator(color: const Color(0xFFE5A00D)))
+                  ? const RitmoShimmerGrid(count: 4)
                   : filtered.isEmpty
-                      ? _buildEmptyState(context)
+                      ? _buildEmptyState(colors)
                       : RefreshIndicator(
                           onRefresh: _loadData,
                           child: ListView(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             children: [
                               // Featured Wisdom Hero Card (Shown when 'All' is selected)
                               if (_selectedCategory == null && featuredExp != null) ...[
                                 _buildFeaturedHeroCard(context, featuredExp),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 18),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                                  child: Text(
-                                    'همه آموزه‌ها (${PersianDigits.convert(filtered.length.toString())})',
-                                    style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.textSecondary,
-                                    ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(CupertinoIcons.sparkles, size: 14, color: Color(0xFFE5A00D)),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'همه آموزه‌ها (${PersianDigits.convert(filtered.length.toString())})',
+                                        style: TextStyle(
+                                          fontFamily: 'Vazirmatn',
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: colors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 10),
                               ],
 
                               // Wisdom Cards List
@@ -192,56 +205,67 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
     final colors = context.colors;
     final isSelected = _selectedCategory == cat;
 
-    return InkWell(
-      onTap: () {
-        RitmoHaptics.selection();
-        setState(() => _selectedCategory = cat);
-      },
-      borderRadius: BorderRadius.circular(RitmoRadius.pill),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFE5A00D) : colors.surfaceSunken,
+    return AnimatedScale(
+      scale: isSelected ? 1.0 : 0.97,
+      duration: const Duration(milliseconds: 140),
+      curve: Curves.easeOutCubic,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            RitmoHaptics.selection();
+            setState(() => _selectedCategory = cat);
+          },
           borderRadius: BorderRadius.circular(RitmoRadius.pill),
-          border: Border.all(
-            color: isSelected ? const Color(0xFFE5A00D) : colors.border.withValues(alpha: 0.25),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 12)),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? Colors.white : colors.textPrimary,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFFE5A00D) : colors.surfaceSunken,
+              borderRadius: BorderRadius.circular(RitmoRadius.pill),
+              border: Border.all(
+                color: isSelected ? const Color(0xFFE5A00D) : colors.border.withValues(alpha: 0.15),
+                width: isSelected ? 1.2 : 0.8,
               ),
             ),
-            if (count > 0) ...[
-              const SizedBox(width: 5),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.white.withValues(alpha: 0.25) : const Color(0xFFE5A00D).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  PersianDigits.convert(count.toString()),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 12)),
+                const SizedBox(width: 5),
+                Text(
+                  label,
                   style: TextStyle(
                     fontFamily: 'Vazirmatn',
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : const Color(0xFFE5A00D),
+                    fontSize: 11.5,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected ? Colors.white : colors.textPrimary,
                   ),
                 ),
-              ),
-            ],
-          ],
+                if (count > 0) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: 0.25)
+                          : const Color(0xFFE5A00D).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                    ),
+                    child: Text(
+                      PersianDigits.convert(count.toString()),
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : const Color(0xFFE5A00D),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -252,82 +276,113 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
-              ? [const Color(0xFF332505), colors.card]
-              : [const Color(0xFFFFF7DB), const Color(0xFFFFFDF5)],
+              ? [const Color(0xFF332505), colors.surfaceSunken]
+              : [const Color(0xFFFFFBEB), const Color(0xFFFEF3C7)],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(RitmoRadius.hero),
-        border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.45)),
+        border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFE5A00D).withValues(alpha: 0.1),
-            blurRadius: 16,
+            color: const Color(0xFFE5A00D).withValues(alpha: isDark ? 0.12 : 0.08),
+            blurRadius: 18,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Subtle quote decoration watermark
+          Positioned(
+            top: -10,
+            left: 0,
+            child: Text(
+              '“',
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 64,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFE5A00D).withValues(alpha: 0.12),
+                height: 1.0,
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('✨', style: TextStyle(fontSize: 16)),
-                  const SizedBox(width: 6),
-                  Text(
-                    'درس برگزیده • ${exp.category.labelFa}',
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFFE5A00D),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5A00D).withValues(alpha: isDark ? 0.25 : 0.15),
+                      borderRadius: BorderRadius.circular(RitmoRadius.pill),
                     ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('✨', style: TextStyle(fontSize: 12)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'درس برگزیده • ${exp.category.labelFa}',
+                          style: const TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFE5A00D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    children: List.generate(5, (idx) {
+                      final starFilled = idx < exp.importance;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 1),
+                        child: Icon(
+                          starFilled ? CupertinoIcons.star_fill : CupertinoIcons.star,
+                          size: 13,
+                          color: starFilled ? const Color(0xFFE5A00D) : colors.textTertiary,
+                        ),
+                      );
+                    }),
                   ),
                 ],
               ),
-              Row(
-                children: List.generate(5, (idx) {
-                  return Icon(
-                    idx < exp.importance ? CupertinoIcons.star_fill : CupertinoIcons.star,
-                    size: 13,
-                    color: idx < exp.importance ? Colors.amber : colors.textTertiary,
-                  );
-                }),
+              const SizedBox(height: 12),
+              Text(
+                '« ${exp.lesson} »',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                  height: 1.5,
+                ),
               ),
+              if (exp.contextText != null && exp.contextText!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  exp.contextText!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 12.5,
+                    color: colors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            '« ${exp.lesson} »',
-            style: TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-              height: 1.45,
-            ),
-          ),
-          if (exp.contextText != null && exp.contextText!.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              exp.contextText!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 12,
-                color: colors.textSecondary,
-                height: 1.4,
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -338,18 +393,19 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      margin: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF241C06) : const Color(0xFFFFFDF7),
+        color: isDark ? colors.surfaceSunken.withValues(alpha: 0.8) : colors.surface,
         borderRadius: BorderRadius.circular(RitmoRadius.card),
         border: Border.all(
-          color: const Color(0xFFE5A00D).withValues(alpha: 0.25),
+          color: const Color(0xFFE5A00D).withValues(alpha: isDark ? 0.25 : 0.15),
+          width: 0.8,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -363,9 +419,9 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
             if (note != null && context.mounted) {
               await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
+                MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note, isExperience: true)),
               );
-              if (mounted) await _loadData();
+              await _loadData();
             }
           },
           child: Padding(
@@ -373,57 +429,113 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header: Category, Stars & Options
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Text(exp.category.emoji, style: const TextStyle(fontSize: 15)),
-                        const SizedBox(width: 6),
-                        Text(
-                          exp.category.labelFa,
-                          style: TextStyle(
-                            fontFamily: 'Vazirmatn',
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFFE5A00D),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE5A00D).withValues(alpha: isDark ? 0.18 : 0.1),
+                        borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(exp.category.emoji, style: const TextStyle(fontSize: 12)),
+                          const SizedBox(width: 4),
+                          Text(
+                            exp.category.labelFa,
+                            style: const TextStyle(
+                              fontFamily: 'Vazirmatn',
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFE5A00D),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     Row(
                       children: [
-                        Text(
-                          'پیشنهاد روزانه',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary),
-                        ),
+                        ...List.generate(5, (idx) {
+                          final isFilled = idx < exp.importance;
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 1),
+                            child: Icon(
+                              isFilled ? CupertinoIcons.star_fill : CupertinoIcons.star,
+                              size: 12,
+                              color: isFilled ? const Color(0xFFE5A00D) : colors.textTertiary,
+                            ),
+                          );
+                        }),
                         const SizedBox(width: 4),
-                        CupertinoSwitch(
-                          value: exp.isActive,
-                          activeTrackColor: const Color(0xFFE5A00D),
-                          onChanged: (val) async {
-                            RitmoHaptics.selection();
-                            await ExperienceRepository.instance.setActive(exp.noteId, val);
-                            if (mounted) await _loadData();
-                          },
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: PopupMenuButton<String>(
+                            padding: EdgeInsets.zero,
+                            icon: Icon(Icons.more_horiz, size: 18, color: colors.textTertiary),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            onSelected: (val) async {
+                              RitmoHaptics.selection();
+                              if (val == 'toggle') {
+                                await ExperienceRepository.instance.setActive(exp.noteId, !exp.isActive);
+                                await _loadData();
+                              } else if (val == 'importance_up') {
+                                if (exp.importance < 5) {
+                                  await ExperienceRepository.instance.setImportance(exp.noteId, exp.importance + 1);
+                                  await _loadData();
+                                }
+                              } else if (val == 'importance_down') {
+                                if (exp.importance > 1) {
+                                  await ExperienceRepository.instance.setImportance(exp.noteId, exp.importance - 1);
+                                  await _loadData();
+                                }
+                              }
+                            },
+                            itemBuilder: (ctx) => [
+                              PopupMenuItem(
+                                value: 'toggle',
+                                child: Text(
+                                  exp.isActive ? 'غیرفعال کردن پیشنهاد' : 'فعال‌سازی پیشنهاد',
+                                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                                ),
+                              ),
+                              if (exp.importance < 5)
+                                const PopupMenuItem(
+                                  value: 'importance_up',
+                                  child: Text('افزایش اهمیت ⭐', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                                ),
+                              if (exp.importance > 1)
+                                const PopupMenuItem(
+                                  value: 'importance_down',
+                                  child: Text('کاهش اهمیت 📉', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                                ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
+
+                // Lesson Text
                 Text(
                   exp.lesson,
                   style: TextStyle(
                     fontFamily: 'Vazirmatn',
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
                     color: colors.textPrimary,
-                    height: 1.4,
+                    height: 1.45,
                   ),
                 ),
-                if (exp.contextText != null && exp.contextText!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+
+                // Context Text
+                if (exp.contextText != null && exp.contextText!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 6),
                   Text(
                     exp.contextText!,
                     maxLines: 2,
@@ -437,25 +549,47 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                   ),
                 ],
                 const SizedBox(height: 10),
+
+                // Footer: DayKey & Active Switch
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: List.generate(5, (sIdx) {
-                        return Icon(
-                          sIdx < exp.importance ? CupertinoIcons.star_fill : CupertinoIcons.star,
-                          size: 12,
-                          color: sIdx < exp.importance ? Colors.amber : colors.textTertiary,
-                        );
-                      }),
-                    ),
                     Text(
-                      'مرور شده: ${PersianDigits.convert(exp.showCount.toString())} بار',
+                      exp.occurredOnDayKey != null ? 'ثبت در روز: ${PersianDigits.convert(exp.occurredOnDayKey!)}' : '',
                       style: TextStyle(
                         fontFamily: 'Vazirmatn',
-                        fontSize: 10,
+                        fontSize: 10.5,
                         color: colors.textTertiary,
                       ),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          exp.isActive ? 'پیشنهاد روزانه فعال' : 'پیشنهاد غیرفعال',
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 10,
+                            color: exp.isActive ? const Color(0xFFE5A00D) : colors.textTertiary,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        SizedBox(
+                          height: 20,
+                          width: 32,
+                          child: Transform.scale(
+                            scale: 0.65,
+                            child: Switch(
+                              value: exp.isActive,
+                              activeThumbColor: const Color(0xFFE5A00D),
+                              onChanged: (val) async {
+                                RitmoHaptics.selection();
+                                await ExperienceRepository.instance.setActive(exp.noteId, val);
+                                await _loadData();
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -467,30 +601,29 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
-    final colors = context.colors;
-
+  Widget _buildEmptyState(RitmoColors colors) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 color: const Color(0xFFE5A00D).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.lightbulb_outline_rounded,
-                size: 48,
+                size: 36,
                 color: Color(0xFFE5A00D),
               ),
             ),
             const SizedBox(height: 16),
             Text(
-              'هیچ تجربه‌ای در این بخش ثبت نشده',
+              'هنوز درسی ثبت نکرده‌اید',
               style: TextStyle(
                 fontFamily: 'Vazirmatn',
                 fontSize: 16,
@@ -500,11 +633,11 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'درس‌هایی که از شکست‌ها، موفقیت‌ها و رخدادهای زندگی می‌گیری را ثبت کن تا در زمان مناسب یادآوری شوند.',
+              'درس‌ها و آموزه‌های کلیدی زندگی خود را بنویسید تا سیستم بازنمایی روزانه آن‌ها را به شما یادآوری کند.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Vazirmatn',
-                fontSize: 12,
+                fontSize: 12.5,
                 color: colors.textSecondary,
                 height: 1.5,
               ),
@@ -513,14 +646,18 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
             ElevatedButton.icon(
               onPressed: () async {
                 RitmoHaptics.confirm();
+                if (!context.mounted) return;
                 await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const NoteEditorScreen(isExperience: true)),
                 );
-                _loadData();
+                if (mounted) await _loadData();
               },
-              icon: const Icon(CupertinoIcons.add, size: 16),
-              label: const Text('ثبت اولین تجربه', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+              icon: const Icon(CupertinoIcons.pencil, size: 16),
+              label: const Text(
+                'ثبت اولین تجربه',
+                style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE5A00D),
                 foregroundColor: Colors.white,

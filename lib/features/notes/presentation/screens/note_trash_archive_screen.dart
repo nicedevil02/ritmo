@@ -84,11 +84,13 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       RitmoHaptics.confirm();
       await NotesRepository.instance.purge(daysOld: 0);
-      RitmoToast.show(context, 'سطل زباله پاکسازی شد 🧹');
-      _loadData();
+      if (mounted) {
+        RitmoToast.show(context, 'سطل زباله پاکسازی شد 🧹');
+        await _loadData();
+      }
     }
   }
 
@@ -115,12 +117,38 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       RitmoHaptics.confirm();
       await NotesRepository.instance.permanentDelete(note.id);
-      RitmoToast.show(context, 'یادداشت برای همیشه حذف شد');
-      _loadData();
+      if (mounted) {
+        RitmoToast.show(context, 'یادداشت برای همیشه حذف شد');
+        await _loadData();
+      }
     }
+  }
+
+  Future<void> _restoreNote(String id) async {
+    RitmoHaptics.selection();
+    await NotesRepository.instance.restore(id);
+    if (!mounted) return;
+    RitmoToast.show(context, 'یادداشت بازیابی شد 🔄');
+    await _loadData();
+  }
+
+  Future<void> _unarchiveNote(String id) async {
+    RitmoHaptics.selection();
+    await NotesRepository.instance.unarchive(id);
+    if (!mounted) return;
+    RitmoToast.show(context, 'از بایگانی خارج شد 📤');
+    await _loadData();
+  }
+
+  Future<void> _trashNote(String id) async {
+    RitmoHaptics.selection();
+    await NotesRepository.instance.delete(id);
+    if (!mounted) return;
+    RitmoToast.show(context, 'به سطل زباله منتقل شد 🗑️');
+    await _loadData();
   }
 
   @override
@@ -271,12 +299,7 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
                     children: [
                       if (isTrash) ...[
                         TextButton.icon(
-                          onPressed: () async {
-                            RitmoHaptics.selection();
-                            await NotesRepository.instance.restore(note.id);
-                            RitmoToast.show(context, 'یادداشت بازیابی شد 🔄');
-                            _loadData();
-                          },
+                          onPressed: () => _restoreNote(note.id),
                           icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 14),
                           label: const Text('بازیابی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
                         ),
@@ -287,22 +310,12 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
                         ),
                       ] else ...[
                         TextButton.icon(
-                          onPressed: () async {
-                            RitmoHaptics.selection();
-                            await NotesRepository.instance.unarchive(note.id);
-                            RitmoToast.show(context, 'از بایگانی خارج شد 📤');
-                            _loadData();
-                          },
+                          onPressed: () => _unarchiveNote(note.id),
                           icon: const Icon(CupertinoIcons.arrow_up_doc, size: 14),
                           label: const Text('خروج از بایگانی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
                         ),
                         TextButton.icon(
-                          onPressed: () async {
-                            RitmoHaptics.selection();
-                            await NotesRepository.instance.delete(note.id);
-                            RitmoToast.show(context, 'به سطل زباله منتقل شد 🗑️');
-                            _loadData();
-                          },
+                          onPressed: () => _trashNote(note.id),
                           icon: const Icon(CupertinoIcons.trash, size: 14, color: Colors.redAccent),
                           label: const Text('انتقال به زباله‌دان', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.redAccent)),
                         ),

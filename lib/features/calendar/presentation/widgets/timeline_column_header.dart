@@ -73,10 +73,10 @@ class TimelineColumnHeader extends StatelessWidget {
 
     return AnimatedContainer(
       duration: RitmoMotion.state,
-      height: CalendarGeometry.columnHeaderHeight - 6.0,
+      constraints: const BoxConstraints(minHeight: 52.0),
       margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
       padding: const EdgeInsets.symmetric(
-        horizontal: RitmoSpacing.md,
+        horizontal: RitmoSpacing.sm + 4,
         vertical: 6.0,
       ),
       decoration: BoxDecoration(
@@ -108,17 +108,23 @@ class TimelineColumnHeader extends StatelessWidget {
           const SizedBox(width: RitmoSpacing.sm),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 14.0,
-                        fontWeight: FontWeight.bold,
-                        color: isActive ? colors.textPrimary : colors.textSecondary,
+                    Flexible(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          height: 1.2,
+                          color: isActive ? colors.textPrimary : colors.textSecondary,
+                        ),
                       ),
                     ),
                     if (isActive) ...[
@@ -134,10 +140,14 @@ class TimelineColumnHeader extends StatelessWidget {
                     ],
                   ],
                 ),
+                const SizedBox(height: 2),
                 Text(
                   toPersianDigits(rangeLabel),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 11.0,
+                    height: 1.2,
                     color: isActive
                         ? colors.primary
                         : colors.textTertiary,

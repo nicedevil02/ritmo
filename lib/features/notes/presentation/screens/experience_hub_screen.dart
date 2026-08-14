@@ -18,6 +18,7 @@ class ExperienceHubScreen extends StatefulWidget {
 
 class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
   List<Experience> _experiences = [];
+  Experience? _featuredExp;
   bool _isLoading = true;
   ExperienceCategory? _selectedCategory;
 
@@ -32,9 +33,16 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
     setState(() => _isLoading = true);
     try {
       final exps = await ExperienceRepository.instance.listAll();
+      Experience? featured = _featuredExp != null
+          ? exps.where((e) => e.noteId == _featuredExp!.noteId).firstOrNull
+          : null;
+      if (featured == null && exps.isNotEmpty) {
+        featured = (exps.where((e) => e.isActive && e.importance >= 4).toList()..shuffle()).firstOrNull ?? exps.first;
+      }
       if (mounted) {
         setState(() {
           _experiences = exps;
+          _featuredExp = featured;
           _isLoading = false;
         });
       }
@@ -43,6 +51,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
       if (mounted) {
         setState(() {
           _experiences = [];
+          _featuredExp = null;
           _isLoading = false;
         });
       }
@@ -58,10 +67,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
         ? _experiences
         : _experiences.where((e) => e.category == _selectedCategory).toList();
 
-    // Featured experience (highest importance & active)
-    final featuredExp = _experiences.isNotEmpty
-        ? (_experiences.where((e) => e.isActive && e.importance >= 4).toList()..shuffle()).firstOrNull ?? _experiences.first
-        : null;
+    final featuredExp = _featuredExp;
 
     return Directionality(
       textDirection: TextDirection.rtl,

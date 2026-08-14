@@ -4,7 +4,6 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/notes/data/experience_repository.dart';
-import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/logic/resurfacing_engine.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
 

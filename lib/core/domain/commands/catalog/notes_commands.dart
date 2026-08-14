@@ -676,7 +676,7 @@ class NoteArchiveCommand extends RitmoCommand {
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
     await ctx.txn.update('notes', {'status': 'ARCHIVED', 'updatedAt': DateTime.now().millisecondsSinceEpoch}, where: 'id = ?', whereArgs: [noteId]);
-    return CommandResult.ok(commandId: id, inverseData: {'noteId': noteId});
+    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId, 'isArchived': true}, inverseData: {'noteId': noteId});
   }
 
   @override
@@ -721,7 +721,7 @@ class NoteRestoreCommand extends RitmoCommand {
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
     await ctx.txn.update('notes', {'status': 'ACTIVE', 'trashedAt': null, 'updatedAt': DateTime.now().millisecondsSinceEpoch}, where: 'id = ?', whereArgs: [noteId]);
-    return CommandResult.ok(commandId: id, inverseData: {'noteId': noteId});
+    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId, 'isRestored': true}, inverseData: {'noteId': noteId});
   }
 
   @override
@@ -767,7 +767,7 @@ class NoteDeleteCommand extends RitmoCommand {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     await ctx.txn.update('notes', {'status': 'TRASHED', 'trashedAt': nowMs, 'updatedAt': nowMs}, where: 'id = ?', whereArgs: [noteId]);
-    return CommandResult.ok(commandId: id, inverseData: {'noteId': noteId});
+    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId, 'isDeleted': true}, inverseData: {'noteId': noteId});
   }
 
   @override

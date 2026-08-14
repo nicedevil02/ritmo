@@ -9,6 +9,9 @@ import 'package:ritmo/core/domain/personas/persona_gate.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/engine_invalidation_tag.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
+import 'package:ritmo/features/notes/data/notes_repository.dart';
+import 'package:ritmo/features/notes/domain/note_models.dart';
+import 'package:ritmo/features/notes/logic/note_fts_engine.dart';
 import 'package:sqflite/sqflite.dart';
 
 class RitmoCommandBus {
@@ -228,6 +231,15 @@ class RitmoCommandBus {
       if (touchesRoutines) {
         await SnapshotSyncService.syncAll();
       }
+
+      // Sync Notes FTS for affected notes (AFTER transaction commits)
+      for (final res in planResult) {
+        final noteId = res.outputData?['noteId'] as String? ?? res.inverseData?['noteId'] as String?;
+        if (noteId != null && noteId.startsWith('note_')) {
+          final isDeleted = res.outputData?['isDeleted'] == true || res.outputData?['isArchived'] == true;
+          await _syncNoteFts(noteId, isDeleted: isDeleted);
+        }
+      }
       
       return PlanResult(success: true, planId: planId, results: planResult);
       
@@ -236,10 +248,26 @@ class RitmoCommandBus {
     }
   }
 
+  Future<void> _syncNoteFts(String noteId, {bool isDeleted = false}) async {
+    try {
+      if (isDeleted) {
+        await NoteFtsEngine.instance.deleteFromIndex(noteId);
+      } else {
+        final note = await NotesRepository.instance.getById(noteId);
+        if (note != null && note.status == NoteStatus.active) {
+          await NoteFtsEngine.instance.indexNote(note);
+        } else {
+          await NoteFtsEngine.instance.deleteFromIndex(noteId);
+        }
+      }
+    } catch (_) {}
+  }
+
   Future<CommandResult> undoAudit(String auditId) async {
     final db = await DatabaseHelper.instance.database;
+    String? noteIdToSync;
     
-    return await db.transaction((txn) async {
+    final result = await db.transaction((txn) async {
       final rows = await txn.query('assistant_audit_log', where: 'id = ?', whereArgs: [auditId], limit: 1);
       if (rows.isEmpty) {
         return CommandResult.failure(commandId: '', errorMessage: 'ممیزی پیدا نشد.');
@@ -285,13 +313,24 @@ class RitmoCommandBus {
         where: 'id = ?',
         whereArgs: [auditId],
       );
+
+      if (cmd.touches.contains(DataDomain.notes)) {
+        noteIdToSync = inverseData['noteId'] as String? ?? payload['id'] as String? ?? payload['noteId'] as String?;
+      }
       
       return CommandResult.ok(commandId: cmd.id);
     });
+
+    if (result.success && noteIdToSync != null && noteIdToSync!.startsWith('note_')) {
+      await _syncNoteFts(noteIdToSync!);
+    }
+
+    return result;
   }
 
   Future<PlanResult> undoPlan(String planId) async {
     final db = await DatabaseHelper.instance.database;
+    final noteIdsToSync = <String>{};
     
     try {
       final results = await db.transaction((txn) async {
@@ -346,6 +385,13 @@ class RitmoCommandBus {
             where: 'id = ?',
             whereArgs: [record.id],
           );
+
+          if (cmd.touches.contains(DataDomain.notes)) {
+            final nId = inverseData['noteId'] as String? ?? payload['id'] as String? ?? payload['noteId'] as String?;
+            if (nId != null && nId.startsWith('note_')) {
+              noteIdsToSync.add(nId);
+            }
+          }
         }
         
         // Update plan status
@@ -361,6 +407,11 @@ class RitmoCommandBus {
         
         return stepResults;
       });
+
+      // Post-commit FTS sync for undoPlan
+      for (final nId in noteIdsToSync) {
+        await _syncNoteFts(nId);
+      }
       
       return PlanResult(success: true, planId: planId, results: results);
     } catch (e) {

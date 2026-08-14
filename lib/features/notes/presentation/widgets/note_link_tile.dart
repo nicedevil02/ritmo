@@ -65,6 +65,10 @@ class NoteLinkTile extends StatelessWidget {
         return 'ارجاع';
       case 'CHILD':
         return 'زیرمجموعه';
+      case 'MENTIONS':
+        return 'اشاره';
+      case 'ABOUT':
+        return 'درباره';
       default:
         return relation;
     }

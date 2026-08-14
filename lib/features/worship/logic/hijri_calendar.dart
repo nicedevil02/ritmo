@@ -21,7 +21,7 @@ class HijriCalendarCalculator {
 
   /// Converts Julian Day Number to HijriDate
   static HijriDate hijriFromGregorian(DateTime date, {int offsetDays = 0}) {
-    final effectiveDate = date.add(Duration(days: offsetDays));
+    final effectiveDate = DateTime(date.year, date.month, date.day + offsetDays);
     final year = effectiveDate.year;
     final month = effectiveDate.month;
     final day = effectiveDate.day;
@@ -49,6 +49,8 @@ class HijriCalendarCalculator {
     if (hMonth < 1) {
       hMonth = 1;
     }
+    final maxDays = daysInMonth(hYear, hMonth);
+    if (hDay > maxDays) hDay = maxDays;
     if (hDay < 1) hDay = 1;
 
     final mName = hijriMonthsFa[hMonth] ?? 'محرم';
@@ -65,20 +67,21 @@ class HijriCalendarCalculator {
 
   /// Converts Hijri to Gregorian DateTime
   static DateTime gregorianFromHijri(int hy, int hm, int hd, {int offsetDays = 0}) {
-    var jdn = ((11 * hy + 3) / 30).floor() + 354 * hy + 30 * hm - ((hm - 1) / 2).floor() + hd + 1948440 - 385;
+    final jdn = ((11 * hy + 3) / 30).floor() + 354 * hy + 30 * hm - ((hm - 1) / 2).floor() + hd + 1948440 - 385;
 
     // Convert JDN to Gregorian
-    var l = jdn + 68569;
-    var n = ((4 * l) / 146097).floor();
-    l = l - ((146097 * n + 3) / 4).floor();
-    var i = ((4000 * (l + 1)) / 1464001).floor();
-    l = l - ((1461 * i) / 4).floor() + 31;
-    var j = ((80 * l) / 2447).floor();
-    var day = l - ((2447 * j) / 80).floor();
-    l = (j / 11).floor();
-    var month = j + 2 - 12 * l;
-    var year = 100 * (n - 49) + i + l;
+    final l0 = jdn + 68569;
+    final n = ((4 * l0) / 146097).floor();
+    final l1 = l0 - ((146097 * n + 3) / 4).floor();
+    final i = ((4000 * (l1 + 1)) / 1464001).floor();
+    final l2 = l1 - ((1461 * i) / 4).floor() + 31;
+    final j = ((80 * l2) / 2447).floor();
+    final day = l2 - ((2447 * j) / 80).floor();
+    final l3 = (j / 11).floor();
+    final month = j + 2 - 12 * l3;
+    final year = 100 * (n - 49) + i + l3;
 
-    return DateTime(year, month, day).subtract(Duration(days: offsetDays));
+    final rawG = DateTime(year, month, day);
+    return DateTime(rawG.year, rawG.month, rawG.day - offsetDays);
   }
 }

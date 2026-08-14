@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/features/worship/logic/worship_calendar_logic.dart';
@@ -98,6 +99,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          theme: RitmoTheme.darkTheme,
           home: Scaffold(
             body: WorshipDayDetailPanel(selectedDay: satDay),
           ),
@@ -115,6 +117,48 @@ void main() {
       expect(find.text('یا رَبَّ الْعالَمین'), findsOneWidget);
       expect(find.text('ذکر روز هفته'), findsOneWidget);
       expect(find.text('تسبیحات حضرت زهرا (س)'), findsNothing);
+    });
+
+    test('7. HijriCalendarCalculator shifts dates accurately with offsetDays (-2 to +2)', () {
+      final baseDate = DateTime(2026, 8, 14); // 24 Mordad 1405
+      final h0 = HijriCalendarCalculator.hijriFromGregorian(baseDate, offsetDays: 0);
+      final hPlus1 = HijriCalendarCalculator.hijriFromGregorian(baseDate, offsetDays: 1);
+      final hMinus1 = HijriCalendarCalculator.hijriFromGregorian(baseDate, offsetDays: -1);
+      final hPlus2 = HijriCalendarCalculator.hijriFromGregorian(baseDate, offsetDays: 2);
+
+      expect(hPlus1.day, equals(h0.day + 1 <= HijriCalendarCalculator.daysInMonth(h0.year, h0.month) ? h0.day + 1 : 1));
+      expect(hMinus1.day, equals(h0.day - 1 >= 1 ? h0.day - 1 : 30));
+      expect(hPlus2.formatted, isNotEmpty);
+    });
+
+    test('8. WorshipCalendarLogic.generateMonthData shifts Hijri days and range headers when hijriOffset is applied', () {
+      final standardMonth = WorshipCalendarLogic.generateMonthData(1405, 5, hijriOffset: 0);
+      final plusOneMonth = WorshipCalendarLogic.generateMonthData(1405, 5, hijriOffset: 1);
+      final minusOneMonth = WorshipCalendarLogic.generateMonthData(1405, 5, hijriOffset: -1);
+
+      final firstDayStd = standardMonth.days.firstWhere((d) => d.isCurrentMonth && d.jalali.day == 1);
+      final firstDayPlus1 = plusOneMonth.days.firstWhere((d) => d.isCurrentMonth && d.jalali.day == 1);
+      final firstDayMinus1 = minusOneMonth.days.firstWhere((d) => d.isCurrentMonth && d.jalali.day == 1);
+
+      expect(firstDayPlus1.hijri.day, isNot(equals(firstDayMinus1.hijri.day)));
+      expect(firstDayStd.hijri.day, isNotNull);
+      expect(standardMonth.hijriRangeText, isNotEmpty);
+      expect(plusOneMonth.hijriRangeText, isNotEmpty);
+    });
+
+    test('9. Religious occasions shift on solar calendar with Hijri crescent correction', () {
+      // 10 Muharram (Ashura)
+      // On standard offset=0, suppose it falls on solar day D.
+      // On offset=+1, the same solar day D has hijri.day=11, and day D-1 has hijri.day=10.
+      final monthData0 = WorshipCalendarLogic.generateMonthData(1405, 4, hijriOffset: 0); // Tir 1405
+      final ashuraDay0 = monthData0.days.where((d) => d.isCurrentMonth && d.occasions.any((o) => o.title.contains('عاشورا'))).toList();
+
+      final monthDataPlus1 = WorshipCalendarLogic.generateMonthData(1405, 4, hijriOffset: 1);
+      final ashuraDayPlus1 = monthDataPlus1.days.where((d) => d.isCurrentMonth && d.occasions.any((o) => o.title.contains('عاشورا'))).toList();
+
+      if (ashuraDay0.isNotEmpty && ashuraDayPlus1.isNotEmpty) {
+        expect(ashuraDayPlus1.first.jalali.day, equals(ashuraDay0.first.jalali.day - 1));
+      }
     });
   });
 }

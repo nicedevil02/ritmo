@@ -60,7 +60,6 @@ class NoteUiHelper {
           emoji: '📅',
         );
       case NoteKind.note:
-      default:
         final primary = context.colors.primary;
         return NoteKindStyle(
           accentColor: primary,
@@ -104,6 +103,31 @@ class NoteUiHelper {
         return '$day $month ${PersianDigits.convert(j.year.toString())}';
       }
     }
+  }
+
+  static String timeOfDayLabelFa(String? tod) {
+    if (tod == null) return 'روز';
+    switch (tod.trim().toUpperCase()) {
+      case 'MORNING':
+        return 'صبح';
+      case 'AFTERNOON':
+        return 'ظهر';
+      case 'EVENING':
+        return 'عصر';
+      case 'NIGHT':
+        return 'شب';
+      default:
+        return 'روز';
+    }
+  }
+
+  static String monthName(int month) {
+    const names = [
+      'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+      'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+    ];
+    if (month >= 1 && month <= 12) return names[month - 1];
+    return '';
   }
 
   static String calculateReadingTime(int wordCount) {

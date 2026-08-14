@@ -5,7 +5,6 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
-import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/features/worship/logic/prayer_timeline.dart';
@@ -234,6 +233,10 @@ class WorshipEngine {
   final Map<String, WorshipDay> _dayCache = {};
   Map<String, dynamic>? _settingsCache;
   List<OccasionItem>? _occasionsCache;
+  int _hijriOffset = 0;
+
+  /// Cached user-defined Hijri crescent offset (-2 to +2 days)
+  int get hijriOffset => _hijriOffset;
 
   static bool _defaultsEnsured = false;
 
@@ -319,6 +322,7 @@ class WorshipEngine {
         );
       } catch (_) {}
     }
+    _hijriOffset = int.tryParse(map['hijri_offset']?.toString() ?? '') ?? 0;
     _settingsCache = map;
     return map;
   }
@@ -326,8 +330,20 @@ class WorshipEngine {
   // ── Hijri (instant, offline — W-6) ───────────────────────────────────────
 
   /// Returns Hijri date for [date] — always instant, always offline (W-6).
-  HijriDate hijriFor(DateTime date, {int offsetDays = 0}) =>
-      HijriCalendarCalculator.hijriFromGregorian(date, offsetDays: offsetDays);
+  /// If [offsetDays] is not provided, defaults to user-configured [_hijriOffset].
+  HijriDate hijriFor(DateTime date, {int? offsetDays}) =>
+      HijriCalendarCalculator.hijriFromGregorian(
+        date,
+        offsetDays: offsetDays ?? _hijriOffset,
+      );
+
+  /// Ensures settings are loaded and returns the user's configured Hijri offset
+  Future<int> getHijriOffset() async {
+    if (_settingsCache != null) return _hijriOffset;
+    final db = await DatabaseHelper.instance.database;
+    await _loadSettings(db);
+    return _hijriOffset;
+  }
 
   /// Loads active scheduled mustahab practices for [date] (both daily and specific-day practices)
   Future<List<WorshipPractice>> loadActiveMustahabs(DateTime date) async {

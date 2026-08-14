@@ -96,8 +96,13 @@ class WorshipCalendarLogic {
     return j.isLeapYear() ? 30 : 29;
   }
 
-  /// Generates grid days and headers for a Jalali month
-  static WorshipCalendarMonthData generateMonthData(int year, int month, {DateTime? todayOverride}) {
+  /// Generates grid days and headers for a Jalali month with user-defined Hijri crescent offset
+  static WorshipCalendarMonthData generateMonthData(
+    int year,
+    int month, {
+    DateTime? todayOverride,
+    int hijriOffset = 0,
+  }) {
     final now = todayOverride ?? DateTime.now();
     final todayJ = Jalali.fromDateTime(now);
 
@@ -115,7 +120,7 @@ class WorshipCalendarLogic {
     for (var i = 0; i < totalGridCells; i++) {
       final currentDt = startDate.add(Duration(days: i));
       final currentJ = Jalali.fromDateTime(currentDt);
-      final currentH = HijriCalendarCalculator.hijriFromGregorian(currentDt);
+      final currentH = HijriCalendarCalculator.hijriFromGregorian(currentDt, offsetDays: hijriOffset);
 
       final isCurrentMonth = currentJ.year == year && currentJ.month == month;
       final isToday = currentJ.year == todayJ.year &&
@@ -150,9 +155,9 @@ class WorshipCalendarLogic {
         ? '${toPersianDigits(monthStartDt.day.toString())} تا ${toPersianDigits(monthEndDt.day.toString())} $startGMonth ${toPersianDigits(monthStartDt.year.toString())}'
         : '${toPersianDigits(monthStartDt.day.toString())} $startGMonth - ${toPersianDigits(monthEndDt.day.toString())} $endGMonth ${toPersianDigits(monthStartDt.year.toString())}';
 
-    // Hijri range calculation
-    final startHijri = HijriCalendarCalculator.hijriFromGregorian(monthStartDt);
-    final endHijri = HijriCalendarCalculator.hijriFromGregorian(monthEndDt);
+    // Hijri range calculation with user offset
+    final startHijri = HijriCalendarCalculator.hijriFromGregorian(monthStartDt, offsetDays: hijriOffset);
+    final endHijri = HijriCalendarCalculator.hijriFromGregorian(monthEndDt, offsetDays: hijriOffset);
 
     final hRange = (startHijri.month == endHijri.month)
         ? '${toPersianDigits(startHijri.day.toString())} تا ${toPersianDigits(endHijri.day.toString())} ${startHijri.monthName} ${toPersianDigits(startHijri.year.toString())}'

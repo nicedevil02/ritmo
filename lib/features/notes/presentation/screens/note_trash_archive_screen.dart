@@ -31,6 +31,9 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTabIndex);
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
     _loadData();
   }
 

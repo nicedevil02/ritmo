@@ -11,6 +11,7 @@ class WorshipSolarCalendar extends StatefulWidget {
   const WorshipSolarCalendar({
     super.key,
     this.initialJalali,
+    this.hijriOffset = 0,
     this.qamariNightText,
     this.onDaySelected,
     this.onOpenTasbih,
@@ -18,6 +19,7 @@ class WorshipSolarCalendar extends StatefulWidget {
   });
 
   final Jalali? initialJalali;
+  final int hijriOffset;
   final String? qamariNightText;
   final ValueChanged<WorshipCalendarDay>? onDaySelected;
   final VoidCallback? onOpenTasbih;
@@ -51,8 +53,32 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
     );
   }
 
+  @override
+  void didUpdateWidget(WorshipSolarCalendar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((oldWidget.hijriOffset) != (widget.hijriOffset)) {
+      setState(() {
+        _loadMonthData();
+        _selectedDay = _monthData.days.firstWhere(
+          (d) =>
+              d.jalali.year == _selectedDay.jalali.year &&
+              d.jalali.month == _selectedDay.jalali.month &&
+              d.jalali.day == _selectedDay.jalali.day,
+          orElse: () => _monthData.days.firstWhere(
+            (d) => d.isToday && d.isCurrentMonth,
+            orElse: () => _monthData.days.firstWhere((d) => d.isCurrentMonth),
+          ),
+        );
+      });
+    }
+  }
+
   void _loadMonthData() {
-    _monthData = WorshipCalendarLogic.generateMonthData(_selectedYear, _selectedMonth);
+    _monthData = WorshipCalendarLogic.generateMonthData(
+      _selectedYear,
+      _selectedMonth,
+      hijriOffset: widget.hijriOffset,
+    );
   }
 
   void _goToPrevMonth() {

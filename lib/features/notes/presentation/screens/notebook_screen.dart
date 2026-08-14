@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/features/notes/data/notes_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/logic/note_fts_engine.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
@@ -13,7 +14,6 @@ import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dar
 import 'package:ritmo/features/notes/presentation/screens/note_srs_review_screen.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_trash_archive_screen.dart';
 import 'package:ritmo/features/notes/presentation/screens/weekly_review_screen.dart';
-import 'package:ritmo/features/notes/presentation/utils/note_ui_helper.dart';
 import 'package:ritmo/features/notes/presentation/widgets/note_card.dart';
 
 class NotebookScreen extends StatefulWidget {
@@ -32,6 +32,8 @@ class _NotebookScreenState extends State<NotebookScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounceTimer;
   int _searchSequence = 0;
+  Map<String, int> _countsByKind = {};
+  int _totalWordCount = 0;
 
   @override
   void initState() {
@@ -66,10 +68,14 @@ class _NotebookScreenState extends State<NotebookScreen> {
         _searchQuery,
         kind: _selectedKind,
       );
+      final counts = await NotesRepository.instance.countByKind();
+      final totalWords = await NotesRepository.instance.getTotalWordCount();
 
       if (mounted && currentSeq == _searchSequence) {
         setState(() {
           _notes = notes;
+          _countsByKind = counts;
+          _totalWordCount = totalWords;
           _isLoading = false;
         });
       }
@@ -113,8 +119,12 @@ class _NotebookScreenState extends State<NotebookScreen> {
     final pinnedNotes = _notes.where((n) => n.isPinned).toList();
     final otherNotes = _notes.where((n) => !n.isPinned).toList();
 
-    final experienceCount = _notes.where((n) => n.kind == NoteKind.experience).length;
-    final totalWordCount = _notes.fold<int>(0, (sum, n) => sum + n.wordCount);
+    final totalActiveCount = _countsByKind.values.fold<int>(0, (sum, c) => sum + c);
+    final noteCount = _countsByKind['NOTE'] ?? 0;
+    final experienceCount = _countsByKind['EXPERIENCE'] ?? 0;
+    final ideaCount = _countsByKind['IDEA'] ?? 0;
+    final decisionCount = _countsByKind['DECISION'] ?? 0;
+    final dailyCount = _countsByKind['DAILY'] ?? 0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -250,11 +260,11 @@ class _NotebookScreenState extends State<NotebookScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatPill('یادداشت‌ها', PersianDigits.convert(_notes.length.toString()), '📓', colors.primary),
+                    _buildStatPill('یادداشت‌ها', PersianDigits.convert(totalActiveCount.toString()), '📓', colors.primary),
                     Container(height: 24, width: 1, color: colors.border.withValues(alpha: 0.3)),
                     _buildStatPill('درس‌های زندگی', PersianDigits.convert(experienceCount.toString()), '💡', const Color(0xFFE5A00D)),
                     Container(height: 24, width: 1, color: colors.border.withValues(alpha: 0.3)),
-                    _buildStatPill('کلمات مکتوب', PersianDigits.convert(totalWordCount.toString()), '✍️', colors.textSecondary),
+                    _buildStatPill('کلمات مکتوب', PersianDigits.convert(_totalWordCount.toString()), '✍️', colors.textSecondary),
                   ],
                 ),
               ),
@@ -333,17 +343,17 @@ class _NotebookScreenState extends State<NotebookScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildFilterPill('همه', null, '🌟', _notes.length),
+                        _buildFilterPill('همه', null, '🌟', totalActiveCount),
                         const SizedBox(width: 6),
-                        _buildFilterPill('یادداشت‌ها', NoteKind.note, '📓', _notes.where((n) => n.kind == NoteKind.note).length),
+                        _buildFilterPill('یادداشت‌ها', NoteKind.note, '📓', noteCount),
                         const SizedBox(width: 6),
                         _buildFilterPill('درس‌ها', NoteKind.experience, '💡', experienceCount),
                         const SizedBox(width: 6),
-                        _buildFilterPill('ایده‌ها', NoteKind.idea, '⚡', _notes.where((n) => n.kind == NoteKind.idea).length),
+                        _buildFilterPill('ایده‌ها', NoteKind.idea, '⚡', ideaCount),
                         const SizedBox(width: 6),
-                        _buildFilterPill('تصمیم‌ها', NoteKind.decision, '🎯', _notes.where((n) => n.kind == NoteKind.decision).length),
+                        _buildFilterPill('تصمیم‌ها', NoteKind.decision, '🎯', decisionCount),
                         const SizedBox(width: 6),
-                        _buildFilterPill('روزانه', NoteKind.daily, '📅', _notes.where((n) => n.kind == NoteKind.daily).length),
+                        _buildFilterPill('روزانه', NoteKind.daily, '📅', dailyCount),
                       ],
                     ),
                   ),
@@ -590,7 +600,7 @@ class _NotebookScreenState extends State<NotebookScreen> {
                   context,
                   MaterialPageRoute(builder: (_) => const NoteEditorScreen()),
                 );
-                _loadNotes();
+                await _loadNotes();
               },
               icon: const Icon(CupertinoIcons.add, size: 16),
               label: const Text('نوشتن اولین یادداشت', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),

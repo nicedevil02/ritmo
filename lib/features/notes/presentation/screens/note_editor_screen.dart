@@ -15,6 +15,7 @@ import 'package:ritmo/features/notes/domain/capture_context.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/presentation/utils/note_ui_helper.dart';
 import 'package:ritmo/features/notes/presentation/widgets/note_link_tile.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 
 class NoteEditorScreen extends StatefulWidget {
   final Note? note;
@@ -46,6 +47,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   late NoteKind _selectedKind;
   bool _isPinned = false;
+  bool _isPrivate = false;
   bool _isExperience = false;
   List<NoteAttachment> _attachments = [];
   List<NoteLink> _links = [];
@@ -71,6 +73,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _lessonController = TextEditingController();
     _selectedKind = _activeNote?.kind ?? (widget.isExperience ? NoteKind.experience : NoteKind.note);
     _isPinned = _activeNote?.isPinned ?? false;
+    _isPrivate = _activeNote?.isPrivate ?? false;
     _isExperience = _activeNote?.kind == NoteKind.experience || widget.isExperience;
 
     _calculateStats();
@@ -172,6 +175,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           body: effectiveBody,
           kind: _isExperience ? NoteKind.experience : _selectedKind,
           isPinned: _isPinned,
+          isPrivate: _isPrivate,
           tags: _tags,
           sourceModule: widget.sourceModule,
           sourceEntityId: widget.sourceEntityId,
@@ -183,6 +187,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           body: effectiveBody,
           kind: _isExperience ? NoteKind.experience : _selectedKind,
           isPinned: _isPinned,
+          isPrivate: _isPrivate,
         );
         await NotesRepository.instance.update(updated, reason: isAutosave ? 'AUTOSAVE' : 'MANUAL_SAVE');
         await NotesRepository.instance.setTags(_activeNote!.id, _tags);
@@ -207,7 +212,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               contextText: effectiveBody,
               category: _expCategory,
               importance: _expImportance,
-              isActive: true,
             ));
           }
         } else {
@@ -289,12 +293,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     }
   }
 
-  void _viewImageAttachment(NoteAttachment att) async {
+  Future<void> _viewImageAttachment(NoteAttachment att) async {
     final absPath = await NoteAttachmentRepository.instance.resolveAbsolutePath(att.relativePath);
     final file = File(absPath);
     if (!await file.exists() || !mounted) return;
 
-    showDialog(
+    await showDialog(
       context: context,
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
@@ -433,8 +437,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
+        final nav = Navigator.of(context);
         await _save();
-        if (mounted) Navigator.pop(context);
+        if (mounted) nav.pop();
       },
       child: Directionality(
         textDirection: TextDirection.rtl,
@@ -448,8 +453,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               tooltip: 'ذخیره و بازگشت',
               onPressed: () async {
                 RitmoHaptics.confirm();
+                final nav = Navigator.of(context);
                 await _save();
-                if (mounted) Navigator.pop(context);
+                if (mounted) nav.pop();
               },
             ),
             title: InkWell(
@@ -484,6 +490,94 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             ),
             centerTitle: true,
             actions: [
+              IconButton(
+                icon: Icon(
+                  _isPrivate ? CupertinoIcons.lock_fill : CupertinoIcons.lock,
+                  color: _isPrivate ? currentStyle.accentColor : colors.textSecondary,
+                  size: 20,
+                ),
+                tooltip: _isPrivate ? 'یادداشت خصوصی است' : 'یادداشت عمومی است',
+                onPressed: () {
+                  RitmoHaptics.selection();
+                  setState(() => _isPrivate = !_isPrivate);
+                  _onContentChanged();
+                },
+              ),
+              if (_activeNote != null) ...[
+                IconButton(
+                  icon: Icon(Icons.history_rounded, color: colors.textSecondary, size: 22),
+                  tooltip: 'تاریخچه نسخه‌ها',
+                  onPressed: _showRevisionsSheet,
+                ),
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    _activeNote?.reviewAt != null ? CupertinoIcons.bolt_horizontal_circle_fill : CupertinoIcons.bolt_horizontal_circle,
+                    color: _activeNote?.reviewAt != null ? const Color(0xFF10B981) : colors.textSecondary,
+                    size: 20,
+                  ),
+                  tooltip: 'مرور فاصله‌دار (SRS)',
+                  onSelected: (action) async {
+                    RitmoHaptics.selection();
+                    if (action == 'add_srs') {
+                      final nextReviewMs = DateTime.now().add(const Duration(days: 1)).millisecondsSinceEpoch;
+                      await NotesRepository.instance.setReview(_activeNote!.id, 1, nextReviewMs);
+                      final fresh = await NotesRepository.instance.getById(_activeNote!.id);
+                      if (!mounted) return;
+                      setState(() => _activeNote = fresh);
+                      RitmoToast.show(context, 'به صف مرور فاصله‌دار اضافه شد 🧠');
+                    } else if (action == 'remove_srs') {
+                      await NotesRepository.instance.setReview(_activeNote!.id, 0, null);
+                      final fresh = await NotesRepository.instance.getById(_activeNote!.id);
+                      if (!mounted) return;
+                      setState(() => _activeNote = fresh);
+                      RitmoToast.show(context, 'از صف مرور فاصله‌دار حذف شد');
+                    }
+                  },
+                  itemBuilder: (ctx) {
+                    final isEnrolled = _activeNote?.reviewAt != null;
+                    if (!isEnrolled) {
+                      return [
+                        const PopupMenuItem(
+                          value: 'add_srs',
+                          child: Row(
+                            children: [
+                              Icon(Icons.psychology_outlined, size: 16, color: Color(0xFF10B981)),
+                              SizedBox(width: 8),
+                              Text('افزودن به مرور فاصله‌دار', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                      ];
+                    } else {
+                      final revDate = _activeNote!.reviewAt!;
+                      final j = Jalali.fromDateTime(revDate);
+                      final dateStr = '${PersianDigits.convert(j.day.toString())} ${NoteUiHelper.monthName(j.month)}';
+                      return [
+                        PopupMenuItem(
+                          enabled: false,
+                          child: Row(
+                            children: [
+                              const Icon(CupertinoIcons.calendar, size: 16, color: Color(0xFF10B981)),
+                              const SizedBox(width: 8),
+                              Text('مرور بعدی: $dateStr', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'remove_srs',
+                          child: Row(
+                            children: [
+                              Icon(CupertinoIcons.xmark_circle, size: 16, color: Colors.redAccent),
+                              SizedBox(width: 8),
+                              Text('حذف از مرور فاصله‌دار', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.redAccent)),
+                            ],
+                          ),
+                        ),
+                      ];
+                    }
+                  },
+                ),
+              ],
               IconButton(
                 icon: Icon(
                   _isPinned ? CupertinoIcons.pin_fill : CupertinoIcons.pin,
@@ -530,7 +624,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                               Icon(CupertinoIcons.sparkles, size: 12, color: colors.primary),
                               const SizedBox(width: 6),
                               Text(
-                                'ثبت در موقعیت: ${_captureContext!.timeOfDay}${_captureContext!.energy != null ? ' • انرژی ${PersianDigits.convert(_captureContext!.energy.toString())}/۱۰' : ''}',
+                                'ثبت در موقعیت: ${NoteUiHelper.timeOfDayLabelFa(_captureContext!.timeOfDay)}${_captureContext!.energy != null ? ' • انرژی ${PersianDigits.convert(_captureContext!.energy.toString())}/۱۰' : ''}',
                                 style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.primary),
                               ),
                             ],
@@ -872,6 +966,215 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _showRevisionsSheet() async {
+    if (_activeNote == null) return;
+    RitmoHaptics.selection();
+    final colors = context.colors;
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Container(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.75),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Sheet Handle
+                Container(
+                  margin: const EdgeInsets.only(top: 10, bottom: 6),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.textTertiary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  child: Row(
+                    children: [
+                      Icon(Icons.history_rounded, color: colors.primary, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'تاریخچه نسخه‌های یادداشت',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: FutureBuilder<List<NoteRevision>>(
+                    future: NotesRepository.instance.listRevisions(_activeNote!.id),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator(color: colors.primary));
+                      }
+                      final revisions = snapshot.data ?? [];
+                      if (revisions.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(
+                              'هنوز نسخه‌ای از این یادداشت ثبت نشده است.',
+                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        itemCount: revisions.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (context, idx) {
+                          final rev = revisions[idx];
+                          final j = Jalali.fromDateTime(rev.createdAt);
+                          final hour = PersianDigits.convert(rev.createdAt.hour.toString().padLeft(2, '0'));
+                          final min = PersianDigits.convert(rev.createdAt.minute.toString().padLeft(2, '0'));
+                          final dateStr = '${PersianDigits.convert(j.day.toString())} ${NoteUiHelper.monthName(j.month)} ${PersianDigits.convert(j.year.toString())} • $hour:$min';
+
+                          String reasonLabel;
+                          Color reasonColor;
+                          switch (rev.reason.toUpperCase()) {
+                            case 'MANUAL_SAVE':
+                              reasonLabel = 'ذخیره دستی';
+                              reasonColor = const Color(0xFF10B981);
+                              break;
+                            case 'AI_EDIT':
+                              reasonLabel = 'ویرایش دستیار';
+                              reasonColor = const Color(0xFF8B5CF6);
+                              break;
+                            case 'RESTORE':
+                              reasonLabel = 'بازیابی';
+                              reasonColor = const Color(0xFF00B4D8);
+                              break;
+                            case 'PRE_DELETE':
+                              reasonLabel = 'پیش از حذف';
+                              reasonColor = Colors.redAccent;
+                              break;
+                            case 'AUTOSAVE':
+                            default:
+                              reasonLabel = 'ذخیره خودکار';
+                              reasonColor = colors.textSecondary;
+                              break;
+                          }
+
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: colors.surfaceSunken,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: colors.border.withValues(alpha: 0.2)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      dateStr,
+                                      style: TextStyle(
+                                        fontFamily: 'Vazirmatn',
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: colors.textPrimary,
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: reasonColor.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        reasonLabel,
+                                        style: TextStyle(
+                                          fontFamily: 'Vazirmatn',
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: reasonColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  rev.body,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 12,
+                                    color: colors.textSecondary,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      '${PersianDigits.convert(rev.wordCount.toString())} کلمه',
+                                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10.5, color: colors.textTertiary),
+                                    ),
+                                    TextButton.icon(
+                                      onPressed: () async {
+                                        Navigator.pop(ctx);
+                                        RitmoHaptics.confirm();
+                                        // Save current state as RESTORE before overwriting if body differed
+                                        if (_bodyController.text.trim() != rev.body.trim() && _activeNote != null) {
+                                          await NotesRepository.instance.update(_activeNote!, reason: 'RESTORE');
+                                        }
+                                        _bodyController.text = rev.body;
+                                        _calculateStats();
+                                        await _save();
+                                        if (context.mounted) {
+                                          RitmoToast.show(context, 'نسخه با موفقیت بازیابی شد 🔄');
+                                        }
+                                      },
+                                      icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 13),
+                                      label: const Text('بازیابی این نسخه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: colors.primary,
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

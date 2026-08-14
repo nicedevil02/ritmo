@@ -8,6 +8,7 @@ import 'package:ritmo/features/notes/data/notes_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/logic/weekly_review_engine.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
+import 'package:ritmo/features/notes/presentation/utils/note_actions.dart';
 import 'package:ritmo/features/notes/presentation/utils/note_ui_helper.dart';
 
 class WeeklyReviewScreen extends StatefulWidget {
@@ -301,7 +302,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                       context,
                       MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
                     );
-                    _loadWeeklyReview();
+                    await _loadWeeklyReview();
                   },
                   child: const Text('مشاهده و ویرایش', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
                 ),
@@ -309,17 +310,16 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                   onPressed: () async {
                     RitmoHaptics.selection();
                     await NotesRepository.instance.archive(note.id);
-                    RitmoToast.show(context, 'یادداشت بایگانی شد 📦');
-                    _loadWeeklyReview();
+                    if (context.mounted) {
+                      RitmoToast.show(context, 'یادداشت بایگانی شد 📦');
+                    }
+                    await _loadWeeklyReview();
                   },
                   child: const Text('آرشیو 📦', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
                 ),
                 TextButton(
-                  onPressed: () async {
-                    RitmoHaptics.selection();
-                    await NotesRepository.instance.delete(note.id);
-                    RitmoToast.show(context, 'به سطل زباله منتقل شد 🗑️');
-                    _loadWeeklyReview();
+                  onPressed: () {
+                    NoteActions.confirmAndTrash(context, note, _loadWeeklyReview);
                   },
                   child: const Text('حذف 🗑️', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.redAccent)),
                 ),

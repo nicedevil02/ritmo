@@ -7,6 +7,7 @@ import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/notes/data/notes_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
+import 'package:ritmo/features/notes/presentation/utils/note_actions.dart';
 import 'package:ritmo/features/notes/presentation/utils/note_ui_helper.dart';
 
 class NoteCard extends StatefulWidget {
@@ -28,44 +29,8 @@ class NoteCard extends StatefulWidget {
 class _NoteCardState extends State<NoteCard> {
   bool _isPressed = false;
 
-  Future<void> _handleDelete(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('انتقال به سطل زباله', style: TextStyle(fontFamily: 'Vazirmatn')),
-        content: Text(
-          'آیا از انتقال یادداشت «${widget.note.title ?? "بدون عنوان"}» به سطل زباله اطمینان دارید؟',
-          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-            child: const Text('انتقال به زباله‌دان', style: TextStyle(fontFamily: 'Vazirmatn')),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && context.mounted) {
-      RitmoHaptics.selection();
-      await NotesRepository.instance.delete(widget.note.id);
-      widget.onChanged();
-
-      RitmoToast.show(
-        context,
-        'یادداشت به سطل زباله منتقل شد 🗑️',
-        actionLabel: 'برگردان',
-        onAction: () async {
-          await NotesRepository.instance.restore(widget.note.id);
-          widget.onChanged();
-        },
-      );
-    }
+  void _handleDelete(BuildContext context) {
+    NoteActions.confirmAndTrash(context, widget.note, widget.onChanged);
   }
 
   @override
@@ -98,7 +63,7 @@ class _NoteCardState extends State<NoteCard> {
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 8,
-                offset: const Offset(0, 3),
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -120,12 +85,12 @@ class _NoteCardState extends State<NoteCard> {
                 widget.onChanged();
               },
               child: Padding(
-                padding: const EdgeInsets.all(13),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Header: Kind Badge + Pin & Menu
+                    // Header: Kind Badge, Privacy lock & Pin & Menu
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -153,6 +118,10 @@ class _NoteCardState extends State<NoteCard> {
                           ),
                         ),
                         const Spacer(),
+                        if (widget.note.isPrivate) ...[
+                          Icon(CupertinoIcons.lock_fill, size: 13, color: colors.textSecondary),
+                          const SizedBox(width: 6),
+                        ],
                         if (widget.note.isPinned) ...[
                           Icon(CupertinoIcons.pin_fill, size: 13, color: style.accentColor),
                           const SizedBox(width: 4),
@@ -230,9 +199,9 @@ class _NoteCardState extends State<NoteCard> {
                       const SizedBox(height: 4),
                     ],
 
-                    // Body Excerpt
+                    // Body Excerpt (Masked if private)
                     Text(
-                      widget.note.body,
+                      widget.note.isPrivate ? '••••••••••••' : widget.note.body,
                       maxLines: widget.isGrid ? 4 : 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -240,6 +209,7 @@ class _NoteCardState extends State<NoteCard> {
                         fontSize: 12,
                         color: colors.textSecondary,
                         height: 1.5,
+                        letterSpacing: widget.note.isPrivate ? 2.0 : 0.0,
                       ),
                     ),
                     const SizedBox(height: 10),

@@ -10,7 +10,6 @@ import 'package:ritmo/core/ux/ritmo_skeleton.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/worship/domain/prayer_target.dart';
-import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/presentation/widgets/mustahab_section.dart';
@@ -147,8 +146,8 @@ class _WorshipScreenState extends State<WorshipScreen> {
     final now = DateTime.now();
     final maghribTime = _worshipDay!.times.maghrib;
     if (now.isAfter(maghribTime)) {
-      final tomorrow = now.add(const Duration(days: 1));
-      final tomorrowHijri = HijriCalendarCalculator.hijriFromGregorian(tomorrow);
+      final tomorrow = DateTime(now.year, now.month, now.day + 1);
+      final tomorrowHijri = WorshipEngine.instance.hijriFor(tomorrow);
       return 'امشب: شب ${toPersianDigits(tomorrowHijri.day.toString())} ${tomorrowHijri.monthName}';
     }
     return null;
@@ -250,6 +249,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
                       // 3. PREMIUM SOLAR WORSHIP CALENDAR & REACTIVE DETAIL PANEL (INCLUDES OBLIGATORY PRAYERS & MUSTAHABS)
                       WorshipSolarCalendar(
                         initialJalali: Jalali.now(),
+                        hijriOffset: WorshipEngine.instance.hijriOffset,
                         qamariNightText: _getQamariNightText(),
                         onChanged: _onDataChanged,
                       ),

@@ -224,66 +224,89 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
           // 2026 Minimal Luxury Status Card (Zero-State)
           if (_activeDebts.isEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF121316) : Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF10B981).withValues(alpha: 0.2)
-                      : const Color(0xFFE8E5DF),
-                  width: 1,
+                borderRadius: BorderRadius.circular(32),
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [const Color(0xFF0D1612), const Color(0xFF111216)]
+                      : [const Color(0xFFF3FAF7), const Color(0xFFF9FDFB)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                    blurRadius: 20,
-                    offset: const Offset(0, 4),
+                    color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.05 : 0.08),
+                    blurRadius: 40,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
               child: Center(
                 child: Column(
                   children: [
-                    // Status Badge with Ambient Rings
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                          width: 2,
+                    // Status Badge with Ambient Glowing Aura
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                const Color(0xFF10B981).withValues(alpha: 0.15),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          CupertinoIcons.checkmark_seal_fill,
-                          color: Color(0xFF059669),
-                          size: 24,
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF13221C) : Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                blurRadius: 20,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              CupertinoIcons.checkmark_seal_fill,
+                              color: Color(0xFF10B981),
+                              size: 30,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 24),
                     Text(
                       'کاروان عبادات تسویه و به‌روز است ✨',
                       style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.bold,
+                        color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
                         fontFamily: 'Vazirmatn',
+                        letterSpacing: -0.3,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 10),
                     Text(
-                      'هیچ بدهی یا قضای ثبت‌شده‌ای در انتظار نداری. با آرامش به تلاوت و مستحباتت بپرداز.',
+                      'هیچ بدهی یا قضای ثبت‌شده‌ای در انتظار نداری. با آرامش و سبک‌بالی به مسیرت ادامه بده.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: colors.textSecondary.withValues(alpha: 0.8),
-                        fontSize: 12.5,
+                        fontSize: 14,
                         fontFamily: 'Vazirmatn',
-                        height: 1.45,
+                        height: 1.6,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],

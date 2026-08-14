@@ -124,20 +124,45 @@ class NotesRepository {
         : (trimmedBody.length > 40 ? '${trimmedBody.substring(0, 40)}...' : trimmedBody);
 
     if (existing != null) {
-      // Save revision if body or title changed meaningfully or reason is explicitly provided
       final bodyChanged = existing.body != trimmedBody;
       final titleChanged = (existing.title ?? '') != derivedTitle;
-      final timeDiffMin = (nowMs - existing.updatedAt.millisecondsSinceEpoch) / 60000;
 
-      if ((bodyChanged && (timeDiffMin > 2 || reason != null)) || (titleChanged && timeDiffMin > 2) || reason == 'AI_EDIT') {
-        await db.insert('note_revisions', {
-          'id': 'rev_${_uuid.v4()}',
-          'noteId': note.id,
-          'body': existing.body,
-          'wordCount': existing.wordCount,
-          'reason': reason ?? 'AUTOSAVE',
-          'createdAt': existing.updatedAt.millisecondsSinceEpoch,
-        });
+      if (bodyChanged || titleChanged) {
+        final effectiveReason = reason ?? 'AUTOSAVE';
+        bool shouldCreateRevision = false;
+
+        if (effectiveReason != 'AUTOSAVE') {
+          // MANUAL_SAVE, AI_EDIT, RESTORE, PRE_DELETE etc. always create revision
+          shouldCreateRevision = true;
+        } else {
+          // AUTOSAVE: only create revision if > 5 minutes (300,000 ms) passed since latest revision of this note
+          final latestRev = await db.query(
+            'note_revisions',
+            where: 'noteId = ?',
+            whereArgs: [note.id],
+            orderBy: 'createdAt DESC',
+            limit: 1,
+          );
+          if (latestRev.isEmpty) {
+            shouldCreateRevision = true;
+          } else {
+            final lastRevCreatedAt = latestRev.first['createdAt'] as int? ?? 0;
+            if ((nowMs - lastRevCreatedAt) > 5 * 60 * 1000) {
+              shouldCreateRevision = true;
+            }
+          }
+        }
+
+        if (shouldCreateRevision) {
+          await db.insert('note_revisions', {
+            'id': 'rev_${_uuid.v4()}',
+            'noteId': note.id,
+            'body': existing.body,
+            'wordCount': existing.wordCount,
+            'reason': effectiveReason,
+            'createdAt': existing.updatedAt.millisecondsSinceEpoch,
+          });
+        }
       }
     }
 
@@ -519,5 +544,30 @@ class NotesRepository {
       'trashed': trashed,
       'experiences': exp,
     };
+  }
+
+  Future<Map<String, int>> countByKind() async {
+    final db = await _db;
+    final rows = await db.rawQuery(
+      "SELECT kind, COUNT(*) as cnt FROM notes WHERE status = 'ACTIVE' GROUP BY kind",
+    );
+    final map = <String, int>{};
+    for (final r in rows) {
+      final kindStr = r['kind'] as String? ?? 'NOTE';
+      final cnt = (r['cnt'] as num?)?.toInt() ?? 0;
+      map[kindStr] = cnt;
+    }
+    return map;
+  }
+
+  Future<int> getTotalWordCount() async {
+    final db = await _db;
+    final res = await db.rawQuery(
+      "SELECT SUM(wordCount) as totalWords FROM notes WHERE status = 'ACTIVE'",
+    );
+    if (res.isNotEmpty && res.first['totalWords'] != null) {
+      return (res.first['totalWords'] as num).toInt();
+    }
+    return 0;
   }
 }

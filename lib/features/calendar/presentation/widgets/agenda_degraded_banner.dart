@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/calendar/presentation/widgets/agenda_diagnostics_sheet.dart';
 
 /// Reusable degraded status banner for Calendar and Journey header.
 ///
@@ -103,7 +104,19 @@ class AgendaDegradedBanner extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: RitmoSpacing.lg),
-                if (onRetry != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      AgendaDiagnosticsSheet.show(context, onRetry: onRetry);
+                    },
+                    icon: const Icon(Icons.bug_report_outlined, size: 18),
+                    label: const Text('گزارش تشخیصی'),
+                  ),
+                ),
+                if (onRetry != null) ...[
+                  const SizedBox(height: RitmoSpacing.sm),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -123,6 +136,7 @@ class AgendaDegradedBanner extends StatelessWidget {
                       ),
                     ),
                   ),
+                ],
               ],
             ),
           ),
@@ -133,7 +147,11 @@ class AgendaDegradedBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (degradedDomains.isEmpty) return const SizedBox.shrink();
+    // Nothing is degraded: still offer a discreet way into the diagnostics
+    // report, so an unexplained empty agenda can be traced on-device.
+    if (degradedDomains.isEmpty) {
+      return _AgendaDiagnosticsChip(onRetry: onRetry);
+    }
 
     final colors = context.colors;
 
@@ -170,6 +188,50 @@ class AgendaDegradedBanner extends StatelessWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   color: colors.warning,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Discreet entry point to [AgendaDiagnosticsSheet].
+class _AgendaDiagnosticsChip extends StatelessWidget {
+  const _AgendaDiagnosticsChip({this.onRetry});
+
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Semantics(
+      label: 'گزارش تشخیصی برنامه',
+      button: true,
+      child: GestureDetector(
+        onTap: () => AgendaDiagnosticsSheet.show(context, onRetry: onRetry),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: colors.textSecondary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(RitmoRadius.badge),
+            border: Border.all(color: colors.textSecondary.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.bug_report_outlined, size: 12, color: colors.textSecondary),
+              const SizedBox(width: 4),
+              Text(
+                'چرا برنامه خالی است؟',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
                 ),
               ),
             ],

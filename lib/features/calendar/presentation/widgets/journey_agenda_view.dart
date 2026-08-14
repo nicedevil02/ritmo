@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/agenda/agenda_load_status.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
@@ -28,6 +30,9 @@ class JourneyAgendaView extends StatefulWidget {
     this.isLoading = false,
     this.onPostponeItem,
     this.onDoneItem,
+    this.errorMessage,
+    this.agendaLoadStatus,
+    this.onRetry,
   });
 
   final Map<String, DayAgendaSnapshot> rangeSnapshots;
@@ -37,6 +42,9 @@ class JourneyAgendaView extends StatefulWidget {
   final bool isLoading;
   final Future<void> Function(AgendaItem item)? onPostponeItem;
   final Future<void> Function(AgendaItem item)? onDoneItem;
+  final String? errorMessage;
+  final AgendaLoadStatus? agendaLoadStatus;
+  final VoidCallback? onRetry;
 
   @override
   State<JourneyAgendaView> createState() => _JourneyAgendaViewState();
@@ -61,7 +69,17 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
         .where((b) => bucketed[b]?.isNotEmpty ?? false)
         .toList();
 
+    final status = widget.agendaLoadStatus;
+    final hasFailure = status != null && status.hasFailure;
+
     if (activeBuckets.isEmpty) {
+      if (hasFailure) {
+        return _AgendaFailureCard(
+          failedSources: status!.failedSources,
+          isFatal: status.fatal,
+          onRetry: widget.onRetry,
+        );
+      }
       return _EmptyAgendaState(onAddTap: widget.onAddTap);
     }
 
@@ -1050,6 +1068,88 @@ class _ActionButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(RitmoRadius.card),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// Agenda Failure Card — T4 (shown instead of silent empty state)
+// ────────────────────────────────────────────────────────────
+
+class _AgendaFailureCard extends StatelessWidget {
+  const _AgendaFailureCard({
+    required this.failedSources,
+    required this.isFatal,
+    this.onRetry,
+  });
+
+  final List<String> failedSources;
+  final bool isFatal;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              size: 48,
+              color: theme.colorScheme.error.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'بارگذاری برنامه‌ها ناقص بود',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15.0,
+                fontWeight: FontWeight.w600,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'بخشی از داده‌ها بارگذاری نشد. دوباره تلاش کن.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.0,
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
+              ),
+            ),
+            if (kDebugMode && failedSources.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(RitmoRadius.card),
+                ),
+                child: Text(
+                  'منابع خراب: ${failedSources.join(', ')}',
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    fontFamily: 'monospace',
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+            if (onRetry != null)
+              _ActionButton(
+                label: 'تلاش مجدد',
+                icon: Icons.refresh_rounded,
+                onTap: onRetry!,
+                isPrimary: true,
+              ),
+          ],
         ),
       ),
     );

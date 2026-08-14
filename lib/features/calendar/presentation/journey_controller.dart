@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/agenda_action_handler.dart';
+import 'package:ritmo/core/domain/agenda/agenda_load_status.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
@@ -77,6 +78,7 @@ class JourneyController extends ChangeNotifier {
   String? get previewTimeOfDay => _previewTimeOfDay;
   int? get previewDurationMinutes => _previewDurationMinutes;
   bool get isDisposed => _isDisposed;
+  AgendaLoadStatus get agendaLoadStatus => _agendaService.lastLoadStatus;
 
   @override
   void notifyListeners() {
@@ -467,6 +469,7 @@ class JourneyController extends ChangeNotifier {
           _snapshotBuilder.buildSnapshot(DayAgenda(dateStr: selectedKey, items: const []));
       sw.stop();
       debugPrint('[JourneyController] loadAgendaRange: ${sw.elapsedMilliseconds}ms');
+      _errorMessage = null; // clear stale error on successful load
     } catch (e, st) {
       if (_isDisposed) return;
       _errorMessage = 'خطا در بارگذاری برنامه‌ها: $e';

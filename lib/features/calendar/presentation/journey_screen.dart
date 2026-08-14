@@ -346,6 +346,7 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Scaffold(
+            backgroundColor: Colors.transparent,
             body: Column(
               children: [
                 // ─── Command Deck Header Surface (4 Controls) ───
@@ -710,6 +711,9 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
             context: context,
             onSaved: _controller.refresh,
           ),
+          errorMessage: _controller.errorMessage,
+          agendaLoadStatus: _controller.agendaLoadStatus,
+          onRetry: _controller.loadForActiveScale,
         );
 
       case JourneyScale.day:
@@ -777,6 +781,7 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                         RitmoPrimaryButton(
                           label: 'افزودن',
                           icon: Icons.add_rounded,
+                          fullWidth: false,
                           onPressed: () => UniversalPlannerSheet.show(
                             context: context,
                             onSaved: _controller.refresh,

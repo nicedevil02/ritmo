@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -7,8 +9,10 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
+import 'package:ritmo/features/settings/presentation/groups/notification_privacy_screen.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
+import 'package:sqflite/sqflite.dart';
 
 class NotificationsGroupScreen extends StatefulWidget {
   const NotificationsGroupScreen({super.key});
@@ -20,19 +24,24 @@ class NotificationsGroupScreen extends StatefulWidget {
 class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
   bool _masterEnabled = true;
   bool _quietEnabled = false;
-  String _quietStart = '00:00';
+  String _quietStart = '23:00';
   String _quietEnd = '07:00';
   bool _persistentEnabled = true;
   String _digestMode = 'standard';
-  int _coalescingMinutes = 15;
   int _maxNonEssential = 3;
   int _snoozeMinutes = 10;
   int _snoozeMaxDefer = 3;
+
+  Map<String, bool> _channelEnabled = {
+    for (final ch in NotificationChannelId.values) ch.nativeId: true,
+  };
+  bool _loadingChannels = false;
 
   @override
   void initState() {
     super.initState();
     _loadSettings();
+    _loadChannelPrefs();
   }
 
   void _loadSettings() {
@@ -43,11 +52,31 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
       _quietEnd = SettingsService.instance.get<String>('notif_quiet_end');
       _persistentEnabled = SettingsService.instance.get<bool>('persistent_status_notification_enabled');
       _digestMode = SettingsService.instance.get<String>('digest_mode');
-      _coalescingMinutes = SettingsService.instance.get<int>('coalescing_window_minutes');
       _maxNonEssential = SettingsService.instance.get<int>('max_non_essential_per_hour');
       _snoozeMinutes = SettingsService.instance.get<int>('snooze_minutes');
       _snoozeMaxDefer = SettingsService.instance.get<int>('snooze_max_defer_count');
     });
+  }
+
+  Future<void> _loadChannelPrefs() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final rows = await db.query('notification_channel_prefs');
+      final map = <String, bool>{};
+      for (final r in rows) {
+        map[r['channel_id'] as String] = (r['enabled'] as int) == 1;
+      }
+      if (mounted) {
+        setState(() {
+          _channelEnabled = map;
+          _loadingChannels = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loadingChannels = false);
+      }
+    }
   }
 
   Future<void> _updateSetting(String key, Object val) async {
@@ -56,10 +85,34 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
     _loadSettings();
   }
 
+  Future<void> _toggleChannel(NotificationChannelId channel, bool enabled) async {
+    setState(() {
+      _channelEnabled[channel.nativeId] = enabled;
+    });
+
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      await db.insert(
+        'notification_channel_prefs',
+        {
+          'channel_id': channel.nativeId,
+          'enabled': enabled ? 1 : 0,
+          'sound_mode': 'default',
+          'vibration_enabled': 1,
+          'bypass_dnd': channel.bypassesQuietHours ? 1 : 0,
+          'updated_at': nowMs,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await AlarmSchedulerService.scheduleNextAlarms();
+    } catch (_) {}
+  }
+
   Future<void> _pickTime(String key, String currentVal, String title) async {
     final parts = currentVal.split(':');
     final initialH = int.tryParse(parts[0]) ?? 0;
-    final initialM = int.tryParse(parts[1]) ?? 0;
+    final initialM = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
     TimeOfDay selectedTime = TimeOfDay(hour: initialH, minute: initialM);
 
     await showCupertinoModalPopup<void>(
@@ -114,240 +167,435 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return RitmoPageScaffold(
-      appBar: const RitmoModuleAppBar(title: 'اعلان‌ها و یادآوری‌ها'),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 60),
-        child: Column(
-          children: [
-            SettingsSection(
-              title: 'کنترل سراسری',
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'اعلان‌های سراسری',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'فعال بودن زمان‌بندی آلارم‌ها و یادآوری روتین‌ها',
-                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                          ),
-                        ],
-                      ),
-                      CupertinoSwitch(
-                        value: _masterEnabled,
-                        activeTrackColor: colors.primary,
-                        onChanged: (val) => _updateSetting('notif_master_enabled', val),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'اعلان دائمی وضعیت',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'نمایش نوار فعالیت جاری در پانل اعلان‌ها',
-                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                          ),
-                        ],
-                      ),
-                      CupertinoSwitch(
-                        value: _persistentEnabled,
-                        activeTrackColor: colors.primary,
-                        onChanged: (val) => _updateSetting('persistent_status_notification_enabled', val),
-                      ),
-                    ],
-                  ),
-                ),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: RitmoPageScaffold(
+        appBar: const RitmoModuleAppBar(title: 'مرکز کنترل اعلان‌ها'),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 60),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. Master Control Section
+              _buildMasterSection(colors),
+              const SizedBox(height: 12),
+
+              // 2. Privacy Center Banner Button
+              _buildPrivacyCenterTile(colors),
+              const SizedBox(height: 12),
+
+              // If Master disabled, show disabled warning banner
+              if (!_masterEnabled)
+                _buildDisabledBanner(colors)
+              else ...[
+                // 3. Quiet Hours Section
+                _buildQuietHoursSection(colors),
+
+                // 4. Rate Limiting & Digest
+                _buildThrottlingSection(colors),
+
+                // 5. Snooze Settings
+                _buildSnoozeSection(colors),
+
+                // 6. Canonical Channels Section
+                _buildChannelsSection(colors),
               ],
-            ),
-            SettingsSection(
-              title: 'ساعات سکوت (مزاحم نشوید)',
-              footer: 'در ساعات سکوت، یادآوری‌های غیراضطراری قطع می‌شوند؛ اما اعلان‌های پزشکی و دارویی همچنان ارسال خواهند شد.',
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'فعال‌سازی ساعات سکوت',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colors.textPrimary),
-                      ),
-                      CupertinoSwitch(
-                        value: _quietEnabled,
-                        activeTrackColor: colors.primary,
-                        onChanged: (val) => _updateSetting('notif_quiet_enabled', val),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_quietEnabled) ...[
-                  SettingsTile(
-                    title: 'زمان آغاز سکوت',
-                    subtitle: toPersianDigits(_quietStart),
-                    onTap: () => _pickTime('notif_quiet_start', _quietStart, 'زمان آغاز سکوت'),
-                  ),
-                  SettingsTile(
-                    title: 'زمان پایان سکوت',
-                    subtitle: toPersianDigits(_quietEnd),
-                    onTap: () => _pickTime('notif_quiet_end', _quietEnd, 'زمان پایان سکوت'),
-                  ),
-                ],
-              ],
-            ),
-            SettingsSection(
-              title: 'تجمیع و خلاصه‌سازی',
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'حالت خلاصه اعلان',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colors.textPrimary),
-                      ),
-                      const SizedBox(height: 10),
-                      RitmoSegmentedControl<String>(
-                        selected: _digestMode,
-                        segments: const {
-                          'standard': 'استاندارد',
-                          'concise': 'فشرده',
-                          'grouped': 'دسته‌ای',
-                        },
-                        onSelected: (val) => _updateSetting('digest_mode', val),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('بازهٔ تجمیع اعلان‌ها', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
-                          Text('${toPersianDigits(_coalescingMinutes)} دقیقه', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
-                        ],
-                      ),
-                      CupertinoSlider(
-                        value: _coalescingMinutes.toDouble(),
-                        min: 1,
-                        max: 60,
-                        divisions: 59,
-                        activeColor: colors.primary,
-                        onChanged: (val) => _updateSetting('coalescing_window_minutes', val.round()),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('سقف پیام‌های غیراضطراری در ساعت', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
-                          Text('${toPersianDigits(_maxNonEssential)} پیام', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
-                        ],
-                      ),
-                      CupertinoSlider(
-                        value: _maxNonEssential.toDouble(),
-                        min: 1,
-                        max: 20,
-                        divisions: 19,
-                        activeColor: colors.primary,
-                        onChanged: (val) => _updateSetting('max_non_essential_per_hour', val.round()),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SettingsSection(
-              title: 'تعویق و اسنوز',
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('مدت زمان تعویق پیش‌فرض', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
-                          Text('${toPersianDigits(_snoozeMinutes)} دقیقه', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
-                        ],
-                      ),
-                      CupertinoSlider(
-                        value: _snoozeMinutes.toDouble(),
-                        min: 1,
-                        max: 120,
-                        divisions: 119,
-                        activeColor: colors.primary,
-                        onChanged: (val) => _updateSetting('snooze_minutes', val.round()),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('حداکثر دفعات تعویق مجاز', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
-                          Text('${toPersianDigits(_snoozeMaxDefer)} بار', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
-                        ],
-                      ),
-                      CupertinoSlider(
-                        value: _snoozeMaxDefer.toDouble(),
-                        min: 0,
-                        max: 10,
-                        divisions: 10,
-                        activeColor: colors.primary,
-                        onChanged: (val) => _updateSetting('snooze_max_defer_count', val.round()),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMasterSection(dynamic colors) {
+    return SettingsSection(
+      title: 'کنترل سراسری اعلان‌ها',
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'کلید اصلی اعلان‌ها (Master)',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'فعال بودن تمام زمان‌بندی‌ها، یادآوری‌ها و هشدارهای ریتمو',
+                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              CupertinoSwitch(
+                value: _masterEnabled,
+                activeTrackColor: colors.primary,
+                onChanged: (val) => _updateSetting('notif_master_enabled', val),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'اعلان دائمی وضعیت (Live Status)',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'نمایش نوار وضعیت و وظیفه جاری در پنل نوتیفیکیشن‌ها',
+                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              CupertinoSwitch(
+                value: _persistentEnabled,
+                activeTrackColor: colors.primary,
+                onChanged: (val) => _updateSetting('persistent_status_notification_enabled', val),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrivacyCenterTile(dynamic colors) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            CupertinoPageRoute<void>(builder: (_) => const NotificationPrivacyScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(CupertinoIcons.shield_lefthalf_fill, color: colors.primary, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'مرکز حریم خصوصی و اعلان‌های مبدل',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'تنظیم متن جایگزین روی صفحه قفل و قفل اثرانگشت',
+                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(CupertinoIcons.chevron_back, size: 18, color: colors.textTertiary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDisabledBanner(dynamic colors) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Color(0xFFF59E0B), size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'تمام اعلان‌ها و آلارم‌های ریتمو به صورت سراسری غیرفعال هستند. برای دریافت یادآوری‌ها، کلید اصلی را روشن کنید.',
+              style: TextStyle(fontSize: 13, color: colors.textPrimary, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuietHoursSection(dynamic colors) {
+    return SettingsSection(
+      title: 'ساعات سکوت و استراحت (Quiet Hours)',
+      footer: 'اعلان‌های حیاتی پزشکی و دارویی حتی در ساعات سکوت نیز با اولویت بالا ارسال می‌شوند.',
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'فعال‌سازی ساعات سکوت',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colors.textPrimary),
+              ),
+              CupertinoSwitch(
+                value: _quietEnabled,
+                activeTrackColor: colors.primary,
+                onChanged: (val) => _updateSetting('notif_quiet_enabled', val),
+              ),
+            ],
+          ),
+        ),
+        if (_quietEnabled) ...[
+          SettingsTile(
+            title: 'زمان آغاز سکوت',
+            subtitle: toPersianDigits(_quietStart),
+            onTap: () => _pickTime('notif_quiet_start', _quietStart, 'زمان آغاز سکوت'),
+          ),
+          SettingsTile(
+            title: 'زمان پایان سکوت',
+            subtitle: toPersianDigits(_quietEnd),
+            onTap: () => _pickTime('notif_quiet_end', _quietEnd, 'زمان پایان سکوت'),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildThrottlingSection(dynamic colors) {
+    return SettingsSection(
+      title: 'تجمیع و محدودیت نرخ (Throttling)',
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'حالت خلاصه‌سازی اعلان‌ها',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colors.textPrimary),
+              ),
+              const SizedBox(height: 10),
+              RitmoSegmentedControl<String>(
+                selected: _digestMode,
+                segments: const {
+                  'standard': 'استاندارد',
+                  'concise': 'فشرده',
+                  'grouped': 'دسته‌ای',
+                },
+                onSelected: (val) => _updateSetting('digest_mode', val),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('سقف اعلان‌های غیرضروری در ساعت', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
+                  Text('${toPersianDigits(_maxNonEssential)} پیام', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
+                ],
+              ),
+              CupertinoSlider(
+                value: _maxNonEssential.toDouble(),
+                min: 1,
+                max: 10,
+                divisions: 9,
+                activeColor: colors.primary,
+                onChanged: (val) => _updateSetting('max_non_essential_per_hour', val.round()),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSnoozeSection(dynamic colors) {
+    return SettingsSection(
+      title: 'تنظیمات به تعویق انداختن (Snooze)',
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('مدت زمان هر بار تعویق', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
+                  Text('${toPersianDigits(_snoozeMinutes)} دقیقه', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
+                ],
+              ),
+              CupertinoSlider(
+                value: _snoozeMinutes.toDouble(),
+                min: 5,
+                max: 60,
+                divisions: 11,
+                activeColor: colors.primary,
+                onChanged: (val) => _updateSetting('snooze_minutes', val.round()),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('سقف دفعات تعویق در روز', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
+                  Text('${toPersianDigits(_snoozeMaxDefer)} بار', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
+                ],
+              ),
+              CupertinoSlider(
+                value: _snoozeMaxDefer.toDouble(),
+                min: 1,
+                max: 10,
+                divisions: 9,
+                activeColor: colors.primary,
+                onChanged: (val) => _updateSetting('snooze_max_defer_count', val.round()),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChannelsSection(dynamic colors) {
+    return SettingsSection(
+      title: 'کانال‌های استاندارد اعلان',
+      footer: 'می‌توانید اعلان‌های هر بخش را به صورت مجزا مدیریت یا موقتاً خاموش کنید.',
+      children: [
+        if (_loadingChannels)
+          const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CupertinoActivityIndicator()),
+          )
+        else ...[
+          for (final channel in NotificationChannelId.values)
+            _buildChannelRow(channel, colors),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildChannelRow(NotificationChannelId channel, dynamic colors) {
+    final enabled = _channelEnabled[channel.nativeId] ?? true;
+
+    final (icon, iconColor) = switch (channel) {
+      NotificationChannelId.critical => (CupertinoIcons.heart_fill, const Color(0xFFEF4444)),
+      NotificationChannelId.routine => (CupertinoIcons.clock_fill, const Color(0xFF3B82F6)),
+      NotificationChannelId.worship => (CupertinoIcons.sun_max_fill, const Color(0xFF10B981)),
+      NotificationChannelId.planning => (CupertinoIcons.calendar, const Color(0xFF8B5CF6)),
+      NotificationChannelId.insight => (CupertinoIcons.sparkles, const Color(0xFFF59E0B)),
+      NotificationChannelId.privateChannel => (CupertinoIcons.shield_fill, const Color(0xFFEC4899)),
+    };
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      channel.titleFa,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    if (channel.bypassesQuietHours) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'عبور از سکوت',
+                          style: TextStyle(fontSize: 10, color: Color(0xFFEF4444), fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  channel.descriptionFa,
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          CupertinoSwitch(
+            value: enabled,
+            activeTrackColor: colors.primary,
+            onChanged: (val) => _toggleChannel(channel, val),
+          ),
+        ],
       ),
     );
   }

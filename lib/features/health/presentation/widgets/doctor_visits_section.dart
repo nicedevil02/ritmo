@@ -6,7 +6,9 @@ import 'package:path/path.dart' as path_utils;
 import 'package:path_provider/path_provider.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/services/native_bridge.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
@@ -144,20 +146,26 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
             },
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
-          await NativeBridge.scheduleExactAlarm(
-            id: alarmId,
-            timeMsUTC: reminderTime,
-            title: 'نوبت پزشک: ${visit.doctorName}',
-            isEssential: true,
+          await NotificationGateway.schedule(
+            NotificationRequest(
+              id: alarmId,
+              channel: NotificationChannelId.critical,
+              scheduledAt: DateTime.fromMillisecondsSinceEpoch(reminderTime),
+              title: 'نوبت پزشک: ${visit.doctorName}',
+              privacy: NotificationPrivacy.redacted,
+              redactedTitle: 'ریتمو: یادآوری نوبت پزشک',
+              sourceSystem: 'health',
+              entityId: visit.id,
+            ),
           );
           // Sync snapshot so BootReceiver can restore this alarm after reboot
           await SnapshotSyncService.syncAll();
         } else {
-          await NativeBridge.cancelAlarm(alarmId);
+          await NotificationGateway.cancel(alarmId);
           await db.delete('pending_reminders', where: 'id = ?', whereArgs: [alarmId]);
         }
       } else {
-        await NativeBridge.cancelAlarm(alarmId);
+        await NotificationGateway.cancel(alarmId);
         await db.delete('pending_reminders', where: 'id = ?', whereArgs: [alarmId]);
       }
 
@@ -171,7 +179,7 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
     try {
       final db = await DatabaseHelper.instance.database;
       await db.delete('doctor_visits', where: 'id = ?', whereArgs: [id]);
-      await NativeBridge.cancelAlarm('visit_$id');
+      await NotificationGateway.cancel('visit_$id');
       // Remove from pending_reminders so snapshot stays clean
       await db.delete('pending_reminders', where: 'id = ?', whereArgs: ['visit_$id']);
       await SnapshotSyncService.syncAll();

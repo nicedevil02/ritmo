@@ -21,7 +21,6 @@ import 'package:ritmo/features/supplementary_sports/movement/presentation/moveme
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_session.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_session_repository.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/session_mode.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/movement_kind_selector.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
@@ -177,7 +176,7 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: CalendarTokens.emerald,
+                  backgroundColor: const Color(0xFF10B981),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: () {

@@ -3,6 +3,9 @@ import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart';
@@ -200,16 +203,20 @@ class SimpleTaskRepository {
 
     if (done && task.reminderId != null && task.reminderId!.isNotEmpty) {
       try {
-        await sl<AlarmPlatform>().cancelAlarm(task.reminderId!);
+        await NotificationGateway.cancel(task.reminderId!);
       } catch (_) {}
     } else if (!done && task.reminderId != null && task.reminderAtMs != null) {
       if (task.reminderAtMs! > nowMs) {
         try {
-          await sl<AlarmPlatform>().scheduleExactAlarm(
-            id: task.reminderId!,
-            timeMsUTC: task.reminderAtMs!,
-            title: task.title,
-            isEssential: false,
+          await NotificationGateway.schedule(
+            NotificationRequest(
+              id: task.reminderId!,
+              channel: NotificationChannelId.planning,
+              scheduledAt: DateTime.fromMillisecondsSinceEpoch(task.reminderAtMs!),
+              title: task.title,
+              sourceSystem: 'tasks',
+              entityId: task.id,
+            ),
           );
         } catch (_) {}
       }
@@ -307,11 +314,15 @@ class SimpleTaskRepository {
     if (!snapshot.task.isDone && snapshot.task.reminderId != null && snapshot.task.reminderAtMs != null) {
       if (snapshot.task.reminderAtMs! > DateTime.now().millisecondsSinceEpoch) {
         try {
-          await sl<AlarmPlatform>().scheduleExactAlarm(
-            id: snapshot.task.reminderId!,
-            timeMsUTC: snapshot.task.reminderAtMs!,
-            title: snapshot.task.title,
-            isEssential: false,
+          await NotificationGateway.schedule(
+            NotificationRequest(
+              id: snapshot.task.reminderId!,
+              channel: NotificationChannelId.planning,
+              scheduledAt: DateTime.fromMillisecondsSinceEpoch(snapshot.task.reminderAtMs!),
+              title: snapshot.task.title,
+              sourceSystem: 'tasks',
+              entityId: snapshot.task.id,
+            ),
           );
         } catch (_) {}
       }

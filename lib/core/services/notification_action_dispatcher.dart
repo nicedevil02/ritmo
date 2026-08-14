@@ -163,11 +163,24 @@ class NotificationActionHandler {
 
         case 'SNOOZE':
           final deferCount = (reminder['deferCount'] as int?) ?? 0;
+          final settingsRows = await db.query(
+            'app_settings',
+            where: "key IN ('snooze_minutes', 'snooze_max_defer_count')",
+          );
+          final settings = {
+            for (final r in settingsRows) r['key'] as String: r['value'] as String
+          };
+          final snoozeMins = int.tryParse(settings['snooze_minutes'] ?? '10') ?? 10;
+          final maxDefer = int.tryParse(settings['snooze_max_defer_count'] ?? '0') ?? 0;
+          final quotaEnabled = maxDefer > 0;
+
           final decision = SnoozePolicy.evaluate(
             itemId: routineId,
             now: DateTime.now(),
-            requestedMinutes: 10,
+            requestedMinutes: snoozeMins,
             currentDeferCount: deferCount,
+            configuredMax: maxDefer > 0 ? maxDefer : 3,
+            quotaEnabled: quotaEnabled,
           );
           switch (decision.verdict) {
             case SnoozeVerdict.allowed:
@@ -175,7 +188,7 @@ class NotificationActionHandler {
               await RitmoExecutionKernel.instance.execute(
                 SnoozeReminderCommand(
                   reminderId: reminderId,
-                  snoozeMinutes: decision.allowedMinutes > 0 ? decision.allowedMinutes : 10,
+                  snoozeMinutes: decision.allowedMinutes > 0 ? decision.allowedMinutes : snoozeMins,
                   dateStr: dateStr,
                 ),
               );

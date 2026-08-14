@@ -1156,31 +1156,74 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           const SizedBox(height: 8),
           if (score == null)
             Text(
-              'برای محاسبهٔ تعادل، داقل ${RitmoNumber.faInt(LifeBalanceEngine.minCompletionsForBalance)} روتین تکمیل‌شده لازم است.',
+              'برای محاسبهٔ تعادل، حداقل ${RitmoNumber.faInt(LifeBalanceEngine.minCompletionsForBalance)} روتین تکمیل‌شده لازم است.',
               style: RitmoTextStyles.caption(colors.textSecondary),
             )
           else ...[
-            Text(
-              'امتیاز توزیع: ${RitmoNumber.faInt(score)} از ۱۰۰',
-              style: RitmoTextStyles.body(colors.textPrimary),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'شاخص تعادل زمانی:',
+                  style: RitmoTextStyles.body(colors.textPrimary),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${RitmoNumber.faInt(score)} از ۱۰۰',
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.5,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Column(
               children: domainMap.entries.map((e) {
-                final ratio = ((distribution[e.key] ?? 0.0) / 100.0).clamp(0.05, 1.0);
+                final percent = distribution[e.key] ?? 0.0;
+                final ratio = (percent / 100.0).clamp(0.0, 1.0);
+                final minutes = _lifeBalanceOutput?.domainMinutes[e.key] ?? 0;
+                final timeLabel = minutes >= 60
+                    ? '${RitmoNumber.faInt(minutes ~/ 60)} س ${minutes % 60 > 0 ? 'و ${RitmoNumber.faInt(minutes % 60)} د' : ''}'
+                    : '${RitmoNumber.faInt(minutes)} د';
+
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  child: Column(
                     children: [
-                      SizedBox(width: 90, child: Text(e.value, style: const TextStyle(fontSize: 11.5, fontFamily: 'Vazirmatn'))),
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: ratio,
-                            minHeight: 8,
-                            backgroundColor: colors.border,
-                            valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(e.value, style: const TextStyle(fontSize: 12, fontFamily: 'Vazirmatn')),
+                          Text(
+                            minutes > 0
+                                ? '$timeLabel (${RitmoNumber.faInt(percent.round())}٪)'
+                                : '—',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontFamily: 'Vazirmatn',
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: ratio,
+                          minHeight: 6,
+                          backgroundColor: colors.border,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            ratio > 0 ? colors.primary : colors.border,
                           ),
                         ),
                       ),

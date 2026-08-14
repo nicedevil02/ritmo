@@ -12,7 +12,6 @@ import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_day_of_week_selector.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_reminder_service.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
@@ -1092,7 +1091,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
           Expanded(
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: CalendarTokens.emerald,
+                backgroundColor: const Color(0xFF10B981),
                 foregroundColor: const Color(0xFF042116),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

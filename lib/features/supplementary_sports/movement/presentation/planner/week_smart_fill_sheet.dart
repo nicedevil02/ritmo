@@ -6,7 +6,6 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_plan_writer.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_suggester.dart';
@@ -317,7 +316,7 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: CalendarTokens.emerald,
+                    backgroundColor: const Color(0xFF10B981),
                     foregroundColor: const Color(0xFF042116),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

@@ -1,7 +1,7 @@
 // lib/features/registry/presentation/widgets/delete_impact_dialog.dart
 
 import 'package:flutter/material.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/registry/domain/delete_impact_report.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 
@@ -28,7 +28,7 @@ class DeleteImpactDialog extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
         ),
         backgroundColor: isDark ? const Color(0xFF1E2235) : Colors.white,
         title: Text(

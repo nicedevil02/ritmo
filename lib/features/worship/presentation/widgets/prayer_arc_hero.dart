@@ -139,20 +139,11 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
 
     final hijriStr = widget.day.hijri.formatted;
 
-    // ── Next Obligatory Prayer & Countdown (Respects Asr/Isha setting) ──
-    final prayerCandidates = <PrayerSlot>[
-      PrayerSlot(key: 'FAJR', titleFa: 'اذان صبح', at: times.fajr, isPrayer: true),
-      PrayerSlot(key: 'DHUHR', titleFa: 'اذان ظهر', at: times.dhuhr, isPrayer: true),
-      if (_showAsrIsha)
-        PrayerSlot(key: 'ASR', titleFa: 'اذان عصر', at: times.asr, isPrayer: true),
-      PrayerSlot(key: 'MAGHRIB', titleFa: 'اذان مغرب', at: times.maghrib, isPrayer: true),
-      if (_showAsrIsha)
-        PrayerSlot(key: 'ISHA', titleFa: 'اذان عشا', at: times.isha, isPrayer: true),
-    ];
-    prayerCandidates.sort((a, b) => a.at.compareTo(b.at));
+    // ── Next Milestone & Countdown (Includes all celestial & prayer milestones) ──
+    final candidates = PrayerTimeline.slotsForTimes(times, includeAsrIsha: _showAsrIsha);
 
     PrayerSlot? nextSlot;
-    for (final s in prayerCandidates) {
+    for (final s in candidates) {
       if (s.at.isAfter(_now)) {
         nextSlot = s;
         break;

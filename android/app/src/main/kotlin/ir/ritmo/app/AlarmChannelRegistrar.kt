@@ -30,6 +30,17 @@ object AlarmChannelRegistrar {
                         result.error("INVALID_ARGUMENTS", "Missing id, time, or title", null)
                     }
                 }
+                AlarmMethods.SCHEDULE_SILENT_TICK -> {
+                    val id = call.argument<String>("id")
+                    val time = (call.argument<Number>("time"))?.toLong()
+
+                    if (id != null && time != null) {
+                        val ok = scheduleSilentTick(context, id, time)
+                        result.success(ok)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "Missing id or time", null)
+                    }
+                }
                 AlarmMethods.CANCEL_ALARM -> {
                     val id = call.argument<String>("id")
                     if (id != null) {
@@ -82,13 +93,14 @@ object AlarmChannelRegistrar {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return false
             val intent = Intent(context, BootReceiver::class.java).apply {
                 action = BootReceiver.ACTION_TRIGGER_ALARM
+                putExtra("id", id)
                 putExtra("reminderId", id)
                 putExtra("title", title)
                 putExtra("isEssential", isEssential)
                 putExtra("scheduledTime", timeMsUTC)
             }
 
-            val requestCode = generateRequestCode(id)
+            val requestCode = generateRequestCode(id, "_ALARM")
             val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             } else {
@@ -111,6 +123,44 @@ object AlarmChannelRegistrar {
         }
     }
 
+    private fun scheduleSilentTick(
+        context: Context,
+        id: String,
+        timeMsUTC: Long
+    ): Boolean {
+        return try {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return false
+            val intent = Intent(context, BootReceiver::class.java).apply {
+                action = BootReceiver.ACTION_TRIGGER_ALARM
+                putExtra("id", id)
+                putExtra("reminderId", id)
+                putExtra("isSilentTick", true)
+                putExtra("scheduledTime", timeMsUTC)
+            }
+
+            val requestCode = generateRequestCode(id, "_SILENT")
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+
+            val pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, flags)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMsUTC, pendingIntent)
+            } else {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, timeMsUTC, pendingIntent)
+            }
+
+            Log.d(TAG, "Successfully scheduled silent tick for $id at $timeMsUTC")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to schedule silent tick $id: ${e.message}", e)
+            false
+        }
+    }
+
     private fun cancelAlarm(context: Context, id: String): Boolean {
         return try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return false
@@ -118,7 +168,7 @@ object AlarmChannelRegistrar {
                 action = BootReceiver.ACTION_TRIGGER_ALARM
             }
 
-            val requestCode = generateRequestCode(id)
+            val requestCode = generateRequestCode(id, "_ALARM")
             val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             } else {
@@ -136,8 +186,7 @@ object AlarmChannelRegistrar {
         }
     }
 
-    private fun generateRequestCode(id: String): Int {
-        val hash = id.hashCode()
-        return if (hash == Int.MIN_VALUE) 0 else Math.abs(hash)
+    fun generateRequestCode(id: String, salt: String = ""): Int {
+        return (id + salt).hashCode() and 0x7FFFFFFF
     }
 }

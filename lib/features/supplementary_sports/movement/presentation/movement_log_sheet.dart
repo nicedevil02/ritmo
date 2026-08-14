@@ -12,7 +12,6 @@ import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_event.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/movement_kind_selector.dart';
 
 Future<void> showMovementLogSheet(
@@ -480,7 +479,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                         style: const TextStyle(
                           fontFamily: 'Vazirmatn',
                           fontWeight: FontWeight.bold,
-                          color: CalendarTokens.emerald,
+                          color: const Color(0xFF10B981),
                           fontSize: 13,
                         ),
                       ),
@@ -516,7 +515,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: (_selectedKind == null || _isSaving)
                             ? Theme.of(context).disabledColor.withValues(alpha: 0.15)
-                            : CalendarTokens.emerald,
+                            : const Color(0xFF10B981),
                         disabledBackgroundColor: Theme.of(context).disabledColor.withValues(alpha: 0.15),
                         foregroundColor: Colors.white,
                         elevation: _selectedKind == null ? 0 : 4,

@@ -8,7 +8,6 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_session_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
@@ -171,7 +170,7 @@ class _SessionShellState extends State<SessionShell> {
 							),
 						),
 						ElevatedButton(
-							style: ElevatedButton.styleFrom(backgroundColor: CalendarTokens.emerald),
+							style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
 							onPressed: () => Navigator.of(dialogContext).pop('finish'),
 							child: const Text(
 								'پایان و ثبت',
@@ -434,7 +433,7 @@ class _SessionShellState extends State<SessionShell> {
 						child: LinearProgressIndicator(
 							value: percent,
 							backgroundColor: Colors.white24,
-							valueColor: const AlwaysStoppedAnimation<Color>(CalendarTokens.emerald),
+							valueColor: const AlwaysStoppedAnimation<Color>(const Color(0xFF10B981)),
 							minHeight: 6,
 						),
 					),
@@ -506,7 +505,7 @@ class _SessionShellState extends State<SessionShell> {
 						FloatingActionButton.large(
 							heroTag: 'shellResume',
 							tooltip: 'ادامهٔ جلسه',
-							backgroundColor: CalendarTokens.emerald,
+							backgroundColor: const Color(0xFF10B981),
 							onPressed: _isBusy
 									? null
 									: () {
@@ -624,7 +623,7 @@ class _FinishDialogState extends State<_FinishDialog> {
 					child: const Text('بازگشت', style: TextStyle(fontFamily: _fontFa, color: Colors.grey)),
 				),
 				ElevatedButton(
-					style: ElevatedButton.styleFrom(backgroundColor: CalendarTokens.emerald),
+					style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
 					onPressed: () => Navigator.of(context).pop(
 						_FinishResult(feeling: _feeling, note: _noteController.text.trim()),
 					),

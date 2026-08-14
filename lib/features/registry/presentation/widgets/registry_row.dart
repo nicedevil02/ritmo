@@ -2,9 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/presentation/widgets/registry_countdown_badge.dart';
 import 'package:ritmo/features/registry/presentation/widgets/registry_status_badge.dart';
@@ -65,11 +66,11 @@ class _RegistryRowState extends State<RegistryRow> {
       },
       child: AnimatedScale(
         scale: _isPressed ? 0.985 : 1.0,
-        duration: CalendarTokens.durationMicro,
-        curve: CalendarTokens.curveDefault,
+        duration: RitmoMotion.press,
+        curve: RitmoMotion.enter,
         child: AnimatedContainer(
-          duration: CalendarTokens.durationStandard,
-          height: CalendarTokens.registryCardHeight,
+          duration: RitmoMotion.state,
+          height: CalendarGeometry.registryCardHeight,
           decoration: BoxDecoration(
             color: widget.isSelected
                 ? domainColor.withValues(alpha: 0.10)
@@ -78,7 +79,7 @@ class _RegistryRowState extends State<RegistryRow> {
                         .withValues(alpha: 0.25)
                     : theme.cardColor),
             borderRadius:
-                BorderRadius.circular(CalendarTokens.radiusCardLg),
+                BorderRadius.circular(RitmoRadius.hero),
             border: Border.all(
               color: widget.isSelected
                   ? domainColor.withValues(alpha: 0.5)
@@ -91,12 +92,12 @@ class _RegistryRowState extends State<RegistryRow> {
             children: [
               // Domain icon container (40×40, rounded rect)
               Container(
-                width: CalendarTokens.iconContainerSize,
-                height: CalendarTokens.iconContainerSize,
+                width: CalendarGeometry.iconContainerSize,
+                height: CalendarGeometry.iconContainerSize,
                 decoration: BoxDecoration(
                   color: domainColor.withValues(alpha: isDark ? 0.12 : 0.08),
                   borderRadius: BorderRadius.circular(
-                    CalendarTokens.iconContainerRadius,
+                    RitmoRadius.iconButton,
                   ),
                 ),
                 child: Icon(
@@ -184,8 +185,8 @@ class _RegistryRowState extends State<RegistryRow> {
     if (!entry.caps.canArchive) {
       return Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: CalendarTokens.spacingL,
-          vertical: CalendarTokens.registryCardGap / 2,
+          horizontal: RitmoSpacing.lg,
+          vertical: 10.0 / 2,
         ),
         child: cardChild,
       );
@@ -193,8 +194,8 @@ class _RegistryRowState extends State<RegistryRow> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: CalendarTokens.spacingL,
-        vertical: CalendarTokens.registryCardGap / 2,
+        horizontal: RitmoSpacing.lg,
+        vertical: 10.0 / 2,
       ),
       child: Dismissible(
         key: ValueKey('entry_${entry.id}'),
@@ -215,7 +216,7 @@ class _RegistryRowState extends State<RegistryRow> {
           decoration: BoxDecoration(
             color: const Color(0xFF64748B),
             borderRadius:
-                BorderRadius.circular(CalendarTokens.radiusCardLg),
+                BorderRadius.circular(RitmoRadius.hero),
           ),
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.only(left: 20),

@@ -88,6 +88,8 @@ class RitmoColors extends ThemeExtension<RitmoColors> {
   Color get outlineVariant => border;
   Color get secondary => primary;
   Color get onBackground => textPrimary;
+  Color get surfaceSubtle => surfaceSunken;
+  Color get borderSubtle => divider;
 
   // ── Wellbeing Semantic Accent Tokens (T-0.4) ────────────────
   Color get sleepAccent => const Color(0xff8B5CF6);

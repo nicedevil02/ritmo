@@ -11,7 +11,6 @@ import 'package:ritmo/features/supplementary_sports/movement/domain/session_mode
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_session.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_session_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/movement_session_notifier.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_workout_session_screen.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -254,7 +253,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                   value: tempVal.clamp(min, max),
                   min: min,
                   max: max,
-                  activeColor: CalendarTokens.emerald,
+                  activeColor: const Color(0xFF10B981),
                   onChanged: (val) {
                     setDlgState(() => tempVal = val);
                   },
@@ -267,7 +266,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                 child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: CalendarTokens.emerald),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
                 onPressed: () async {
                   Navigator.of(ctx).pop();
                   await _updateLiveValue(key, tempVal);
@@ -380,7 +379,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
               child: const Text('بازگشت', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: CalendarTokens.emerald),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
               onPressed: () async {
                 Navigator.of(ctx).pop(); // dialog
                 Navigator.of(context).pop(); // screen
@@ -435,7 +434,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                           child: LinearProgressIndicator(
                             value: targetPercent,
                             backgroundColor: Colors.white24,
-                            valueColor: const AlwaysStoppedAnimation<Color>(CalendarTokens.emerald),
+                            valueColor: const AlwaysStoppedAnimation<Color>(const Color(0xFF10B981)),
                             minHeight: 6,
                           ),
                         ),
@@ -582,7 +581,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                           children: [
                             FloatingActionButton.large(
                               heroTag: 'resume',
-                              backgroundColor: CalendarTokens.emerald,
+                              backgroundColor: const Color(0xFF10B981),
                               onPressed: () {
                                 RitmoHaptics.tap();
                                 widget.notifier.resume();

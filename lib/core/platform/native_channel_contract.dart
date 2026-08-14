@@ -11,8 +11,22 @@ abstract class NativeChannels {
   static const notifActionBg = 'com.ritmo.app/notif_action_bg';
 }
 
+abstract class DatabaseConfig {
+  static const databaseName = 'ritmo.db';
+}
+
+abstract class NotificationChannels {
+  static const critical = 'ritmo_critical_v3';
+  static const routine = 'ritmo_routine_v3';
+  static const worship = 'ritmo_worship_v3';
+  static const planning = 'ritmo_planning_v3';
+  static const insight = 'ritmo_insight_v3';
+  static const privateChannel = 'ritmo_private_v3';
+}
+
 abstract class AlarmMethods {
   static const scheduleExactAlarm = 'scheduleExactAlarm';
+  static const scheduleSilentTick = 'scheduleSilentTick';
   static const cancelAlarm = 'cancelAlarm';
   static const checkExactAlarmPermission = 'checkExactAlarmPermission';
   static const requestExactAlarmPermission = 'requestExactAlarmPermission';

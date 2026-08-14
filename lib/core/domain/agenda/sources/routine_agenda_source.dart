@@ -41,7 +41,7 @@ class RoutineAgendaSource implements AgendaSource {
   final Map<String, bool> activeModules;
 
   @override
-  Set<AgendaDomain> get domains => {AgendaDomain.routine};
+  Set<AgendaDomain> get domains => {AgendaDomain.routine, AgendaDomain.event};
 
   @override
   bool get isEnabled => true;
@@ -157,12 +157,16 @@ class RoutineAgendaSource implements AgendaSource {
       final cat = r['category'] as String;
       if (!_isCategoryModuleEnabled(cat)) continue;
 
-      final s = schedules.firstWhere(
-        (sched) => (sched['routineId'] ?? sched['routine_id']) == r['id'],
-        orElse: () => <String, dynamic>{},
-      );
+      Map<String, dynamic>? matchedSchedule;
+      for (final sched in schedules) {
+        if ((sched['routineId'] ?? sched['routine_id']) == r['id']) {
+          matchedSchedule = sched;
+          break;
+        }
+      }
 
-      if (s.isEmpty) continue;
+      if (matchedSchedule == null || matchedSchedule.isEmpty) continue;
+      final s = matchedSchedule;
 
       // 1. Check database occurrences in memory.
       final hasOcc = occurrences.any(
@@ -271,25 +275,27 @@ class RoutineAgendaSource implements AgendaSource {
 
   @override
   List<AgendaItem> itemsForDate(AgendaDayContext ctx) {
-    if (!ctx.options.wants(AgendaDomain.routine)) return [];
+    final wantsRoutine = ctx.options.wants(AgendaDomain.routine);
+    final wantsEvent = ctx.options.wants(AgendaDomain.event);
+    if (!wantsRoutine && !wantsEvent) return [];
 
     final dateStr = ctx.dateStr;
     final items = <AgendaItem>[];
     final dateCompletions = completionsByDate[dateStr] ?? {};
 
-    // MED-10: medications live in `routines` too, and MedicineAgendaSource now
-    // expands each one into a separate item per scheduled dose. Emitting them
-    // here as well showed every medication twice with two different states,
-    // because taking a dose writes to medication_logs while this source reads
-    // routine_completions — the routine copy stayed pending forever. Only skip
-    // them when the medicine domain is part of this request, so a routine-only
-    // query still returns exactly what it used to.
     final medicineOwnsDoses = ctx.options.wants(AgendaDomain.medicine);
 
     for (final entry in activeForDate(ctx.date)) {
       final r = entry['routine'] as Map<String, dynamic>;
       final s = entry['schedule'] as Map<String, dynamic>;
       final routineId = r['id'] as String;
+
+      final isEvent = (r['itemType'] as String?) == 'EVENT';
+      final itemDomain = isEvent ? AgendaDomain.event : AgendaDomain.routine;
+
+      if (!ctx.options.wants(itemDomain)) {
+        continue;
+      }
 
       if (medicineOwnsDoses && MedicationIdentity.isMedicationRoutine(r)) {
         continue;
@@ -334,8 +340,8 @@ class RoutineAgendaSource implements AgendaSource {
       }
 
       items.add(AgendaItem(
-        id: buildAgendaItemId(AgendaDomain.routine, routineId, dateStr),
-        domain: AgendaDomain.routine,
+        id: buildAgendaItemId(itemDomain, routineId, dateStr),
+        domain: itemDomain,
         sourceId: routineId,
         title: r['title'] as String? ?? '',
         dateStr: dateStr,
@@ -346,7 +352,7 @@ class RoutineAgendaSource implements AgendaSource {
         priority: (r['priority'] as num?)?.toDouble() ?? 1.0,
         isEssential: r['isEssential'] == 1,
         deepLink:
-            AgendaDeepLink(domain: AgendaDomain.routine, targetId: routineId),
+            AgendaDeepLink(domain: itemDomain, targetId: routineId),
         meta: {
           'routine': r,
           'schedule': s,

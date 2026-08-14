@@ -60,6 +60,10 @@ class PlannerSaveContext {
     required this.reflectionGratitude,
     required this.reflectionLearnings,
     required this.reflectionIsPrivate,
+    this.eventDate,
+    this.eventStartTime,
+    this.eventEndTime,
+    this.eventLocation = '',
   });
   // ── Shared ──────────────────────────────────────────────────────────────────
   final String title;
@@ -71,6 +75,12 @@ class PlannerSaveContext {
   final Map<String, dynamic>? routineToEdit;
   final Category selectedCategory;
   final String itemType; // ROUTINE | REMINDER | TASK | REFLECT | EVENT
+
+  // ── Event-specific ──────────────────────────────────────────────────────────
+  final DateTime? eventDate;
+  final TimeOfDay? eventStartTime;
+  final TimeOfDay? eventEndTime;
+  final String eventLocation;
 
   // ── Generic / Routine-specific ──────────────────────────────────────────────
   final String recurrenceType;   // EVERY_DAY | WEEKLY | CUSTOM_DAYS

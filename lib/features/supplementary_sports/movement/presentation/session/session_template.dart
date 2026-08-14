@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_session.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/session_mode.dart';
@@ -162,7 +161,7 @@ Future<double?> showSessionMetricDialog({
 								min: min,
 								max: max,
 								divisions: divisions,
-								activeColor: CalendarTokens.emerald,
+								activeColor: const Color(0xFF10B981),
 								label: toPersianDigits(value.round().toString()),
 								onChanged: (next) => setDialogState(() => value = next),
 							),
@@ -178,7 +177,7 @@ Future<double?> showSessionMetricDialog({
 							child: const Text('لغو', style: TextStyle(fontFamily: _fontFa, color: Colors.grey)),
 						),
 						ElevatedButton(
-							style: ElevatedButton.styleFrom(backgroundColor: CalendarTokens.emerald),
+							style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
 							onPressed: () => Navigator.of(dialogContext).pop(value),
 							child: const Text('ثبت', style: TextStyle(fontFamily: _fontFa, color: Colors.white)),
 						),

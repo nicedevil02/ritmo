@@ -34,14 +34,32 @@ class GenericStrategy implements PlannerCategoryStrategy {
         ? c.routineToEdit!['id'] as String
         : 'routine_$now';
 
+    final isEvent = c.itemType == 'EVENT';
+    final eventTime = (isEvent && c.eventStartTime != null) ? c.eventStartTime! : c.selectedTime;
+    final timeStr = c.formatTime(eventTime);
+
+    int durationMinutes = c.targetDuration;
+    if (isEvent && c.eventStartTime != null && c.eventEndTime != null) {
+      final startMin = c.eventStartTime!.hour * 60 + c.eventStartTime!.minute;
+      final endMin = c.eventEndTime!.hour * 60 + c.eventEndTime!.minute;
+      final diff = endMin - startMin;
+      durationMinutes = diff > 0 ? diff : 60;
+    }
+
+    String? desc = c.description.isNotEmpty ? c.description : null;
+    if (isEvent && c.eventLocation.trim().isNotEmpty) {
+      final locText = 'مکان: ${c.eventLocation.trim()}';
+      desc = desc != null ? '$desc\n$locText' : locText;
+    }
+
     final routineData = {
       'id': routineId,
       'title': c.title,
-      'description': c.description.isNotEmpty ? c.description : null,
+      'description': desc,
       'category': c.selectedCategory.name,
       'customCategoryId': null,
       'zoneId': c.selectedZoneId,
-      'routineType': c.itemType == 'ROUTINE'
+      'routineType': (c.itemType == 'ROUTINE' || isEvent)
           ? RoutineType.timeBased.name
           : RoutineType.asNeeded.name,
       'notificationLevel': NotificationLevel.normal.name,
@@ -49,7 +67,7 @@ class GenericStrategy implements PlannerCategoryStrategy {
       'isEssentialLocked': 0,
       'energyRule': c.energyRule,
       'priority': c.priority,
-      'targetDurationMinutes': DurationBounds.sanitize(c.targetDuration),
+      'targetDurationMinutes': DurationBounds.sanitize(durationMinutes),
       'lightDurationMinutes': 0,
       'minimalDurationMinutes': 0,
       'isArchived': 0,
@@ -62,10 +80,12 @@ class GenericStrategy implements PlannerCategoryStrategy {
       'reminderOffsetMinutes': c.reminderOffsetMinutes,
     };
 
-    final timeStr = c.formatTime(c.selectedTime);
+    final effectiveDate = (isEvent && c.eventDate != null) ? c.eventDate! : c.selectedDate;
     RoutineRecurrence recurrence = const DailyRecurrence();
-    if (c.itemType == 'TASK') {
-      recurrence = OnceRecurrence(date: c.selectedDate);
+    if (isEvent) {
+      recurrence = OnceRecurrence(date: effectiveDate);
+    } else if (c.itemType == 'TASK') {
+      recurrence = OnceRecurrence(date: effectiveDate);
     } else if (c.recurrenceType == 'CUSTOM_DAYS' && c.worshipSelectedDays.isNotEmpty) {
       recurrence = WeekdaysRecurrence(weekdays: c.worshipSelectedDays.toSet());
     }
@@ -73,7 +93,7 @@ class GenericStrategy implements PlannerCategoryStrategy {
     final (schedType, daysOfWeek) = deriveScheduleParams(recurrence);
     final recurrenceJson = encodeRecurrenceRule(
       recurrence: recurrence,
-      startDate: c.selectedDate,
+      startDate: effectiveDate,
       reminderTimes: [timeStr],
     );
 

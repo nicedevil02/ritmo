@@ -6,6 +6,9 @@ import 'package:ritmo/core/domain/execution/command_context.dart';
 import 'package:ritmo/core/domain/execution/command_handler.dart';
 import 'package:ritmo/core/domain/execution/events/kernel_event_factory.dart';
 import 'package:ritmo/core/domain/execution/kernel_mutation_result.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 
@@ -83,12 +86,18 @@ class ConfirmReshuffleHandler
               routinesList.isNotEmpty && routinesList.first['isEssential'] == 1;
 
           tasks.add(() async {
-            await sl<AlarmPlatform>().cancelAlarm(remId);
-            await sl<AlarmPlatform>().scheduleExactAlarm(
-              id: remId,
-              timeMsUTC: newScheduledMs,
-              title: title,
-              isEssential: isEssential,
+            await NotificationGateway.cancel(remId);
+            await NotificationGateway.schedule(
+              NotificationRequest(
+                id: remId,
+                channel: isEssential ? NotificationChannelId.critical : NotificationChannelId.routine,
+                scheduledAt: DateTime.fromMillisecondsSinceEpoch(newScheduledMs),
+                title: title,
+                privacy: isEssential ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+                redactedTitle: isEssential ? 'ریتمو: یک یادآوری روتین دارید 🌸' : null,
+                sourceSystem: 'routines',
+                entityId: action.routineId,
+              ),
             );
             await DatabaseHelper.instance.logNotificationEvent(
               routineId: action.routineId,

@@ -9,7 +9,7 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/domain/models/completion_result.dart';
 import 'package:ritmo/core/navigation/shell_metrics.dart';
-import 'package:ritmo/features/calendar/utils/calendar_defaults.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
 
 /// Central helper for convergence and cross-feature workflows between Calendar and Today Dashboard.
 class TodayCalendarConvergenceHelper {

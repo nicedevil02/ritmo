@@ -59,7 +59,7 @@ class CentralInboxService {
         'body': body,
         'priority': pr.index,
         'linkModule': linkModule,
-        'linkEntityId': linkEntityId,
+        'linkEntityId': linkEntityId ?? entityId,
         'linkAction': linkAction,
         'payloadJson': jsonEncode(payload ?? {}),
         'status': InboxStatus.UNREAD.name,
@@ -183,7 +183,7 @@ class CentralInboxService {
           'status': InboxStatus.ACTIONED.name,
           'readAt': now,
         },
-        where: 'sourceSystem = ? AND entityId = ? AND status = ?',
+        where: 'sourceSystem = ? AND linkEntityId = ? AND status = ?',
         whereArgs: [sourceSystem, entityId, InboxStatus.UNREAD.name],
       );
       

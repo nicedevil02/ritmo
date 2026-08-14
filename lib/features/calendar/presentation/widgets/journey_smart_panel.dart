@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/analysis/agenda_conflict_detector.dart';
 import 'package:ritmo/core/domain/agenda/analysis/agenda_gap_calculator.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_free_gaps_section.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_suggestions_section.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_summary_section.dart';
@@ -64,19 +64,18 @@ class _JourneySmartPanelState extends State<JourneySmartPanel> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = context.colors;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
         height: MediaQuery.of(context).size.height * 0.68,
         decoration: BoxDecoration(
-          color: isDark ? theme.colorScheme.surfaceContainerLow : theme.cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(CalendarTokens.radiusSheet)),
+          color: colors.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+              color: colors.overlay.withValues(alpha: 0.12),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),
@@ -84,59 +83,55 @@ class _JourneySmartPanelState extends State<JourneySmartPanel> with SingleTicker
         ),
         child: Column(
           children: [
-            const SizedBox(height: CalendarTokens.spacingM),
+            const SizedBox(height: RitmoSpacing.md),
             // Top Drag Handle
             Center(
               child: Container(
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: theme.dividerColor.withValues(alpha: 0.30),
+                  color: colors.borderSubtle,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const SizedBox(height: CalendarTokens.spacingM),
+            const SizedBox(height: RitmoSpacing.md),
 
             // Segmented Tab Header Container
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: CalendarTokens.spacingXl),
+              padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.xl),
               child: Container(
                 height: 44,
-                padding: const EdgeInsets.all(CalendarTokens.spacingXs),
+                padding: const EdgeInsets.all(RitmoSpacing.xs),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(CalendarTokens.radiusSegment),
+                  color: colors.surfaceSubtle,
+                  borderRadius: BorderRadius.circular(RitmoRadius.field),
                   border: Border.all(
-                    color: theme.dividerColor.withValues(alpha: CalendarTokens.alphaCardBorder),
+                    color: colors.borderSubtle,
                   ),
                 ),
                 child: TabBar(
                   controller: _tabController,
                   indicator: BoxDecoration(
-                    color: isDark ? theme.colorScheme.surfaceContainerHigh : theme.cardColor,
-                    borderRadius: BorderRadius.circular(CalendarTokens.radiusSegPill),
+                    color: colors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
+                        color: colors.overlay.withValues(alpha: 0.08),
                         blurRadius: 4,
                         offset: const Offset(0, 1),
                       )
                     ],
                   ),
-                  labelColor: theme.colorScheme.primary,
-                  unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
+                  labelColor: colors.primary,
+                  unselectedLabelColor: colors.textSecondary,
                   labelStyle: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    fontFamily: 'Vazirmatn',
                   ),
                   unselectedLabelStyle: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    fontFamily: 'Vazirmatn',
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
@@ -148,7 +143,7 @@ class _JourneySmartPanelState extends State<JourneySmartPanel> with SingleTicker
                 ),
               ),
             ),
-            const SizedBox(height: CalendarTokens.spacingS),
+            const SizedBox(height: RitmoSpacing.sm),
 
             // Tab Views
             Expanded(
@@ -156,7 +151,7 @@ class _JourneySmartPanelState extends State<JourneySmartPanel> with SingleTicker
                 controller: _tabController,
                 children: [
                   SingleChildScrollView(
-                    padding: const EdgeInsets.all(CalendarTokens.spacingXl),
+                    padding: const EdgeInsets.all(RitmoSpacing.xl),
                     child: JourneySummarySection(
                       snapshot: widget.snapshot,
                       onSelectActivity: (item) {
@@ -166,7 +161,7 @@ class _JourneySmartPanelState extends State<JourneySmartPanel> with SingleTicker
                     ),
                   ),
                   SingleChildScrollView(
-                    padding: const EdgeInsets.all(CalendarTokens.spacingXl),
+                    padding: const EdgeInsets.all(RitmoSpacing.xl),
                     child: JourneySuggestionsSection(
                       snapshot: widget.snapshot,
                       onSelectConflict: (conflict) {
@@ -176,7 +171,7 @@ class _JourneySmartPanelState extends State<JourneySmartPanel> with SingleTicker
                     ),
                   ),
                   SingleChildScrollView(
-                    padding: const EdgeInsets.all(CalendarTokens.spacingXl),
+                    padding: const EdgeInsets.all(RitmoSpacing.xl),
                     child: JourneyFreeGapsSection(
                       snapshot: widget.snapshot,
                       onSelectFreeGap: (gap) {

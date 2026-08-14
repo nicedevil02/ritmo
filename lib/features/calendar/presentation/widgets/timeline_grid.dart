@@ -2,14 +2,12 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/features/calendar/presentation/logic/timeline_layout_engine.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_hour_axis.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_item_card.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_overflow_card.dart';
@@ -21,8 +19,8 @@ class TimelineGrid extends StatefulWidget {
     required this.isToday,
     this.rangeStartMinutes = 0,
     this.rangeEndMinutes = 1440,
-    this.pxPerMinute = CalendarTokens.pxPerMinute,
-    this.hourAxisWidth = CalendarTokens.hourAxisWidth,
+    this.pxPerMinute = CalendarGeometry.pxPerMinute,
+    this.hourAxisWidth = CalendarGeometry.hourAxisWidth,
     this.maxLanes,
     this.axisSide = HourAxisSide.leading,
     this.scrollController,
@@ -40,7 +38,6 @@ class TimelineGrid extends StatefulWidget {
     this.onSlotTap,
     this.onScheduleUntimed,
     this.onOverflowTap,
-    this.onZoomScaleUpdate,
   });
 
   final List<AgendaItem> items;
@@ -66,7 +63,6 @@ class TimelineGrid extends StatefulWidget {
   final ValueChanged<int>? onSlotTap; // minute of day (0..1439)
   final void Function(AgendaItem item, int startMinutes, int durationMinutes)? onScheduleUntimed;
   final ValueChanged<AgendaItem>? onOverflowTap;
-  final ValueChanged<double>? onZoomScaleUpdate;
 
   @override
   State<TimelineGrid> createState() => _TimelineGridState();
@@ -128,6 +124,7 @@ class _TimelineGridState extends State<TimelineGrid> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final layoutEngine = TimelineLayoutEngine(
       pxPerMinute: widget.pxPerMinute,
       rangeStartMinutes: widget.rangeStartMinutes,
@@ -152,6 +149,8 @@ class _TimelineGridState extends State<TimelineGrid> {
         rangeEndMinutes: widget.rangeEndMinutes,
         width: widget.hourAxisWidth,
         side: widget.axisSide,
+        isToday: widget.isToday,
+        now: _now,
       ),
     );
 
@@ -221,10 +220,10 @@ class _TimelineGridState extends State<TimelineGrid> {
                         child: IgnorePointer(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.25),
-                              borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+                              color: colors.primary.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(RitmoRadius.card),
                               border: Border.all(
-                                color: Colors.blueAccent,
+                                color: colors.primary,
                                 width: 2.0,
                               ),
                             ),
@@ -235,14 +234,14 @@ class _TimelineGridState extends State<TimelineGrid> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: Colors.blueAccent,
-                                    borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+                                    color: colors.primary,
+                                    borderRadius: BorderRadius.circular(RitmoRadius.badge),
                                   ),
                                   child: Text(
                                     toPersianDigits(TimelineSnappingHelper.minutesToTimeString(effectiveDragStartMinutes)),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: CalendarTokens.textLabel,
+                                    style: TextStyle(
+                                      color: colors.onPrimary,
+                                      fontSize: 11.0,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -273,47 +272,47 @@ class _TimelineGridState extends State<TimelineGrid> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
                                       decoration: BoxDecoration(
-                                        color: Colors.redAccent,
-                                        borderRadius: BorderRadius.circular(CalendarTokens.radiusPill),
+                                        color: colors.accent,
+                                        borderRadius: BorderRadius.circular(RitmoRadius.pill),
                                       ),
                                       child: Text(
                                         toPersianDigits(
                                           '${_now.hour.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}',
                                         ),
-                                        style: const TextStyle(
-                                          fontSize: CalendarTokens.textLabel,
+                                        style: TextStyle(
+                                          fontSize: 11.0,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                          color: colors.onPrimary,
                                         ),
                                       ),
                                     ),
                                     Expanded(
                                       child: Container(
-                                        height: CalendarTokens.nowLineThickness,
-                                        color: Colors.redAccent,
+                                        height: CalendarGeometry.nowLineThickness,
+                                        color: colors.accent,
                                       ),
                                     ),
                                   ] else ...[
                                     Expanded(
                                       child: Container(
-                                        height: CalendarTokens.nowLineThickness,
-                                        color: Colors.redAccent,
+                                        height: CalendarGeometry.nowLineThickness,
+                                        color: colors.accent,
                                       ),
                                     ),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
                                       decoration: BoxDecoration(
-                                        color: Colors.redAccent,
-                                        borderRadius: BorderRadius.circular(CalendarTokens.radiusPill),
+                                        color: colors.accent,
+                                        borderRadius: BorderRadius.circular(RitmoRadius.pill),
                                       ),
                                       child: Text(
                                         toPersianDigits(
                                           '${_now.hour.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}',
                                         ),
-                                        style: const TextStyle(
-                                          fontSize: CalendarTokens.textLabel,
+                                        style: TextStyle(
+                                          fontSize: 11.0,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                          color: colors.onPrimary,
                                         ),
                                       ),
                                     ),
@@ -350,7 +349,7 @@ class _TimelineGridState extends State<TimelineGrid> {
       height: dimHeight,
       child: IgnorePointer(
         child: Container(
-          color: Theme.of(context).disabledColor.withValues(alpha: CalendarTokens.alphaPastDim),
+          color: Theme.of(context).disabledColor.withValues(alpha: CalendarGeometry.alphaPastDim),
         ),
       ),
     );
@@ -466,7 +465,7 @@ class _TimelineGridState extends State<TimelineGrid> {
         hapticFeedbackOnStart: true,
         feedback: Material(
           elevation: 12,
-          borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
           color: Colors.transparent,
           child: Opacity(
             opacity: 0.85,
@@ -488,7 +487,7 @@ class _TimelineGridState extends State<TimelineGrid> {
           child: sizedItemCard,
         ),
         onDragStarted: () {
-          RitmoHaptics.tap();
+          RitmoHapticsPolicy.tap();
           widget.onDragStarted?.call(item, layoutItem.startMinutes, layoutItem.durationMinutes);
           if (mounted) {
             setState(() {
@@ -515,14 +514,14 @@ class _TimelineGridState extends State<TimelineGrid> {
               durationMinutes: layoutItem.durationMinutes,
             );
             if (snapped != _dragStartMinutes && mounted) {
-              RitmoHaptics.tap();
+              RitmoHapticsPolicy.tap();
               setState(() {
                 _dragStartMinutes = snapped;
               });
             }
           }
         },
-        onDraggableCanceled: (_, __) {
+        onDraggableCanceled: (_, _) {
           widget.onDragCanceled?.call();
           if (mounted) {
             setState(() {
@@ -570,15 +569,26 @@ class _TimelineGridState extends State<TimelineGrid> {
     final scrollOffset = controller.position.pixels;
     final targetYInViewport = localPos.dy - scrollOffset;
 
-    const edgeMargin = 50.0;
-    const scrollStep = 25.0;
+    const edgeMargin = 60.0;
 
     if (targetYInViewport < edgeMargin && scrollOffset > 0) {
-      final newOffset = (scrollOffset - scrollStep).clamp(0.0, controller.position.maxScrollExtent);
-      controller.jumpTo(newOffset);
+      final intensity = ((edgeMargin - targetYInViewport) / edgeMargin).clamp(0.1, 1.0);
+      final step = 40.0 * intensity;
+      final newOffset = (scrollOffset - step).clamp(0.0, controller.position.maxScrollExtent);
+      controller.animateTo(
+        newOffset,
+        duration: const Duration(milliseconds: 32),
+        curve: Curves.linear,
+      );
     } else if (targetYInViewport > viewportHeight - edgeMargin && scrollOffset < controller.position.maxScrollExtent) {
-      final newOffset = (scrollOffset + scrollStep).clamp(0.0, controller.position.maxScrollExtent);
-      controller.jumpTo(newOffset);
+      final intensity = ((targetYInViewport - (viewportHeight - edgeMargin)) / edgeMargin).clamp(0.1, 1.0);
+      final step = 40.0 * intensity;
+      final newOffset = (scrollOffset + step).clamp(0.0, controller.position.maxScrollExtent);
+      controller.animateTo(
+        newOffset,
+        duration: const Duration(milliseconds: 32),
+        curve: Curves.linear,
+      );
     }
   }
 
@@ -610,9 +620,8 @@ class _TimelineGridState extends State<TimelineGrid> {
             child: Text(
               'پنجره خواب',
               style: TextStyle(
-                fontSize: CalendarTokens.textLabel,
+                fontSize: 11.0,
                 color: colors.textTertiary,
-                fontFamily: 'Vazirmatn',
               ),
             ),
           ),
@@ -624,8 +633,10 @@ class _TimelineGridState extends State<TimelineGrid> {
   }
 
   List<({int startMinutes, int endMinutes})> _sleepSegmentsForDay(int startM, int endM) {
+    if (startM == endM) return const [];
     final start = startM % 1440;
     final end = endM % 1440;
+    if (start == end) return const [];
     final crossesMidnight = startM > endM || endM > 1440;
     if (!crossesMidnight && start < end) {
       return [(startMinutes: start, endMinutes: end)];

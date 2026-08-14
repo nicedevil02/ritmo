@@ -205,112 +205,122 @@ class OnboardingController extends ChangeNotifier {
     try {
       final db = await DatabaseHelper.instance.database;
 
-      // Check if onboarding is already completed (Idempotency guard)
-      final alreadyCompleted = await OnboardingGate.isCompleted(db);
+      var createdCount = 0;
+      final expectedCount = selectedStarterRoutines.length;
 
-      if (!alreadyCompleted) {
-        // 1. Create starter routines with deterministic IDs to ensure idempotency (Best Effort)
-        try {
-          for (final t in selectedStarterRoutines) {
-            final rId = 'onboarding_routine_${t.id}';
-            final duration = DurationBounds.sanitize(t.durationMinutes);
-
-            final routineData = {
-              'id': rId,
-              'title': t.titleFa,
-              'category': t.category.name,
-              'routineType': 'timeBased',
-              'notificationLevel': 'normal',
-              'isEssential': 0,
-              'energyRule': 'none',
-              'priority': 1.0,
-              'targetDurationMinutes': duration,
-              'displayOrder': 1,
-              'description': 'اولین روتین ثبت‌شده در آنبوردینگ',
-              'createdAt': nowMs,
-              'updatedAt': nowMs,
-            };
-
-            final rule = RecurrenceRule(
-              startDate: DateTime.now(),
-              weekdays: const [1, 2, 3, 4, 5, 6, 7],
-              reminderTimes: [t.defaultTime],
-            );
-
-            final scheduleData = {
-              'id': 'sched_$rId',
-              'routineId': rId,
-              'scheduleType': 'DAILY',
-              'timeOfDay': t.defaultTime,
-              'daysOfWeek': '1,2,3,4,5,6,7',
-              'recurrenceRule': jsonEncode(rule.toMap()),
-              'createdAt': nowMs,
-              'updatedAt': nowMs,
-            };
-
-            final command = CreateRoutineCommand(
-              routineData: routineData,
-              scheduleData: scheduleData,
-            );
-
-            await RitmoExecutionKernel.instance.execute(command);
-          }
-        } catch (routineErr, routineSt) {
-          RitmoLog.error('OnboardingController', 'Error creating starter routines', routineErr, routineSt);
-        }
-
-        // 2. Perform main onboarding completion transaction
-        await db.transaction((txn) async {
-          final canCourses = PremiumService.instance.can(PremiumFeature.coursesModule);
-
-          final moduleStates = OnboardingModuleMap.resolveModuleStates(
-            chosenAreas: focusAreas,
-            isFemale: gender == 'FEMALE',
-            enableCycle: enableCycle,
-            canUseCourses: canCourses,
-          );
-
-          for (final entry in moduleStates.entries) {
-            await txn.insert(
-              'app_settings',
-              {
-                'key': entry.key,
-                'value': entry.value,
-                'updatedAt': nowMs,
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
+      // Perform all onboarding insertions atomically in one transaction
+      await db.transaction((txn) async {
+        // 1. Create starter routines with deterministic IDs to ensure idempotency
+        for (final t in selectedStarterRoutines) {
+          final rId = 'onboarding_routine_${t.id}';
+          
+          final existing = await txn.query('routines', where: 'id = ?', whereArgs: [rId], limit: 1);
+          if (existing.isNotEmpty) {
+            createdCount++;
+            continue;
           }
 
-          final focusCodes = focusAreas.map((a) => a.code).toList();
-          final settingsToSave = {
-            if (userName.isNotEmpty) 'user_name': userName,
-            'user_gender': gender,
-            'user_age': age.toString(),
-            'wake_time': wakeTime,
-            'sleep_time': sleepTime,
-            'primary_focus_areas': jsonEncode(focusCodes),
-            'energy_profile': energyProfile,
-            'default_energy_level': energyProfile,
-            'notif_permission_asked': 'true',
-            'notif_permission_granted': notifGranted ? 'true' : 'false',
-            'onboarding_skipped_steps': jsonEncode(skippedStepCodes.toList()),
+          final duration = DurationBounds.sanitize(t.durationMinutes);
+
+          final routineData = {
+            'id': rId,
+            'title': t.titleFa,
+            'category': t.category.name,
+            'routineType': 'timeBased',
+            'notificationLevel': 'normal',
+            'isEssential': 0,
+            'energyRule': 'NONE',
+            'priority': 1.0,
+            'targetDurationMinutes': duration,
+            'displayOrder': 1,
+            'description': 'اولین روتین ثبت‌شده در آنبوردینگ',
+            'createdAt': nowMs,
+            'updatedAt': nowMs,
           };
 
-          for (final entry in settingsToSave.entries) {
-            await txn.insert(
-              'app_settings',
-              {
-                'key': entry.key,
-                'value': entry.value,
-                'updatedAt': nowMs,
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
-          }
+          final rule = RecurrenceRule(
+            startDate: DateTime.now(),
+            weekdays: const [1, 2, 3, 4, 5, 6, 7],
+            reminderTimes: [t.defaultTime],
+          );
 
-          await OnboardingGate.markCompleted(txn, version: OnboardingGate.currentVersion, userName: userName);
-        });
+          final scheduleData = {
+            'id': 'sched_$rId',
+            'routineId': rId,
+            'scheduleType': 'DAILY',
+            'timeOfDay': t.defaultTime,
+            'daysOfWeek': '1,2,3,4,5,6,7',
+            'recurrenceRule': jsonEncode(rule.toMap()),
+            'createdAt': nowMs,
+            'updatedAt': nowMs,
+          };
+
+          final command = CreateRoutineCommand(
+            routineData: routineData,
+            scheduleData: scheduleData,
+          );
+
+          await RitmoExecutionKernel.instance.execute(command, txn: txn);
+          createdCount++;
+        }
+
+        // 2. Perform main onboarding completion settings update
+        final canCourses = PremiumService.instance.can(PremiumFeature.coursesModule);
+
+        final moduleStates = OnboardingModuleMap.resolveModuleStates(
+          chosenAreas: focusAreas,
+          isFemale: gender == 'FEMALE',
+          enableCycle: enableCycle,
+          canUseCourses: canCourses,
+        );
+
+        for (final entry in moduleStates.entries) {
+          await txn.insert(
+            'app_settings',
+            {
+              'key': entry.key,
+              'value': entry.value,
+              'updatedAt': nowMs,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+
+        final focusCodes = focusAreas.map((a) => a.code).toList();
+        final settingsToSave = {
+          if (userName.isNotEmpty) 'user_name': userName,
+          'user_gender': gender,
+          'user_age': age.toString(),
+          'wake_time': wakeTime,
+          'sleep_time': sleepTime,
+          'primary_focus_areas': jsonEncode(focusCodes),
+          'energy_profile': energyProfile,
+          'default_energy_level': energyProfile,
+          'notif_permission_asked': 'true',
+          'notif_permission_granted': notifGranted ? 'true' : 'false',
+          'onboarding_skipped_steps': jsonEncode(skippedStepCodes.toList()),
+        };
+
+        for (final entry in settingsToSave.entries) {
+          await txn.insert(
+            'app_settings',
+            {
+              'key': entry.key,
+              'value': entry.value,
+              'updatedAt': nowMs,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+
+        await OnboardingGate.markCompleted(txn, version: OnboardingGate.currentVersion, userName: userName);
+      });
+
+      if (createdCount < expectedCount) {
+        isSaving = false;
+        errorMessage = '$createdCount مورد از $expectedCount روتین ساخته شد. لطفاً دوباره تلاش کنید.';
+        notifyListeners();
+        return;
       }
 
       // Clear draft store immediately after successful transaction

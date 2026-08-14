@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/features/calendar/presentation/logic/split_day_scroll_helper.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_motion.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_column_header.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_grid.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_hour_axis.dart';
@@ -74,12 +74,12 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
   void scrollToMinutes(int minutes) {
     if (!_sharedScrollController.hasClients) {
       if (_singleColumnController.hasClients) {
-        final offset = ((minutes - 60).clamp(0, 1440)) * CalendarTokens.pxPerMinute;
+        final offset = ((minutes - 60).clamp(0, 1440)) * CalendarGeometry.pxPerMinute;
         final maxScroll = _singleColumnController.position.maxScrollExtent;
         _singleColumnController.animateTo(
           offset.clamp(0.0, maxScroll),
-          duration: CalendarMotion.d(context, CalendarTokens.durationEmphasis),
-          curve: CalendarTokens.curveEmphasis,
+          duration: RitmoMotion.effective(context, RitmoMotion.sheet),
+          curve: RitmoMotion.enter,
         );
       }
       return;
@@ -89,8 +89,8 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
     final maxScroll = _sharedScrollController.position.maxScrollExtent;
     _sharedScrollController.animateTo(
       target.offset.clamp(0.0, maxScroll),
-      duration: CalendarMotion.d(context, CalendarTokens.durationEmphasis),
-      curve: CalendarTokens.curveEmphasis,
+      duration: RitmoMotion.effective(context, RitmoMotion.sheet),
+      curve: RitmoMotion.enter,
     );
   }
 
@@ -104,17 +104,17 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
         final maxScroll = _sharedScrollController.position.maxScrollExtent;
         _sharedScrollController.animateTo(
           target.offset.clamp(0.0, maxScroll),
-          duration: CalendarMotion.d(context, CalendarTokens.durationEmphasis),
-          curve: CalendarTokens.curveEmphasis,
+          duration: RitmoMotion.effective(context, RitmoMotion.sheet),
+          curve: RitmoMotion.enter,
         );
       }
       if (_singleColumnController.hasClients) {
-        final offset = ((nowMinutes - 60).clamp(0, 1440)) * CalendarTokens.pxPerMinute;
+        final offset = ((nowMinutes - 60).clamp(0, 1440)) * CalendarGeometry.pxPerMinute;
         final maxScroll = _singleColumnController.position.maxScrollExtent;
         _singleColumnController.animateTo(
           offset.clamp(0.0, maxScroll),
-          duration: CalendarMotion.d(context, CalendarTokens.durationEmphasis),
-          curve: CalendarTokens.curveEmphasis,
+          duration: RitmoMotion.effective(context, RitmoMotion.sheet),
+          curve: RitmoMotion.enter,
         );
       }
     } else {
@@ -138,13 +138,13 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
       }
     }
 
-    final pxRate = isSingle ? CalendarTokens.pxPerMinute : CalendarTokens.pxPerMinuteSplit;
+    final pxRate = isSingle ? CalendarGeometry.pxPerMinute : CalendarGeometry.pxPerMinuteSplit;
     final offset = ((firstMinute - rangeStart - 30).clamp(0, 720)) * pxRate;
     final maxScroll = controller.position.maxScrollExtent;
     controller.animateTo(
       offset.clamp(0.0, maxScroll),
-      duration: CalendarMotion.d(context, CalendarTokens.durationEmphasis),
-      curve: CalendarTokens.curveEmphasis,
+      duration: RitmoMotion.effective(context, RitmoMotion.sheet),
+      curve: RitmoMotion.enter,
     );
   }
 
@@ -171,7 +171,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
         final renderBox = gridKey.currentContext?.findRenderObject() as RenderBox?;
         if (renderBox == null) return;
         final localOffset = renderBox.globalToLocal(details.offset);
-        final rawMinutes = ((localOffset.dy / CalendarTokens.pxPerMinuteSplit) + range.startMinutes).round();
+        final rawMinutes = ((localOffset.dy / CalendarGeometry.pxPerMinuteSplit) + range.startMinutes).round();
         final dur = DurationBounds.sanitize(details.data.durationMinutes);
         final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
 
@@ -188,7 +188,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
         final localOffset = renderBox != null
             ? renderBox.globalToLocal(details.offset)
             : Offset.zero;
-        final rawMinutes = ((localOffset.dy / CalendarTokens.pxPerMinuteSplit) + range.startMinutes).round();
+        final rawMinutes = ((localOffset.dy / CalendarGeometry.pxPerMinuteSplit) + range.startMinutes).round();
         final dur = DurationBounds.sanitize(details.data.durationMinutes);
         final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
 
@@ -212,9 +212,9 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
               isToday: widget.isToday,
               rangeStartMinutes: range.startMinutes,
               rangeEndMinutes: range.endMinutes,
-              pxPerMinute: CalendarTokens.pxPerMinuteSplit,
-              hourAxisWidth: CalendarTokens.hourAxisWidthSplit,
-              maxLanes: CalendarTokens.maxLanesSplit,
+              pxPerMinute: CalendarGeometry.pxPerMinuteSplit,
+              hourAxisWidth: CalendarGeometry.hourAxisWidthSplit,
+              maxLanes: CalendarGeometry.maxLanesSplit,
               axisSide: side,
               scrollController: _sharedScrollController,
               sleepStartMinutes: widget.sleepStartMinutes,
@@ -251,14 +251,13 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                 child: IgnorePointer(
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(CalendarTokens.spacingM),
+                      padding: const EdgeInsets.all(RitmoSpacing.md),
                       child: Text(
                         'برنامه‌ای در این بازه نیست',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: CalendarTokens.textMeta,
+                          fontSize: 12.0,
                           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                          fontFamily: 'Vazirmatn',
                         ),
                       ),
                     ),
@@ -277,12 +276,12 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
     final now = DateTime.now();
     final nowMinutes = (now.hour * 60) + now.minute;
 
-    final isMorningActive = widget.isToday && nowMinutes < CalendarTokens.splitBoundaryMinutes;
-    final isAfternoonActive = widget.isToday && nowMinutes >= CalendarTokens.splitBoundaryMinutes;
+    final isMorningActive = widget.isToday && nowMinutes < CalendarGeometry.splitBoundaryMinutes;
+    final isAfternoonActive = widget.isToday && nowMinutes >= CalendarGeometry.splitBoundaryMinutes;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < CalendarTokens.splitMinScreenWidth) {
+        if (constraints.maxWidth < CalendarGeometry.splitMinScreenWidth) {
           // Fallback to single column timeline for narrow screens
           return DragTarget<AgendaItem>(
             onWillAcceptWithDetails: (details) => true,
@@ -290,7 +289,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
               final renderBox = _singleGridKey.currentContext?.findRenderObject() as RenderBox?;
               if (renderBox == null) return;
               final localOffset = renderBox.globalToLocal(details.offset);
-              final rawMinutes = (localOffset.dy / CalendarTokens.pxPerMinute).round();
+              final rawMinutes = (localOffset.dy / CalendarGeometry.pxPerMinute).round();
               final dur = DurationBounds.sanitize(details.data.durationMinutes);
               final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
 
@@ -307,7 +306,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
               final localOffset = renderBox != null
                   ? renderBox.globalToLocal(details.offset)
                   : Offset.zero;
-              final rawMinutes = (localOffset.dy / CalendarTokens.pxPerMinute).round();
+              final rawMinutes = (localOffset.dy / CalendarGeometry.pxPerMinute).round();
               final dur = DurationBounds.sanitize(details.data.durationMinutes);
               final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
 
@@ -332,8 +331,8 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                   isToday: widget.isToday,
                   rangeStartMinutes: 0,
                   rangeEndMinutes: 1440,
-                  pxPerMinute: CalendarTokens.pxPerMinute,
-                  hourAxisWidth: CalendarTokens.hourAxisWidth,
+                  pxPerMinute: CalendarGeometry.pxPerMinute,
+                  hourAxisWidth: CalendarGeometry.hourAxisWidth,
                   sleepStartMinutes: widget.sleepStartMinutes,
                   sleepEndMinutes: widget.sleepEndMinutes,
                   highlightedItemId: widget.highlightedItemId,
@@ -373,7 +372,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
             Directionality(
               textDirection: TextDirection.rtl,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: CalendarTokens.spacingS),
+                padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm),
                 child: Row(
                   children: [
                     Expanded(
@@ -384,7 +383,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                         isActive: isMorningActive,
                       ),
                     ),
-                    const SizedBox(width: CalendarTokens.columnGap),
+                    const SizedBox(width: CalendarGeometry.columnGap),
                     Expanded(
                       child: TimelineColumnHeader(
                         title: SplitDayRange.afternoon.titleFa,
@@ -406,7 +405,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                 child: Directionality(
                   textDirection: TextDirection.rtl,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: CalendarTokens.spacingS),
+                    padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -420,11 +419,11 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                           ),
                         ),
                         SizedBox(
-                          width: CalendarTokens.columnGap,
+                          width: CalendarGeometry.columnGap,
                           child: Center(
                             child: Container(
                               width: 1.0,
-                              height: 720 * CalendarTokens.pxPerMinuteSplit,
+                              height: 720 * CalendarGeometry.pxPerMinuteSplit,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topCenter,

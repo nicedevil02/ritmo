@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/domain/agenda/agenda_item.dart';
-import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_chip.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_time_range.dart';
 import 'package:ritmo/features/calendar/presentation/logic/timeline_layout_engine.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
-import 'package:ritmo/features/calendar/utils/domain_palette.dart';
+import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 
 class TimelineItemCard extends StatelessWidget {
   const TimelineItemCard({
@@ -59,11 +56,7 @@ class TimelineItemCard extends StatelessWidget {
 
     final cardOpacity = isDone ? 0.55 : (isDimmed ? 0.30 : (isGhost ? 0.85 : 1.0));
 
-    final borderRadius = layoutItem.continuedFromPreviousDay
-        ? const BorderRadius.vertical(bottom: Radius.circular(CalendarTokens.radiusCard))
-        : (layoutItem.continuesToNextDay
-            ? const BorderRadius.vertical(top: Radius.circular(CalendarTokens.radiusCard))
-            : BorderRadius.circular(CalendarTokens.radiusCard));
+    final borderRadius = BorderRadius.circular(RitmoRadius.card);
 
     final startMin = layoutItem.startMinutes;
     final durMin = layoutItem.durationMinutes;
@@ -77,69 +70,86 @@ class TimelineItemCard extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: borderRadius,
-            child: AnimatedContainer(
-              duration: CalendarTokens.durationMicro,
-              curve: CalendarTokens.curveDefault,
-              decoration: BoxDecoration(
-                color: bgContainerColor,
-                borderRadius: borderRadius,
-                border: Border.all(
-                  color: isHighlighted
-                      ? color
-                      : (item.isEstimated
-                          ? color.withValues(alpha: 0.4)
-                          : colors.border.withValues(alpha: 0.15)),
-                  width: isHighlighted ? 2.0 : 1.0,
-                  style: item.isEstimated ? BorderStyle.solid : BorderStyle.solid,
+            child: SizedBox(
+              height: height,
+              child: AnimatedContainer(
+                duration: RitmoMotion.press,
+                curve: RitmoMotion.enter,
+                decoration: BoxDecoration(
+                  color: bgContainerColor,
+                  borderRadius: borderRadius,
+                  border: Border.all(
+                    color: isHighlighted
+                        ? color
+                        : (item.isEstimated
+                            ? color.withValues(alpha: 0.4)
+                            : colors.border.withValues(alpha: 0.15)),
+                    width: isHighlighted ? 2.0 : 1.0,
+                  ),
                 ),
-              ),
-              child: ClipRRect(
-                borderRadius: borderRadius,
-                child: Stack(
-                  children: [
-                    // Right accent bar (RTL)
-                    Positioned(
-                      top: 0,
-                      bottom: 0,
-                      right: 0,
-                      width: 4.0,
-                      child: Container(
-                        color: isDone ? colors.disabled : color,
+                child: ClipRRect(
+                  borderRadius: borderRadius,
+                  child: Stack(
+                    children: [
+                      // Content layout by tier
+                      Padding(
+                        padding: EdgeInsets.only(
+                          right: onToggleComplete != null ? 14.0 : 10.0,
+                          left: 6.0,
+                          top: isCompact ? 1.0 : (isHighlighted ? 2.0 : 3.0),
+                          bottom: isCompact ? 1.0 : (isHighlighted ? 2.0 : 3.0),
+                        ),
+                        child: isCompact
+                            ? Center(child: _buildCompactTier(context, colors, color, isDone))
+                            : (isExpanded
+                                ? _buildExpandedTier(context, colors, color, isDone, startMin, durMin)
+                                : _buildNormalTier(context, colors, color, isDone, startMin, durMin, height)),
                       ),
-                    ),
 
-                    // Single-day override indicator chip
-                    if (item.hasOverride)
+                      // Single-day override indicator chip
+                      if (item.hasOverride)
+                        Positioned(
+                          top: 2,
+                          left: 2,
+                          child: IgnorePointer(
+                            child: Transform.scale(
+                              scale: 0.8,
+                              alignment: Alignment.topLeft,
+                              child: const RitmoChip(
+                                label: 'فقط امروز',
+                                isSelected: true,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // Right accent bar (RTL) with touch target for completion (Rendered on top)
                       Positioned(
-                        top: 2,
-                        left: 2,
-                        child: IgnorePointer(
-                          child: Transform.scale(
-                            scale: 0.8,
-                            alignment: Alignment.topLeft,
-                            child: const RitmoChip(
-                              label: 'فقط امروز',
-                              isSelected: true,
+                        top: 0,
+                        bottom: 0,
+                        right: 0,
+                        width: onToggleComplete != null ? 36.0 : 4.0,
+                        child: GestureDetector(
+                          key: ValueKey('toggle_complete_${item.id}'),
+                          behavior: HitTestBehavior.opaque,
+                          onTap: onToggleComplete != null
+                              ? () {
+                                  RitmoHapticsPolicy.success();
+                                  onToggleComplete!();
+                                }
+                              : null,
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Container(
+                              width: 4.0,
+                              height: double.infinity,
+                              color: isDone ? colors.disabled : color,
                             ),
                           ),
                         ),
                       ),
-
-                    // Content layout by tier
-                    Padding(
-                      padding: EdgeInsets.only(
-                        right: 10.0,
-                        left: 6.0,
-                        top: isHighlighted ? 2.0 : 3.0,
-                        bottom: isHighlighted ? 2.0 : 3.0,
-                      ),
-                      child: isCompact
-                          ? _buildCompactTier(context, colors, color, isDone)
-                          : (isExpanded
-                              ? _buildExpandedTier(context, colors, color, isDone, startMin, durMin)
-                              : _buildNormalTier(context, colors, color, isDone, startMin, durMin, height)),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -154,16 +164,20 @@ class TimelineItemCard extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            item.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: CalendarTokens.textLabel,
-              color: colors.textPrimary,
-              fontWeight: FontWeight.bold,
-              decoration: isDone ? TextDecoration.lineThrough : null,
-              fontFamily: 'Vazirmatn',
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(
+              item.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.0,
+                color: colors.textPrimary,
+                fontWeight: FontWeight.bold,
+                decoration: isDone ? TextDecoration.lineThrough : null,
+                height: 1.0,
+              ),
             ),
           ),
         ),
@@ -173,7 +187,7 @@ class TimelineItemCard extends StatelessWidget {
 
   Widget _buildNormalTier(BuildContext context, RitmoColors colors, Color color, bool isDone, int startMin, int durMin, double height) {
     final item = layoutItem.item;
-    final showTime = item.isTimed && height >= 44.0;
+    final showTime = item.isTimed && height >= 54.0;
     return Row(
       children: [
         Icon(domainIcon(item.domain), size: 14, color: color),
@@ -184,26 +198,28 @@ class TimelineItemCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                item.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: CalendarTokens.textMeta,
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                  decoration: isDone ? TextDecoration.lineThrough : null,
-                  fontFamily: 'Vazirmatn',
+              Flexible(
+                child: Text(
+                  item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.0,
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    decoration: isDone ? TextDecoration.lineThrough : null,
+                  ),
                 ),
               ),
               if (showTime)
-                RitmoTimeRange(
-                  startMinutes: startMin,
-                  endMinutes: startMin + durMin,
-                  style: TextStyle(
-                    fontSize: CalendarTokens.textLabel,
-                    color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
+                Flexible(
+                  child: RitmoTimeRange(
+                    startMinutes: startMin,
+                    endMinutes: startMin + durMin,
+                    style: TextStyle(
+                      fontSize: 11.0,
+                      color: colors.textSecondary,
+                    ),
                   ),
                 ),
             ],
@@ -230,11 +246,10 @@ class TimelineItemCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: CalendarTokens.textTitle,
+                  fontSize: 15.0,
                   color: colors.textPrimary,
                   fontWeight: FontWeight.bold,
                   decoration: isDone ? TextDecoration.lineThrough : null,
-                  fontFamily: 'Vazirmatn',
                 ),
               ),
               if (item.subtitle != null && item.subtitle!.isNotEmpty)
@@ -243,9 +258,8 @@ class TimelineItemCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: CalendarTokens.textLabel,
+                    fontSize: 11.0,
                     color: colors.textTertiary,
-                    fontFamily: 'Vazirmatn',
                   ),
                 ),
               const SizedBox(height: 2),
@@ -254,9 +268,8 @@ class TimelineItemCard extends StatelessWidget {
                   startMinutes: startMin,
                   endMinutes: startMin + durMin,
                   style: TextStyle(
-                    fontSize: CalendarTokens.textLabel,
+                    fontSize: 11.0,
                     color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
                   ),
                 ),
             ],

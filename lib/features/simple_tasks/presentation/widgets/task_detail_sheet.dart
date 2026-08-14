@@ -18,6 +18,9 @@ import 'package:ritmo/features/simple_tasks/domain/task_step.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_step_list.dart';
 import 'package:ritmo/features/notes/logic/promote_to_note.dart';
 
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
@@ -242,11 +245,15 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     widget.onTaskUpdated();
 
     // 4) زمان‌بندی واقعی
-    await sl<AlarmPlatform>().scheduleExactAlarm(
-      id: reminderId,
-      timeMsUTC: targetMs,
-      title: _task.title,
-      isEssential: false,
+    await NotificationGateway.schedule(
+      NotificationRequest(
+        id: reminderId,
+        channel: NotificationChannelId.planning,
+        scheduledAt: DateTime.fromMillisecondsSinceEpoch(targetMs),
+        title: _task.title,
+        sourceSystem: 'tasks',
+        entityId: _task.id,
+      ),
     );
     await AlarmSchedulerService.scheduleNextAlarms();
 

@@ -8,7 +8,7 @@ import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/core/widgets/action/action_sheet_registry.dart';
 import 'package:ritmo/core/widgets/action/action_sheet_result.dart';
 import 'package:ritmo/core/widgets/action/sheet_actions.dart';
-import 'package:ritmo/features/calendar/utils/domain_palette.dart';
+import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 
 /// Five-zone unified Action Sheet presentation container.
 class RitmoActionSheet extends StatefulWidget {

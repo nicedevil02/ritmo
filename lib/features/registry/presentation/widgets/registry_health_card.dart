@@ -1,7 +1,7 @@
 // lib/features/registry/presentation/widgets/registry_health_card.dart
 
 import 'package:flutter/material.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/registry/domain/registry_health_issue.dart';
 
 class RegistryHealthCard extends StatefulWidget {
@@ -39,18 +39,18 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
           ? Container(
               key: const ValueKey('fixed_state'),
               margin: const EdgeInsets.symmetric(
-                horizontal: CalendarTokens.spacingL,
-                vertical: CalendarTokens.spacingS,
+                horizontal: RitmoSpacing.lg,
+                vertical: RitmoSpacing.sm,
               ),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: CalendarTokens.emerald.withValues(alpha: 0.1),
+                color: const Color(0xFF10B981).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: CalendarTokens.emerald.withValues(alpha: 0.3)),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, color: CalendarTokens.emerald, size: 20),
+                  Icon(Icons.check_circle_rounded, color: const Color(0xFF10B981), size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'مشکل با موفقیت برطرف شد 🎉',
@@ -58,7 +58,7 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
                       fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: CalendarTokens.emerald,
+                      color: const Color(0xFF10B981),
                     ),
                   ),
                 ],
@@ -67,15 +67,15 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
           : Container(
               key: const ValueKey('normal_state'),
               margin: const EdgeInsets.symmetric(
-                horizontal: CalendarTokens.spacingL,
-                vertical: CalendarTokens.spacingS,
+                horizontal: RitmoSpacing.lg,
+                vertical: RitmoSpacing.sm,
               ),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: isDark
                     ? theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.6)
                     : theme.cardColor,
-                borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+                borderRadius: BorderRadius.circular(RitmoRadius.card),
                 border: Border.all(
                   color: severityColor.withValues(alpha: 0.35),
                   width: 1.2,

@@ -2,6 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
@@ -1050,11 +1053,15 @@ class CoursesRepository {
       final timeMs = r['scheduledTime']! as int;
       final courseTitle = r['title']! as String;
 
-      await sl<AlarmPlatform>().scheduleExactAlarm(
-        id: alarmId,
-        timeMsUTC: timeMs,
-        title: 'کلاس: $courseTitle',
-        isEssential: false,
+      await NotificationGateway.schedule(
+        NotificationRequest(
+          id: alarmId,
+          channel: NotificationChannelId.planning,
+          scheduledAt: DateTime.fromMillisecondsSinceEpoch(timeMs),
+          title: 'کلاس: $courseTitle',
+          sourceSystem: 'courses',
+          entityId: alarmId,
+        ),
       );
     }
 

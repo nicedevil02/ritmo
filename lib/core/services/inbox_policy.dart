@@ -9,8 +9,8 @@ class InboxPolicy {
   }) {
     switch (category) {
       case InboxCategory.REMINDER:
-        // Only push reminders with priority >= important (1) or essential.
-        return priority.index >= 1;
+        // Push all routine reminders into inbox
+        return priority.index >= 0;
       case InboxCategory.INSIGHT:
         return true;
       case InboxCategory.SUGGESTION:

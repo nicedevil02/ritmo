@@ -1,5 +1,5 @@
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
-import 'package:ritmo/features/calendar/utils/calendar_defaults.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
 
 /// Helper utilities for snapping minutes and duration calculations.
 class TimelineSnappingHelper {

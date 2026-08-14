@@ -35,7 +35,7 @@ class NowPillViewModel {
   factory NowPillViewModel.fromSnapshot(
     DayAgendaSnapshot? snapshot, {
     required DateTime now,
-    required bool isToday,
+    bool isToday = true,
     DateTime? selectedDate,
   }) {
     if (snapshot == null) {
@@ -74,7 +74,8 @@ class NowPillViewModel {
         orElse: () => snapshot.items.first,
       );
 
-      final firstTimeStr = firstItem.timeOfDay != null ? toPersianDigits(firstItem.timeOfDay!) : '';
+      final firstTime = firstItem.timeOfDay;
+      final firstTimeStr = firstTime != null ? toPersianDigits(firstTime) : '';
       final label = firstTimeStr.isNotEmpty
           ? '${toPersianDigits(total)} برنامه · اولین: $firstTimeStr'
           : '${toPersianDigits(total)} برنامه';
@@ -94,7 +95,8 @@ class NowPillViewModel {
     final next = snapshot.nextActivity;
 
     if (current != null) {
-      final timeStr = current.timeOfDay != null ? toPersianDigits(current.timeOfDay!) : '';
+      final currentTime = current.timeOfDay;
+      final timeStr = currentTime != null ? toPersianDigits(currentTime) : '';
       final durMinutes = DurationBounds.sanitize(current.durationMinutes);
       final durStr = ' (${RelativeTimeFormatter.durationFa(durMinutes)})';
 

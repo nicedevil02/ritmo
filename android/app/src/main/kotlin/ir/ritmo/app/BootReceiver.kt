@@ -43,17 +43,23 @@ class BootReceiver : BroadcastReceiver() {
                 Log.d(TAG, "Skipping alarm restore on time change: shift < 60 seconds")
             }
         } else if (action == ALARM_TRIGGER_ACTION) {
-            // An alarm fired. Check if it's a status update refresh or a normal routine alarm.
-            val id = intent.getStringExtra("id") ?: "default_id"
+            // An alarm fired. Check if it's a silent tick or status update refresh or a normal routine alarm.
+            val id = intent.getStringExtra("id") ?: intent.getStringExtra("reminderId")
+            if (id == null) {
+                Log.e(TAG, "Missing alarm id in Intent, dropping notification.")
+                return
+            }
+
             val title = intent.getStringExtra("title") ?: "یادآوری روتین"
             val isEssential = intent.getBooleanExtra("isEssential", false)
+            val isSilentTick = intent.getBooleanExtra("isSilentTick", false)
             
-            if (id.startsWith("status_update_") || title == "REFRESH_STATUS") {
-                Log.d(TAG, "Status update alarm fired, refreshing persistent notification")
+            if (isSilentTick || id.startsWith("status_update_") || title == "REFRESH_STATUS") {
+                Log.d(TAG, "Silent tick or status update alarm fired, refreshing persistent notification")
                 val updateIntent = Intent(context, NotificationActionReceiver::class.java).apply {
                     this.action = "com.ritmo.app.NOTIF_ACTION"
                     putExtra("actionType", "UPDATE_PERSISTENT_STATUS")
-                    putExtra("reminderId", "dummy_id")
+                    putExtra("reminderId", id)
                 }
                 context.sendBroadcast(updateIntent)
             } else {
@@ -62,7 +68,7 @@ class BootReceiver : BroadcastReceiver() {
                 val updateIntent = Intent(context, NotificationActionReceiver::class.java).apply {
                     this.action = "com.ritmo.app.NOTIF_ACTION"
                     putExtra("actionType", "UPDATE_PERSISTENT_STATUS")
-                    putExtra("reminderId", "dummy_id")
+                    putExtra("reminderId", id)
                 }
                 context.sendBroadcast(updateIntent)
             }
@@ -70,7 +76,7 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     private fun generateRequestCode(id: String, salt: String = ""): Int {
-        return (id + salt).hashCode() and 0x7FFFFFFF
+        return AlarmChannelRegistrar.generateRequestCode(id, salt)
     }
 
     private fun restoreAlarmsFromSnapshot(context: Context) {
@@ -279,7 +285,8 @@ class BootReceiver : BroadcastReceiver() {
             notificationManager.notify(notifNumericId, builder.build())
         } else {
             val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            val digestMode = prefs.getString("flutter.notif_digest_mode", "false") == "true"
+            val digestModeStr = prefs.getString("flutter.notif_digest_mode", "standard") ?: "standard"
+            val digestMode = digestModeStr == "concise" || digestModeStr == "grouped" || digestModeStr == "true"
             val maxNonEssential = prefs.getSafeInt("flutter.notif_max_non_essential_per_hour", 3)
 
             var isRateLimited = false
@@ -353,6 +360,8 @@ class BootReceiver : BroadcastReceiver() {
                     .setColor(ContextCompat.getColor(context, R.color.ritmo_accent))
                     .setContentTitle(context.getString(R.string.notif_daily_routine_title))
                     .setContentText(title)
+                    .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                    .setPublicVersion(buildSanitizedPublicVersion(context, isEssential))
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true)
                     .setGroup(GROUP_KEY_NON_ESSENTIAL)
@@ -420,6 +429,8 @@ class BootReceiver : BroadcastReceiver() {
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                 .setContentTitle(summaryTitle)
                 .setContentText(summaryText)
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                .setPublicVersion(buildSanitizedPublicVersion(context, isEssential))
                 .setContentIntent(summaryPendingIntent)
                 .setAutoCancel(true)
                 .setGroup(GROUP_KEY_NON_ESSENTIAL)

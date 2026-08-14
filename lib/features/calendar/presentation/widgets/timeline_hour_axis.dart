@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 
 enum HourAxisSide { leading, trailing }
 
@@ -10,9 +11,11 @@ class TimelineHourAxis extends StatelessWidget {
     required this.pxPerMinute,
     this.rangeStartMinutes = 0,
     this.rangeEndMinutes = 1440,
-    this.width = CalendarTokens.hourAxisWidth,
+    this.width = CalendarGeometry.hourAxisWidth,
     this.side = HourAxisSide.leading,
-    this.labelFontSize = CalendarTokens.textLabel,
+    this.labelFontSize = 11.0,
+    this.isToday = false,
+    this.now,
   });
 
   final double pxPerMinute;
@@ -21,11 +24,14 @@ class TimelineHourAxis extends StatelessWidget {
   final double width;
   final HourAxisSide side;
   final double labelFontSize;
+  final bool isToday;
+  final DateTime? now;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final nowHour = DateTime.now().hour;
+    final colors = context.colors;
+    final effectiveNow = now ?? DateTime.now();
+    final nowHour = effectiveNow.hour;
     final startHour = (rangeStartMinutes / 60.0).ceil();
     final endHour = (rangeEndMinutes / 60.0).floor();
     final rangeHeight = (rangeEndMinutes - rangeStartMinutes) * pxPerMinute;
@@ -40,21 +46,22 @@ class TimelineHourAxis extends StatelessWidget {
           for (var h = startHour; h <= endHour; h++)
             Positioned(
               top: ((h * 60) - rangeStartMinutes) * pxPerMinute - 7,
-              left: isLeading ? CalendarTokens.spacingXs : 0,
-              right: isLeading ? 0 : CalendarTokens.spacingXs,
+              left: isLeading ? RitmoSpacing.xs : 0,
+              right: isLeading ? 0 : RitmoSpacing.xs,
               child: Align(
                 alignment: isLeading ? Alignment.centerLeft : Alignment.centerRight,
                 child: Text(
                   toPersianDigits('${h.toString().padLeft(2, '0')}:00'),
                   style: TextStyle(
                     fontSize: labelFontSize,
-                    fontWeight: h == nowHour ? FontWeight.w700 : FontWeight.w500,
-                    color: h == nowHour
-                        ? theme.colorScheme.primary
-                        : (h < nowHour
-                            ? theme.textTheme.bodySmall?.color?.withValues(alpha: 0.25)
-                            : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.40)),
-                    fontFamily: 'Vazirmatn',
+                    fontWeight: (isToday && h == nowHour) ? FontWeight.w700 : FontWeight.w500,
+                    color: isToday
+                        ? (h == nowHour
+                            ? colors.primary
+                            : (h < nowHour
+                                ? colors.textTertiary
+                                : colors.textSecondary))
+                        : colors.textTertiary,
                   ),
                 ),
               ),
@@ -79,7 +86,7 @@ class TimelineGridLines extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     final rangeHeight = (rangeEndMinutes - rangeStartMinutes) * pxPerMinute;
 
     return SizedBox(
@@ -90,8 +97,8 @@ class TimelineGridLines extends StatelessWidget {
           pxPerMinute: pxPerMinute,
           rangeStartMinutes: rangeStartMinutes,
           rangeEndMinutes: rangeEndMinutes,
-          lineColor: theme.dividerColor.withValues(alpha: 0.18),
-          halfHourLineColor: theme.dividerColor.withValues(alpha: 0.08),
+          lineColor: colors.borderSubtle.withValues(alpha: 0.25),
+          halfHourLineColor: colors.borderSubtle.withValues(alpha: 0.10),
         ),
       ),
     );

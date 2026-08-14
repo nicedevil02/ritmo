@@ -1,58 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/navigation/ritmo_router.dart';
-import 'package:timezone/data/latest.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_ids.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 
-/// قدم صفر — یادآور پیش‌خواب (Wind-down).
-///
-/// کلیدهای `sleep_winddown_reminder` و `sleep_winddown_minutes` مدت‌ها در
-/// `app_settings` نوشته می‌شدند ولی هیچ‌جا خوانده و زمان‌بندی نمی‌شدند.
-/// این سرویس تنها نقطهٔ ورود است: پس از ذخیرهٔ اهداف خواب و در شروع اپ،
-/// [syncFromSettings] را صدا بزنید.
+/// یادآور پیش‌خواب (Wind-down).
+/// زمان‌بندی از طریق NotificationGateway با کانال planning انجام می‌شود.
 class SleepWinddownReminderService {
-  static const int _notificationId = 3001;
-
-  /// قدم ۳: تپ روی نوتیف با payload مسیر، کاربر را به بخش خواب می‌برد.
+  static const int _notificationId = NotificationIds.sleepWinddown;
   static const String _tapPayload = 'route:/sleep';
 
-  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-  static bool _initialized = false;
-
-  static Future<void> _ensureInitialized() async {
-    if (_initialized) return;
-
-    tz.initializeTimeZones();
-
-    const initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initializationSettingsDarwin = DarwinInitializationSettings();
-
-    const initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
-    );
-
-    await _notificationsPlugin.initialize(
-      settings: initializationSettings,
-      onDidReceiveNotificationResponse: _onNotificationResponse,
-    );
-    _initialized = true;
-  }
-
-  /// تپ روی نوتیف: مسیر را به روتر می‌دهیم. اگر اپ هنوز بالا نیامده باشد،
-  /// روتر آن را صف می‌کند و shell در اولین فریم اجرایش می‌کند.
-  static void _onNotificationResponse(NotificationResponse response) {
-    final payload = response.payload;
-    if (payload == null || !payload.startsWith('route:')) return;
-    unawaited(RitmoRouter.open(payload.substring('route:'.length)));
-  }
-
-  /// تنظیمات را از `app_settings` می‌خواند و نوتیف روزانه را زمان‌بندی یا لغو می‌کند.
+  /// تنظیمات را از `app_settings` می‌خواند و نوتیف روزانه را از طریق Gateway زمان‌بندی یا لغو می‌کند.
   static Future<void> syncFromSettings() async {
     try {
       final db = await DatabaseHelper.instance.database;
@@ -91,7 +52,6 @@ class SleepWinddownReminderService {
       }
 
       // امن در برابر عبور از نیمه‌شب: مثلاً پلهٔ ۰۰:۳۰ با ۶۰ دقیقه ⇒ ۲۳:۳۰ همان شب.
-      // اپراتور ٪ در Dart برای مقسوم‌علیه مثبت همیشه نامنفی برمی‌گرداند.
       final reminderMinOfDay = ((hour * 60 + minute) - minutesBefore) % 1440;
 
       await _scheduleDaily(
@@ -111,7 +71,6 @@ class SleepWinddownReminderService {
     required int minutesBefore,
     required String bedtime,
   }) async {
-    await _ensureInitialized();
     await cancel();
 
     final now = DateTime.now();
@@ -120,44 +79,22 @@ class SleepWinddownReminderService {
       scheduled = scheduled.add(const Duration(days: 1));
     }
 
-    const androidDetails = AndroidNotificationDetails(
-      'sleep_winddown',
-      'یادآور پیش‌خواب',
-      channelDescription: 'اعلان ملایم برای آماده‌شدن جهت خواب',
-      color: Color(0xff8B5CF6),
+    await NotificationGateway.schedule(
+      NotificationRequest(
+        id: 'sleep_winddown_$_notificationId',
+        channel: NotificationChannelId.planning,
+        scheduledAt: scheduled,
+        title: 'ریتمو 🌙',
+        body: '$minutesBefore دقیقه تا خواب هدف ($bedtime). کم‌کم جمع‌ش کن.',
+        sourceSystem: 'sleep',
+        entityId: 'sleep_winddown',
+        payload: const {'route': _tapPayload},
+      ),
     );
-    const iosDetails = DarwinNotificationDetails();
-    const details =
-        NotificationDetails(android: androidDetails, iOS: iosDetails);
-
-    final tzDateTime = tz.TZDateTime.from(scheduled, tz.local);
-
-    Future<void> schedule(AndroidScheduleMode mode) =>
-        _notificationsPlugin.zonedSchedule(
-          id: _notificationId,
-          title: 'ریتمو 🌙',
-          body: '$minutesBefore دقیقه تا خواب هدف ($bedtime). کم‌کم جمع‌ش کن.',
-          scheduledDate: tzDateTime,
-          notificationDetails: details,
-          androidScheduleMode: mode,
-          matchDateTimeComponents: DateTimeComponents.time,
-          payload: _tapPayload,
-        );
-
-    try {
-      await schedule(AndroidScheduleMode.exactAllowWhileIdle);
-    } catch (_) {
-      try {
-        await schedule(AndroidScheduleMode.inexactAllowWhileIdle);
-      } catch (e) {
-        debugPrint(
-            'SleepWinddownReminderService: fallback scheduling also failed: $e');
-      }
-    }
   }
 
   static Future<void> cancel() async {
-    await _ensureInitialized();
-    await _notificationsPlugin.cancel(id: _notificationId);
+    await NotificationGateway.cancel('sleep_winddown_$_notificationId');
+    await NotificationGateway.cancelForEntity('sleep', 'sleep_winddown');
   }
 }

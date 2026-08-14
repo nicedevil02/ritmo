@@ -387,8 +387,8 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
           final colors = context.colors;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('تسبیحات حضرت زهرا (س) به پایان رسید. قبول باشد ✨', style: TextStyle(fontFamily: 'Vazirmatn')),
-              backgroundColor: colors.accent,
+              content: const Text('تسبیحات حضرت زهرا (س) به پایان رسید. قبول باشد ✨', style: TextStyle(fontFamily: 'Vazirmatn')),
+              backgroundColor: colors.primary,
             ),
           );
         }
@@ -588,11 +588,13 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.accent,
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 0,
                 ),
                 onPressed: () => Navigator.pop(context, true),
-                child: Text('ذخیره', style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                child: Text('ذخیره', style: TextStyle(color: colors.onPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -1394,46 +1396,38 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                         onTap: () => _showDhikrSettingsSheet(activePractice),
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
-                          padding: EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? colors.surfaceSunken
-                                : colors.surfaceSunken,
+                            color: colors.surfaceSunken,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: colors.accent
-                                  .withValues(alpha: 0.28),
+                              color: colors.primary.withValues(alpha: 0.35),
                             ),
                           ),
                           child: Icon(
                             CupertinoIcons.slider_horizontal_3,
                             size: 15,
-                            color: isDark
-                                ? colors.accent
-                                : colors.accent,
+                            color: colors.primary,
                           ),
                         ),
                       ),
 
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
 
                       // Add button
                       InkWell(
                         onTap: _showAddDhikrSheet,
                         borderRadius: BorderRadius.circular(18),
                         child: Container(
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 11,
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? colors.surfaceSunken
-                                : colors.surfaceSunken,
+                            color: colors.surfaceSunken,
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: colors.accent
-                                  .withValues(alpha: 0.28),
+                              color: colors.primary.withValues(alpha: 0.35),
                             ),
                           ),
                           child: Row(
@@ -1442,18 +1436,16 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                               Icon(
                                 CupertinoIcons.add,
                                 size: 14,
-                                color: colors.accent,
+                                color: colors.primary,
                               ),
-                              SizedBox(width: 4),
+                              const SizedBox(width: 4),
                               Text(
                                 'افزودن',
                                 style: TextStyle(
                                   fontFamily: 'Vazirmatn',
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
-                                  color: isDark
-                                      ? colors.accent
-                                      : colors.accent,
+                                  color: colors.primary,
                                 ),
                               ),
                             ],
@@ -1664,13 +1656,13 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                       ),
                                     ],
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.center,
                                     children: [
                                       Icon(
                                         CupertinoIcons.add,
-                                        color: Colors.white,
+                                        color: colors.onPrimary,
                                         size: 19,
                                       ),
                                       SizedBox(width: 7),
@@ -1680,7 +1672,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                           fontFamily: 'Vazirmatn',
                                           fontSize: 15,
                                           fontWeight: FontWeight.w800,
-                                          color: Colors.white,
+                                          color: colors.onPrimary,
                                         ),
                                       ),
                                     ],
@@ -1849,7 +1841,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                           colors,
                           icon: CupertinoIcons.fullscreen,
                           label: 'تمام‌صفحه',
-                          color: colors.accent,
+                          color: colors.primary,
                           onTap: _openFullscreenTasbih,
                         ),
                       ),
@@ -2157,7 +2149,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                             color: colors.primary,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(CupertinoIcons.plus, color: Colors.white, size: 18),
+                          child: Icon(CupertinoIcons.plus, color: colors.onPrimary, size: 18),
                         ),
                       ),
                     ],
@@ -2192,7 +2184,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                               fontFamily: 'Vazirmatn',
                               fontSize: 11.5,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              color: isSelected ? Colors.white : colors.textSecondary,
+                              color: isSelected ? colors.onPrimary : colors.textSecondary,
                             ),
                           ),
                         ),
@@ -2260,15 +2252,15 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: colors.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
               onPressed: _save,
-              child: const Text(
+              child: Text(
                 'ذخیره تنظیمات',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary),
               ),
             ),
           ],
@@ -2439,7 +2431,7 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
                     ),
                     CupertinoSwitch(
                       value: _showInCalendar,
-                      activeTrackColor: colors.accent,
+                      activeTrackColor: colors.primary,
                       onChanged: (val) {
                         setState(() {
                           _showInCalendar = val;
@@ -2453,13 +2445,13 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
 
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.accent,
-                  foregroundColor: Colors.white,
+                  foregroundColor: colors.onPrimary,
+                  backgroundColor: colors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: _save,
-                child: const Text('ثبت و افزودن ذکر', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                child: Text('ثبت و افزودن ذکر', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary)),
               ),
             ],
           ),
@@ -2543,9 +2535,9 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
               child: Text('انصراف', style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn')),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: colors.error),
+              style: ElevatedButton.styleFrom(backgroundColor: colors.error, elevation: 0),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('حذف', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+              child: Text('حذف', style: TextStyle(color: colors.textOnColor, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -2705,7 +2697,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                   ),
                   CupertinoSwitch(
                     value: _showInCalendar,
-                    activeTrackColor: colors.accent,
+                    activeTrackColor: colors.primary,
                     onChanged: (val) {
                       setState(() {
                         _showInCalendar = val;
@@ -2731,16 +2723,16 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.accent,
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
                     ),
                     onPressed: _save,
-                    child: const Text(
+                    child: Text(
                       'ذخیره تنظیمات',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary),
                     ),
                   ),
                 ),

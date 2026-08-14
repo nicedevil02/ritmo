@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/agenda_action_handler.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
@@ -15,7 +15,8 @@ import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/core/domain/agenda/occurrence_override_repository.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/features/calendar/utils/calendar_defaults.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
+import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 /// Calendar view scale. `agenda` is the primary view ("what's next?").
@@ -222,6 +223,34 @@ class JourneyController extends ChangeNotifier {
       if (_isDisposed) return;
       _errorMessage = 'Failed to complete task: $e';
       debugPrint('completeItem error: $e\n$stackTrace');
+    } finally {
+      if (!_isDisposed) {
+        _isExecutingAction = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> postponeItem(AgendaItem item, {int days = 1}) async {
+    if (_isDisposed || _isExecutingAction) return;
+    _isExecutingAction = true;
+    notifyListeners();
+
+    try {
+      if (item.domain == AgendaDomain.task) {
+        final task = await SimpleTaskRepository.instance.getById(item.sourceId);
+        if (task != null) {
+          final currentDate = DateTime.tryParse(task.dueDate ?? item.dateStr) ?? DateTime.now();
+          final nextDate = currentDate.add(Duration(days: days));
+          final nextDateStr = '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}';
+          await SimpleTaskRepository.instance.updateTask(task.copyWith(dueDate: nextDateStr));
+        }
+      }
+      await refresh();
+    } catch (e, stackTrace) {
+      if (_isDisposed) return;
+      _errorMessage = 'Failed to postpone task: $e';
+      debugPrint('postponeItem error: $e\n$stackTrace');
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -537,7 +566,7 @@ class JourneyController extends ChangeNotifier {
       );
       await command.execute();
       CommandStack.instance.push(command);
-      RitmoHaptics.success();
+      RitmoHapticsPolicy.success();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = 'Failed to schedule task: $e';
@@ -565,7 +594,7 @@ class JourneyController extends ChangeNotifier {
       );
       await command.execute();
       CommandStack.instance.push(command);
-      RitmoHaptics.success();
+      RitmoHapticsPolicy.success();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = 'Failed to unschedule task: $e';

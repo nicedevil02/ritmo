@@ -1,8 +1,8 @@
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/analysis/agenda_conflict_detector.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
-import 'package:ritmo/features/calendar/logic/timeline_snapping.dart';
-import 'package:ritmo/features/calendar/utils/calendar_defaults.dart';
+import 'package:ritmo/features/calendar/presentation/logic/timeline_snapping.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
 
 class ConflictChecker {
   static Future<List<AgendaItem>> checkConflicts({

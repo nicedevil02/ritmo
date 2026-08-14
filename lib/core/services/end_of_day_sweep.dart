@@ -32,6 +32,11 @@ class EndOfDaySweep {
         WHERE o.status IN ('pending', 'snoozed') AND o.date < ?
       ''', [todayStr]);
 
+      // Pre-fetch worship context before transaction to avoid SQLite deadlock (BOOT-DEADLOCK)
+      final suspended = await CycleConsentBridge.isWorshipSuspended();
+      final yesterdayDate = DateTime.tryParse(yesterdayStr) ?? DateTime.now().subtract(const Duration(days: 1));
+      final dayCtx = await WorshipEngine.instance.dayContext(yesterdayDate);
+
       await db.transaction((txn) async {
         for (final row in staleRows) {
           final occId = row['id']! as String;
@@ -77,8 +82,8 @@ class EndOfDaySweep {
           }
         }
 
-        // Worship Sweep
-        await _sweepWorship(txn, yesterdayStr, todayStr);
+        // Worship Sweep with pre-fetched contexts
+        await _sweepWorship(txn, yesterdayStr, todayStr, dayCtx: dayCtx, suspended: suspended, yesterdayDate: yesterdayDate);
         
         // Sports Sweep
         await _sweepSports(txn);
@@ -103,13 +108,15 @@ class EndOfDaySweep {
     return sweptCount;
   }
 
-  static Future<void> _sweepWorship(DatabaseExecutor txn, String yesterdayStr, String todayStr) async {
+  static Future<void> _sweepWorship(
+    DatabaseExecutor txn,
+    String yesterdayStr,
+    String todayStr, {
+    required WorshipDayContext dayCtx,
+    required bool suspended,
+    required DateTime yesterdayDate,
+  }) async {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final suspended = await CycleConsentBridge.isWorshipSuspended();
-
-    // Load day context for yesterday
-    final yesterdayDate = DateTime.tryParse(yesterdayStr) ?? DateTime.now().subtract(const Duration(days: 1));
-    final dayCtx = await WorshipEngine.instance.dayContext(yesterdayDate);
 
     // Calculate end-of-yesterday cutoff: practices created AFTER this point
     // were not active yesterday and should NOT be swept (prevents false qada on fresh install).

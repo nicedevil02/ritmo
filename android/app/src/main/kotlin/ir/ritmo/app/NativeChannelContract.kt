@@ -19,8 +19,18 @@ object DatabaseConfig {
     const val DATABASE_NAME = "ritmo.db"
 }
 
+object NotificationChannels {
+    const val CRITICAL = "ritmo_critical_v3"
+    const val ROUTINE = "ritmo_routine_v3"
+    const val WORSHIP = "ritmo_worship_v3"
+    const val PLANNING = "ritmo_planning_v3"
+    const val INSIGHT = "ritmo_insight_v3"
+    const val PRIVATE_CHANNEL = "ritmo_private_v3"
+}
+
 object AlarmMethods {
     const val SCHEDULE_EXACT_ALARM = "scheduleExactAlarm"
+    const val SCHEDULE_SILENT_TICK = "scheduleSilentTick"
     const val CANCEL_ALARM = "cancelAlarm"
     const val CHECK_EXACT_ALARM_PERMISSION = "checkExactAlarmPermission"
     const val REQUEST_EXACT_ALARM_PERMISSION = "requestExactAlarmPermission"

@@ -116,9 +116,9 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
   final FocusNode _focusNode = FocusNode();
 
   List<_TasbihStage> _getFatimaStages(RitmoColors colors) => [
-    _TasbihStage('اللهُ أَکْبَرُ', 'الله اکبر', 34, colors.accent),
-    _TasbihStage('الْحَمْدُ لِلَّهِ', 'الحمد لله', 33, colors.success),
-    _TasbihStage('سُبْحَانَ اللَّهِ', 'سبحان الله', 33, colors.primary),
+    _TasbihStage('اللهُ أَکْبَرُ', 'الله اکبر', 34, colors.primary),
+    _TasbihStage('الْحَمْدُ لِلَّهِ', 'الحمد لله', 33, colors.primaryPressed),
+    _TasbihStage('سُبْحَانَ اللَّهِ', 'سبحان الله', 33, colors.accent),
   ];
 
   @override
@@ -408,7 +408,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
 
     final active = _activePractice;
     final stage = _isZahra ? fatimaStages[_stageIndex] : null;
-    final activeColor = stage?.accentColor ?? (colors.accent);
+    final activeColor = stage?.accentColor ?? colors.primary;
     final dhikrArabic = stage?.arabicText ?? active.title;
     final dhikrTitle = stage?.titleFa ?? 'ذکر روزانه';
     final target = stage?.target ?? active.dailyTarget;

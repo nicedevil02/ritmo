@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/agenda/analysis/agenda_gap_calculator.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 
 class JourneyFreeGapsSection extends StatelessWidget {
   const JourneyFreeGapsSection({
@@ -23,7 +23,7 @@ class JourneyFreeGapsSection extends StatelessWidget {
 
     if (gaps.isEmpty) {
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: CalendarTokens.spacing3xl),
+        padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.xxl),
         alignment: Alignment.center,
         child: Column(
           children: [
@@ -40,21 +40,19 @@ class JourneyFreeGapsSection extends StatelessWidget {
                 color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.45),
               ),
             ),
-            const SizedBox(height: CalendarTokens.spacingM),
+            const SizedBox(height: RitmoSpacing.md),
             const Text(
               'روز پرباری داری! 💪',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: CalendarTokens.textTitle,
-                fontFamily: 'Vazirmatn',
+                fontSize: 15.0,
               ),
             ),
-            const SizedBox(height: CalendarTokens.spacingXs),
+            const SizedBox(height: RitmoSpacing.xs),
             Text(
               'زمان آزاد قابل توجهی در این روز باقی نمانده است.',
               style: TextStyle(
-                fontSize: CalendarTokens.textMeta,
-                fontFamily: 'Vazirmatn',
+                fontSize: 12.0,
                 color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.60),
               ),
             ),
@@ -71,29 +69,28 @@ class JourneyFreeGapsSection extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.event_available_rounded, size: 18, color: theme.colorScheme.primary),
-              const SizedBox(width: CalendarTokens.spacingS),
+              const SizedBox(width: RitmoSpacing.sm),
               Text(
                 'بلاک‌های زمان آزاد (${toPersianDigits(gaps.length.toString())})',
                 style: TextStyle(
-                  fontSize: CalendarTokens.textTitle,
+                  fontSize: 15.0,
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
-                  fontFamily: 'Vazirmatn',
                 ),
               ),
             ],
           ),
-          const SizedBox(height: CalendarTokens.spacingS),
+          const SizedBox(height: RitmoSpacing.sm),
           for (final gap in gaps)
             InkWell(
               onTap: () => onSelectFreeGap?.call(gap),
-              borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+              borderRadius: BorderRadius.circular(RitmoRadius.card),
               child: Container(
-                margin: const EdgeInsets.only(bottom: CalendarTokens.spacingS),
+                margin: const EdgeInsets.only(bottom: RitmoSpacing.sm),
                 padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.06),
-                  borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+                  borderRadius: BorderRadius.circular(RitmoRadius.card),
                   border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.20)),
                 ),
                 child: Row(
@@ -106,13 +103,12 @@ class JourneyFreeGapsSection extends StatelessWidget {
                           size: 16,
                           color: theme.colorScheme.primary,
                         ),
-                        const SizedBox(width: CalendarTokens.spacingS),
+                        const SizedBox(width: RitmoSpacing.sm),
                         Text(
                           toPersianDigits('از ${gap.startTimeStr} تا ${gap.endTimeStr}'),
                           style: const TextStyle(
-                            fontSize: CalendarTokens.textBody,
+                            fontSize: 14.0,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Vazirmatn',
                           ),
                         ),
                       ],
@@ -123,7 +119,7 @@ class JourneyFreeGapsSection extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(CalendarTokens.radiusPill),
+                            borderRadius: BorderRadius.circular(RitmoRadius.pill),
                           ),
                           child: Text(
                             toPersianDigits('${gap.durationMinutes} دقیقه'),
@@ -131,11 +127,10 @@ class JourneyFreeGapsSection extends StatelessWidget {
                               fontSize: 11,
                               color: theme.colorScheme.onPrimaryContainer,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Vazirmatn',
                             ),
                           ),
                         ),
-                        const SizedBox(width: CalendarTokens.spacingXs),
+                        const SizedBox(width: RitmoSpacing.xs),
                         Icon(
                           Icons.chevron_left_rounded,
                           size: 18,

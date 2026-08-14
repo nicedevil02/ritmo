@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
-import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_dialog.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
@@ -21,17 +23,35 @@ class EmptyDayView extends StatelessWidget {
     super.key,
     required this.date,
     required this.onRefreshRequested,
+    this.snapshot,
   });
 
   final DateTime date;
   final VoidCallback onRefreshRequested;
+  final DayAgendaSnapshot? snapshot;
 
   String get _dateStr =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
+
+    final disabledModules = <String>[];
+    if (snapshot != null && snapshot!.enabledDomains.isNotEmpty) {
+      if (snapshot!.enabledDomains[AgendaDomain.prayer] == false) {
+        disabledModules.add('نماز');
+      }
+      if (snapshot!.enabledDomains[AgendaDomain.sport] == false) {
+        disabledModules.add('ورزش');
+      }
+      if (snapshot!.enabledDomains[AgendaDomain.medicine] == false) {
+        disabledModules.add('دارو');
+      }
+      if (snapshot!.enabledDomains[AgendaDomain.course] == false) {
+        disabledModules.add('دوره‌ها');
+      }
+    }
 
     return Center(
       child: Padding(
@@ -43,38 +63,59 @@ class EmptyDayView extends StatelessWidget {
               'برای این روز چیزی ثبت نشده.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: CalendarTokens.textBody,
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
-                fontFamily: 'Vazirmatn',
+                fontSize: 14.0,
+                color: colors.textSecondary,
               ),
             ),
+            if (disabledModules.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: colors.surfaceSubtle,
+                  borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                  border: Border.all(
+                    color: colors.borderSubtle,
+                  ),
+                ),
+                child: Text(
+                  'ماژول‌های غیرفعال: ${disabledModules.join("، ")}',
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    color: colors.textTertiary,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
 
             // Button 1: Someday tasks
-            _EmptyDayActionButton(
+            RitmoSecondaryButton(
               label: 'کارهای بدون تاریخ',
               icon: Icons.inventory_2_rounded,
-              onTap: () => _openSomedayTasksSheet(context),
+              fullWidth: true,
+              onPressed: () => _openSomedayTasksSheet(context),
             ),
             const SizedBox(height: 10),
 
             // Button 2: Copy from yesterday
-            _EmptyDayActionButton(
+            RitmoSecondaryButton(
               label: 'کپی از دیروز',
               icon: Icons.copy_rounded,
-              onTap: () => _confirmCopyFromYesterday(context),
+              fullWidth: true,
+              onPressed: () => _confirmCopyFromYesterday(context),
             ),
             const SizedBox(height: 10),
 
             // Button 3: Add new item
-            _EmptyDayActionButton(
+            RitmoPrimaryButton(
               label: 'افزودن',
               icon: Icons.add_rounded,
-              onTap: () => UniversalPlannerSheet.show(
+              fullWidth: true,
+              onPressed: () => UniversalPlannerSheet.show(
                 context: context,
                 onSaved: onRefreshRequested,
               ),
-              isPrimary: true,
             ),
           ],
         ),
@@ -109,34 +150,16 @@ class EmptyDayView extends StatelessWidget {
   }
 
   Future<void> _confirmCopyFromYesterday(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(CalendarTokens.radiusCard)),
-        title: const Text(
-          'کپی از دیروز',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16),
-        ),
-        content: const Text(
-          'کارهای دیروز به این روز اضافه شوند؟',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('تأیید', style: TextStyle(fontFamily: 'Vazirmatn')),
-          ),
-        ],
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'کپی از دیروز',
+      content: 'کارهای دیروز به این روز اضافه شوند؟',
+      confirmLabel: 'تأیید',
+      cancelLabel: 'انصراف',
     );
 
     if (confirmed == true && context.mounted) {
-      RitmoHaptics.tap();
+      RitmoHapticsPolicy.tap();
       final yesterday = date.subtract(const Duration(days: 1));
       final yesterdayStr =
           '${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
@@ -163,7 +186,6 @@ class EmptyDayView extends StatelessWidget {
           dueDate: _dateStr,
           dueTime: task.dueTime,
           note: task.note,
-          isImportant: task.isImportant,
         );
         createdIds.add(newTask.id);
       }
@@ -171,65 +193,25 @@ class EmptyDayView extends StatelessWidget {
       DayAgendaService.instance.invalidateDate(_dateStr);
       onRefreshRequested();
 
-      final countStr = toPersianDigits(yesterdayTasks.length.toString());
-      if (!context.mounted) return;
-      RitmoToast.show(
-        context,
-        '$countStr مورد کپی شد',
-        onUndo: () async {
-          for (final id in createdIds) {
-            await SimpleTaskRepository.instance.deleteTask(id);
-          }
-          DayAgendaService.instance.invalidateDate(_dateStr);
-          onRefreshRequested();
-        },
-      );
+      if (context.mounted) {
+        final count = createdIds.length;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$count کار از دیروز کپی شد'),
+            action: SnackBarAction(
+              label: 'بازگشت (Undo)',
+              onPressed: () async {
+                for (final id in createdIds) {
+                  await SimpleTaskRepository.instance.delete(id);
+                }
+                DayAgendaService.instance.invalidateDate(_dateStr);
+                onRefreshRequested();
+              },
+            ),
+          ),
+        );
+      }
     }
-  }
-}
-
-class _EmptyDayActionButton extends StatelessWidget {
-  const _EmptyDayActionButton({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-    this.isPrimary = false,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool isPrimary;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, size: 18),
-        label: Text(
-          label,
-          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: isPrimary
-              ? theme.colorScheme.primary
-              : theme.textTheme.bodyMedium?.color,
-          side: BorderSide(
-            color: isPrimary
-                ? theme.colorScheme.primary.withValues(alpha: 0.5)
-                : theme.dividerColor,
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
-          ),
-        ),
-      ),
-    );
   }
 }
 
@@ -249,73 +231,76 @@ class _SomedayTasksPickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = context.colors;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.6,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? theme.colorScheme.surfaceContainerHigh : theme.cardColor,
-          borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(CalendarTokens.radiusSheet)),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.6,
         ),
-        padding: const EdgeInsets.all(CalendarTokens.spacingL),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'کارهای بدون تاریخ',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Vazirmatn',
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(RitmoRadius.sheet),
+            ),
+          ),
+          padding: const EdgeInsets.all(RitmoSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'کارهای بدون تاریخ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 20),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: tasks.length,
-                itemBuilder: (ctx, i) {
-                  final task = tasks[i];
-                  return ListTile(
-                    title: Text(
-                      task.title,
-                      style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
-                    ),
-                    trailing: TextButton(
-                      onPressed: () async {
-                        final updated = task.copyWith(dueDate: targetDateStr);
-                        await SimpleTaskRepository.instance.updateTask(updated);
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                        }
-                        onScheduled();
-                        if (parentContext.mounted) {
-                          RitmoToast.show(parentContext, 'کار به تاریخ انتخابی منتقل شد');
-                        }
-                      },
-                      child: const Text('افزودن به این روز',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
-                    ),
-                  );
-                },
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: tasks.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (ctx, i) {
+                    final task = tasks[i];
+                    return ListTile(
+                      title: Text(
+                        task.title,
+                        style: TextStyle(fontSize: 14, color: colors.textPrimary),
+                      ),
+                      trailing: TextButton(
+                        onPressed: () async {
+                          final updated = task.copyWith(dueDate: targetDateStr);
+                          await SimpleTaskRepository.instance.updateTask(updated);
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                          }
+                          onScheduled();
+                          if (parentContext.mounted) {
+                            RitmoToast.show(parentContext, 'کار به تاریخ انتخابی منتقل شد');
+                          }
+                        },
+                        child: const Text('افزودن به این روز', style: TextStyle(fontSize: 12)),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

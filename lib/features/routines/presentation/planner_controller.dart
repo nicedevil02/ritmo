@@ -47,7 +47,7 @@ class PlannerController extends ChangeNotifier {
   final TimeOfDay? prefilledTime;
   final String? prefilledTitle;
 
-  bool moduleReligionEnabled = true;
+  bool moduleReligionEnabled = false;
   bool moduleMedicineEnabled = false;
   bool moduleCycleEnabled = false;
   bool moduleCoursesEnabled = false;
@@ -564,74 +564,82 @@ class PlannerController extends ChangeNotifier {
   void setReflectionSheetOpener(VoidCallback opener) => openReflectionSheet = opener;
   void setGenericSheetOpener(VoidCallback opener) => openGenericSheet = opener;
 
+  bool _isDelegating = false;
+
   /// If this item belongs to a dedicated module or category, opens its canonical sheet and returns true.
   bool delegateToOwnerModule(BuildContext context) {
-    if (itemType == 'COURSE' ||
-        selectedCategory == Category.learning ||
-        selectedCategory == Category.free) {
-      if (openCourseSheet != null) {
-        openCourseSheet!(initialValues: _buildCourseInitialValues());
+    if (_isDelegating) return false;
+    _isDelegating = true;
+    try {
+      if (itemType == 'COURSE' ||
+          selectedCategory == Category.learning ||
+          selectedCategory == Category.free) {
+        if (openCourseSheet != null) {
+          openCourseSheet!(initialValues: _buildCourseInitialValues());
+          return true;
+        }
+      }
+
+      if (itemType == 'GOAL' || selectedCategory == Category.custom) {
+        if (openGoalSheet != null) {
+          openGoalSheet!(templateData: _buildGoalTemplateData());
+          return true;
+        }
+      }
+
+      if (selectedCategory == Category.religious) {
+        if (openWorshipSheet != null) {
+          openWorshipSheet!(prefill: _buildWorshipPrefill());
+          return true;
+        }
+      }
+
+      if (selectedCategory == Category.medical) {
+        if (openMedicalSheet != null) {
+          openMedicalSheet!(tempMedicationData);
+          return true;
+        }
+      }
+
+      if (selectedCategory == Category.fitness) {
+        if (openSportsLogSheet != null) {
+          openSportsLogSheet!(
+            durationMinutes: sportsDuration,
+          );
+          return true;
+        }
+      }
+
+      if (itemType == 'EVENT') {
+        if (openEventSheet != null) {
+          openEventSheet!();
+          return true;
+        }
+      }
+
+      if (itemType == 'REMINDER') {
+        if (openReminderSheet != null) {
+          openReminderSheet!();
+          return true;
+        }
+      }
+
+      if (itemType == 'REFLECT') {
+        if (openReflectionSheet != null) {
+          openReflectionSheet!();
+          return true;
+        }
+      }
+
+      if (openGenericSheet != null) {
+        openGenericSheet!();
         return true;
       }
-    }
 
-    if (itemType == 'GOAL' || selectedCategory == Category.custom) {
-      if (openGoalSheet != null) {
-        openGoalSheet!(templateData: _buildGoalTemplateData());
-        return true;
-      }
+      return false;
+    } finally {
+      Future.microtask(() => _isDelegating = false);
     }
-
-    if (selectedCategory == Category.religious) {
-      if (openWorshipSheet != null) {
-        openWorshipSheet!(prefill: _buildWorshipPrefill());
-        return true;
-      }
-    }
-
-    if (selectedCategory == Category.medical) {
-      if (openMedicalSheet != null) {
-        openMedicalSheet!(tempMedicationData);
-        return true;
-      }
-    }
-
-    if (selectedCategory == Category.fitness) {
-      if (openSportsLogSheet != null) {
-        openSportsLogSheet!(
-          durationMinutes: sportsDuration,
-        );
-        return true;
-      }
-    }
-
-    if (itemType == 'EVENT') {
-      if (openEventSheet != null) {
-        openEventSheet!();
-        return true;
-      }
-    }
-
-    if (itemType == 'REMINDER') {
-      if (openReminderSheet != null) {
-        openReminderSheet!();
-        return true;
-      }
-    }
-
-    if (itemType == 'REFLECT') {
-      if (openReflectionSheet != null) {
-        openReflectionSheet!();
-        return true;
-      }
-    }
-
-    if (openGenericSheet != null) {
-      openGenericSheet!();
-      return true;
-    }
-
-    return false;
   }
 
   void _showActivationDialog({
@@ -1364,23 +1372,27 @@ class PlannerController extends ChangeNotifier {
       reflectionGratitude: reflectionGratitude,
       reflectionLearnings: reflectionLearnings,
       reflectionIsPrivate: reflectionIsPrivate,
+      // Event
+      eventDate: eventDate,
+      eventStartTime: eventStartTime,
+      eventEndTime: eventEndTime,
+      eventLocation: eventLocation,
     );
   }
 
-  Future<void> save(BuildContext context) async {
+  Future<bool> save(BuildContext context, {bool allowDelegation = true}) async {
     // Only delegate to the owner module's dedicated creation sheet when
-    // creating a NEW item. When editing, always save through the strategy
-    // pipeline (PlannerStrategyRegistry / GenericStrategy) so module-owned
-    // categories like learning routines actually persist their edits
-    // instead of reopening CreateCourseSheet/etc. every time.
-    if (!isEditing && delegateToOwnerModule(context)) {
-      return;
+    // creating a NEW item and allowDelegation is true. When editing or when
+    // called from a dedicated builder sheet, always save through the strategy
+    // pipeline (PlannerStrategyRegistry / GenericStrategy).
+    if (allowDelegation && !isEditing && delegateToOwnerModule(context)) {
+      return false;
     }
 
     if (title.trim().isEmpty) {
       RitmoToast.show(context, 'لطفاً عنوان فعالیت را وارد کنید.', icon: Icons.warning_rounded, iconColor: Colors.amber);
       updatePage(0);
-      return;
+      return false;
     }
 
     // بررسی سقف روتین — فقط برای ایجاد جدید (نه ویرایش)
@@ -1396,11 +1408,11 @@ class PlannerController extends ChangeNotifier {
           );
           unawaited(PremiumUpgradeSheet.show(context));
         }
-        return;
+        return false;
       }
     }
 
-    if (isSaving) return;
+    if (isSaving) return false;
 
     isSaving = true;
     notifyListeners();
@@ -1411,7 +1423,10 @@ class PlannerController extends ChangeNotifier {
         selectedCategory,
         itemType: itemType,
       );
-      if (!context.mounted) return;
+      if (!context.mounted) {
+        isSaving = false;
+        return false;
+      }
       await strategy.save(saveCtx, context);
 
       showSuccessAnim = true;
@@ -1426,6 +1441,7 @@ class PlannerController extends ChangeNotifier {
           Navigator.pop(context);
         }
       });
+      return true;
     } catch (e) {
       isSaving = false;
       notifyListeners();
@@ -1433,6 +1449,7 @@ class PlannerController extends ChangeNotifier {
       if (context.mounted) {
         RitmoToast.show(context, 'خطا در ثبت اطلاعات: $e', icon: Icons.error_outline, iconColor: Colors.red);
       }
+      return false;
     }
   }
 

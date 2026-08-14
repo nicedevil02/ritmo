@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 /// K29 — Go To Date Dialog ("برو به تاریخ")
@@ -32,23 +31,24 @@ class GoToDateDialog {
     return showDialog<DateTime>(
       context: context,
       builder: (ctx) {
-        final theme = Theme.of(ctx);
+        final colors = ctx.colors;
 
         return AlertDialog(
+          backgroundColor: colors.surfaceElevated,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+            borderRadius: BorderRadius.circular(RitmoRadius.card),
           ),
-          title: const Text(
+          title: Text(
             'برو به تاریخ',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'میان‌برهای سریع:',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.grey),
+                style: TextStyle(fontSize: 12, color: colors.textSecondary),
               ),
               const SizedBox(height: 8),
 
@@ -58,15 +58,15 @@ class GoToDateDialog {
                 runSpacing: 6,
                 children: [
                   ActionChip(
-                    label: const Text('امروز', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                    label: const Text('امروز', style: TextStyle(fontSize: 12)),
                     onPressed: () => Navigator.pop(ctx, todayOnly),
                   ),
                   ActionChip(
-                    label: const Text('شنبهٔ آینده', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                    label: const Text('شنبهٔ آینده', style: TextStyle(fontSize: 12)),
                     onPressed: () => Navigator.pop(ctx, nextSat),
                   ),
                   ActionChip(
-                    label: const Text('اول ماه بعد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                    label: const Text('اول ماه بعد', style: TextStyle(fontSize: 12)),
                     onPressed: () => Navigator.pop(ctx, firstOfNextMonth),
                   ),
                 ],
@@ -80,7 +80,7 @@ class GoToDateDialog {
                   icon: const Icon(Icons.calendar_month_rounded, size: 18),
                   label: const Text(
                     'انتخاب تقویمی…',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
+                    style: TextStyle(fontSize: 14),
                   ),
                   onPressed: () async {
                     final picked = await showDatePicker(
@@ -100,7 +100,7 @@ class GoToDateDialog {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, null),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف'),
             ),
           ],
         );

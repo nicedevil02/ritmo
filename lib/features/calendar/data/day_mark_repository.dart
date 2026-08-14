@@ -35,7 +35,7 @@ class DayMark {
 }
 
 /// K43 — Repository for managing Day Marks (REST, TRAVEL, SPECIAL, NORMAL)
-/// in `day_marks` table (v83 migration).
+/// in `day_marks` table.
 class DayMarkRepository {
   DayMarkRepository._();
   static final DayMarkRepository instance = DayMarkRepository._();
@@ -51,13 +51,13 @@ class DayMarkRepository {
         kind: DayMark.parseKind(row['kind']?.toString()),
         note: row['note']?.toString(),
       );
-    } catch (e) {
-      debugPrint('[DayMarkRepository] getMark error: $e');
+    } catch (e, st) {
+      debugPrint('[DayMarkRepository] getMark error: $e\n$st');
       return null;
     }
   }
 
-  Future<void> setMark(String dateStr, DayMarkKind kind, {String? note}) async {
+  Future<bool> setMark(String dateStr, DayMarkKind kind, {String? note}) async {
     try {
       final db = await DatabaseHelper.instance.database;
       final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -65,21 +65,31 @@ class DayMarkRepository {
 
       if (kind == DayMarkKind.normal) {
         await db.delete('day_marks', where: 'date = ?', whereArgs: [dateStr]);
-      } else {
-        await db.insert(
-          'day_marks',
-          {
-            'date': dateStr,
-            'kind': kindCode,
-            'note': note,
-            'createdAt': nowMs,
-            'updatedAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        return true;
       }
-    } catch (e) {
-      debugPrint('[DayMarkRepository] setMark error: $e');
+
+      // Preserve existing note if new note is omitted
+      String? finalNote = note;
+      if (finalNote == null) {
+        final existing = await getMark(dateStr);
+        finalNote = existing?.note;
+      }
+
+      await db.insert(
+        'day_marks',
+        {
+          'date': dateStr,
+          'kind': kindCode,
+          'note': finalNote,
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      return true;
+    } catch (e, st) {
+      debugPrint('[DayMarkRepository] setMark error: $e\n$st');
+      return false;
     }
   }
 }

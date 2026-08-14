@@ -17,16 +17,19 @@ class LifeBalanceEngineOutput {
     required this.score,
     required this.distribution,
     required this.trend,
+    this.domainMinutes = const {},
     this.skippedRows = 0,
   });
   final int? score;
   final Map<String, double> distribution;
   final Map<int, int?> trend;
+  final Map<String, int> domainMinutes;
   final int skippedRows;
 }
 
 class LifeBalanceEngine implements CachedEngine<LifeBalanceEngineInput, LifeBalanceEngineOutput> {
   static const int minCompletionsForBalance = 10;
+  static const int minMinutesForBalance = 30;
 
   @override
   Future<LifeBalanceEngineOutput> calculate(LifeBalanceEngineInput input) async {
@@ -35,6 +38,10 @@ class LifeBalanceEngine implements CachedEngine<LifeBalanceEngineInput, LifeBala
       routineCompletions: input.routineCompletions,
     );
     final distribution = calculateCategoryDistribution(
+      routines: input.routines,
+      routineCompletions: input.routineCompletions,
+    );
+    final domainMinutes = calculateDomainMinutes(
       routines: input.routines,
       routineCompletions: input.routineCompletions,
     );
@@ -47,6 +54,7 @@ class LifeBalanceEngine implements CachedEngine<LifeBalanceEngineInput, LifeBala
       score: score,
       distribution: distribution,
       trend: trend,
+      domainMinutes: domainMinutes,
     );
   }
 
@@ -68,19 +76,85 @@ class LifeBalanceEngine implements CachedEngine<LifeBalanceEngineInput, LifeBala
   @override
   List<Type> dependencies() => [];
 
-  /// Maps a routine category database string to the analytical domains.
+  /// Maps a routine category database string to analytical domains.
   static String mapCategoryToDomain(String dbCategory) {
     final clean = dbCategory.toLowerCase().trim();
-    if (clean == 'religious') return 'RELIGION';
-    if (clean == 'medical' || clean == 'fitness') return 'HEALTH';
-    if (clean == 'learning' || clean == 'konkur') return 'LEARNING';
-    if (clean == 'work') return 'WORK';
-    if (clean == 'personal') return 'PERSONAL';
-    if (clean == 'free') return 'FREE';
-    return 'CUSTOM'; // T-3.8: Custom domain instead of mapping to FREE
+    if (clean == 'religious' || clean == 'worship' || clean == 'prayer') return 'RELIGION';
+    if (clean == 'medical' || clean == 'fitness' || clean == 'health' || clean == 'sport' || clean == 'sports') {
+      return 'HEALTH';
+    }
+    if (clean == 'learning' || clean == 'konkur' || clean == 'study' || clean == 'course') return 'LEARNING';
+    if (clean == 'work' || clean == 'career' || clean == 'job') return 'WORK';
+    if (clean == 'personal' || clean == 'family' || clean == 'social') return 'PERSONAL';
+    if (clean == 'free' || clean == 'leisure' || clean == 'hobby') return 'FREE';
+    return 'CUSTOM';
   }
 
-  /// Calculates the Life Balance Score (0 - 100) using normalized variance.
+  /// Resolves the actual or estimated duration in minutes for a routine completion.
+  static double resolveCompletionDurationMinutes({
+    required Map<String, dynamic>? routine,
+    required Map<String, dynamic> completion,
+    required String domain,
+  }) {
+    final actual = completion.readInt('actual_duration_minutes') ?? completion.readInt('durationMinutes');
+    double baseMinutes;
+
+    if (actual != null && actual > 0) {
+      baseMinutes = actual.toDouble();
+    } else if (routine != null) {
+      final resultType = completion.readString('resultType') ?? 'FULL';
+      if (resultType == 'LIGHT') {
+        baseMinutes = (routine.readInt('lightDurationMinutes') ??
+                routine.readInt('targetDurationMinutes') ??
+                routine.readInt('durationMinutes') ??
+                _defaultDurationForDomain(domain))
+            .toDouble();
+      } else if (resultType == 'MINIMAL') {
+        baseMinutes = (routine.readInt('minimalDurationMinutes') ??
+                routine.readInt('targetDurationMinutes') ??
+                routine.readInt('durationMinutes') ??
+                _defaultDurationForDomain(domain))
+            .toDouble();
+      } else {
+        baseMinutes = (routine.readInt('targetDurationMinutes') ??
+                routine.readInt('durationMinutes') ??
+                _defaultDurationForDomain(domain))
+            .toDouble();
+      }
+    } else {
+      baseMinutes = _defaultDurationForDomain(domain).toDouble();
+    }
+
+    final resultType = completion.readString('resultType') ?? 'FULL';
+    if (resultType == 'PARTIAL') {
+      final ratio = completion.readDouble('partialRatio') ?? 0.5;
+      baseMinutes *= ratio.clamp(0.1, 0.9);
+    }
+
+    return baseMinutes.clamp(1.0, 1440.0);
+  }
+
+  static int _defaultDurationForDomain(String domain) {
+    switch (domain) {
+      case 'RELIGION':
+        return 15;
+      case 'HEALTH':
+        return 30;
+      case 'LEARNING':
+        return 45;
+      case 'WORK':
+        return 45;
+      case 'PERSONAL':
+        return 20;
+      case 'FREE':
+        return 30;
+      case 'CUSTOM':
+      default:
+        return 20;
+    }
+  }
+
+  /// Calculates the Life Balance Score (0 - 100) using time-weighted normalized variance.
   /// Returns null if data is insufficient.
   static int? calculateLifeBalanceScore({
     required List<Map<String, dynamic>> routines,
@@ -88,26 +162,26 @@ class LifeBalanceEngine implements CachedEngine<LifeBalanceEngineInput, LifeBala
   }) {
     // 1. Identify active domains
     final activeRoutines = routines.where((r) => (r.readInt('isArchived') ?? 0) == 0).toList();
-    if (activeRoutines.isEmpty) return null; // T-1.3: Data missing
+    if (activeRoutines.isEmpty) return null;
 
-    final activeDomains = activeRoutines
-        .map((r) => mapCategoryToDomain(r.readString('category') ?? 'CUSTOM'))
-        .toSet();
-    final n = activeDomains.length;
-
-    if (n <= 1) return null; // T-1.3: Single domain balance is meaningless
-
-    // 2. Count completions per active domain
-    final domainCounts = <String, int>{for (final d in activeDomains) d: 0};
-    var totalCompletions = 0;
-
+    final routineMap = <String, Map<String, dynamic>>{};
     final routineToDomain = <String, String>{};
     for (final r in activeRoutines) {
       final id = r.readString('id');
       if (id != null) {
+        routineMap[id] = r;
         routineToDomain[id] = mapCategoryToDomain(r.readString('category') ?? 'CUSTOM');
       }
     }
+
+    final activeDomains = routineToDomain.values.toSet();
+    final n = activeDomains.length;
+    if (n <= 1) return null;
+
+    // 2. Aggregate duration per active domain
+    final domainDurations = <String, double>{for (final d in activeDomains) d: 0.0};
+    var totalCompletions = 0;
+    var totalDurationMinutes = 0.0;
 
     for (final comp in routineCompletions) {
       final rId = comp.readString('routineId');
@@ -115,21 +189,29 @@ class LifeBalanceEngine implements CachedEngine<LifeBalanceEngineInput, LifeBala
       final domain = routineToDomain[rId];
       if (domain != null && activeDomains.contains(domain)) {
         final type = comp.readString('resultType') ?? 'FULL';
-        if (type != 'CANNOT_NOW' && type != 'SNOOZED') {
-          domainCounts[domain] = (domainCounts[domain] ?? 0) + 1;
+        if (type != 'CANNOT_NOW' && type != 'SNOOZED' && type != 'SKIPPED') {
+          final minutes = resolveCompletionDurationMinutes(
+            routine: routineMap[rId],
+            completion: comp,
+            domain: domain,
+          );
+          domainDurations[domain] = (domainDurations[domain] ?? 0.0) + minutes;
+          totalDurationMinutes += minutes;
           totalCompletions++;
         }
       }
     }
 
-    if (totalCompletions < minCompletionsForBalance) return null; // T-1.3
+    if (totalCompletions < minCompletionsForBalance || totalDurationMinutes < minMinutesForBalance) {
+      return null;
+    }
 
-    // 3. Compute normalized variance
+    // 3. Compute time-weighted normalized variance
     final mu = 1.0 / n;
     var sumSquaredDiffs = 0.0;
 
     for (final domain in activeDomains) {
-      final p = (domainCounts[domain] ?? 0) / totalCompletions;
+      final p = totalDurationMinutes > 0 ? ((domainDurations[domain] ?? 0.0) / totalDurationMinutes) : 0.0;
       sumSquaredDiffs += (p - mu) * (p - mu);
     }
 
@@ -142,30 +224,30 @@ class LifeBalanceEngine implements CachedEngine<LifeBalanceEngineInput, LifeBala
     return score.round().clamp(0, 100);
   }
 
-  /// Calculates the distribution percentages for each of the domains.
-  static Map<String, double> calculateCategoryDistribution({
+  /// Calculates the total duration in minutes spent on each domain.
+  static Map<String, int> calculateDomainMinutes({
     required List<Map<String, dynamic>> routines,
     required List<Map<String, dynamic>> routineCompletions,
   }) {
-    final activeRoutines = routines.where((r) => (r.readInt('isArchived') ?? 0) == 0).toList();
+    final routineMap = <String, Map<String, dynamic>>{};
     final routineToDomain = <String, String>{};
-    for (final r in activeRoutines) {
+    for (final r in routines) {
       final id = r.readString('id');
       if (id != null) {
+        routineMap[id] = r;
         routineToDomain[id] = mapCategoryToDomain(r.readString('category') ?? 'CUSTOM');
       }
     }
 
-    final domainCounts = <String, int>{
-      'RELIGION': 0,
-      'HEALTH': 0,
-      'LEARNING': 0,
-      'WORK': 0,
-      'PERSONAL': 0,
-      'FREE': 0,
-      'CUSTOM': 0,
+    final domainDurations = <String, double>{
+      'RELIGION': 0.0,
+      'HEALTH': 0.0,
+      'LEARNING': 0.0,
+      'WORK': 0.0,
+      'PERSONAL': 0.0,
+      'FREE': 0.0,
+      'CUSTOM': 0.0,
     };
-    var total = 0;
 
     for (final comp in routineCompletions) {
       final rId = comp.readString('routineId');
@@ -173,22 +255,40 @@ class LifeBalanceEngine implements CachedEngine<LifeBalanceEngineInput, LifeBala
       final domain = routineToDomain[rId];
       if (domain != null) {
         final type = comp.readString('resultType') ?? 'FULL';
-        if (type != 'CANNOT_NOW' && type != 'SNOOZED') {
-          domainCounts[domain] = (domainCounts[domain] ?? 0) + 1;
-          total++;
+        if (type != 'CANNOT_NOW' && type != 'SNOOZED' && type != 'SKIPPED') {
+          final minutes = resolveCompletionDurationMinutes(
+            routine: routineMap[rId],
+            completion: comp,
+            domain: domain,
+          );
+          domainDurations[domain] = (domainDurations[domain] ?? 0.0) + minutes;
         }
       }
     }
 
+    return domainDurations.map((key, val) => MapEntry(key, val.round()));
+  }
+
+  /// Calculates the distribution percentages for each domain based on logged duration.
+  static Map<String, double> calculateCategoryDistribution({
+    required List<Map<String, dynamic>> routines,
+    required List<Map<String, dynamic>> routineCompletions,
+  }) {
+    final domainMinutes = calculateDomainMinutes(
+      routines: routines,
+      routineCompletions: routineCompletions,
+    );
+    final total = domainMinutes.values.fold<int>(0, (a, b) => a + b);
+
     final distribution = <String, double>{};
-    domainCounts.forEach((domain, count) {
-      distribution[domain] = total > 0 ? (count / total) * 100.0 : 0.0;
+    domainMinutes.forEach((domain, minutes) {
+      distribution[domain] = total > 0 ? (minutes / total) * 100.0 : 0.0;
     });
 
     return distribution;
   }
 
-  /// Calculates the balance trend scores historically (T-3.9: numeric keys, injected time).
+  /// Calculates the balance trend scores historically.
   static Map<int, int?> calculateBalanceTrend({
     required DateTime now,
     required List<Map<String, dynamic>> routines,
@@ -212,7 +312,7 @@ class LifeBalanceEngine implements CachedEngine<LifeBalanceEngineInput, LifeBala
         routineCompletions: wCompletions,
       );
 
-      trends[w + 1] = score; // T-3.9: Integer key 1..4 without Persian strings
+      trends[w + 1] = score;
     }
 
     return trends;

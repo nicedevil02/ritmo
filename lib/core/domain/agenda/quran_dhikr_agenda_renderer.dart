@@ -26,7 +26,8 @@ class QuranDhikrAgendaRenderer extends AgendaTileRenderer {
         children: [
           GestureDetector(
             onTap: () async {
-              HapticFeedback.selectionClick();
+              await HapticFeedback.selectionClick();
+              if (!context.mounted) return;
               await AgendaActionHandler.instance.toggleAgendaItem(
                 item: item,
                 isDone: !isDone,
@@ -94,7 +95,7 @@ class QuranDhikrAgendaRenderer extends AgendaTileRenderer {
             ),
             const SizedBox(width: 8),
           ],
-          if (item.hasValidTimeOfDay || (item.meta?['practice']?['reminderEnabled'] == 1)) ...[
+          if (item.hasValidTimeOfDay || (item.meta['practice']?['reminderEnabled'] == 1)) ...[
             Icon(Icons.notifications_active_outlined, size: 14, color: colors.textSecondary.withValues(alpha: 0.7)),
             const SizedBox(width: 8),
           ],

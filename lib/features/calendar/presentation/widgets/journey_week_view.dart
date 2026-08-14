@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
-import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
-import 'package:ritmo/features/calendar/utils/domain_palette.dart';
+import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -56,22 +54,21 @@ class JourneyWeekView extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: CalendarTokens.spacingM,
-          vertical: CalendarTokens.spacingS,
+          horizontal: RitmoSpacing.md,
+          vertical: RitmoSpacing.sm,
         ),
         child: Column(
           children: [
             // K27 — Weekly Progress Bar
             Padding(
-              padding: const EdgeInsets.only(bottom: CalendarTokens.spacingS),
+              padding: const EdgeInsets.only(bottom: RitmoSpacing.sm),
               child: Row(
                 children: [
                   Text(
                     'پیشرفت هفته: ${toPersianDigits(weekCompleted)} از ${toPersianDigits(weekTotal)}',
                     style: TextStyle(
-                      fontSize: CalendarTokens.textMeta,
+                      fontSize: 12.0,
                       fontWeight: FontWeight.w600,
-                      fontFamily: 'Vazirmatn',
                       color: colors.textSecondary,
                     ),
                   ),
@@ -85,7 +82,7 @@ class JourneyWeekView extends StatelessWidget {
                         backgroundColor: colors.border.withValues(alpha: 0.3),
                         valueColor: AlwaysStoppedAnimation<Color>(
                           weekCompleted == weekTotal && weekTotal > 0
-                              ? CalendarTokens.emerald
+                              ? colors.success
                               : colors.primary,
                         ),
                       ),
@@ -123,7 +120,6 @@ class JourneyWeekView extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               color: isSelected ? colors.onPrimary : colors.textSecondary,
-                              fontFamily: 'Vazirmatn',
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -133,7 +129,6 @@ class JourneyWeekView extends StatelessWidget {
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: isSelected ? colors.onPrimary : colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
                             ),
                           ),
                         ],
@@ -150,7 +145,7 @@ class JourneyWeekView extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: colors.surface,
-                  borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+                  borderRadius: BorderRadius.circular(RitmoRadius.card),
                   border: Border.all(color: colors.border),
                 ),
                 child: SingleChildScrollView(
@@ -201,7 +196,7 @@ class JourneyWeekView extends StatelessWidget {
                                       right: 0,
                                       child: Container(
                                         height: 1.5,
-                                        color: colors.error,
+                                        color: colors.accent,
                                       ),
                                     ),
                                 ],

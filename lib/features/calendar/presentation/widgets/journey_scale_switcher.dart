@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 
 /// K18 — Redesigned scale switcher: 3 primary tabs (برنامه · روز · ماه)
 /// + overflow ⋯ button for week and year.
-///
-/// Design rules (from 067.md §8):
-/// - Exactly 3 visible tabs; no scrollable/ellipsis text.
-/// - Week and year live in the ⋯ overflow popup.
-/// - When week or year is active, the 3-tab strip shows no selection
-///   and the ⋯ button highlights with the active scale's label.
 class JourneyScaleSwitcher extends StatelessWidget {
   const JourneyScaleSwitcher({
     super.key,
@@ -37,8 +31,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = context.colors;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -47,16 +40,12 @@ class JourneyScaleSwitcher extends StatelessWidget {
           // ─── 3-Tab Strip ───
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(CalendarTokens.spacingXs),
+              padding: const EdgeInsets.all(RitmoSpacing.xs),
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : theme.colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(CalendarTokens.radiusSegment),
+                color: colors.surfaceSubtle,
+                borderRadius: BorderRadius.circular(RitmoRadius.field),
                 border: Border.all(
-                  color:
-                      theme.dividerColor.withValues(alpha: CalendarTokens.alphaCardBorder),
+                  color: colors.borderSubtle,
                 ),
               ),
               child: Row(
@@ -72,23 +61,20 @@ class JourneyScaleSwitcher extends StatelessWidget {
                         onTap: () => onScaleChanged(scale),
                         behavior: HitTestBehavior.opaque,
                         child: AnimatedContainer(
-                          duration: CalendarTokens.durationStandard,
-                          curve: CalendarTokens.curveEmphasis,
+                          duration: RitmoMotion.state,
+                          curve: RitmoMotion.enter,
                           height: 40.0,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? (isDark
-                                    ? theme.colorScheme.surfaceContainerHigh
-                                    : theme.cardColor)
+                                ? colors.surfaceElevated
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(
-                                CalendarTokens.radiusSegPill),
+                                RitmoRadius.iconButton),
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: Colors.black.withValues(
-                                          alpha: isDark ? 0.25 : 0.08),
+                                      color: colors.overlay.withValues(alpha: 0.08),
                                       blurRadius: 4,
                                       offset: const Offset(0, 1),
                                     )
@@ -98,15 +84,13 @@ class JourneyScaleSwitcher extends StatelessWidget {
                           child: Text(
                             label,
                             style: TextStyle(
-                              fontSize: CalendarTokens.textBody,
+                              fontSize: 14.0,
                               fontWeight: isSelected
                                   ? FontWeight.w700
                                   : FontWeight.w600,
                               color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : theme.textTheme.bodyMedium?.color
-                                      ?.withValues(alpha: 0.55),
-                              fontFamily: 'Vazirmatn',
+                                  ? colors.primary
+                                  : colors.textSecondary,
                             ),
                           ),
                         ),
@@ -162,7 +146,6 @@ class JourneyScaleSwitcher extends StatelessWidget {
 }
 
 /// The overflow ⋯ button that shows week / year options in a popup menu.
-/// Highlights with the active scale's label when week or year is selected.
 class _OverflowScaleButton extends StatelessWidget {
   const _OverflowScaleButton({
     required this.activeScale,
@@ -178,8 +161,7 @@ class _OverflowScaleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = context.colors;
 
     return Semantics(
       button: true,
@@ -191,10 +173,8 @@ class _OverflowScaleButton extends StatelessWidget {
         padding: EdgeInsets.zero,
         position: PopupMenuPosition.under,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(CalendarTokens.radiusCard)),
-        color: isDark
-            ? theme.colorScheme.surfaceContainerHigh
-            : theme.cardColor,
+            borderRadius: BorderRadius.circular(RitmoRadius.card)),
+        color: colors.surfaceElevated,
         elevation: 4,
         offset: const Offset(0, 4),
         itemBuilder: (ctx) => overflowScales
@@ -204,14 +184,13 @@ class _OverflowScaleButton extends StatelessWidget {
                 child: Text(
                   JourneyScaleSwitcher.scaleLabelFa(scale),
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: CalendarTokens.textBody,
+                    fontSize: 14.0,
                     fontWeight: scale == activeScale
                         ? FontWeight.w700
                         : FontWeight.w500,
                     color: scale == activeScale
-                        ? theme.colorScheme.primary
-                        : theme.textTheme.bodyMedium?.color,
+                        ? colors.primary
+                        : colors.textPrimary,
                   ),
                 ),
               ),
@@ -219,40 +198,38 @@ class _OverflowScaleButton extends StatelessWidget {
             .toList(),
         onSelected: onScaleChanged,
         child: AnimatedContainer(
-          duration: CalendarTokens.durationStandard,
-          curve: CalendarTokens.curveEmphasis,
+          duration: RitmoMotion.state,
+          curve: RitmoMotion.enter,
           height: 48,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             color: isActive
-                ? theme.colorScheme.primary.withValues(alpha: 0.12)
-                : (isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : theme.colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.5)),
-            borderRadius: BorderRadius.circular(CalendarTokens.radiusSegment),
+                ? colors.primary.withValues(alpha: 0.12)
+                : colors.surfaceSubtle,
+            borderRadius: BorderRadius.circular(RitmoRadius.field),
             border: Border.all(
               color: isActive
-                  ? theme.colorScheme.primary.withValues(alpha: 0.3)
-                  : theme.dividerColor
-                      .withValues(alpha: CalendarTokens.alphaCardBorder),
+                  ? colors.primary.withValues(alpha: 0.3)
+                  : colors.borderSubtle,
             ),
           ),
           child: isActive
-              ? Text(
-                  JourneyScaleSwitcher.scaleLabelFa(activeScale),
-                  style: TextStyle(
-                    fontSize: CalendarTokens.textBody,
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.primary,
-                    fontFamily: 'Vazirmatn',
+              ? Center(
+                  child: Text(
+                    JourneyScaleSwitcher.scaleLabelFa(activeScale),
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.w700,
+                      color: colors.primary,
+                    ),
                   ),
                 )
-              : Icon(
-                  Icons.more_horiz_rounded,
-                  size: 20,
-                  color: theme.textTheme.bodyMedium?.color
-                      ?.withValues(alpha: 0.55),
+              : Center(
+                  child: Icon(
+                    Icons.more_horiz_rounded,
+                    size: 20,
+                    color: colors.textSecondary,
+                  ),
                 ),
         ),
       ),

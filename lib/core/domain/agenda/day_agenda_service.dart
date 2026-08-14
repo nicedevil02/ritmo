@@ -326,6 +326,7 @@ class DayAgendaService {
 
     final enabledDomains = <AgendaDomain, bool>{
       AgendaDomain.routine: true,
+      AgendaDomain.event: true,
       AgendaDomain.prayer: ctx.religionEnabled,
       AgendaDomain.mustahab: ctx.religionEnabled,
       AgendaDomain.worshipDebt: ctx.religionEnabled && opts.includeWorshipDebt,

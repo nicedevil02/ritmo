@@ -13,24 +13,19 @@ class ForegroundNotificationUpdater {
     try {
       final db = await DatabaseHelper.instance.database;
 
-      // 1. Check if persistent status notification is enabled in settings
-      final settingsList = await db.query(
-        'app_settings',
-        where: 'key = ?',
-        whereArgs: ['persistent_status_notification_enabled'],
-      );
-      final isEnabled = settingsList.isEmpty || settingsList.first['value'] != 'false';
-
-      if (!isEnabled) {
-        await sl<NotificationPlatform>().stopForegroundService();
-        return;
-      }
-
-      // 2. Fetch all required data to evaluate
+      // 1. Fetch settings to verify both master notif switch and persistent status notification switch
       final settingsMap = {
         for (final row in await db.query('app_settings'))
           row['key']! as String: row['value']! as String
       };
+
+      final notifMasterEnabled = settingsMap['notif_master_enabled'] != 'false';
+      final isPersistentEnabled = settingsMap['persistent_status_notification_enabled'] != 'false';
+
+      if (!notifMasterEnabled || !isPersistentEnabled) {
+        await sl<NotificationPlatform>().stopForegroundService();
+        return;
+      }
 
       // RIE details
       final activeZoneId = settingsMap['active_zone_id'] ?? 'default_zone';

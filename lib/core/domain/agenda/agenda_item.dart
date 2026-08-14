@@ -182,6 +182,10 @@ class AgendaItem {
 
   /// Stable key for identifying recurring daily series without changing DB schemas.
   String get recurrenceKey {
+    if (domain == AgendaDomain.prayer) {
+      final key = sourceId.isNotEmpty ? sourceId : title;
+      return '${domain.name}|$key';
+    }
     final seriesId = (meta['routine'] as Map?)?['id']?.toString() ??
         (meta['schedule'] as Map?)?['id']?.toString() ??
         title;

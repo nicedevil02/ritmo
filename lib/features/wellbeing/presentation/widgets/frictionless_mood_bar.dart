@@ -121,15 +121,15 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
         children: [
           Expanded(
             child: Text(
-              'الان چطوری؟',
+              'الان در چه حالی؟',
               style: RitmoTextStyles.body(colors.textPrimary),
             ),
           ),
-          _moodButton(context, 1, '😔', 'غمگین یا خسته', colors.error),
+          _moodButton(context, 1, '🙁', 'ناآرام یا ناراحت', colors.error),
           const SizedBox(width: 8),
-          _moodButton(context, 3, '😐', 'معمولی', colors.cautionAccent),
+          _moodButton(context, 3, '😐', 'معمولی و آرام', colors.cautionAccent),
           const SizedBox(width: 8),
-          _moodButton(context, 5, '🙂', 'خوب و باانرژی', colors.success),
+          _moodButton(context, 5, '😊', 'خوب و شاداب', colors.success),
         ],
       ),
     );

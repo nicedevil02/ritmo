@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_time_range.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
-import 'package:ritmo/features/calendar/utils/domain_palette.dart';
 import 'package:ritmo/features/courses/presentation/widgets/create_course_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/create_goal_sheet.dart';
 import 'package:ritmo/features/health/presentation/widgets/medication_form_sheet.dart';
@@ -54,10 +52,10 @@ class DomainSelectionSheet extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(CalendarTokens.radiusSheet),
+            top: Radius.circular(RitmoRadius.sheet),
           ),
         ),
-        padding: const EdgeInsets.all(CalendarTokens.spacingL),
+        padding: const EdgeInsets.all(RitmoSpacing.lg),
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -66,14 +64,14 @@ class DomainSelectionSheet extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(CalendarTokens.spacingS),
+                    padding: const EdgeInsets.all(RitmoSpacing.sm),
                     decoration: BoxDecoration(
                       color: colors.primaryContainer.withValues(alpha: 0.4),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.add_task_rounded, color: colors.primary, size: 22),
                   ),
-                  const SizedBox(width: CalendarTokens.spacingM),
+                  const SizedBox(width: RitmoSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,9 +102,9 @@ class DomainSelectionSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: CalendarTokens.spacingM),
+              const SizedBox(height: RitmoSpacing.md),
               Divider(height: 1, color: colors.border),
-              const SizedBox(height: CalendarTokens.spacingM),
+              const SizedBox(height: RitmoSpacing.md),
               _buildOptionTile(
                 context,
                 title: 'روتین جدید',
@@ -254,30 +252,30 @@ class DomainSelectionSheet extends StatelessWidget {
     final colors = context.colors;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: CalendarTokens.spacingS),
+      padding: const EdgeInsets.only(bottom: RitmoSpacing.sm),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
           child: Container(
-            padding: const EdgeInsets.all(CalendarTokens.spacingM),
+            padding: const EdgeInsets.all(RitmoSpacing.md),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+              borderRadius: BorderRadius.circular(RitmoRadius.card),
               border: Border.all(color: color.withValues(alpha: 0.25)),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(CalendarTokens.spacingS),
+                  padding: const EdgeInsets.all(RitmoSpacing.sm),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+                    borderRadius: BorderRadius.circular(RitmoRadius.badge),
                   ),
                   child: Icon(icon, color: color, size: 20),
                 ),
-                const SizedBox(width: CalendarTokens.spacingM),
+                const SizedBox(width: RitmoSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

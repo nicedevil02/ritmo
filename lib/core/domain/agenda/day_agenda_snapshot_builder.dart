@@ -92,6 +92,7 @@ class DayAgendaSnapshotBuilder {
       nextActivity: next,
       suggestions: suggestions,
       sleepWindow: sleepWindow,
+      enabledDomains: dayAgenda.enabledDomains,
     );
   }
 

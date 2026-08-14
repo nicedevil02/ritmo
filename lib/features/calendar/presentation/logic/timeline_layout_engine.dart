@@ -2,8 +2,8 @@
 
 import 'dart:math';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 
 class TimelineLayoutItem {
   const TimelineLayoutItem({
@@ -18,8 +18,6 @@ class TimelineLayoutItem {
     required this.isTruncated,
     this.isClippedAtStart = false,
     this.isClippedAtEnd = false,
-    this.continuesToNextDay = false,
-    this.continuedFromPreviousDay = false,
     this.overflowCount = 0,
     this.overflowItems = const [],
   });
@@ -35,8 +33,6 @@ class TimelineLayoutItem {
   final bool isTruncated;
   final bool isClippedAtStart;
   final bool isClippedAtEnd;
-  final bool continuesToNextDay;
-  final bool continuedFromPreviousDay;
   final int overflowCount;
   final List<AgendaItem> overflowItems;
 
@@ -46,7 +42,7 @@ class TimelineLayoutItem {
 
 class TimelineLayoutEngine {
   const TimelineLayoutEngine({
-    this.pxPerMinute = CalendarTokens.pxPerMinute,
+    this.pxPerMinute = CalendarGeometry.pxPerMinute,
     this.minItemHeight = 28.0,
     this.defaultDurationMinutes = DurationBounds.defaultMinutes,
     this.rangeStartMinutes = 0,
@@ -101,7 +97,6 @@ class TimelineLayoutEngine {
         isClippedAtStart: isClippedAtStart,
         isClippedAtEnd: isClippedAtEnd,
         isTruncated: isTruncated,
-        endMinutes: endM,
       ));
     }
 
@@ -272,7 +267,6 @@ class _RawEntry {
     required this.isClippedAtStart,
     required this.isClippedAtEnd,
     required this.isTruncated,
-    required this.endMinutes,
   });
 
   final AgendaItem item;
@@ -284,6 +278,5 @@ class _RawEntry {
   final bool isClippedAtStart;
   final bool isClippedAtEnd;
   final bool isTruncated;
-  final int endMinutes;
   int laneIndex = 0;
 }

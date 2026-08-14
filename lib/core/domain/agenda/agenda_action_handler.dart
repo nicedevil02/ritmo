@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/action_feedback.dart';
@@ -253,13 +252,13 @@ class AgendaActionHandler {
         );
         if (res is WorshipLogFailed) {
           RitmoLogger.error('toggleAgendaItem: ${res.error}');
-          if (context != null) {
+          if (context != null && context.mounted) {
             ActionFeedback.failure(context, message: 'خطا در ثبت: ${res.error}');
           }
           throw Exception(res.error.toString());
         } else if (res is WorshipLogBlocked) {
           RitmoLogger.warning('toggleAgendaItem: ${res.userMessage}');
-          if (context != null) {
+          if (context != null && context.mounted) {
             ActionFeedback.failure(context, message: res.userMessage);
           }
           throw Exception(res.userMessage);

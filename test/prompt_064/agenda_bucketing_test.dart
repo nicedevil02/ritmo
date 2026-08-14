@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/domain/models.dart';
-import 'package:ritmo/features/calendar/logic/agenda_bucketing.dart';
+import 'package:ritmo/features/calendar/presentation/logic/agenda_bucketing.dart';
 
 void main() {
   group('K19 — Agenda Bucketing Unit Tests', () {

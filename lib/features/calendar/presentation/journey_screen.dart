@@ -1,6 +1,4 @@
 import 'dart:async';
-
-import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/domain/agenda/action_feedback.dart';
@@ -9,22 +7,22 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_snapshot_builder.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
-import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
-import 'package:ritmo/core/settings/settings_service.dart';
+import 'package:ritmo/core/navigation/shell_metrics.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/calendar/data/day_mark_repository.dart';
 import 'package:ritmo/features/calendar/data/occasions_calendar_source.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
-import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/features/calendar/presentation/models/now_pill_view_model.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_date_formatter.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/features/calendar/presentation/widgets/calendar_management_sheet.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/calendar_search_delegate.dart';
-import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
+import 'package:ritmo/features/calendar/presentation/widgets/day_review_sheet.dart';
+import 'package:ritmo/features/calendar/presentation/logic/timeline_snapping.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/day_summary_bar.dart';
-import 'package:ritmo/features/calendar/presentation/widgets/empty_day_view.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/go_to_date_dialog.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_agenda_view.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_month_view.dart';
@@ -34,10 +32,11 @@ import 'package:ritmo/features/calendar/presentation/widgets/journey_week_view.d
 import 'package:ritmo/features/calendar/presentation/widgets/journey_year_view.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/now_pill.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_split_day_view.dart';
-import 'package:ritmo/features/calendar/widgets/day_review_sheet.dart';
+import 'package:ritmo/features/calendar/presentation/widgets/timeline_untimed_section.dart';
+import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/features/registry/logic/registry_service.dart';
 import 'package:ritmo/features/registry/presentation/all_plans_screen.dart';
-import 'package:ritmo/features/calendar/presentation/widgets/timeline_untimed_section.dart';
+import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class JourneyScreen extends StatefulWidget {
@@ -54,30 +53,29 @@ class JourneyScreen extends StatefulWidget {
   State<JourneyScreen> createState() => _JourneyScreenState();
 }
 
-class _JourneyScreenState extends State<JourneyScreen> {
+class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserver {
   late final JourneyController _controller;
   final GlobalKey<TimelineSplitDayViewState> _splitDayKey = GlobalKey<TimelineSplitDayViewState>();
   StreamSubscription<RitmoEvent>? _eventSubscription;
 
-  JourneyScale _prevScale = JourneyScale.day;
-  DateTime _prevDate = DateTime.now();
   int _registryHealthCount = 0;
+
+  // Cached DayMark future per date
+  String? _cachedDayMarkDateStr;
+  Future<DayMark?>? _cachedDayMarkFuture;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = JourneyController();
 
     final startDate = widget.initialDate ?? DateTime.now();
-    _prevDate = startDate;
 
     if (widget.initialItemId != null) {
-      // K22 EXCEPTION: navigating to a specific item forces day scale.
-      // This comment is intentional — do not remove without reading 067.md §K22.
       _controller.selectDate(startDate, scaleToSet: JourneyScale.day);
       _controller.loadForActiveScale().then((_) => _focusItemById(widget.initialItemId));
     } else {
-      // K22: Load user-preferred scale from settings; fall back to agenda.
       _controller.loadDefaultScale().then((_) {
         _controller.loadForActiveScale().then((_) => _autoScrollToNow());
       });
@@ -86,8 +84,35 @@ class _JourneyScreenState extends State<JourneyScreen> {
     _checkHealthIssues();
     _eventSubscription = RitmoEventBus().onEvents.listen((event) {
       _handleNavigationEvent(event);
-      _checkHealthIssues();
+      if (event.type == 'health_updated' ||
+          event.type == 'medicine_logged' ||
+          event.type == 'cycle_data_changed' ||
+          event.type == 'registry_updated') {
+        _checkHealthIssues();
+      }
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _controller.refresh();
+      _autoScrollToNow();
+    }
+  }
+
+  Future<DayMark?> _getDayMarkFuture(String dateStr) {
+    if (_cachedDayMarkDateStr == dateStr && _cachedDayMarkFuture != null) {
+      return _cachedDayMarkFuture!;
+    }
+    _cachedDayMarkDateStr = dateStr;
+    _cachedDayMarkFuture = DayMarkRepository.instance.getMark(dateStr);
+    return _cachedDayMarkFuture!;
+  }
+
+  void _invalidateDayMarkCache() {
+    _cachedDayMarkDateStr = null;
+    _cachedDayMarkFuture = null;
   }
 
   Future<void> _checkHealthIssues() async {
@@ -218,7 +243,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
     ));
   }
 
-  // K32 — Open the day review sheet for the given date.
+  // Open the day review sheet for the given date.
   Future<void> _openDayReview(DateTime date, DayAgendaSnapshot? existingSnapshot) async {
     final ds = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     DayAgendaSnapshot? snap = existingSnapshot;
@@ -236,7 +261,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
     );
   }
 
-  // K44 — Show bottom sheet to pick day mark (REST / TRAVEL / SPECIAL / NORMAL).
+  // Show bottom sheet to pick day mark (REST / TRAVEL / SPECIAL / NORMAL).
   Future<void> _showDayMarkMenu(BuildContext ctx, DateTime date) async {
     final ds = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     final existing = await DayMarkRepository.instance.getMark(ds);
@@ -247,11 +272,13 @@ class _JourneyScreenState extends State<JourneyScreen> {
     );
     if (kind == null || !mounted) return;
     await DayMarkRepository.instance.setMark(ds, kind);
+    _invalidateDayMarkCache();
     unawaited(_controller.refresh());
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _eventSubscription?.cancel();
     _controller.dispose();
     super.dispose();
@@ -277,7 +304,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
         final jalali = Jalali.fromDateTime(date);
         return 'روز ${jalali.formatter.wN}';
       case JourneyScale.week:
-        final sat = date.subtract(Duration(days: (date.weekday == 6 ? 0 : (date.weekday == 7 ? 1 : date.weekday + 1))));
+        final sat = CourseScheduler.getSaturdayOfWeek(date);
         final fri = sat.add(const Duration(days: 6));
         final satJalali = Jalali.fromDateTime(sat);
         final friJalali = Jalali.fromDateTime(fri);
@@ -293,7 +320,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
     return AnimatedBuilder(
       animation: _controller,
@@ -314,93 +341,172 @@ class _JourneyScreenState extends State<JourneyScreen> {
           selectedDate: selectedDate,
         );
 
-        final isScaleChanged = activeScale != _prevScale;
-        final isDateBackward = selectedDate.isBefore(_prevDate);
-        _prevScale = activeScale;
-        _prevDate = selectedDate;
+        final dateKey = '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
 
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Scaffold(
             body: Column(
               children: [
-                // Layer 1 Command Deck Header Surface
+                // ─── Command Deck Header Surface (4 Controls) ───
                 Container(
-                  color: theme.brightness == Brightness.dark
-                      ? theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.85)
-                      : theme.colorScheme.surface.withValues(alpha: 0.95),
+                  color: colors.surfaceElevated,
                   padding: EdgeInsets.only(
-                    left: CalendarTokens.spacingXl,
-                    right: CalendarTokens.spacingXl,
-                    top: MediaQuery.paddingOf(context).top + CalendarTokens.spacingS,
-                    bottom: CalendarTokens.spacingM,
+                    left: RitmoSpacing.lg,
+                    right: RitmoSpacing.lg,
+                    top: MediaQuery.paddingOf(context).top + RitmoSpacing.xs,
+                    bottom: RitmoSpacing.sm,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // [1] Date Hero Row
+                      // [Control 1 & Control 4] Tappable Date Hero Title + Today Chip + Period Navigation
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          // Tappable Date Title opens GoToDateDialog directly
                           Expanded(
-                            child: Text(
-                              _getHeroDateTitle(selectedDate),
-                              style: TextStyle(
-                                fontSize: CalendarTokens.textHero,
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.onSurface,
-                                fontFamily: 'Vazirmatn',
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (!isToday)
-                            Semantics(
-                              label: 'پرش به امروز',
-                              button: true,
-                              child: GestureDetector(
-                                onTap: () {
-                                  _controller.selectDate(DateTime.now(), scaleToSet: JourneyScale.day);
-                                  _autoScrollToNow();
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primaryContainer,
-                                    borderRadius: BorderRadius.circular(CalendarTokens.radiusPill),
-                                  ),
-                                  child: Text(
-                                    'امروز',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: theme.colorScheme.onPrimaryContainer,
-                                      fontFamily: 'Vazirmatn',
+                            child: InkWell(
+                              onTap: () async {
+                                final picked = await GoToDateDialog.show(context, initialDate: selectedDate);
+                                if (picked != null && mounted) {
+                                  _controller.selectDate(picked);
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(RitmoRadius.card),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        _getHeroDateTitle(selectedDate),
+                                        style: TextStyle(
+                                          fontSize: 22.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: colors.textPrimary,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      size: 20,
+                                      color: colors.textTertiary,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
+                          ),
+
+                          // Control 4: Animated Today Chip (visible only when !isToday)
+                          AnimatedOpacity(
+                            opacity: isToday ? 0.0 : 1.0,
+                            duration: RitmoMotion.state,
+                            child: isToday
+                                ? const SizedBox.shrink()
+                                : Semantics(
+                                    label: 'پرش به امروز',
+                                    button: true,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        _controller.selectDate(DateTime.now(), scaleToSet: JourneyScale.day);
+                                        _autoScrollToNow();
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        margin: const EdgeInsets.only(left: 6),
+                                        decoration: BoxDecoration(
+                                          color: colors.primary.withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                                          border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                                        ),
+                                        child: Text(
+                                          'امروز',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: colors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                          ),
+
+                          // Control 3: Search Button
+                          IconButton(
+                            icon: const Icon(Icons.search_rounded, size: 22),
+                            tooltip: 'جستجوی رویدادها',
+                            color: colors.textPrimary,
+                            onPressed: () {
+                              final items = _controller.snapshot?.items ?? allItems;
+                              showSearch(
+                                context: context,
+                                delegate: CalendarSearchDelegate(
+                                  items: items,
+                                  onItemSelected: _openItemDetails,
+                                ),
+                              );
+                            },
+                          ),
+
+                          // Management Sheet Button (Three dots ⋯)
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.tune_rounded, size: 22),
+                                tooltip: 'مدیریت و تنظیمات تقویم',
+                                color: colors.textPrimary,
+                                onPressed: () => CalendarManagementSheet.show(
+                                  context: context,
+                                  selectedDate: selectedDate,
+                                  currentScale: activeScale,
+                                  healthIssueCount: _registryHealthCount,
+                                  onSelectScale: _controller.setScale,
+                                  onOpenDayReview: () => _openDayReview(selectedDate, snapshot),
+                                  onOpenDayMarkPicker: () => _showDayMarkMenu(context, selectedDate),
+                                  onOpenAllPlans: _openAllPlans,
+                                  onRefresh: _controller.refresh,
+                                ),
+                              ),
+                              if (_registryHealthCount > 0)
+                                Positioned(
+                                  top: 8,
+                                  left: 8,
+                                  child: Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: BoxDecoration(
+                                      color: colors.error,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ],
                       ),
-                      
-                      // K40 — Occasion banner (day scale only, first occasion title)
+
+                      // Occasion / Holiday banner (day scale)
                       if (activeScale == JourneyScale.day)
                         Builder(builder: (ctx) {
                           final occasions = OccasionsCalendarSource.occasionsForDate(selectedDate);
                           if (occasions.isEmpty) return const SizedBox.shrink();
                           final first = occasions.first;
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.only(bottom: 4),
                             child: Row(
                               children: [
                                 Icon(
                                   first.isHoliday ? Icons.celebration_outlined : Icons.info_outline_rounded,
                                   size: 13,
-                                  color: first.isHoliday
-                                      ? Theme.of(ctx).colorScheme.error
-                                      : Theme.of(ctx).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                                  color: first.isHoliday ? colors.error : colors.textTertiary,
                                 ),
                                 const SizedBox(width: 5),
                                 Expanded(
@@ -410,10 +516,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: 11,
-                                      fontFamily: 'Vazirmatn',
-                                      color: first.isHoliday
-                                          ? Theme.of(ctx).colorScheme.error
-                                          : Theme.of(ctx).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                                      color: first.isHoliday ? colors.error : colors.textSecondary,
                                     ),
                                   ),
                                 ),
@@ -422,12 +525,10 @@ class _JourneyScreenState extends State<JourneyScreen> {
                           );
                         }),
 
-                      // K45 — Day mark badge (روز استراحت 🌴 / روز سفر ✈️ / روز خاص ⭐)
+                      // Day mark badge (استراحت 🌴 / سفر ✈️ / خاص ⭐)
                       if (activeScale == JourneyScale.day)
                         FutureBuilder<DayMark?>(
-                          future: DayMarkRepository.instance.getMark(
-                            '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
-                          ),
+                          future: _getDayMarkFuture(dateKey),
                           builder: (ctx, snap) {
                             final mark = snap.data;
                             if (mark == null || mark.kind == DayMarkKind.normal) return const SizedBox.shrink();
@@ -442,23 +543,23 @@ class _JourneyScreenState extends State<JourneyScreen> {
                               onTap: () => unawaited(_showDayMarkMenu(ctx, selectedDate)),
                               child: Container(
                                 margin: const EdgeInsets.only(bottom: 6),
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(ctx).colorScheme.secondaryContainer,
-                                  borderRadius: BorderRadius.circular(CalendarTokens.radiusPill),
+                                  color: colors.primary.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                                  border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(icon, size: 13, color: Theme.of(ctx).colorScheme.onSecondaryContainer),
+                                    Icon(icon, size: 13, color: colors.primary),
                                     const SizedBox(width: 5),
                                     Text(
                                       label,
                                       style: TextStyle(
                                         fontSize: 11,
-                                        fontFamily: 'Vazirmatn',
-                                        fontWeight: FontWeight.w600,
-                                        color: Theme.of(ctx).colorScheme.onSecondaryContainer,
+                                        fontWeight: FontWeight.bold,
+                                        color: colors.primary,
                                       ),
                                     ),
                                   ],
@@ -468,17 +569,15 @@ class _JourneyScreenState extends State<JourneyScreen> {
                           },
                         ),
 
-                      const SizedBox(height: CalendarTokens.spacingS),
-
-                      // [2] Navigation & Context Action Row
+                      // Navigation arrows row + Sub-context subtitle
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
                             children: [
                               SizedBox(
-                                width: 38,
-                                height: 38,
+                                width: 32,
+                                height: 32,
                                 child: IconButton(
                                   padding: EdgeInsets.zero,
                                   icon: const Icon(Icons.chevron_right, size: 22),
@@ -491,16 +590,15 @@ class _JourneyScreenState extends State<JourneyScreen> {
                                 child: Text(
                                   _getSubContextTitle(activeScale, selectedDate),
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
-                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 12.0,
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.textSecondary,
                                   ),
                                 ),
                               ),
                               SizedBox(
-                                width: 38,
-                                height: 38,
+                                width: 32,
+                                height: 32,
                                 child: IconButton(
                                   padding: EdgeInsets.zero,
                                   icon: const Icon(Icons.chevron_left, size: 22),
@@ -510,139 +608,11 @@ class _JourneyScreenState extends State<JourneyScreen> {
                               ),
                             ],
                           ),
-                          Row(
-                            children: [
-                              // K32 — Day Review button
-                              SizedBox(
-                                width: 36,
-                                height: 36,
-                                child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: const Icon(Icons.rate_review_outlined, size: 20),
-                                  tooltip: 'مرور روز',
-                                  onPressed: () => unawaited(_openDayReview(selectedDate, snapshot)),
-                                ),
-                              ),
-                              SizedBox(
-                                width: 36,
-                                height: 36,
-                                child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: const Icon(Icons.space_dashboard_outlined, size: 20),
-                                  tooltip: 'خلاصه روز',
-                                  onPressed: () {
-                                    unawaited(_openSmartPanel());
-                                  },
-                                ),
-                              ),
-                              SizedBox(
-                                width: 36,
-                                height: 36,
-                                child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: const Icon(Icons.calendar_month_outlined, size: 20),
-                                  tooltip: 'برو به تاریخ',
-                                  onPressed: () async {
-                                    final picked = await GoToDateDialog.show(context, initialDate: selectedDate);
-                                    if (picked != null && mounted) {
-                                      _controller.selectDate(picked);
-                                    }
-                                  },
-                                ),
-                              ),
-                              SizedBox(
-                                width: 36,
-                                height: 36,
-                                child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: const Icon(Icons.search_rounded, size: 20),
-                                  tooltip: 'جستجوی رویدادها',
-                                  onPressed: () {
-                                    final items = _controller.snapshot?.items ?? allItems;
-                                    showSearch(
-                                      context: context,
-                                      delegate: CalendarSearchDelegate(
-                                        items: items,
-                                        onItemSelected: _openItemDetails,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              SizedBox(
-                                width: 36,
-                                height: 36,
-                                child: Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    IconButton(
-                                      padding: EdgeInsets.zero,
-                                      icon: const Icon(Icons.list_alt_rounded, size: 20),
-                                      tooltip: 'همه برنامه‌ها',
-                                      onPressed: _openAllPlans,
-                                    ),
-                                    if (_registryHealthCount > 0)
-                                      Positioned(
-                                        top: 7,
-                                        left: 7,
-                                        child: Container(
-                                          width: 7,
-                                          height: 7,
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFFF43F5E),
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(
-                                width: 36,
-                                height: 36,
-                                child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: const Icon(Icons.refresh, size: 20),
-                                  tooltip: 'بازخوانی',
-                                  onPressed: _controller.refresh,
-                                ),
-                              ),
-                              SizedBox(
-                                width: 36,
-                                height: 36,
-                                child: PopupMenuButton<String>(
-                                  padding: EdgeInsets.zero,
-                                  icon: const Icon(Icons.more_vert_rounded, size: 20),
-                                  tooltip: 'تنظیمات نمای تقویم',
-                                  onSelected: (value) async {
-                                    if (value == 'toggle_compression') {
-                                      final current = SettingsService.instance.get<bool>('calendar_compress_recurring');
-                                      await SettingsService.instance.set('calendar_compress_recurring', !current);
-                                      unawaited(_controller.refresh());
-                                    }
-                                  },
-                                  itemBuilder: (ctx) {
-                                    final isCompressed = SettingsService.instance.get<bool>('calendar_compress_recurring');
-                                    return [
-                                      CheckedPopupMenuItem<String>(
-                                        value: 'toggle_compression',
-                                        checked: isCompressed,
-                                        child: const Text(
-                                          'فشرده‌سازی تکرارها',
-                                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
-                                        ),
-                                      ),
-                                    ];
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
                         ],
                       ),
-                      const SizedBox(height: CalendarTokens.spacingM),
+                      const SizedBox(height: RitmoSpacing.xs),
 
-                      // Scale Switcher Segmented Control
+                      // [Control 2] Scale Switcher Segmented Control
                       JourneyScaleSwitcher(
                         activeScale: activeScale,
                         onScaleChanged: _controller.setScale,
@@ -651,55 +621,56 @@ class _JourneyScreenState extends State<JourneyScreen> {
                   ),
                 ),
 
-                // Content View with PageTransitionSwitcher
+                // ─── Main Content Viewport with Pull-to-Refresh & Swipe Gestures ───
                 Expanded(
-                  child: PageTransitionSwitcher(
-                    duration: CalendarTokens.durationEmphasis,
-                    reverse: isDateBackward,
-                    transitionBuilder: (child, primaryAnimation, secondaryAnimation) {
-                      if (isScaleChanged) {
-                        return SharedAxisTransition(
-                          animation: primaryAnimation,
-                          secondaryAnimation: secondaryAnimation,
-                          transitionType: SharedAxisTransitionType.scaled,
-                          child: child,
-                        );
-                      } else {
-                        return SharedAxisTransition(
-                          animation: primaryAnimation,
-                          secondaryAnimation: secondaryAnimation,
-                          transitionType: SharedAxisTransitionType.horizontal,
-                          child: child,
-                        );
-                      }
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      _invalidateDayMarkCache();
+                      await _controller.refresh();
                     },
                     child: _controller.isLoading
-                        ? const Center(key: ValueKey('journey_loading'), child: CircularProgressIndicator())
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              color: colors.primary,
+                            ),
+                          )
                         : _controller.errorMessage != null
                             ? Center(
                                 key: const ValueKey('journey_error'),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text('خطا: ${_controller.errorMessage}'),
-                                    const SizedBox(height: CalendarTokens.spacingM),
-                                    ElevatedButton(
+                                    Text('خطا: ${_controller.errorMessage}', style: TextStyle(color: colors.error)),
+                                    const SizedBox(height: RitmoSpacing.md),
+                                    RitmoSecondaryButton(
                                       onPressed: _controller.refresh,
-                                      child: const Text('بازخوانی'),
+                                      label: 'تلاش دوباره',
                                     ),
                                   ],
                                 ),
                               )
-                            : KeyedSubtree(
-                                key: ValueKey('${activeScale.name}_${selectedDate.year}_${selectedDate.month}_${selectedDate.day}'),
-                                child: _buildScaleContent(
-                                  activeScale: activeScale,
-                                  selectedDate: selectedDate,
-                                  snapshot: snapshot,
-                                  untimedItems: untimedItems,
-                                  timedItems: timedItems,
-                                  pillViewModel: pillViewModel,
-                                  isToday: isToday,
+                            : GestureDetector(
+                                onHorizontalDragEnd: (details) {
+                                  if (details.primaryVelocity == null) return;
+                                  // RTL awareness: swipe left = next (period 1), swipe right = prev (period -1)
+                                  if (details.primaryVelocity! < -150) {
+                                    _controller.navigatePeriod(1);
+                                  } else if (details.primaryVelocity! > 150) {
+                                    _controller.navigatePeriod(-1);
+                                  }
+                                },
+                                behavior: HitTestBehavior.translucent,
+                                child: KeyedSubtree(
+                                  key: ValueKey('${activeScale.name}_${selectedDate.year}_${selectedDate.month}_${selectedDate.day}'),
+                                  child: _buildScaleContent(
+                                    activeScale: activeScale,
+                                    selectedDate: selectedDate,
+                                    snapshot: snapshot,
+                                    untimedItems: untimedItems,
+                                    timedItems: timedItems,
+                                    pillViewModel: pillViewModel,
+                                    isToday: isToday,
+                                  ),
                                 ),
                               ),
                   ),
@@ -721,133 +692,192 @@ class _JourneyScreenState extends State<JourneyScreen> {
     required NowPillViewModel pillViewModel,
     required bool isToday,
   }) {
+    final colors = context.colors;
+
     switch (activeScale) {
       case JourneyScale.agenda:
         return JourneyAgendaView(
           rangeSnapshots: _controller.rangeSnapshots,
           now: DateTime.now(),
           onItemTap: _openItemDetails,
+          onDoneItem: (item) async {
+            await _controller.completeItem(item);
+          },
+          onPostponeItem: (item) async {
+            await _controller.postponeItem(item, days: 1);
+          },
           onAddTap: () => UniversalPlannerSheet.show(
             context: context,
             onSaved: _controller.refresh,
           ),
         );
+
       case JourneyScale.day:
-        return (snapshot == null || snapshot.items.isEmpty)
-            ? EmptyDayView(
-                date: selectedDate,
-                onRefreshRequested: _controller.refresh,
-              )
-            : Stack(
-                children: [
-                  Column(
-                    children: [
-                      // K24 — Day Summary Bar
-                      DaySummaryBar(
-                        snapshot: snapshot,
-                        onTapFreeGaps: _openSmartPanel,
-                      ),
-                      TimelineUntimedSection(
-                        untimedItems: untimedItems,
-                        onItemTap: _openItemDetails,
-                        onUnscheduleItem: (item) async {
-                          await _controller.unscheduleItem(item);
-                          if (mounted) {
-                            RitmoToast.show(
-                              context,
-                              'رویداد از زمان‌بندی خارج شد',
-                              onUndo: () => _controller.undoLastAction(),
-                            );
-                          }
-                        },
-                      ),
-                      Expanded(
-                        child: TimelineSplitDayView(
-                          key: _splitDayKey,
-                          items: snapshot.items,
-                          isToday: isToday,
-                          sleepStartMinutes: snapshot.sleepWindow?.startMinutes,
-                          sleepEndMinutes: snapshot.sleepWindow?.endMinutes,
-                          highlightedItemId: _controller.highlightedItemId,
-                          onItemTap: _openItemDetails,
-                          onItemMove: (item, newStartMinutes) async {
-                            final timeStr = TimelineSnappingHelper.minutesToTimeString(newStartMinutes);
-                            await _controller.commitItemDrag(
-                              item,
-                              timeStr,
-                              scope: CalendarEditScope.thisDayOnly,
-                            );
-                            if (mounted) {
-                              RitmoToast.show(
-                                context,
-                                'فقط برای امروز جابه‌جا شد',
-                                onUndo: () => _controller.undoLastAction(),
-                              );
-                            }
-                          },
-                          onItemResize: (item, newDurationMinutes) async {
-                            await _controller.commitItemResize(item, newDurationMinutes);
-                            if (mounted) {
-                              RitmoToast.show(
-                                context,
-                                'مدت زمان به ${toPersianDigits(newDurationMinutes.toString())} دقیقه تغییر یافت',
-                                onUndo: () => _controller.undoLastAction(),
-                              );
-                            }
-                          },
-                          onSlotTap: (slotMinutes) {
-                            final prefilledTime = TimeOfDay(hour: slotMinutes ~/ 60, minute: slotMinutes % 60);
-                            UniversalPlannerSheet.show(
-                              context: context,
-                              prefilledTime: prefilledTime,
-                              onSaved: _controller.refresh,
-                            );
-                          },
-                          onScheduleUntimed: (item, startMinutes, durMinutes) async {
-                            await _controller.scheduleItem(item, startMinutes, durMinutes);
-                            if (mounted) {
-                              final timeStr = TimelineSnappingHelper.minutesToTimeString(startMinutes);
-                              RitmoToast.show(
-                                context,
-                                'رویداد در ساعت ${toPersianDigits(timeStr)} زمان‌بندی شد',
-                                onUndo: () => _controller.undoLastAction(),
-                              );
-                            }
-                          },
-                          onOverflowTap: _openItemDetails,
-                        ),
-                      ),
-                    ],
+        final hasItems = snapshot != null && snapshot.items.isNotEmpty;
+        return Stack(
+          children: [
+            Column(
+              children: [
+                if (hasItems) ...[
+                  // Day Summary Bar
+                  DaySummaryBar(
+                    snapshot: snapshot,
+                    onTapFreeGaps: _openSmartPanel,
                   ),
-                  if (pillViewModel.isVisible)
-                    Positioned(
-                      bottom: 16,
-                      left: 16,
-                      right: 16,
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: NowPill(
-                          viewModel: pillViewModel,
-                          onTapPill: _openSmartPanel,
-                          onTapJumpNow: _autoScrollToNow,
-                          onTapComplete: pillViewModel.targetItem != null
-                              ? () async {
-                                  final item = pillViewModel.targetItem!;
-                                  await _controller.completeItem(item);
-                                  if (mounted) {
-                                    ActionFeedback.success(
-                                      context,
-                                      message: 'رویداد با موفقیت ثبت شد',
-                                      dateStr: item.dateStr,
-                                    );
-                                  }
-                                }
-                              : null,
-                        ),
-                      ),
+                  TimelineUntimedSection(
+                    untimedItems: untimedItems,
+                    onItemTap: _openItemDetails,
+                    onUnscheduleItem: (item) async {
+                      await _controller.unscheduleItem(item);
+                      if (mounted) {
+                        RitmoToast.show(
+                          context,
+                          'رویداد از زمان‌بندی خارج شد',
+                          onUndo: () => _controller.undoLastAction(),
+                        );
+                      }
+                    },
+                  ),
+                ] else ...[
+                  // Empty day banner card inside timeline header
+                  Container(
+                    margin: const EdgeInsets.all(RitmoSpacing.md),
+                    padding: const EdgeInsets.all(RitmoSpacing.md),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceSubtle,
+                      borderRadius: BorderRadius.circular(RitmoRadius.card),
+                      border: Border.all(color: colors.borderSubtle),
                     ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'برای این روز برنامه‌ای ثبت نشده',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'با لمس طولانی روی ساعت دلخواه، برنامه اضافه کنید',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        RitmoPrimaryButton(
+                          label: 'افزودن',
+                          icon: Icons.add_rounded,
+                          onPressed: () => UniversalPlannerSheet.show(
+                            context: context,
+                            onSaved: _controller.refresh,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
-              );
+
+                // Timeline Split Day View (Always Rendered)
+                Expanded(
+                  child: TimelineSplitDayView(
+                    key: _splitDayKey,
+                    items: snapshot?.items ?? const [],
+                    isToday: isToday,
+                    sleepStartMinutes: snapshot?.sleepWindow?.startMinutes,
+                    sleepEndMinutes: snapshot?.sleepWindow?.endMinutes,
+                    highlightedItemId: _controller.highlightedItemId,
+                    onItemTap: _openItemDetails,
+                    onItemMove: (item, newStartMinutes) async {
+                      final timeStr = TimelineSnappingHelper.minutesToTimeString(newStartMinutes);
+                      await _controller.commitItemDrag(
+                        item,
+                        timeStr,
+                        scope: CalendarEditScope.thisDayOnly,
+                      );
+                      if (mounted) {
+                        RitmoToast.show(
+                          context,
+                          'فقط برای امروز جابه‌جا شد',
+                          onUndo: () => _controller.undoLastAction(),
+                        );
+                      }
+                    },
+                    onItemResize: (item, newDurationMinutes) async {
+                      await _controller.commitItemResize(item, newDurationMinutes);
+                      if (mounted) {
+                        RitmoToast.show(
+                          context,
+                          'مدت زمان به ${toPersianDigits(newDurationMinutes.toString())} دقیقه تغییر یافت',
+                          onUndo: () => _controller.undoLastAction(),
+                        );
+                      }
+                    },
+                    onSlotTap: (slotMinutes) {
+                      final prefilledTime = TimeOfDay(hour: slotMinutes ~/ 60, minute: slotMinutes % 60);
+                      UniversalPlannerSheet.show(
+                        context: context,
+                        prefilledTime: prefilledTime,
+                        onSaved: _controller.refresh,
+                      );
+                    },
+                    onScheduleUntimed: (item, startMinutes, durMinutes) async {
+                      await _controller.scheduleItem(item, startMinutes, durMinutes);
+                      if (mounted) {
+                        final timeStr = TimelineSnappingHelper.minutesToTimeString(startMinutes);
+                        RitmoToast.show(
+                          context,
+                          'رویداد در ساعت ${toPersianDigits(timeStr)} زمان‌بندی شد',
+                          onUndo: () => _controller.undoLastAction(),
+                        );
+                      }
+                    },
+                    onOverflowTap: _openItemDetails,
+                  ),
+                ),
+              ],
+            ),
+
+            // NowPill positioned above bottom nav bar (Section 4.7)
+            if (pillViewModel.isVisible)
+              Positioned(
+                bottom: RitmoShellMetrics.navBarHeight + RitmoShellMetrics.navBarBottomGap + 8,
+                left: RitmoSpacing.lg,
+                right: RitmoSpacing.lg,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: NowPill(
+                    viewModel: pillViewModel,
+                    onTapPill: _openSmartPanel,
+                    onTapJumpNow: _autoScrollToNow,
+                    onTapComplete: pillViewModel.targetItem != null
+                        ? () async {
+                            final item = pillViewModel.targetItem!;
+                            await _controller.completeItem(item);
+                            if (mounted) {
+                              ActionFeedback.success(
+                                context,
+                                message: 'رویداد با موفقیت ثبت شد',
+                                dateStr: item.dateStr,
+                              );
+                            }
+                          }
+                        : null,
+                  ),
+                ),
+              ),
+          ],
+        );
+
       case JourneyScale.week:
         return JourneyWeekView(
           selectedDate: selectedDate,
@@ -856,6 +886,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
             _controller.selectDate(date, scaleToSet: JourneyScale.day);
           },
         );
+
       case JourneyScale.month:
         return JourneyMonthView(
           selectedDate: selectedDate,
@@ -863,8 +894,14 @@ class _JourneyScreenState extends State<JourneyScreen> {
           onSelectDate: (date) {
             _controller.selectDate(date, scaleToSet: JourneyScale.day);
           },
-          onLongPressDayCell: (date) => unawaited(_showDayMarkMenu(context, date)),
+          onLongPressDayCell: (date) {
+            UniversalPlannerSheet.show(
+              context: context,
+              onSaved: _controller.refresh,
+            );
+          },
         );
+
       case JourneyScale.year:
         return JourneyYearView(
           selectedDate: selectedDate,
@@ -877,48 +914,60 @@ class _JourneyScreenState extends State<JourneyScreen> {
   }
 }
 
-// K44 — Day Mark picker bottom sheet
+// Day Mark picker bottom sheet
 class _DayMarkSheet extends StatelessWidget {
   const _DayMarkSheet({required this.current});
   final DayMarkKind current;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.md),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40,
+              width: 36,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 16),
+              margin: const EdgeInsets.only(bottom: RitmoSpacing.md),
               decoration: BoxDecoration(
-                color: theme.dividerColor,
+                color: colors.borderSubtle,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Text('وضعیت روز', style: theme.textTheme.titleMedium?.copyWith(fontFamily: 'Vazirmatn')),
-            const SizedBox(height: 12),
-            _markTile(context, DayMarkKind.normal, 'روز عادی', Icons.wb_sunny_outlined),
-            _markTile(context, DayMarkKind.rest, 'روز استراحت 🌴', Icons.beach_access_outlined),
-            _markTile(context, DayMarkKind.travel, 'روز سفر ✈️', Icons.flight_outlined),
-            _markTile(context, DayMarkKind.special, 'روز خاص ⭐', Icons.star_outline),
+            Text(
+              'وضعیت روز',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: RitmoSpacing.sm),
+            _markTile(context, DayMarkKind.normal, 'روز عادی', Icons.wb_sunny_outlined, colors),
+            _markTile(context, DayMarkKind.rest, 'روز استراحت 🌴', Icons.beach_access_outlined, colors),
+            _markTile(context, DayMarkKind.travel, 'روز سفر ✈️', Icons.flight_outlined, colors),
+            _markTile(context, DayMarkKind.special, 'روز خاص ⭐', Icons.star_outline, colors),
           ],
         ),
       ),
     );
   }
 
-  Widget _markTile(BuildContext context, DayMarkKind kind, String label, IconData icon) {
+  Widget _markTile(BuildContext context, DayMarkKind kind, String label, IconData icon, RitmoColors colors) {
     final isSelected = kind == current;
-    final theme = Theme.of(context);
     return ListTile(
-      leading: Icon(icon, color: isSelected ? theme.colorScheme.primary : null),
-      title: Text(label, style: const TextStyle(fontFamily: 'Vazirmatn')),
-      trailing: isSelected ? Icon(Icons.check_rounded, color: theme.colorScheme.primary) : null,
+      leading: Icon(icon, color: isSelected ? colors.primary : colors.textSecondary),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? colors.primary : colors.textPrimary,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      trailing: isSelected ? Icon(Icons.check_rounded, color: colors.primary) : null,
       onTap: () => Navigator.of(context).pop(kind),
     );
   }

@@ -16,6 +16,7 @@ class DayAgendaSnapshot {
     this.nextActivity,
     required this.suggestions,
     this.sleepWindow,
+    this.enabledDomains = const {},
   });
 
   final DayAgenda dayAgenda;
@@ -28,6 +29,7 @@ class DayAgendaSnapshot {
   final AgendaItem? nextActivity;
   final List<AgendaSuggestion> suggestions;
   final SleepWindowBlock? sleepWindow;
+  final Map<AgendaDomain, bool> enabledDomains;
 
   String get dateStr => dayAgenda.dateStr;
   List<AgendaItem> get items => dayAgenda.items;

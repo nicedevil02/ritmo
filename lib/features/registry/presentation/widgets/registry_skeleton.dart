@@ -1,7 +1,8 @@
 // lib/features/registry/presentation/widgets/registry_skeleton.dart
 
 import 'package:flutter/material.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 
 /// Shimmer skeleton loader that mimics the registry card layout
 /// while data is being fetched.
@@ -39,13 +40,13 @@ class _RegistrySkeletonState extends State<RegistrySkeleton>
       animation: _shimmerController,
       builder: (context, _) {
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: CalendarTokens.spacingL),
+          padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
           child: Column(
             children: List.generate(widget.itemCount, (index) {
               return Padding(
                 padding: EdgeInsets.only(
                   bottom: index < widget.itemCount - 1
-                      ? CalendarTokens.registryCardGap
+                      ? 10.0
                       : 0,
                 ),
                 child: _buildSkeletonCard(context),
@@ -82,12 +83,12 @@ class _RegistrySkeletonState extends State<RegistrySkeleton>
     );
 
     return Container(
-      height: CalendarTokens.registryCardHeight,
+      height: CalendarGeometry.registryCardHeight,
       decoration: BoxDecoration(
         color: isDark
             ? theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.15)
             : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(CalendarTokens.radiusCardLg),
+        borderRadius: BorderRadius.circular(RitmoRadius.hero),
         border: Border.all(
           color: theme.dividerColor.withValues(alpha: 0.04),
         ),
@@ -100,12 +101,12 @@ class _RegistrySkeletonState extends State<RegistrySkeleton>
             decoration: BoxDecoration(
               gradient: gradient,
               borderRadius: BorderRadius.circular(
-                CalendarTokens.iconContainerRadius,
+                RitmoRadius.iconButton,
               ),
             ),
             child: const SizedBox(
-              width: CalendarTokens.iconContainerSize,
-              height: CalendarTokens.iconContainerSize,
+              width: CalendarGeometry.iconContainerSize,
+              height: CalendarGeometry.iconContainerSize,
             ),
           ),
 

@@ -7,11 +7,8 @@ class OnboardingGate {
 
   static const int currentVersion = 1;
 
-  /// Returns true if onboarding has been completed and essential user profile exists.
+  /// Returns true if onboarding has been completed in SQLite or SharedPreferences.
   static Future<bool> isCompleted(DatabaseExecutor db) async {
-    String? dbUserName;
-    var dbCompleted = false;
-
     try {
       final completedRows = await db.query(
         'app_settings',
@@ -19,32 +16,26 @@ class OnboardingGate {
         limit: 1,
       );
       if (completedRows.isNotEmpty && completedRows.first['value'] == 'true') {
-        dbCompleted = true;
-      }
-
-      final nameRows = await db.query(
-        'app_settings',
-        where: "key = 'user_name'",
-        limit: 1,
-      );
-      if (nameRows.isNotEmpty) {
-        dbUserName = nameRows.first['value'] as String?;
+        return true;
       }
     } catch (_) {}
 
-    // If SQLite has both completed flag and user_name, user is validly onboarded
-    if (dbCompleted && dbUserName != null && dbUserName.isNotEmpty && dbUserName != 'کاربر') {
-      return true;
-    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('onboarding_completed') == true;
+    } catch (_) {}
 
-    // Dual Fallback & Auto-Healer: Check SharedPreferences
+    return false;
+  }
+
+  /// Explicitly heals SQLite app_settings from SharedPreferences if SharedPreferences has completed state.
+  static Future<bool> healFromPrefs(DatabaseExecutor db) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final isSpCompleted = prefs.getBool('onboarding_completed') == true;
       final spUserName = prefs.getString('user_name');
 
       if (isSpCompleted && spUserName != null && spUserName.isNotEmpty) {
-        // Auto-heal SQLite app_settings from SharedPreferences
         final nowMs = DateTime.now().millisecondsSinceEpoch;
         await db.insert(
           'app_settings',
@@ -59,9 +50,7 @@ class OnboardingGate {
         return true;
       }
     } catch (_) {}
-
-    // If dbCompleted is true (from SQLite), accept it
-    return dbCompleted;
+    return false;
   }
 
   /// Returns the version number of the completed onboarding flow.

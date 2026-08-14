@@ -1,10 +1,12 @@
 enum ReminderState {
   unknown('unknown'),
+  scheduled('scheduled'),
   active('active'),
   delayed('delayed'),
   opened('opened'),
   expired('expired'),
-  cancelled('cancelled');
+  cancelled('cancelled'),
+  missed('missed');
 
   const ReminderState(this.dbValue);
   final String dbValue;

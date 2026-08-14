@@ -401,6 +401,27 @@ class SettingsRegistry {
       descriptionFa: 'تعداد دفعات مجاز برای به تعویق انداختن یک روتین',
       searchTerms: ['حداکثر تعویق', 'دفعات اسنوز'],
     ),
+    SettingDescriptor(
+      key: 'notif_privacy_mode',
+      type: SettingType.enumeration,
+      scope: SettingScope.db,
+      defaultValue: 'redacted',
+      labelFa: 'سطح حریم خصوصی اعلان‌ها',
+      group: SettingsGroup.notifications,
+      allowed: ['none', 'redacted', 'locked', 'hidden'],
+      descriptionFa: 'نمایش متن مبدل، قفل با بیومتریک یا پنهان‌سازی کامل',
+      searchTerms: ['حریم خصوصی', 'مبدل', 'قفل اعلان', 'امنیت'],
+    ),
+    SettingDescriptor(
+      key: 'notif_biometric_enabled',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: false,
+      labelFa: 'قفل اثرانگشت برای اعلان‌های خصوصی',
+      group: SettingsGroup.notifications,
+      descriptionFa: 'الزام احراز هویت برای مشاهده متن اعلان‌های محرمانه',
+      searchTerms: ['اثرانگشت', 'بیومتریک', 'قفل', 'احراز هویت'],
+    ),
 
     // ----------------------------------------------------
     // ۴. ظاهر و زبان (Appearance & Locale)

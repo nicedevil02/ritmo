@@ -1,8 +1,7 @@
 import 'dart:async';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/calendar/presentation/models/now_pill_view_model.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 
 class NowPill extends StatefulWidget {
   const NowPill({
@@ -107,18 +106,13 @@ class _NowPillState extends State<NowPill>
   Widget build(BuildContext context) {
     final vm = widget.viewModel;
 
-    if (!vm.isVisible) {
-      return const SizedBox.shrink();
-    }
+    final colors = context.colors;
 
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    Color badgeColor = theme.colorScheme.primary;
+    Color badgeColor = colors.primary;
     if (vm.isOverdue) {
-      badgeColor = const Color(0xffF43F5E); // Overdue Red
+      badgeColor = colors.error;
     } else if (!vm.isCurrent) {
-      badgeColor = Colors.amber.shade700;
+      badgeColor = colors.warning;
     }
 
     return Directionality(
@@ -127,22 +121,20 @@ class _NowPillState extends State<NowPill>
         color: Colors.transparent,
         child: InkWell(
           onTap: widget.onTapPill,
-          borderRadius: BorderRadius.circular(CalendarTokens.radiusPill),
+          borderRadius: BorderRadius.circular(RitmoRadius.pill),
           child: Container(
             height: 48.0,
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
             decoration: BoxDecoration(
-              color: isDark
-                  ? theme.colorScheme.surfaceContainerHigh
-                  : theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(CalendarTokens.radiusPill),
+              color: colors.surfaceElevated,
+              borderRadius: BorderRadius.circular(RitmoRadius.pill),
               border: Border.all(
                 color: badgeColor.withValues(alpha: 0.40),
                 width: 1.0,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.08),
+                  color: colors.overlay.withValues(alpha: 0.08),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -178,12 +170,12 @@ class _NowPillState extends State<NowPill>
                               },
                             ),
                           ),
-                          const SizedBox(width: CalendarTokens.spacingS),
+                          const SizedBox(width: RitmoSpacing.sm),
 
                           // Animated Switcher for smooth content transitions
                           Expanded(
                             child: AnimatedSwitcher(
-                              duration: CalendarTokens.durationStandard,
+                              duration: RitmoMotion.state,
                               child: Row(
                                 key: ValueKey('${vm.statusLabel}_${vm.targetItem?.id}'),
                                 mainAxisSize: MainAxisSize.min,
@@ -194,10 +186,9 @@ class _NowPillState extends State<NowPill>
                                           ? 'الان: '
                                           : (vm.statusLabel == 'NEXT' ? 'بعدی: ' : ''),
                                       style: TextStyle(
-                                        fontSize: CalendarTokens.textBody,
+                                        fontSize: 14.0,
                                         fontWeight: FontWeight.w600,
                                         color: badgeColor,
-                                        fontFamily: 'Vazirmatn',
                                       ),
                                     ),
                                   ],
@@ -208,10 +199,9 @@ class _NowPillState extends State<NowPill>
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          fontSize: CalendarTokens.textBody,
+                                          fontSize: 14.0,
                                           fontWeight: FontWeight.w700,
-                                          color: theme.textTheme.bodyLarge?.color,
-                                          fontFamily: 'Vazirmatn',
+                                          color: colors.textPrimary,
                                         ),
                                       ),
                                     ),
@@ -227,12 +217,11 @@ class _NowPillState extends State<NowPill>
                                         return Text(
                                           '$prefix$label',
                                           style: TextStyle(
-                                            fontSize: CalendarTokens.textMeta,
+                                            fontSize: 12.0,
                                             fontWeight: FontWeight.w400,
                                             color: vm.isOverdue
                                                 ? badgeColor
-                                                : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.70),
-                                            fontFamily: 'Vazirmatn',
+                                                : colors.textSecondary,
                                           ),
                                         );
                                       },
@@ -254,8 +243,8 @@ class _NowPillState extends State<NowPill>
                           IconButton(
                             icon: Icon(Icons.my_location_rounded, size: 18, color: badgeColor),
                             onPressed: () {
-                              RitmoHaptics.tap();
-                              widget.onTapJumpNow!();
+                              RitmoHapticsPolicy.tap();
+                              widget.onTapJumpNow?.call();
                             },
                             tooltip: 'پرش به زمان فعلی',
                             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
@@ -269,23 +258,23 @@ class _NowPillState extends State<NowPill>
                               width: 1,
                               height: 16,
                               margin: const EdgeInsets.symmetric(horizontal: 2),
-                              color: isDark ? Colors.white12 : Colors.black12,
+                              color: colors.borderSubtle,
                             ),
 
                           Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                              color: colors.primary.withValues(alpha: 0.12),
                             ),
                             child: IconButton(
                               icon: Icon(
                                 Icons.check_circle_outline_rounded,
                                 size: 20,
-                                color: theme.colorScheme.primary,
+                                color: colors.primary,
                               ),
                               onPressed: () {
-                                RitmoHaptics.success();
-                                widget.onTapComplete!();
+                                RitmoHapticsPolicy.success();
+                                widget.onTapComplete?.call();
                               },
                               tooltip: 'تکمیل رویداد',
                               constraints: const BoxConstraints(minWidth: 44, minHeight: 44),

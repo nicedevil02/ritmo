@@ -285,11 +285,11 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               // Segmented Tab bar
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(4),
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDark ? colors.surface : colors.card,
+                  color: colors.surfaceSunken,
                   borderRadius: BorderRadius.circular(14),
-                  border: isDark ? Border.all(color: colors.accent.withValues(alpha: 0.15), width: 1.2) : null,
+                  border: Border.all(color: colors.border.withValues(alpha: 0.6), width: 1),
                 ),
                 child: Row(
                   children: [
@@ -302,10 +302,10 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                           });
                         },
                         child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
                             color: _activeTab == 0
-                                ? (isDark ? Colors.white.withValues(alpha: 0.1) : colors.bg)
+                                ? colors.primary.withValues(alpha: 0.15)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -313,9 +313,9 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                             child: Text(
                               '📍 انتخاب شهر',
                               style: TextStyle(
-                                fontSize: 14.5,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
+                                color: _activeTab == 0 ? colors.primary : colors.textSecondary,
                                 fontFamily: 'Vazirmatn',
                               ),
                             ),
@@ -332,10 +332,10 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                           });
                         },
                         child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
                             color: _activeTab == 1
-                                ? (isDark ? Colors.white.withValues(alpha: 0.1) : colors.bg)
+                                ? colors.primary.withValues(alpha: 0.15)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -343,9 +343,9 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                             child: Text(
                               '⚙️ تنظیمات محاسبه',
                               style: TextStyle(
-                                fontSize: 14.5,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
+                                color: _activeTab == 1 ? colors.primary : colors.textSecondary,
                                 fontFamily: 'Vazirmatn',
                               ),
                             ),
@@ -420,25 +420,25 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                     final isSelected = cityId == _currentCityId;
 
                     return Container(
-                      margin: EdgeInsets.symmetric(vertical: 4),
+                      margin: const EdgeInsets.symmetric(vertical: 4),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? colors.accent.withValues(alpha: 0.1)
-                            : colors.textSecondary.withValues(alpha: 0.01),
+                            ? colors.primary.withValues(alpha: 0.12)
+                            : colors.surfaceSunken.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isSelected
-                              ? colors.accent.withValues(alpha: 0.4)
-                              : colors.textSecondary.withValues(alpha: 0.04),
+                              ? colors.primary.withValues(alpha: 0.5)
+                              : colors.border.withValues(alpha: 0.3),
                         ),
                       ),
                       child: ListTile(
                         dense: true,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                         title: Text(
                           cityName,
                           style: TextStyle(
-                            color: colors.textPrimary,
+                            color: isSelected ? colors.primary : colors.textPrimary,
                             fontSize: 15,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             fontFamily: 'Vazirmatn',
@@ -453,7 +453,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                           ),
                         ),
                         trailing: isSelected
-                            ? Icon(CupertinoIcons.checkmark_alt, color: colors.accent, size: 18)
+                            ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary, size: 18)
                             : Icon(CupertinoIcons.location, color: colors.textSecondary.withValues(alpha: 0.4), size: 16),
                         onTap: () => _selectCity(cityId),
                       ),
@@ -481,7 +481,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               fontFamily: 'Vazirmatn',
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           ..._methods.map((method) {
             final isSelected = _selectedMethod == method['key'];
 
@@ -493,17 +493,17 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                 });
               },
               child: Container(
-                margin: EdgeInsets.symmetric(vertical: 4),
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? colors.accent.withValues(alpha: 0.08)
-                      : colors.textSecondary.withValues(alpha: 0.02),
+                      ? colors.primary.withValues(alpha: 0.12)
+                      : colors.surfaceSunken.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: isSelected
-                        ? colors.accent.withValues(alpha: 0.4)
-                        : colors.textSecondary.withValues(alpha: 0.06),
+                        ? colors.primary.withValues(alpha: 0.5)
+                        : colors.border.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -514,36 +514,34 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected 
-                              ? (isDark ? Colors.white : colors.accent) 
-                              : colors.textPrimary,
+                          color: isSelected ? colors.primary : colors.textPrimary,
                           fontFamily: 'Vazirmatn',
                         ),
                       ),
                     ),
                     if (isSelected)
-                      Icon(CupertinoIcons.checkmark_alt, color: colors.accent, size: 18),
+                      Icon(CupertinoIcons.checkmark_alt, color: colors.primary, size: 18),
                   ],
                 ),
               ),
             );
           }),
-          SizedBox(height: 20),
-
-          SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // Online API Refresh Button
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: colors.accent,
-              foregroundColor: Colors.black,
+              backgroundColor: colors.surfaceSunken,
+              foregroundColor: colors.primary,
+              side: BorderSide(color: colors.primary.withValues(alpha: 0.3)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              elevation: 0,
             ),
-            icon: const Icon(CupertinoIcons.cloud_download, size: 20),
-            label: const Text(
+            icon: Icon(CupertinoIcons.cloud_download, size: 20, color: colors.primary),
+            label: Text(
               'به‌روزرسانی آنلاین اوقات شرعی از API',
-              style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', fontSize: 14),
+              style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', fontSize: 14, color: colors.primary),
             ),
             onPressed: () async {
               unawaited(HapticFeedback.mediumImpact());
@@ -570,7 +568,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               }
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           // Show Asr and Isha Switch Row
           Row(
@@ -587,7 +585,8 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               ),
               Switch(
                 value: _showAsrIsha,
-                activeThumbColor: colors.accent,
+                activeThumbColor: colors.primary,
+                activeTrackColor: colors.primary.withValues(alpha: 0.35),
                 onChanged: (val) {
                   setState(() {
                     _showAsrIsha = val;
@@ -596,7 +595,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // Hijri Offset Section
           Row(
@@ -618,21 +617,21 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: colors.accent,
+                  color: colors.primary,
                   fontFamily: 'Vazirmatn',
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: colors.accent,
-              inactiveTrackColor: Colors.white12,
-              thumbColor: colors.accent,
-              overlayColor: colors.accent.withValues(alpha: 0.2),
-              valueIndicatorColor: colors.accent,
-              valueIndicatorTextStyle: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
+              activeTrackColor: colors.primary,
+              inactiveTrackColor: colors.surfaceSunken,
+              thumbColor: colors.primary,
+              overlayColor: colors.primary.withValues(alpha: 0.2),
+              valueIndicatorColor: colors.primary,
+              valueIndicatorTextStyle: TextStyle(fontFamily: 'Vazirmatn', color: colors.onPrimary),
             ),
             child: Slider(
               value: _hijriOffset.toDouble(),
@@ -647,29 +646,31 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               },
             ),
           ),
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
 
           // Save button
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: colors.accent,
-              foregroundColor: Colors.white,
+              backgroundColor: colors.primary,
+              foregroundColor: colors.onPrimary,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
             ),
             onPressed: _isSavingSettings ? null : _saveSettings,
             child: _isSavingSettings
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
-                    child: CupertinoActivityIndicator(color: Colors.white),
+                    child: CupertinoActivityIndicator(color: colors.onPrimary),
                   )
-                : const Text(
+                : Text(
                     'ذخیره تنظیمات محاسبه',
                     style: TextStyle(
                       fontSize: 15.5,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Vazirmatn',
+                      color: colors.onPrimary,
                     ),
                   ),
           ),

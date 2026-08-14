@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/notifications/notification_ids.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/services/backup_passcode_manager.dart';
 import 'package:ritmo/core/services/cycle_notification_service.dart';
@@ -58,7 +59,7 @@ Future<bool> _runWeeklyBackup() async {
     final hasCode = await passcodeManager.hasPasscode();
     if (!hasCode) {
       await CycleNotificationService.showImmediateNotification(
-        id: 3001,
+        id: NotificationIds.weeklyBackup,
         title: 'پشتیبان‌گیری خودکار ریتمو ☁️',
         body: 'برای فعالسازی بکاپ خودکار، یک رمز عبور (passcode) در تنظیمات پروفایل خود تنظیم کنید.',
       );

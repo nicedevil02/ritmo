@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 
 /// K34 — Morning Brief notification generator and scheduler.
 /// Text is 100% data-driven:
@@ -16,27 +16,27 @@ class MorningBrief {
     final agenda = await DayAgendaService.instance.agendaForDate(date);
 
     int overdueCount = 0;
-    int todayCount = agenda.items.length;
+    int todayCount = 0;
 
     for (final item in agenda.items) {
       if (item.dateStr != dateStr || item.id.contains('overdue')) {
         overdueCount++;
+      } else {
+        todayCount++;
       }
     }
 
     if (overdueCount > 0) {
-      return '$overdueCount کار معوقه داری و $todayCount برنامه برای امروز.';
+      return '${toPersianDigits(overdueCount)} کار معوقه داری و ${toPersianDigits(todayCount)} برنامه برای امروز.';
     }
 
     if (todayCount > 0) {
-      final first = agenda.items.firstWhere(
-        (i) => i.isTimed && i.timeOfDay != null,
-        orElse: () => agenda.items.first,
-      );
-      if (first.isTimed && first.timeOfDay != null) {
-        return '$todayCount برنامه برای امروز. اولین: ${first.title}، ساعت ${first.timeOfDay}.';
+      final timed = agenda.items.where((i) => i.dateStr == dateStr && i.isTimed && i.timeOfDay != null).toList();
+      if (timed.isNotEmpty) {
+        final first = timed.first;
+        return '${toPersianDigits(todayCount)} برنامه برای امروز. اولین: ${first.title}، ساعت ${toPersianDigits(first.timeOfDay ?? "")}.';
       }
-      return '$todayCount برنامه برای امروز.';
+      return '${toPersianDigits(todayCount)} برنامه برای امروز.';
     }
 
     return 'امروز برنامه‌ای ثبت نشده.';

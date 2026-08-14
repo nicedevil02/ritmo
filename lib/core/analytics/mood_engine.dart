@@ -50,8 +50,8 @@ class MoodEngineOutput {
   /// List of mood trend average valences.
   final List<double> moodTrend;
 
-  /// Mood distribution grouped by daypart.
-  final Map<String, Mood> moodByDaypart;
+  /// Mood distribution grouped by daypart (null if no data for that daypart).
+  final Map<String, Mood?> moodByDaypart;
 
   /// Pearson correlation score between energy and mood (-1.0 to +1.0).
   final double? energyMoodCorrelation;
@@ -124,7 +124,7 @@ class MoodEngine implements CachedEngine<MoodEngineInput, MoodEngineOutput> {
     }
 
     // 3. Mood By Daypart
-    final daypartMoods = <String, Mood>{};
+    final daypartMoods = <String, Mood?>{};
     final daypartLogs = {
       'morning': <MoodLog>[],
       'afternoon': <MoodLog>[],
@@ -164,7 +164,7 @@ class MoodEngine implements CachedEngine<MoodEngineInput, MoodEngineOutput> {
         });
         daypartMoods[daypart] = bestMood;
       } else {
-        daypartMoods[daypart] = Mood.neutral;
+        daypartMoods[daypart] = null;
       }
     });
 

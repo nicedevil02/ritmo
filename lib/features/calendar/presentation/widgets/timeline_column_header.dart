@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 
 class SplitDayRange {
   const SplitDayRange({
@@ -19,14 +20,14 @@ class SplitDayRange {
 
   static const morning = SplitDayRange(
     startMinutes: 0,
-    endMinutes: CalendarTokens.splitBoundaryMinutes,
+    endMinutes: CalendarGeometry.splitBoundaryMinutes,
     titleFa: 'صبح',
     rangeLabel: '۰۰:۰۰ – ۱۲:۰۰',
     icon: Icons.wb_twilight_rounded,
   );
 
   static const afternoon = SplitDayRange(
-    startMinutes: CalendarTokens.splitBoundaryMinutes,
+    startMinutes: CalendarGeometry.splitBoundaryMinutes,
     endMinutes: 1440,
     titleFa: 'بعدازظهر',
     rangeLabel: '۱۲:۰۰ – ۲۴:۰۰',
@@ -50,15 +51,14 @@ class TimelineColumnHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = context.colors;
 
     final activeGradient = LinearGradient(
       begin: Alignment.topRight,
       end: Alignment.bottomLeft,
       colors: [
-        CalendarTokens.emerald.withValues(alpha: 0.22),
-        CalendarTokens.emerald.withValues(alpha: 0.08),
+        colors.primary.withValues(alpha: 0.18),
+        colors.primary.withValues(alpha: 0.06),
       ],
     );
 
@@ -66,37 +66,28 @@ class TimelineColumnHeader extends StatelessWidget {
       begin: Alignment.topRight,
       end: Alignment.bottomLeft,
       colors: [
-        colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+        colors.surfaceSubtle.withValues(alpha: 0.35),
+        colors.surfaceSubtle.withValues(alpha: 0.15),
       ],
     );
 
     return AnimatedContainer(
-      duration: CalendarTokens.durationStandard,
-      height: CalendarTokens.columnHeaderHeight - 6.0,
+      duration: RitmoMotion.state,
+      height: CalendarGeometry.columnHeaderHeight - 6.0,
       margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
       padding: const EdgeInsets.symmetric(
-        horizontal: CalendarTokens.spacingM,
+        horizontal: RitmoSpacing.md,
         vertical: 6.0,
       ),
       decoration: BoxDecoration(
         gradient: isActive ? activeGradient : inactiveGradient,
-        borderRadius: BorderRadius.circular(14.0),
+        borderRadius: BorderRadius.circular(RitmoRadius.card),
         border: Border.all(
           color: isActive
-              ? CalendarTokens.emerald.withValues(alpha: 0.65)
-              : colorScheme.outlineVariant.withValues(alpha: 0.22),
+              ? colors.primary.withValues(alpha: 0.50)
+              : colors.borderSubtle,
           width: isActive ? 1.5 : 1.0,
         ),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: CalendarTokens.emerald.withValues(alpha: 0.25),
-                  blurRadius: 14,
-                  spreadRadius: 0,
-                )
-              ]
-            : null,
       ),
       child: Row(
         children: [
@@ -105,16 +96,16 @@ class TimelineColumnHeader extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isActive
-                  ? CalendarTokens.emerald.withValues(alpha: 0.30)
-                  : colorScheme.onSurfaceVariant.withValues(alpha: 0.12),
+                  ? colors.primary.withValues(alpha: 0.20)
+                  : colors.surfaceSubtle,
             ),
             child: Icon(
               icon,
               size: 18,
-              color: isActive ? CalendarTokens.emerald : colorScheme.onSurfaceVariant,
+              color: isActive ? colors.primary : colors.textSecondary,
             ),
           ),
-          const SizedBox(width: CalendarTokens.spacingS),
+          const SizedBox(width: RitmoSpacing.sm),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -124,11 +115,10 @@ class TimelineColumnHeader extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      style: TextStyle(
                         fontSize: 14.0,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Vazirmatn',
-                        color: isActive ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                        color: isActive ? colors.textPrimary : colors.textSecondary,
                       ),
                     ),
                     if (isActive) ...[
@@ -136,16 +126,9 @@ class TimelineColumnHeader extends StatelessWidget {
                       Container(
                         width: 6,
                         height: 6,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: CalendarTokens.emerald,
-                          boxShadow: [
-                            BoxShadow(
-                              color: CalendarTokens.emerald,
-                              blurRadius: 6,
-                              spreadRadius: 1,
-                            ),
-                          ],
+                          color: colors.primary,
                         ),
                       ),
                     ],
@@ -153,13 +136,12 @@ class TimelineColumnHeader extends StatelessWidget {
                 ),
                 Text(
                   toPersianDigits(rangeLabel),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontSize: CalendarTokens.textLabel,
+                  style: TextStyle(
+                    fontSize: 11.0,
                     color: isActive
-                        ? CalendarTokens.emerald.withValues(alpha: 0.90)
-                        : colorScheme.onSurfaceVariant.withValues(alpha: 0.70),
+                        ? colors.primary
+                        : colors.textTertiary,
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                    fontFamily: 'Vazirmatn',
                   ),
                 ),
               ],

@@ -4,7 +4,6 @@ import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 
 class AlarmDiagnosticsSheet extends StatefulWidget {
   const AlarmDiagnosticsSheet({super.key});

@@ -1,62 +1,22 @@
 // lib/features/supplementary_sports/movement/data/movement_reminder_service.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/unified_planner_repository.dart';
-import 'package:timezone/data/latest.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
 
-/// سرویس مدیریت نوتیفیکیشن‌های یادآوری حرکت و تمرین در طول هفته.
+/// سرویس مدیریت نوتیفیکیشن‌های یادآوری حرکت و تمرین در طول هفته از طریق NotificationGateway.
 class MovementReminderService {
   MovementReminderService._();
 
-  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-  static bool _initialized = false;
-
-  static const String channelId = 'movement_reminders';
-  static const String channelName = 'یادآوری‌های حرکت و تمرین';
-  static const String channelDescription =
-      'اعلان‌های یادآوری قبل از شروع جلسات ورزشی و تمرین';
-
-  static const int startNotificationId = 10000;
-  static const int maxNotificationSlots = 200;
-
-  static Future<void> _ensureInitialized() async {
-    if (_initialized) return;
-
-    try {
-      tz.initializeTimeZones();
-      try {
-        if (tz.local.name == 'UTC') {
-          tz.setLocalLocation(tz.getLocation('Asia/Tehran'));
-        }
-      } catch (_) {}
-
-      const initializationSettingsAndroid =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
-      const initializationSettingsDarwin = DarwinInitializationSettings();
-
-      const initializationSettings = InitializationSettings(
-        android: initializationSettingsAndroid,
-        iOS: initializationSettingsDarwin,
-      );
-
-      await _notificationsPlugin.initialize(settings: initializationSettings);
-      _initialized = true;
-    } catch (e) {
-      debugPrint('[ss] MovementReminderService init error: $e');
-    }
-  }
+  static const String sourceSystem = 'movement';
 
   /// لغو تمام نوتیفیکیشن‌های یادآوری حرکت قبلی.
   static Future<void> cancelAll() async {
     try {
-      await _ensureInitialized();
-      for (int i = startNotificationId; i < startNotificationId + maxNotificationSlots; i++) {
-        await _notificationsPlugin.cancel(id: i);
-      }
+      await NotificationGateway.cancelForEntity(sourceSystem, 'movement_week');
     } catch (e) {
       debugPrint('[ss] MovementReminderService cancelAll error: $e');
     }
@@ -66,14 +26,10 @@ class MovementReminderService {
   /// (با اعمال خودکار همهٔ استثناهای این هفته: SKIP, MOVE, RETIME, LIGHT).
   static Future<void> rescheduleWeekReminders() async {
     try {
-      await _ensureInitialized();
       await cancelAll();
 
       final plan = await UnifiedPlannerRepository.instance.loadWeek();
       final now = DateTime.now();
-
-      int notifIdCounter = startNotificationId;
-      const int maxNotifId = startNotificationId + maxNotificationSlots;
 
       for (int dayIndex = 0; dayIndex < 7; dayIndex++) {
         final items = plan.byDay[dayIndex];
@@ -114,8 +70,6 @@ class MovementReminderService {
           }
 
           if (reminderTime.isAfter(now)) {
-            if (notifIdCounter >= maxNotifId) break;
-
             final String bodyText;
             if (item.isLight) {
               bodyText = 'نسخه سبک ${item.title} امروز 🌿';
@@ -126,70 +80,24 @@ class MovementReminderService {
                   '${toPersianDigits(item.reminderMinutes.toString())} دقیقه دیگه ${item.title} ${item.emoji}';
             }
 
-            await _scheduleSingleNotification(
-              id: notifIdCounter++,
-              title: 'ریتم حرکت ${item.emoji}',
-              body: bodyText,
-              scheduledDate: reminderTime,
+            final reminderId = 'movement_${item.id}_${reminderTime.millisecondsSinceEpoch}';
+
+            await NotificationGateway.schedule(
+              NotificationRequest(
+                id: reminderId,
+                channel: NotificationChannelId.routine,
+                scheduledAt: reminderTime,
+                title: 'ریتم حرکت ${item.emoji}',
+                body: bodyText,
+                sourceSystem: sourceSystem,
+                entityId: 'movement_week',
+              ),
             );
           }
         }
       }
     } catch (e) {
       debugPrint('[ss] MovementReminderService reschedule error: $e');
-    }
-  }
-
-  static Future<void> _scheduleSingleNotification({
-    required int id,
-    required String title,
-    required String body,
-    required DateTime scheduledDate,
-  }) async {
-    const androidDetails = AndroidNotificationDetails(
-      channelId,
-      channelName,
-      channelDescription: channelDescription,
-      color: Color(0xFF10B981),
-      importance: Importance.high,
-      priority: Priority.high,
-    );
-
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    const platformDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    final tzDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
-
-    try {
-      await _notificationsPlugin.zonedSchedule(
-        id: id,
-        title: title,
-        body: body,
-        scheduledDate: tzDateTime,
-        notificationDetails: platformDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      );
-    } catch (_) {
-      try {
-        await _notificationsPlugin.zonedSchedule(
-          id: id,
-          title: title,
-          body: body,
-          scheduledDate: tzDateTime,
-          notificationDetails: platformDetails,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        );
-      } catch (e) {
-        debugPrint('[ss] MovementReminderService single schedule fallback error: $e');
-      }
     }
   }
 }

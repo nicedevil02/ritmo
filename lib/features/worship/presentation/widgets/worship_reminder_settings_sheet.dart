@@ -343,14 +343,10 @@ class _WorshipReminderSettingsSheetState
         Container(
           width: 38, height: 38,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [colors.accent, colors.accentContainer],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: colors.primary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(CupertinoIcons.bell_fill, color: Colors.white, size: 18),
+          child: Icon(CupertinoIcons.bell_fill, color: colors.primary, size: 18),
         ),
         SizedBox(width: 12),
         Expanded(
@@ -539,24 +535,24 @@ class _WorshipReminderSettingsSheetState
                   margin: EdgeInsets.symmetric(horizontal: 4),
                   padding: EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: selected ? colors.accent.withValues(alpha: 0.15) : chipBg,
+                    color: selected ? colors.primary.withValues(alpha: 0.15) : chipBg,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: selected ? colors.accent.withValues(alpha: 0.4) : Colors.transparent,
+                      color: selected ? colors.primary.withValues(alpha: 0.5) : Colors.transparent,
                     ),
                   ),
                   child: Column(
                     children: [
                       Icon(f['icon']! as IconData,
                           size: 20,
-                          color: selected ? colors.accent : colors.textSecondary),
+                          color: selected ? colors.primary : colors.textSecondary),
                       SizedBox(height: 6),
                       Text(
                         f['label']! as String,
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                          color: selected ? colors.accent : colors.textSecondary,
+                          color: selected ? colors.primary : colors.textSecondary,
                           fontFamily: 'Vazirmatn',
                         ),
                       ),
@@ -591,7 +587,7 @@ class _WorshipReminderSettingsSheetState
                   width: 38, height: 38,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: sel ? colors.accent : chipBg,
+                    color: sel ? colors.primary : chipBg,
                     border: Border.all(
                       color: sel ? Colors.transparent : colors.textSecondary.withValues(alpha: 0.12),
                     ),
@@ -600,7 +596,7 @@ class _WorshipReminderSettingsSheetState
                     child: Text(
                       day['label']! as String,
                       style: TextStyle(
-                        color: sel ? Colors.black : colors.textPrimary,
+                        color: sel ? colors.onPrimary : colors.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                         fontFamily: 'Vazirmatn',
@@ -1023,7 +1019,7 @@ class _WorshipReminderSettingsSheetState
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: colors.accent,
+                color: colors.primary,
                 fontFamily: 'Vazirmatn',
               ),
             ),
@@ -1031,14 +1027,14 @@ class _WorshipReminderSettingsSheetState
         ),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
-            activeTrackColor: colors.accent,
+            activeTrackColor: colors.primary,
             inactiveTrackColor:
                 colors.textSecondary.withValues(alpha: 0.08),
-            thumbColor: colors.accent,
-            overlayColor: colors.accent.withValues(alpha: 0.15),
+            thumbColor: colors.primary,
+            overlayColor: colors.primary.withValues(alpha: 0.15),
             trackHeight: 3,
             thumbShape:
-                RoundSliderThumbShape(enabledThumbRadius: 7),
+                const RoundSliderThumbShape(enabledThumbRadius: 7),
           ),
           child: Slider(
             value: _offsetMinutes.toDouble(),
@@ -1050,7 +1046,7 @@ class _WorshipReminderSettingsSheetState
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1095,7 +1091,7 @@ class _WorshipReminderSettingsSheetState
                   fontFamily: 'Vazirmatn',
                 ),
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Text(
                 'اگر انجام نشد، به لیست قضا اضافه می‌شود',
                 style: TextStyle(
@@ -1109,7 +1105,7 @@ class _WorshipReminderSettingsSheetState
         ),
         CupertinoSwitch(
           value: _allowQada,
-          activeTrackColor: colors.accent,
+          activeTrackColor: colors.primary,
           onChanged: (v) => setState(() => _allowQada = v),
         ),
       ],
@@ -1121,7 +1117,7 @@ class _WorshipReminderSettingsSheetState
     return SafeArea(
       top: false,
       child: Padding(
-        padding: EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.only(top: 8),
         child: Row(
           children: [
             if (widget.practice.reminderEnabled) ...[
@@ -1133,13 +1129,13 @@ class _WorshipReminderSettingsSheetState
                     _save();
                   },
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
+                      color: colors.surfaceSunken,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                          color: colors.medicalRed
-                              .withValues(alpha: 0.3)),
+                        color: colors.error.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Center(
                       child: Text(
@@ -1147,7 +1143,7 @@ class _WorshipReminderSettingsSheetState
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: colors.medicalRed,
+                          color: colors.error,
                           fontFamily: 'Vazirmatn',
                         ),
                       ),
@@ -1155,7 +1151,7 @@ class _WorshipReminderSettingsSheetState
                   ),
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
             ],
             Expanded(
               flex: 2,
@@ -1165,30 +1161,25 @@ class _WorshipReminderSettingsSheetState
                   _save();
                 },
                 child: Container(
-                  padding:
-                      EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [colors.accent, colors.accentContainer],
-                      begin: Alignment.centerRight,
-                      end: Alignment.centerLeft,
-                    ),
+                    color: colors.primary,
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: colors.accent.withValues(alpha: 0.3),
+                        color: colors.primary.withValues(alpha: 0.28),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
                       'ثبت تنظیمات',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: colors.onPrimary,
                         fontFamily: 'Vazirmatn',
                       ),
                     ),

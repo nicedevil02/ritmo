@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/features/calendar/data/calendar_search_repository.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
-import 'package:ritmo/features/calendar/utils/domain_palette.dart';
-import 'package:ritmo/features/registry/domain/registry_entry.dart';
-import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 
 /// K36 + K37 — Global Calendar Search Delegate
 /// Grouped into: "امروز", "این هفته", "سایر تاریخ‌ها"
@@ -16,12 +14,10 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
   CalendarSearchDelegate({
     required this.items,
-    this.registryEntries = const [],
     this.onItemSelected,
   });
 
   final List<AgendaItem> items;
-  final List<RegistryEntry> registryEntries;
   final ValueChanged<AgendaItem>? onItemSelected;
 
   @override
@@ -81,7 +77,7 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
             child: Center(
               child: Text(
                 'هیچ نتیجه‌ای یافت نشد.',
-                style: TextStyle(fontFamily: 'Vazirmatn'),
+                style: TextStyle(),
               ),
             ),
           );
@@ -95,7 +91,7 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: ListView(
-            padding: const EdgeInsets.all(CalendarTokens.spacingM),
+            padding: const EdgeInsets.all(RitmoSpacing.md),
             children: [
               if (todayHits.isNotEmpty) ...[
                 _SearchSectionHeader(
@@ -136,7 +132,7 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: ListView(
-        padding: const EdgeInsets.all(CalendarTokens.spacingM),
+        padding: const EdgeInsets.all(RitmoSpacing.md),
         children: [
           _SearchSectionHeader(
             title: 'برنامه‌های امروز (${toPersianDigits(todayResults.length)})',
@@ -146,9 +142,9 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
             final icon = domainIcon(item.domain);
             return ListTile(
               leading: Icon(icon, color: color),
-              title: Text(item.title, style: const TextStyle(fontFamily: 'Vazirmatn')),
+              title: Text(item.title, style: const TextStyle()),
               subtitle: item.subtitle != null
-                  ? Text(item.subtitle!, style: const TextStyle(fontFamily: 'Vazirmatn'))
+                  ? Text(item.subtitle!, style: const TextStyle())
                   : null,
               onTap: () {
                 onItemSelected?.call(item);
@@ -174,9 +170,8 @@ class _SearchSectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: TextStyle(
-          fontSize: CalendarTokens.textSection,
+          fontSize: 13.0,
           fontWeight: FontWeight.bold,
-          fontFamily: 'Vazirmatn',
           color: theme.colorScheme.primary,
         ),
       ),
@@ -198,13 +193,13 @@ class _HitTile extends StatelessWidget {
       leading: Icon(icon, color: color),
       title: Text(
         hit.title,
-        style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w600),
+        style: const TextStyle(fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
         hit.isRecurring
             ? 'تکرارشونده${hit.subtitle != null ? ' · ${hit.subtitle}' : ''}'
             : '${hit.dateStr != null ? toPersianDigits(hit.dateStr) : 'بدون تاریخ'}${hit.subtitle != null ? ' · ${hit.subtitle}' : ''}',
-        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+        style: const TextStyle(fontSize: 12),
       ),
       onTap: () {
         // Construct target item for router

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 
 class JourneySummarySection extends StatelessWidget {
   const JourneySummarySection({
@@ -26,18 +26,17 @@ class JourneySummarySection extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.analytics_outlined, size: 18, color: theme.colorScheme.primary),
-              const SizedBox(width: CalendarTokens.spacingS),
+              const SizedBox(width: RitmoSpacing.sm),
               Text(
                 'خلاصه روز (${toPersianDigits(snapshot.dateStr)})',
                 style: const TextStyle(
-                  fontSize: CalendarTokens.textTitle,
+                  fontSize: 15.0,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'Vazirmatn',
                 ),
               ),
             ],
           ),
-          const SizedBox(height: CalendarTokens.spacingM),
+          const SizedBox(height: RitmoSpacing.md),
 
           // 3 Metric Tiles Row
           Row(
@@ -47,19 +46,19 @@ class JourneySummarySection extends StatelessWidget {
                   label: 'تکمیل‌شده',
                   value: toPersianDigits('${snapshot.completedCount}'),
                   icon: Icons.task_alt_rounded,
-                  color: CalendarTokens.emerald,
+                  color: theme.colorScheme.primary,
                 ),
               ),
-              const SizedBox(width: CalendarTokens.spacingS),
+              const SizedBox(width: RitmoSpacing.sm),
               Expanded(
                 child: _MetricCard(
                   label: 'باقی‌مانده',
                   value: toPersianDigits('${snapshot.remainingCount}'),
                   icon: Icons.pending_actions_rounded,
-                  color: Colors.amber.shade700,
+                  color: theme.colorScheme.tertiary,
                 ),
               ),
-              const SizedBox(width: CalendarTokens.spacingS),
+              const SizedBox(width: RitmoSpacing.sm),
               Expanded(
                 child: _MetricCard(
                   label: 'زمان آزاد',
@@ -70,7 +69,7 @@ class JourneySummarySection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: CalendarTokens.spacingL),
+          const SizedBox(height: RitmoSpacing.lg),
 
           // Spotlight rows for Current / Next activity
           if (snapshot.currentActivity != null) ...[
@@ -81,13 +80,13 @@ class JourneySummarySection extends StatelessWidget {
               isCurrent: true,
               onTap: () => onSelectActivity?.call(snapshot.currentActivity!),
             ),
-            const SizedBox(height: CalendarTokens.spacingS),
+            const SizedBox(height: RitmoSpacing.sm),
           ],
           if (snapshot.nextActivity != null) ...[
             _SpotlightActivityCard(
               label: 'فعالیت بعدی',
               item: snapshot.nextActivity!,
-              accentColor: Colors.amber.shade800,
+              accentColor: theme.colorScheme.tertiary,
               isCurrent: false,
               onTap: () => onSelectActivity?.call(snapshot.nextActivity!),
             ),
@@ -117,23 +116,22 @@ class _MetricCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(CalendarTokens.spacingM),
+      padding: const EdgeInsets.all(RitmoSpacing.md),
       decoration: BoxDecoration(
         color: color.withValues(alpha: isDark ? 0.12 : 0.08),
-        borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+        borderRadius: BorderRadius.circular(RitmoRadius.badge),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 18, color: color),
-          const SizedBox(height: CalendarTokens.spacingS),
+          const SizedBox(height: RitmoSpacing.sm),
           Text(
             value,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              fontFamily: 'Vazirmatn',
               color: theme.textTheme.bodyLarge?.color,
             ),
           ),
@@ -141,8 +139,7 @@ class _MetricCard extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: CalendarTokens.textLabel,
-              fontFamily: 'Vazirmatn',
+              fontSize: 11.0,
               color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65),
             ),
           ),
@@ -174,12 +171,12 @@ class _SpotlightActivityCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+      borderRadius: BorderRadius.circular(RitmoRadius.card),
       child: Container(
-        padding: const EdgeInsets.all(CalendarTokens.spacingM),
+        padding: const EdgeInsets.all(RitmoSpacing.md),
         decoration: BoxDecoration(
           color: accentColor.withValues(alpha: isDark ? 0.12 : 0.08),
-          borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
           border: Border.all(color: accentColor.withValues(alpha: 0.3)),
         ),
         child: Row(
@@ -192,7 +189,7 @@ class _SpotlightActivityCard extends StatelessWidget {
                 color: accentColor,
               ),
             ),
-            const SizedBox(width: CalendarTokens.spacingM),
+            const SizedBox(width: RitmoSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,10 +197,9 @@ class _SpotlightActivityCard extends StatelessWidget {
                   Text(
                     label,
                     style: TextStyle(
-                      fontSize: CalendarTokens.textLabel,
+                      fontSize: 11.0,
                       fontWeight: FontWeight.w700,
                       color: accentColor,
-                      fontFamily: 'Vazirmatn',
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -212,9 +208,8 @@ class _SpotlightActivityCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: CalendarTokens.textBody,
+                      fontSize: 14.0,
                       fontWeight: FontWeight.w600,
-                      fontFamily: 'Vazirmatn',
                     ),
                   ),
                 ],

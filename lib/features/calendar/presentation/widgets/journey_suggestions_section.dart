@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/analysis/agenda_conflict_detector.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 
 class JourneySuggestionsSection extends StatelessWidget {
   const JourneySuggestionsSection({
@@ -16,15 +17,14 @@ class JourneySuggestionsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = context.colors;
 
     final conflicts = snapshot.conflicts;
     final suggestions = snapshot.suggestions;
 
     if (conflicts.isEmpty && suggestions.isEmpty) {
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: CalendarTokens.spacing3xl),
+        padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.xxl),
         alignment: Alignment.center,
         child: Column(
           children: [
@@ -33,26 +33,25 @@ class JourneySuggestionsSection extends StatelessWidget {
               height: 52,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: CalendarTokens.emerald.withValues(alpha: isDark ? 0.15 : 0.08),
+                color: colors.primary.withValues(alpha: 0.12),
               ),
-              child: const Icon(Icons.check_circle_outline_rounded, size: 28, color: CalendarTokens.emerald),
+              child: Icon(Icons.check_circle_outline_rounded, size: 28, color: colors.primary),
             ),
-            const SizedBox(height: CalendarTokens.spacingM),
-            const Text(
+            const SizedBox(height: RitmoSpacing.md),
+            Text(
               'برنامه‌ات ایده‌آله 🎯',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: CalendarTokens.textTitle,
-                fontFamily: 'Vazirmatn',
+                fontSize: 15.0,
+                color: colors.textPrimary,
               ),
             ),
-            const SizedBox(height: CalendarTokens.spacingXs),
+            const SizedBox(height: RitmoSpacing.xs),
             Text(
               'هیچ تداخل یا هشداری در این روز وجود ندارد.',
               style: TextStyle(
-                fontSize: CalendarTokens.textMeta,
-                fontFamily: 'Vazirmatn',
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.60),
+                fontSize: 12.0,
+                color: colors.textSecondary,
               ),
             ),
           ],
@@ -68,39 +67,38 @@ class JourneySuggestionsSection extends StatelessWidget {
           if (conflicts.isNotEmpty) ...[
             Row(
               children: [
-                const Icon(Icons.warning_amber_rounded, size: 18, color: Colors.amber),
-                const SizedBox(width: CalendarTokens.spacingS),
+                Icon(Icons.warning_amber_rounded, size: 18, color: colors.warning),
+                const SizedBox(width: RitmoSpacing.sm),
                 Text(
                   'تداخل‌ها (${toPersianDigits(conflicts.length.toString())})',
                   style: TextStyle(
-                    fontSize: CalendarTokens.textTitle,
+                    fontSize: 15.0,
                     fontWeight: FontWeight.bold,
-                    color: Colors.amber.shade800,
-                    fontFamily: 'Vazirmatn',
+                    color: colors.warning,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: CalendarTokens.spacingS),
+            const SizedBox(height: RitmoSpacing.sm),
             for (final conflict in conflicts)
               InkWell(
                 onTap: () => onSelectConflict?.call(conflict),
-                borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+                borderRadius: BorderRadius.circular(RitmoRadius.card),
                 child: Container(
-                  margin: const EdgeInsets.only(bottom: CalendarTokens.spacingS),
+                  margin: const EdgeInsets.only(bottom: RitmoSpacing.sm),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: isDark ? 0.12 : 0.06),
-                    borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
-                    border: Border.all(color: Colors.amber.withValues(alpha: 0.25)),
+                    color: colors.warning.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(RitmoRadius.card),
+                    border: Border.all(color: colors.warning.withValues(alpha: 0.25)),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+                    borderRadius: BorderRadius.circular(RitmoRadius.card),
                     child: Row(
                       children: [
                         Container(
-                          width: CalendarTokens.accentBarWidth,
+                          width: CalendarGeometry.accentBarWidth,
                           height: 54,
-                          color: Colors.amber.shade700,
+                          color: colors.warning,
                         ),
                         Expanded(
                           child: Padding(
@@ -110,25 +108,24 @@ class JourneySuggestionsSection extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     conflict.description,
-                                    style: const TextStyle(
-                                      fontSize: CalendarTokens.textBody,
-                                      fontFamily: 'Vazirmatn',
+                                    style: TextStyle(
+                                      fontSize: 14.0,
+                                      color: colors.textPrimary,
                                     ),
                                   ),
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: Colors.amber.shade800,
-                                    borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+                                    color: colors.warning,
+                                    borderRadius: BorderRadius.circular(RitmoRadius.badge),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'رفع تداخل',
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontFamily: 'Vazirmatn',
+                                      color: colors.onPrimary,
                                     ),
                                   ),
                                 ),
@@ -141,41 +138,40 @@ class JourneySuggestionsSection extends StatelessWidget {
                   ),
                 ),
               ),
-            const SizedBox(height: CalendarTokens.spacingM),
+            const SizedBox(height: RitmoSpacing.md),
           ],
           if (suggestions.isNotEmpty) ...[
             Row(
               children: [
-                Icon(Icons.lightbulb_outline_rounded, size: 18, color: theme.colorScheme.primary),
-                const SizedBox(width: CalendarTokens.spacingS),
+                Icon(Icons.lightbulb_outline_rounded, size: 18, color: colors.primary),
+                const SizedBox(width: RitmoSpacing.sm),
                 Text(
                   'پیشنهادها (${toPersianDigits(suggestions.length.toString())})',
                   style: TextStyle(
-                    fontSize: CalendarTokens.textTitle,
+                    fontSize: 15.0,
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                    fontFamily: 'Vazirmatn',
+                    color: colors.primary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: CalendarTokens.spacingS),
+            const SizedBox(height: RitmoSpacing.sm),
             for (final suggestion in suggestions)
               Container(
-                margin: const EdgeInsets.only(bottom: CalendarTokens.spacingS),
+                margin: const EdgeInsets.only(bottom: RitmoSpacing.sm),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.06),
-                  borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
-                  border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.25)),
+                  color: colors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(RitmoRadius.card),
+                  border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+                  borderRadius: BorderRadius.circular(RitmoRadius.card),
                   child: Row(
                     children: [
                       Container(
-                        width: CalendarTokens.accentBarWidth,
+                        width: CalendarGeometry.accentBarWidth,
                         height: 54,
-                        color: theme.colorScheme.primary,
+                        color: colors.primary,
                       ),
                       Expanded(
                         child: Padding(
@@ -185,9 +181,9 @@ class JourneySuggestionsSection extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   suggestion.message,
-                                  style: const TextStyle(
-                                    fontSize: CalendarTokens.textBody,
-                                    fontFamily: 'Vazirmatn',
+                                  style: TextStyle(
+                                    fontSize: 14.0,
+                                    color: colors.textPrimary,
                                   ),
                                 ),
                               ),
@@ -195,16 +191,15 @@ class JourneySuggestionsSection extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary,
-                                    borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+                                    color: colors.primary,
+                                    borderRadius: BorderRadius.circular(RitmoRadius.badge),
                                   ),
                                   child: Text(
-                                    toPersianDigits(suggestion.suggestedTimeOfDay!),
-                                    style: const TextStyle(
+                                    toPersianDigits(suggestion.suggestedTimeOfDay ?? ''),
+                                    style: TextStyle(
                                       fontSize: 11,
-                                      color: Colors.white,
+                                      color: colors.onPrimary,
                                       fontWeight: FontWeight.bold,
-                                      fontFamily: 'Vazirmatn',
                                     ),
                                   ),
                                 ),

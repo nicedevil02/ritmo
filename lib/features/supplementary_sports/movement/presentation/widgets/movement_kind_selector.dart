@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_custom_kind_sheet.dart';
 
 class MovementKindSelector extends StatefulWidget {
@@ -246,12 +245,12 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? CalendarTokens.emerald.withValues(alpha: 0.22)
+                                ? const Color(0xFF10B981).withValues(alpha: 0.22)
                                 : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.30),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
-                                  ? CalendarTokens.emerald
+                                  ? const Color(0xFF10B981)
                                   : colors.outlineVariant.withValues(alpha: 0.20),
                               width: isSelected ? 1.5 : 1.0,
                             ),
@@ -267,7 +266,7 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
                                   fontFamily: 'Vazirmatn',
                                   fontSize: 13,
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                  color: isSelected ? CalendarTokens.emerald : colors.onSurface,
+                                  color: isSelected ? const Color(0xFF10B981) : colors.onSurface,
                                 ),
                               ),
                             ],

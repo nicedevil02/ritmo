@@ -3,11 +3,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/domain/registry_health_issue.dart';
 import 'package:ritmo/features/registry/domain/registry_query.dart';
@@ -306,7 +307,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                   elevation: 3,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(
-                      CalendarTokens.fabRadius,
+                      RitmoRadius.hero,
                     ),
                   ),
                   icon: const Icon(Icons.add_rounded, size: 22),
@@ -332,10 +333,10 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
   Widget _buildHeader(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        CalendarTokens.spacingL,
-        CalendarTokens.spacingM,
-        CalendarTokens.spacingL,
-        CalendarTokens.spacingS,
+        RitmoSpacing.lg,
+        RitmoSpacing.md,
+        RitmoSpacing.lg,
+        RitmoSpacing.sm,
       ),
       child: Row(
         children: [
@@ -399,9 +400,9 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
     return Padding(
       padding:
-          const EdgeInsets.symmetric(horizontal: CalendarTokens.spacingL),
+          const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
       child: SizedBox(
-        height: CalendarTokens.searchBarHeight,
+        height: CalendarGeometry.searchBarHeight,
         child: TextField(
           controller: _searchController,
           onChanged: _onSearchChanged,
@@ -572,7 +573,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
   Widget _buildLensSwitcher(ThemeData theme, bool isDark) {
     return Padding(
       padding:
-          const EdgeInsets.symmetric(horizontal: CalendarTokens.spacingL),
+          const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
@@ -636,8 +637,8 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
         _refreshData();
       },
       child: AnimatedContainer(
-        duration: CalendarTokens.durationStandard,
-        curve: CalendarTokens.curveDefault,
+        duration: RitmoMotion.state,
+        curve: RitmoMotion.enter,
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: isActive
@@ -713,11 +714,11 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
 
   Widget _buildDomainFilterChips(ThemeData theme, bool isDark) {
     return SizedBox(
-      height: CalendarTokens.chipHeight,
+      height: CalendarGeometry.chipHeight,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(
-          horizontal: CalendarTokens.spacingL,
+          horizontal: RitmoSpacing.lg,
         ),
         children: [
           _buildFilterChip(
@@ -776,7 +777,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: CalendarTokens.durationStandard,
+        duration: RitmoMotion.state,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
@@ -867,13 +868,13 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             margin: const EdgeInsets.symmetric(
-              horizontal: CalendarTokens.spacingL,
-              vertical: CalendarTokens.registryCardGap / 2,
+              horizontal: RitmoSpacing.lg,
+              vertical: 10.0 / 2,
             ),
             decoration: BoxDecoration(
               color: const Color(0xFF64748B),
               borderRadius: BorderRadius.circular(
-                CalendarTokens.radiusCardLg,
+                RitmoRadius.hero,
               ),
             ),
             child: const Row(
@@ -948,7 +949,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
           children: [
             const Icon(
               Icons.verified_rounded,
-              color: CalendarTokens.emerald,
+              color: const Color(0xFF10B981),
               size: 48,
             ),
             const SizedBox(height: 12),
@@ -958,7 +959,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                 fontFamily: 'Vazirmatn',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: CalendarTokens.emerald,
+                color: const Color(0xFF10B981),
               ),
             ),
             const SizedBox(height: 4),

@@ -149,11 +149,16 @@ class DedicatedBuilderSheet extends StatelessWidget {
                             onPressed: controller.title.trim().isEmpty || controller.isSaving
                                 ? null
                                 : () async {
-                                    await controller.save(context);
-                                    if (context.mounted) {
-                                      Navigator.pop(context);
+                                    final success = await controller.save(
+                                      context,
+                                      allowDelegation: false,
+                                    );
+                                    if (success) {
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                      }
+                                      onSaved();
                                     }
-                                    onSaved();
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: colors.primary,

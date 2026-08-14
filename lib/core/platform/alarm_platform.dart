@@ -11,6 +11,12 @@ abstract interface class AlarmPlatform {
     required bool isEssential,
   });
 
+  /// Schedules a silent tick alarm for background refresh without user-visible notification.
+  Future<bool> scheduleSilentTick({
+    required String id,
+    required int timeMsUTC,
+  });
+
   /// Cancels a scheduled alarm.
   Future<bool> cancelAlarm(String id);
 
@@ -36,6 +42,17 @@ class MethodChannelAlarmPlatform implements AlarmPlatform {
       timeMsUTC: timeMsUTC,
       title: title,
       isEssential: isEssential,
+    );
+  }
+
+  @override
+  Future<bool> scheduleSilentTick({
+    required String id,
+    required int timeMsUTC,
+  }) {
+    return NativeBridge.scheduleSilentTick(
+      id: id,
+      timeMsUTC: timeMsUTC,
     );
   }
 

@@ -1,10 +1,10 @@
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 
 /// Pure function to map minutes of day (0..1439) to scroll target in split day view.
 ({int columnIndex, double offset}) splitDayScrollTargetFor(
   int minutesOfDay, {
-  double pxPerMinute = CalendarTokens.pxPerMinuteSplit,
-  int boundaryMinutes = CalendarTokens.splitBoundaryMinutes,
+  double pxPerMinute = CalendarGeometry.pxPerMinuteSplit,
+  int boundaryMinutes = CalendarGeometry.splitBoundaryMinutes,
   int leadMinutes = 60,
 }) {
   final clampedM = minutesOfDay.clamp(0, 1439);

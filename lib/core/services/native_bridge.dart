@@ -79,6 +79,41 @@ class NativeBridge {
     }
   }
 
+  /// Schedules a silent tick alarm in Android's AlarmManager for background state refreshes.
+  static Future<bool> scheduleSilentTick({
+    required String id,
+    required int timeMsUTC,
+  }) async {
+    if (kIsWeb) {
+      debugPrint('Web: Mock scheduled silent tick $id at $timeMsUTC');
+      return true;
+    }
+    try {
+      final bool? success = await _alarmChannel.invokeMethod<bool>(AlarmMethods.scheduleSilentTick, {
+        'id': id,
+        'time': timeMsUTC,
+      });
+      return success ?? false;
+    } on MissingPluginException catch (e, st) {
+      RitmoLog.error(
+        'NativeBridge',
+        'Channel contract mismatch or unhandled method ${AlarmMethods.scheduleSilentTick} on channel ${NativeChannels.alarms}',
+        e,
+        st,
+      );
+      unawaited(_recordNativeFailure());
+      return false;
+    } on PlatformException catch (e, st) {
+      RitmoLog.error('NativeBridge', 'Platform error scheduling silent tick: ${e.message}', e, st);
+      unawaited(_recordNativeFailure());
+      return false;
+    } catch (e, st) {
+      RitmoLog.error('NativeBridge', 'Unexpected error scheduling silent tick', e, st);
+      unawaited(_recordNativeFailure());
+      return false;
+    }
+  }
+
   /// Cancels a scheduled alarm in Android's AlarmManager.
   static Future<bool> cancelAlarm(String id) async {
     if (kIsWeb) {

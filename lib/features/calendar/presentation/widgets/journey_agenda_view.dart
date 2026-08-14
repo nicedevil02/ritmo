@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
-import 'package:ritmo/features/calendar/logic/agenda_bucketing.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
-import 'package:ritmo/features/calendar/utils/domain_palette.dart';
+import 'package:ritmo/features/calendar/presentation/logic/agenda_bucketing.dart';
+import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 
 /// K20 — Agenda scale view: scrollable list bucketed by time proximity.
 ///
 /// Layout rules (from 067.md §K20):
 /// - CustomScrollView with SliverPersistentHeader for sticky bucket headers.
 /// - Empty buckets are NOT rendered (no header, no empty space).
-/// - Fixed row height from CalendarTokens.agendaRowHeight to prevent scroll jitter.
+/// - Fixed row height from CalendarGeometry.agendaRowHeight to prevent scroll jitter.
 /// - thisWeek/nextWeek/later group items under a Jalali day sub-heading.
 /// - Completed items go to the bottom of their group with lineThrough style.
 /// - K23: right→left swipe = postpone (task/goalStep only); left→right swipe = done.
@@ -50,8 +49,8 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
   Widget build(BuildContext context) {
     if (widget.isLoading) {
       return const Padding(
-        padding: EdgeInsets.all(CalendarTokens.spacingM),
-        child: RitmoSkeletonList(itemCount: 6, itemHeight: CalendarTokens.agendaRowHeight),
+        padding: EdgeInsets.all(RitmoSpacing.md),
+        child: RitmoSkeletonList(itemCount: 6, itemHeight: CalendarGeometry.agendaRowHeight),
       );
     }
 
@@ -128,14 +127,13 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
           slivers.add(SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                  CalendarTokens.spacingXl, CalendarTokens.spacingM, CalendarTokens.spacingXl, 4),
+                  RitmoSpacing.xl, RitmoSpacing.md, RitmoSpacing.xl, 4),
               child: Text(
                 'تکرارهای ثابت (${toPersianDigits(seriesList.length)})',
                 style: TextStyle(
-                  fontSize: CalendarTokens.textMeta,
+                  fontSize: 12.0,
                   fontWeight: FontWeight.w700,
                   color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-                  fontFamily: 'Vazirmatn',
                 ),
               ),
             ),
@@ -328,9 +326,9 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   final bool isOverdue;
 
   @override
-  double get minExtent => CalendarTokens.agendaBucketHeaderHeight;
+  double get minExtent => CalendarGeometry.agendaBucketHeaderHeight;
   @override
-  double get maxExtent => CalendarTokens.agendaBucketHeaderHeight;
+  double get maxExtent => CalendarGeometry.agendaBucketHeaderHeight;
 
   @override
   Widget build(
@@ -344,18 +342,17 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
       color: theme.scaffoldBackgroundColor,
       alignment: AlignmentDirectional.centerStart,
       padding: const EdgeInsets.symmetric(
-        horizontal: CalendarTokens.spacingXl,
-        vertical: CalendarTokens.spacingXs,
+        horizontal: RitmoSpacing.xl,
+        vertical: RitmoSpacing.xs,
       ),
       child: Row(
         children: [
           Text(
             bucketLabelFa(bucket),
             style: TextStyle(
-              fontSize: CalendarTokens.textSection,
+              fontSize: 13.0,
               fontWeight: FontWeight.w700,
               color: labelColor,
-              fontFamily: 'Vazirmatn',
             ),
           ),
           const SizedBox(width: 6),
@@ -364,15 +361,14 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
             decoration: BoxDecoration(
               color: (isOverdue ? context.colors.warning : theme.colorScheme.primary)
                   .withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+              borderRadius: BorderRadius.circular(RitmoRadius.badge),
             ),
             child: Text(
               countText,
               style: TextStyle(
-                fontSize: CalendarTokens.textLabel,
+                fontSize: 11.0,
                 fontWeight: FontWeight.w600,
                 color: isOverdue ? context.colors.warning : theme.colorScheme.primary,
-                fontFamily: 'Vazirmatn',
               ),
             ),
           ),
@@ -407,15 +403,15 @@ class _UpcomingUniqueBanner extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.fromLTRB(
-        CalendarTokens.spacingXl,
-        CalendarTokens.spacingM,
-        CalendarTokens.spacingXl,
-        CalendarTokens.spacingS,
+        RitmoSpacing.xl,
+        RitmoSpacing.md,
+        RitmoSpacing.xl,
+        RitmoSpacing.sm,
       ),
-      padding: const EdgeInsets.all(CalendarTokens.spacingM),
+      padding: const EdgeInsets.all(RitmoSpacing.md),
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+        borderRadius: BorderRadius.circular(RitmoRadius.card),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.2),
         ),
@@ -435,10 +431,9 @@ class _UpcomingUniqueBanner extends StatelessWidget {
               Text(
                 'پیش‌رو (کارهای یکتا)',
                 style: TextStyle(
-                  fontSize: CalendarTokens.textBody,
+                  fontSize: 14.0,
                   fontWeight: FontWeight.w700,
                   color: theme.colorScheme.primary,
-                  fontFamily: 'Vazirmatn',
                 ),
               ),
             ],
@@ -471,9 +466,8 @@ class _UpcomingUniqueBanner extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: CalendarTokens.textBody,
+                              fontSize: 14.0,
                               fontWeight: FontWeight.w500,
-                              fontFamily: 'Vazirmatn',
                               color: theme.textTheme.bodyMedium?.color,
                             ),
                           ),
@@ -483,13 +477,12 @@ class _UpcomingUniqueBanner extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+                            borderRadius: BorderRadius.circular(RitmoRadius.badge),
                           ),
                           child: Text(
                             daySubGroupLabel(item.dateStr),
                             style: TextStyle(
                               fontSize: 11,
-                              fontFamily: 'Vazirmatn',
                               color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.65),
                             ),
                           ),
@@ -538,7 +531,7 @@ class _RecurringGroupRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: CalendarTokens.spacingXl,
+        horizontal: RitmoSpacing.xl,
         vertical: 3,
       ),
       child: Card(
@@ -546,7 +539,7 @@ class _RecurringGroupRow extends StatelessWidget {
         elevation: 0,
         color: theme.colorScheme.surfaceContainerLow,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
           side: BorderSide(
             color: theme.dividerColor.withValues(alpha: 0.4),
           ),
@@ -555,10 +548,10 @@ class _RecurringGroupRow extends StatelessWidget {
           children: [
             InkWell(
               onTap: onToggleExpand,
-              borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+              borderRadius: BorderRadius.circular(RitmoRadius.card),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: CalendarTokens.spacingM,
+                  horizontal: RitmoSpacing.md,
                   vertical: 10,
                 ),
                 child: Row(
@@ -573,7 +566,7 @@ class _RecurringGroupRow extends StatelessWidget {
                       ),
                       child: Icon(icon, size: 16, color: color),
                     ),
-                    const SizedBox(width: CalendarTokens.spacingS),
+                    const SizedBox(width: RitmoSpacing.sm),
 
                     // Title + Subtitle
                     Expanded(
@@ -586,9 +579,8 @@ class _RecurringGroupRow extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: CalendarTokens.textBody,
+                              fontSize: 14.0,
                               fontWeight: FontWeight.w600,
-                              fontFamily: 'Vazirmatn',
                               color: theme.textTheme.bodyMedium?.color,
                             ),
                           ),
@@ -598,10 +590,9 @@ class _RecurringGroupRow extends StatelessWidget {
                               child: Text(
                                 '${toPersianDigits(series.completedCount)} از ${toPersianDigits(series.totalCount)} انجام شد',
                                 style: TextStyle(
-                                  fontSize: CalendarTokens.textMeta,
+                                  fontSize: 12.0,
                                   color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.w500,
-                                  fontFamily: 'Vazirmatn',
                                 ),
                               ),
                             ),
@@ -616,9 +607,8 @@ class _RecurringGroupRow extends StatelessWidget {
                         child: Text(
                           toPersianDigits(rep.timeOfDay ?? ''),
                           style: TextStyle(
-                            fontSize: CalendarTokens.textMeta,
+                            fontSize: 12.0,
                             color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
-                            fontFamily: 'Vazirmatn',
                           ),
                         ),
                       ),
@@ -628,15 +618,14 @@ class _RecurringGroupRow extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+                        borderRadius: BorderRadius.circular(RitmoRadius.badge),
                       ),
                       child: Text(
                         series.recurrenceLabel,
                         style: TextStyle(
-                          fontSize: CalendarTokens.textMeta,
+                          fontSize: 12.0,
                           fontWeight: FontWeight.w600,
                           color: theme.colorScheme.primary,
-                          fontFamily: 'Vazirmatn',
                         ),
                       ),
                     ),
@@ -673,7 +662,6 @@ class _RecurringGroupRow extends StatelessWidget {
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.45),
-                            fontFamily: 'Vazirmatn',
                           ),
                         ),
                       ),
@@ -710,14 +698,13 @@ class _DaySubGroupHeader extends StatelessWidget {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-            CalendarTokens.spacingXl, CalendarTokens.spacingS, CalendarTokens.spacingXl, 2),
+            RitmoSpacing.xl, RitmoSpacing.sm, RitmoSpacing.xl, 2),
         child: Text(
           daySubGroupLabel(dateStr),
           style: TextStyle(
-            fontSize: CalendarTokens.textMeta,
+            fontSize: 12.0,
             fontWeight: FontWeight.w600,
             color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.45),
-            fontFamily: 'Vazirmatn',
           ),
         ),
       ),
@@ -791,6 +778,7 @@ class _AgendaRowState extends State<_AgendaRow> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final theme = Theme.of(context);
     final item = widget.item;
     final color = domainColor(context, item.domain);
@@ -798,13 +786,13 @@ class _AgendaRowState extends State<_AgendaRow> {
     final isDone = _isDone;
 
     final Widget row = SizedBox(
-      height: CalendarTokens.agendaRowHeight,
+      height: CalendarGeometry.agendaRowHeight,
       child: InkWell(
         onTap: widget.onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: CalendarTokens.spacingXl,
-            vertical: CalendarTokens.spacingXs,
+            horizontal: RitmoSpacing.xl,
+            vertical: RitmoSpacing.xs,
           ),
           child: Row(
             children: [
@@ -820,7 +808,7 @@ class _AgendaRowState extends State<_AgendaRow> {
                     size: 16,
                     color: color.withValues(alpha: isDone ? 0.4 : 1.0)),
               ),
-              const SizedBox(width: CalendarTokens.spacingS),
+              const SizedBox(width: RitmoSpacing.sm),
 
               // Title + subtitle
               Expanded(
@@ -833,9 +821,8 @@ class _AgendaRowState extends State<_AgendaRow> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: CalendarTokens.textBody,
+                        fontSize: 14.0,
                         fontWeight: FontWeight.w500,
-                        fontFamily: 'Vazirmatn',
                         color: isDone
                             ? theme.textTheme.bodyMedium?.color
                                 ?.withValues(alpha: 0.35)
@@ -850,10 +837,9 @@ class _AgendaRowState extends State<_AgendaRow> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: CalendarTokens.textMeta,
+                          fontSize: 12.0,
                           color: theme.textTheme.bodyMedium?.color
                               ?.withValues(alpha: isDone ? 0.25 : 0.5),
-                          fontFamily: 'Vazirmatn',
                         ),
                       ),
                   ],
@@ -867,10 +853,9 @@ class _AgendaRowState extends State<_AgendaRow> {
                   child: Text(
                     toPersianDigits(item.timeOfDay ?? ''),
                     style: TextStyle(
-                      fontSize: CalendarTokens.textMeta,
+                      fontSize: 12.0,
                       color: theme.textTheme.bodyMedium?.color
                           ?.withValues(alpha: isDone ? 0.25 : 0.55),
-                      fontFamily: 'Vazirmatn',
                     ),
                   ),
                 ),
@@ -894,16 +879,17 @@ class _AgendaRowState extends State<_AgendaRow> {
     // K23 — wrap in Dismissible for swipe gestures
     return Dismissible(
       key: ValueKey(item.id),
+      direction: _canPostpone ? DismissDirection.horizontal : DismissDirection.startToEnd,
       // Left→right: mark done (all domains)
       background: _SwipeBackground(
-        color: Colors.green.shade600,
+        color: colors.success,
         icon: Icons.check_rounded,
         alignment: AlignmentDirectional.centerStart,
         label: 'انجام شد',
       ),
-      // Right→left: postpone (task/goalStep only); snap back for others
+      // Right→left: postpone (task/goalStep only); disabled when !_canPostpone
       secondaryBackground: _SwipeBackground(
-        color: _canPostpone ? Colors.orange.shade700 : Colors.transparent,
+        color: _canPostpone ? colors.accent : Colors.transparent,
         icon: _canPostpone ? Icons.schedule_rounded : null,
         alignment: AlignmentDirectional.centerEnd,
         label: _canPostpone ? 'فردا' : '',
@@ -911,7 +897,7 @@ class _AgendaRowState extends State<_AgendaRow> {
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.startToEnd) {
           // Done swipe
-          RitmoHaptics.tap();
+          RitmoHapticsPolicy.tap();
           if (widget.onDone != null) await widget.onDone!();
           return false; // parent refreshes via event; don't remove from list directly
         } else {
@@ -920,7 +906,7 @@ class _AgendaRowState extends State<_AgendaRow> {
             // Snap back — routines cannot be postponed
             return false;
           }
-          RitmoHaptics.tap();
+          RitmoHapticsPolicy.tap();
           if (widget.onPostpone != null) await widget.onPostpone!();
           return false;
         }
@@ -953,7 +939,7 @@ class _SwipeBackground extends StatelessWidget {
     return Container(
       color: color.withValues(alpha: 0.15),
       alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: CalendarTokens.spacingXl),
+      padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.xl),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -963,9 +949,8 @@ class _SwipeBackground extends StatelessWidget {
             label,
             style: TextStyle(
               color: color,
-              fontSize: CalendarTokens.textMeta,
+              fontSize: 12.0,
               fontWeight: FontWeight.w600,
-              fontFamily: 'Vazirmatn',
             ),
           ),
         ],
@@ -996,9 +981,8 @@ class _EmptyAgendaState extends StatelessWidget {
               'برنامه‌ای در بازه پیش‌رو ثبت نشده.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: CalendarTokens.textBody,
+                fontSize: 14.0,
                 color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
-                fontFamily: 'Vazirmatn',
               ),
             ),
             const SizedBox(height: 24),
@@ -1051,7 +1035,7 @@ class _ActionButton extends StatelessWidget {
         icon: Icon(icon, size: 18),
         label: Text(
           label,
-          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
+          style: const TextStyle(fontSize: 14),
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: isPrimary
@@ -1064,7 +1048,7 @@ class _ActionButton extends StatelessWidget {
           ),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+            borderRadius: BorderRadius.circular(RitmoRadius.card),
           ),
         ),
       ),

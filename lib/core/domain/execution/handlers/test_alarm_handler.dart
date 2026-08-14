@@ -6,6 +6,9 @@ import 'package:ritmo/core/domain/execution/command_handler.dart';
 import 'package:ritmo/core/domain/execution/events/kernel_event_factory.dart';
 import 'package:ritmo/core/domain/execution/kernel_mutation_result.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 
@@ -38,11 +41,15 @@ class TestAlarmHandler implements KernelCommandHandler<TestAlarmCommand> {
     );
 
     tasks.add(() async {
-      final ok = await sl<AlarmPlatform>().scheduleExactAlarm(
-        id: testId,
-        timeMsUTC: scheduledMs,
-        title: '🧪 آلارم تست ریتمو',
-        isEssential: true,
+      final ok = await NotificationGateway.schedule(
+        NotificationRequest(
+          id: testId,
+          channel: NotificationChannelId.critical,
+          scheduledAt: DateTime.fromMillisecondsSinceEpoch(scheduledMs),
+          title: '🧪 آلارم تست ریتمو',
+          sourceSystem: 'system',
+          entityId: 'test_routine',
+        ),
       );
       final db = await DatabaseHelper.instance.database;
       await db.update(

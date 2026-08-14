@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
+import 'package:ritmo/core/utils/relative_time_formatter.dart';
 
 /// K24 — Day summary bar: single line above timeline with 3 numbers derived from snapshot.
 /// - remainingCount ("مانده")
@@ -27,34 +28,23 @@ class DaySummaryBar extends StatelessWidget {
 
   String _formatFreeTime(int totalMinutes) {
     if (totalMinutes <= 0) return '۰ دقیقه';
-    final hours = totalMinutes ~/ 60;
-    final mins = totalMinutes % 60;
-    if (hours > 0 && mins > 0) {
-      return '${toPersianDigits(hours)} ساعت و ${toPersianDigits(mins)} دقیقه';
-    } else if (hours > 0) {
-      return '${toPersianDigits(hours)} ساعت';
-    } else {
-      return '${toPersianDigits(mins)} دقیقه';
-    }
+    return RelativeTimeFormatter.durationFa(totalMinutes);
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = context.colors;
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: CalendarTokens.spacingXl,
-        vertical: CalendarTokens.spacingXs + 2,
+        horizontal: RitmoSpacing.xl,
+        vertical: RitmoSpacing.xs + 2,
       ),
       decoration: BoxDecoration(
-        color: isDark
-            ? theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.5)
-            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        color: colors.surfaceSubtle,
         border: Border(
           bottom: BorderSide(
-            color: theme.dividerColor.withValues(alpha: CalendarTokens.alphaCardBorder),
+            color: colors.borderSubtle,
           ),
         ),
       ),
@@ -64,36 +54,33 @@ class DaySummaryBar extends StatelessWidget {
           // Remaining count
           _SummaryChip(
             label: 'مانده: ${toPersianDigits(snapshot.remainingCount)}',
-            color: theme.colorScheme.primary,
+            color: colors.primary,
           ),
 
           // Completed count
           _SummaryChip(
             label: 'انجام‌شده: ${toPersianDigits(snapshot.completedCount)}',
-            color: CalendarTokens.emerald,
+            color: colors.success,
           ),
 
           // Free time (tappable)
           InkWell(
             onTap: onTapFreeGaps,
-            borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+            borderRadius: BorderRadius.circular(RitmoRadius.badge),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               child: Row(
                 children: [
                   Icon(Icons.schedule_rounded,
                       size: 13,
-                      color: theme.textTheme.bodyMedium?.color
-                          ?.withValues(alpha: 0.6)),
+                      color: colors.textSecondary),
                   const SizedBox(width: 3),
                   Text(
                     'آزاد: ${_formatFreeTime(_freeMinutes)}',
                     style: TextStyle(
-                      fontSize: CalendarTokens.textMeta,
+                      fontSize: 12.0,
                       fontWeight: FontWeight.w600,
-                      color: theme.textTheme.bodyMedium?.color
-                          ?.withValues(alpha: 0.7),
-                      fontFamily: 'Vazirmatn',
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -117,15 +104,14 @@ class _SummaryChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+        borderRadius: BorderRadius.circular(RitmoRadius.badge),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: CalendarTokens.textMeta,
+          fontSize: 12.0,
           fontWeight: FontWeight.w600,
           color: color,
-          fontFamily: 'Vazirmatn',
         ),
       ),
     );

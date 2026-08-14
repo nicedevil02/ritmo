@@ -7,7 +7,6 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_readiness_service.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_reminder_service.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_slot_override_repository.dart';
@@ -312,7 +311,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 						height: 52,
 						child: ElevatedButton.icon(
 							style: ElevatedButton.styleFrom(
-								backgroundColor: CalendarTokens.emerald,
+								backgroundColor: const Color(0xFF10B981),
 								foregroundColor: const Color(0xFF042116),
 								elevation: 3,
 								shape: RoundedRectangleBorder(
@@ -653,7 +652,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 			decoration: BoxDecoration(
 				color: colors.surfaceElevated,
 				borderRadius: BorderRadius.circular(18),
-				border: Border.all(color: CalendarTokens.emerald.withValues(alpha: 0.5)),
+				border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
 			),
 			child: Column(
 				crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -690,7 +689,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 								Expanded(
 									child: ElevatedButton(
 										style: ElevatedButton.styleFrom(
-											backgroundColor: CalendarTokens.emerald,
+											backgroundColor: const Color(0xFF10B981),
 											foregroundColor: const Color(0xFF042116),
 											shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
 											padding: const EdgeInsets.symmetric(vertical: 10),
@@ -747,7 +746,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 					] else ...[
 						ElevatedButton(
 							style: ElevatedButton.styleFrom(
-								backgroundColor: CalendarTokens.emerald,
+								backgroundColor: const Color(0xFF10B981),
 								foregroundColor: const Color(0xFF042116),
 								shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
 								padding: const EdgeInsets.symmetric(vertical: 10),

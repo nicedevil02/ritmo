@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class JourneyYearView extends StatelessWidget {
@@ -18,8 +18,7 @@ class JourneyYearView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = context.colors;
     final now = DateTime.now();
 
     final jalaliSelected = Jalali.fromDateTime(selectedDate);
@@ -36,82 +35,81 @@ class JourneyYearView extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: CalendarTokens.spacingL,
-          vertical: CalendarTokens.spacingS,
+          horizontal: RitmoSpacing.lg,
+          vertical: RitmoSpacing.sm,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.calendar_today_rounded, size: 18, color: theme.colorScheme.primary),
-                const SizedBox(width: CalendarTokens.spacingS),
+                Icon(Icons.calendar_today_rounded, size: 18, color: colors.primary),
+                const SizedBox(width: RitmoSpacing.sm),
                 Text(
                   'نمای سال $jalaliYearStr',
                   style: TextStyle(
-                    fontSize: CalendarTokens.textTitle,
+                    fontSize: 14.0,
                     fontWeight: FontWeight.bold,
-                    color: theme.textTheme.bodyLarge?.color,
-                    fontFamily: 'Vazirmatn',
+                    color: colors.textPrimary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: CalendarTokens.spacingM),
+            const SizedBox(height: RitmoSpacing.md),
             Expanded(
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
-                  mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
-                  childAspectRatio: 0.95,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 1.15,
                 ),
                 itemCount: 12,
                 itemBuilder: (context, index) {
-                  final monthNumber = index + 1;
-                  final monthDate = Jalali(jalaliYear, monthNumber, 1).toDateTime();
-
-                  final isSelectedMonth = jalaliSelected.year == jalaliYear && jalaliSelected.month == monthNumber;
-                  final isCurrentMonth = jalaliNow.year == jalaliYear && jalaliNow.month == monthNumber;
+                  final monthIndex = index + 1;
+                  final isCurrentMonth = (jalaliYear == jalaliNow.year && monthIndex == jalaliNow.month);
+                  final isSelectedMonth = (jalaliYear == jalaliSelected.year && monthIndex == jalaliSelected.month);
 
                   int monthTaskCount = 0;
                   int monthCompletedCount = 0;
 
-                  for (final entry in rangeSnapshots.entries) {
-                    final dt = DateTime.tryParse(entry.key);
-                    if (dt != null) {
-                      final j = Jalali.fromDateTime(dt);
-                      if (j.year == jalaliYear && j.month == monthNumber) {
-                        monthTaskCount += entry.value.items.length;
-                        monthCompletedCount += entry.value.completedCount;
+                  for (int d = 1; d <= 31; d++) {
+                    try {
+                      final jDate = Jalali(jalaliYear, monthIndex, d);
+                      final gDate = jDate.toDateTime();
+                      final dateStr =
+                          '${gDate.year}-${gDate.month.toString().padLeft(2, '0')}-${gDate.day.toString().padLeft(2, '0')}';
+                      final snapshot = rangeSnapshots[dateStr];
+                      if (snapshot != null) {
+                        monthTaskCount += snapshot.items.length;
+                        monthCompletedCount += snapshot.completedCount;
                       }
-                    }
+                    } catch (_) {}
                   }
 
-                  final progressRatio = monthTaskCount > 0
-                      ? (monthCompletedCount / monthTaskCount).clamp(0.0, 1.0)
-                      : 0.0;
+                  final progressRatio = monthTaskCount > 0 ? (monthCompletedCount / monthTaskCount) : 0.0;
 
                   return InkWell(
-                    onTap: () => onSelectMonth(monthDate),
-                    borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+                    onTap: () {
+                      final firstDay = Jalali(jalaliYear, monthIndex, 1).toDateTime();
+                      onSelectMonth(firstDay);
+                    },
+                    borderRadius: BorderRadius.circular(RitmoRadius.card),
                     child: Container(
-                      padding: const EdgeInsets.all(CalendarTokens.spacingM),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: isSelectedMonth
-                            ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.08)
+                            ? colors.primary.withValues(alpha: 0.12)
                             : (isCurrentMonth
-                                ? theme.colorScheme.primary.withValues(alpha: 0.06)
-                                : (isDark
-                                    ? theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.40)
-                                    : theme.cardColor)),
-                        borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+                                ? colors.primary.withValues(alpha: 0.06)
+                                : colors.surfaceSubtle),
+                        borderRadius: BorderRadius.circular(RitmoRadius.card),
                         border: Border.all(
                           color: isSelectedMonth
-                              ? theme.colorScheme.primary
+                              ? colors.primary
                               : (isCurrentMonth
-                                  ? theme.colorScheme.primary.withValues(alpha: 0.5)
-                                  : theme.dividerColor.withValues(alpha: CalendarTokens.alphaCardBorder)),
+                                  ? colors.primary.withValues(alpha: 0.40)
+                                  : colors.borderSubtle),
                           width: isSelectedMonth ? 1.5 : 1.0,
                         ),
                       ),
@@ -127,10 +125,9 @@ class JourneyYearView extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'Vazirmatn',
                                   color: isCurrentMonth || isSelectedMonth
-                                      ? theme.colorScheme.primary
-                                      : theme.textTheme.bodyLarge?.color,
+                                      ? colors.primary
+                                      : colors.textPrimary,
                                 ),
                               ),
                               if (isCurrentMonth)
@@ -138,7 +135,7 @@ class JourneyYearView extends StatelessWidget {
                                   width: 6,
                                   height: 6,
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary,
+                                    color: colors.primary,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -152,14 +149,13 @@ class JourneyYearView extends StatelessWidget {
                                     ? '${toPersianDigits((progressRatio * 100).round())}٪'
                                     : '—',
                                 style: TextStyle(
-                                  fontSize: CalendarTokens.textMeta,
+                                  fontSize: 12.0,
                                   fontWeight: FontWeight.w600,
-                                  fontFamily: 'Vazirmatn',
                                   color: monthTaskCount > 0
                                       ? (isCurrentMonth || isSelectedMonth
-                                          ? theme.colorScheme.primary
-                                          : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.70))
-                                      : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.30),
+                                          ? colors.primary
+                                          : colors.textSecondary)
+                                      : colors.textTertiary,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -168,13 +164,13 @@ class JourneyYearView extends StatelessWidget {
                                 child: LinearProgressIndicator(
                                   value: monthTaskCount > 0 ? progressRatio : 0.0,
                                   minHeight: 3,
-                                  backgroundColor: theme.dividerColor.withValues(alpha: 0.12),
+                                  backgroundColor: colors.borderSubtle,
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     monthTaskCount == 0
-                                        ? theme.disabledColor
+                                        ? colors.disabled
                                         : (monthCompletedCount == monthTaskCount
-                                            ? CalendarTokens.emerald
-                                            : theme.colorScheme.primary),
+                                            ? colors.success
+                                            : colors.primary),
                                   ),
                                 ),
                               ),

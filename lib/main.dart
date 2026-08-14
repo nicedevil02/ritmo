@@ -164,14 +164,20 @@ class _RitmoAppState extends State<RitmoApp> {
       if (mounted) setState(() => _initError = null);
       final db = await DatabaseHelper.instance.database;
 
-      // WarmUp database tasks and sweep (BOOT-07)
-      await DatabaseHelper.warmUp(db);
+      // WarmUp database tasks and sweep with safety timeout (BOOT-07)
+      await DatabaseHelper.warmUp(db).timeout(
+        const Duration(seconds: 4),
+        onTimeout: () => RitmoLog.warning('Init', 'Database warmup timed out'),
+      );
 
       // قدم صفر: همگام‌سازی یادآور پیش‌خواب با تنظیمات در هر شروع اپ
       unawaited(SleepWinddownReminderService.syncFromSettings());
 
-      // Restore any in-progress course study timer (C8)
-      await CourseTimerService.instance.initOnAppStart();
+      // Restore any in-progress course study timer with timeout (C8)
+      await CourseTimerService.instance.initOnAppStart().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => RitmoLog.warning('Init', 'Course timer init timed out'),
+      );
 
       // Check if onboarding is completed via OnboardingGate
       _onboardingCompleted = await OnboardingGate.isCompleted(db);
@@ -183,7 +189,6 @@ class _RitmoAppState extends State<RitmoApp> {
           _initError = e;
         });
       }
-      rethrow;
     }
   }
 

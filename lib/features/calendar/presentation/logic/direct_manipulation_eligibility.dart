@@ -1,7 +1,6 @@
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
-import 'package:ritmo/features/calendar/logic/timeline_snapping.dart';
 
-export 'package:ritmo/features/calendar/logic/timeline_snapping.dart';
+export 'package:ritmo/features/calendar/presentation/logic/timeline_snapping.dart';
 
 /// Centralized eligibility rules for timeline direct manipulation (drag & resize).
 class DirectManipulationEligibility {

@@ -4,9 +4,6 @@ import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/calendar/presentation/logic/today_calendar_convergence_helper.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -93,9 +90,9 @@ class DayReviewSheet extends StatelessWidget {
         decoration: BoxDecoration(
           color: isDark ? theme.colorScheme.surfaceContainerHigh : theme.cardColor,
           borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(CalendarTokens.radiusSheet)),
+              top: Radius.circular(RitmoRadius.sheet)),
         ),
-        padding: const EdgeInsets.all(CalendarTokens.spacingL),
+        padding: const EdgeInsets.all(RitmoSpacing.lg),
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -111,19 +108,17 @@ class DayReviewSheet extends StatelessWidget {
                       Text(
                         'مرور روز',
                         style: TextStyle(
-                          fontSize: CalendarTokens.textTitle,
+                          fontSize: 15.0,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         _fullJalaliDateStr,
                         style: TextStyle(
-                          fontSize: CalendarTokens.textMeta,
+                          fontSize: 12.0,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
                         ),
                       ),
                     ],
@@ -133,15 +128,14 @@ class DayReviewSheet extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: colors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+                      borderRadius: BorderRadius.circular(RitmoRadius.badge),
                     ),
                     child: Text(
                       'امتیاز ریتم: ${toPersianDigits(snapshot.rhythmScore)}٪',
                       style: TextStyle(
-                        fontSize: CalendarTokens.textMeta,
+                        fontSize: 12.0,
                         fontWeight: FontWeight.bold,
                         color: colors.primary,
-                        fontFamily: 'Vazirmatn',
                       ),
                     ),
                   ),
@@ -156,7 +150,7 @@ class DayReviewSheet extends StatelessWidget {
                     child: _StatBox(
                       label: 'انجام‌شده',
                       value: toPersianDigits(snapshot.completedCount),
-                      color: CalendarTokens.emerald,
+                      color: colors.success,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -187,15 +181,14 @@ class DayReviewSheet extends StatelessWidget {
                   color: isDark
                       ? theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.6)
                       : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+                  borderRadius: BorderRadius.circular(RitmoRadius.card),
                 ),
                 child: Text(
                   _narrativeSummary,
                   style: TextStyle(
-                    fontSize: CalendarTokens.textMeta,
+                    fontSize: 12.0,
                     fontWeight: FontWeight.w600,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
                   ),
                 ),
               ),
@@ -208,10 +201,9 @@ class DayReviewSheet extends StatelessWidget {
                 Text(
                   'تداخل‌های زمانی (${toPersianDigits(snapshot.conflicts.length)})',
                   style: TextStyle(
-                    fontSize: CalendarTokens.textSection,
+                    fontSize: 13.0,
                     fontWeight: FontWeight.bold,
                     color: colors.warning,
-                    fontFamily: 'Vazirmatn',
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -233,9 +225,8 @@ class DayReviewSheet extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: CalendarTokens.textMeta,
+                              fontSize: 12.0,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
                             ),
                           ),
                         ),
@@ -244,7 +235,7 @@ class DayReviewSheet extends StatelessWidget {
                             Navigator.pop(context);
                             onReviewed();
                           },
-                          child: const Text('رفع', style: TextStyle(fontSize: 12, fontFamily: 'Vazirmatn')),
+                          child: const Text('رفع', style: TextStyle(fontSize: 12)),
                         ),
                       ],
                     ),
@@ -257,10 +248,9 @@ class DayReviewSheet extends StatelessWidget {
               Text(
                 'برنامه‌های مانده (${toPersianDigits(uncompleted.length)})',
                 style: TextStyle(
-                  fontSize: CalendarTokens.textSection,
+                  fontSize: 13.0,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
                 ),
               ),
               const SizedBox(height: 6),
@@ -271,15 +261,14 @@ class DayReviewSheet extends StatelessWidget {
                         child: Text(
                           'تمام برنامه‌های این روز انجام شده‌اند.',
                           style: TextStyle(
-                            fontSize: CalendarTokens.textMeta,
+                            fontSize: 12.0,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
                           ),
                         ),
                       )
                     : ListView.separated(
                         itemCount: uncompleted.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (ctx, index) {
                           final item = uncompleted[index];
                           return _ReviewTile(
@@ -321,7 +310,6 @@ class _StatBox extends StatelessWidget {
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: color,
-              fontFamily: 'Vazirmatn',
             ),
           ),
           const SizedBox(height: 2),
@@ -330,7 +318,6 @@ class _StatBox extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               color: color,
-              fontFamily: 'Vazirmatn',
             ),
           ),
         ],
@@ -370,17 +357,16 @@ class _ReviewTile extends StatelessWidget {
           Text(
             item.title,
             style: TextStyle(
-              fontSize: CalendarTokens.textBody,
+              fontSize: 14.0,
               fontWeight: FontWeight.w600,
               color: colors.textPrimary,
-              fontFamily: 'Vazirmatn',
             ),
           ),
           if (item.timeOfDay != null) ...[
             const SizedBox(height: 2),
             Text(
-              'ساعت: ${toPersianDigits(item.timeOfDay!)}',
-              style: TextStyle(fontSize: CalendarTokens.textMeta, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+              'ساعت: ${toPersianDigits(item.timeOfDay ?? "")}',
+              style: TextStyle(fontSize: 12.0, color: colors.textSecondary),
             ),
           ],
           const SizedBox(height: 8),
@@ -393,7 +379,7 @@ class _ReviewTile extends StatelessWidget {
               _TileButton(
                 label: 'انجام شد',
                 icon: Icons.check_circle_outline_rounded,
-                color: CalendarTokens.emerald,
+                color: colors.success,
                 onTap: () async {
                   await helper.completeItem(item);
                   DayAgendaService.instance.invalidateDate(dateStr);
@@ -464,7 +450,7 @@ class _TileButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        RitmoHaptics.tap();
+        RitmoHapticsPolicy.tap();
         onTap();
       },
       borderRadius: BorderRadius.circular(6),
@@ -486,7 +472,6 @@ class _TileButton extends StatelessWidget {
                 fontSize: 11,
                 color: color,
                 fontWeight: FontWeight.w600,
-                fontFamily: 'Vazirmatn',
               ),
             ),
           ],

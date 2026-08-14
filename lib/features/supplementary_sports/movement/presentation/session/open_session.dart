@@ -8,7 +8,6 @@ import 'package:ritmo/features/supplementary_sports/movement/presentation/sessio
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_session_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/session_mode.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
 /// تنها دروازهٔ ورود به صفحهٔ جلسه.
@@ -75,7 +74,7 @@ Future<void> startMovementSessionFlow(BuildContext context, MovementKind kind) a
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: CalendarTokens.emerald,
+                backgroundColor: const Color(0xFF10B981),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () async {

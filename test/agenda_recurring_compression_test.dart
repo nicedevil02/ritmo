@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
-import 'package:ritmo/features/calendar/logic/agenda_bucketing.dart';
+import 'package:ritmo/features/calendar/presentation/logic/agenda_bucketing.dart';
 
 AgendaItem _createItem({
   required String id,
@@ -51,6 +51,46 @@ void main() {
       expect(item1.recurrenceKey, equals('course|sched_math|10:00'));
       expect(item2.recurrenceKey, equals('course|sched_math|10:00'));
       expect(item1.recurrenceKey, equals(item2.recurrenceKey));
+    });
+
+    test('recurrenceKey groups prayer items independently of shifting astronomical times', () {
+      final fajrDay1 = _createItem(
+        id: 'prayer:fajr:2026-08-15',
+        domain: AgendaDomain.prayer,
+        sourceId: 'fajr',
+        title: 'نماز صبح',
+        dateStr: '2026-08-15',
+        timeOfDay: '04:18',
+      );
+
+      final fajrDay2 = _createItem(
+        id: 'prayer:fajr:2026-08-16',
+        domain: AgendaDomain.prayer,
+        sourceId: 'fajr',
+        title: 'نماز صبح',
+        dateStr: '2026-08-16',
+        timeOfDay: '04:19',
+      );
+
+      final fajrDay3 = _createItem(
+        id: 'prayer:fajr:2026-08-17',
+        domain: AgendaDomain.prayer,
+        sourceId: 'fajr',
+        title: 'نماز صبح',
+        dateStr: '2026-08-17',
+        timeOfDay: '04:20',
+      );
+
+      expect(fajrDay1.recurrenceKey, equals('prayer|fajr'));
+      expect(fajrDay2.recurrenceKey, equals('prayer|fajr'));
+      expect(fajrDay3.recurrenceKey, equals('prayer|fajr'));
+
+      final collapsed = collapseRecurringSeries([fajrDay1, fajrDay2, fajrDay3], daysInBucket: 7);
+      expect(collapsed.length, equals(1));
+      expect(collapsed.first, isA<AgendaSeries>());
+      final series = collapsed.first as AgendaSeries;
+      expect(series.instances.length, equals(3));
+      expect(series.representative.title, equals('نماز صبح'));
     });
 
     test('calculateRecurrenceLabel: 7 days out of 7 returns هر روز', () {

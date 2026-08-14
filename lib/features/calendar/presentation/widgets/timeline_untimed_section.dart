@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
-import 'package:ritmo/features/calendar/utils/domain_palette.dart';
+import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 
 class TimelineUntimedSection extends StatelessWidget {
   const TimelineUntimedSection({
@@ -29,7 +28,7 @@ class TimelineUntimedSection extends StatelessWidget {
         return DirectManipulationEligibility.isUnschedulable(details.data);
       },
       onAcceptWithDetails: (details) {
-        RitmoHaptics.success();
+        RitmoHapticsPolicy.success();
         onUnscheduleItem?.call(details.data);
       },
       builder: (context, candidateData, rejectedData) {
@@ -43,13 +42,13 @@ class TimelineUntimedSection extends StatelessWidget {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AnimatedContainer(
-            duration: CalendarTokens.durationStandard,
-            curve: CalendarTokens.curveDefault,
+            duration: RitmoMotion.state,
+            curve: RitmoMotion.enter,
             margin: const EdgeInsets.symmetric(
-              horizontal: CalendarTokens.spacingL,
-              vertical: CalendarTokens.spacingS,
+              horizontal: RitmoSpacing.lg,
+              vertical: RitmoSpacing.sm,
             ),
-            padding: const EdgeInsets.all(CalendarTokens.spacingM),
+            padding: const EdgeInsets.all(RitmoSpacing.md),
             decoration: BoxDecoration(
               color: isHovered
                   ? colorScheme.primaryContainer.withValues(alpha: 0.25)
@@ -74,27 +73,26 @@ class TimelineUntimedSection extends StatelessWidget {
                       size: 16,
                       color: isHovered ? colorScheme.primary : theme.colorScheme.primary,
                     ),
-                    const SizedBox(width: CalendarTokens.spacingS),
+                    const SizedBox(width: RitmoSpacing.sm),
                     Text(
                       isHovered
                           ? 'اینجا رها کن تا از زمان‌بندی خارج شود'
                           : 'بدون زمانبندی (${toPersianDigits(untimedItems.length.toString())})',
                       style: TextStyle(
-                        fontSize: CalendarTokens.textMeta,
+                        fontSize: 12.0,
                         fontWeight: FontWeight.w600,
                         color: isHovered
                             ? colorScheme.primary
                             : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65),
-                        fontFamily: 'Vazirmatn',
                       ),
                     ),
                   ],
                 ),
                 if (hasUntimed) ...[
-                  const SizedBox(height: CalendarTokens.spacingS),
+                  const SizedBox(height: RitmoSpacing.sm),
                   Wrap(
-                    spacing: CalendarTokens.spacingS,
-                    runSpacing: CalendarTokens.spacingS,
+                    spacing: RitmoSpacing.sm,
+                    runSpacing: RitmoSpacing.sm,
                     children: untimedItems.map((item) => _buildChipItem(context, item, isDark)).toList(),
                   ),
                 ],
@@ -114,14 +112,14 @@ class TimelineUntimedSection extends StatelessWidget {
 
     final chipWidget = InkWell(
       onTap: () => onItemTap?.call(item),
-      borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+      borderRadius: BorderRadius.circular(RitmoRadius.badge),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
         decoration: BoxDecoration(
           color: isDone
               ? theme.disabledColor.withValues(alpha: 0.12)
               : color.withValues(alpha: isDark ? 0.15 : 0.08),
-          borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+          borderRadius: BorderRadius.circular(RitmoRadius.badge),
           border: Border.all(
             color: color.withValues(alpha: isDone ? 0.2 : 0.3),
           ),
@@ -137,7 +135,7 @@ class TimelineUntimedSection extends StatelessWidget {
                 color: isDone ? theme.disabledColor : color,
               ),
             ),
-            const SizedBox(width: CalendarTokens.spacingXs),
+            const SizedBox(width: RitmoSpacing.xs),
             if (isDone)
               Padding(
                 padding: const EdgeInsets.only(left: 3.0),
@@ -150,13 +148,12 @@ class TimelineUntimedSection extends StatelessWidget {
             Text(
               item.title,
               style: TextStyle(
-                fontSize: CalendarTokens.textMeta,
+                fontSize: 12.0,
                 fontWeight: isDone ? FontWeight.w400 : FontWeight.w600,
                 color: isDone
                     ? theme.textTheme.bodySmall?.color?.withValues(alpha: 0.45)
                     : theme.textTheme.bodyLarge?.color,
                 decoration: isDone ? TextDecoration.lineThrough : null,
-                fontFamily: 'Vazirmatn',
               ),
             ),
           ],
@@ -175,10 +172,10 @@ class TimelineUntimedSection extends StatelessWidget {
       data: item,
       delay: const Duration(milliseconds: 300),
       hapticFeedbackOnStart: true,
-      onDragStarted: () => RitmoHaptics.tap(),
+      onDragStarted: () => RitmoHapticsPolicy.tap(),
       feedback: Material(
         elevation: 8,
-        borderRadius: BorderRadius.circular(CalendarTokens.radiusBadge),
+        borderRadius: BorderRadius.circular(RitmoRadius.badge),
         color: Colors.transparent,
         child: Transform.scale(
           scale: 1.08,

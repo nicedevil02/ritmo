@@ -7,6 +7,9 @@ import 'package:ritmo/core/domain/execution/command_handler.dart';
 import 'package:ritmo/core/domain/execution/events/kernel_event_factory.dart';
 import 'package:ritmo/core/domain/execution/kernel_mutation_result.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 
@@ -84,12 +87,18 @@ class SnoozeReminderHandler
         routineList.isNotEmpty && routineList.first['isEssential'] == 1;
 
     tasks.add(() async {
-      await sl<AlarmPlatform>().cancelAlarm(command.reminderId);
-      final ok = await sl<AlarmPlatform>().scheduleExactAlarm(
-        id: command.reminderId,
-        timeMsUTC: snoozeUntilMs,
-        title: title,
-        isEssential: isEssential,
+      await NotificationGateway.cancel(command.reminderId);
+      final ok = await NotificationGateway.schedule(
+        NotificationRequest(
+          id: command.reminderId,
+          channel: isEssential ? NotificationChannelId.critical : NotificationChannelId.routine,
+          scheduledAt: DateTime.fromMillisecondsSinceEpoch(snoozeUntilMs),
+          title: title,
+          privacy: isEssential ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+          redactedTitle: isEssential ? 'ریتمو: یک یادآوری روتین دارید 🌸' : null,
+          sourceSystem: 'routines',
+          entityId: routineId,
+        ),
       );
       final db = await DatabaseHelper.instance.database;
       await db.update(

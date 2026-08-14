@@ -6,6 +6,9 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
@@ -174,11 +177,15 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
       final updated = created.copyWith(reminderAtMs: targetMs, reminderId: reminderId);
       await SimpleTaskRepository.instance.updateTask(updated);
       
-      await sl<AlarmPlatform>().scheduleExactAlarm(
-        id: reminderId,
-        timeMsUTC: targetMs,
-        title: created.title,
-        isEssential: false,
+      await NotificationGateway.schedule(
+        NotificationRequest(
+          id: reminderId,
+          channel: NotificationChannelId.planning,
+          scheduledAt: DateTime.fromMillisecondsSinceEpoch(targetMs),
+          title: created.title,
+          sourceSystem: 'tasks',
+          entityId: created.id,
+        ),
       );
       await AlarmSchedulerService.scheduleNextAlarms();
     }

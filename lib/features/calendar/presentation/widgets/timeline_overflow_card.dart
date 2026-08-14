@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
-import 'package:ritmo/features/calendar/utils/domain_palette.dart';
+import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 
 class TimelineOverflowCard extends StatelessWidget {
   const TimelineOverflowCard({
@@ -20,12 +21,12 @@ class TimelineOverflowCard extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(CalendarTokens.radiusSheet)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
       ),
       builder: (ctx) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(CalendarTokens.spacingL),
+            padding: const EdgeInsets.all(RitmoSpacing.lg),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,7 +37,6 @@ class TimelineOverflowCard extends StatelessWidget {
                       'رویدادهای هم‌زمان (${toPersianDigits(overflowCount)})',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Vazirmatn',
                       ),
                     ),
                     const Spacer(),
@@ -51,11 +51,12 @@ class TimelineOverflowCard extends StatelessWidget {
                   child: ListView.separated(
                     shrinkWrap: true,
                     itemCount: overflowItems.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final item = overflowItems[index];
                       final color = domainColor(context, item.domain);
                       final icon = domainIcon(item.domain);
+                      final timeLabel = item.timeOfDay;
 
                       return ListTile(
                         leading: CircleAvatar(
@@ -65,18 +66,14 @@ class TimelineOverflowCard extends StatelessWidget {
                         ),
                         title: Text(
                           item.title,
-                          style: const TextStyle(
-                            fontFamily: 'Vazirmatn',
-                            fontWeight: FontWeight.w600,
-                            fontSize: CalendarTokens.textBody,
+                          style: const TextStyle(fontWeight: FontWeight.w600,
+                            fontSize: 14.0,
                           ),
                         ),
-                        subtitle: item.timeOfDay != null
+                        subtitle: timeLabel != null
                             ? Text(
-                                toPersianDigits(item.timeOfDay!),
-                                style: const TextStyle(
-                                  fontFamily: 'Vazirmatn',
-                                  fontSize: CalendarTokens.textMeta,
+                                toPersianDigits(timeLabel),
+                                style: const TextStyle(fontSize: 12.0,
                                 ),
                               )
                             : null,
@@ -104,25 +101,24 @@ class TimelineOverflowCard extends StatelessWidget {
 
     return InkWell(
       onTap: () => _showOverflowSheet(context),
-      borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+      borderRadius: BorderRadius.circular(RitmoRadius.card),
       child: Container(
         decoration: BoxDecoration(
-          color: colorScheme.outlineVariant.withValues(alpha: CalendarTokens.alphaDomainFill),
-          borderRadius: BorderRadius.circular(CalendarTokens.radiusCard),
+          color: colorScheme.outlineVariant.withValues(alpha: CalendarGeometry.alphaDomainFill),
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
           border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: CalendarTokens.alphaCardBorder),
+            color: colorScheme.outlineVariant.withValues(alpha: CalendarGeometry.alphaCardBorder),
           ),
         ),
         alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: CalendarTokens.spacingS),
+        padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm),
         child: Text(
           '+${toPersianDigits(overflowCount.toString())} مورد دیگر',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: CalendarTokens.textMetaSplit,
+            fontSize: 11.0,
             fontWeight: FontWeight.w600,
             color: colorScheme.onSurfaceVariant,
-            fontFamily: 'Vazirmatn',
           ),
         ),
       ),

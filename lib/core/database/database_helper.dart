@@ -19,7 +19,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 100;
+  static const int _dbVersion = 101;
   static int get dbVersionForTest => _dbVersion;
 
   @visibleForTesting
@@ -70,6 +70,9 @@ class DatabaseHelper {
     try {
       try {
         await db.execute('ALTER TABLE worship_practices ADD COLUMN showInCalendar INTEGER DEFAULT 0;');
+      } catch (_) {}
+      try {
+        await db.execute("UPDATE routines SET energyRule = 'NONE' WHERE energyRule = 'none';");
       } catch (_) {}
       await SeedService.seedSupplementarySports(db);
       await _checkDailySweep(db);

@@ -189,7 +189,7 @@ class DayAgendaService {
         continue;
       }
       try {
-        final agenda = await _assembleDay(date, ds, ctx, opts);
+        final agenda = await _assembleDay(date, ds, ctx, opts, failures);
         if (opts.domains.isEmpty && opts.includeCompleted) _cache[ds] = agenda;
         result[ds] = agenda;
       } catch (e, st) {
@@ -385,6 +385,7 @@ class DayAgendaService {
     String dateStr,
     _AgendaContext ctx,
     AgendaQueryOptions opts,
+    List<String> failures,
   ) async {
     final todayStr = _dateStr(DateTime.now());
     final isToday = dateStr == todayStr;
@@ -416,35 +417,72 @@ class DayAgendaService {
       options: opts,
     );
 
+    // C-FIX-2 (تقویم خالی) — هر منبع باید جداگانه ایزوله شود.
+    //
+    // قبلاً `_guardSource` فقط *بارگذاری* منابع را محافظت می‌کرد، ولی همین‌جا
+    // `itemsForDate` نُه منبع پشت‌سرهم و بدون محافظ صدا زده می‌شد. روتین‌ها اول
+    // به لیست اضافه می‌شدند، پس اگر یک منبعِ بعدی (معمولاً منبعِ ماژول خاموش مثل
+    // عبادت/ورزش/دارو) استثنا می‌داد، کل روز — از جمله روتین‌های سالم — دور
+    // ریخته می‌شد و `agendaForRange` برای آن روز `DayAgenda.empty` ذخیره می‌کرد؛
+    // یعنی هر ۶۰ روز تقویم خالی، در حالی که صفحهٔ اصلی با مسیر جایگزین P0 هنوز
+    // کارها را نشان می‌داد. اکنون خرابی یک دامنه فقط همان دامنه را حذف می‌کند.
+    void addFrom(String label, List<AgendaItem> Function() produce) {
+      try {
+        items.addAll(produce());
+      } catch (e, st) {
+        RitmoLog.error(
+          'DayAgendaService',
+          'source "$label" itemsForDate failed for $dateStr',
+          e,
+          st,
+        );
+        final key = 'items:$label';
+        if (!failures.contains(key)) failures.add(key);
+      }
+    }
+
     // Apply the activeWorshipTitles filter for routineSource
     final activeWorshipTitles = <String>{};
-    if (ctx.worshipSource.isEnabled) {
-      for (final p in ctx.worshipSource.prayerPractices) {
-        final title = p['title'] as String?;
-        if (title != null) activeWorshipTitles.add(title.trim());
+    try {
+      if (ctx.worshipSource.isEnabled) {
+        for (final p in ctx.worshipSource.prayerPractices) {
+          final title = p['title'] as String?;
+          if (title != null) activeWorshipTitles.add(title.trim());
+        }
+        for (final p in ctx.worshipSource.mustahabPractices) {
+          final title = p['title'] as String?;
+          if (title != null) activeWorshipTitles.add(title.trim());
+        }
       }
-      for (final p in ctx.worshipSource.mustahabPractices) {
-        final title = p['title'] as String?;
-        if (title != null) activeWorshipTitles.add(title.trim());
-      }
+    } catch (e, st) {
+      RitmoLog.error(
+        'DayAgendaService',
+        'worship title filter failed for $dateStr',
+        e,
+        st,
+      );
     }
 
-    final routines = ctx.routineSource.itemsForDate(agendaCtx);
-    final filteredRoutines = routines.where((r) => !activeWorshipTitles.contains(r.title.trim())).toList();
+    addFrom('routine', () {
+      final routines = ctx.routineSource.itemsForDate(agendaCtx);
+      return routines
+          .where((r) => !activeWorshipTitles.contains(r.title.trim()))
+          .toList();
+    });
 
-    items.addAll(filteredRoutines);
-    items.addAll(ctx.worshipSource.itemsForDate(agendaCtx));
-    items.addAll(ctx.sportsSource.itemsForDate(agendaCtx));
-    items.addAll(ctx.medicineSource.itemsForDate(agendaCtx));
-    items.addAll(ctx.goalStepsSource.itemsForDate(agendaCtx));
+    addFrom('worship', () => ctx.worshipSource.itemsForDate(agendaCtx));
+    addFrom('sports', () => ctx.sportsSource.itemsForDate(agendaCtx));
+    addFrom('medicine', () => ctx.medicineSource.itemsForDate(agendaCtx));
+    addFrom('goalSteps', () => ctx.goalStepsSource.itemsForDate(agendaCtx));
 
-    if (ctx.taskSource != null) {
-      items.addAll(ctx.taskSource!.itemsForDate(agendaCtx));
+    final taskSource = ctx.taskSource;
+    if (taskSource != null) {
+      addFrom('task', () => taskSource.itemsForDate(agendaCtx));
     }
 
-    items.addAll(ctx.courseSource.itemsForDate(agendaCtx));
-    items.addAll(ctx.konkurSource.itemsForDate(agendaCtx));
-    items.addAll(ctx.cycleSource.itemsForDate(agendaCtx));
+    addFrom('course', () => ctx.courseSource.itemsForDate(agendaCtx));
+    addFrom('konkur', () => ctx.konkurSource.itemsForDate(agendaCtx));
+    addFrom('cycle', () => ctx.cycleSource.itemsForDate(agendaCtx));
 
     // K43: Apply REST/TRAVEL day effect — mark non-essential items as skipped.
     final dayMark = ctx.dayMarksByDate[dateStr];

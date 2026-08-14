@@ -37,6 +37,8 @@ class DayAgendaService {
   static final DayAgendaService instance = DayAgendaService._();
 
   /// Small per-date cache (invalidated reactively via the event bus).
+  ///
+  /// C-FIX-4: only *non-empty* days are ever stored here. See [agendaForRange].
   final Map<String, DayAgenda> _cache = {};
 
   AgendaLoadStatus _lastStatus = const AgendaLoadStatus.ok();
@@ -160,6 +162,7 @@ class DayAgendaService {
       ctx = await _buildContext(start, end, opts, failures);
     } catch (e, st) {
       RitmoLog.error('DayAgendaService', 'fatal context build failure', e, st);
+      if (!failures.contains('context')) failures.add('context');
       _lastStatus = AgendaLoadStatus(failedSources: failures, fatal: true);
       for (final date in dates) {
         result.putIfAbsent(_dateStr(date), () => DayAgenda.empty(_dateStr(date)));
@@ -175,6 +178,9 @@ class DayAgendaService {
       }
     }
 
+    final cacheEligible = opts.domains.isEmpty && opts.includeCompleted;
+    var servedFromCache = 0;
+
     for (final date in dates) {
       final ds = _dateStr(date);
 
@@ -185,13 +191,29 @@ class DayAgendaService {
       }
 
       // Cache only the full, unfiltered agenda; filtered queries are rebuilt.
-      if (opts.domains.isEmpty && opts.includeCompleted && _cache.containsKey(ds)) {
+      if (cacheEligible && _cache.containsKey(ds)) {
         result[ds] = _cache[ds]!;
+        servedFromCache++;
         continue;
       }
       try {
         final agenda = await _assembleDay(date, ds, ctx, opts, failures);
-        if (opts.domains.isEmpty && opts.includeCompleted) _cache[ds] = agenda;
+
+        // C-FIX-4: NEVER cache an empty day.
+        //
+        // This cache is only consulted by default-option callers, which in
+        // practice means the Calendar; Home always passes an explicit `domains`
+        // set and therefore recomputes every time. So a single early assembly
+        // (e.g. a startup/widget/alarm path running while onboarding had not
+        // yet inserted the starter routines) used to pin an empty DayAgenda in
+        // here, and the Calendar kept serving that empty day for the rest of
+        // the session: no exception, no failedSources, no degraded banner, just
+        // a permanently blank agenda while Home and the routine vault looked
+        // perfectly fine. Empty days are cheap to rebuild, so we only memoize
+        // days that actually produced items. Emptiness must never be sticky.
+        if (cacheEligible && agenda.items.isNotEmpty) {
+          _cache[ds] = agenda;
+        }
         result[ds] = agenda;
       } catch (e, st) {
         RitmoLog.error('DayAgendaService', 'assembleDay failed for $ds', e, st);
@@ -200,6 +222,20 @@ class DayAgendaService {
       }
     }
     _lastStatus = AgendaLoadStatus(failedSources: failures, fatal: false);
+
+    // One greppable line that makes "why is the agenda empty?" answerable.
+    var totalItems = 0;
+    for (final agenda in result.values) {
+      totalItems += agenda.items.length;
+    }
+    debugPrint(
+      '[DayAgendaService] range ${_dateStr(start)}..${_dateStr(end)} '
+      'days=${result.length} items=$totalItems cached=$servedFromCache '
+      'routines=${ctx.routineSource.routines.length} '
+      'schedules=${ctx.routineSource.schedules.length} '
+      'occurrences=${ctx.routineSource.occurrences.length} '
+      'failures=$failures',
+    );
 
     return result;
   }
@@ -258,25 +294,35 @@ class DayAgendaService {
 
     final sources = await AgendaSourceRegistry.instance.loadSources(loadCtx);
 
-    final routineSource = (sources['routine'] as RoutineAgendaSource?) ?? RoutineAgendaSource.disabled();
-    final worshipSource = (sources['worship'] as WorshipAgendaSource?) ?? WorshipAgendaSource.disabled(settingsMap, db);
-    final sportsSource = (sources['sports'] as SportsAgendaSource?) ?? SportsAgendaSource.disabled(db);
-    final medicineSource = (sources['medicine'] as MedicineAgendaSource?) ?? MedicineAgendaSource.disabled();
-    final goalStepsSource = (sources['goalSteps'] as GoalStepsAgendaSource?) ?? GoalStepsAgendaSource.empty();
-    final taskSource = sources['task'] as TaskAgendaSource?;
-    final courseSource = (sources['course'] as CourseAgendaSource?) ?? CourseAgendaSource.disabled();
-    final konkurSource = (sources['konkur'] as KonkurAgendaSource?) ?? KonkurAgendaSource.disabled();
-    final cycleSource = (sources['cycle'] as CycleAgendaSource?) ?? const CycleAgendaSource(cycleOutput: null, cycleAllowed: false);
+    // Defensive lookups: a wrong runtime type must degrade a single source,
+    // never abort the whole range build with a cast error.
+    final routineSource = _sourceOf<RoutineAgendaSource>(sources, 'routine') ?? RoutineAgendaSource.disabled();
+    final worshipSource = _sourceOf<WorshipAgendaSource>(sources, 'worship') ?? WorshipAgendaSource.disabled(settingsMap, db);
+    final sportsSource = _sourceOf<SportsAgendaSource>(sources, 'sports') ?? SportsAgendaSource.disabled(db);
+    final medicineSource = _sourceOf<MedicineAgendaSource>(sources, 'medicine') ?? MedicineAgendaSource.disabled();
+    final goalStepsSource = _sourceOf<GoalStepsAgendaSource>(sources, 'goalSteps') ?? GoalStepsAgendaSource.empty();
+    final taskSource = _sourceOf<TaskAgendaSource>(sources, 'task');
+    final courseSource = _sourceOf<CourseAgendaSource>(sources, 'course') ?? CourseAgendaSource.disabled();
+    final konkurSource = _sourceOf<KonkurAgendaSource>(sources, 'konkur') ?? KonkurAgendaSource.disabled();
+    final cycleSource = _sourceOf<CycleAgendaSource>(sources, 'cycle') ?? const CycleAgendaSource(cycleOutput: null, cycleAllowed: false);
 
     final cityId = settingsMap['prayer_city_id'] ??
         settingsMap['home_city_id'] ??
         'TEHRAN_TEHRAN';
-    final cityResult = await db.query(
-      'iran_cities',
-      where: 'id = ?',
-      whereArgs: [cityId],
-      limit: 1,
-    );
+
+    // This lookup used to run unguarded: any failure here (missing/locked table
+    // on a fresh install) aborted the entire range as a fatal context failure.
+    var cityResult = const <Map<String, Object?>>[];
+    try {
+      cityResult = await db.query(
+        'iran_cities',
+        where: 'id = ?',
+        whereArgs: [cityId],
+        limit: 1,
+      );
+    } catch (e, st) {
+      RitmoLog.error('DayAgendaService', 'iran_cities lookup failed for $cityId', e, st);
+    }
 
     var latitude = 35.6892;
     var longitude = 51.3890;
@@ -336,6 +382,24 @@ class DayAgendaService {
       calcMethodStr: calcMethodStr,
     );
 }
+
+  /// Type-safe registry lookup: returns null instead of throwing when a key is
+  /// missing or holds an unexpected source type.
+  static T? _sourceOf<T extends AgendaSource>(
+    Map<String, AgendaSource> sources,
+    String key,
+  ) {
+    final source = sources[key];
+    if (source is T) return source;
+    if (source != null) {
+      RitmoLog.error(
+        'DayAgendaService',
+        'agenda source "$key" has unexpected type ${source.runtimeType}',
+        StateError('unexpected agenda source type'),
+      );
+    }
+    return null;
+  }
 
   // ---------------------------------------------------------------------------
   // Per-day assembly

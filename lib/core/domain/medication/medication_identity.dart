@@ -10,6 +10,15 @@
 /// canonical `'MEDICINE'` marker alone is not enough until the backfill
 /// migration lands. Until then the deterministic id prefix and the
 /// medication-only columns identify existing rows.
+///
+/// C-FIX-5 — why the columns are compared against zero and not against null:
+/// `routines` declares `medStockCount`, `medRefillThreshold`,
+/// `minIntervalHours` and `maxDosesPerDay` as `INTEGER NOT NULL DEFAULT 0`.
+/// A null check therefore matched *every* routine ever created, so the routine
+/// agenda source classified all of them as medications and skipped them, and
+/// the Calendar rendered an empty day while the routine list stayed full.
+/// Absence is encoded as 0 in this schema, so only a positive value is
+/// evidence of a medication.
 class MedicationIdentity {
   const MedicationIdentity._();
 
@@ -23,14 +32,24 @@ class MedicationIdentity {
   /// has no scheduled slot, so it can never be "due" or "missed".
   static const String asNeededRoutineType = 'asNeeded';
 
+  /// Columns only a medication fills in. Each defaults to 0 for plain routines.
+  static const List<String> medicationColumns = <String>[
+    'medStockCount',
+    'medRefillThreshold',
+    'minIntervalHours',
+    'maxDosesPerDay',
+  ];
+
   /// SQL fragment for a `WHERE` clause on the `routines` table.
+  ///
+  /// Must stay the exact twin of [isMedicationRoutine].
   static const String sqlPredicate =
       "(itemType = '$itemType'"
       " OR id LIKE '$routineIdPrefix%'"
-      " OR medStockCount IS NOT NULL"
-      " OR medRefillThreshold IS NOT NULL"
-      " OR minIntervalHours IS NOT NULL"
-      " OR maxDosesPerDay IS NOT NULL)";
+      " OR COALESCE(medStockCount, 0) > 0"
+      " OR COALESCE(medRefillThreshold, 0) > 0"
+      " OR COALESCE(minIntervalHours, 0) > 0"
+      " OR COALESCE(maxDosesPerDay, 0) > 0)";
 
   /// In-memory twin of [sqlPredicate] for rows that are already loaded.
   static bool isMedicationRoutine(Map<String, dynamic> routine) {
@@ -39,10 +58,20 @@ class MedicationIdentity {
     final id = routine['id'];
     if (id is String && id.startsWith(routineIdPrefix)) return true;
 
-    return routine['medStockCount'] != null ||
-        routine['medRefillThreshold'] != null ||
-        routine['minIntervalHours'] != null ||
-        routine['maxDosesPerDay'] != null;
+    for (final column in medicationColumns) {
+      if (_isPositive(routine[column])) return true;
+    }
+
+    return false;
+  }
+
+  /// Tolerates the int/String/bool shapes sqflite and imports can produce.
+  static bool _isPositive(Object? value) {
+    if (value == null) return false;
+    if (value is num) return value > 0;
+    if (value is bool) return value;
+    final parsed = num.tryParse(value.toString().trim());
+    return parsed != null && parsed > 0;
   }
 
   static bool isAsNeeded(Map<String, dynamic> routine) =>

@@ -5,7 +5,7 @@ import 'package:ritmo/core/services/module_management_service.dart';
 void main() {
   group('ModuleRegistry Unit Tests', () {
     test('ModuleRegistry contains core and optional descriptors', () {
-      final modules = ModuleRegistry.modules;
+      const modules = ModuleRegistry.modules;
       expect(modules.length, greaterThanOrEqualTo(10));
 
       final todayMod = ModuleRegistry.findByKey('module_today_routines');

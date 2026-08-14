@@ -286,6 +286,16 @@ class SettingsRegistry {
       descriptionFa: 'تمرینات انعطاف‌پذیری و جانبی',
       searchTerms: ['ورزش', 'تکمیلی', 'کشش'],
     ),
+    SettingDescriptor(
+      key: 'module_notes_enabled',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: false,
+      labelFa: 'دفترچه و تجربه‌ها',
+      group: SettingsGroup.modules,
+      descriptionFa: 'یادداشت، ایده و درس‌هایی که از زندگی گرفته‌ای',
+      searchTerms: ['یادداشت', 'دفترچه', 'تجربه', 'درس'],
+    ),
 
     // ----------------------------------------------------
     // ۳. اعلان‌ها و یادآوری‌ها (Notifications)

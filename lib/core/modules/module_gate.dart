@@ -32,11 +32,16 @@ class ModuleGate {
     
     final newStates = <String, bool>{};
     for (final desc in ModuleRegistry.modules) {
-      newStates[desc.key] = _resolve(desc, rawMap[desc.key]);
+      String? rawVal;
+      if (desc.key == 'module_medicine_enabled') {
+        rawVal = rawMap['module_medicine_enabled'] ?? rawMap['module_health_enabled'];
+      } else if (desc.key == 'module_supplementary_sports_enabled') {
+        rawVal = rawMap['module_supplementary_sports_enabled'] ?? rawMap['module_sports_enabled'];
+      } else {
+        rawVal = rawMap[desc.key];
+      }
+      newStates[desc.key] = _resolve(desc, rawVal);
     }
-    
-    // Explicitly add module_supplementary_sports_enabled mapping to module_sports_enabled if needed, 
-    // but the prompt says to map it to sports. We'll handle it if it asks.
     
     states.value = newStates;
   }
@@ -55,7 +60,14 @@ class ModuleGate {
       RitmoLogger.error('ModuleGate: Unknown module key "$moduleKey" requested from settings.');
       return false;
     }
-    final rawVal = settings[moduleKey] ?? (moduleKey == 'module_supplementary_sports_enabled' ? settings['module_sports_enabled'] : null);
+    String? rawVal;
+    if (moduleKey == 'module_medicine_enabled') {
+      rawVal = settings['module_medicine_enabled'] ?? settings['module_health_enabled'];
+    } else if (moduleKey == 'module_supplementary_sports_enabled') {
+      rawVal = settings['module_supplementary_sports_enabled'] ?? settings['module_sports_enabled'];
+    } else {
+      rawVal = settings[moduleKey];
+    }
     return _resolve(desc, rawVal);
   }
 

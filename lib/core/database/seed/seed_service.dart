@@ -86,7 +86,6 @@ class SeedService {
       'module_goals_enabled': 'false',
       'module_progressive_habits_enabled': 'false',
       'module_assistant_enabled': 'false',
-      'module_health_enabled': 'true',
       'module_energy_enabled': 'false',
       'module_sports_enabled': 'false',
       'module_supplementary_sports_enabled': 'false',

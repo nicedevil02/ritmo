@@ -14,7 +14,7 @@ class MedicineRegistrySource implements RegistrySource {
   RegistryDomain get domain => RegistryDomain.medicine;
 
   @override
-  String get moduleSettingsKey => 'module_health_enabled';
+  String get moduleSettingsKey => 'module_medicine_enabled';
 
   @override
   Future<int> count({bool includeArchived = false}) async {

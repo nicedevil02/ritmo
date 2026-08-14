@@ -25,7 +25,7 @@ void main() {
       expect(states['module_supplementary_sports_enabled'], equals('true'));
       expect(states['module_sleep_enabled'], equals('true'));
       expect(states['module_medicine_enabled'], equals('true'));
-      expect(states['module_sports_enabled'], isNull); // Removed dead key
+      expect(states['module_sports_enabled'], equals('false'));
       expect(states['module_goals_enabled'], equals('false'));
     });
 

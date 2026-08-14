@@ -96,16 +96,16 @@ extension RegistryDomainX on RegistryDomain {
         return 'module_goals_enabled';
       case RegistryDomain.worship:
       case RegistryDomain.worshipDebt:
-        return 'module_worship_enabled';
+        return 'module_religion_enabled';
       case RegistryDomain.medicine:
-        return 'module_health_enabled';
+        return 'module_medicine_enabled';
       case RegistryDomain.konkur:
         return 'module_study_enabled';
       case RegistryDomain.movementKind:
       case RegistryDomain.workoutPlan:
         return 'module_supplementary_sports_enabled';
       case RegistryDomain.doctorVisit:
-        return 'module_health_enabled';
+        return 'module_medicine_enabled';
       case RegistryDomain.routine:
         return ''; // Always enabled
     }

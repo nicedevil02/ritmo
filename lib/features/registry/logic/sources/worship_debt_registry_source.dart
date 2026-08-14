@@ -13,7 +13,7 @@ class WorshipDebtRegistrySource implements RegistrySource {
   RegistryDomain get domain => RegistryDomain.worshipDebt;
 
   @override
-  String get moduleSettingsKey => 'module_worship_enabled';
+  String get moduleSettingsKey => 'module_religion_enabled';
 
   @override
   Future<int> count({bool includeArchived = false}) async {

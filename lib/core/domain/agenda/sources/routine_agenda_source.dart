@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/modules/module_gate.dart';
+import 'package:ritmo/core/modules/routine_visibility.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/engines/routine_occurrence_generator.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
@@ -134,6 +135,17 @@ class RoutineAgendaSource implements AgendaSource {
 
   static String _dateStr(DateTime dt) => dt.toIso8601String().substring(0, 10);
 
+  /// Returns an empty, non-functional source (used as fallback on load failure).
+  static RoutineAgendaSource disabled() => RoutineAgendaSource(
+    routines: const [],
+    schedules: const [],
+    occurrences: const [],
+    avgDurations: const {},
+    categoryAvgDurations: const {},
+    completionsByDate: const {},
+    activeModules: const {},
+  );
+
   bool _isCategoryModuleEnabled(String category) {
     // Removed hardcoded 'religious' check for routines
     if (category == 'medical' && !(activeModules['medicine'] ?? false)) {
@@ -154,8 +166,15 @@ class RoutineAgendaSource implements AgendaSource {
     final dateStr = _dateStr(date);
 
     for (final r in routines) {
-      final cat = r['category'] as String;
-      if (!_isCategoryModuleEnabled(cat)) continue;
+      final cat = r['category']?.toString() ?? 'personal';
+      final routineId = r['id']?.toString() ?? '';
+      // Build a settings-compatible map from the stored module flags.
+      final settingsForVisibility = <String, String>{
+        'module_religion_enabled': (activeModules['religion'] ?? false).toString(),
+        'module_medicine_enabled': (activeModules['medicine'] ?? false).toString(),
+        'module_courses_enabled': (activeModules['courses'] ?? false).toString(),
+      };
+      if (!RoutineVisibility.isVisible(routineId: routineId, settings: settingsForVisibility)) continue;
 
       Map<String, dynamic>? matchedSchedule;
       for (final sched in schedules) {
@@ -165,13 +184,22 @@ class RoutineAgendaSource implements AgendaSource {
         }
       }
 
-      if (matchedSchedule == null || matchedSchedule.isEmpty) continue;
-      final s = matchedSchedule;
-
       // 1. Check database occurrences in memory.
       final hasOcc = occurrences.any(
         (occ) => (occ['routine_id'] ?? occ['routineId']) == r['id'] && occ['date'] == dateStr,
       );
+
+      if (matchedSchedule == null || matchedSchedule.isEmpty) {
+        // No schedule row: only include if there is an explicit occurrence for this date.
+        if (hasOcc) {
+          // Floating routine — synthesise a minimal schedule map.
+          active.add({'routine': r, 'schedule': <String, dynamic>{}});
+        }
+        continue;
+      }
+
+      final s = matchedSchedule;
+
       if (hasOcc) {
         active.add({'routine': r, 'schedule': s});
         continue;
@@ -301,7 +329,7 @@ class RoutineAgendaSource implements AgendaSource {
         continue;
       }
 
-      final catStr = r['category'] as String;
+      final catStr = r['category']?.toString() ?? 'personal';
       final category = Category.values.firstWhere(
         (e) => e.name.toLowerCase() == catStr.toLowerCase(),
         orElse: () => Category.custom,

@@ -22,6 +22,7 @@ import 'package:ritmo/core/domain/models/reflection_context.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/core/services/sync/sync_module_gate.dart';
+import 'package:ritmo/core/modules/routine_visibility.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/persian_digits.dart'; // toPersianDigits
 import 'package:ritmo/core/utils/snapshot_helper.dart';
@@ -234,7 +235,12 @@ class DashboardController {
           medRoutines.add(rMap);
         }
 
-        final moduleEnabled = _isModuleEnabled(category, settingsMap);
+        // T5: User-created routines are never hidden by module gates.
+        // Only system routines (e.g. worship_debt_routine) follow their owning module.
+        final moduleEnabled = RoutineVisibility.isVisible(
+          routineId: rId,
+          settings: settingsMap,
+        );
 
         final routine = Routine(
           id: rId,

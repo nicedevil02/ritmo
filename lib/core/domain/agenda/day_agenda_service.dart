@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/domain/agenda/agenda_load_status.dart';
+import 'package:ritmo/core/domain/agenda/agenda_source_registry.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -237,82 +237,31 @@ class DayAgendaService {
 
     final startStr = _dateStr(start);
     final endStr = _dateStr(end);
+    final todayStr = _dateStr(DateTime.now());
 
-    final routineSource = await _guardSource(
-      'routine', failures,
-      () => RoutineAgendaSource.load(db, settingsMap, startStr, endStr),
-      () => RoutineAgendaSource.disabled(),
+    final loadCtx = AgendaSourceLoadContext(
+      db: db,
+      settingsMap: settingsMap,
+      start: start,
+      end: end,
+      startStr: startStr,
+      endStr: endStr,
+      todayStr: todayStr,
+      options: opts,
+      failures: failures,
     );
 
-    final worshipSource = religionEnabled
-        ? await _guardSource(
-            'worship', failures,
-            () => WorshipAgendaSource.load(db, settingsMap, start, end),
-            () => WorshipAgendaSource.disabled(settingsMap, db),
-          )
-        : WorshipAgendaSource.disabled(settingsMap, db);
+    final sources = await AgendaSourceRegistry.instance.loadSources(loadCtx);
 
-    final sportsSource = sportsEnabled
-        ? await _guardSource(
-            'sports', failures,
-            () => SportsAgendaSource.load(db, settingsMap),
-            () => SportsAgendaSource.disabled(db),
-          )
-        : SportsAgendaSource.disabled(db);
-
-    final medicineSource = medicineEnabled
-        ? await _guardSource(
-            'medicine', failures,
-            () => MedicineAgendaSource.load(db, settingsMap, start, end),
-            () => MedicineAgendaSource.disabled(),
-          )
-        : MedicineAgendaSource.disabled();
-
-    final goalStepsSource = await _guardSource(
-      'goalSteps', failures,
-      () => GoalStepsAgendaSource.load(db, start, end),
-      () => GoalStepsAgendaSource.empty(),
-    );
-
-    TaskAgendaSource? taskSource;
-    final tasksEnabled = settingsMap['calendar_show_tasks'] != 'false';
-    if (tasksEnabled && opts.wants(AgendaDomain.task)) {
-      taskSource = await _guardSource<TaskAgendaSource?>(
-        'task', failures,
-        () => TaskAgendaSource.load(
-          db,
-          start,
-          end,
-          _dateStr(DateTime.now()),
-          settingsMap['app_start_date'],
-        ),
-        () => null,
-      );
-    }
-
-    final courseSource = coursesEnabled
-        ? await _guardSource(
-            'course', failures,
-            () => CourseAgendaSource.load(db, coursesEnabled, startStr, endStr),
-            () => CourseAgendaSource.disabled(),
-          )
-        : CourseAgendaSource.disabled();
-
-    final konkurSource = konkurEnabled
-        ? await _guardSource(
-            'konkur', failures,
-            () => KonkurAgendaSource.load(konkurEnabled),
-            () => KonkurAgendaSource.disabled(),
-          )
-        : KonkurAgendaSource.disabled();
-
-    final cycleSource = cycleAllowed
-        ? await _guardSource(
-            'cycle', failures,
-            () => CycleAgendaSource.load(db, settingsMap, cycleAllowed),
-            () => const CycleAgendaSource(cycleOutput: null, cycleAllowed: false),
-          )
-        : const CycleAgendaSource(cycleOutput: null, cycleAllowed: false);
+    final routineSource = (sources['routine'] as RoutineAgendaSource?) ?? RoutineAgendaSource.disabled();
+    final worshipSource = (sources['worship'] as WorshipAgendaSource?) ?? WorshipAgendaSource.disabled(settingsMap, db);
+    final sportsSource = (sources['sports'] as SportsAgendaSource?) ?? SportsAgendaSource.disabled(db);
+    final medicineSource = (sources['medicine'] as MedicineAgendaSource?) ?? MedicineAgendaSource.disabled();
+    final goalStepsSource = (sources['goalSteps'] as GoalStepsAgendaSource?) ?? GoalStepsAgendaSource.empty();
+    final taskSource = sources['task'] as TaskAgendaSource?;
+    final courseSource = (sources['course'] as CourseAgendaSource?) ?? CourseAgendaSource.disabled();
+    final konkurSource = (sources['konkur'] as KonkurAgendaSource?) ?? KonkurAgendaSource.disabled();
+    final cycleSource = (sources['cycle'] as CycleAgendaSource?) ?? const CycleAgendaSource(cycleOutput: null, cycleAllowed: false);
 
     final cityId = settingsMap['prayer_city_id'] ??
         settingsMap['home_city_id'] ??
@@ -368,6 +317,7 @@ class DayAgendaService {
       courseSource: courseSource,
       konkurSource: konkurSource,
       cycleSource: cycleSource,
+      allSources: sources,
       dayMarksByDate: dayMarksByDate,
       latitude: latitude,
       longitude: longitude,
@@ -484,6 +434,14 @@ class DayAgendaService {
     addFrom('konkur', () => ctx.konkurSource.itemsForDate(agendaCtx));
     addFrom('cycle', () => ctx.cycleSource.itemsForDate(agendaCtx));
 
+    // Additional / custom registered sources (e.g. from tests or new modules)
+    const standardKeys = {'routine', 'worship', 'sports', 'medicine', 'goalSteps', 'task', 'course', 'konkur', 'cycle'};
+    for (final entry in ctx.allSources.entries) {
+      if (!standardKeys.contains(entry.key)) {
+        items.addAll(entry.value.itemsForDate(agendaCtx));
+      }
+    }
+
     // K43: Apply REST/TRAVEL day effect — mark non-essential items as skipped.
     final dayMark = ctx.dayMarksByDate[dateStr];
     List<AgendaItem> finalItems = items;
@@ -548,22 +506,6 @@ class DayAgendaService {
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
-
-  /// Runs [load]; on failure logs, adds [label] to [failures], and returns [fallback()].
-  Future<T> _guardSource<T>(
-    String label,
-    List<String> failures,
-    Future<T> Function() load,
-    T Function() fallback,
-  ) async {
-    try {
-      return await load();
-    } catch (e, st) {
-      RitmoLog.error('DayAgendaService', 'source "$label" failed', e, st);
-      failures.add(label);
-      return fallback();
-    }
-  }
 }
 
 
@@ -587,6 +529,7 @@ class _AgendaContext {
     required this.courseSource,
     required this.konkurSource,
     required this.cycleSource,
+    required this.allSources,
     required this.dayMarksByDate,
     required this.latitude,
     required this.longitude,
@@ -609,6 +552,7 @@ class _AgendaContext {
   final CourseAgendaSource courseSource;
   final KonkurAgendaSource konkurSource;
   final CycleAgendaSource cycleSource;
+  final Map<String, AgendaSource> allSources;
   final Map<String, String> dayMarksByDate;
 
   final double latitude;

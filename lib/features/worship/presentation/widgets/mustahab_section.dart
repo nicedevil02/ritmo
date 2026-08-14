@@ -189,12 +189,12 @@ class _MustahabSectionState extends State<MustahabSection> {
             children: [
               Row(
                 children: [
-                  const Text('✨', style: TextStyle(fontSize: 16)),
+                  const Text('✨', style: TextStyle(fontSize: 15)),
                   const SizedBox(width: 6),
                   Text(
                     'مستحبات و ادعیه',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15.5,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
                       fontFamily: 'Vazirmatn',
@@ -208,15 +208,14 @@ class _MustahabSectionState extends State<MustahabSection> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5A00D).withValues(alpha: 0.12),
+                    color: const Color(0xFFD4A843).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.3)),
                   ),
                   child: const Text(
                     '➕ مدیریت و افزودن',
                     style: TextStyle(
                       fontSize: 11.5,
-                      color: Color(0xFFE5A00D),
+                      color: Color(0xFFB48528),
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Vazirmatn',
                     ),
@@ -229,21 +228,18 @@ class _MustahabSectionState extends State<MustahabSection> {
 
           if (_activeMustahabs.isEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 18),
+              padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 18),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [const Color(0xFF201705), const Color(0xFF111827)]
-                      : [const Color(0xFFFFFDF5), Colors.white],
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                ),
+                color: isDark ? const Color(0xFF121316) : Colors.white,
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.25), width: 1.5),
+                border: Border.all(
+                  color: isDark ? const Color(0xFFD4A843).withValues(alpha: 0.2) : const Color(0xFFE8E5DF),
+                  width: 1,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 16,
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                    blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -252,12 +248,12 @@ class _MustahabSectionState extends State<MustahabSection> {
                 child: Column(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE5A00D).withValues(alpha: 0.12),
+                        color: const Color(0xFFD4A843).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(CupertinoIcons.heart_fill, color: Color(0xFFE5A00D), size: 28),
+                      child: const Icon(CupertinoIcons.heart_fill, color: Color(0xFFB48528), size: 26),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -268,19 +264,19 @@ class _MustahabSectionState extends State<MustahabSection> {
                     Text(
                       'با افزودن نماز شب، زیارت عاشورا، دعای عهد و نوافل، روح روزت را جلا ببخش.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: colors.textSecondary, fontSize: 12, fontFamily: 'Vazirmatn', height: 1.4),
+                      style: TextStyle(color: colors.textSecondary.withValues(alpha: 0.8), fontSize: 12, fontFamily: 'Vazirmatn', height: 1.45),
                     ),
                     const SizedBox(height: 14),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE5A00D),
+                        backgroundColor: const Color(0xFFD4A843),
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: _showManageSheet,
-                      icon: const Icon(CupertinoIcons.add, size: 16),
+                      icon: const Icon(CupertinoIcons.add, size: 15),
                       label: const Text(
                         'انتخاب از فهرست مستحبات',
                         style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
@@ -291,150 +287,162 @@ class _MustahabSectionState extends State<MustahabSection> {
               ),
             )
           else
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [const Color(0xFF1E1708), const Color(0xFF111827)]
-                      : [const Color(0xFFFFFDF8), Colors.white],
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                ),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.25), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _activeMustahabs.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final practice = _activeMustahabs[index];
-                  final status = _statuses[practice.id];
-                  final isDone = status?.isDone == true;
-                  final isSkipped = status?.isSkipped == true;
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _activeMustahabs.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final practice = _activeMustahabs[index];
+                final status = _statuses[practice.id];
+                final isDone = status?.isDone == true;
 
-                  // Determine appropriate spiritual icon
-                  String emoji = '📿';
-                  if (practice.title.contains('شب')) {
-                    emoji = '🌙';
-                  } else if (practice.title.contains('عاشورا')) {
-                    emoji = '📜';
-                  } else if (practice.title.contains('عهد')) {
-                    emoji = '🤝';
-                  } else if (practice.title.contains('کمیل') || practice.title.contains('ندبه')) {
-                    emoji = '🤲';
-                  } else if (practice.title.contains('طیار')) {
-                    emoji = '🕊️';
-                  } else if (practice.title.contains('نافله')) {
-                    emoji = '✨';
-                  }
+                // Appropriate spiritual vector icon and accent color
+                IconData vectorIcon = CupertinoIcons.sparkles;
+                Color iconColor = const Color(0xFFB48528);
+                Color iconBg = const Color(0xFFD4A843).withValues(alpha: 0.12);
 
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
+                if (practice.title.contains('شب')) {
+                  vectorIcon = CupertinoIcons.moon_stars_fill;
+                  iconColor = const Color(0xFF6366F1);
+                  iconBg = const Color(0xFF6366F1).withValues(alpha: 0.1);
+                } else if (practice.title.contains('عاشورا') || practice.title.contains('زیارت')) {
+                  vectorIcon = CupertinoIcons.book_fill;
+                  iconColor = const Color(0xFF059669);
+                  iconBg = const Color(0xFF059669).withValues(alpha: 0.1);
+                } else if (practice.title.contains('عهد')) {
+                  vectorIcon = CupertinoIcons.hand_raised_fill;
+                  iconColor = const Color(0xFFD97706);
+                  iconBg = const Color(0xFFD97706).withValues(alpha: 0.1);
+                } else if (practice.title.contains('کمیل') || practice.title.contains('ندبه')) {
+                  vectorIcon = CupertinoIcons.heart_fill;
+                  iconColor = const Color(0xFFE11D48);
+                  iconBg = const Color(0xFFE11D48).withValues(alpha: 0.1);
+                }
+
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF16171B) : Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
                       color: isDone
-                          ? (isDark ? const Color(0xFF0D2818) : const Color(0xFFF0FDF4))
-                          : (isDark ? colors.surfaceSunken : colors.surface),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDone
-                            ? const Color(0xFF10B981).withValues(alpha: 0.45)
-                            : colors.border.withValues(alpha: 0.2),
-                      ),
+                          ? const Color(0xFF10B981).withValues(alpha: 0.35)
+                          : (isDark ? const Color(0xFF26272F) : const Color(0xFFE8E5DF)),
+                      width: 1,
                     ),
-                    child: Row(
-                      children: [
-                        Text(emoji, style: const TextStyle(fontSize: 18)),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.025),
+                        blurRadius: 16,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Vector Icon Badge
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: iconBg,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(vectorIcon, color: iconColor, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Title and Notes
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              practice.title,
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.bold,
+                                color: isDone ? const Color(0xFF059669) : colors.textPrimary,
+                                decoration: isDone ? TextDecoration.lineThrough : null,
+                              ),
+                            ),
+                            if (practice.notes != null && practice.notes!.isNotEmpty) ...[
+                              const SizedBox(height: 3),
                               Text(
-                                practice.title,
+                                practice.notes!,
                                 style: TextStyle(
                                   fontFamily: 'Vazirmatn',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDone ? const Color(0xFF10B981) : colors.textPrimary,
-                                  decoration: isDone ? TextDecoration.lineThrough : null,
+                                  fontSize: 12,
+                                  color: colors.textSecondary.withValues(alpha: 0.75),
+                                  height: 1.3,
                                 ),
                               ),
-                              if (practice.notes != null && practice.notes!.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  practice.notes!,
-                                  style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
-                                    fontSize: 11.5,
-                                    color: colors.textSecondary,
-                                  ),
+                            ],
+                          ],
+                        ),
+                      ),
+
+                      // Time / Reminder Pill
+                      if (practice.reminderEnabled) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD4A843).withValues(alpha: 0.09),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(CupertinoIcons.bell_fill, size: 11, color: Color(0xFFB48528)),
+                              const SizedBox(width: 4),
+                              Text(
+                                practice.reminderTime != null ? toPersianDigits(practice.reminderTime!) : 'یادآور',
+                                style: const TextStyle(
+                                  fontFamily: 'Vazirmatn',
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFB48528),
                                 ),
-                              ],
+                              ),
                             ],
                           ),
                         ),
-                        if (practice.reminderEnabled) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE5A00D).withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(CupertinoIcons.bell_fill, size: 10, color: Color(0xFFE5A00D)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  practice.reminderTime != null ? toPersianDigits(practice.reminderTime!) : 'یادآور',
-                                  style: const TextStyle(
-                                    fontFamily: 'Vazirmatn',
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFFE5A00D),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        // Interactive Checkmark Pod
-                        InkWell(
-                          onTap: () => _toggleDone(practice, !isDone),
-                          borderRadius: BorderRadius.circular(12),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: isDone ? const Color(0xFF10B981) : Colors.transparent,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isDone ? const Color(0xFF10B981) : colors.textSecondary.withValues(alpha: 0.35),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Icon(
-                              CupertinoIcons.checkmark,
-                              size: 14,
-                              color: isDone ? Colors.white : Colors.transparent,
-                            ),
-                          ),
-                        ),
+                        const SizedBox(width: 10),
                       ],
-                    ),
-                  );
-                },
-              ),
+
+                      // Minimal Modern Checkbox Control
+                      InkWell(
+                        onTap: () => _toggleDone(practice, !isDone),
+                        borderRadius: BorderRadius.circular(20),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: isDone ? const Color(0xFF10B981) : Colors.transparent,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDone ? const Color(0xFF10B981) : const Color(0xFFCBD5E1),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: isDone
+                              ? const Center(
+                                  child: Icon(
+                                    CupertinoIcons.checkmark,
+                                    size: 13,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
         ],
       ),

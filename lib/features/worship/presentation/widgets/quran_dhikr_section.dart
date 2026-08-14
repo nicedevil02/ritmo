@@ -844,23 +844,19 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF241C06), const Color(0xFF111827)]
-              : [const Color(0xFFFFFDF7), Colors.white],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ),
+        color: isDark ? const Color(0xFF121316) : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFFE5A00D).withValues(alpha: 0.35),
-          width: 1.5,
+          color: isDark
+              ? const Color(0xFFD4A843).withValues(alpha: 0.2)
+              : const Color(0xFFE8E5DF),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFE5A00D).withValues(alpha: isDark ? 0.1 : 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 5),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -871,31 +867,31 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE5A00D).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFFD4A843).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(CupertinoIcons.circle_grid_hex_fill, color: Color(0xFFE5A00D), size: 18),
+                child: const Icon(CupertinoIcons.circle_grid_hex_fill, color: Color(0xFFD4A843), size: 16),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                   decoration: BoxDecoration(
-                    color: isDark ? colors.surfaceSunken : colors.surface,
+                    color: isDark ? colors.surfaceSunken : const Color(0xFFF8F9FA),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colors.border.withValues(alpha: 0.2)),
+                    border: Border.all(color: colors.border.withValues(alpha: 0.4), width: 1),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: activePractice.id,
                       dropdownColor: colors.card,
-                      icon: Icon(CupertinoIcons.chevron_down, color: colors.textSecondary, size: 14),
+                      icon: Icon(CupertinoIcons.chevron_down, color: colors.textSecondary, size: 13),
                       style: TextStyle(
                         color: colors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
                         fontFamily: 'Vazirmatn',
                       ),
                       items: _dhikrs.map((d) {
@@ -924,16 +920,16 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                 onTap: _showAddDhikrSheet,
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5A00D).withValues(alpha: 0.12),
+                    color: const Color(0xFFD4A843).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Text(
                     '➕ ذکر جدید',
                     style: TextStyle(
                       fontSize: 11.5,
-                      color: Color(0xFFE5A00D),
+                      color: Color(0xFFB48528),
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Vazirmatn',
                     ),
@@ -942,28 +938,25 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // Interactive 3D Touch Counter Pod
+          // Interactive Tactile Counter Canvas (بوم لمسی ذکرشمار)
           ScaleOnTap(
             onTap: isZahra ? _tapZahraCounter : () => _incrementDhikr(activePractice, 1),
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [const Color(0xFF332505), const Color(0xFF1C180A)]
-                      : [const Color(0xFFFFFBEB), const Color(0xFFFFF7DB)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+                color: isDark ? const Color(0xFF191A1F) : const Color(0xFFFCFBF9),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFE5A00D).withValues(alpha: 0.4)),
+                border: Border.all(
+                  color: const Color(0xFFD4A843).withValues(alpha: isDark ? 0.3 : 0.25),
+                  width: 1,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFE5A00D).withValues(alpha: 0.12),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4),
+                    color: const Color(0xFFD4A843).withValues(alpha: 0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -971,31 +964,49 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                 children: [
                   Text(
                     isZahra ? _zahraPhrases[_zahraStep] : activePractice.title,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFFE5A00D),
-                      fontFamily: 'Vazirmatn',
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    isZahra
-                        ? toPersianDigits('$_zahraCount / ${_zahraTargets[_zahraStep]}')
-                        : toPersianDigits('$done / $target'),
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
+                      fontSize: 23,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? const Color(0xFFECC468) : const Color(0xFF9E6F13),
                       fontFamily: 'Vazirmatn',
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        isZahra
+                            ? toPersianDigits('$_zahraCount')
+                            : toPersianDigits('$done'),
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                          fontFamily: 'Vazirmatn',
+                        ),
+                      ),
+                      Text(
+                        isZahra
+                            ? toPersianDigits(' / ${_zahraTargets[_zahraStep]}')
+                            : toPersianDigits(' / $target'),
+                        style: TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textSecondary.withValues(alpha: 0.7),
+                          fontFamily: 'Vazirmatn',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     'برای افزایش ذکر، روی کادر ضربه بزنید 👆',
                     style: TextStyle(
                       fontSize: 11,
-                      color: colors.textTertiary,
+                      color: colors.textSecondary.withValues(alpha: 0.6),
                       fontFamily: 'Vazirmatn',
                     ),
                   ),
@@ -1016,16 +1027,21 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                 return Expanded(
                   child: Container(
                     margin: EdgeInsets.only(left: idx < 2 ? 6 : 0),
-                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    padding: const EdgeInsets.symmetric(vertical: 7),
                     decoration: BoxDecoration(
                       color: isPassed
-                          ? const Color(0xFF10B981).withValues(alpha: 0.2)
-                          : (isActive ? const Color(0xFFE5A00D).withValues(alpha: 0.2) : colors.surfaceSunken),
-                      borderRadius: BorderRadius.circular(8),
+                          ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                          : (isActive
+                              ? const Color(0xFFD4A843).withValues(alpha: 0.12)
+                              : (isDark ? colors.surfaceSunken : const Color(0xFFF1F5F9))),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isPassed
-                            ? const Color(0xFF10B981)
-                            : (isActive ? const Color(0xFFE5A00D) : colors.border.withValues(alpha: 0.2)),
+                            ? const Color(0xFF10B981).withValues(alpha: 0.4)
+                            : (isActive
+                                ? const Color(0xFFD4A843).withValues(alpha: 0.6)
+                                : colors.border.withValues(alpha: 0.3)),
+                        width: 1,
                       ),
                     ),
                     child: Center(
@@ -1033,11 +1049,11 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                         label,
                         style: TextStyle(
                           fontFamily: 'Vazirmatn',
-                          fontSize: 10,
-                          fontWeight: (isPassed || isActive) ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 10.5,
+                          fontWeight: (isPassed || isActive) ? FontWeight.bold : FontWeight.w500,
                           color: isPassed
-                              ? const Color(0xFF10B981)
-                              : (isActive ? const Color(0xFFE5A00D) : colors.textTertiary),
+                              ? const Color(0xFF059669)
+                              : (isActive ? const Color(0xFFB48528) : colors.textSecondary.withValues(alpha: 0.7)),
                         ),
                       ),
                     ),
@@ -1058,31 +1074,31 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                   target: isZahra ? 100 : activePractice.dailyTarget,
                   isFatima: isZahra,
                 ),
-                icon: const Icon(CupertinoIcons.fullscreen, size: 14, color: Color(0xFFE5A00D)),
-                label: const Text('تمام‌صفحه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, color: Color(0xFFE5A00D))),
+                icon: const Icon(CupertinoIcons.fullscreen, size: 14, color: Color(0xFFB48528)),
+                label: const Text('تمام‌صفحه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, color: Color(0xFFB48528), fontWeight: FontWeight.bold)),
                 style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFFE5A00D).withValues(alpha: 0.1),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  backgroundColor: const Color(0xFFD4A843).withValues(alpha: 0.1),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
               TextButton.icon(
                 onPressed: isZahra ? _resetZahraCounter : () => _resetDhikr(activePractice),
                 icon: Icon(CupertinoIcons.refresh, size: 14, color: colors.textSecondary),
-                label: Text('بازنشانی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, color: colors.textSecondary)),
+                label: Text('بازنشانی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, color: colors.textSecondary, fontWeight: FontWeight.w600)),
                 style: TextButton.styleFrom(
-                  backgroundColor: colors.surfaceSunken,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  backgroundColor: isDark ? colors.surfaceSunken : const Color(0xFFF1F5F9),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
               TextButton.icon(
                 onPressed: () => _manuallySetDhikrCount(activePractice),
                 icon: Icon(CupertinoIcons.pencil, size: 14, color: colors.textSecondary),
-                label: Text('تنظیم دستی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, color: colors.textSecondary)),
+                label: Text('تنظیم دستی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, color: colors.textSecondary, fontWeight: FontWeight.w600)),
                 style: TextButton.styleFrom(
-                  backgroundColor: colors.surfaceSunken,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  backgroundColor: isDark ? colors.surfaceSunken : const Color(0xFFF1F5F9),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
@@ -1095,13 +1111,13 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE5A00D).withValues(alpha: 0.12),
+                  color: const Color(0xFFD4A843).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   toPersianDigits('امروز: $done دور کامل انجام شده ✨'),
                   style: const TextStyle(
-                    color: Color(0xFFE5A00D),
+                    color: Color(0xFFB48528),
                     fontSize: 11.5,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Vazirmatn',

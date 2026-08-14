@@ -184,12 +184,12 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
             children: [
               Row(
                 children: [
-                  const Text('⚖️', style: TextStyle(fontSize: 16)),
+                  const Text('⚖️', style: TextStyle(fontSize: 15)),
                   const SizedBox(width: 6),
                   Text(
                     'جبران و قضای عبادات',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15.5,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
                       fontFamily: 'Vazirmatn',
@@ -203,15 +203,14 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
                   ),
                   child: const Text(
                     '➕ افزودن مورد جبرانی',
                     style: TextStyle(
                       fontSize: 11.5,
-                      color: Color(0xFF10B981),
+                      color: Color(0xFF059669),
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Vazirmatn',
                     ),
@@ -222,24 +221,23 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
           ),
           const SizedBox(height: 10),
 
-          // Zero-State or Active Debts List
+          // 2026 Minimal Luxury Status Card (Zero-State)
           if (_activeDebts.isEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 18),
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [const Color(0xFF062A20), const Color(0xFF111827)]
-                      : [const Color(0xFFF0FDF4), Colors.white],
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                ),
+                color: isDark ? const Color(0xFF121316) : Colors.white,
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3), width: 1.5),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                      : const Color(0xFFE8E5DF),
+                  width: 1,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.05),
-                    blurRadius: 16,
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                    blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -247,20 +245,32 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
               child: Center(
                 child: Column(
                   children: [
+                    // Status Badge with Ambient Rings
                     Container(
-                      padding: const EdgeInsets.all(14),
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        color: const Color(0xFF10B981).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                          width: 2,
+                        ),
                       ),
-                      child: const Icon(CupertinoIcons.checkmark_seal_fill, color: Color(0xFF10B981), size: 30),
+                      child: const Center(
+                        child: Icon(
+                          CupertinoIcons.checkmark_seal_fill,
+                          color: Color(0xFF059669),
+                          size: 24,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     Text(
                       'کاروان عبادات تسویه و به‌روز است ✨',
                       style: TextStyle(
                         color: colors.textPrimary,
-                        fontSize: 15,
+                        fontSize: 15.5,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'Vazirmatn',
                       ),
@@ -270,8 +280,8 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                       'هیچ بدهی یا قضای ثبت‌شده‌ای در انتظار نداری. با آرامش به تلاوت و مستحباتت بپرداز.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: colors.textSecondary,
-                        fontSize: 12,
+                        color: colors.textSecondary.withValues(alpha: 0.8),
+                        fontSize: 12.5,
                         fontFamily: 'Vazirmatn',
                         height: 1.45,
                       ),

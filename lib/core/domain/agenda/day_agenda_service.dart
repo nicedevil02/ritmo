@@ -221,6 +221,10 @@ class DayAgendaService {
       for (final s in settings) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''
     };
 
+    final routinesEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_today_routines');
+    final goalsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_goals_enabled');
+    final tasksEnabled = routinesEnabled && settingsMap['calendar_show_tasks'] != 'false';
+    final eventsEnabled = routinesEnabled && settingsMap['calendar_show_events'] != 'false';
     final religionEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled');
     final coursesEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_courses_enabled');
     final konkurEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_study_enabled') &&
@@ -305,6 +309,10 @@ class DayAgendaService {
 
     return _AgendaContext(
       settingsMap: settingsMap,
+      routinesEnabled: routinesEnabled,
+      goalsEnabled: goalsEnabled,
+      tasksEnabled: tasksEnabled,
+      eventsEnabled: eventsEnabled,
       religionEnabled: religionEnabled,
       coursesEnabled: coursesEnabled,
       konkurEnabled: konkurEnabled,
@@ -348,18 +356,18 @@ class DayAgendaService {
 
 
     final enabledDomains = <AgendaDomain, bool>{
-      AgendaDomain.routine: true,
-      AgendaDomain.event: true,
+      AgendaDomain.routine: ctx.routinesEnabled,
+      AgendaDomain.event: ctx.eventsEnabled,
       AgendaDomain.prayer: ctx.religionEnabled,
       AgendaDomain.mustahab: ctx.religionEnabled,
       AgendaDomain.worshipDebt: ctx.religionEnabled && opts.includeWorshipDebt,
       AgendaDomain.course: ctx.coursesEnabled,
-      AgendaDomain.goalStep: true,
+      AgendaDomain.goalStep: ctx.goalsEnabled,
       AgendaDomain.konkur: ctx.konkurEnabled,
       AgendaDomain.cycle: ctx.cycleAllowed,
       AgendaDomain.sport: ctx.sportsEnabled,
       AgendaDomain.medicine: ctx.medicineEnabled,
-      AgendaDomain.task: ctx.taskSource != null,
+      AgendaDomain.task: ctx.tasksEnabled,
     };
 
     final agendaCtx = AgendaDayContext(
@@ -544,13 +552,17 @@ class _AgendaContext {
 
   _AgendaContext({
     required this.settingsMap,
+    required this.routinesEnabled,
+    required this.goalsEnabled,
+    required this.tasksEnabled,
+    required this.eventsEnabled,
     required this.religionEnabled,
     required this.coursesEnabled,
     required this.konkurEnabled,
     required this.cycleAllowed,
     required this.sportsEnabled,
     required this.medicineEnabled,
-    this.taskSource,
+    required this.taskSource,
     required this.routineSource,
     required this.worshipSource,
     required this.sportsSource,
@@ -567,6 +579,10 @@ class _AgendaContext {
     required this.calcMethodStr,
   });
   final Map<String, String> settingsMap;
+  final bool routinesEnabled;
+  final bool goalsEnabled;
+  final bool tasksEnabled;
+  final bool eventsEnabled;
   final bool religionEnabled;
   final bool coursesEnabled;
   final bool konkurEnabled;

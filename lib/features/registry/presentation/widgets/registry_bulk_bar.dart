@@ -49,7 +49,6 @@ class RegistryBulkBar extends StatelessWidget {
               Text(
                 '${toPersianDigits(selectedCount.toString())} مورد انتخاب شده',
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13.5,
                   fontWeight: FontWeight.bold,
                 ),
@@ -65,7 +64,7 @@ class RegistryBulkBar extends StatelessWidget {
                 icon: const Icon(Icons.archive_rounded, size: 16),
                 label: const Text(
                   'بایگانی',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                  style: TextStyle(fontSize: 12),
                 ),
               ),
               const SizedBox(width: 8),
@@ -79,7 +78,7 @@ class RegistryBulkBar extends StatelessWidget {
                 icon: const Icon(Icons.delete_forever_rounded, size: 16),
                 label: const Text(
                   'حذف',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                  style: TextStyle(fontSize: 12),
                 ),
               ),
             ],

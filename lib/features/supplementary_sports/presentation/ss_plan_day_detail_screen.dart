@@ -261,26 +261,26 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            title: const Text('این روز خالی می‌ماند!', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-            content: const Text('حذف این حرکت باعث خالی شدن کل روز تمرینی می‌شود. آیا می‌خواهید کل روز تمرینی را حذف کنید یا حرکت دیگری جایگزین کنید؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+            title: const Text('این روز خالی می‌ماند!', style: TextStyle(fontWeight: FontWeight.bold)),
+            content: const Text('حذف این حرکت باعث خالی شدن کل روز تمرینی می‌شود. آیا می‌خواهید کل روز تمرینی را حذف کنید یا حرکت دیگری جایگزین کنید؟', style: TextStyle()),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
+                child: const Text('لغو', style: TextStyle(color: Colors.grey)),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                   _showAddExerciseBottomSheet();
                 },
-                child: const Text('جایگزین کردن', style: TextStyle(fontFamily: 'Vazirmatn')),
+                child: const Text('جایگزین کردن', style: TextStyle()),
               ),
               TextButton(
                 onPressed: () async {
                   Navigator.pop(context);
                   await _deleteEntirePlanDay();
                 },
-                child: const Text('حذف کل روز تمرینی', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red)),
+                child: const Text('حذف کل روز تمرینی', style: TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -331,7 +331,7 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('حرکت مشابه عضلانی یافت نشد.', style: TextStyle(fontFamily: 'Vazirmatn')),
+              content: Text('حرکت مشابه عضلانی یافت نشد.', style: TextStyle()),
             ),
           );
         }
@@ -500,7 +500,7 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
         backgroundColor: colors.background,
         appBar: AppBar(
           backgroundColor: colors.surface,
-          title: Text(widget.dayName, style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary)),
+          title: Text(widget.dayName, style: TextStyle(color: colors.textPrimary)),
           centerTitle: true,
         ),
         body: Directionality(
@@ -519,7 +519,7 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
         backgroundColor: colors.background,
         appBar: AppBar(
           backgroundColor: colors.surface,
-          title: Text('نسخه تمرینی ${widget.dayName}', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary)),
+          title: Text('نسخه تمرینی ${widget.dayName}', style: TextStyle(color: colors.textPrimary)),
           centerTitle: true,
         ),
         body: Directionality(
@@ -533,7 +533,7 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
       backgroundColor: colors.background,
       appBar: AppBar(
         backgroundColor: colors.surface,
-        title: Text('جزئیات تمرین ${widget.dayName}', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary)),
+        title: Text('جزئیات تمرین ${widget.dayName}', style: TextStyle(color: colors.textPrimary)),
         centerTitle: true,
       ),
       body: Directionality(
@@ -621,7 +621,6 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                 Text(
                   _prescription!.headlineFa,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: context.colors.textPrimary,
@@ -635,7 +634,6 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                     Text(
                       toPersianDigits('${_prescription!.targetMinutes} دقیقه'),
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         color: context.colors.textSecondary,
                         fontSize: 14,
                       ),
@@ -651,7 +649,6 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                       child: Text(
                         _prescription!.focusCodes.isNotEmpty ? _prescription!.focusCodes.join(' و ') : '',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           color: context.colors.textSecondary,
                           fontSize: 14,
                         ),
@@ -667,7 +664,6 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                     Text(
                       'شدت: ${_prescription!.intensityTier.labelFa}',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         color: context.colors.textSecondary,
                         fontSize: 14,
                       ),
@@ -698,7 +694,6 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                         Text(
                           'توصیه مربی',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontWeight: FontWeight.bold,
                             color: context.colors.primary,
                           ),
@@ -707,7 +702,6 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                         Text(
                           _prescription!.coachNoteFa!,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             color: context.colors.textPrimary,
                             height: 1.5,
                           ),

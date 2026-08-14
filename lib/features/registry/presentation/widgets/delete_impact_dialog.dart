@@ -34,7 +34,6 @@ class DeleteImpactDialog extends StatelessWidget {
         title: Text(
           'حذف «${entry.title}»؟',
           style: const TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -46,7 +45,6 @@ class DeleteImpactDialog extends StatelessWidget {
             const Text(
               'با حذف کامل، این موارد از بین می‌روند:',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
 
               ),
@@ -61,7 +59,6 @@ class DeleteImpactDialog extends StatelessWidget {
               child: Text(
                 report.toFaSentence(),
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12.5,
                   height: 1.5,
                   color: report.orphanedDependents.isNotEmpty
@@ -82,7 +79,7 @@ class DeleteImpactDialog extends StatelessWidget {
               foregroundColor: const Color(0xFFF43F5E),
               side: const BorderSide(color: Color(0xFFF43F5E)),
             ),
-            child: const Text('حذف کامل', style: TextStyle(fontFamily: 'Vazirmatn')),
+            child: const Text('حذف کامل', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () {
@@ -93,7 +90,7 @@ class DeleteImpactDialog extends StatelessWidget {
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: Colors.white,
             ),
-            child: const Text('بایگانی کن', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+            child: const Text('بایگانی کن', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

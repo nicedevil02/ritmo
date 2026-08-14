@@ -32,11 +32,11 @@ class AssistantActionPreviewSheet extends StatelessWidget {
               children: [
                 Text(
                   keyFa,
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
                 Text(
                   value.toString(),
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                 ),
               ],
             ),
@@ -111,7 +111,6 @@ class AssistantActionPreviewSheet extends StatelessWidget {
                     Text(
                       'پیش‌نمایش اقدام پیشنهادی',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12,
                         color: colors.textSecondary,
                       ),
@@ -120,7 +119,6 @@ class AssistantActionPreviewSheet extends StatelessWidget {
                     Text(
                       action.title,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -145,7 +143,6 @@ class AssistantActionPreviewSheet extends StatelessWidget {
                         Text(
                           'جزئیات اقدام:',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
@@ -155,7 +152,7 @@ class AssistantActionPreviewSheet extends StatelessWidget {
                         if (payloadWidgets.isEmpty)
                           Text(
                             'اقدام شامل داده‌های تکمیلی نیست. برای تایید روی ذخیره کلیک کنید.',
-                            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
                           )
                         else
                           ...payloadWidgets,
@@ -172,7 +169,6 @@ class AssistantActionPreviewSheet extends StatelessWidget {
                           Text(
                             'جزئیات اقدام:',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -182,7 +178,7 @@ class AssistantActionPreviewSheet extends StatelessWidget {
                           if (payloadWidgets.isEmpty)
                             Text(
                               'اقدام شامل داده‌های تکمیلی نیست. برای تایید روی ذخیره کلیک کنید.',
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                              style: TextStyle(fontSize: 12, color: colors.textSecondary),
                             )
                           else
                             ...payloadWidgets,
@@ -210,7 +206,6 @@ class AssistantActionPreviewSheet extends StatelessWidget {
                     child: Text(
                       'انصراف',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         color: colors.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -242,7 +237,6 @@ class AssistantActionPreviewSheet extends StatelessWidget {
                     child: Text(
                       action.type == AssistantActionType.openPage ? 'برو به صفحه' : 'تایید و ذخیره',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         color: isDark ? Colors.black : Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,

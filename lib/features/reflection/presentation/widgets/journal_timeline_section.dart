@@ -106,7 +106,6 @@ class JournalTimelineSection extends StatelessWidget {
               Text(
                 'هنوز هیچ یادداشتی ثبت نشده است.',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -117,7 +116,6 @@ class JournalTimelineSection extends StatelessWidget {
                 'ثبت روزانه خودارزیابی به شما کمک می‌کند الگوهای ذهنی خود را بهتر بشناسید.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   color: colors.textSecondary,
                 ),
@@ -166,7 +164,6 @@ class JournalTimelineSection extends StatelessWidget {
                         Text(
                           _formatJalaliDate(day.dateIso),
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: colors.primary,
@@ -208,7 +205,6 @@ class JournalTimelineSection extends StatelessWidget {
                                     Text(
                                       'ارزیابی صبحگاهی: ',
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                         color: colors.textPrimary,
@@ -217,7 +213,6 @@ class JournalTimelineSection extends StatelessWidget {
                                     Text(
                                       '${_getMoodEmoji(day.checkin!.mood)} ${_getMoodLabel(day.checkin!.mood)}',
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 12,
                                         color: colors.textSecondary,
                                       ),
@@ -229,7 +224,6 @@ class JournalTimelineSection extends StatelessWidget {
                                   Text(
                                     day.checkin!.note!,
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 11,
                                       color: colors.textSecondary,
                                       fontStyle: FontStyle.italic,
@@ -271,7 +265,6 @@ class JournalTimelineSection extends StatelessWidget {
                                     Text(
                                       'بازتاب عصرگاهی: ',
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                         color: colors.textPrimary,
@@ -280,7 +273,6 @@ class JournalTimelineSection extends StatelessWidget {
                                     Text(
                                       'حالت روحی ${_getMoodScoreEmoji(day.reflection!.moodScore)}',
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 12,
                                         color: colors.textSecondary,
                                       ),
@@ -305,7 +297,6 @@ class JournalTimelineSection extends StatelessWidget {
                                   Text(
                                     day.reflection!.reflectionText!,
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 12,
                                       color: colors.textPrimary,
                                     ),
@@ -332,7 +323,6 @@ class JournalTimelineSection extends StatelessWidget {
                               child: Text(
                                 'تأمل عصرگاهی ثبت نشده است. برای ثبت ضربه بزنید.',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 11,
                                   color: colors.textSecondary,
                                 ),
@@ -358,7 +348,6 @@ class JournalTimelineSection extends StatelessWidget {
       child: RichText(
         text: TextSpan(
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 11,
             color: colors.textSecondary,
           ),

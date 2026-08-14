@@ -55,20 +55,20 @@ class RoutineDetailsSheet extends StatelessWidget {
           backgroundColor: colors.card,
           title: Text(
             'لغو ثبت انجام',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.textPrimary),
+            style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary),
           ),
           content: Text(
             'آیا از لغو ثبت انجام این روتین برای $dateLabel اطمینان دارید؟',
-            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary),
+            style: TextStyle(color: colors.textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx, false),
-              child: Text('خیر', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+              child: Text('خیر', style: TextStyle(color: colors.textSecondary)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx, true),
-              child: Text('بله، لغو شود', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.medicalRed, fontWeight: FontWeight.bold)),
+              child: Text('بله، لغو شود', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -155,7 +155,7 @@ class RoutineDetailsSheet extends StatelessWidget {
                   Text(
                     'جزئیات روتین: ${routine.title}',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -163,23 +163,23 @@ class RoutineDetailsSheet extends StatelessWidget {
                     children: [
                       Column(
                         children: [
-                          Text('$totalCompletions', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor, fontFamily: 'Vazirmatn')),
-                          Text('کل انجام‌ها', style: TextStyle(fontSize: 12, color: subtitleColor, fontFamily: 'Vazirmatn')),
+                          Text('$totalCompletions', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor)),
+                          Text('کل انجام‌ها', style: TextStyle(fontSize: 12, color: subtitleColor)),
                         ],
                       ),
                       Column(
                         children: [
-                          Text('🔥 $currentStreak', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colors.warning, fontFamily: 'Vazirmatn')),
-                          Text('تداوم فعلی', style: TextStyle(fontSize: 12, color: subtitleColor, fontFamily: 'Vazirmatn')),
+                          Text('🔥 $currentStreak', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colors.warning)),
+                          Text('تداوم فعلی', style: TextStyle(fontSize: 12, color: subtitleColor)),
                         ],
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
                   if (completions.isEmpty)
-                    const Center(child: Text('تاکنون هیچ انجام شدنی ثبت نشده است.', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.grey)))
+                    const Center(child: Text('تاکنون هیچ انجام شدنی ثبت نشده است.', style: TextStyle(fontSize: 12, color: Colors.grey)))
                   else ...[
-                    const Text('آخرین انجام‌ها:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                    const Text('آخرین انجام‌ها:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxHeight: 180),
@@ -202,8 +202,8 @@ class RoutineDetailsSheet extends StatelessWidget {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(_formatJalaliDateWithWeekday(date), style: TextStyle(fontSize: 12, color: textColor, fontFamily: 'Vazirmatn')),
-                                    Text('$timeStr ($type)', style: TextStyle(fontSize: 12, color: subtitleColor, fontFamily: 'Vazirmatn')),
+                                    Text(_formatJalaliDateWithWeekday(date), style: TextStyle(fontSize: 12, color: textColor)),
+                                    Text('$timeStr ($type)', style: TextStyle(fontSize: 12, color: subtitleColor)),
                                   ],
                                 ),
                                 if (noteText != null && noteText.isNotEmpty)
@@ -214,7 +214,6 @@ class RoutineDetailsSheet extends StatelessWidget {
                                       textDirection: TextDirection.rtl,
                                       style: TextStyle(
                                         fontSize: 11,
-                                        fontFamily: 'Vazirmatn',
                                         color: subtitleColor.withValues(alpha: 0.9),
                                       ),
                                     ),
@@ -240,7 +239,7 @@ class RoutineDetailsSheet extends StatelessWidget {
                       icon: const Icon(CupertinoIcons.clear, size: 16),
                       label: const Text(
                         'لغو ثبت انجام این روتین',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -253,7 +252,7 @@ class RoutineDetailsSheet extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text('بستن', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: const Text('بستن', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),

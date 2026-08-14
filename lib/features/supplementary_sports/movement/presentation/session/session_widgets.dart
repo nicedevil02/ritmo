@@ -45,7 +45,6 @@ class SessionCard extends StatelessWidget {
 											maxLines: 1,
 											overflow: TextOverflow.ellipsis,
 											style: const TextStyle(
-												fontFamily: _fontFa,
 												color: Colors.white,
 												fontSize: 13,
 												fontWeight: FontWeight.bold,
@@ -58,7 +57,6 @@ class SessionCard extends StatelessWidget {
 												maxLines: 2,
 												overflow: TextOverflow.ellipsis,
 												style: const TextStyle(
-													fontFamily: _fontFa,
 													color: Colors.white60,
 													fontSize: 11,
 												),
@@ -123,7 +121,6 @@ class SessionChip extends StatelessWidget {
 								Text(
 									label,
 									style: TextStyle(
-										fontFamily: _fontFa,
 										color: isEnabled ? Colors.white : Colors.white38,
 										fontSize: 11,
 									),
@@ -182,7 +179,6 @@ class SessionToggleChip extends StatelessWidget {
 								Text(
 									label,
 									style: TextStyle(
-										fontFamily: _fontFa,
 										color: isOn ? Colors.white : Colors.white70,
 										fontSize: 11,
 										fontWeight: isOn ? FontWeight.bold : FontWeight.normal,
@@ -230,7 +226,6 @@ class SessionActionButton extends StatelessWidget {
 						maxLines: 1,
 						overflow: TextOverflow.ellipsis,
 						style: const TextStyle(
-							fontFamily: _fontFa,
 							color: Colors.white,
 							fontSize: 12,
 							fontWeight: FontWeight.bold,

@@ -78,7 +78,6 @@ class KonkurStatsSection extends StatelessWidget {
             Text(
               'پیشنهاد تمرکز و تقویت دروس:',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -116,7 +115,6 @@ class KonkurStatsSection extends StatelessWidget {
                             Text(
                               sub.name,
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
@@ -126,7 +124,6 @@ class KonkurStatsSection extends StatelessWidget {
                             Text(
                               'میزان آمادگی فعلی: ${toPersianDigits(percent)}٪. به نظر می‌رسد این درس نیاز به تمرکز بیشتری دارد. بیایید با مطالعه مباحث پایه یا حل چند تست سبک، تسلط خود را ارتقا دهیم! 💪',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11,
                                 color: colors.textSecondary,
                                 height: 1.4,
@@ -172,7 +169,6 @@ class KonkurStatsSection extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
                     color: colors.textSecondary,
@@ -184,7 +180,6 @@ class KonkurStatsSection extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
                 color: colors.textPrimary,

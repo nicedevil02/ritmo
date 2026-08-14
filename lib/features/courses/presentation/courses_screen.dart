@@ -218,7 +218,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
             ),
             child: Text(
               '${toPersianDigits(_activeCourses.length)} فعال',
-              style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Color(0xff3B82F6), fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 10, color: Color(0xff3B82F6), fontWeight: FontWeight.bold),
             ),
           ),
           actions: [

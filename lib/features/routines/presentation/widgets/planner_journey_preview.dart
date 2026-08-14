@@ -82,7 +82,6 @@ class PlannerJourneyPreview extends StatelessWidget {
                 Text(
                   'پیش‌نمایش مسیر فعالیت‌ها',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12.5,
                     fontWeight: FontWeight.bold,
                     color: colors.textSecondary.withValues(alpha: 0.8),
@@ -104,7 +103,6 @@ class PlannerJourneyPreview extends StatelessWidget {
                         Text(
                           'تداخل با ${conflictRange.title}',
                           style: const TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: Color(0xffF59E0B),
@@ -194,7 +192,6 @@ class PlannerJourneyPreview extends StatelessWidget {
           child: Text(
             toPersianDigits(time),
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 11,
               fontWeight: FontWeight.bold,
               color: isNew ? color : color.withValues(alpha: 0.6),
@@ -225,7 +222,6 @@ class PlannerJourneyPreview extends StatelessWidget {
               Text(
                 title,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12.5,
                   fontWeight: isNew ? FontWeight.bold : FontWeight.normal,
                   color: isNew ? color : color.withValues(alpha: 0.85),
@@ -235,7 +231,6 @@ class PlannerJourneyPreview extends StatelessWidget {
                 const Text(
                   'این کار به این قسمت از مسیر اضافه می‌شود.',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 9.5,
                     color: Color(0xff10B981),
                     fontWeight: FontWeight.w600,

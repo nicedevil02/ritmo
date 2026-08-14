@@ -20,7 +20,7 @@ class CourseStep2Form extends StatelessWidget {
         children: [
           const Text(
             'نوع منبع آموزشی',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -36,7 +36,7 @@ class CourseStep2Form extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'تعداد کل جلسات / فصول: ${controller.courseTotalSessions}',
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+            style: const TextStyle(fontSize: 13),
           ),
           Slider(
             value: controller.courseTotalSessions.toDouble(),
@@ -52,7 +52,7 @@ class CourseStep2Form extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'هدف هفتگی (تعداد جلسات در هفته): ${controller.courseWeeklyTarget}',
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+            style: const TextStyle(fontSize: 13),
           ),
           Slider(
             value: controller.courseWeeklyTarget.toDouble(),
@@ -68,7 +68,7 @@ class CourseStep2Form extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'مدت زمان تقریبی هر جلسه: ${controller.courseSessionDuration} دقیقه',
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+            style: const TextStyle(fontSize: 13),
           ),
           Slider(
             value: controller.courseSessionDuration.toDouble(),
@@ -87,7 +87,7 @@ class CourseStep2Form extends StatelessWidget {
             children: [
               const Text(
                 'زمان ترجیحی مطالعه',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               TextButton(
                 onPressed: () async {
@@ -102,7 +102,7 @@ class CourseStep2Form extends StatelessWidget {
                 },
                 child: Text(
                   '${controller.coursePreferredTime.hour.toString().padLeft(2, '0')}:${controller.coursePreferredTime.minute.toString().padLeft(2, '0')}',
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -110,7 +110,7 @@ class CourseStep2Form extends StatelessWidget {
           const SizedBox(height: 12),
           const Text(
             'روزهای ترجیحی برای مطالعه',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
           const SizedBox(height: 8),
           PlannerDayOfWeekSelector(
@@ -128,7 +128,7 @@ class CourseStep2Form extends StatelessWidget {
   Widget _buildTypeChip(String type, String label) {
     final sel = controller.courseType == type;
     return ChoiceChip(
-      label: Text(label, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
       selected: sel,
       selectedColor: const Color(0xff6366F1),
       labelStyle: TextStyle(color: sel ? Colors.white : Colors.black),

@@ -382,7 +382,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('هیچ تاریخچه تغییری ثبت نشده است.', style: TextStyle(fontFamily: 'Vazirmatn')),
+              content: Text('هیچ تاریخچه تغییری ثبت نشده است.', style: TextStyle()),
             ),
           );
         }
@@ -411,12 +411,12 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                     title: Text(
                       reason,
                       textDirection: TextDirection.rtl,
-                      style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500),
+                      style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                     subtitle: Text(
                       dateStr,
                       textDirection: TextDirection.rtl,
-                      style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                      style: const TextStyle(fontSize: 12),
                     ),
                     trailing: TextButton(
                       onPressed: () async {
@@ -426,7 +426,6 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                       child: Text(
                         'بازیابی',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           color: SupplementarySportsTheme.getSuccessColor(context),
                         ),
                       ),
@@ -468,7 +467,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('برنامه با موفقیت به نسخه قبلی بازیابی شد.', style: TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text('برنامه با موفقیت به نسخه قبلی بازیابی شد.', style: TextStyle()),
           ),
         );
       }
@@ -511,7 +510,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                 icon: const Icon(Icons.settings, size: 18),
                 label: const Text(
                   'تنظیمات برنامه',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                  style: TextStyle(fontSize: 12),
                 ),
                 onPressed: _openProgramSettingsModal,
                 style: TextButton.styleFrom(
@@ -554,7 +553,6 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
               label: const Text(
                 'کتابخانه کامل تمرینات ورزشی 📚',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -610,7 +608,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
         statusColor = const Color(0xFFF59E0B);
         statusIcon = Text(
           toPersianDigits('${day.completionPercentage}٪'),
-          style: TextStyle(fontFamily: 'Vazirmatn', color: statusColor, fontSize: 13, fontWeight: FontWeight.bold),
+          style: TextStyle(color: statusColor, fontSize: 13, fontWeight: FontWeight.bold),
         );
       case DayStatus.today:
         statusColor = SupplementarySportsTheme.getSuccessColor(context).withValues(alpha: 0.2);
@@ -735,7 +733,6 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
               Text(
                 'تقویم ۲۸ روزه دوره',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : const Color(0xFF1C1C1E),
@@ -744,7 +741,6 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
               Text(
                 toPersianDigits('پیشرفت کل: ${_planProgressPercent.toStringAsFixed(0)}٪'),
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF2E7D5B),
@@ -776,7 +772,6 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                       child: Text(
                         'هفته $weekNum',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                           color: isDark ? Colors.grey[500] : const Color(0xFF8E8E93),
@@ -810,7 +805,6 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                             child = Text(
                               toPersianDigits('$dayIndex'),
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 color: isDark ? Colors.white : Colors.black87,
@@ -826,7 +820,6 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                             child = Text(
                               toPersianDigits('$dayIndex'),
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 10,
                                 color: isDark ? Colors.grey[650] : Colors.grey[400],
                               ),
@@ -840,7 +833,6 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                             child = Text(
                               '-',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 10,
                                 color: isDark ? Colors.grey[800] : Colors.grey[300],
                               ),

@@ -58,7 +58,7 @@ class _SSRecoveryCardState extends State<SSRecoveryCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: theme.textSecondary)),
+        Text(title, style: TextStyle(fontSize: 12, color: theme.textSecondary)),
         const SizedBox(height: 6),
         Row(
           children: List.generate(3, (idx) {
@@ -84,7 +84,6 @@ class _SSRecoveryCardState extends State<SSRecoveryCard> {
                     child: Text(
                       val == 1 ? 'سبک' : (val == 2 ? 'متوسط' : 'شدید'),
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         color: isSelected ? Colors.white : theme.textPrimary,
@@ -122,7 +121,7 @@ class _SSRecoveryCardState extends State<SSRecoveryCard> {
                 const SizedBox(width: 8),
                 Text(
                   'ارزیابی آمادگی و ریکاوری',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 15, color: theme.textPrimary),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: theme.textPrimary),
                 ),
                 const Spacer(),
                 if (widget.isLoggedToday)
@@ -132,7 +131,7 @@ class _SSRecoveryCardState extends State<SSRecoveryCard> {
                       color: theme.emeraldPrimary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text('ثبت‌شده امروز ✅', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: theme.emeraldPrimary)),
+                    child: Text('ثبت‌شده امروز ✅', style: TextStyle(fontSize: 11, color: theme.emeraldPrimary)),
                   ),
               ],
             ),
@@ -153,7 +152,7 @@ class _SSRecoveryCardState extends State<SSRecoveryCard> {
                     ? const CupertinoActivityIndicator(color: Colors.white)
                     : const Text(
                         'ثبت وضعیت ریکاوری 🌿',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
                       ),
               ),
             ),

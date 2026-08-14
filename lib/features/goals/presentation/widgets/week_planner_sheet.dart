@@ -299,7 +299,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
                       child: Text(
                         _showWizard ? 'مسیر سریع' : 'شخصی‌سازی دقیق',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 13,
                           color: colors.textPrimary,
                         ),
@@ -319,7 +318,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
                             : const Text(
                                 'ثبت و فعال‌سازی هفته',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
@@ -344,7 +342,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
         Text(
           'برنامه‌ریزی سریع هفته (۹۰ ثانیه) ⚡',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -354,7 +351,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
         Text(
           'تخصیص هوشمند و متوازن تعهدات به روزهای هفته بدون تداخل.',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 13,
             color: colors.textSecondary,
           ),
@@ -365,7 +361,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
         Text(
           'پروفایل ذخیرهٔ زمان:',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 14,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -388,7 +383,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
         Text(
           'منابع و نامزدهای برنامه:',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 14,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -410,7 +404,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
               title: Text(
                 title,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   color: colors.textPrimary,
                 ),
@@ -439,7 +432,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
                 Text(
                   'پیش‌نمایش تخصیص:',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: colors.primary,
@@ -449,7 +441,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
                 Text(
                   '+ ${PersianDigits.toPersian(_previewResult!.placed.length.toString())} تخصیص برای ${_previewResult!.placed.map((a) => a.dayKey).toSet().length} روز آماده شد.',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12,
                     color: colors.textPrimary,
                   ),
@@ -459,7 +450,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
                   Text(
                     '! ${PersianDigits.toPersian(_previewResult!.unplaced.length.toString())} تعهد در ظرفیت جا نشد.',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: colors.error,
                     ),
@@ -482,7 +472,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
         Text(
           'شخصی‌سازی دقیق هفته (ویزارد ۴ مرحله‌ای)',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -493,7 +482,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
         Text(
           'تنظیم روزهای سبک (Light Days):',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 13,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -529,7 +517,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
         Text(
           'تعهدات فعال برای این هفته (${PersianDigits.toPersian(_loadedCandidates.length.toString())} مورد):',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 13,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -551,7 +538,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
                   child: Text(
                     c.title,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       color: colors.textPrimary,
                     ),
@@ -560,7 +546,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
                 Text(
                   '${PersianDigits.toPersian(c.effortMinutes.toString())} دقیقه',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12,
                     color: colors.textSecondary,
                   ),
@@ -597,7 +582,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
             child: Text(
               label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 color: isSelected ? Colors.white : colors.textPrimary,

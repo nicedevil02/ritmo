@@ -100,7 +100,7 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('ثبت دستی جلسه مطالعه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+              Text('ثبت دستی جلسه مطالعه', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
               IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
             ],
           ),
@@ -110,10 +110,10 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
             initialValue: _selectedSubjectId,
             decoration: InputDecoration(
               labelText: 'انتخاب درس',
-              labelStyle: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary),
+              labelStyle: TextStyle(color: colors.textSecondary),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
             ),
-            items: widget.subjects.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name, style: const TextStyle(fontFamily: 'Vazirmatn')))).toList(),
+            items: widget.subjects.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name, style: const TextStyle()))).toList(),
             onChanged: (val) {
               if (val != null) {
                 setState(() => _selectedSubjectId = val);
@@ -124,12 +124,12 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
           const SizedBox(height: 12),
           // Date Row
           ListTile(
-            title: const Text('تاریخ جلسه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: Text(dateLabel, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.primary)),
+            title: const Text('تاریخ جلسه', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            subtitle: Text(dateLabel, style: TextStyle(fontSize: 12, color: colors.primary)),
             trailing: TextButton.icon(
               onPressed: _selectDate,
               icon: const Icon(Icons.calendar_today_rounded, size: 16),
-              label: const Text('تغییر تاریخ', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+              label: const Text('تغییر تاریخ', style: TextStyle(fontSize: 12)),
             ),
           ),
           const SizedBox(height: 12),
@@ -137,8 +137,8 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('مدت مطالعه (دقیقه)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold)),
-              Text('${RitmoNumber.faInt(_durationMinutes)} دقیقه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold, color: colors.primary)),
+              const Text('مدت مطالعه (دقیقه)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              Text('${RitmoNumber.faInt(_durationMinutes)} دقیقه', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.primary)),
             ],
           ),
           Slider(
@@ -155,7 +155,7 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
-            child: const Text('ثبت جلسه', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+            child: const Text('ثبت جلسه', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
           ),
         ],
       ),

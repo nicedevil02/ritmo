@@ -292,7 +292,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
                   title: Text(
                     'آیا مطمئن هستید؟',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
                     ),
@@ -300,18 +299,17 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
                   content: Text(
                     'کار در حال ویرایش ذخیره نشده است. آیا می‌خواهید تغییرات را دور بیندازید؟',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       color: colors.textSecondary,
                     ),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('ادامه ویرایش', style: TextStyle(fontFamily: 'Vazirmatn')),
+                      child: const Text('ادامه ویرایش', style: TextStyle()),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('دور انداختن', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red)),
+                      child: const Text('دور انداختن', style: TextStyle(color: Colors.red)),
                     ),
                   ],
                 ),
@@ -415,7 +413,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
                                                 ? 'تغییرات کار با موفقیت ذخیره شد!'
                                                 : 'کار جدید به مسیر زندگی اضافه شد!',
                                             style: const TextStyle(
-                                              fontFamily: 'Vazirmatn',
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
                                               color: Colors.white,
@@ -431,7 +428,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
                                             child: Text(
                                               '⏰ ${_controller.getTimeToStartLabel()}',
                                               style: const TextStyle(
-                                                fontFamily: 'Vazirmatn',
                                                 fontSize: 12,
                                                 color: Colors.white,
                                               ),
@@ -495,7 +491,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
                 Text(
                   'عنوان کار',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: colors.primary,
@@ -511,7 +506,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
                 _controller.notifyListeners();
               },
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -519,7 +513,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
               decoration: InputDecoration(
                 hintText: 'عنوان کار را وارد کنید...',
                 hintStyle: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   color: colors.textSecondary.withValues(alpha: 0.5),
                 ),
@@ -587,7 +580,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
             Text(
               'دارو با موفقیت ثبت شد',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -597,7 +589,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
             Text(
               'می‌توانید پیش‌نمایش را تأیید کنید.',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 color: colors.textSecondary,
               ),
@@ -621,7 +612,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
             Text(
               'عبادت با موفقیت ثبت شد',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -631,7 +621,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
             Text(
               'می‌توانید پیش‌نمایش را تأیید کنید.',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 color: colors.textSecondary,
               ),
@@ -688,7 +677,6 @@ class _CollapsibleJourneyPreviewState extends State<CollapsibleJourneyPreview> {
                       Text(
                         'پیش‌نمایش مسیر فعالیت‌ها',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary.withValues(alpha: 0.8),

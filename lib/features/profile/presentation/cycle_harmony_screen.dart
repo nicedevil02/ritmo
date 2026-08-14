@@ -108,12 +108,12 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
             child: AlertDialog(
               backgroundColor: const Color(0xff1C1F2E),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('شروع دوره قاعدگی', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-              content: const Text('آیا می‌خواهید شروع دوره قاعدگی جدید را از امروز ثبت کنید؟', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70, fontSize: 13)),
+              title: const Text('شروع دوره قاعدگی', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              content: const Text('آیا می‌خواهید شروع دوره قاعدگی جدید را از امروز ثبت کنید؟', style: TextStyle(color: Colors.white70, fontSize: 13)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('خیر', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54)),
+                  child: const Text('خیر', style: TextStyle(color: Colors.white54)),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -122,7 +122,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () => Navigator.pop(context, true),
-                  child: const Text('بله، ثبت شود', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                  child: const Text('بله، ثبت شود', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -150,12 +150,12 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
             child: AlertDialog(
               backgroundColor: const Color(0xff1C1F2E),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('پایان دوره قاعدگی', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-              content: const Text('آیا می‌خواهید پایان دوره قاعدگی فعلی را در امروز ثبت کنید؟', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70, fontSize: 13)),
+              title: const Text('پایان دوره قاعدگی', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              content: const Text('آیا می‌خواهید پایان دوره قاعدگی فعلی را در امروز ثبت کنید؟', style: TextStyle(color: Colors.white70, fontSize: 13)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('خیر', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54)),
+                  child: const Text('خیر', style: TextStyle(color: Colors.white54)),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -164,7 +164,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () => Navigator.pop(context, true),
-                  child: const Text('بله، ثبت شود', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                  child: const Text('بله، ثبت شود', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -220,17 +220,17 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 title: Text(
                   isEdit ? 'ویرایش دوره قاعدگی' : 'ثبت دوره قاعدگی جدید',
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
                 ),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('تاریخ شروع دوره:', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white70)),
+                      title: const Text('تاریخ شروع دوره:', style: TextStyle(fontSize: 13, color: Colors.white70)),
                       subtitle: Text(
                         _formatJalaliDate(startDate),
-                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, color: Color(0xffF43F5E), fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 15, color: Color(0xffF43F5E), fontWeight: FontWeight.bold),
                       ),
                       trailing: const Icon(CupertinoIcons.calendar, color: Color(0xffF43F5E)),
                       onTap: () async {
@@ -250,11 +250,10 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                     const Divider(color: Colors.white10),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('تاریخ پایان دوره (اختیاری):', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white70)),
+                      title: const Text('تاریخ پایان دوره (اختیاری):', style: TextStyle(fontSize: 13, color: Colors.white70)),
                       subtitle: Text(
                         endDate != null ? _formatJalaliDate(endDate!) : 'در حال حاضر فعال',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 15,
                           color: endDate != null ? const Color(0xffF43F5E) : Colors.grey,
                           fontWeight: FontWeight.bold,
@@ -294,7 +293,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54)),
+                    child: const Text('انصراف', style: TextStyle(color: Colors.white54)),
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -342,7 +341,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       }
                       await _loadData();
                     },
-                    child: const Text('ذخیره', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                    child: const Text('ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -372,7 +371,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 title: const Text(
                   'تنظیمات طول دوره و چرخه',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
                 ),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -380,8 +379,8 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('میانگین طول چرخه (روز):', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white70)),
-                        Text('$cycleLength روز', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: Color(0xffF43F5E), fontWeight: FontWeight.bold)),
+                        const Text('میانگین طول چرخه (روز):', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                        Text('$cycleLength روز', style: const TextStyle(fontSize: 14, color: Color(0xffF43F5E), fontWeight: FontWeight.bold)),
                       ],
                     ),
                     Slider(
@@ -401,8 +400,8 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('میانگین طول قاعدگی (روز):', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white70)),
-                        Text('$periodDuration روز', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: Color(0xffF43F5E), fontWeight: FontWeight.bold)),
+                        const Text('میانگین طول قاعدگی (روز):', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                        Text('$periodDuration روز', style: const TextStyle(fontSize: 14, color: Color(0xffF43F5E), fontWeight: FontWeight.bold)),
                       ],
                     ),
                     Slider(
@@ -423,7 +422,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54)),
+                    child: const Text('انصراف', style: TextStyle(color: Colors.white54)),
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -449,7 +448,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       }
                       await _loadData();
                     },
-                    child: const Text('ذخیره', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                    child: const Text('ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -515,8 +514,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           IconButton(
                             icon: Icon(CupertinoIcons.shield_fill, color: colors.textPrimary),
@@ -538,8 +536,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                           style: TextStyle(
                             fontSize: 11,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -660,7 +657,6 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      fontFamily: 'Vazirmatn',
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -672,7 +668,6 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                   style: TextStyle(
                     fontSize: 11.5,
                     color: colors.textSecondary.withValues(alpha: 0.8),
-                    fontFamily: 'Vazirmatn',
                     height: 1.6,
                   ),
                 ),
@@ -683,7 +678,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                   children: [
                     const Text(
                       'طول چرخه بدنی (فاصله بین دو شروع):',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -693,7 +688,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       ),
                       child: Text(
                         '$_onboardingCycleLength روز',
-                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Color(0xffFDA4AF), fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 12, color: Color(0xffFDA4AF), fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -727,7 +722,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                   children: [
                     const Text(
                       'میانگین طول دوره خونریزی:',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -737,7 +732,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       ),
                       child: Text(
                         '$_onboardingPeriodDuration روز',
-                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Color(0xffFDA4AF), fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 12, color: Color(0xffFDA4AF), fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -775,7 +770,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                   ),
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    title: const Text('تاریخ شروع آخرین دوره شما:', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white60)),
+                    title: const Text('تاریخ شروع آخرین دوره شما:', style: TextStyle(fontSize: 12, color: Colors.white60)),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
@@ -783,7 +778,6 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                             ? _formatJalaliDate(_onboardingLastStartDate!)
                             : 'هنوز انتخاب نشده (اختیاری)',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 13.5,
                           color: _onboardingLastStartDate != null ? const Color(0xffFDA4AF) : Colors.white24,
                           fontWeight: FontWeight.bold,
@@ -841,7 +835,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                           const SnackBar(
                             content: Text(
                               'لطفاً تاریخ شروع آخرین دوره خود را مشخص کنید.',
-                              style: TextStyle(fontFamily: 'Vazirmatn'),
+                              style: TextStyle(),
                             ),
                             backgroundColor: Colors.redAccent,
                           ),
@@ -904,7 +898,6 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Vazirmatn',
                             color: Colors.white,
                           ),
                         ),
@@ -956,8 +949,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
               ],
             ),
@@ -969,7 +961,6 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
               style: TextStyle(
                 fontSize: 10.5,
                 color: colors.textSecondary.withValues(alpha: 0.8),
-                fontFamily: 'Vazirmatn',
                 height: 1.5,
               ),
             ),
@@ -1013,8 +1004,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                         style: const TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ),
                   ),
@@ -1068,8 +1058,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),
@@ -1095,12 +1084,12 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       children: [
                         const Text(
                           'طول چرخه بدنی',
-                          style: TextStyle(fontSize: 10, color: Colors.grey, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 10, color: Colors.grey),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           '$cycleLength روز',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
                         ),
                       ],
                     ),
@@ -1119,12 +1108,12 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       children: [
                         const Text(
                           'طول دوره قاعدگی',
-                          style: TextStyle(fontSize: 10, color: Colors.grey, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 10, color: Colors.grey),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           '$periodDuration روز',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
                         ),
                       ],
                     ),
@@ -1148,8 +1137,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
             fontSize: 14,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 12),
         if (_cycleLogs.isEmpty)
@@ -1167,8 +1155,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   color: Colors.grey,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ),
           )
@@ -1222,8 +1209,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.bold,
                                     color: colors.textPrimary,
-                                    fontFamily: 'Vazirmatn',
-                                  ),
+                                    ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -1231,8 +1217,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                                   style: TextStyle(
                                     fontSize: 10,
                                     color: colors.textSecondary.withValues(alpha: 0.7),
-                                    fontFamily: 'Vazirmatn',
-                                  ),
+                                    ),
                                 ),
                               ],
                             ),
@@ -1256,17 +1241,17 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                                       child: AlertDialog(
                                         backgroundColor: const Color(0xff1C1F2E),
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                        title: const Text('حذف دوره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                                        content: const Text('آیا مطمئن هستید که می‌خواهید این دوره را حذف کنید؟', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70, fontSize: 13)),
+                                        title: const Text('حذف دوره', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                        content: const Text('آیا مطمئن هستید که می‌خواهید این دوره را حذف کنید؟', style: TextStyle(color: Colors.white70, fontSize: 13)),
                                         actions: [
                                           TextButton(
                                             onPressed: () => Navigator.pop(context, false),
-                                            child: const Text('خیر', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54)),
+                                            child: const Text('خیر', style: TextStyle(color: Colors.white54)),
                                           ),
                                           ElevatedButton(
                                             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                                             onPressed: () => Navigator.pop(context, true),
-                                            child: const Text('بله، حذف شود', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                                            child: const Text('بله، حذف شود', style: TextStyle(fontWeight: FontWeight.bold)),
                                           ),
                                         ],
                                       ),
@@ -1385,16 +1370,14 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                               fontSize: 15.5,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           Text(
                             'از چرخه',
                             style: TextStyle(
                               fontSize: 9.5,
                               color: colors.textSecondary.withValues(alpha: 0.8),
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                         ],
                       ),
@@ -1420,7 +1403,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                         ),
                         child: const Text(
                           'توصیه ریتمو',
-                          style: TextStyle(fontSize: 8.5, color: Color(0xffFDA4AF), fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 8.5, color: Color(0xffFDA4AF), fontWeight: FontWeight.bold),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -1434,7 +1417,6 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                       color: Color(0xffFDA4AF),
-                      fontFamily: 'Vazirmatn',
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -1447,8 +1429,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       fontSize: 10,
                       color: colors.textSecondary.withValues(alpha: 0.8),
                       height: 1.5,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ],
               ),
@@ -1542,8 +1523,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
               style: TextStyle(
                 fontSize: 9.5,
                 color: colors.textSecondary.withValues(alpha: 0.8),
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -1552,8 +1532,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ],
         ),
@@ -1596,8 +1575,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
             fontSize: 14,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 12),
         Column(
@@ -1629,7 +1607,6 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
                           height: 1.4,
                         ),
                       ),
@@ -1654,8 +1631,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
             fontSize: 14,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 12),
         GridView.count(
@@ -1715,7 +1691,6 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                 style: TextStyle(
                   fontSize: 10,
                   color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
                   height: 1.4,
                 ),
               ),
@@ -1749,8 +1724,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -1758,8 +1732,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       style: TextStyle(
                         fontSize: 10,
                         color: colors.textSecondary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),
@@ -1793,7 +1766,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
               icon: const Icon(CupertinoIcons.gear_solid, size: 16, color: Color(0xffFDA4AF)),
               label: const Text(
                 'تنظیمات پیشرفته و یادآوری‌ها',
-                style: TextStyle(fontSize: 12, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
             ),
           ],

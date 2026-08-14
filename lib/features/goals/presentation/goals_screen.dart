@@ -73,7 +73,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
         SnackBar(
           content: Text(
             'هدف «${target.title}» به صورت کامل تکمیل شد! 🎉',
-            style: const TextStyle(fontFamily: 'Vazirmatn'),
+            style: const TextStyle(),
           ),
           backgroundColor: const Color(0xFF10B981),
           duration: const Duration(seconds: 5),
@@ -146,7 +146,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
                       'آرشیو اهداف تکمیل شده',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.colors.textPrimary),
                     ),
                   ),
                   const Divider(color: Colors.white10),
@@ -244,13 +244,13 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                   const SizedBox(height: 16),
                   Text(
                     'خطا در بارگذاری اهداف و برنامه‌ها',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     viewState.error.toString(),
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
@@ -261,7 +261,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
                     icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('تلاش مجدد', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                    label: const Text('تلاش مجدد', style: TextStyle(fontWeight: FontWeight.bold)),
                     onPressed: () => _controller.reload(force: true),
                   ),
                 ],
@@ -298,7 +298,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
             ),
             child: const Text(
               'فعال',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Color(0xffF97316), fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 10, color: Color(0xffF97316), fontWeight: FontWeight.bold),
             ),
           ),
           actions: [
@@ -335,14 +335,14 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                   value: 'toggle_view',
                   child: Text(
                     _controller.showTreeView ? 'نمای کارت نتیجه‌محور' : 'نمای درختی اهداف',
-                    style: const TextStyle(fontFamily: 'Vazirmatn'),
+                    style: const TextStyle(),
                   ),
                 ),
                 const PopupMenuItem(
                   value: 'archive',
                   child: Text(
                     'آرشیو اهداف',
-                    style: TextStyle(fontFamily: 'Vazirmatn'),
+                    style: TextStyle(),
                   ),
                 ),
               ],
@@ -381,7 +381,6 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                         child: Text(
                           'برنامه‌ها',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: _tabController.index == 0 ? Colors.white : colors.textSecondary,
@@ -408,7 +407,6 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                         child: Text(
                           'اهداف',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: _tabController.index == 1 ? Colors.white : colors.textSecondary,
@@ -541,8 +539,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),
@@ -560,8 +557,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: colors.primary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -570,8 +566,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                         fontSize: 15.5,
                         fontWeight: FontWeight.w900,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -581,8 +576,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                       style: TextStyle(
                         fontSize: 11.5,
                         color: colors.textSecondary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -590,7 +584,6 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                       style: TextStyle(
                         fontSize: 11.5,
                         color: colors.success,
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -611,7 +604,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Text(
             'یک هدف جدید انتخاب کنید:',
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.textPrimary),
+            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
           ),
         ),
         const SizedBox(height: 8),
@@ -670,14 +663,14 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                   const SizedBox(width: 6),
                   Text(
                     title,
-                    style: TextStyle(fontSize: 12.5, fontFamily: 'Vazirmatn', color: colors.textPrimary, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 12.5, color: colors.textPrimary, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
               Text(
                 desc,
-                style: TextStyle(fontSize: 10.5, fontFamily: 'Vazirmatn', color: colors.textSecondary),
+                style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

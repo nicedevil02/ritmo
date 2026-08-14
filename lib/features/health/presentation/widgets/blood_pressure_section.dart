@@ -197,7 +197,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                           child: TextFormField(
                             controller: _sysController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(color: colors.textPrimary),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: 'سیستول (SYS)',
@@ -215,7 +215,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                           child: TextFormField(
                             controller: _diaController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(color: colors.textPrimary),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: 'دیاستول (DIA)',
@@ -237,7 +237,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                           child: TextFormField(
                             controller: _pulseController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(color: colors.textPrimary),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: 'ضربان (Pulse)',
@@ -249,7 +249,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             initialValue: _arm,
-                            style: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(color: colors.textPrimary, fontSize: 13),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: l10n.bloodPressureArm,
@@ -274,7 +274,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: _position,
-                      style: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(color: colors.textPrimary, fontSize: 13),
                       decoration: RitmoTheme.inputDecoration(
                         context,
                         label: l10n.bloodPressurePosition,
@@ -297,7 +297,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _noteController,
-                      style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(color: colors.textPrimary),
                       decoration: RitmoTheme.inputDecoration(
                         context,
                         label: 'یادداشت (اختیاری)',
@@ -314,7 +314,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                       ),
                       child: Text(
                         l10n.bloodPressureSave,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -453,12 +453,12 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: colors.card,
-          title: const Text('حذف سنجش', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
-          content: const Text('آیا مطمئن هستید که می‌خواهید این سنجش فشار خون را حذف کنید؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+          title: const Text('حذف سنجش', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: const Text('آیا مطمئن هستید که می‌خواهید این سنجش فشار خون را حذف کنید؟', style: TextStyle()),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () {
@@ -466,7 +466,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-              child: const Text('حذف', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+              child: const Text('حذف', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

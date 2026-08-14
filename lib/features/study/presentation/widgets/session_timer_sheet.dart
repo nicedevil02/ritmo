@@ -98,12 +98,12 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
         children: [
           Text(
             widget.subject.name,
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 20, fontWeight: FontWeight.bold, color: colors.textPrimary),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colors.textPrimary),
           ),
           if (widget.topic != null)
             Text(
               widget.topic!.name,
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+              style: TextStyle(fontSize: 13, color: colors.textSecondary),
             ),
           const SizedBox(height: 24),
           // Timer Circle Display
@@ -118,7 +118,7 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
             child: Center(
               child: Text(
                 timeStr,
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 32, fontWeight: FontWeight.bold, color: colors.primary),
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: colors.primary),
               ),
             ),
           ),
@@ -147,19 +147,19 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 icon: const Icon(Icons.check_rounded, color: Colors.white),
-                label: const Text('پایان جلسه', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+                label: const Text('پایان جلسه', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             ],
           ),
           const SizedBox(height: 20),
           // Feedback options
-          Text('نتیجه مطالعه:', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary)),
+          Text('نتیجه مطالعه:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
           const SizedBox(height: 8),
           SegmentedButton<SessionFeedback>(
             segments: const [
-              ButtonSegment(value: SessionFeedback.understood, label: Text('فهمیدم', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11))),
-              ButtonSegment(value: SessionFeedback.partial, label: Text('نصفه‌نیمه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11))),
-              ButtonSegment(value: SessionFeedback.needAgain, label: Text('دوباره', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11))),
+              ButtonSegment(value: SessionFeedback.understood, label: Text('فهمیدم', style: TextStyle(fontSize: 11))),
+              ButtonSegment(value: SessionFeedback.partial, label: Text('نصفه‌نیمه', style: TextStyle(fontSize: 11))),
+              ButtonSegment(value: SessionFeedback.needAgain, label: Text('دوباره', style: TextStyle(fontSize: 11))),
             ],
             selected: {_feedback},
             onSelectionChanged: (set) => setState(() => _feedback = set.first),

@@ -91,7 +91,7 @@ class _BulkTopicsSheetState extends State<BulkTopicsSheet> {
             children: [
               Text(
                 _isPreview ? 'پیش‌نمایش سرفصل‌ها' : 'افزودن دسته‌جمعی سرفصل‌ها',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary),
               ),
               IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
             ],
@@ -101,16 +101,16 @@ class _BulkTopicsSheetState extends State<BulkTopicsSheet> {
           if (!_isPreview) ...[
             Text(
               'سرفصل‌های خود را از متنی مانند پیام تلگرام یا PDF کپی و پیست کنید.\nخطوطی که با - یا فاصله شروع شوند زیرسرفصل محسوب می‌شوند.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+              style: TextStyle(fontSize: 12, color: colors.textSecondary),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _textController,
               maxLines: 8,
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
+              style: TextStyle(fontSize: 13, color: colors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'فصل ۱: مفاهیم اولیه\n  - تعریف واژگان\n  - اصول پایه\nفصل ۲: کاربردها...',
-                hintStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary.withValues(alpha: 0.6)),
+                hintStyle: TextStyle(fontSize: 12, color: colors.textSecondary.withValues(alpha: 0.6)),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
               ),
             ),
@@ -122,12 +122,12 @@ class _BulkTopicsSheetState extends State<BulkTopicsSheet> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              child: const Text('بررسی و پیش‌نمایش', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text('بررسی و پیش‌نمایش', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
             ),
           ] else ...[
             Text(
               'مجموع: ${RitmoNumber.faInt(_parsedTopics.length)} سرفصل استخراج شد.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.primary, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 13, color: colors.primary, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             ConstrainedBox(
@@ -147,7 +147,7 @@ class _BulkTopicsSheetState extends State<BulkTopicsSheet> {
                         Expanded(
                           child: Text(
                             topic.name,
-                            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
+                            style: TextStyle(fontSize: 13, color: colors.textPrimary),
                           ),
                         ),
                         IconButton(
@@ -169,7 +169,7 @@ class _BulkTopicsSheetState extends State<BulkTopicsSheet> {
                   child: OutlinedButton(
                     onPressed: () => setState(() => _isPreview = false),
                     style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                    child: Text('ویرایش متن', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                    child: Text('ویرایش متن', style: TextStyle(color: colors.textSecondary)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -192,7 +192,7 @@ class _BulkTopicsSheetState extends State<BulkTopicsSheet> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: const Text('ثبت نهایی سرفصل‌ها', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+                    child: const Text('ثبت نهایی سرفصل‌ها', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                   ),
                 ),
               ],

@@ -207,7 +207,6 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
                   child: Text(
                     labels[index],
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                       color: isSelected ? Colors.white : colors.textSecondary,
@@ -255,7 +254,6 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
                     labels[index],
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                       color: isSelected ? Colors.white : colors.textSecondary,
@@ -295,7 +293,6 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
           title: Text(
             'حرکت',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
@@ -492,7 +489,6 @@ class _FamilyCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 11.5,
                         color: colors.textPrimary,
@@ -503,7 +499,6 @@ class _FamilyCard extends StatelessWidget {
                     Text(
                       '${count.toString().toPersianDigits()} حرکت',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 9.5,
                         color: colors.textSecondary,
                       ),
@@ -612,7 +607,6 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
                         color: colors.textPrimary,
@@ -683,7 +677,6 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontWeight: FontWeight.bold,
                           fontSize: 11,
                           color: colors.textPrimary,
@@ -758,7 +751,6 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontWeight: FontWeight.bold,
                           fontSize: 11,
                           color: colors.textPrimary,
@@ -796,7 +788,6 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
           title: Text(
             widget.family.titleFa,
             style: const TextStyle(
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.bold,
               fontSize: 17,
             ),
@@ -823,7 +814,7 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
                             ? const Center(
                                 child: Text(
                                   'ورزشی در این گروه پیدا نشد.',
-                                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
+                                  style: TextStyle(fontSize: 14),
                                 ),
                               )
                             : GridView.builder(
@@ -901,7 +892,6 @@ class _KindCard extends StatelessWidget {
                         'MET ${kind.baseMet.toString().toPersianDigits()}',
                         style: TextStyle(
                           fontSize: 8,
-                          fontFamily: 'Vazirmatn',
                           fontWeight: FontWeight.bold,
                           color: colors.textSecondary,
                         ),
@@ -914,7 +904,6 @@ class _KindCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontWeight: FontWeight.bold,
                     fontSize: 11,
                     color: colors.textPrimary,
@@ -964,7 +953,6 @@ class _SportDetailSheet extends StatelessWidget {
                       Text(
                         kind.titleFa,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                           color: colors.textPrimary,
@@ -973,7 +961,6 @@ class _SportDetailSheet extends StatelessWidget {
                       Text(
                         kind.family.titleFa,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: colors.textSecondary,
                         ),
@@ -1012,7 +999,6 @@ class _SportDetailSheet extends StatelessWidget {
                     child: const Text(
                       'شروع تمرین',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                         color: Colors.white,
@@ -1044,7 +1030,6 @@ class _InfoBlock extends StatelessWidget {
         Text(
           title,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 11,
             color: colors.textSecondary,
           ),
@@ -1053,7 +1038,6 @@ class _InfoBlock extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontWeight: FontWeight.bold,
             fontSize: 14,
             color: colors.textPrimary,
@@ -1442,7 +1426,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         child: Text(
                           toPersianDigits('$readiness٪'),
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: color,
@@ -1462,7 +1445,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                               const Text(
                                 'شاخص آمادگی زیستی:',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
@@ -1472,7 +1454,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                               Text(
                                 _readinessBadgeText,
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   color: color,
@@ -1486,7 +1467,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                                 ? 'بدن شما در بهترین فاز ریکاوری و انرژی است. امروز می‌توانید وزنه و فشار تمرین را افزایش دهید!'
                                 : 'بدن شما نیاز به ریکاوری ملایم دارد. انجام تمرینات با تمرکز بر فرم صحیح حرکت توصیه می‌شود.'),
                             style: const TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11.5,
                               color: Colors.white70,
                               height: 1.4,
@@ -1536,7 +1516,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               Text(
                 title,
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13.5,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -1545,7 +1524,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               Text(
                 toPersianDigits('$score٪'),
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13.5,
                   fontWeight: FontWeight.bold,
                   color: color,
@@ -1567,7 +1545,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           Text(
             desc,
             style: const TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 11,
               color: Colors.white60,
               height: 1.4,
@@ -1978,7 +1955,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('انتقال به فردا', style: TextStyle(fontFamily: 'Vazirmatn')),
+                      child: const Text('انتقال به فردا', style: TextStyle()),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1991,7 +1968,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('تمرین فشرده (۳ حرکت)', style: TextStyle(fontFamily: 'Vazirmatn')),
+                      child: const Text('تمرین فشرده (۳ حرکت)', style: TextStyle()),
                     ),
                   ),
                 ],
@@ -2143,15 +2120,15 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                   children: [
                     const Icon(Icons.incomplete_circle_rounded, color: Colors.white, size: 64),
                     const SizedBox(height: 12),
-                    const Text('تمرین نیمه‌تمام ⏳', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const Text('تمرین نیمه‌تمام ⏳', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                     const SizedBox(height: 6),
-                    Text(summary, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white)),
+                    Text(summary, style: const TextStyle(fontSize: 13, color: Colors.white)),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         icon: const Icon(Icons.play_arrow_rounded, color: Color(0xFFD97706)),
-                        label: const Text('ادامه تمرین', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFD97706))),
+                        label: const Text('ادامه تمرین', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFD97706))),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -2214,11 +2191,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                   children: [
                     const Icon(Icons.check_circle_rounded, color: Colors.white, size: 64),
                     const SizedBox(height: 12),
-                    const Text('خسته نباشید قهرمان! 🎉', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const Text('خسته نباشید قهرمان! 🎉', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                     const SizedBox(height: 6),
-                    Text('تمرین روز $dayName با موفقیت انجام شد.', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white70)),
+                    Text('تمرین روز $dayName با موفقیت انجام شد.', style: const TextStyle(fontSize: 13, color: Colors.white70)),
                     const SizedBox(height: 4),
-                    Text(summary, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white70)),
+                    Text(summary, style: const TextStyle(fontSize: 12, color: Colors.white70)),
                   ],
                 ),
               ),
@@ -2273,7 +2250,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 child: Text(
                   'جلسه تمرینی ناتمام دارید 🏋️‍♂️',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -2286,7 +2262,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           const Text(
             'یک تمرین از قبل ذخیره شده در حال اجراست. می‌توانید آن را ادامه دهید یا انصراف دهید.',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 12,
               color: Colors.white70,
               height: 1.4,
@@ -2313,7 +2288,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                     });
                   },
                   icon: const Icon(Icons.play_arrow_rounded, size: 20),
-                  label: const Text('ادامه تمرین', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                  label: const Text('ادامه تمرین', style: TextStyle(fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF59E0B),
                     foregroundColor: Colors.black,
@@ -2349,7 +2324,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+                child: const Text('انصراف', style: TextStyle()),
               ),
             ],
           ),
@@ -2437,7 +2412,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       const SizedBox(width: 5),
                       Text(
                         usesExternalApp ? 'تمرین با اپ خارجی' : 'تمرین تجویزی هوشمند',
-                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ],
                   ),
@@ -2448,7 +2423,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 Text(
                   prescription.headlineFa,
                   style: const TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
@@ -2462,7 +2436,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                   Text(
                     prescription.coachNoteFa!,
                     style: const TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       color: Colors.white60,
                       height: 1.4,
@@ -2503,7 +2476,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         icon: Icon(usesExternalApp ? Icons.open_in_new_rounded : Icons.play_arrow_rounded, size: 20),
                         label: Text(
                           usesExternalApp ? 'ثبت در اپ خارجی' : 'شروع تمرین تجویزی',
-                          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                         onPressed: onStart,
                       ),
@@ -2522,7 +2495,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         icon: const Icon(Icons.edit_note_rounded, size: 16, color: Colors.white70),
                         label: const Text(
                           'اصلاح تمرین',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70),
                         ),
                         onPressed: onCantToday,
                       ),
@@ -2629,7 +2602,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       SizedBox(width: 5),
                       Text(
                         'جلسه تمرین',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ],
                   ),
@@ -2640,7 +2613,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 Text(
                   'تمرین $workoutName',
                   style: const TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
@@ -2682,7 +2654,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         icon: const Icon(Icons.play_arrow_rounded, size: 20),
                         label: const Text(
                           'شروع تمرین',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                         onPressed: onStart,
                       ),
@@ -2702,7 +2674,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         icon: const Icon(Icons.edit_note_rounded, size: 16, color: Colors.white70),
                         label: const Text(
                           'اصلاح تمرین',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70),
                         ),
                         onPressed: onCantToday,
                       ),
@@ -2762,7 +2734,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         const SizedBox(width: 4),
         Text(
           text,
-          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white70),
+          style: const TextStyle(fontSize: 12, color: Colors.white70),
         ),
       ],
     );
@@ -2807,7 +2779,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                     Text(
                       toPersianDigits('$completedCount'),
                       style: const TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
@@ -2815,7 +2786,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                     ),
                     const Text(
                       'روز متوالی',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 9, color: Colors.white54),
+                      style: TextStyle(fontSize: 9, color: Colors.white54),
                     ),
                   ],
                 ),
@@ -2848,7 +2819,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       Text(
                         'تداوم این هفته',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -2860,7 +2830,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                   const SizedBox(height: 2),
                   Text(
                     toPersianDigits('تو از ۷ روز هفته $completedCount روز تمرین داشتی'),
-                    style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.white54),
+                    style: const TextStyle(fontSize: 11, color: Colors.white54),
                   ),
                   const SizedBox(height: 12),
 
@@ -2892,7 +2862,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                             children: [
                               Text(
                                 farsiDays[i],
-                                style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.white54),
+                                style: const TextStyle(fontSize: 11, color: Colors.white54),
                               ),
                               const SizedBox(height: 4),
                               Container(
@@ -2974,7 +2944,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       Text(
                         'توصیه مربی AI',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -2986,7 +2955,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                   Text(
                     message,
                     style: const TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: Colors.white70,
                       height: 1.5,
@@ -3008,11 +2976,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 const SizedBox(height: 4),
                 const Text(
                   'انرژی بدن',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 9, color: Colors.white38),
+                  style: TextStyle(fontSize: 9, color: Colors.white38),
                 ),
                 Text(
                   toPersianDigits('$_energyScore٪'),
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
                 ),
               ],
             ),
@@ -3080,7 +3048,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         const Text(
                           'وضعیت بدن امروز',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -3101,7 +3068,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                           Text(
                             toPersianDigits('$readiness٪ — $readinessText'),
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: readinessColor,
@@ -3176,7 +3142,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.white70),
+            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.white70),
           ),
           const SizedBox(height: 6),
           Stack(
@@ -3196,7 +3162,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           Text(
             toPersianDigits(displayPercent),
             style: const TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 11,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -3212,7 +3177,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
             child: Text(
               displayTag,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 8.5,
                 fontWeight: FontWeight.w600,
                 color: color,
@@ -3312,7 +3276,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                               Text(
                                 toPersianDigits('برنامه $dayLabel'),
                                 style: const TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
@@ -3332,7 +3295,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                           child: Text(
                             categoryTag,
                             style: const TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11,
                               color: Colors.white70,
                             ),
@@ -3411,7 +3373,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                           Text(
                             name,
                             style: const TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -3468,7 +3429,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: color,
@@ -3502,13 +3462,13 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           const SizedBox(height: 12),
           const Text(
             'امروز روز استراحت شماست 🧘‍♂️',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 8),
           Text(
             suggestion,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white70),
+            style: const TextStyle(fontSize: 13, color: Colors.white70),
           ),
         ],
       ),
@@ -3531,13 +3491,13 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                   const SizedBox(height: 16),
                   const Text(
                     'برنامه ۲۸ روزه شما به پایان رسید!',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
                   const Text(
                     'تبریک می‌گوییم! شما تمام جلسات این دوره را با اراده و تداوم به پایان رساندید.',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: Colors.white70, height: 1.5),
+                    style: TextStyle(fontSize: 14, color: Colors.white70, height: 1.5),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
@@ -3552,7 +3512,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       onPressed: _resetAndStartNewPlan,
                       child: const Text(
                         'شروع برنامه جدید',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ),
                   ),

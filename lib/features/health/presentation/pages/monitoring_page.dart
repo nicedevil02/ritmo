@@ -59,7 +59,6 @@ class _MonitoringPageState extends State<MonitoringPage> {
               Text(
                 l10n.healthMonitoring,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
                   fontSize: 16,
@@ -134,8 +133,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               color: isSelected ? Colors.white : colors.textSecondary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
         ),
       ),

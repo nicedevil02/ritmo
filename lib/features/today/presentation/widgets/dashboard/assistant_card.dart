@@ -100,8 +100,7 @@ class AssistantCard extends StatelessWidget {
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: colors.primary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -160,8 +159,7 @@ class AssistantCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -181,8 +179,7 @@ class AssistantCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 10,
                                 color: colors.textSecondary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ],
                         ),
@@ -221,8 +218,7 @@ class AssistantCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ),
                   ),
@@ -242,7 +238,7 @@ class AssistantCard extends StatelessWidget {
                       child: Text(
                         l10n.whyThisSuggestion,
                         style: const TextStyle(
-                            fontSize: 12, fontFamily: 'Vazirmatn'),
+                            fontSize: 12),
                       ),
                     ),
                   ),
@@ -261,8 +257,7 @@ class AssistantCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         color: colors.textSecondary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ),
                 ),
@@ -295,7 +290,6 @@ class AssistantCard extends StatelessWidget {
           Text(
             b.headline,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
@@ -307,7 +301,6 @@ class AssistantCard extends StatelessWidget {
           Text(
             b.summary,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 12,
               height: 1.6,
               color: colors.textSecondary,
@@ -359,7 +352,6 @@ class AssistantCard extends StatelessWidget {
             child: Text(
               insight.text,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: colors.textSecondary,
               ),
@@ -387,7 +379,6 @@ class AssistantCard extends StatelessWidget {
         child: Text(
           suggestion.text,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 12,
             color: colors.textSecondary,
           ),
@@ -436,7 +427,6 @@ class AssistantCard extends StatelessWidget {
                 child: Text(
                   suggestion.text,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12,
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w600,

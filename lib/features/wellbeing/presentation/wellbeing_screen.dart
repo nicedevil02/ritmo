@@ -584,8 +584,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                                 fontSize: 11.5,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 color: isSelected ? colors.primary : colors.textSecondary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           );
                         }).toList(),
@@ -1034,7 +1033,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
-        child: Text(label, style: TextStyle(fontSize: 11.5, color: color, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+        child: Text(label, style: TextStyle(fontSize: 11.5, color: color, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -1106,7 +1105,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               ),
               TextButton(
                 onPressed: _showGoldenWindowDialog,
-                child: Text('یعنی چی؟', style: TextStyle(fontSize: 11.5, color: colors.primary, fontFamily: 'Vazirmatn')),
+                child: Text('یعنی چی؟', style: TextStyle(fontSize: 11.5, color: colors.primary)),
               ),
             ],
           ),
@@ -1176,7 +1175,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   child: Text(
                     '${RitmoNumber.faInt(score)} از ۱۰۰',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontWeight: FontWeight.bold,
                       fontSize: 12.5,
                       color: colors.primary,
@@ -1202,14 +1200,13 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(e.value, style: const TextStyle(fontSize: 12, fontFamily: 'Vazirmatn')),
+                          Text(e.value, style: const TextStyle(fontSize: 12)),
                           Text(
                             minutes > 0
                                 ? '$timeLabel (${RitmoNumber.faInt(percent.round())}٪)'
                                 : '—',
                             style: TextStyle(
                               fontSize: 11,
-                              fontFamily: 'Vazirmatn',
                               color: colors.textSecondary,
                             ),
                           ),
@@ -1303,7 +1300,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 Expanded(
                   child: Text(
                     'تا تکمیل این دوره هیچ ساعتی تحمیل نمی‌شود.',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
                   ),
                 ),
                 OutlinedButton.icon(
@@ -1315,7 +1312,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('ثبت خواب دیشب', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                  label: const Text('ثبت خواب دیشب', style: TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -1421,7 +1418,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               if (state.adherence7d != null)
                 Text(
                   'پایبندی ۷ روزه: ${RitmoNumber.faPercent((state.adherence7d! * 100).round())}',
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xff8B5CF6)),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xff8B5CF6)),
                 )
               else
                 const SizedBox.shrink(),
@@ -1434,7 +1431,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 icon: const Icon(Icons.check, size: 16),
-                label: const Text('ثبت خواب', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                label: const Text('ثبت خواب', style: TextStyle(fontSize: 12)),
               ),
             ],
           ),
@@ -1599,7 +1596,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             children: [
               ListTile(
                 leading: Icon(Icons.bedtime, color: colors.sleepAccent),
-                title: Text(day.sleepHours != null ? 'خواب: ${RitmoNumber.faHours(day.sleepHours!)}' : 'خواب ثبت نشده است', style: const TextStyle(fontFamily: 'Vazirmatn')),
+                title: Text(day.sleepHours != null ? 'خواب: ${RitmoNumber.faHours(day.sleepHours!)}' : 'خواب ثبت نشده است', style: const TextStyle()),
                 trailing: TextButton(
                   onPressed: () {
                     Navigator.pop(ctx);
@@ -1609,12 +1606,12 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       builder: (_) => SleepLogSheet(onSaved: _requestReload, target: _sleepTarget),
                     );
                   },
-                  child: const Text('ثبت / ویرایش', style: TextStyle(fontFamily: 'Vazirmatn')),
+                  child: const Text('ثبت / ویرایش', style: TextStyle()),
                 ),
               ),
               ListTile(
                 leading: Icon(Icons.bolt, color: colors.energyAccent),
-                title: Text(day.energyLevel != null ? 'انرژی: ${RitmoNumber.faInt((day.energyLevel! * 33).round())}٪' : 'انرژی ثبت نشده است', style: const TextStyle(fontFamily: 'Vazirmatn')),
+                title: Text(day.energyLevel != null ? 'انرژی: ${RitmoNumber.faInt((day.energyLevel! * 33).round())}٪' : 'انرژی ثبت نشده است', style: const TextStyle()),
                 trailing: TextButton(
                   onPressed: () {
                     Navigator.pop(ctx);
@@ -1624,12 +1621,12 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       builder: (_) => QuickLogSheet(onSaved: _requestReload),
                     );
                   },
-                  child: const Text('ثبت / ویرایش', style: TextStyle(fontFamily: 'Vazirmatn')),
+                  child: const Text('ثبت / ویرایش', style: TextStyle()),
                 ),
               ),
               ListTile(
                 leading: Icon(Icons.edit_note, color: colors.primary),
-                title: Text(day.hasReflection ? 'بازتاب ثبت شده است ✅' : 'بازتاب ثبت نشده است', style: const TextStyle(fontFamily: 'Vazirmatn')),
+                title: Text(day.hasReflection ? 'بازتاب ثبت شده است ✅' : 'بازتاب ثبت نشده است', style: const TextStyle()),
                 trailing: TextButton(
                   onPressed: () {
                     Navigator.pop(ctx);
@@ -1639,7 +1636,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       builder: (_) => DailyReflectionSheet(onSaved: _requestReload, date: day.dateStr),
                     );
                   },
-                  child: const Text('ثبت بازتاب', style: TextStyle(fontFamily: 'Vazirmatn')),
+                  child: const Text('ثبت بازتاب', style: TextStyle()),
                 ),
               ),
             ],
@@ -1692,7 +1689,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       );
                     },
                     icon: const Icon(Icons.edit, size: 16),
-                    label: const Text('ویرایش کامل', style: TextStyle(fontFamily: 'Vazirmatn')),
+                    label: const Text('ویرایش کامل', style: TextStyle()),
                   ),
                   TextButton.icon(
                     onPressed: () async {
@@ -1702,7 +1699,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       _requestReload();
                     },
                     icon: Icon(Icons.delete, size: 16, color: colors.error),
-                    label: Text('حذف', style: TextStyle(color: colors.error, fontFamily: 'Vazirmatn')),
+                    label: Text('حذف', style: TextStyle(color: colors.error)),
                   ),
                 ],
               ),

@@ -53,7 +53,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
             const SizedBox(height: 12),
             Text(
               'هیچ هدفی ثبت نشده است.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14.5, color: colors.textSecondary),
+              style: TextStyle(fontSize: 14.5, color: colors.textSecondary),
             ),
           ],
         ),
@@ -159,8 +159,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
                                 fontSize: 10.5,
                                 color: Color(0xFFF59E0B),
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -172,8 +171,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
                                 fontWeight: FontWeight.bold,
                                 color: isCompleted ? colors.success : colors.textPrimary,
                                 decoration: isCompleted ? TextDecoration.lineThrough : null,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -183,7 +181,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
                         const SizedBox(height: 4),
                         Text(
                           desc,
-                          style: TextStyle(fontSize: 11.5, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
                         ),
                       ],
                       // Deadline/Overdue row
@@ -198,7 +196,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
                                   const SizedBox(width: 4),
                                   Text(
                                     deadlineText,
-                                    style: TextStyle(fontSize: 11, color: deadlineColor, fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500),
+                                    style: TextStyle(fontSize: 11, color: deadlineColor, fontWeight: FontWeight.w500),
                                   ),
                                   const SizedBox(width: 8),
                                 ],
@@ -212,7 +210,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
                                 ),
                                 child: Text(
                                   'گام عقب‌افتاده',
-                                  style: TextStyle(fontSize: 10, color: colors.warning, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontSize: 10, color: colors.warning, fontWeight: FontWeight.bold),
                                 ),
                               ),
                           ],
@@ -267,7 +265,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
                 const SizedBox(width: 8),
                 Text(
                   '${toPersianDigits(percent)}٪',
-                  style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 11, color: colors.textSecondary, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -312,8 +310,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
                                     fontSize: 13,
                                     color: stepDone ? colors.textSecondary : colors.textPrimary,
                                     decoration: stepDone ? TextDecoration.lineThrough : null,
-                                    fontFamily: 'Vazirmatn',
-                                  ),
+                                    ),
                                 ),
                               ),
                               if (step.isOverdue)
@@ -326,7 +323,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
                                   ),
                                   child: Text(
                                     'عقب‌افتاده',
-                                    style: TextStyle(fontSize: 9.5, color: colors.warning, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                                    style: TextStyle(fontSize: 9.5, color: colors.warning, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                             ],
@@ -351,7 +348,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
                                       const SizedBox(width: 4),
                                       Text(
                                         'روتین: ${linkedRoutine.title}',
-                                        style: TextStyle(fontSize: 10.5, color: colors.primary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500),
+                                        style: TextStyle(fontSize: 10.5, color: colors.primary, fontWeight: FontWeight.w500),
                                       ),
                                       if (routineStatus != null && routineStatus.doneCount > 0) ...[
                                         const SizedBox(width: 6),
@@ -363,7 +360,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
                                         const SizedBox(width: 6),
                                         Text(
                                           'انجام: ${toPersianDigits(routineStatus.doneCount)} · استریک: ${toPersianDigits(routineStatus.streak)}',
-                                          style: TextStyle(fontSize: 10, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                                          style: TextStyle(fontSize: 10, color: colors.textSecondary),
                                         ),
                                       ],
                                     ],
@@ -423,15 +420,15 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
       showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-        title: const Text('حذف کامل هدف', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+        title: const Text('حذف کامل هدف', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text(
           'آیا از حذف هدف «${goal.title}» مطمئن هستید؟ موارد زیر برای همیشه حذف خواهند شد:$subInfo$stepInfo$routineInfo$reminderInfo',
-          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13.5),
+          style: const TextStyle(fontSize: 13.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+            child: const Text('انصراف', style: TextStyle()),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
@@ -439,7 +436,7 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
               Navigator.pop(ctx);
               widget.onDeleteGoal(goal.id);
             },
-            child: const Text('حذف کامل', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+            child: const Text('حذف کامل', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

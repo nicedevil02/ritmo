@@ -158,7 +158,6 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                   Text(
                     'جزئیات قالب: ${template.name}',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -187,7 +186,6 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                             title: Text(
                               item.title,
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 14,
                                 color: colors.textPrimary,
                               ),
@@ -195,7 +193,6 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                             subtitle: Text(
                               'زمان: ${item.startKind == 'clock' ? (item.startTime ?? '') : item.startKind == 'anchor' ? 'لنگر ${item.anchorEvent}' : 'بعد از فعالیت قبلی'} • مدت: ${item.durationMin ?? 30} دقیقه',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11,
                                 color: colors.textSecondary,
                               ),
@@ -228,7 +225,6 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
         title: Text(
           'قالب‌های برنامه‌ریز روز',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -248,7 +244,6 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                     child: Text(
                       'هیچ قالبی ذخیره نشده است. 💾',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 14,
                         color: colors.textSecondary,
                       ),
@@ -273,7 +268,6 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                           title: Text(
                             template.name,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -282,7 +276,6 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                           subtitle: Text(
                             'شامل ${template.items.length} فعالیت • تعداد استفاده: ${template.useCount}',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11,
                               color: colors.textSecondary,
                             ),

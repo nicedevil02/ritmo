@@ -85,8 +85,7 @@ class HomePulseStrip extends StatelessWidget {
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ),
                     if (caption != null && caption!.isNotEmpty)
@@ -95,8 +94,7 @@ class HomePulseStrip extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           color: colors.textTertiary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                   ],
                 ),
@@ -145,16 +143,14 @@ class HomePulseStrip extends StatelessWidget {
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 Text(
                   toPersianDigits('$doneCount از $totalCount'),
                   style: TextStyle(
                     fontSize: 9,
                     color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
               ],
             ),
@@ -190,8 +186,7 @@ class HomePulseStrip extends StatelessWidget {
             style: TextStyle(
               fontSize: 11.5,
               color: colors.textSecondary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
         ),
         Text(
@@ -200,8 +195,7 @@ class HomePulseStrip extends StatelessWidget {
             fontSize: 12.5,
             fontWeight: FontWeight.w800,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         if (metric.onTap != null) ...[
           const SizedBox(width: 2),

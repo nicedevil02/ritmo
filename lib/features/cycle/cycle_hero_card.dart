@@ -168,7 +168,7 @@ class _CycleHeroCardState extends State<CycleHeroCard> with SingleTickerProvider
                                 color: Colors.white,
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'Vazirmatn', // یا فونت دلخواه پروژه
+                                // یا فونت دلخواه پروژه
                               ),
                             ),
                             const SizedBox(height: 2),

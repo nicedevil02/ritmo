@@ -277,7 +277,6 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
               Text(
                 'تایید نهایی تغییرات',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                   fontSize: 16.5,
                   color: colors.textPrimary,
@@ -292,7 +291,6 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
               Text(
                 'آیا می‌خواهید تغییرات پیشنهادی مربی هوشمند را روی برنامه تمرینی خود اعمال کنید؟',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13.5,
                   color: isDark ? Colors.white70 : colors.textSecondary,
                   height: 1.5,
@@ -311,7 +309,6 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
                 child: Text(
                   detailText,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: colors.primary,
@@ -327,7 +324,6 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
               child: const Text(
                 'انصراف',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   color: Colors.redAccent,
                   fontWeight: FontWeight.bold,
                 ),
@@ -345,7 +341,6 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
               child: const Text(
                 'تایید و اعمال',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -647,8 +642,7 @@ $_sportsContext
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         IconButton(
                           tooltip: 'افزودن',
@@ -666,7 +660,7 @@ $_sportsContext
                         maxHeight: MediaQuery.of(context).size.height * 0.4,
                       ),
                       child: _sessions.isEmpty
-                          ? const Center(child: Text('گفتگویی یافت نشد', style: TextStyle(fontFamily: 'Vazirmatn')))
+                          ? const Center(child: Text('گفتگویی یافت نشد', style: TextStyle()))
                           : ListView.builder(
                               shrinkWrap: true,
                               itemCount: _sessions.length,
@@ -678,11 +672,11 @@ $_sportsContext
                                   selectedColor: colors.primary,
                                   title: Text(
                                     sess.summary ?? 'گفتگوی مربیگری',
-                                    style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13.5),
+                                    style: const TextStyle(fontSize: 13.5),
                                   ),
                                   subtitle: Text(
                                     '${sess.messageCount} پیام',
-                                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.6)),
+                                    style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.6)),
                                   ),
                                   trailing: IconButton(
                                               tooltip: 'حذف',
@@ -760,8 +754,7 @@ $_sportsContext
                           fontSize: 17.5,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -930,7 +923,6 @@ $_sportsContext
                           maxLines: 4,
                           enabled: !_isTyping,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13.5,
                             color: colors.textPrimary,
                           ),
@@ -939,7 +931,6 @@ $_sportsContext
                             border: InputBorder.none,
                             hintText: _isStreaming ? 'مربی در حال تایپ است...' : 'سوالی درباره ورزش بپرسید یا برنامه‌ای بخواهید...',
                             hintStyle: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12.5,
                               color: colors.textSecondary.withValues(alpha: 0.6),
                             ),
@@ -992,8 +983,7 @@ $_sportsContext
             color: colors.textPrimary,
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
       ),
     );
@@ -1103,7 +1093,6 @@ class _SportsMessageBubbleState extends State<SportsMessageBubble> {
                 children: parseMarkdownText(
                   widget.msg['content'] as String,
                   TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13.5,
                     color: isUser ? Colors.white : colors.textPrimary,
                     height: 1.6,
@@ -1139,7 +1128,7 @@ class _SportsMessageBubbleState extends State<SportsMessageBubble> {
               icon: Icon(icon, size: 16),
               label: Text(
                 action.label,
-                style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
               onPressed: () {
                 if (widget.onActionPressed != null) {

@@ -35,7 +35,7 @@ class GoalsArchiveSection extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'هیچ هدفی در آرشیو وجود ندارد.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14.5, color: colors.textSecondary),
+              style: TextStyle(fontSize: 14.5, color: colors.textSecondary),
             ),
           ],
         ),
@@ -82,7 +82,6 @@ class GoalsArchiveSection extends StatelessWidget {
               title: Text(
                 goal.title,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14.5,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -92,7 +91,6 @@ class GoalsArchiveSection extends StatelessWidget {
               subtitle: Text(
                 'تکمیل در: $compDateStr · ${toPersianDigits(completedStepsCount)} گام انجام شده',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 11.5,
                   color: colors.textSecondary,
                 ),
@@ -129,12 +127,12 @@ class GoalsArchiveSection extends StatelessWidget {
         context: context,
         builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('تأیید حذف یا رهاسازی «${goal.title}»', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold)),
+        title: Text('تأیید حذف یا رهاسازی «${goal.title}»', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('این عملیات بر موارد زیر تأثیر می‌گذارد:', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13.5)),
+            const Text('این عملیات بر موارد زیر تأثیر می‌گذارد:', style: TextStyle(fontSize: 13.5)),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
@@ -146,20 +144,20 @@ class GoalsArchiveSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('• زیراهداف: ${toPersianDigits(impact.subGoalCount)} عدد', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5)),
-                  Text('• گام‌های مرتبط: ${toPersianDigits(impact.stepCount)} عدد (${toPersianDigits(impact.completedStepCount)} گام انجام شده)', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5)),
-                  Text('• یادآورهای فعال: ${toPersianDigits(impact.scheduledReminderCount)} عدد', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5)),
+                  Text('• زیراهداف: ${toPersianDigits(impact.subGoalCount)} عدد', style: const TextStyle(fontSize: 12.5)),
+                  Text('• گام‌های مرتبط: ${toPersianDigits(impact.stepCount)} عدد (${toPersianDigits(impact.completedStepCount)} گام انجام شده)', style: const TextStyle(fontSize: 12.5)),
+                  Text('• یادآورهای فعال: ${toPersianDigits(impact.scheduledReminderCount)} عدد', style: const TextStyle(fontSize: 12.5)),
                 ],
               ),
             ),
             const SizedBox(height: 12),
-            const Text('می‌توانید به جای حذف کامل، هدف را «رهاسازی» کنید تا آمار آن حفظ شود.', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.grey)),
+            const Text('می‌توانید به جای حذف کامل، هدف را «رهاسازی» کنید تا آمار آن حفظ شود.', style: TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+            child: const Text('انصراف', style: TextStyle()),
           ),
           TextButton(
             onPressed: () async {
@@ -167,14 +165,14 @@ class GoalsArchiveSection extends StatelessWidget {
               await GoalsRepository.instance.updateGoalStatus(goal.id, 'ABANDONED', abandonReason: 'کاربر هدف را رها کرد');
               onRefresh();
             },
-            child: const Text('رهاسازی (حفظ آمار)', style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xFFF59E0B))),
+            child: const Text('رهاسازی (حفظ آمار)', style: TextStyle(color: Color(0xFFF59E0B))),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               onDeleteGoal(goal.id);
             },
-            child: Text('حذف کامل', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.warning, fontWeight: FontWeight.bold)),
+            child: Text('حذف کامل', style: TextStyle(color: colors.warning, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

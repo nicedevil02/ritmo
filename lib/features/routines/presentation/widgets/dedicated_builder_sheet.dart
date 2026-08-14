@@ -102,7 +102,6 @@ class DedicatedBuilderSheet extends StatelessWidget {
                                   Text(
                                     title,
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       color: colors.textPrimary,
@@ -112,7 +111,6 @@ class DedicatedBuilderSheet extends StatelessWidget {
                                   Text(
                                     subtitle,
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 11,
                                       color: colors.textSecondary
                                           .withValues(alpha: 0.65),
@@ -181,7 +179,6 @@ class DedicatedBuilderSheet extends StatelessWidget {
                                       Text(
                                         'ذخیره $title',
                                         style: const TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           fontSize: 15,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,

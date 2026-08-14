@@ -48,7 +48,6 @@ class CyclePredictionConfidenceCard extends StatelessWidget {
                   Text(
                     'اعتبار پیش‌بینی ریتم بدنی',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -65,7 +64,6 @@ class CyclePredictionConfidenceCard extends StatelessWidget {
                 child: Text(
                   badgeLabelFa,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: badgeColor,
@@ -86,7 +84,6 @@ class CyclePredictionConfidenceCard extends StatelessWidget {
                         child: Text(
                           r,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 11,
                             color: colors.textSecondary,
                           ),

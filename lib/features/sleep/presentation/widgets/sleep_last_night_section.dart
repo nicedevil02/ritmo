@@ -69,7 +69,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
               const SizedBox(height: 16),
               Text(
                 'هیچ داده‌ای برای دیشب ثبت نشده است.',
-                style: TextStyle(fontSize: 13, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 13, color: colors.textSecondary),
               ),
             ],
           ),
@@ -92,7 +92,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
                 children: [
                   const Text(
                     'جزئیات خواب دیشب',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   const SizedBox(height: 16),
                   _buildDetailRow(
@@ -126,12 +126,12 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
                     const SizedBox(height: 8),
                     Text(
                       'یادداشت شما:',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+                      style: TextStyle(fontSize: 11, color: colors.textSecondary),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       log.note!,
-                      style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white),
+                      style: const TextStyle(fontSize: 12, color: Colors.white),
                     ),
                   ],
                 ],
@@ -150,7 +150,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
                 children: [
                   const Text(
                     'برنامه در برابر واقعیت',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   const SizedBox(height: 16),
 
@@ -191,7 +191,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
                 children: [
                   const Text(
                     'برنامه خواب امشب شما',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -199,7 +199,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
                     children: [
                       Text(
                         'زمان خواب هدف امشب:',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
                       ),
                       Text(
                         widget.target.bedtime,
@@ -217,12 +217,11 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
                     children: [
                       Text(
                         'یادآور پیش‌خواب:',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
                       ),
                       Text(
                         widget.isWinddownEnabled ? 'فعال' : 'غیرفعال',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: widget.isWinddownEnabled
@@ -235,7 +234,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
                   const SizedBox(height: 6),
                   Text(
                     'تغییر از «تنظیم اهداف خواب»',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary),
+                    style: TextStyle(fontSize: 10, color: colors.textSecondary),
                   ),
                 ],
               ),
@@ -256,12 +255,12 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
           const SizedBox(width: 12),
           Text(
             label,
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white70),
+            style: const TextStyle(fontSize: 12, color: Colors.white70),
           ),
           const Spacer(),
           Text(
             value,
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ],
       ),
@@ -282,13 +281,12 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
           children: [
             Text(
               title,
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.cardSubtitle),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.cardSubtitle),
             ),
             const SizedBox(width: 8),
             Text(
               deviation,
               style: const TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: Color(0xff8B5CF6),
@@ -305,7 +303,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
               children: [
                 Text(
                   'برنامه (هدف):',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary),
+                  style: TextStyle(fontSize: 10, color: colors.textSecondary),
                 ),
                 Text(
                   target,
@@ -319,7 +317,7 @@ class _SleepLastNightSectionState extends State<SleepLastNightSection> {
               children: [
                 Text(
                   'واقعی:',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary),
+                  style: TextStyle(fontSize: 10, color: colors.textSecondary),
                 ),
                 Text(
                   actual,

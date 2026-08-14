@@ -163,7 +163,6 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
               'ثبت چندتایی قضای ${debt.title}',
               style: TextStyle(
                 color: colors.textPrimary,
-                fontFamily: 'Vazirmatn',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -176,7 +175,6 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                   'تعداد ادای امروز (حداکثر ${toPersianDigits(debt.remainingCount.toString())} مورد):',
                   style: TextStyle(
                     color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                   ),
                 ),
@@ -185,7 +183,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                   controller: controller,
                   keyboardType: TextInputType.number,
                   autofocus: true,
-                  style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
                   decoration: InputDecoration(
                     fillColor: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                     filled: true,
@@ -220,7 +218,6 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                         child: Text(
                           toPersianDigits('+$n'),
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
                             color: colors.primary,
@@ -235,7 +232,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, null),
-                child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -251,7 +248,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                     Navigator.pop(context, val);
                   }
                 },
-                child: Text('ثبت ادا', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.onPrimary)),
+                child: Text('ثبت ادا', style: TextStyle(fontWeight: FontWeight.bold, color: colors.onPrimary)),
               ),
             ],
           ),
@@ -302,16 +299,16 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
             title: Text(
               'حذف مورد قضای عبادات',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             content: Text(
               'آیا از حذف "${debt.title}" اطمینان دارید؟ تمام سوابق مربوط به این بدهی پاک خواهد شد.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13.5, color: colors.textSecondary),
+              style: TextStyle(fontSize: 13.5, color: colors.textSecondary),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -320,7 +317,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () => Navigator.pop(context, true),
-                child: Text('حذف دائم', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                child: Text('حذف دائم', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -505,7 +502,6 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                 Text(
                                   'جبران و قضای عبادات',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 16.5,
                                     fontWeight: FontWeight.w800,
                                     color: colors.textPrimary,
@@ -515,7 +511,6 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                 Text(
                                   'پیگیری و جبران نماز و روزه قضا',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
                                     color: colors.textSecondary
@@ -559,7 +554,6 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                             Text(
                               'افزودن مورد جبرانی',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                                 color: colors.primary,
@@ -628,7 +622,6 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                               color: isDark ? colors.success : colors.success,
                               fontSize: 17,
                               fontWeight: FontWeight.w900,
-                              fontFamily: 'Vazirmatn',
                               letterSpacing: -0.3,
                             ),
                           ),
@@ -639,7 +632,6 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                             style: TextStyle(
                               color: colors.textSecondary.withValues(alpha: 0.8),
                               fontSize: 13,
-                              fontFamily: 'Vazirmatn',
                               height: 1.55,
                               fontWeight: FontWeight.w500,
                             ),
@@ -694,8 +686,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       color: colors.textPrimary,
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                 ),
                                 // Edit/Settings Icon
@@ -724,8 +715,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       color: colors.primary,
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w800,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                 ),
                               ],
@@ -751,7 +741,6 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                 style: TextStyle(
                                   color: colors.textSecondary.withValues(alpha: 0.75),
                                   fontSize: 11.5,
-                                  fontFamily: 'Vazirmatn',
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -766,7 +755,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                   children: [
                                     Text(
                                       'هدف روزانه: ',
-                                      style: TextStyle(color: colors.textSecondary, fontSize: 11.5, fontFamily: 'Vazirmatn'),
+                                      style: TextStyle(color: colors.textSecondary, fontSize: 11.5),
                                     ),
                                     InkWell(
                                       onTap: () => _changeDailyTarget(debt, -1),
@@ -784,7 +773,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       padding: const EdgeInsets.symmetric(horizontal: 8),
                                       child: Text(
                                         toPersianDigits('${debt.dailyTarget}'),
-                                        style: TextStyle(color: colors.textPrimary, fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                                        style: TextStyle(color: colors.textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
                                       ),
                                     ),
                                     InkWell(
@@ -822,8 +811,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                             color: colors.primary,
-                                            fontFamily: 'Vazirmatn',
-                                          ),
+                                            ),
                                         ),
                                       ),
                                     ),
@@ -840,7 +828,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       ),
                                       onPressed: () => _logBatchCompletion(debt, 1),
                                       icon: Icon(CupertinoIcons.checkmark_alt, size: 14, color: colors.onPrimary),
-                                      label: Text('ثبت ۱ ادا', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary)),
+                                      label: Text('ثبت ۱ ادا', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: colors.onPrimary)),
                                     ),
                                   ],
                                 ),
@@ -873,8 +861,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                 color: isDark ? colors.success : colors.success,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ],
                         ),
@@ -907,8 +894,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       color: colors.textSecondary,
                                       fontSize: 13.5,
                                       decoration: TextDecoration.lineThrough,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                 ),
                                 // Restore Button
@@ -926,7 +912,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       children: [
                                         Icon(CupertinoIcons.arrow_counterclockwise, size: 12, color: colors.success),
                                         SizedBox(width: 4),
-                                        Text('بازگردانی', style: TextStyle(fontSize: 11, color: colors.success, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                                        Text('بازگردانی', style: TextStyle(fontSize: 11, color: colors.success, fontWeight: FontWeight.bold)),
                                       ],
                                     ),
                                   ),
@@ -1100,8 +1086,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),
@@ -1150,7 +1135,6 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                         child: Text(
                           p,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: colors.primary,
@@ -1167,7 +1151,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
             // Title Field
             TextField(
               controller: _titleController,
-              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.w600),
+              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.w600),
               decoration: InputDecoration(
                 hintText: 'عنوان بدهی (مثلاً: نماز قضای صبح)',
                 hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
@@ -1192,7 +1176,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                   child: TextField(
                     controller: _countController,
                     keyboardType: TextInputType.number,
-                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       hintText: 'تعداد کل قضاها',
                       hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
@@ -1214,7 +1198,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                   child: TextField(
                     controller: _targetController,
                     keyboardType: TextInputType.number,
-                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       hintText: 'هدف انجام در روز',
                       hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
@@ -1244,7 +1228,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                 elevation: 0,
               ),
               onPressed: _save,
-              child: Text('ثبت بدهی جدید', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary)),
+              child: Text('ثبت بدهی جدید', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary)),
             ),
           ],
         ),
@@ -1289,8 +1273,7 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
                   color: isSelected
                       ? colors.primary
                       : colors.textSecondary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ],
           ),
@@ -1415,8 +1398,7 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 IconButton(
                   icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
@@ -1429,10 +1411,10 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
             // Title
             TextField(
               controller: _titleController,
-              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.w600),
+              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.w600),
               decoration: InputDecoration(
                 labelText: 'عنوان',
-                labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                labelStyle: TextStyle(color: colors.textSecondary),
                 fillColor: colors.surfaceSunken,
                 filled: true,
                 enabledBorder: OutlineInputBorder(
@@ -1454,10 +1436,10 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                   child: TextField(
                     controller: _totalController,
                     keyboardType: TextInputType.number,
-                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       labelText: 'تعداد کل',
-                      labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                      labelStyle: TextStyle(color: colors.textSecondary),
                       fillColor: colors.surfaceSunken,
                       filled: true,
                       enabledBorder: OutlineInputBorder(
@@ -1476,10 +1458,10 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                   child: TextField(
                     controller: _remainingController,
                     keyboardType: TextInputType.number,
-                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       labelText: 'باقیمانده',
-                      labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                      labelStyle: TextStyle(color: colors.textSecondary),
                       fillColor: colors.surfaceSunken,
                       filled: true,
                       enabledBorder: OutlineInputBorder(
@@ -1501,10 +1483,10 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
             TextField(
               controller: _targetController,
               keyboardType: TextInputType.number,
-              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 labelText: 'هدف روزانه',
-                labelStyle: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                labelStyle: TextStyle(color: colors.textSecondary),
                 fillColor: colors.surfaceSunken,
                 filled: true,
                 enabledBorder: OutlineInputBorder(
@@ -1551,7 +1533,7 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
                       elevation: 0,
                     ),
                     onPressed: _update,
-                    child: Text('ذخیره تغییرات', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary)),
+                    child: Text('ذخیره تغییرات', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary)),
                   ),
                 ),
               ],

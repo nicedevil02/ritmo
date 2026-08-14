@@ -99,7 +99,6 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                 'هنوز در حالِ یادگیریِ الگوی بدنتم 🌸',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: colors.textPrimary,
@@ -110,7 +109,6 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                 'برای مشاهده نمودارهای روند و نظم چرخه، باید حداقل اطلاعات ۲ دوره قبلی را ثبت کرده باشید.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   color: colors.textSecondary,
                 ),
@@ -140,8 +138,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white70 : colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -153,7 +150,6 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                         style: TextStyle(
                           fontSize: 14,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
                           height: 1.5,
                         ),
                       ),
@@ -174,8 +170,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : const Color(0xffEC4899),
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ),
               ],
@@ -197,8 +192,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                     fontSize: 14.5,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white70 : colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -241,8 +235,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                     fontSize: 14.5,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white70 : colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 12),
                 if (_loading) const Center(child: CircularProgressIndicator(color: Color(0xffEC4899))) else _symptomStats.isEmpty
@@ -251,7 +244,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               child: Text(
                                 'علائمی ثبت نشده است.',
-                                style: TextStyle(color: colors.textSecondary, fontSize: 13, fontFamily: 'Vazirmatn'),
+                                style: TextStyle(color: colors.textSecondary, fontSize: 13),
                               ),
                             ),
                           )
@@ -278,8 +271,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
                                           color: isDark ? Colors.white : colors.textPrimary,
-                                          fontFamily: 'Vazirmatn',
-                                        ),
+                                          ),
                                       ),
                                       // Right: Badge / stats
                                       Container(
@@ -295,8 +287,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.bold,
                                             color: Color(0xffEC4899),
-                                            fontFamily: 'Vazirmatn',
-                                          ),
+                                            ),
                                         ),
                                       ),
                                     ],
@@ -336,8 +327,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                       fontSize: 14.5,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white70 : colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -345,8 +335,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.white60 : colors.textSecondary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   const SizedBox(height: 48),
                   SizedBox(
@@ -386,7 +375,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : colors.textSecondary, fontFamily: 'Vazirmatn'),
+          style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : colors.textSecondary),
         ),
       ],
     );
@@ -470,7 +459,7 @@ class _CycleTrendPainter extends CustomPainter {
       // Draw value text
       textPainter.text = TextSpan(
         text: _toPersianDigits(trendPoints[i].lengthDays.toString()),
-        style: TextStyle(fontSize: 9, color: isDark ? Colors.white : Colors.black87, fontFamily: 'Vazirmatn'),
+        style: TextStyle(fontSize: 9, color: isDark ? Colors.white : Colors.black87),
       );
       textPainter.layout();
       textPainter.paint(canvas, Offset(x - 6, yCycle - 16));
@@ -545,7 +534,7 @@ class _SymptomTimelinePainter extends CustomPainter {
     canvas.drawLine(Offset(startX, centerY - 6), Offset(startX, centerY + 6), tickPaint);
     textPainter.text = const TextSpan(
       text: 'روز ۱',
-      style: TextStyle(fontSize: 8.5, color: Colors.grey, fontFamily: 'Vazirmatn'),
+      style: TextStyle(fontSize: 8.5, color: Colors.grey),
     );
     textPainter.layout();
     textPainter.paint(canvas, Offset(startX - textPainter.width / 2, centerY + 10));
@@ -555,7 +544,7 @@ class _SymptomTimelinePainter extends CustomPainter {
     canvas.drawLine(Offset(endX, centerY - 6), Offset(endX, centerY + 6), tickPaint);
     textPainter.text = TextSpan(
       text: _toPersianDigits('روز $cycleLength'),
-      style: TextStyle(fontSize: 8.5, color: textColor, fontFamily: 'Vazirmatn'),
+      style: TextStyle(fontSize: 8.5, color: textColor),
     );
     textPainter.layout();
     textPainter.paint(canvas, Offset(endX - textPainter.width / 2, centerY + 10));
@@ -586,7 +575,7 @@ class _SymptomTimelinePainter extends CustomPainter {
       final String farsiName = translator(stat.key);
       final labelSpan = TextSpan(
         text: _toPersianDigits('$farsiName (روز $day)'),
-        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
       );
 
       textPainter.text = labelSpan;

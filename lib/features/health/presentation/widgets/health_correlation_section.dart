@@ -28,12 +28,12 @@ class HealthCorrelationSection extends StatelessWidget {
           children: [
             Text(
               'تحلیل همبستگی هوشمند سلامت',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
             ),
             const SizedBox(height: 6),
             Text(
               'بررسی ارتباط ریاضی بین خواب/انرژی روزانه و مقادیر قند/فشار خون شما در بازه اخیر.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+              style: TextStyle(fontSize: 11, color: colors.textSecondary),
             ),
             const SizedBox(height: 16),
             if (activeCorrelations.isEmpty)
@@ -42,7 +42,7 @@ class HealthCorrelationSection extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(
                     'داده‌های ثبت‌شده در بازه اخیر کافی نیست. همبستگی‌ها پس از حداقل ۳ روز ثبت همزمان خواب/انرژی و مقادیر علائم حیاتی ظاهر می‌شوند.',
-                    style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary, fontSize: 12),
+                    style: TextStyle(color: colors.textSecondary, fontSize: 12),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -95,7 +95,7 @@ class HealthCorrelationSection extends StatelessWidget {
                               children: [
                                 Text(
                                   _getMetricLabel(item.metric),
-                                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -106,7 +106,7 @@ class HealthCorrelationSection extends StatelessWidget {
                                   ),
                                   child: Text(
                                     _toPersianDigits(coeff.toStringAsFixed(2)),
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.textPrimary),
                                   ),
                                 ),
                               ],
@@ -114,12 +114,12 @@ class HealthCorrelationSection extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               typeLabel,
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: iconColor, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 10, color: iconColor, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 6),
                             Text(
                               item.insight,
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary, height: 1.5),
+                              style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5),
                               textAlign: TextAlign.justify,
                             ),
                           ],
@@ -143,7 +143,7 @@ class HealthCorrelationSection extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'توجه: همبستگی ریاضی لزوماً به معنای رابطه علّی مستقیم نیست و رفتارهای زیستی تحت تأثیر فاکتورهای متعددی هستند.',
-                      style: TextStyle(fontSize: 10, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 10, color: colors.textSecondary),
                     ),
                   ),
                 ],

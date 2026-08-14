@@ -72,8 +72,7 @@ class RealmDayBarWidget extends StatelessWidget {
                         : (item.weekday == 5
                             ? const Color(0xFFE53935)
                             : colors.textPrimary),
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
               ),
             );

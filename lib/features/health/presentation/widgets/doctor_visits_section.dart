@@ -271,7 +271,7 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
                         const SizedBox(height: 16),
                         Text(
                           'خطا در بارگذاری تصویر نسخه',
-                          style: TextStyle(fontFamily: 'Vazirmatn', color: context.colors.textPrimary),
+                          style: TextStyle(color: context.colors.textPrimary),
                         ),
                       ],
                     ),
@@ -386,7 +386,7 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
       return Center(
         child: Text(
           isPast ? l10n.doctorVisitsNoPast : l10n.doctorVisitsNoUpcoming,
-          style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+          style: TextStyle(color: colors.textSecondary),
         ),
       );
     }
@@ -558,7 +558,7 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                        child: const Text('انجام شد', style: TextStyle(fontSize: 12, fontFamily: 'Vazirmatn')),
+                        child: const Text('انجام شد', style: TextStyle(fontSize: 12)),
                       ),
                     ],
                   ],
@@ -619,16 +619,16 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
           backgroundColor: colors.card,
           title: Text(
             l10n.doctorVisitsDelete,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           content: Text(
             l10n.doctorVisitsDeleteConfirm,
-            style: const TextStyle(fontFamily: 'Vazirmatn'),
+            style: const TextStyle(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(l10n.doctorVisitsCancel, style: const TextStyle(fontFamily: 'Vazirmatn')),
+              child: Text(l10n.doctorVisitsCancel, style: const TextStyle()),
             ),
             ElevatedButton(
               onPressed: () {
@@ -638,7 +638,7 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
               style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
               child: Text(
                 l10n.doctorVisitsConfirm,
-                style: const TextStyle(color: Colors.white, fontFamily: 'Vazirmatn'),
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -855,27 +855,26 @@ class _DoctorVisitFormState extends State<_DoctorVisitForm> {
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _doctorNameController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsDoctorName, icon: Icons.person),
                 validator: (val) => val == null || val.trim().isEmpty ? 'لطفاً نام پزشک را وارد کنید' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _specialtyController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsSpecialty, icon: Icons.star_border),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _visitType,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsType, icon: Icons.category),
                 dropdownColor: colors.card,
                 items: [
@@ -902,7 +901,7 @@ class _DoctorVisitFormState extends State<_DoctorVisitForm> {
                         _toPersianDigits(
                           '${Jalali.fromDateTime(_selectedDate).year}/${Jalali.fromDateTime(_selectedDate).month}/${Jalali.fromDateTime(_selectedDate).day}',
                         ),
-                        style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(color: colors.textPrimary),
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -918,7 +917,7 @@ class _DoctorVisitFormState extends State<_DoctorVisitForm> {
                       icon: Icon(Icons.access_time, color: colors.primary, size: 18),
                       label: Text(
                         _toPersianDigits('${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}'),
-                        style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(color: colors.textPrimary),
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -932,26 +931,26 @@ class _DoctorVisitFormState extends State<_DoctorVisitForm> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _clinicNameController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsClinicName, icon: Icons.business),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _clinicAddressController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsClinicAddress, icon: Icons.location_on),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _clinicPhoneController,
                 keyboardType: TextInputType.phone,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsClinicPhone, icon: Icons.phone),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
                 initialValue: _reminderBefore,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsReminder, icon: Icons.notifications),
                 dropdownColor: colors.card,
                 items: [
@@ -973,13 +972,13 @@ class _DoctorVisitFormState extends State<_DoctorVisitForm> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _reasonController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsReason, icon: Icons.question_answer),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _notesController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsNotes, icon: Icons.notes),
                 maxLines: 2,
               ),
@@ -992,7 +991,7 @@ class _DoctorVisitFormState extends State<_DoctorVisitForm> {
                       icon: Icon(Icons.add_photo_alternate, color: colors.primary),
                       label: Text(
                         _attachmentPath == null ? l10n.doctorVisitsAddAttachment : 'تغییر نسخه / سند',
-                        style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontSize: 13),
+                        style: TextStyle(color: colors.textPrimary, fontSize: 13),
                         overflow: TextOverflow.ellipsis,
                       ),
                       style: OutlinedButton.styleFrom(
@@ -1043,7 +1042,7 @@ class _DoctorVisitFormState extends State<_DoctorVisitForm> {
                 ),
                 child: Text(
                   l10n.doctorVisitsSave,
-                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

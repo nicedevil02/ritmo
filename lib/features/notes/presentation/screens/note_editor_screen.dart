@@ -455,7 +455,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                       Text(
                         '${kStyle.emoji} ${kStyle.labelFa}',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 13.5,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                           color: colors.textPrimary,
@@ -491,7 +490,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           children: [
             ListTile(
               leading: Icon(currentStyle.icon, color: currentStyle.accentColor),
-              title: Text('نوع: ${currentStyle.labelFa}', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13.5, fontWeight: FontWeight.bold)),
+              title: Text('نوع: ${currentStyle.labelFa}', style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
               trailing: Icon(CupertinoIcons.chevron_left, size: 14, color: colors.textTertiary),
               onTap: () {
                 Navigator.pop(ctx);
@@ -500,7 +499,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             ),
             ListTile(
               leading: Icon(_isPinned ? CupertinoIcons.pin_slash : CupertinoIcons.pin, color: colors.textPrimary),
-              title: Text(_isPinned ? 'برداشتن سنجاق' : 'سنجاق کردن', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13.5)),
+              title: Text(_isPinned ? 'برداشتن سنجاق' : 'سنجاق کردن', style: const TextStyle(fontSize: 13.5)),
               onTap: () {
                 Navigator.pop(ctx);
                 setState(() => _isPinned = !_isPinned);
@@ -509,7 +508,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             ),
             ListTile(
               leading: Icon(_isPrivate ? CupertinoIcons.lock_slash : CupertinoIcons.lock, color: colors.textPrimary),
-              title: Text(_isPrivate ? 'عمومی کردن' : 'خصوصی کردن', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13.5)),
+              title: Text(_isPrivate ? 'عمومی کردن' : 'خصوصی کردن', style: const TextStyle(fontSize: 13.5)),
               onTap: () {
                 Navigator.pop(ctx);
                 setState(() => _isPrivate = !_isPrivate);
@@ -525,7 +524,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 title: Text(
                   hasSrs ? 'خروج از مرور فاصله‌دار' : 'افزودن به مرور فاصله‌دار',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13.5,
                     color: hasSrs ? colors.error : colors.textPrimary,
                   ),
@@ -541,7 +539,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               ),
               ListTile(
                 leading: Icon(Icons.history_rounded, color: colors.textPrimary),
-                title: const Text('تاریخچه نسخه‌ها', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13.5)),
+                title: const Text('تاریخچه نسخه‌ها', style: TextStyle(fontSize: 13.5)),
                 trailing: Icon(CupertinoIcons.chevron_left, size: 14, color: colors.textTertiary),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -643,7 +641,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                 Text(
                                   currentStyle.labelFa,
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     color: currentStyle.accentColor,
@@ -666,7 +663,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                               child: Text(
                                 _saveStatusText!,
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 11,
                                   color: colors.textTertiary,
                                 ),
@@ -766,7 +762,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                   Text(
                                     'درس کلیدی و ماندگار تجربه',
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 13,
                                       fontWeight: FontWeight.w800,
                                       color: insightsColor,
@@ -781,7 +776,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                 maxLines: 2,
                                 minLines: 1,
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w600,
                                   color: colors.textPrimary,
@@ -789,7 +783,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                 decoration: InputDecoration(
                                   hintText: 'یک جمله درس ماندگار...',
                                   hintStyle: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 12,
                                     color: colors.textTertiary.withValues(alpha: 0.6),
                                   ),
@@ -839,7 +832,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                         child: Text(
                                           '${c.emoji} ${c.labelFa}',
                                           style: TextStyle(
-                                            fontFamily: 'Vazirmatn',
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
                                             color: colors.textPrimary,
@@ -853,7 +845,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                       Text(
                                         'اهمیت: ',
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           fontSize: 11.5,
                                           color: colors.textSecondary,
                                         ),
@@ -917,7 +908,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           Text(
                             'برچسب‌ها',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -947,7 +937,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                     Text(
                                       '#$t',
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.w600,
                                         color: currentStyle.accentColor,
@@ -976,14 +965,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                               controller: _tagInputController,
                               textDirection: TextDirection.rtl,
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11.5,
                                 color: colors.textPrimary,
                               ),
                               decoration: InputDecoration(
                                 hintText: '+ برچسب...',
                                 hintStyle: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 11,
                                   color: colors.textTertiary.withValues(alpha: 0.7),
                                 ),
@@ -1002,7 +989,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                         Text(
                           'پیوست‌ها (${PersianDigits.convert(_attachments.length.toString())})',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
@@ -1085,7 +1071,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                       const SizedBox(width: 4),
                                       Text(
                                         att.fileName,
-                                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5),
+                                        style: const TextStyle(fontSize: 11.5),
                                       ),
                                       const SizedBox(width: 4),
                                       InkWell(
@@ -1184,7 +1170,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                         Text(
                           '${PersianDigits.convert(_wordCount.toString())} کلمه • $readingTime',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 11.5,
                             color: colors.textTertiary,
                           ),
@@ -1193,7 +1178,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           Text(
                             _saveStatusText!,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11.5,
                               color: colors.textTertiary,
                             ),

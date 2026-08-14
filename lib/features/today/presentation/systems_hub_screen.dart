@@ -270,8 +270,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -279,8 +278,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                               style: TextStyle(
                                 fontSize: 10.5,
                                 color: colors.textSecondary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ],
                         ),
@@ -320,10 +318,10 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
             Expanded(
               child: TextField(
                 autofocus: true,
-                style: TextStyle(color: colors.textPrimary, fontSize: 13.5, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
                 decoration: const InputDecoration(
                   hintText: 'جستجو در سیستم‌ها...',
-                  hintStyle: TextStyle(color: Colors.white38, fontSize: 12, fontFamily: 'Vazirmatn'),
+                  hintStyle: TextStyle(color: Colors.white38, fontSize: 12),
                   border: InputBorder.none,
                 ),
                 onChanged: (val) {
@@ -394,16 +392,14 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 Text(
                   'تمام سیستم‌های فعال و قابل مدیریت زندگی شما',
                   style: TextStyle(
                     fontSize: 11,
                     color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
               ],
             ),
@@ -442,8 +438,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
             fontSize: 14,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
       ],
     );
@@ -910,8 +905,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: isDarkMode ? Colors.white : const Color(0xFF1C1C1E),
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       const SizedBox(height: 1.5),
                       // DESCRIPTION
@@ -924,8 +918,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                           color: isDarkMode
                               ? Colors.white.withValues(alpha: 0.7)
                               : Colors.black.withValues(alpha: 0.6),
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -983,8 +976,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
               fontSize: 9.5,
               fontWeight: FontWeight.bold,
               color: Colors.white,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
         ],
       ),
@@ -1299,8 +1291,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -1310,8 +1301,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                     fontSize: 13,
                     color: colors.textSecondary,
                     height: 1.5,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 28),
                 SizedBox(
@@ -1334,8 +1324,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ),
                 ),
@@ -1357,19 +1346,19 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           textDirection: TextDirection.rtl,
           child: AlertDialog(
             backgroundColor: const Color(0xff1A1D29),
-            title: const Text('⚠️ هشدار مهم پزشکی', style: TextStyle(fontFamily: 'Vazirmatn')),
+            title: const Text('⚠️ هشدار مهم پزشکی', style: TextStyle()),
             content: const Text(
               'توجه: غیرفعال‌سازی این ماژول تمام یادآوری‌های دارویی شما را لغو می‌کند و ممکن است بر سلامتتان اثر بگذارد. مطمئنید؟',
-              style: TextStyle(height: 1.6, fontFamily: 'Vazirmatn'),
+              style: TextStyle(height: 1.6),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('خیر، لغو نشود', style: TextStyle(color: Color(0xff9AA0AE), fontFamily: 'Vazirmatn')),
+                child: const Text('خیر، لغو نشود', style: TextStyle(color: Color(0xff9AA0AE))),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('بله، خاموش کن', style: TextStyle(color: Color(0xffE5736B), fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                child: const Text('بله، خاموش کن', style: TextStyle(color: Color(0xffE5736B), fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -1395,19 +1384,19 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: const Color(0xff1A1D29),
-          title: Text('⚠️ بازنشانی سیستم $moduleTitle', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold)),
+          title: Text('⚠️ بازنشانی سیستم $moduleTitle', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           content: Text(
             'آیا از بازنشانی داده‌های سیستم «$moduleTitle» اطمینان دارید؟ تمام ثبت‌ها، تاریخچه و اطلاعات این سیستم پاک خواهد شد و قابل بازگردانی نیست.',
-            style: const TextStyle(height: 1.6, fontFamily: 'Vazirmatn', fontSize: 13),
+            style: const TextStyle(height: 1.6, fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('انصراف', style: TextStyle(color: Color(0xff9AA0AE), fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle(color: Color(0xff9AA0AE))),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('بله، بازنشانی کن', style: TextStyle(color: Color(0xffE5736B), fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+              child: const Text('بله، بازنشانی کن', style: TextStyle(color: Color(0xffE5736B), fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -1425,7 +1414,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('داده‌های سیستم «$moduleTitle» با موفقیت بازنشانی گردید.', style: const TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text('داده‌های سیستم «$moduleTitle» با موفقیت بازنشانی گردید.', style: const TextStyle()),
             backgroundColor: const Color(0xff10B981),
             behavior: SnackBarBehavior.floating,
           ),

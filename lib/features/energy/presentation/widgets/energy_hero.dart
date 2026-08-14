@@ -83,7 +83,7 @@ class EnergyHero extends StatelessWidget {
                       children: [
                         const Text(
                           'انرژی پویا',
-                          style: TextStyle(fontSize: 10, color: Colors.white54, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 10, color: Colors.white54),
                         ),
                         const SizedBox(height: 2),
                         Row(
@@ -96,8 +96,7 @@ class EnergyHero extends StatelessWidget {
                                 fontSize: 26,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                             const Text(
                               '٪',
@@ -105,8 +104,7 @@ class EnergyHero extends StatelessWidget {
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: pinkColor,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ],
                         ),
@@ -131,11 +129,11 @@ class EnergyHero extends StatelessWidget {
                 children: [
                   const Text(
                     'احوال روحی اخیر: ',
-                    style: TextStyle(fontSize: 11, color: Colors.white54, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 11, color: Colors.white54),
                   ),
                   Text(
                     moodText,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ],
               ),
@@ -160,7 +158,7 @@ class EnergyHero extends StatelessWidget {
                     SizedBox(width: 6),
                     Text(
                       'الان چطورم؟',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -176,7 +174,7 @@ class EnergyHero extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: Text(
                   '💡 چرا این عدد؟ (عوامل سازنده انرژی پویا)',
-                  style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.white70, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.white70),
                 ),
               ),
               const SizedBox(height: 8),
@@ -212,7 +210,7 @@ class EnergyHero extends StatelessWidget {
                     ),
                     child: Text(
                       _toPersianDigits(exp),
-                      style: TextStyle(fontSize: 9.5, color: chipText, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 9.5, color: chipText),
                     ),
                   );
                 }).toList(),

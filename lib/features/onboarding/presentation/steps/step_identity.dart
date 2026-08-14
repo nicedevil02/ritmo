@@ -48,7 +48,6 @@ class StepIdentity extends StatelessWidget {
             fontSize: 18,
             fontWeight: FontWeight.w900,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
             height: 1.4,
           ),
         ),
@@ -58,15 +57,13 @@ class StepIdentity extends StatelessWidget {
           style: TextStyle(
             color: colors.textPrimary,
             fontSize: 16,
-            fontFamily: 'Vazirmatn',
             fontWeight: FontWeight.bold,
           ),
           decoration: InputDecoration(
             hintText: 'نام شما...',
             hintStyle: TextStyle(
               color: colors.textSecondary.withValues(alpha: 0.5),
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
             filled: true,
             fillColor: colors.textPrimary.withValues(alpha: 0.04),
             border: OutlineInputBorder(
@@ -94,8 +91,7 @@ class StepIdentity extends StatelessWidget {
             fontSize: 15,
             fontWeight: FontWeight.bold,
             color: colors.textSecondary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 10),
         Row(
@@ -116,8 +112,7 @@ class StepIdentity extends StatelessWidget {
             fontSize: 15,
             fontWeight: FontWeight.bold,
             color: colors.textSecondary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 10),
         SizedBox(
@@ -128,7 +123,6 @@ class StepIdentity extends StatelessWidget {
               textTheme: CupertinoTextThemeData(
                 pickerTextStyle: TextStyle(
                   color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
                   fontSize: 20,
                 ),
               ),
@@ -169,7 +163,6 @@ class StepIdentity extends StatelessWidget {
         }
       },
       labelStyle: TextStyle(
-        fontFamily: 'Vazirmatn',
         color: isSelected ? Colors.white : colors.textSecondary,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         fontSize: 13,

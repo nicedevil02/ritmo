@@ -39,7 +39,7 @@ class PregnancyTodayCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2C2C3E) : Colors.pink.shade50,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.colors.primary.withOpacity(0.3)),
+        border: Border.all(color: context.colors.primary.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,7 +51,6 @@ class PregnancyTodayCard extends StatelessWidget {
               Text(
                 'کارت امروز بارداری (سه ماهه ${trimester == 1 ? "اول" : (trimester == 2 ? "دوم" : "سوم")})',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                   color: context.colors.textPrimary,
@@ -97,7 +96,7 @@ class PregnancyTodayCard extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.15),
+                  color: Colors.amber.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -107,7 +106,7 @@ class PregnancyTodayCard extends StatelessWidget {
                     const Expanded(
                       child: Text(
                         'اولین لگد را ثبت کنید',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                     InkWell(
@@ -115,7 +114,7 @@ class PregnancyTodayCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(8)),
-                        child: const Text('ثبت', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.black)),
+                        child: const Text('ثبت', style: TextStyle(fontSize: 11, color: Colors.black)),
                       ),
                     ),
                   ],
@@ -143,7 +142,7 @@ class PregnancyTodayCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                     icon: const Icon(CupertinoIcons.play_circle_fill, size: 18),
-                    label: const Text('شروع لگدشماری', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold)),
+                    label: const Text('شروع لگدشماری', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     onPressed: () => onNavigateTab(2),
                   ),
                 ),
@@ -156,7 +155,7 @@ class PregnancyTodayCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                     icon: const Icon(CupertinoIcons.timer, size: 18),
-                    label: const Text('شروع انقباض‌سنج', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold)),
+                    label: const Text('شروع انقباض‌سنج', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     onPressed: onOpenLaborMode,
                   ),
                 ),
@@ -169,7 +168,7 @@ class PregnancyTodayCard extends StatelessWidget {
                   minimumSize: const Size(double.infinity, 40),
                 ),
                 icon: const Icon(CupertinoIcons.bag_fill, size: 16),
-                label: const Text('چک‌لیست ساک بیمارستان (هفته ۳۲+)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                label: const Text('چک‌لیست ساک بیمارستان (هفته ۳۲+)', style: TextStyle(fontSize: 12)),
                 onPressed: onOpenHospitalBag,
               ),
             ],
@@ -188,7 +187,7 @@ class PregnancyTodayCard extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, height: 1.4),
+            style: const TextStyle(fontSize: 12, height: 1.4),
           ),
         ),
       ],

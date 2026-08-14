@@ -75,21 +75,21 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
           backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF16192E) : Colors.white,
           title: Text(
             'تایمر جلسه دیگری در حال اجراست',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16, color: colors.textPrimary),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.textPrimary),
           ),
           content: Text(
             'یک تایمر مطالعه برای جلسه دیگری فعال است. با شروع این جلسه، تایمر قبلی پاک می‌شود. ادامه می‌دهید؟',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: const Text('شروع این جلسه', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('شروع این جلسه', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -178,22 +178,22 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
                   const Text(
                     'ثبت و اتمام جلسه مطالعه',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'مدت زمان مطالعه شما: ${toPersianDigits(actualDuration.toString())} دقیقه',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.primary, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 13, color: colors.primary, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _noteController,
                     maxLines: 3,
-                    style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontSize: 12.5),
+                    style: const TextStyle(color: Colors.white, fontSize: 12.5),
                     decoration: InputDecoration(
                       hintText: 'یادداشت یا خلاصه جلسه (اختیاری)...',
-                      hintStyle: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white.withValues(alpha: 0.4), fontSize: 12),
+                      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12),
                       fillColor: isDarkMode ? Colors.black.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
                       filled: true,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: colors.border)),
@@ -205,7 +205,7 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                        child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
@@ -214,7 +214,7 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
                           backgroundColor: colors.success,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('تأیید و ذخیره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: const Text('تأیید و ذخیره', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -272,7 +272,6 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
                       Text(
                         widget.course.title,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 14,
                           color: colors.textSecondary,
                         ),
@@ -281,7 +280,6 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
                       Text(
                         '${widget.course.unitLabelResolved} ${widget.session.sessionNumber}',
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -332,7 +330,6 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
                       Text(
                         toPersianDigits(_formatTime(_secondsElapsed)),
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -342,7 +339,6 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
                       Text(
                         _isRunning ? 'در حال مطالعه...' : 'متوقف شده',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: _isRunning ? colors.success : colors.textSecondary,
                         ),
@@ -366,7 +362,7 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
                     icon: Icon(_isRunning ? CupertinoIcons.pause_fill : CupertinoIcons.play_fill, size: 20, color: Colors.white),
                     label: Text(
                       _isRunning ? 'مکس' : 'ادامه',
-                      style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
                   ElevatedButton.icon(
@@ -379,7 +375,7 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
                     icon: const Icon(CupertinoIcons.checkmark_alt, size: 20, color: Colors.white),
                     label: const Text(
                       'اتمام جلسه',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
                 ],

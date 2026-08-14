@@ -109,7 +109,6 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
             Text(
               'رشته خودت رو انتخاب کن',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -120,7 +119,6 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
               'سرفصل‌های کامل کنکور به صورت خودکار اضافه میشه',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 14,
                 color: colors.textSecondary,
               ),
@@ -140,7 +138,6 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                   child: Text(
                     _labelForField(field),
                     style: const TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -176,7 +173,6 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
             child: Text(
               _energyContext!.farsiNote,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w500,
@@ -218,12 +214,12 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
           Expanded(
             child: Text(
               '$countStr آیتم مطالعاتی از روزهای قبل باقی مانده — به امروز منتقل شود؟',
-              style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Color(0xFF5D4037)),
+              style: const TextStyle(fontSize: 12, color: Color(0xFF5D4037)),
             ),
           ),
           TextButton(
             onPressed: () => _applyCarryForward(_carryOverItems),
-            child: const Text('انتقال', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6))),
+            child: const Text('انتقال', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6))),
           ),
         ],
       ),
@@ -368,16 +364,16 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
             final confirm = await showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(
-                title: const Text('ریست کامل اطلاعات کنکور؟', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red)),
+                title: const Text('ریست کامل اطلاعات کنکور؟', style: TextStyle(color: Colors.red)),
                 content: const Text(
                   'آیا مطمئن هستید؟ این عمل تمام دروس، سرفصل‌ها، آزمون‌ها، اهداف روزانه و تنظیمات ماژول کنکور شما را پاک خواهد کرد. این عمل غیرقابل بازگشت است.',
-                  style: TextStyle(fontFamily: 'Vazirmatn'),
+                  style: TextStyle(),
                 ),
                 actions: [
-                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn'))),
+                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('انصراف', style: TextStyle())),
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text('بله، ریست کن', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red)),
+                    child: const Text('بله، ریست کن', style: TextStyle(color: Colors.red)),
                   ),
                 ],
               ),
@@ -426,7 +422,7 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
       return Scaffold(
         backgroundColor: colors.bg,
         appBar: AppBar(
-          title: const Text('کنکور', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          title: const Text('کنکور', style: TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
@@ -458,7 +454,7 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
       child: Scaffold(
         backgroundColor: colors.bg,
         appBar: AppBar(
-          title: const Text('کنکور', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          title: const Text('کنکور', style: TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
@@ -518,7 +514,7 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                       indicatorColor: const Color(0xFF8B5CF6),
                       labelColor: const Color(0xFF8B5CF6),
                       unselectedLabelColor: colors.textSecondary,
-                      labelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold),
+                      labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                       tabs: const [
                         Tab(text: 'امروز / برنامه', icon: Icon(Icons.today, size: 20)),
                         Tab(text: 'بودجه‌بندی', icon: Icon(Icons.pie_chart, size: 20)),
@@ -682,14 +678,14 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('⚙ تنظیمات ماژول کنکور', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text('⚙ تنظیمات ماژول کنکور', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
             ],
           ),
           const SizedBox(height: 16),
           ListTile(
-            title: const Text('تغییر به حالت عمومی درس و مطالعه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF3B82F6))),
-            subtitle: Text('خروج از حالت اختصاصی کنکور و خروج به محیط عمومی مطالعه.', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary)),
+            title: const Text('تغییر به حالت عمومی درس و مطالعه', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF3B82F6))),
+            subtitle: Text('خروج از حالت اختصاصی کنکور و خروج به محیط عمومی مطالعه.', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
             trailing: const Icon(Icons.swap_horiz_rounded, color: Color(0xFF3B82F6)),
             onTap: () async {
               final db = await DatabaseHelper.instance.database;
@@ -705,8 +701,8 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
           const Divider(),
           // Curriculum Picker Button
           ListTile(
-            title: const Text('بارگذاری سرفصل‌های کنکور', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: Text('افزودن دروس و مباحث استاندارد کنکور بر اساس رشته تحصیلی.', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary)),
+            title: const Text('بارگذاری سرفصل‌های کنکور', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            subtitle: Text('افزودن دروس و مباحث استاندارد کنکور بر اساس رشته تحصیلی.', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
             trailing: const Icon(Icons.school, color: Color(0xFF8B5CF6)),
             onTap: () {
               Navigator.pop(context);
@@ -716,12 +712,12 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
           const Divider(),
           // Exam Date Row
           ListTile(
-            title: const Text('تاریخ برگزاری کنکور', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold)),
-            subtitle: Text(dateStr, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary)),
+            title: const Text('تاریخ برگزاری کنکور', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            subtitle: Text(dateStr, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
             trailing: TextButton.icon(
               onPressed: _selectDate,
               icon: const Icon(Icons.edit, size: 16, color: Color(0xFF8B5CF6)),
-              label: const Text('تغییر تاریخ', style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xFF8B5CF6), fontSize: 12)),
+              label: const Text('تغییر تاریخ', style: TextStyle(color: Color(0xFF8B5CF6), fontSize: 12)),
             ),
           ),
           const Divider(),
@@ -734,8 +730,8 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('هدف زمان مطالعه روزانه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold)),
-                    Text(formatDuration(_dailyTargetMinutes), style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6))),
+                    const Text('هدف زمان مطالعه روزانه', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    Text(formatDuration(_dailyTargetMinutes), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6))),
                   ],
                 ),
                 Slider(
@@ -756,7 +752,7 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
           const Divider(),
           // Show in Dashboard Switch
           SwitchListTile(
-            title: const Text('نمایش برنامه‌ریزی امروز در داشبورد اصلی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold)),
+            title: const Text('نمایش برنامه‌ریزی امروز در داشبورد اصلی', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             value: _showInDashboard,
             activeThumbColor: const Color(0xFF8B5CF6),
             onChanged: (val) {
@@ -769,8 +765,8 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
           const Divider(),
           // Reset Button
           ListTile(
-            title: const Text('ریست کل اطلاعات کنکور', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
-            subtitle: Text('پاک کردن تمام دروس، مباحث و تاریخچه‌ها جهت شروع مجدد.', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary)),
+            title: const Text('ریست کل اطلاعات کنکور', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
+            subtitle: Text('پاک کردن تمام دروس، مباحث و تاریخچه‌ها جهت شروع مجدد.', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
             trailing: const Icon(Icons.warning, color: Colors.red),
             onTap: widget.onReset,
           ),
@@ -784,7 +780,7 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('✓ ذخیره تغییرات تنظیمات', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+            child: const Text('✓ ذخیره تغییرات تنظیمات', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

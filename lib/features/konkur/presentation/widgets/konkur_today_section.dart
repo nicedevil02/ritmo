@@ -102,12 +102,12 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('ثبت سریع', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          title: const Text('ثبت سریع', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('چند دقیقه واقعاً مطالعه کردی؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+              const Text('چند دقیقه واقعاً مطالعه کردی؟', style: TextStyle()),
               const SizedBox(height: 12),
               TextField(
                 controller: minutesController,
@@ -117,19 +117,19 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                   hintText: '0',
                   border: OutlineInputBorder(),
                 ),
-                style: const TextStyle(fontFamily: 'Vazirmatn'),
+                style: const TextStyle(),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, 'JUST_CHECK'),
-              child: const Text('فقط تیک بزن (بدون ثبت زمان)', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('فقط تیک بزن (بدون ثبت زمان)', style: TextStyle()),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
               onPressed: () => Navigator.pop(ctx, minutesController.text.trim()),
-              child: const Text('ثبت زمان و تیک', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('ثبت زمان و تیک', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -167,7 +167,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
           const SnackBar(
             content: Text(
               'جلسه مطالعه با موفقیت ثبت شد! خدا قوت 🌟',
-              style: TextStyle(fontFamily: 'Vazirmatn'),
+              style: TextStyle(),
             ),
           ),
         );
@@ -178,7 +178,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
           SnackBar(
             content: Text(
               'خطا در ثبت سریع: $e',
-              style: const TextStyle(fontFamily: 'Vazirmatn'),
+              style: const TextStyle(),
             ),
           ),
         );
@@ -202,7 +202,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
             const SnackBar(
               content: Text(
                 'لطفاً ابتدا تاریخ کنکور را در تنظیمات تعیین کنید.',
-                style: TextStyle(fontFamily: 'Vazirmatn'),
+                style: TextStyle(),
               ),
             ),
           );
@@ -225,7 +225,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
           const SnackBar(
             content: Text(
               'برنامه از فردا به روز شد — برنامه امروز دست نخورد 📅',
-              style: TextStyle(fontFamily: 'Vazirmatn'),
+              style: TextStyle(),
             ),
           ),
         );
@@ -236,7 +236,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
           SnackBar(
             content: Text(
               'خطا در بازچینش برنامه: $e',
-              style: const TextStyle(fontFamily: 'Vazirmatn'),
+              style: const TextStyle(),
             ),
           ),
         );
@@ -281,7 +281,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                   const SizedBox(width: 8),
                   const Text(
                     'چرا این مبحث برنامه‌ریزی شد؟',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const Spacer(),
                   IconButton(
@@ -293,12 +293,12 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
               const SizedBox(height: 12),
               Text(
                 'مبحث: ${topic.name}',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
               ),
               const SizedBox(height: 4),
               Text(
                 'حالت پیشنهادی: $modeLabel',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                style: TextStyle(fontSize: 12, color: colors.textSecondary),
               ),
               const Divider(height: 24),
               Container(
@@ -309,7 +309,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                 ),
                 child: Text(
                   reasonText,
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary, height: 1.5),
+                  style: TextStyle(fontSize: 13, color: colors.textPrimary, height: 1.5),
                 ),
               ),
               const SizedBox(height: 16),
@@ -376,7 +376,6 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
             Text(
               'برنامه مطالعاتی امروز:',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -421,7 +420,6 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                         ? 'امروز برنامه مطالعاتی ندارید'
                         : 'برنامه امروز شما شامل ${toPersianDigits(widget.todayPlanItems.length)} مبحث است',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -432,7 +430,6 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                     Text(
                       '${toPersianDigits(_daysBehindCount)} مبحث از برنامه‌ عقب هستید! ⚠️',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11,
                         color: colors.warning,
                         fontWeight: FontWeight.w500,
@@ -442,7 +439,6 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                     Text(
                       'کاملاً طبق برنامه پیش می‌روید. عالیه! 🌟',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11,
                         color: colors.success,
                         fontWeight: FontWeight.w500,
@@ -462,7 +458,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                     )
                   : const Text(
                       'بازچینش برنامه',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                     ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF8B5CF6),
@@ -493,7 +489,6 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
             child: Text(
               'انرژی شما پایین است؛ برای جلوگیری از خستگی مفرط پیشنهاد می‌کنیم مباحث سبک‌تر را مطالعه کنید 🌿',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 11,
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w500,
@@ -522,7 +517,6 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
             Text(
               'امروز برنامه‌ای نیست — یه مبحث انتخاب کن 🌿',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: Colors.grey,
@@ -572,7 +566,6 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                       Text(
                         subject.name,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 11,
                           color: colors.textSecondary,
                         ),
@@ -595,7 +588,6 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                               Text(
                                 'چرا این؟',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 10,
                                   color: Color(0xFF8B5CF6),
                                   fontWeight: FontWeight.bold,
@@ -611,7 +603,6 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                   Text(
                     topic.name,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -621,7 +612,6 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                   Text(
                     'زمان برنامه‌ریزی شده: ${formatDuration(item.plannedMinutes)}',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       color: colors.textSecondary,
                     ),
@@ -636,7 +626,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                   icon: const Icon(Icons.play_arrow, size: 14, color: Colors.white),
                   label: const Text(
                     'شروع',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B5CF6),
@@ -651,7 +641,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                   icon: Icon(Icons.check, size: 14, color: colors.success),
                   label: Text(
                     'انجام',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.success, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 11, color: colors.success, fontWeight: FontWeight.bold),
                   ),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -694,7 +684,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
               );
             },
             icon: const Icon(Icons.play_circle_fill, size: 16),
-            label: const Text('+ مطالعه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold)),
+            label: const Text('+ مطالعه', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
           ),
         ),
         const SizedBox(width: 8),
@@ -721,7 +711,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
               );
             },
             icon: const Icon(Icons.assignment_turned_in, size: 16),
-            label: const Text('+ آزمون', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold)),
+            label: const Text('+ آزمون', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
           ),
         ),
         const SizedBox(width: 8),
@@ -735,7 +725,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
             ),
             onPressed: _isReplanning ? null : _replanSchedule,
             icon: const Icon(Icons.auto_fix_high, size: 16),
-            label: Text(_isReplanning ? 'تنظیم...' : '⚡ بازتنظیم', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold)),
+            label: Text(_isReplanning ? 'تنظیم...' : '⚡ بازتنظیم', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
           ),
         ),
       ],

@@ -29,7 +29,6 @@ class ChatActionChip extends StatelessWidget {
       label: Text(
         action.label,
         style: TextStyle(
-          fontFamily: 'Vazirmatn',
           fontSize: 12,
           fontWeight: FontWeight.bold,
           color: colors.textPrimary,

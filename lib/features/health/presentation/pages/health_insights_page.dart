@@ -161,7 +161,6 @@ class _HealthInsightsPageState extends State<HealthInsightsPage> {
               Text(
                 'روندها و تحلیل سلامت',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
                   fontSize: 16,
@@ -197,7 +196,7 @@ class _HealthInsightsPageState extends State<HealthInsightsPage> {
                     icon: const Icon(Icons.description_outlined),
                     label: const Text(
                       'تولید خلاصه برای پزشک',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 40),

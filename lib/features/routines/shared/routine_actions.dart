@@ -92,7 +92,7 @@ class RoutineActions {
       SnackBar(
         content: Text(
           'روتین به مدت $minutes دقیقه به تعویق افتاد.',
-          style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
+          style: TextStyle(color: colors.textPrimary),
         ),
         backgroundColor: colors.warning,
       ),

@@ -54,21 +54,21 @@ class TodaySessionsSection extends StatelessWidget {
           backgroundColor: isDarkMode ? const Color(0xff12141C) : Colors.white,
           title: const Text(
             'تکمیل مستقیم جلسه',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           content: Text(
             'آیا می‌خواهید این جلسه را بدون اجرا کردن تایمر و با مدت پیش‌فرض ${toPersianDigits(duration)} دقیقه به عنوان تکمیل‌شده علامت بزنید؟',
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+            style: const TextStyle(fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: const Text('بله، تکمیل کن', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('بله، تکمیل کن', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -107,7 +107,6 @@ class TodaySessionsSection extends StatelessWidget {
         Text(
           'جلسات برنامه امروز شما',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 15,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -181,7 +180,6 @@ class TodaySessionsSection extends StatelessWidget {
                                   Text(
                                     course.title,
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                       color: colors.textPrimary,
@@ -191,7 +189,6 @@ class TodaySessionsSection extends StatelessWidget {
                                   Text(
                                     '${session.sessionTitle ?? '${course.unitLabelResolved} ${session.sessionNumber}'} • مدت زمان: ${toPersianDigits(customDuration)} دقیقه',
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 11,
                                       color: colors.textSecondary,
                                     ),
@@ -209,7 +206,6 @@ class TodaySessionsSection extends StatelessWidget {
                                 child: Text(
                                   course.provider!,
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 9,
                                     color: colors.textSecondary,
                                   ),
@@ -234,7 +230,6 @@ class TodaySessionsSection extends StatelessWidget {
                                   child: Text(
                                     energyWarning,
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 10.5,
                                       color: colors.textPrimary,
                                       height: 1.4,
@@ -258,7 +253,6 @@ class TodaySessionsSection extends StatelessWidget {
                                 child: Text(
                                   'تکمیل مستقیم',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 11.5,
                                     color: colors.textSecondary,
                                   ),
@@ -284,7 +278,6 @@ class TodaySessionsSection extends StatelessWidget {
                                 label: Text(
                                   isLowEnergy && energyRule == 'offerLight' ? 'شروع نسخه سبک' : 'شروع تایمر',
                                   style: const TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.bold,
                                   ),

@@ -81,8 +81,7 @@ class PlannerWeekdaysPicker extends StatelessWidget {
                   color: isSelected
                       ? Colors.white
                       : (isDark ? Colors.white70 : Colors.black87),
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ),
           ),

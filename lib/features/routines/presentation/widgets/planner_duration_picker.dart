@@ -27,7 +27,6 @@ class PlannerDurationPicker extends StatelessWidget {
               Text(
                 'مدت فعالیت',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -52,7 +51,6 @@ class PlannerDurationPicker extends StatelessWidget {
                       child: Text(
                         '${toPersianDigits(controller.targetDuration.toString())} دقیقه',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 15.5,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -83,7 +81,6 @@ class PlannerDurationPicker extends StatelessWidget {
                       label: Text(
                         '${toPersianDigits(mins.toString())} دقیقه',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: isSelected ? Colors.white : colors.textSecondary,
                         ),
@@ -126,7 +123,6 @@ class PlannerDurationPicker extends StatelessWidget {
                       Text(
                         '⚡ پیشنهاد هوشمند: ${toPersianDigits(controller.aiEstimatedDuration.toString())} دقیقه',
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: Color(0xff8B5CF6),
@@ -147,7 +143,6 @@ class PlannerDurationPicker extends StatelessWidget {
                 title: Text(
                   'نسخه‌های کوچک‌تر (برای روزهای سخت)',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: colors.primary,
@@ -156,7 +151,6 @@ class PlannerDurationPicker extends StatelessWidget {
                 subtitle: const Text(
                   'اگر روزی نتوانستی کامل انجام دهی، این‌ها زنجیره‌ات را زنده نگه می‌دارند.',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11,
                     color: Colors.grey,
                   ),
@@ -175,11 +169,11 @@ class PlannerDurationPicker extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('نسخه سبک (۵۰٪)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold)),
+                              const Text('نسخه سبک (۵۰٪)', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 4),
                               Text(
                                 '${toPersianDigits(DurationVariants.light(controller.targetDuration))} دقیقه',
-                                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.primary, fontWeight: FontWeight.bold),
+                                style: TextStyle(fontSize: 13, color: colors.primary, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -196,11 +190,11 @@ class PlannerDurationPicker extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('نسخه حداقلی (۱۵٪)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold)),
+                              const Text('نسخه حداقلی (۱۵٪)', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 4),
                               Text(
                                 '${toPersianDigits(DurationVariants.minimal(controller.targetDuration))} دقیقه',
-                                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.amber.shade700, fontWeight: FontWeight.bold),
+                                style: TextStyle(fontSize: 13, color: Colors.amber.shade700, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),

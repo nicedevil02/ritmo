@@ -177,7 +177,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                     Text(
                       'پیش‌نمایش برنامه روز ${_getFarsiDate()}',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -200,7 +199,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                             child: Text(
                               'هیچ فعالیتی در برنامه وجود ندارد.',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 color: colors.textSecondary,
                               ),
                             ),
@@ -290,7 +288,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                           child: Text(
                             item.title,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -316,7 +313,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                         Text(
                           item.resolvedTime ?? 'نامشخص',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: colors.textSecondary,
@@ -328,7 +324,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                         Text(
                           item.durationMin != null ? '${item.durationMin} دقیقه' : 'تخمین زده نشده',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             color: colors.textSecondary,
                           ),
@@ -344,7 +339,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                             child: Text(
                               'حدسی',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 10,
                                 color: colors.primary,
                               ),
@@ -358,7 +352,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                       Text(
                         item.note!,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: hasConflict ? Colors.amber[800] : colors.textSecondary,
                         ),
@@ -394,7 +387,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
               Text(
                 'پیشنهادهای هوشمند Ritmo',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: colors.primary,
@@ -409,7 +401,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
               child: Text(
                 '• ${s.text}',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   color: colors.textPrimary,
                 ),
@@ -489,7 +480,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                 child: Text(
                   'انصراف',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 14,
                     color: colors.textSecondary,
                   ),
@@ -510,7 +500,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                 child: Text(
                   'قالب روز',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 14,
                     color: colors.goldAccent,
                   ),
@@ -537,7 +526,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                             ? 'ذخیره در پیش‌نویس هفته'
                             : 'تأیید و ثبت',
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,

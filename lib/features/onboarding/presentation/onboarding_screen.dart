@@ -41,7 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         SnackBar(
           content: Text(
             'ادامه آنبوردینگ از گام ${_controller.currentIndex + 1}',
-            style: const TextStyle(fontFamily: 'Vazirmatn'),
+            style: const TextStyle(),
           ),
           duration: const Duration(seconds: 3),
         ),
@@ -200,7 +200,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -278,8 +277,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                             style: TextStyle(
                                               color: colors.textSecondary,
                                               fontSize: 13,
-                                              fontFamily: 'Vazirmatn',
-                                            ),
+                                              ),
                                           ),
                                         ),
                                         ElevatedButton(
@@ -297,8 +295,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                             style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
-                                              fontFamily: 'Vazirmatn',
-                                            ),
+                                              ),
                                           ),
                                         ),
                                       ],

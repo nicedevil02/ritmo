@@ -199,7 +199,7 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
     Clipboard.setData(ClipboardData(text: _summaryText));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('متن گزارش با موفقیت در حافظه کپی شد.', style: TextStyle(fontFamily: 'Vazirmatn')),
+        content: const Text('متن گزارش با موفقیت در حافظه کپی شد.', style: TextStyle()),
         backgroundColor: context.colors.success,
       ),
     );
@@ -231,8 +231,7 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
@@ -268,7 +267,7 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         icon: const Icon(Icons.copy, size: 18),
-                        label: const Text('کپی متن گزارش', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                        label: const Text('کپی متن گزارش', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -278,7 +277,7 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       ),
-                      child: const Text('بستن', style: TextStyle(fontFamily: 'Vazirmatn')),
+                      child: const Text('بستن', style: TextStyle()),
                     ),
                   ],
                 ),

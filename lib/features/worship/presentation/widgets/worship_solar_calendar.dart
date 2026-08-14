@@ -223,8 +223,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -0.5,
                                   color: colors.textPrimary,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                               SizedBox(width: 8),
                               // Today Button Shortcut (Active whenever selected day is not today)
@@ -257,8 +256,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                                             fontSize: 11,
                                             fontWeight: FontWeight.w800,
                                             color: colors.primary,
-                                            fontFamily: 'Vazirmatn',
-                                          ),
+                                            ),
                                         ),
                                       ],
                                     ),
@@ -273,8 +271,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                               fontSize: 13.5,
                               fontWeight: FontWeight.w600,
                               color: colors.textSecondary.withValues(alpha: 0.85),
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -428,8 +425,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                 color: isFriday
                     ? colors.error
                     : colors.textSecondary.withValues(alpha: 0.8),
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ),
         ),
@@ -538,7 +534,6 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                     ? FontWeight.w900
                     : (isHoliday ? FontWeight.w800 : FontWeight.w700),
                 color: mainTextColor,
-                fontFamily: 'Vazirmatn',
                 height: 1.1,
               ),
             ),

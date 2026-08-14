@@ -174,7 +174,7 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
                   children: [
                     const Text(
                       'ایجاد دوره با سرفصل AI',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                     IconButton(
                       icon: const Icon(CupertinoIcons.xmark_circle_fill, color: Colors.white54),
@@ -188,10 +188,10 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
                 if (!_isParsed) ...[
                   TextField(
                     controller: _titleController,
-                    style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: 'Vazirmatn'),
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
                     decoration: const InputDecoration(
                       labelText: 'عنوان دوره آموزشی',
-                      labelStyle: TextStyle(color: Colors.white60, fontSize: 11, fontFamily: 'Vazirmatn'),
+                      labelStyle: TextStyle(color: Colors.white60, fontSize: 11),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -200,10 +200,10 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
                       controller: _inputController,
                       maxLines: null,
                       expands: true,
-                      style: const TextStyle(color: Colors.white, fontSize: 12.5, fontFamily: 'Vazirmatn'),
+                      style: const TextStyle(color: Colors.white, fontSize: 12.5),
                       decoration: InputDecoration(
                         hintText: 'متن سرفصل، فهرست عناوین، یا فرمت JSON تولیدشده توسط AI را اینجا پیست کنید...\nمثال:\nجلسه ۱: مقدمه و نصب فلاتر\nجلسه ۲: متغیرها و انواع داده\nجلسه ۳: ساخت اولین ویجت',
-                        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11.5, fontFamily: 'Vazirmatn'),
+                        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11.5),
                         fillColor: Colors.white.withValues(alpha: 0.02),
                         filled: true,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Colors.white12)),
@@ -220,7 +220,7 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
                     ),
                     onPressed: _parseSyllabusText,
                     icon: const Icon(CupertinoIcons.sparkles, size: 18),
-                    label: const Text('استخراج سرفصل‌ها و پیش‌نمایش', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                    label: const Text('استخراج سرفصل‌ها و پیش‌نمایش', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                   ),
                 ] else ...[
                   Row(
@@ -228,11 +228,11 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
                     children: [
                       Text(
                         'پیش‌نمایش ${_draftSessions.length} جلسه استخراج‌شده:',
-                        style: const TextStyle(fontSize: 13, color: Colors.white70, fontFamily: 'Vazirmatn'),
+                        style: const TextStyle(fontSize: 13, color: Colors.white70),
                       ),
                       TextButton(
                         onPressed: () => setState(() => _isParsed = false),
-                        child: const Text('ویرایش متن ورودی', style: TextStyle(fontSize: 12, color: Colors.lightBlueAccent, fontFamily: 'Vazirmatn')),
+                        child: const Text('ویرایش متن ورودی', style: TextStyle(fontSize: 12, color: Colors.lightBlueAccent)),
                       ),
                     ],
                   ),
@@ -263,7 +263,7 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
                               Expanded(
                                 child: Text(
                                   session.sessionTitle ?? 'جلسه ${index + 1}',
-                                  style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: 'Vazirmatn'),
+                                  style: const TextStyle(color: Colors.white, fontSize: 13),
                                 ),
                               ),
                               IconButton(
@@ -291,7 +291,7 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
                     onPressed: _isSaving ? null : _saveCourseAndSessions,
                     child: _isSaving
                         ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('تأیید و ساخت دوره آموزشی', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                        : const Text('تأیید و ساخت دوره آموزشی', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ],

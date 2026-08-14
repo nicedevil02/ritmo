@@ -39,7 +39,7 @@ class _HealthTrendsSectionState extends State<HealthTrendsSection> {
           child: Center(
             child: Text(
               'داده‌ای برای تحلیل روند علایم وجود ندارد.',
-              style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary, fontSize: 13),
+              style: TextStyle(color: colors.textSecondary, fontSize: 13),
             ),
           ),
         ),
@@ -94,7 +94,7 @@ class _HealthTrendsSectionState extends State<HealthTrendsSection> {
           children: [
             Text(
               'روند تغییرات علائم حیاتی',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
             ),
             const SizedBox(height: 12),
             // Chips for selector
@@ -160,13 +160,13 @@ class _HealthTrendsSectionState extends State<HealthTrendsSection> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(subLabel, style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                          Text(subLabel, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                           const SizedBox(height: 4),
                           Row(
                             children: [
                               Text(
                                 _toPersianDigits(trend.average.toStringAsFixed(1)),
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                               ),
                               const SizedBox(width: 4),
                               Text(unit, style: TextStyle(fontSize: 10, color: colors.textSecondary)),
@@ -179,7 +179,7 @@ class _HealthTrendsSectionState extends State<HealthTrendsSection> {
                               const SizedBox(width: 4),
                               Text(
                                 directionText,
-                                style: TextStyle(fontSize: 10, color: directionColor, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                                style: TextStyle(fontSize: 10, color: directionColor, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -205,7 +205,7 @@ class _HealthTrendsSectionState extends State<HealthTrendsSection> {
                       Expanded(
                         child: Text(
                           '${_toPersianDigits(currentTrends.first.inRangePercent.toStringAsFixed(0))}% زمان‌ها در محدوده سالم قرار داشته است.',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.success, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 11, color: colors.success, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -215,7 +215,7 @@ class _HealthTrendsSectionState extends State<HealthTrendsSection> {
               if (rangeLabel.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(rangeLabel, style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                  child: Text(rangeLabel, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                 ),
               // Chart area
               Container(
@@ -262,7 +262,6 @@ class _HealthTrendsSectionState extends State<HealthTrendsSection> {
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             color: isSelected ? Colors.white : colors.textSecondary,
@@ -350,7 +349,7 @@ class LineChartPainter extends CustomPainter {
       // Label
       textPainter.text = TextSpan(
         text: _toPersianDigits(valueY.toStringAsFixed(0)),
-        style: TextStyle(color: textColor, fontSize: 8, fontFamily: 'Vazirmatn'),
+        style: TextStyle(color: textColor, fontSize: 8),
       );
       textPainter.layout();
       textPainter.paint(canvas, Offset(size.width - textPainter.width - 2, yPos - textPainter.height - 2));

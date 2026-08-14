@@ -172,9 +172,9 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
         return Theme(
           data: Theme.of(context).copyWith(
             timePickerTheme: const TimePickerThemeData(
-              helpTextStyle: TextStyle(fontFamily: 'Vazirmatn'),
-              hourMinuteTextStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 24),
-              dayPeriodTextStyle: TextStyle(fontFamily: 'Vazirmatn'),
+              helpTextStyle: TextStyle(),
+              hourMinuteTextStyle: TextStyle(fontSize: 24),
+              dayPeriodTextStyle: TextStyle(),
             ),
           ),
           child: Directionality(
@@ -235,16 +235,16 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Text(
               'تغییر ریتم برنامه‌ریزی',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             content: const Text(
               'تغییر هدف هفتگی، روزها یا تعداد جلسات باعث زمان‌بندی مجدد جلسات آینده می‌شود. آیا ادامه می‌دهید؟',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white70),
+              style: TextStyle(fontSize: 13, color: Colors.white70),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54)),
+                child: const Text('انصراف', style: TextStyle(color: Colors.white54)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -252,7 +252,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('تأیید و ذخیره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                child: const Text('تأیید و ذخیره', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -371,7 +371,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                 Text(
                   isEditing ? 'ویرایش دوره آموزشی' : 'ایجاد دوره آموزشی جدید',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -394,7 +393,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                     // Course Title
                     TextFormField(
                       controller: _titleController,
-                      style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 14),
+                      style: TextStyle(color: colors.textPrimary, fontSize: 14),
                       decoration: RitmoTheme.inputDecoration(
                         context,
                         label: 'عنوان دوره آموزشی *',
@@ -413,7 +412,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                     Text(
                       'نوع دوره:',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary.withValues(alpha: 0.85),
@@ -429,7 +427,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                           label: Text(
                             '${type.defaultEmoji} ${type.label}',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               color: isSelected ? Colors.white : colors.textSecondary,
@@ -460,7 +457,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                           child: TextFormField(
                             controller: _totalSessionsController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 13),
+                            style: TextStyle(color: colors.textPrimary, fontSize: 13),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: 'تعداد کل $_currentUnitLabel‌ها',
@@ -479,7 +476,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                           child: TextFormField(
                             controller: _durationController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 13),
+                            style: TextStyle(color: colors.textPrimary, fontSize: 13),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: 'مدت هر $_currentUnitLabel (دقیقه)',
@@ -504,7 +501,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                         Text(
                           'تعداد جلسات در هفته:',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary.withValues(alpha: 0.85),
@@ -521,7 +517,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                             Text(
                               toPersianDigits('$_weeklyTarget جلسه'),
                               style: const TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -542,7 +537,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                     Text(
                       'روزهای ترجیحی مطالعه:',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary.withValues(alpha: 0.85),
@@ -572,7 +566,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                         title: Text(
                           'تنظیمات پیشرفته (اختیاری)',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: colors.primary,
@@ -585,7 +578,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                           if (_selectedType == CourseType.custom) ...[
                             TextFormField(
                               controller: _unitLabelController,
-                              style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 13),
+                              style: TextStyle(color: colors.textPrimary, fontSize: 13),
                               decoration: RitmoTheme.inputDecoration(
                                 context,
                                 label: 'نام واحد سفارشی (مثلاً: پودمان، مبحث)',
@@ -598,7 +591,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                           // Provider
                           TextFormField(
                             controller: _providerController,
-                            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 13),
+                            style: TextStyle(color: colors.textPrimary, fontSize: 13),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: 'پلتفرم / استاد (مثلاً: یوتیوب، استاد رضایی)',
@@ -611,7 +604,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                           Text(
                             'قانون تطابق انرژی با مود:',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12.5,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary.withValues(alpha: 0.85),
@@ -635,7 +627,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                                     value: rule['value'],
                                     child: Text(
                                       rule['label']!,
-                                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5, color: colors.textPrimary),
+                                      style: TextStyle(fontSize: 12.5, color: colors.textPrimary),
                                     ),
                                   );
                                 }).toList(),
@@ -651,7 +643,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                           Text(
                             'اتصال یک‌طرفه به هدف (اختیاری):',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12.5,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary.withValues(alpha: 0.85),
@@ -671,14 +662,14 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                                 isExpanded: true,
                                 hint: Text(
                                   'انتخاب هدف برای ارسال درصد پیشرفت...',
-                                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5, color: colors.textSecondary),
+                                  style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
                                 ),
                                 dropdownColor: isDarkMode ? const Color(0xff1A1D29) : Colors.white,
                                 items: [
                                   DropdownMenuItem<String?>(
                                     child: Text(
                                       'بدون اتصال به هدف',
-                                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5, color: colors.textSecondary),
+                                      style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
                                     ),
                                   ),
                                   ..._activeGoals.map((goal) {
@@ -686,7 +677,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                                       value: goal['id'] as String,
                                       child: Text(
                                         goal['title'] as String,
-                                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5, color: colors.textPrimary),
+                                        style: TextStyle(fontSize: 12.5, color: colors.textPrimary),
                                       ),
                                     );
                                   }),
@@ -705,11 +696,11 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                           SwitchListTile(
                             title: Text(
                               'فعال‌سازی یادآور مطالعه',
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
                             ),
                             subtitle: Text(
                               'ارسال نوتیفیکیشن در ساعت تعیین‌شده',
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10.5, color: colors.textSecondary),
+                              style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
                             ),
                             value: _reminderEnabled,
                             onChanged: (val) {
@@ -729,7 +720,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                                 Text(
                                   'ساعت یادآوری:',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 12,
                                     color: colors.textPrimary.withValues(alpha: 0.85),
                                   ),
@@ -772,7 +762,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                     : Text(
                         isEditing ? 'ذخیره تغییرات' : 'ذخیره و ایجاد دوره',
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -838,7 +827,6 @@ class _WeekdayChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 11.5,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             color: isSelected ? Colors.white : colors.textSecondary.withValues(alpha: 0.8),

@@ -439,7 +439,6 @@ class SSLottieLoadingOverlay extends StatelessWidget {
               Text(
                 message,
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),

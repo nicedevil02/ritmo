@@ -220,7 +220,7 @@ class _MedicalProfileSectionState extends State<MedicalProfileSection> {
                     });
                   },
                   icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-                  label: const Text('ویرایش پرونده', style: TextStyle(color: Colors.white, fontSize: 13, fontFamily: 'Vazirmatn')),
+                  label: const Text('ویرایش پرونده', style: TextStyle(color: Colors.white, fontSize: 13)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.primary,
                     elevation: 0,
@@ -367,7 +367,7 @@ class _MedicalProfileSectionState extends State<MedicalProfileSection> {
         children: [
           DropdownButtonFormField<String>(
             initialValue: _bloodGroup,
-            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+            style: TextStyle(color: colors.textPrimary),
             decoration: RitmoTheme.inputDecoration(context, label: 'گروه خونی', icon: Icons.water_drop_outlined),
             dropdownColor: colors.card,
             items: const [
@@ -391,40 +391,40 @@ class _MedicalProfileSectionState extends State<MedicalProfileSection> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _illnessesController,
-            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+            style: TextStyle(color: colors.textPrimary),
             decoration: RitmoTheme.inputDecoration(context, label: 'بیماری‌های خاص / حساسیت مهم', icon: Icons.sick_outlined),
             maxLines: 2,
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _emergencyNameController,
-            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+            style: TextStyle(color: colors.textPrimary),
             decoration: RitmoTheme.inputDecoration(context, label: 'نام مخاطب اضطراری', icon: Icons.contact_emergency),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _emergencyPhoneController,
             keyboardType: TextInputType.phone,
-            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+            style: TextStyle(color: colors.textPrimary),
             decoration: RitmoTheme.inputDecoration(context, label: 'تلفن مخاطب اضطراری', icon: Icons.phone),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _insuranceNameController,
-            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+            style: TextStyle(color: colors.textPrimary),
             decoration: RitmoTheme.inputDecoration(context, label: 'نام بیمه پایه (مثلا: تامین اجتماعی)', icon: Icons.shield_outlined),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _insuranceNumberController,
             keyboardType: TextInputType.number,
-            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+            style: TextStyle(color: colors.textPrimary),
             decoration: RitmoTheme.inputDecoration(context, label: 'شماره بیمه', icon: Icons.pin),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _insuranceSuppController,
-            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+            style: TextStyle(color: colors.textPrimary),
             decoration: RitmoTheme.inputDecoration(context, label: 'نام بیمه تکمیلی (اختیاری)', icon: Icons.add_moderator),
           ),
           const SizedBox(height: 12),
@@ -460,7 +460,7 @@ class _MedicalProfileSectionState extends State<MedicalProfileSection> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('انصراف', style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                  child: Text('انصراف', style: TextStyle(color: colors.textPrimary)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -472,7 +472,7 @@ class _MedicalProfileSectionState extends State<MedicalProfileSection> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('ذخیره تغییرات', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                  child: const Text('ذخیره تغییرات', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],

@@ -142,7 +142,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
         const SnackBar(
           content: Text(
             'لطفاً مبحث مورد نظر را انتخاب کنید.',
-            style: TextStyle(fontFamily: 'Vazirmatn'),
+            style: TextStyle(),
           ),
         ),
       );
@@ -155,19 +155,19 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('ثبت جلسه کوتاه؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+          title: const Text('ثبت جلسه کوتاه؟', style: TextStyle()),
           content: const Text(
             'زمان ثبت شده کمتر از یک دقیقه است. آیا می‌خواهید این زمان را گرد کرده و ثبت کنید؟',
-            style: TextStyle(fontFamily: 'Vazirmatn'),
+            style: TextStyle(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('ثبت', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('ثبت', style: TextStyle()),
             ),
           ],
         ),
@@ -272,7 +272,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
             backgroundColor: colors.success,
             content: Text(
               'جلسه با موفقیت ثبت شد. خدا قوت! 💪$outcomeNote',
-              style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white),
+              style: const TextStyle(color: Colors.white),
             ),
           ),
         );
@@ -283,7 +283,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
           SnackBar(
             content: Text(
               'خطا در ثبت جلسه: $e',
-              style: const TextStyle(fontFamily: 'Vazirmatn'),
+              style: const TextStyle(),
             ),
           ),
         );
@@ -324,7 +324,6 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
               Text(
                 '⏱ ثبت فعالیت و تایمر مطالعه',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -354,13 +353,13 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
                   value: _selectedSubject,
                   decoration: const InputDecoration(
                     labelText: 'درس',
-                    labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                    labelStyle: TextStyle(fontSize: 12),
                     border: OutlineInputBorder(),
                   ),
                   items: widget.subjects.map((sub) {
                     return DropdownMenuItem(
                       value: sub,
-                      child: Text(sub.name, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13)),
+                      child: Text(sub.name, style: const TextStyle(fontSize: 13)),
                     );
                   }).toList(),
                   onChanged: (sub) {
@@ -379,13 +378,13 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
                   value: _selectedTopic,
                   decoration: const InputDecoration(
                     labelText: 'مبحث',
-                    labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                    labelStyle: TextStyle(fontSize: 12),
                     border: OutlineInputBorder(),
                   ),
                   items: subTopics.map((topic) {
                     return DropdownMenuItem(
                       value: topic,
-                      child: Text(topic.name, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13)),
+                      child: Text(topic.name, style: const TextStyle(fontSize: 13)),
                     );
                   }).toList(),
                   onChanged: (topic) {
@@ -414,7 +413,6 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
                   Text(
                     toPersianDigits(_formatTimerText()),
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 48,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 2,
@@ -430,7 +428,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
                         icon: Icon(_isRunning ? Icons.pause : Icons.play_arrow, color: Colors.white),
                         label: Text(
                           _isRunning ? 'توقف موقت' : 'شروع تایمر',
-                          style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _isRunning ? colors.warning : const Color(0xFF8B5CF6),
@@ -442,7 +440,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
                       OutlinedButton.icon(
                         onPressed: _resetTimer,
                         icon: const Icon(Icons.refresh, color: Colors.grey),
-                        label: const Text('ریست', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
+                        label: const Text('ریست', style: TextStyle(color: Colors.grey)),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -482,12 +480,11 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
                 children: [
                   const Text(
                     'درصد خالص کنکور (نمره منفی):',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     '${toPersianDigits(_netPercent.toStringAsFixed(1))}٪',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: _netPercent >= 50.0
@@ -505,7 +502,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
           // Outcome Picker on Complete
           Text(
             'نتیجه جلسه:',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -513,25 +510,25 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
             runSpacing: 8,
             children: [
               ChoiceChip(
-                label: const Text('✅ کاملاً فهمیدم', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10)),
+                label: const Text('✅ کاملاً فهمیدم', style: TextStyle(fontSize: 10)),
                 selected: _selectedOutcome == 'UNDERSTOOD',
                 selectedColor: Colors.green.withValues(alpha: 0.2),
                 onSelected: (sel) => setState(() => _selectedOutcome = sel ? 'UNDERSTOOD' : null),
               ),
               ChoiceChip(
-                label: const Text('🔵 تا حدی فهمیدم', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10)),
+                label: const Text('🔵 تا حدی فهمیدم', style: TextStyle(fontSize: 10)),
                 selected: _selectedOutcome == 'PARTIAL',
                 selectedColor: Colors.blue.withValues(alpha: 0.2),
                 onSelected: (sel) => setState(() => _selectedOutcome = sel ? 'PARTIAL' : null),
               ),
               ChoiceChip(
-                label: const Text('🔁 باید مرور بشه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10)),
+                label: const Text('🔁 باید مرور بشه', style: TextStyle(fontSize: 10)),
                 selected: _selectedOutcome == 'NEEDS_REVIEW',
                 selectedColor: Colors.orange.withValues(alpha: 0.2),
                 onSelected: (sel) => setState(() => _selectedOutcome = sel ? 'NEEDS_REVIEW' : null),
               ),
               ChoiceChip(
-                label: const Text('📝 تمرین بیشتر لازمه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10)),
+                label: const Text('📝 تمرین بیشتر لازمه', style: TextStyle(fontSize: 10)),
                 selected: _selectedOutcome == 'NEEDS_PRACTICE',
                 selectedColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
                 onSelected: (sel) => setState(() => _selectedOutcome = sel ? 'NEEDS_PRACTICE' : null),
@@ -543,7 +540,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
           if (_selectedTopic != null) ...[
             Text(
               'سطح تسلط جدید مبحث:',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+              style: TextStyle(fontSize: 13, color: colors.textSecondary),
             ),
             const SizedBox(height: 8),
             Row(
@@ -555,7 +552,6 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
                   label: Text(
                     lvl.label,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 10,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
@@ -602,7 +598,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
             ),
             child: const Text(
               '✓ ثبت و اتمام جلسه مطالعه',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -635,7 +631,6 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
           child: Text(
             label,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               color: isSelected ? const Color(0xFF8B5CF6) : colors.textSecondary,
@@ -653,11 +648,11 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
       textAlign: TextAlign.center,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+        labelStyle: const TextStyle(fontSize: 12),
         border: const OutlineInputBorder(),
         contentPadding: const EdgeInsets.symmetric(vertical: 8),
       ),
-      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, color: colors.textPrimary),
+      style: TextStyle(fontSize: 15, color: colors.textPrimary),
     );
   }
 }

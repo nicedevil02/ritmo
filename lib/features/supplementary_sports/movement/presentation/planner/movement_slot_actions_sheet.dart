@@ -38,7 +38,6 @@ Future<bool> showMovementSlotActionsSheet(
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontFamily: _fontFa,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: colors.textPrimary,
@@ -49,7 +48,7 @@ Future<bool> showMovementSlotActionsSheet(
                 timeLabel == null
                     ? 'فقط این هفته عوض می‌شود. قالب سر جایش می‌ماند.'
                     : 'ساعت ${toPersianDigits(timeLabel)} · فقط این هفته',
-                style: TextStyle(fontFamily: _fontFa, fontSize: 12, color: colors.textSecondary),
+                style: TextStyle(fontSize: 12, color: colors.textSecondary),
               ),
               const SizedBox(height: 14),
               _action(
@@ -124,7 +123,7 @@ Widget _action(
     leading: Icon(icon, color: colors.primary),
     title: Text(
       label,
-      style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary, fontSize: 14),
+      style: TextStyle(color: colors.textPrimary, fontSize: 14),
     ),
     onTap: onTap,
   );

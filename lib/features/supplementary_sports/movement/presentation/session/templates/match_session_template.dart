@@ -55,7 +55,7 @@ class MatchSessionTemplate extends SessionTemplate {
 							padding: EdgeInsets.symmetric(horizontal: 12),
 							child: Text(
 								'—',
-								style: TextStyle(fontFamily: _fontFa, color: Colors.white38, fontSize: 30),
+								style: TextStyle(color: Colors.white38, fontSize: 30),
 							),
 						),
 						_ScoreBlock(
@@ -84,7 +84,7 @@ class MatchSessionTemplate extends SessionTemplate {
 				const SizedBox(height: 8),
 				Text(
 					toPersianDigits(formatSessionDuration(ctx.elapsedMs)),
-					style: const TextStyle(fontFamily: _fontFa, color: Colors.white70, fontSize: 18),
+					style: const TextStyle(color: Colors.white70, fontSize: 18),
 				),
 			],
 		);
@@ -161,13 +161,12 @@ class _ScoreBlock extends StatelessWidget {
 			children: [
 				Text(
 					teamLabel,
-					style: const TextStyle(fontFamily: _fontFa, color: Colors.white54, fontSize: 12),
+					style: const TextStyle(color: Colors.white54, fontSize: 12),
 				),
 				const SizedBox(height: 4),
 				Text(
 					toPersianDigits(score.toString()),
 					style: const TextStyle(
-						fontFamily: _fontFa,
 						color: Colors.white,
 						fontSize: 60,
 						fontWeight: FontWeight.w900,

@@ -50,7 +50,6 @@ class KonkurFieldPickerSheet extends StatelessWidget {
                 'بارگذاری سرفصل‌های کنکور',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -61,7 +60,6 @@ class KonkurFieldPickerSheet extends StatelessWidget {
                 'رشته موردنظر را انتخاب کنید — مباحث کامل و اوزان آزمون اضافه می‌شود',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   color: colors.textSecondary,
                 ),
@@ -76,7 +74,6 @@ class KonkurFieldPickerSheet extends StatelessWidget {
                 child: Text(
                   'انصراف',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 14,
                     color: colors.textSecondary,
                   ),
@@ -130,7 +127,6 @@ class KonkurFieldPickerSheet extends StatelessWidget {
                       Text(
                         field.label,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -140,7 +136,6 @@ class KonkurFieldPickerSheet extends StatelessWidget {
                       Text(
                         '$subjectCount درس · $topicCount مبحث',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: colors.textSecondary,
                         ),

@@ -288,7 +288,7 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
                           child: TextFormField(
                             controller: _valueController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(color: colors.textPrimary),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: l10n.bloodSugarValue,
@@ -310,7 +310,7 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
                           flex: 3,
                           child: DropdownButtonFormField<String>(
                             initialValue: _measurementType,
-                            style: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(color: colors.textPrimary, fontSize: 13),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: l10n.bloodSugarTitle,
@@ -338,7 +338,7 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _noteController,
-                      style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(color: colors.textPrimary),
                       decoration: RitmoTheme.inputDecoration(
                         context,
                         label: 'یادداشت (اختیاری)',
@@ -355,7 +355,7 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
                       ),
                       child: Text(
                         l10n.bloodSugarSave,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -486,12 +486,12 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: colors.card,
-          title: const Text('حذف سنجش', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
-          content: const Text('آیا مطمئن هستید که می‌خواهید این سنجش قند خون را حذف کنید؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+          title: const Text('حذف سنجش', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: const Text('آیا مطمئن هستید که می‌خواهید این سنجش قند خون را حذف کنید؟', style: TextStyle()),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () {
@@ -499,7 +499,7 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-              child: const Text('حذف', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+              child: const Text('حذف', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

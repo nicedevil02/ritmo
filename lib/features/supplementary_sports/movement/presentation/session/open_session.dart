@@ -43,11 +43,11 @@ Future<void> startMovementSessionFlow(BuildContext context, MovementKind kind) a
         child: AlertDialog(
           title: const Text(
             'جلسهٔ زندهٔ ناتمام',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: const Text(
             'یک جلسهٔ ورزشی ناتمام پیدا شد. می‌خواهی چه کار کنی؟',
-            style: TextStyle(fontFamily: 'Vazirmatn'),
+            style: TextStyle(),
           ),
           actions: [
             TextButton(
@@ -59,7 +59,7 @@ Future<void> startMovementSessionFlow(BuildContext context, MovementKind kind) a
                   await _startAndOpenNewSession(context, kind);
                 }
               },
-              child: const Text('حذف قبلی', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red)),
+              child: const Text('حذف قبلی', style: TextStyle(color: Colors.red)),
             ),
             TextButton(
               onPressed: () async {
@@ -70,7 +70,7 @@ Future<void> startMovementSessionFlow(BuildContext context, MovementKind kind) a
                   await _startAndOpenNewSession(context, kind);
                 }
               },
-              child: const Text('پایان و ذخیره قبلی', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.amber)),
+              child: const Text('پایان و ذخیره قبلی', style: TextStyle(color: Colors.amber)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -88,7 +88,7 @@ Future<void> startMovementSessionFlow(BuildContext context, MovementKind kind) a
               },
               child: const Text(
                 'ادامهٔ قبلی',
-                style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ],

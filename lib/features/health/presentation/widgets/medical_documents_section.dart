@@ -105,12 +105,12 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: context.colors.card,
-          title: const Text('ویرایش یادداشت شخصی', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          title: const Text('ویرایش یادداشت شخصی', style: TextStyle(fontWeight: FontWeight.bold)),
           content: TextField(
             controller: controller,
             maxLines: 3,
             textDirection: TextDirection.rtl,
-            style: TextStyle(fontFamily: 'Vazirmatn', color: context.colors.textPrimary),
+            style: TextStyle(color: context.colors.textPrimary),
             decoration: const InputDecoration(
               hintText: 'توضیحات یا یادداشت شخصی خود را وارد کنید...',
             ),
@@ -118,12 +118,12 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, controller.text.trim()),
               style: ElevatedButton.styleFrom(backgroundColor: context.colors.primary),
-              child: const Text('ذخیره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('ذخیره', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -316,7 +316,7 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: ChoiceChip(
-        label: Text(label, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: isSelected ? Colors.white : colors.textPrimary)),
+        label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : colors.textPrimary)),
         selected: isSelected,
         selectedColor: colors.primary,
         backgroundColor: colors.card,
@@ -413,7 +413,7 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       child: Text(
                         doc.userNotes == null || doc.userNotes!.isEmpty ? '➕ افزودن یادداشت' : '✏️ ویرایش سریع',
-                        style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', color: colors.primary, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 11, color: colors.primary, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -494,15 +494,15 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: colors.card,
-          title: const Text('حذف مدرک', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+          title: const Text('حذف مدرک', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Text(
             l10n.medicalDocumentsDeleteConfirm,
-            style: const TextStyle(fontFamily: 'Vazirmatn'),
+            style: const TextStyle(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () {
@@ -510,7 +510,7 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-              child: const Text('حذف', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+              child: const Text('حذف', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -608,7 +608,7 @@ class _MultiPageViewerState extends State<_MultiPageViewer> {
                   ),
                   child: Text(
                     _toPersianDigits('صفحه ${_currentPage + 1} از ${widget.imagePaths.length}'),
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'Vazirmatn'),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ),
                 FloatingActionButton.small(
@@ -773,20 +773,20 @@ class _MedicalDocumentFormState extends State<_MedicalDocumentForm> {
             children: [
               Text(
                 widget.document == null ? l10n.medicalDocumentsAddTitle : l10n.medicalDocumentsEditTitle,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _titleController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.medicalDocumentsDocTitle, icon: Icons.title),
                 validator: (val) => val == null || val.trim().isEmpty ? 'لطفاً عنوان مدرک را وارد کنید' : null,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _category,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.medicalDocumentsCategory, icon: Icons.category),
                 dropdownColor: colors.card,
                 items: const [
@@ -814,7 +814,7 @@ class _MedicalDocumentFormState extends State<_MedicalDocumentForm> {
                   _toPersianDigits(
                     '${Jalali.fromDateTime(_selectedDate).year}/${Jalali.fromDateTime(_selectedDate).month}/${Jalali.fromDateTime(_selectedDate).day}',
                   ),
-                  style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(color: colors.textPrimary),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -825,27 +825,27 @@ class _MedicalDocumentFormState extends State<_MedicalDocumentForm> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _labNameController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.medicalDocumentsLabName, icon: Icons.business),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _summaryController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.medicalDocumentsSummary, icon: Icons.summarize),
                 maxLines: 2,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _doctorNotesController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.medicalDocumentsDoctorNotes, icon: Icons.notes),
                 maxLines: 2,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _userNotesController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.medicalDocumentsUserNotes, icon: Icons.note_alt_outlined),
                 maxLines: 2,
               ),
@@ -856,7 +856,7 @@ class _MedicalDocumentFormState extends State<_MedicalDocumentForm> {
                 icon: Icon(Icons.add_photo_alternate, color: colors.primary),
                 label: Text(
                   l10n.medicalDocumentsSelectImages,
-                  style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontSize: 13),
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -921,7 +921,7 @@ class _MedicalDocumentFormState extends State<_MedicalDocumentForm> {
                 ),
                 child: Text(
                   l10n.medicalDocumentsSave,
-                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

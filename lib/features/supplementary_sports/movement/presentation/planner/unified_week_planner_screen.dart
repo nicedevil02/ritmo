@@ -88,7 +88,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 					const SnackBar(
 						content: Text(
 							'پیشنهاد مطمئنی ندارم — خودت بچین 😊',
-							style: TextStyle(fontFamily: _fontFa),
+							style: TextStyle(),
 						),
 					),
 				);
@@ -137,7 +137,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 					const SnackBar(
 						content: Text(
 							'امروز سبک‌تر — قالب هفته سر جایش می‌ماند 🌿',
-							style: TextStyle(fontFamily: _fontFa),
+							style: TextStyle(),
 						),
 					),
 				);
@@ -172,7 +172,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 					const SnackBar(
 						content: Text(
 							'جلسهٔ امروز رد شد — استراحت کن 🌿',
-							style: TextStyle(fontFamily: _fontFa),
+							style: TextStyle(),
 						),
 					),
 				);
@@ -201,7 +201,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 					SnackBar(
 						content: Text(
 							'فقط این هفته رفت به ${kPersianWeekdayNames[destSat0]}',
-							style: const TextStyle(fontFamily: _fontFa),
+							style: const TextStyle(),
 						),
 					),
 				);
@@ -244,7 +244,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 						Text(
 							'خواندن برنامهٔ هفته ممکن نشد.',
 							textAlign: TextAlign.center,
-							style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 13),
+							style: TextStyle(color: colors.textSecondary, fontSize: 13),
 						),
 						const SizedBox(height: 12),
 						ElevatedButton.icon(
@@ -256,7 +256,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 							icon: const Icon(Icons.refresh_rounded, size: 18),
 							label: const Text(
 								'تلاش دوباره',
-								style: TextStyle(fontFamily: _fontFa),
+								style: TextStyle(),
 							),
 						),
 					],
@@ -323,7 +323,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 							label: const Text(
 								'افزودن به هفته',
 								style: TextStyle(
-									fontFamily: _fontFa,
 									fontSize: 15,
 									fontWeight: FontWeight.bold,
 								),
@@ -478,7 +477,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 					Text(
 						kicker,
 						style: TextStyle(
-							fontFamily: _fontFa,
 							fontSize: 11,
 							fontWeight: FontWeight.w700,
 							color: amber ? const Color(0xFFF59E0B) : (rest ? colors.primary : accentColor),
@@ -490,7 +488,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 						maxLines: 2,
 						overflow: TextOverflow.ellipsis,
 						style: TextStyle(
-							fontFamily: _fontFa,
 							fontSize: 20,
 							fontWeight: FontWeight.w800,
 							color: colors.textPrimary,
@@ -500,7 +497,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 					Text(
 						body,
 						style: TextStyle(
-							fontFamily: _fontFa,
 							fontSize: 13,
 							color: colors.textSecondary,
 							height: 1.5,
@@ -543,7 +539,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 			child: Text(
 				label,
 				style: const TextStyle(
-					fontFamily: _fontFa,
 					fontWeight: FontWeight.w700,
 					fontSize: 12.5,
 				),
@@ -601,7 +596,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 						maxLines: 1,
 						overflow: TextOverflow.ellipsis,
 						style: TextStyle(
-							fontFamily: _fontFa,
 							fontSize: 15,
 							fontWeight: FontWeight.w800,
 							color: colors.textPrimary,
@@ -611,7 +605,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 					Text(
 						label,
 						style: TextStyle(
-							fontFamily: _fontFa,
 							fontSize: 10.5,
 							color: colors.textSecondary,
 						),
@@ -664,7 +657,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 							Text(
 								'جمع‌بندی جمعه',
 								style: TextStyle(
-									fontFamily: _fontFa,
 									fontSize: 15,
 									fontWeight: FontWeight.bold,
 									color: colors.textPrimary,
@@ -676,7 +668,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 					Text(
 						summaryText,
 						style: TextStyle(
-							fontFamily: _fontFa,
 							fontSize: 12.5,
 							color: colors.textSecondary,
 							height: 1.4,
@@ -703,7 +694,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 													const SnackBar(
 														content: Text(
 															'قالب هفتگی با تغییرات جدید به‌روز شد ✓',
-															style: TextStyle(fontFamily: _fontFa),
+															style: TextStyle(),
 														),
 													),
 												);
@@ -712,7 +703,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 										},
 										child: const Text(
 											'این تغییرها دائمی بشه',
-											style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, fontSize: 12),
+											style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
 										),
 									),
 								),
@@ -730,14 +721,14 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 												const SnackBar(
 													content: Text(
 														'قالب هفته سر جایش موند ✓',
-														style: TextStyle(fontFamily: _fontFa),
+														style: TextStyle(),
 													),
 												),
 											);
 										},
 										child: Text(
 											'فقط همین هفته بود',
-											style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary, fontSize: 12),
+											style: TextStyle(color: colors.textPrimary, fontSize: 12),
 										),
 									),
 								),
@@ -764,14 +755,14 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 									const SnackBar(
 										content: Text(
 											'ریتم این هفته تأیید شد! آماده برای هفتهٔ بعد 🚀',
-											style: TextStyle(fontFamily: _fontFa),
+											style: TextStyle(),
 										),
 									),
 								);
 							},
 							child: const Text(
 								'همین ریتم برای هفتهٔ بعد 💚',
-								style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, fontSize: 12.5),
+								style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
 							),
 						),
 					],
@@ -787,8 +778,8 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 				Row(
 					mainAxisAlignment: MainAxisAlignment.spaceBetween,
 					children: [
-						Text('نوار ریتم', style: TextStyle(fontFamily: _fontFa, fontSize: 12, color: colors.textSecondary)),
-						Text('هر ستون یک روز', style: TextStyle(fontFamily: _fontFa, fontSize: 12, color: colors.textSecondary)),
+						Text('نوار ریتم', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+						Text('هر ستون یک روز', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
 					],
 				),
 				const SizedBox(height: 8),
@@ -849,12 +840,11 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 			child: Column(
 				mainAxisSize: MainAxisSize.min,
 				children: [
-					Text(_shortDayNames[sat0], style: TextStyle(fontFamily: _fontFa, fontSize: 11, color: text, fontWeight: FontWeight.bold)),
+					Text(_shortDayNames[sat0], style: TextStyle(fontSize: 11, color: text, fontWeight: FontWeight.bold)),
 					const SizedBox(height: 4),
 					Text(
 						label,
 						style: TextStyle(
-							fontFamily: _fontFa,
 							fontSize: hasPlan ? 14 : 10,
 							color: text,
 							fontWeight: FontWeight.w600,
@@ -899,7 +889,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 									maxLines: 1,
 									overflow: TextOverflow.ellipsis,
 									style: TextStyle(
-										fontFamily: _fontFa,
 										color: colors.textPrimary,
 										fontSize: 13,
 										fontWeight: FontWeight.bold,
@@ -908,7 +897,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 							),
 							Text(
 								'هفتهٔ ${toPersianDigits(currentWeek.toString())} از ${toPersianDigits(campaign.weeks.toString())}',
-								style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 11),
+								style: TextStyle(color: colors.textSecondary, fontSize: 11),
 							),
 						],
 					),
@@ -976,7 +965,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 											maxLines: 1,
 											overflow: TextOverflow.ellipsis,
 											style: TextStyle(
-												fontFamily: _fontFa,
 												color: colors.textPrimary,
 												fontSize: 14,
 												fontWeight: FontWeight.bold,
@@ -987,7 +975,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 										items.isEmpty
 												? (weekHasPlan ? 'آرامش' : 'خالی')
 												: '${toPersianDigits(items.length.toString())} جلسه',
-										style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 11),
+										style: TextStyle(color: colors.textSecondary, fontSize: 11),
 									),
 								],
 							),
@@ -1008,7 +996,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 		if (!weekHasPlan) {
 			return Text(
 				'هنوز چیده نشده',
-				style: TextStyle(fontFamily: _fontFa, color: colors.textTertiary, fontSize: 12),
+				style: TextStyle(color: colors.textTertiary, fontSize: 12),
 			);
 		}
 		return Container(
@@ -1021,9 +1009,9 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 			child: Row(
 				children: [
 					Expanded(
-						child: Text('🌿 ریکاوری', style: TextStyle(fontFamily: _fontFa, color: colors.primary, fontSize: 12.5, fontWeight: FontWeight.w700)),
+						child: Text('🌿 ریکاوری', style: TextStyle(color: colors.primary, fontSize: 12.5, fontWeight: FontWeight.w700)),
 					),
-					Text('محافظت‌شده', style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 11)),
+					Text('محافظت‌شده', style: TextStyle(color: colors.textSecondary, fontSize: 11)),
 				],
 			),
 		);
@@ -1058,7 +1046,6 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 										maxLines: 1,
 										overflow: TextOverflow.ellipsis,
 										style: TextStyle(
-											fontFamily: _fontFa,
 											color: colors.textPrimary,
 											fontSize: 13,
 											fontWeight: FontWeight.bold,
@@ -1070,7 +1057,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 											subtitleParts.join(' · '),
 											maxLines: 2,
 											overflow: TextOverflow.ellipsis,
-											style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 11),
+											style: TextStyle(color: colors.textSecondary, fontSize: 11),
 										),
 								],
 							),
@@ -1115,7 +1102,7 @@ class _UnifiedWeekPlannerViewState extends State<UnifiedWeekPlannerView> {
 							),
 						],
 					),
-					child: Text('${item.emoji} ${item.title}', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary, fontSize: 13)),
+					child: Text('${item.emoji} ${item.title}', style: TextStyle(color: colors.textPrimary, fontSize: 13)),
 				),
 			),
 			childWhenDragging: Opacity(opacity: 0.35, child: tile),
@@ -1176,7 +1163,6 @@ class UnifiedWeekPlannerScreen extends StatelessWidget {
 												maxLines: 1,
 												overflow: TextOverflow.ellipsis,
 												style: TextStyle(
-													fontFamily: _fontFa,
 													fontSize: 18,
 													fontWeight: FontWeight.bold,
 													color: colors.textPrimary,

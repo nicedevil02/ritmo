@@ -47,7 +47,6 @@ class _AIDeepAnalysisDialogState extends State<AIDeepAnalysisDialog> {
             Text(
               'حریم خصوصی و پردازش هوشمند 🧠',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -62,7 +61,6 @@ class _AIDeepAnalysisDialogState extends State<AIDeepAnalysisDialog> {
             Text(
               'تحلیل عمیق الگوهای رفتاری نیازمند بررسی خلاصهٔ غیرشناسایی‌شده از آمارهای تکمیل روتین‌ها، نمرهٔ انرژی و خواب شما توسط دستیار هوش مصنوعی ریتمو است.',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: colors.textSecondary,
                 height: 1.6,
@@ -79,7 +77,6 @@ class _AIDeepAnalysisDialogState extends State<AIDeepAnalysisDialog> {
               child: Text(
                 '🔒 هیچ اطلاعات شخصی مانند نام، شماره همراه یا محتوای یادداشت‌های محرمانه ارسال نمی‌شود و فقط خلاصه آمارهای عددی تحلیل می‌گردد.',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 11,
                   color: colors.primary,
                   height: 1.5,
@@ -101,7 +98,6 @@ class _AIDeepAnalysisDialogState extends State<AIDeepAnalysisDialog> {
                 Text(
                   'این انتخاب برای تحلیل‌های بعدی ذخیره شود',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11,
                     color: colors.textPrimary,
                   ),
@@ -116,7 +112,6 @@ class _AIDeepAnalysisDialogState extends State<AIDeepAnalysisDialog> {
             child: Text(
               'انصراف',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 color: colors.textSecondary,
               ),
             ),
@@ -136,7 +131,6 @@ class _AIDeepAnalysisDialogState extends State<AIDeepAnalysisDialog> {
             child: const Text(
               'تایید و شروع تحلیل',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),

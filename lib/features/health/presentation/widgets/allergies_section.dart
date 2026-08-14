@@ -270,15 +270,15 @@ class _AllergiesSectionState extends State<AllergiesSection> {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: colors.card,
-          title: const Text('حذف آلرژی', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+          title: const Text('حذف آلرژی', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Text(
             l10n.allergyDeleteConfirm,
-            style: const TextStyle(fontFamily: 'Vazirmatn'),
+            style: const TextStyle(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () {
@@ -286,7 +286,7 @@ class _AllergiesSectionState extends State<AllergiesSection> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-              child: const Text('حذف', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+              child: const Text('حذف', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -388,20 +388,20 @@ class _AllergyFormState extends State<_AllergyForm> {
             children: [
               Text(
                 l10n.allergySave,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _allergenController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.allergyName, icon: Icons.warning_amber_rounded),
                 validator: (val) => val == null || val.trim().isEmpty ? 'لطفاً نام آلرژن را وارد کنید' : null,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _category,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.allergyCategory, icon: Icons.category),
                 dropdownColor: colors.card,
                 items: [
@@ -421,7 +421,7 @@ class _AllergyFormState extends State<_AllergyForm> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _severity,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.allergySeverity, icon: Icons.warning_sharp),
                 dropdownColor: colors.card,
                 items: [
@@ -441,7 +441,7 @@ class _AllergyFormState extends State<_AllergyForm> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _reactionController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.allergyReaction, icon: Icons.details),
               ),
               const SizedBox(height: 12),
@@ -452,7 +452,7 @@ class _AllergyFormState extends State<_AllergyForm> {
                   _diagnosedDate != null
                       ? _toPersianDigits('${Jalali.fromDateTime(_diagnosedDate!).year}/${Jalali.fromDateTime(_diagnosedDate!).month}/${Jalali.fromDateTime(_diagnosedDate!).day}')
                       : l10n.allergyDiagnosedDate,
-                  style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontSize: 13),
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -463,7 +463,7 @@ class _AllergyFormState extends State<_AllergyForm> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _notesController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: 'توضیحات / یادداشت', icon: Icons.notes),
                 maxLines: 2,
               ),
@@ -477,7 +477,7 @@ class _AllergyFormState extends State<_AllergyForm> {
                 ),
                 child: const Text(
                   'ثبت آلرژی',
-                  style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

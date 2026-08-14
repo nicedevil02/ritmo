@@ -70,7 +70,6 @@ class NoteCard extends StatelessWidget {
     final highlightColor = isDark ? colors.accent : colors.textPrimary;
 
     final titleTextStyle = TextStyle(
-      fontFamily: 'Vazirmatn',
       fontSize: 14,
       fontWeight: FontWeight.w800,
       color: colors.textPrimary,
@@ -78,7 +77,6 @@ class NoteCard extends StatelessWidget {
     );
 
     final bodyTextStyle = TextStyle(
-      fontFamily: 'Vazirmatn',
       fontSize: 12.5,
       fontWeight: FontWeight.w500,
       color: colors.textSecondary.withValues(alpha: 0.85),
@@ -87,7 +85,6 @@ class NoteCard extends StatelessWidget {
     );
 
     final metaTextStyle = TextStyle(
-      fontFamily: 'Vazirmatn',
       fontSize: 10.5,
       fontWeight: FontWeight.w600,
       color: colors.textTertiary.withValues(alpha: 0.7),
@@ -161,7 +158,6 @@ class NoteCard extends StatelessWidget {
                         Text(
                           style.labelFa,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 10.5,
                             fontWeight: FontWeight.bold,
                             color: style.accentColor,

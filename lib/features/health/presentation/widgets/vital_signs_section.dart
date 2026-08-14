@@ -305,7 +305,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
                           child: TextFormField(
                             controller: _heightController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(color: colors.textPrimary),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: l10n.vitalSignsHeight,
@@ -322,7 +322,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             initialValue: _vitalType,
-                            style: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(color: colors.textPrimary, fontSize: 13),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: 'نوع شاخص',
@@ -353,7 +353,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
                           child: TextFormField(
                             controller: _valueController,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(color: colors.textPrimary),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: '${l10n.vitalSignsValue} (${_getUnit(_vitalType)})',
@@ -375,7 +375,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _noteController,
-                      style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(color: colors.textPrimary),
                       decoration: RitmoTheme.inputDecoration(
                         context,
                         label: 'یادداشت (اختیاری)',
@@ -392,7 +392,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
                       ),
                       child: Text(
                         l10n.vitalSignsSave,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -499,12 +499,12 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: colors.card,
-          title: const Text('حذف سنجش', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
-          content: const Text('آیا مطمئن هستید که می‌خواهید این سنجش علامت حیاتی را حذف کنید؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+          title: const Text('حذف سنجش', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: const Text('آیا مطمئن هستید که می‌خواهید این سنجش علامت حیاتی را حذف کنید؟', style: TextStyle()),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () {
@@ -512,7 +512,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-              child: const Text('حذف', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+              child: const Text('حذف', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

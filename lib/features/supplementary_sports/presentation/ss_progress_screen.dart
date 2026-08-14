@@ -327,7 +327,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: const Text('ثبت وزن جدید ⚖️', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          title: const Text('ثبت وزن جدید ⚖️', style: TextStyle(fontWeight: FontWeight.bold)),
           content: TextField(
             controller: controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -337,9 +337,9 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
             maxLength: 6,
             decoration: const InputDecoration(
               labelText: 'وزن به کیلوگرم (مثلاً ۷۵.۵)',
-              labelStyle: TextStyle(fontFamily: 'Vazirmatn'),
+              labelStyle: TextStyle(),
               helperText: 'عدد اعشاری با نقطه، مثلاً ۷۲.۴',
-              helperStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+              helperStyle: TextStyle(fontSize: 12),
               counterText: '',
               border: OutlineInputBorder(),
             ),
@@ -347,7 +347,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
+              child: const Text('لغو', style: TextStyle(color: Colors.grey)),
             ),
             TextButton(
               onPressed: () async {
@@ -358,7 +358,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                   await _addWeightLog(weight);
                 }
               },
-              child: const Text('ثبت', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.green, fontWeight: FontWeight.bold)),
+              child: const Text('ثبت', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -383,7 +383,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('وزن جدید با موفقیت ثبت شد!', style: TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text('وزن جدید با موفقیت ثبت شد!', style: TextStyle()),
             backgroundColor: Color(0xFF2E7D5B),
           ),
         );
@@ -458,7 +458,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                           icon: const Icon(Icons.analytics_outlined, size: 18),
                           label: const Text(
                             'آنالیز متریال و METs',
-                            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                           onPressed: () {
                             Navigator.push(
@@ -619,7 +619,6 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
           Text(
             toPersianDigits('تقویم فعالیت ماهانه ($monthName $year)'),
             style: const TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
@@ -631,7 +630,6 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
             children: farsiDays.map((d) => Text(
               d,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: isDark ? Colors.grey[500] : Colors.grey[600],
               ),
@@ -676,7 +674,6 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                 child: Text(
                   toPersianDigits('$day'),
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 10,
                     fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
                     color: isCompleted 
@@ -711,7 +708,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
         children: [
           const Text(
             'میزان دقایق تمرین این هفته',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           Row(
@@ -728,7 +725,6 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                   Text(
                     toPersianDigits(val.toStringAsFixed(0)),
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
                       color: val > 0 ? const Color(0xFF2E7D5B) : Colors.grey,
@@ -754,7 +750,6 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                   Text(
                     weekDayLabels[index],
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white70 : Colors.black87,
@@ -795,12 +790,12 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
             children: [
               const Text(
                 'ردیاب وزن شما ⚖️',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
               ElevatedButton.icon(
                 onPressed: _showAddWeightDialog,
                 icon: const Icon(Icons.add, size: 14, color: Colors.white),
-                label: const Text('ثبت وزن', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.white)),
+                label: const Text('ثبت وزن', style: TextStyle(fontSize: 11, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E7D5B),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -841,7 +836,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
           Row(
             textDirection: TextDirection.rtl,
             children: feelings.isEmpty 
-              ? [Text('ثبت نشده', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey[500]))]
+              ? [Text('ثبت نشده', style: TextStyle(color: Colors.grey[500]))]
               : feelings.map((f) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -896,11 +891,11 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
           child: ListTile(
             title: Text(
               item.exerciseName,
-              style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               toPersianDigits('${item.consecutiveEasyWeeks} هفته متوالی سبک بوده است.'),
-              style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+              style: const TextStyle(fontSize: 12),
             ),
             trailing: TextButton(
               onPressed: () {
@@ -909,7 +904,6 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
               child: Text(
                 'ارتقای شدت ⚡',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   color: SupplementarySportsTheme.getSuccessColor(context),
                 ),
               ),
@@ -945,7 +939,7 @@ class WeightLineChart extends StatelessWidget {
       return Container(
         height: 120,
         alignment: Alignment.center,
-        child: const Text('داده‌ای برای نمایش وجود ندارد. وزن خود را ثبت کنید.', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
+        child: const Text('داده‌ای برای نمایش وجود ندارد. وزن خود را ثبت کنید.', style: TextStyle(color: Colors.grey)),
       );
     }
 
@@ -1023,7 +1017,6 @@ class WeightChartPainter extends CustomPainter {
       
       final textSpan = TextSpan(
         style: TextStyle(
-          fontFamily: 'Vazirmatn',
           fontSize: 9,
           color: isDark ? Colors.white70 : Colors.black87,
           fontWeight: FontWeight.bold,

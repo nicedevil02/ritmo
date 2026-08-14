@@ -59,13 +59,13 @@ class _SSCantTodaySheet extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 'چرا امروز نه؟ 🤔',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.textPrimary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'دلیلت رو ثبت کن تا الگوی استراحتت رو بهتر بفهمیم',
-                style: TextStyle(fontSize: 13, color: theme.textSecondary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 13, color: theme.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -109,9 +109,9 @@ class _SSCantTodaySheet extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: TextStyle(fontSize: 14, color: theme.textPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+            Text(title, style: TextStyle(fontSize: 14, color: theme.textPrimary, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text(subtitle, style: TextStyle(fontSize: 11, color: theme.textSecondary, fontFamily: 'Vazirmatn')),
+            Text(subtitle, style: TextStyle(fontSize: 11, color: theme.textSecondary)),
           ],
         ),
       ),

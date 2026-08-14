@@ -29,7 +29,6 @@ class _LifePulseSparklineChartState extends State<LifePulseSparklineChart> {
         child: Text(
           'هنوز داده‌های کافی برای رسم نمودار ثبت نشده است.',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 11,
             color: colors.textSecondary,
           ),
@@ -50,7 +49,6 @@ class _LifePulseSparklineChartState extends State<LifePulseSparklineChart> {
             Text(
               'نمودار تعاملی ۳۰ روز اخیر:',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 11,
                 color: colors.textSecondary,
               ),
@@ -59,7 +57,6 @@ class _LifePulseSparklineChartState extends State<LifePulseSparklineChart> {
               Text(
                 '${selectedItem['date']}: ${toPersianDigits('${selectedItem['rhythmScore']}٪')}',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                   color: colors.primary,

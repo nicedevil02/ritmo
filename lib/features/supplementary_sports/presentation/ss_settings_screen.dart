@@ -171,7 +171,7 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
         SnackBar(
           content: Text(
             value ? 'یادآور روزانه در سیستم هوشمند ریتمو فعال شد.' : 'یادآور روزانه لغو شد.',
-            style: const TextStyle(fontFamily: 'Vazirmatn'),
+            style: const TextStyle(),
           ),
         ),
       );
@@ -265,7 +265,7 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
               value 
                   ? 'حالت بی‌صدا (آپارتمانی) فعال شد. از این پس تمرینات بدون حرکات پرصدا تولید می‌شوند.' 
                   : 'حالت بی‌صدا غیرفعال شد.',
-              style: const TextStyle(fontFamily: 'Vazirmatn'),
+              style: const TextStyle(),
             ),
           ),
         );
@@ -284,18 +284,18 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
           title: const Text(
             'آیا مطمئن هستید؟',
             textDirection: TextDirection.rtl,
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: const Text(
             'با انجام این کار، تمام اطلاعات تمرینی شما برای همیشه حذف می‌شود و این عملیات غیرقابل بازگشت است.',
             textDirection: TextDirection.rtl,
-            style: TextStyle(fontFamily: 'Vazirmatn'),
+            style: TextStyle(),
           ),
           actions: <Widget>[
             TextButton(
               child: const Text(
                 'لغو',
-                style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey),
+                style: TextStyle(color: Colors.grey),
               ),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -304,7 +304,7 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
             TextButton(
               child: const Text(
                 'بله، بازنشانی کن',
-                style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red, fontWeight: FontWeight.bold),
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
               ),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -362,7 +362,7 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('ماژول با موفقیت بازنشانی شد.', style: TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text('ماژول با موفقیت بازنشانی شد.', style: TextStyle()),
           ),
         );
         Navigator.of(context).popUntil((route) => route.isFirst);
@@ -461,24 +461,24 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
           child: Column(
             children: [
               SwitchListTile(
-                title: const Text('صدای مربی (TTS)', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500)),
-                subtitle: Text('اعلام صوتی اسم و جزئیات حرکات به فارسی', style: TextStyle(fontFamily: 'Vazirmatn', color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text('صدای مربی (TTS)', style: TextStyle(fontWeight: FontWeight.w500)),
+                subtitle: Text('اعلام صوتی اسم و جزئیات حرکات به فارسی', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
                 value: _ttsEnabled,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleTts,
               ),
               const Divider(),
               SwitchListTile(
-                title: const Text('شمارش معکوس صوتی مربی', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500)),
-                subtitle: Text('اعلام ثانیه‌های آخر استراحت و حرکت به فارسی', style: TextStyle(fontFamily: 'Vazirmatn', color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text('شمارش معکوس صوتی مربی', style: TextStyle(fontWeight: FontWeight.w500)),
+                subtitle: Text('اعلام ثانیه‌های آخر استراحت و حرکت به فارسی', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
                 value: _ttsCountdownEnabled,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleTtsCountdown,
               ),
               const Divider(),
               SwitchListTile(
-                title: const Text('افکت‌های صوتی تمرین', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500)),
-                subtitle: Text('پخش صداهای شروع و پایان مراحل تمرینی', style: TextStyle(fontFamily: 'Vazirmatn', color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text('افکت‌های صوتی تمرین', style: TextStyle(fontWeight: FontWeight.w500)),
+                subtitle: Text('پخش صداهای شروع و پایان مراحل تمرینی', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
                 value: _audioCuesEnabled,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleAudioCues,
@@ -496,42 +496,42 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
           child: Column(
             children: [
               ListTile(
-                title: const Text('مدت زمان استراحت پیش‌فرض', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500)),
-                subtitle: const Text('زمان استراحت بین ست‌ها و حرکات', style: TextStyle(fontFamily: 'Vazirmatn')),
+                title: const Text('مدت زمان استراحت پیش‌فرض', style: TextStyle(fontWeight: FontWeight.w500)),
+                subtitle: const Text('زمان استراحت بین ست‌ها و حرکات', style: TextStyle()),
                 trailing: DropdownButton<int>(
                   value: _defaultRestSeconds,
                   onChanged: (val) => val != null ? _updateRestSeconds(val) : null,
                   items: [30, 45, 60, 75, 90, 120].map((seconds) {
                     return DropdownMenuItem<int>(
                       value: seconds,
-                      child: Text(toPersianDigits('$seconds ثانیه'), style: const TextStyle(fontFamily: 'Vazirmatn')),
+                      child: Text(toPersianDigits('$seconds ثانیه'), style: const TextStyle()),
                     );
                   }).toList(),
                 ),
               ),
               const Divider(),
               SwitchListTile(
-                title: const Text('حالت بی‌صدا (مناسب آپارتمان) 🔇', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500)),
-                subtitle: Text('حذف خودکار حرکات کوبشی و پر سر و صدا', style: TextStyle(fontFamily: 'Vazirmatn', color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text('حالت بی‌صدا (مناسب آپارتمان) 🔇', style: TextStyle(fontWeight: FontWeight.w500)),
+                subtitle: Text('حذف خودکار حرکات کوبشی و پر سر و صدا', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
                 value: _profile?.neighborFriendly ?? false,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleNeighborFriendly,
               ),
               const Divider(),
               ListTile(
-                title: const Text('واحد اندازه‌گیری', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500)),
-                subtitle: const Text('فرمت وزن و قد در برنامه', style: TextStyle(fontFamily: 'Vazirmatn')),
+                title: const Text('واحد اندازه‌گیری', style: TextStyle(fontWeight: FontWeight.w500)),
+                subtitle: const Text('فرمت وزن و قد در برنامه', style: TextStyle()),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ChoiceChip(
-                      label: const Text('متریک (کیلوگرم)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                      label: const Text('متریک (کیلوگرم)', style: TextStyle(fontSize: 11)),
                       selected: _unitsMetric,
                       onSelected: (val) => _toggleUnits(true),
                     ),
                     const SizedBox(width: 8),
                     ChoiceChip(
-                      label: const Text('امپریال (پوند)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                      label: const Text('امپریال (پوند)', style: TextStyle(fontSize: 11)),
                       selected: !_unitsMetric,
                       onSelected: (val) => _toggleUnits(false),
                     ),
@@ -553,13 +553,13 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
               SwitchListTile(
                 title: Text(
                   _detailMode ? 'حالت پیشرفته (دقیق با ست و تکرار)' : 'حالت ساده (خلاصه و تیک سریع)',
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
                   _detailMode
                     ? 'برنامه ورزشی شامل انیمیشن حرکات، تعداد ست، تکرار و وزنه به صورت کامل نمایش داده می‌شود.'
                     : 'برنامه به صورت خلاصه و با امکان تیک زدن سریع روزانه بدون درگیری با جزئیات ست نمایش داده می‌شود.',
-                  style: TextStyle(fontFamily: 'Vazirmatn', color: SupplementarySportsTheme.getTextSecondary(context), height: 1.4),
+                  style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context), height: 1.4),
                 ),
                 value: _detailMode,
                 activeThumbColor: const Color(0xFF2E7D5B),
@@ -581,8 +581,8 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
           child: Column(
             children: [
               SwitchListTile(
-                title: const Text('یادآوری روزانه تمرین', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500)),
-                subtitle: Text('یادآوری شروع جلسه در زمان مقرر', style: TextStyle(fontFamily: 'Vazirmatn', color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text('یادآوری روزانه تمرین', style: TextStyle(fontWeight: FontWeight.w500)),
+                subtitle: Text('یادآوری شروع جلسه در زمان مقرر', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
                 value: _remindersEnabled,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleReminders,
@@ -590,7 +590,7 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
               if (_remindersEnabled) ...[
                 const Divider(),
                 ListTile(
-                  title: const Text('زمان یادآوری روزانه', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500)),
+                  title: const Text('زمان یادآوری روزانه', style: TextStyle(fontWeight: FontWeight.w500)),
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
@@ -600,7 +600,6 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
                     child: Text(
                       timeStr,
                       style: const TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF2E7D5B),
                       ),
@@ -611,8 +610,8 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
               ],
               const Divider(),
               SwitchListTile(
-                title: const Text('بررسی آمادگی صبحگاهی 🌅', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500)),
-                subtitle: Text('سوال درباره سطح انرژی و خواب برای تنظیم تمرین روز', style: TextStyle(fontFamily: 'Vazirmatn', color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text('بررسی آمادگی صبحگاهی 🌅', style: TextStyle(fontWeight: FontWeight.w500)),
+                subtitle: Text('سوال درباره سطح انرژی و خواب برای تنظیم تمرین روز', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
                 value: _morningCheckinEnabled,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleMorningCheckin,
@@ -633,7 +632,6 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
                 title: const Text(
                   'تنظیم مجدد کامل پروفایل و برنامه ⚠️',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontWeight: FontWeight.bold,
                     color: Colors.redAccent,
                   ),
@@ -641,7 +639,6 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
                 subtitle: Text(
                   'حذف برنامه فعلی و شروع مجدد آنبوردینگ',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     color: SupplementarySportsTheme.getTextSecondary(context),
                   ),
                 ),
@@ -689,8 +686,7 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
                             fontSize: 17.5,
                             fontWeight: FontWeight.bold,
                             color: isDark ? Colors.white : const Color(0xFF133B26),
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),
@@ -714,7 +710,7 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
       backgroundColor: colors.background,
       appBar: AppBar(
         backgroundColor: colors.surface,
-        title: Text('تنظیمات حرکت', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        title: Text('تنظیمات حرکت', style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
         centerTitle: true,
       ),
       body: Directionality(
@@ -744,14 +740,12 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               color: SupplementarySportsTheme.getTextSecondary(context),
             ),
           ),
           Text(
             value,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.bold,
               color: SupplementarySportsTheme.getTextPrimary(context),
             ),

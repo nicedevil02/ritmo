@@ -42,7 +42,6 @@ class SsProgramDiffSheet extends StatelessWidget {
               Text(
                 'بازنویسی برنامه',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -53,7 +52,6 @@ class SsProgramDiffSheet extends StatelessWidget {
               Text(
                 messageFa,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   color: colors.textSecondary,
                   height: 1.5,
@@ -126,7 +124,6 @@ class _DiffStat extends StatelessWidget {
           child: Text(
             '+$count', // Just a placeholder format
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: color,
@@ -137,7 +134,6 @@ class _DiffStat extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 12,
             color: colors.textSecondary,
           ),

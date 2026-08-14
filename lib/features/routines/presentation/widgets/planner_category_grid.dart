@@ -61,7 +61,6 @@ class PlannerCategoryGrid extends StatelessWidget {
               Text(
                 'کارهای پرکاربرد اخیر',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: colors.textSecondary.withValues(alpha: 0.65),
@@ -81,7 +80,7 @@ class PlannerCategoryGrid extends StatelessWidget {
                       child: ActionChip(
                         label: Text(
                           '${_getCategoryEmoji(category)} $sTitle ${toPersianDigits(timeStr)}',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textPrimary),
+                          style: TextStyle(fontSize: 11, color: colors.textPrimary),
                         ),
                         onPressed: () {
                           HapticFeedback.selectionClick();
@@ -98,7 +97,6 @@ class PlannerCategoryGrid extends StatelessWidget {
             Text(
               'انتخاب دسته‌بندی کار',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: colors.textSecondary.withValues(alpha: 0.65),
@@ -177,7 +175,6 @@ class PlannerCategoryGrid extends StatelessWidget {
                               title,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary.withValues(alpha: 0.85),
@@ -199,7 +196,6 @@ class PlannerCategoryGrid extends StatelessWidget {
                             child: const Text(
                               'پیشنهاد ✨',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 8,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -254,7 +250,6 @@ class PlannerCategoryGrid extends StatelessWidget {
                   Text(
                     'پیشنهاد با AI',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
                       color: Color(0xff8B5CF6),

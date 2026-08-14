@@ -71,7 +71,7 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text('تحلیل حرکت و رکوردهای شخصی', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+        title: const Text('تحلیل حرکت و رکوردهای شخصی', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: _isLoading
@@ -86,7 +86,7 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                     // Section 1: Diversity Map
                     Text(
                       '🎨 نقشهٔ تنوع خانواده‌های حرکت',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16, color: colors.onBackground),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.onBackground),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -116,7 +116,6 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                                     child: Text(
                                       f.titleFa,
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontWeight: FontWeight.bold,
                                         color: isUsed ? colors.onSurface : colors.onSurfaceVariant,
                                       ),
@@ -128,7 +127,6 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                               Text(
                                 isUsed ? '${count.toPersianDigits()} فعالیت ثبت‌شده' : 'این خانواده رو هنوز امتحان نکردی 💡',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 11,
                                   color: isUsed ? colors.primary : colors.onSurfaceVariant,
                                 ),
@@ -143,7 +141,7 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                     // Section 2: Personal Records (PR)
                     Text(
                       '🏆 رکوردهای شخصی من (PR)',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16, color: colors.onBackground),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.onBackground),
                     ),
                     const SizedBox(height: 12),
                     _prs.isEmpty
@@ -156,7 +154,7 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                             child: const Center(
                               child: Text(
                                 'هنوز رکوردی ثبت نشده. با ثبت فعالیت‌های بیشتر رکوردهای جدیدت اینجا قرار می‌گیرند ✨',
-                                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                                style: TextStyle(fontSize: 13),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -193,11 +191,11 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                                   ),
                                   title: Text(
                                     '$kindTitle — $typeLabel',
-                                    style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                   subtitle: Text(
                                     'مقدار رکورد: ${val.toStringAsFixed(1).toPersianDigits()} $unit',
-                                    style: TextStyle(fontFamily: 'Vazirmatn', color: colors.primary),
+                                    style: TextStyle(color: colors.primary),
                                   ),
                                 ),
                               );

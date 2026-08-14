@@ -180,7 +180,6 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
                     Text(
                       'پیش‌نمایش برنامه هفتگی',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -195,7 +194,6 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
                       child: Text(
                         '${_drafts.length} روز',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: colors.primary,
@@ -258,7 +256,6 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
                                         Text(
                                           _getDayName(draft.planDate),
                                           style: TextStyle(
-                                            fontFamily: 'Vazirmatn',
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
                                             color: colors.textPrimary,
@@ -268,7 +265,6 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
                                         Text(
                                           _getFarsiDate(draft.planDate),
                                           style: TextStyle(
-                                            fontFamily: 'Vazirmatn',
                                             fontSize: 10,
                                             color: colors.textSecondary,
                                           ),
@@ -288,7 +284,6 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
                                           Text(
                                             'برنامه‌ای ثبت نشده است',
                                             style: TextStyle(
-                                              fontFamily: 'Vazirmatn',
                                               fontSize: 12,
                                               color: colors.textSecondary,
                                             ),
@@ -310,7 +305,6 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
                                                 child: Text(
                                                   '${item.title} (${item.resolvedTime ?? ''})',
                                                   style: TextStyle(
-                                                    fontFamily: 'Vazirmatn',
                                                     fontSize: 10,
                                                     color: colors.textPrimary,
                                                   ),
@@ -357,7 +351,6 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
                               child: Text(
                                 'انصراف',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 15,
                                   color: colors.textSecondary,
                                 ),
@@ -382,7 +375,6 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
                                   : const Text(
                                       'تأیید و ثبت برنامه‌ها',
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
@@ -397,7 +389,6 @@ class _AiWeeklyPlannerPreviewSheetState extends State<AiWeeklyPlannerPreviewShee
                         'برنامهٔ هفته یک‌جا ثبت می‌شود؛ اگر مشکلی پیش بیاید هیچ روزی نیمه‌کاره ثبت نمی‌ماند.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 11,
                           color: colors.textSecondary,
                         ),

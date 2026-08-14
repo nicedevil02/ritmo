@@ -110,8 +110,7 @@ class AiStatusCard extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: statusColor,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ],
           ),
@@ -124,8 +123,7 @@ class AiStatusCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 color: colors.textSecondary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           const SizedBox(height: RitmoSpacing.xs),
 
@@ -136,8 +134,7 @@ class AiStatusCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 color: colors.textSecondary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             )
           else if (health == AiHealth.failing && errorMessage != null && errorMessage!.isNotEmpty)
             Text(
@@ -145,8 +142,7 @@ class AiStatusCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 color: colors.warning,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
 
           if (!cloudConsentGranted) ...[
@@ -164,7 +160,7 @@ class AiStatusCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'رضایت ابری دستیار غیرفعال است (درخواست‌ها ممکن است پردازش نشوند).',
-                      style: TextStyle(fontSize: 11, color: colors.warning, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 11, color: colors.warning),
                     ),
                   ),
                 ],

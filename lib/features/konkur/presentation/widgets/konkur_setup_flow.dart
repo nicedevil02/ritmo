@@ -71,7 +71,7 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
         const SnackBar(
           content: Text(
             'لطفاً تمام فیلدها را پر کنید.',
-            style: TextStyle(fontFamily: 'Vazirmatn'),
+            style: TextStyle(),
           ),
         ),
       );
@@ -104,7 +104,7 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
           SnackBar(
             content: Text(
               'خطا در ذخیره‌سازی: $e',
-              style: const TextStyle(fontFamily: 'Vazirmatn'),
+              style: const TextStyle(),
             ),
           ),
         );
@@ -135,7 +135,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                 'راه‌اندازی ماژول کنکور 📚',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
                   color: colors.textPrimary,
@@ -146,7 +145,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                 'قدم به قدم برای برنامه‌ریزی هوشمند کنکور شما',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   color: colors.textSecondary,
                 ),
@@ -171,7 +169,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                       child: Text(
                         'مرحله قبل',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           color: colors.textSecondary,
                           fontWeight: FontWeight.bold,
                         ),
@@ -202,7 +199,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                         : Text(
                             _currentStep == 2 ? 'پایان و راه‌اندازی' : 'مرحله بعد',
                             style: const TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                             ),
@@ -248,7 +244,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                   : Text(
                       toPersianDigits(index + 1),
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         color: isActive || isDone ? Colors.white : colors.textSecondary,
                       ),
@@ -287,7 +282,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
         Text(
           'رشته تحصیلی خود را انتخاب کنید:',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -324,7 +318,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                     Text(
                       field.label,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 15,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         color: colors.textPrimary,
@@ -358,7 +351,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
         Text(
           'تاریخ برگزاری کنکور سراسری:',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -368,7 +360,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
         Text(
           'این تاریخ برای تنظیم روزشمار و بودجه‌بندی برنامه شما استفاده خواهد شد.',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 12,
             color: colors.textSecondary,
           ),
@@ -390,7 +381,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                 Text(
                   formattedDate,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: _selectedExamDate != null ? colors.textPrimary : colors.textSecondary,
@@ -402,7 +392,7 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                   icon: const Icon(Icons.date_range, color: Colors.white),
                   label: const Text(
                     'انتخاب تاریخ شمسی کنکور',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B5CF6),
@@ -436,7 +426,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                       Text(
                         'افزودن دروس عمومی کنکور؟',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -446,7 +435,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                       Text(
                         'در نظام جدید دروس عمومی حذف شده‌اند، اما در صورت تمایل می‌توانید آن‌ها را مطالعه کنید.',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 11,
                           color: colors.textSecondary,
                         ),
@@ -479,7 +467,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
         Text(
           'سقف مطالعه روزانه (هدف شما):',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -489,7 +476,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
         Text(
           'هدف روزانه مطالعه مباحث و تست‌زنی بر حسب دقیقه.',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 12,
             color: colors.textSecondary,
           ),
@@ -507,7 +493,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
               Text(
                 formatDuration(_dailyTargetMinutes),
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFF8B5CF6),
@@ -533,7 +518,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                   Text(
                     '۱ ساعت',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: colors.textSecondary,
                     ),
@@ -541,7 +525,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                   Text(
                     '۱۲ ساعت',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: colors.textSecondary,
                     ),

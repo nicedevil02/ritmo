@@ -61,7 +61,6 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
               maxLength: widget.maxLength,
               textDirection: TextDirection.rtl,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 color: colors.textPrimary,
               ),
@@ -69,7 +68,6 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
               decoration: InputDecoration(
                 hintText: widget.hintFa,
                 hintStyle: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   color: colors.textSecondary.withValues(alpha: 0.6),
                 ),
@@ -133,7 +131,6 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
               PersianDigits.convert('$textLength/${widget.maxLength}'),
               textAlign: TextAlign.left,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 10.5,
                 color: textLength >= widget.maxLength ? colors.error : colors.textSecondary,
               ),

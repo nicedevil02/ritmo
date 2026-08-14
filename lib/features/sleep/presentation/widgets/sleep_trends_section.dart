@@ -34,7 +34,6 @@ class SleepTrendsSection extends StatelessWidget {
             child: Text(
               'نمودار روند خواب',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: colors.cardTitle,
@@ -55,7 +54,7 @@ class SleepTrendsSection extends StatelessWidget {
                     children: [
                       Text(
                         'روند خواب و کیفیت روزهای اخیر',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textPrimary),
+                        style: TextStyle(fontSize: 12, color: colors.textPrimary),
                       ),
                       Row(
                         children: [
@@ -77,7 +76,7 @@ class SleepTrendsSection extends StatelessWidget {
                       alignment: Alignment.center,
                       child: Text(
                         'داده‌های کافی برای رسم نمودار وجود ندارد 📊',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+                        style: TextStyle(fontSize: 11, color: colors.textSecondary),
                       ),
                     )
                   else
@@ -105,7 +104,6 @@ class SleepTrendsSection extends StatelessWidget {
             child: Text(
               'تحلیل همبستگی خواب با روز بعد',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: colors.cardTitle,
@@ -150,7 +148,6 @@ class SleepTrendsSection extends StatelessWidget {
                       Text(
                         'تحلیل ارتباط خواب و عملکرد',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -162,7 +159,6 @@ class SleepTrendsSection extends StatelessWidget {
                   Text(
                     correlationInsight,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       height: 1.5,
                       color: colors.cardTitle,
@@ -172,7 +168,6 @@ class SleepTrendsSection extends StatelessWidget {
                   Text(
                     'توضیح علمی: ضریب همبستگی عددی بین ۱- (همبستگی معکوس کامل) تا ۱+ (همبستگی مستقیم کامل) است. مقادیر نزدیک به صفر نشان‌دهنده نبود ارتباط مستقیم است.',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 9,
                       color: colors.textSecondary,
                     ),
@@ -198,7 +193,7 @@ class SleepTrendsSection extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           text,
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary),
+          style: TextStyle(fontSize: 10, color: colors.textSecondary),
         ),
       ],
     );
@@ -231,7 +226,7 @@ class SleepTrendsSection extends StatelessWidget {
           children: [
             Text(
               title,
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+              style: TextStyle(fontSize: 11, color: colors.textSecondary),
             ),
             const SizedBox(height: 8),
             Text(
@@ -245,7 +240,7 @@ class SleepTrendsSection extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               val != null ? _getCorrelationStrengthLabel(val) : 'حداقل ۳ ثبت نیاز است',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 9, color: colors.textSecondary),
+              style: TextStyle(fontSize: 9, color: colors.textSecondary),
             ),
           ],
         ),

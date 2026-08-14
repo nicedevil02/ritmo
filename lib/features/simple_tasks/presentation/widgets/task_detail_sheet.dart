@@ -327,7 +327,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx, false),
-              child: Text('انصراف', style: TextStyle(color: context.colors.textSecondary, fontFamily: 'Vazirmatn')),
+              child: Text('انصراف', style: TextStyle(color: context.colors.textSecondary)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx, true),
@@ -595,7 +595,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                                 Expanded(
                                   child: Text(
                                     'این یادداشت بلند شده — می‌خواهی به دفترچه منتقلش کنی؟',
-                                    style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', color: colors.primary),
+                                    style: TextStyle(fontSize: 11, color: colors.primary),
                                   ),
                                 ),
                                 TextButton.icon(

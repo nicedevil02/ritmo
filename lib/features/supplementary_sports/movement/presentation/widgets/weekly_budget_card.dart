@@ -63,7 +63,6 @@ class WeeklyBudgetCard extends StatelessWidget {
                         Text(
                           'بودجهٔ حرکت این هفته',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             color: colors.onSurface,
@@ -74,7 +73,6 @@ class WeeklyBudgetCard extends StatelessWidget {
                     Text(
                       '${achievedInt.toPersianDigits()} از ${targetInt.toPersianDigits()}',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: colors.primary,
@@ -117,7 +115,6 @@ class WeeklyBudgetCard extends StatelessWidget {
                         child: Text(
                           '$label  $metVal MET-min',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 12,
                             color: colors.onSurfaceVariant,
                           ),
@@ -132,7 +129,6 @@ class WeeklyBudgetCard extends StatelessWidget {
                 Text(
                   footerText,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12,
                     color: colors.onSurfaceVariant,
                   ),

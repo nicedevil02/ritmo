@@ -26,7 +26,7 @@ class StudyWeekHeatmap extends StatelessWidget {
         children: [
           Text(
             'فعالیت ۸ هفته اخیر',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
           ),
           const SizedBox(height: 12),
           GridView.builder(

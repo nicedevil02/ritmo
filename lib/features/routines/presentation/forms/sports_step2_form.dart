@@ -44,7 +44,7 @@ class _SportsStep2FormState extends State<SportsStep2Form> {
     return Expanded(
       child: ChoiceChip(
         avatar: Icon(icon, size: 18, color: isSelected ? Colors.white : colors.onSurface),
-        label: Text(label, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: isSelected ? Colors.white : colors.onSurface)),
+        label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : colors.onSurface)),
         selected: isSelected,
         selectedColor: colors.primary,
         onSelected: (_) {
@@ -73,7 +73,7 @@ class _SportsStep2FormState extends State<SportsStep2Form> {
         children: [
           const Text(
             'نوع عملیات ورزشی',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
           const SizedBox(height: 8),
           Row(
@@ -88,7 +88,7 @@ class _SportsStep2FormState extends State<SportsStep2Form> {
           // Kind Selector from MovementRepository
           const Text(
             'انتخاب نوع ورزش',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
           const SizedBox(height: 8),
           _isLoadingKinds
@@ -99,7 +99,7 @@ class _SportsStep2FormState extends State<SportsStep2Form> {
                   children: _availableKinds.take(12).map((k) {
                     final isSelected = c.sportsType == k.code;
                     return ChoiceChip(
-                      label: Text('${k.emoji} ${k.titleFa}', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: isSelected ? Colors.white : colors.onSurface)),
+                      label: Text('${k.emoji} ${k.titleFa}', style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : colors.onSurface)),
                       selected: isSelected,
                       selectedColor: colors.primary,
                       onSelected: (_) {
@@ -115,14 +115,14 @@ class _SportsStep2FormState extends State<SportsStep2Form> {
           if (c.sportsOpType == 'LOG') ...[
             Text(
               'می‌خواهید برای همین الان یک لاگ فعالیت حرکتی ثبت کنید.',
-              style: TextStyle(fontFamily: 'Vazirmatn', color: colors.onSurfaceVariant, fontSize: 13),
+              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
             ),
           ] else ...[
             PlannerTimelinePicker(controller: c),
             const SizedBox(height: 20),
             PlannerDurationPicker(controller: c),
             const SizedBox(height: 16),
-            const Text('روزهای تمرین در هفته:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13)),
+            const Text('روزهای تمرین در هفته:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             const SizedBox(height: 8),
             PlannerDayOfWeekSelector(
               selectedDays: c.worshipSelectedDays,
@@ -149,7 +149,7 @@ class _SportsStep2FormState extends State<SportsStep2Form> {
                   Expanded(
                     child: Text(
                       'پیش‌نمایش بار هفتگی: ${daysCount.toPersianDigits()} روز × ${duration.toPersianDigits()} دقیقه ≈ ${estWeeklyMetMins.round().toPersianDigits()} MET-min در هفته ⚡',
-                      style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],

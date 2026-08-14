@@ -87,8 +87,7 @@ class _RoutineSnoozeBottomSheetState extends State<RoutineSnoozeBottomSheet> {
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -98,8 +97,7 @@ class _RoutineSnoozeBottomSheetState extends State<RoutineSnoozeBottomSheet> {
                           style: TextStyle(
                             fontSize: 9.5,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),
@@ -143,8 +141,7 @@ class _RoutineSnoozeBottomSheetState extends State<RoutineSnoozeBottomSheet> {
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -153,8 +150,7 @@ class _RoutineSnoozeBottomSheetState extends State<RoutineSnoozeBottomSheet> {
                   style: TextStyle(
                     fontSize: 11.5,
                     color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 16),
 
@@ -231,8 +227,7 @@ class _RoutineSnoozeBottomSheetState extends State<RoutineSnoozeBottomSheet> {
                               fontSize: 12.5,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -247,8 +242,7 @@ class _RoutineSnoozeBottomSheetState extends State<RoutineSnoozeBottomSheet> {
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.bold,
                                 color: colors.primary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ),
                         ],
@@ -307,7 +301,7 @@ class _RoutineSnoozeBottomSheetState extends State<RoutineSnoozeBottomSheet> {
                   },
                   child: const Text(
                     'تایید زمان دلخواه',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -318,7 +312,7 @@ class _RoutineSnoozeBottomSheetState extends State<RoutineSnoozeBottomSheet> {
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'انصراف',
-                    style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                    style: TextStyle(color: colors.textSecondary, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],

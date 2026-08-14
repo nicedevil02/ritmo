@@ -168,7 +168,6 @@ class _RoutineNiyyahSheetState extends State<RoutineNiyyahSheet> {
                       Text(
                         'آماده‌ای؟',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: colors.textSecondary,
                         ),
@@ -177,7 +176,6 @@ class _RoutineNiyyahSheetState extends State<RoutineNiyyahSheet> {
                       Text(
                         widget.routine.title,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -197,7 +195,6 @@ class _RoutineNiyyahSheetState extends State<RoutineNiyyahSheet> {
               Text(
                 'کیفیت و سطح انجام',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: colors.textSecondary,
@@ -251,7 +248,7 @@ class _RoutineNiyyahSheetState extends State<RoutineNiyyahSheet> {
                 icon: const Icon(CupertinoIcons.play_circle_fill, size: 20),
                 label: const Text(
                   'شروع تایمر تمرکز',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colors.primary,
@@ -271,7 +268,6 @@ class _RoutineNiyyahSheetState extends State<RoutineNiyyahSheet> {
                   'برای این روتین مدت‌زمانی تعریف نشده است',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12,
                     color: colors.textSecondary,
                   ),
@@ -286,7 +282,7 @@ class _RoutineNiyyahSheetState extends State<RoutineNiyyahSheet> {
               icon: Icon(CupertinoIcons.check_mark_circled, size: 20, color: colors.success),
               label: Text(
                 'ثبت فوری بدون تایمر',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.success),
+                style: TextStyle(fontWeight: FontWeight.bold, color: colors.success),
               ),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: colors.success.withValues(alpha: 0.5)),
@@ -305,7 +301,7 @@ class _RoutineNiyyahSheetState extends State<RoutineNiyyahSheet> {
                     icon: Icon(CupertinoIcons.time, size: 18, color: colors.warning),
                     label: Text(
                       'تعویق روتین',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.warning),
+                      style: TextStyle(fontSize: 13, color: colors.warning),
                     ),
                   ),
                 ),
@@ -315,7 +311,7 @@ class _RoutineNiyyahSheetState extends State<RoutineNiyyahSheet> {
                     icon: Icon(CupertinoIcons.pencil, size: 18, color: colors.primary),
                     label: Text(
                       'ویرایش',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.primary),
+                      style: TextStyle(fontSize: 13, color: colors.primary),
                     ),
                   ),
                 ),
@@ -325,7 +321,7 @@ class _RoutineNiyyahSheetState extends State<RoutineNiyyahSheet> {
                     icon: Icon(CupertinoIcons.info_circle, size: 18, color: colors.textSecondary),
                     label: Text(
                       'جزئیات',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+                      style: TextStyle(fontSize: 13, color: colors.textSecondary),
                     ),
                   ),
                 ),
@@ -375,7 +371,6 @@ class _ModeSelectorTile extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
                 color: isSelected ? color : colors.textPrimary,
@@ -385,7 +380,6 @@ class _ModeSelectorTile extends StatelessWidget {
             Text(
               '${PersianDigits.convert(durationMinutes.toString())} دقیقه',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 11,
                 color: isSelected ? color : colors.textSecondary,
               ),

@@ -166,7 +166,6 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                 Text(
                   'ساخت نوع ورزش سفارشی',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: colors.onSurface,
@@ -187,7 +186,7 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                       children: [
                         Text(
                           'آیا منظورتان "${_similarFound!.emoji} ${_similarFound!.titleFa}" بود؟',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.onSurface),
+                          style: TextStyle(fontWeight: FontWeight.bold, color: colors.onSurface),
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -196,7 +195,7 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
                                 onPressed: () => Navigator.of(context).pop(_similarFound),
-                                child: const Text('بله، انتخابش کن', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                                child: const Text('بله، انتخابش کن', style: TextStyle(color: Colors.white)),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -206,7 +205,7 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                                   setState(() => _similarFound = null);
                                   _doSave();
                                 },
-                                child: const Text('نه، جدید بساز', style: TextStyle(fontFamily: 'Vazirmatn')),
+                                child: const Text('نه، جدید بساز', style: TextStyle()),
                               ),
                             ),
                           ],
@@ -222,7 +221,7 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                   controller: _titleController,
                   textInputAction: TextInputAction.done,
                   maxLength: 40,
-                  style: TextStyle(fontFamily: 'Vazirmatn', color: colors.onSurface),
+                  style: TextStyle(color: colors.onSurface),
                   decoration: InputDecoration(
                     labelText: 'نام ورزش',
                     counterText: '',
@@ -234,7 +233,7 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                 const SizedBox(height: 16),
 
                 // Emoji Picker
-                const Text('آیکن / ایموجی:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                const Text('آیکن / ایموجی:', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -262,7 +261,7 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                 const SizedBox(height: 16),
 
                 // Family Picker
-                const Text('خانواده ورزش:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                const Text('خانواده ورزش:', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -270,7 +269,7 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                   children: MovementFamily.values.map((f) {
                     final isSelected = f == _selectedFamily;
                     return ChoiceChip(
-                      label: Text('${f.emoji} ${f.titleFa}', style: TextStyle(fontFamily: 'Vazirmatn', color: isSelected ? Colors.white : colors.onSurface)),
+                      label: Text('${f.emoji} ${f.titleFa}', style: TextStyle(color: isSelected ? Colors.white : colors.onSurface)),
                       selected: isSelected,
                       selectedColor: colors.primary,
                       onSelected: (val) {
@@ -282,7 +281,7 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                 const SizedBox(height: 16),
 
                 // Intensity / MET Level
-                const Text('شدت تقریبی فعالیت:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                const Text('شدت تقریبی فعالیت:', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Column(
                   children: [
@@ -294,7 +293,7 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                 const SizedBox(height: 16),
 
                 // Primary Metric
-                const Text('متریک اصلی اندازهگیری:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                const Text('متریک اصلی اندازهگیری:', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -308,7 +307,7 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                   ].map((m) {
                     final isSelected = m == _selectedMetric;
                     return ChoiceChip(
-                      label: Text('${m.code} (${m.unitFa})', style: TextStyle(fontFamily: 'Vazirmatn', color: isSelected ? Colors.white : colors.onSurface)),
+                      label: Text('${m.code} (${m.unitFa})', style: TextStyle(color: isSelected ? Colors.white : colors.onSurface)),
                       selected: isSelected,
                       selectedColor: colors.primary,
                       onSelected: (val) {
@@ -321,17 +320,17 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
 
                 // Switches
                 SwitchListTile(
-                  title: const Text('فعالیت در فضای باز است؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+                  title: const Text('فعالیت در فضای باز است؟', style: TextStyle()),
                   value: _isOutdoor,
                   onChanged: (v) => setState(() => _isOutdoor = v),
                 ),
                 SwitchListTile(
-                  title: const Text('معمولاً تیمی/گروهی انجام می‌شود؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+                  title: const Text('معمولاً تیمی/گروهی انجام می‌شود؟', style: TextStyle()),
                   value: _isSocial,
                   onChanged: (v) => setState(() => _isSocial = v),
                 ),
                 SwitchListTile(
-                  title: const Text('نیاز به رزرو سالن/باشگاه دارد؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+                  title: const Text('نیاز به رزرو سالن/باشگاه دارد؟', style: TextStyle()),
                   value: _needsVenue,
                   onChanged: (v) => setState(() => _needsVenue = v),
                 ),
@@ -350,7 +349,7 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                         ? const CupertinoActivityIndicator(color: Colors.white)
                         : const Text(
                             'ساخت ورزش سفارشی',
-                            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
                           ),
                   ),
                 ),
@@ -390,7 +389,6 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
               child: Text(
                 label,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected ? colors.primary : colors.textPrimary,

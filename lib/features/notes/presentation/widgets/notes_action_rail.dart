@@ -102,7 +102,6 @@ class NotesActionRail extends StatelessWidget {
               Text(
                 item.label,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 11.5,
                   fontWeight: item.isPrimary ? FontWeight.bold : FontWeight.w500,
                   color: itemColor,

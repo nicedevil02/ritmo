@@ -57,7 +57,7 @@ class EnergyTodaySection extends StatelessWidget {
                     SizedBox(width: 8),
                     Text(
                       'نوسان انرژی فیزیکی امروز',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ],
                 ),
@@ -81,11 +81,11 @@ class EnergyTodaySection extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(_toPersianDigits('۰۰:۰۰'), style: const TextStyle(fontSize: 9, color: Colors.white30, fontFamily: 'Vazirmatn')),
-                    Text(_toPersianDigits('۰۶:۰۰'), style: const TextStyle(fontSize: 9, color: Colors.white30, fontFamily: 'Vazirmatn')),
-                    Text(_toPersianDigits('۱۲:۰۰'), style: const TextStyle(fontSize: 9, color: Colors.white30, fontFamily: 'Vazirmatn')),
-                    Text(_toPersianDigits('۱۸:۰۰'), style: const TextStyle(fontSize: 9, color: Colors.white30, fontFamily: 'Vazirmatn')),
-                    Text(_toPersianDigits('۲۴:۰۰'), style: const TextStyle(fontSize: 9, color: Colors.white30, fontFamily: 'Vazirmatn')),
+                    Text(_toPersianDigits('۰۰:۰۰'), style: const TextStyle(fontSize: 9, color: Colors.white30)),
+                    Text(_toPersianDigits('۰۶:۰۰'), style: const TextStyle(fontSize: 9, color: Colors.white30)),
+                    Text(_toPersianDigits('۱۲:۰۰'), style: const TextStyle(fontSize: 9, color: Colors.white30)),
+                    Text(_toPersianDigits('۱۸:۰۰'), style: const TextStyle(fontSize: 9, color: Colors.white30)),
+                    Text(_toPersianDigits('۲۴:۰۰'), style: const TextStyle(fontSize: 9, color: Colors.white30)),
                   ],
                 ),
                 if (todayEnergyLogs.isEmpty) ...[
@@ -94,7 +94,7 @@ class EnergyTodaySection extends StatelessWidget {
                     child: Text(
                       'تازه شروع کردی! با ثبت وضعیت در طول روز، منحنی نوسان انرژی فیزیکی شما در این بخش رسم می‌شود 📈',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 10.5, color: colors.textSecondary, fontFamily: 'Vazirmatn', height: 1.5),
+                      style: TextStyle(fontSize: 10.5, color: colors.textSecondary, height: 1.5),
                     ),
                   ),
                 ],
@@ -109,7 +109,7 @@ class EnergyTodaySection extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 4),
           child: Text(
             'احوال روحی ثبت‌شده امروز',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ),
         const SizedBox(height: 10),
@@ -120,7 +120,7 @@ class EnergyTodaySection extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
                 'امروز هنوز هیچ احوال روحی ثبت نکرده‌ای 🌿',
-                style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 11, color: colors.textSecondary),
               ),
             ),
           )
@@ -147,7 +147,7 @@ class EnergyTodaySection extends StatelessWidget {
                       // Time
                       Text(
                         _formatTime(log.loggedAt),
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xffEC4899), fontFamily: 'Vazirmatn'),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xffEC4899)),
                       ),
                       const SizedBox(width: 14),
 
@@ -161,7 +161,7 @@ class EnergyTodaySection extends StatelessWidget {
                               children: [
                                 Text(
                                   'احساس: ${log.mood.emoji} ${log.mood.label}',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                                 ),
                                 // Valence Indicator
                                 Row(
@@ -180,7 +180,7 @@ class EnergyTodaySection extends StatelessWidget {
                               const SizedBox(height: 6),
                               Text(
                                 log.note!,
-                                style: TextStyle(fontSize: 10.5, color: colors.textSecondary, fontFamily: 'Vazirmatn', height: 1.4),
+                                style: TextStyle(fontSize: 10.5, color: colors.textSecondary, height: 1.4),
                               ),
                             ],
                           ],
@@ -197,7 +197,7 @@ class EnergyTodaySection extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 4),
           child: Text(
             'یادداشت‌های ثبت‌شده انرژی و حال',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ),
         const SizedBox(height: 8),

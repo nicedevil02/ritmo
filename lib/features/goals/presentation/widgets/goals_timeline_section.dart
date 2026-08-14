@@ -62,7 +62,6 @@ class GoalsTimelineSection extends StatelessWidget {
             Text(
               'برنامه‌ای برای روزهای آینده ثبت نشده است.',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 14.5,
                 color: colors.textSecondary,
               ),
@@ -143,7 +142,6 @@ class GoalsTimelineSection extends StatelessWidget {
                             step.title,
                             style: TextStyle(
                               color: colors.warningText,
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13.5,
                               fontWeight: FontWeight.bold,
                             ),
@@ -152,7 +150,6 @@ class GoalsTimelineSection extends StatelessWidget {
                             'هدف: ${goal.title} · مهلت: ${formatShamsiDate(step.scheduledDate)}',
                             style: TextStyle(
                               color: colors.textSecondary,
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11.5,
                             ),
                           ),
@@ -269,7 +266,6 @@ class GoalsTimelineSection extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: colors.primary,
@@ -279,7 +275,6 @@ class GoalsTimelineSection extends StatelessWidget {
           Text(
             stats,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 11.5,
               color: colors.textSecondary,
               fontWeight: FontWeight.w500,
@@ -301,7 +296,6 @@ class GoalsTimelineSection extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: isToday ? colors.primary : colors.textSecondary,
@@ -333,7 +327,6 @@ class GoalsTimelineSection extends StatelessWidget {
                     'امروز',
                     style: TextStyle(
                       fontSize: 9.5,
-                      fontFamily: 'Vazirmatn',
                       color: colors.primary,
                       fontWeight: FontWeight.bold,
                     ),
@@ -356,7 +349,6 @@ class GoalsTimelineSection extends StatelessWidget {
       child: Text(
         title,
         style: TextStyle(
-          fontFamily: 'Vazirmatn',
           fontSize: 14,
           fontWeight: FontWeight.bold,
           color: isOverdue ? colors.warning : colors.primary,
@@ -413,7 +405,6 @@ class GoalsTimelineSection extends StatelessWidget {
         title: Text(
           item.title,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: item.isDone ? colors.textSecondary : colors.textPrimary,
@@ -425,7 +416,6 @@ class GoalsTimelineSection extends StatelessWidget {
             Text(
               item.source.label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 11,
                 color: _getSourceColor(item.source, colors),
                 fontWeight: FontWeight.bold,
@@ -440,7 +430,6 @@ class GoalsTimelineSection extends StatelessWidget {
                 child: Text(
                   item.subtitle!,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11,
                     color: colors.textSecondary,
                   ),

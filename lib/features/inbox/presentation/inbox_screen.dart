@@ -70,7 +70,6 @@ class _InboxScreenState extends State<InboxScreen> {
           'صندوق پیام‌ها و یادآوری‌ها',
           style: TextStyle(
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -86,7 +85,6 @@ class _InboxScreenState extends State<InboxScreen> {
               child: const Text(
                 'خواندن همه',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   color: Color(0xff5B8AF5),
                   fontWeight: FontWeight.bold,
@@ -141,7 +139,6 @@ class _InboxScreenState extends State<InboxScreen> {
             'هیچ اعلان یا یادآوری فعالی نیست',
             style: TextStyle(
               fontSize: 14,
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
             ),
@@ -151,7 +148,6 @@ class _InboxScreenState extends State<InboxScreen> {
             'همه چیز مرتب است! صندوق شما خالی است.',
             style: TextStyle(
               fontSize: 11,
-              fontFamily: 'Vazirmatn',
               color: colors.textSecondary,
             ),
           ),
@@ -185,7 +181,7 @@ class _InboxScreenState extends State<InboxScreen> {
             const SnackBar(
               content: Text(
                 'آیتم بایگانی شد.',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                style: TextStyle(fontSize: 12),
               ),
               duration: Duration(seconds: 1),
             ),
@@ -248,16 +244,14 @@ class _InboxScreenState extends State<InboxScreen> {
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
                               color: isUnread ? itemColor : colors.textSecondary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           Text(
                             _toPersianDigits(_formatDateTime(item.createdAt)),
                             style: TextStyle(
                               fontSize: 8.5,
                               color: colors.textSecondary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                         ],
                       ),
@@ -268,8 +262,7 @@ class _InboxScreenState extends State<InboxScreen> {
                           fontSize: 12.5,
                           fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       if (item.body != null && item.body!.isNotEmpty) ...[
                         const SizedBox(height: 3),
@@ -278,7 +271,6 @@ class _InboxScreenState extends State<InboxScreen> {
                           style: TextStyle(
                             fontSize: 10,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
                             height: 1.4,
                           ),
                         ),

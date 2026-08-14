@@ -76,7 +76,6 @@ class CoursesWeeklyHero extends StatelessWidget {
                     Text(
                       'خلاصه وضعیت هفته',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -101,7 +100,6 @@ class CoursesWeeklyHero extends StatelessWidget {
                       Text(
                         '${toPersianDigits(studyStreakDays)} روز استریک',
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: Color(0xff10A37F),
@@ -122,7 +120,6 @@ class CoursesWeeklyHero extends StatelessWidget {
                       Text(
                         'پیشرفت هدف هفتگی',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: colors.textSecondary,
                         ),
@@ -135,7 +132,6 @@ class CoursesWeeklyHero extends StatelessWidget {
                           Text(
                             toPersianDigits(weeklyDoneSessions),
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -144,7 +140,6 @@ class CoursesWeeklyHero extends StatelessWidget {
                           Text(
                             ' / ${toPersianDigits(weeklyTargetSessions)} جلسه',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               color: colors.textSecondary,
                             ),
@@ -167,7 +162,6 @@ class CoursesWeeklyHero extends StatelessWidget {
                       Text(
                         'کل زمان مطالعه',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: colors.textSecondary,
                         ),
@@ -180,7 +174,6 @@ class CoursesWeeklyHero extends StatelessWidget {
                           Text(
                             toPersianDigits(weeklyStudyMinutes),
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -189,7 +182,6 @@ class CoursesWeeklyHero extends StatelessWidget {
                           Text(
                             ' دقیقه',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               color: colors.textSecondary,
                             ),
@@ -216,7 +208,6 @@ class CoursesWeeklyHero extends StatelessWidget {
               Text(
                 'هدف هفتگی محقق شد! عالیه 🎉💪',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                   color: colors.success,

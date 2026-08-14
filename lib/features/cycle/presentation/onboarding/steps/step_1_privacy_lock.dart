@@ -48,8 +48,7 @@ class Step1PrivacyLock extends StatelessWidget {
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
                 color: colors.textPrimary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ),
           const SizedBox(height: 12),
@@ -106,8 +105,7 @@ class Step1PrivacyLock extends StatelessWidget {
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -115,8 +113,7 @@ class Step1PrivacyLock extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -147,7 +144,7 @@ class Step1PrivacyLock extends StatelessWidget {
               onPressed: onNext,
               child: const Text(
                 'متوجه شدم، مرحله بعد',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -183,8 +180,7 @@ class Step1PrivacyLock extends StatelessWidget {
                     fontSize: 12.5,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -192,7 +188,6 @@ class Step1PrivacyLock extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
                     height: 1.4,
                   ),
                 ),

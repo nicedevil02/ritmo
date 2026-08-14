@@ -60,7 +60,6 @@ class _SSIntroScreenState extends State<SSIntroScreen> {
                   Text(
                     'همراه تمرین',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 32,
                       fontWeight: FontWeight.w900,
                       color: titleColor,
@@ -75,7 +74,6 @@ class _SSIntroScreenState extends State<SSIntroScreen> {
                       'برنامه‌ریزی هوشمند تمرینات ورزشی تکمیلی، پایش تداوم و دریافت برنامه‌های ورزشی اختصاصی متناسب با بازخورد کیفی شما.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 15,
                         color: subtitleColor,
                         height: 1.6,

@@ -241,13 +241,13 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
         builder: (context, setDlgState) => Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            title: Text(title, style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+            title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '${toPersianDigits(tempVal.round().toString())} $unit',
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 Slider(
                   value: tempVal.clamp(min, max),
@@ -263,7 +263,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
+                child: const Text('لغو', style: TextStyle(color: Colors.grey)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
@@ -271,7 +271,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                   Navigator.of(ctx).pop();
                   await _updateLiveValue(key, tempVal);
                 },
-                child: const Text('ثبت', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                child: const Text('ثبت', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -312,7 +312,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('رویداد رسیدن به قله ثبت شد 🎉', style: TextStyle(fontFamily: 'Vazirmatn')),
+        content: Text('رویداد رسیدن به قله ثبت شد 🎉', style: TextStyle()),
       ),
     );
   }
@@ -328,11 +328,11 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: const Text('ثبت و پایان تمرین', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          title: const Text('ثبت و پایان تمرین', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('خسته نباشید! حس خودتان بعد از تمرین چطور است؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+              const Text('خسته نباشید! حس خودتان بعد از تمرین چطور است؟', style: TextStyle()),
               const SizedBox(height: 16),
               StatefulBuilder(
                 builder: (context, setDlgState) => Row(
@@ -365,10 +365,10 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
               TextField(
                 decoration: const InputDecoration(
                   labelText: 'یادداشت تمرین (اختیاری)',
-                  labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                  labelStyle: TextStyle(fontSize: 13),
                   border: OutlineInputBorder(),
                 ),
-                style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                style: const TextStyle(fontSize: 13),
                 onChanged: (val) => noteText = val,
               ),
             ],
@@ -376,7 +376,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('بازگشت', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
+              child: const Text('بازگشت', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
@@ -385,7 +385,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                 Navigator.of(context).pop(); // screen
                 await widget.notifier.finish(feeling: selectedFeeling, note: noteText);
               },
-              child: const Text('ذخیره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text('ذخیره', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -420,11 +420,11 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                           children: [
                             Text(
                               'پیشرفت هدف',
-                              style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary, fontSize: 11),
+                              style: TextStyle(color: colors.textSecondary, fontSize: 11),
                             ),
                             Text(
                               '${toPersianDigits((targetPercent * 100).round().toString())}٪',
-                              style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -454,7 +454,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                           const SizedBox(width: 8),
                           Text(
                             widget.kind.titleFa,
-                            style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -472,7 +472,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                           ),
                           child: Text(
                             isDetail ? 'حالت حرفه‌ای' : 'حالت ساده',
-                            style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -515,8 +515,8 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('دور $lapNumber', style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white60)),
-                                Text(_formatDuration(durationMs), style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
+                                Text('دور $lapNumber', style: const TextStyle(color: Colors.white60)),
+                                Text(_formatDuration(durationMs), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                               ],
                             ),
                           );
@@ -539,7 +539,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                         ),
                         onPressed: _recordSummit,
                         icon: const Icon(Icons.terrain, color: Colors.white),
-                        label: const Text('رسیدم به قله 🏔️', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        label: const Text('رسیدم به قله 🏔️', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                       ),
                     ),
                   if (widget.mode == SessionMode.laps)
@@ -553,7 +553,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                         ),
                         onPressed: _recordLap,
                         icon: const Icon(Icons.timer, color: Colors.white, size: 28),
-                        label: const Text('ثبت دور جدید', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
+                        label: const Text('ثبت دور جدید', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
                       ),
                     ),
                 ],
@@ -623,7 +623,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
               const SizedBox(width: 8),
               const Text(
                 'کیلومتر',
-                style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white60, fontSize: 24),
+                style: TextStyle(color: Colors.white60, fontSize: 24),
               ),
               const SizedBox(width: 12),
               IconButton(
@@ -638,7 +638,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
           ),
           Text(
             '${toPersianDigits(_formatDuration(widget.notifier.elapsedMs))} | تمپو: ${toPersianDigits(_getPaceString(widget.notifier.elapsedMs, meters))}',
-            style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70, fontSize: 16),
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
         ],
       );
@@ -660,7 +660,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
               const SizedBox(width: 8),
               const Text(
                 'متر صعود',
-                style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white60, fontSize: 24),
+                style: TextStyle(color: Colors.white60, fontSize: 24),
               ),
               const SizedBox(width: 12),
               IconButton(
@@ -675,7 +675,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
           ),
           Text(
             toPersianDigits(_formatDuration(widget.notifier.elapsedMs)),
-            style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70, fontSize: 18),
+            style: const TextStyle(color: Colors.white70, fontSize: 18),
           ),
         ],
       );
@@ -687,11 +687,11 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
         children: [
           Text(
             toPersianDigits('$lapCount دور'),
-            style: const TextStyle(color: Colors.white, fontSize: 72, fontWeight: FontWeight.w900, fontFamily: 'Vazirmatn'),
+            style: const TextStyle(color: Colors.white, fontSize: 72, fontWeight: FontWeight.w900),
           ),
           Text(
             toPersianDigits(_formatDuration(widget.notifier.elapsedMs)),
-            style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70, fontSize: 18),
+            style: const TextStyle(color: Colors.white70, fontSize: 18),
           ),
         ],
       );
@@ -724,7 +724,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
           const SizedBox(height: 8),
           Text(
             toPersianDigits(_formatDuration(widget.notifier.elapsedMs)),
-            style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70, fontSize: 18),
+            style: const TextStyle(color: Colors.white70, fontSize: 18),
           ),
         ],
       );
@@ -762,9 +762,9 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
       ),
       child: Column(
         children: [
-          Text(label, style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white60, fontSize: 11)),
+          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11)),
           const SizedBox(height: 4),
-          Text(toPersianDigits(value), style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(toPersianDigits(value), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
         ],
       ),
     );

@@ -97,7 +97,7 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('برنامه با موفقیت به‌روزرسانی شد.', style: TextStyle(fontFamily: 'Vazirmatn'))),
+          const SnackBar(content: Text('برنامه با موفقیت به‌روزرسانی شد.', style: TextStyle())),
         );
         Navigator.pop(context, true);
       }
@@ -137,7 +137,7 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
       appBar: AppBar(
         backgroundColor: colors.surface,
         elevation: 0,
-        title: Text('تنظیمات برنامه تمرینی', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary)),
+        title: Text('تنظیمات برنامه تمرینی', style: TextStyle(color: colors.textPrimary)),
         iconTheme: IconThemeData(color: colors.textPrimary),
       ),
       body: Directionality(
@@ -147,9 +147,9 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('روزهای تمرین در هفته', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+              Text('روزهای تمرین در هفته', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
               const SizedBox(height: 8),
-              Text('حداقل یک روز برای استراحت باید خالی بماند.', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary)),
+              Text('حداقل یک روز برای استراحت باید خالی بماند.', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
               const SizedBox(height: 16),
               
               Wrap(
@@ -167,7 +167,7 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
               ),
               const SizedBox(height: 32),
 
-              const Text('الگوی تقسیم عضلات (Split)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text('الگوی تقسیم عضلات (Split)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _splitPattern,
@@ -177,7 +177,7 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
                   fillColor: colors.surfaceSunken,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
-                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
+                style: TextStyle(color: colors.textPrimary),
                 items: const [
                   DropdownMenuItem(value: 'AUTO', child: Text('هوشمند (پیشنهادی ریتمو)')),
                   DropdownMenuItem(value: 'FULL_BODY', child: Text('فول بادی (تمام بدن)')),
@@ -190,7 +190,7 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
               ),
               const SizedBox(height: 32),
 
-              const Text('شدت پیش‌فرض (Intensity)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text('شدت پیش‌فرض (Intensity)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _defaultIntensity,
@@ -200,7 +200,7 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
                   fillColor: colors.surfaceSunken,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
-                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
+                style: TextStyle(color: colors.textPrimary),
                 items: const [
                   DropdownMenuItem(value: 'LIGHT', child: Text('سبک (ریکاوری بیشتر)')),
                   DropdownMenuItem(value: 'MODERATE', child: Text('متوسط (تعادل استاندارد)')),
@@ -230,7 +230,7 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
     final isSelected = _trainingDays.contains(dayNum);
 
     return FilterChip(
-      label: Text(label, style: const TextStyle(fontFamily: 'Vazirmatn')),
+      label: Text(label, style: const TextStyle()),
       selected: isSelected,
       onSelected: (_) => _toggleDay(dayNum),
       selectedColor: sportsAccent.withValues(alpha: 0.2),

@@ -85,7 +85,7 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
           const SnackBar(
             content: Text(
               'مدتزمان نامعتبر است؛ تایمر قابل اجرا نیست.',
-              style: TextStyle(fontFamily: 'Vazirmatn'),
+              style: TextStyle(),
             ),
           ),
         );
@@ -224,14 +224,13 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
             title: Text(
               'تایمر به پایان رسید 🎉',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
               ),
             ),
             content: Text(
               'زمان تعیین شده برای روتین "${widget.routine.title}" تمام شد. آیا آن را انجام دادید؟',
-              style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary),
+              style: TextStyle(color: colors.textSecondary),
             ),
             actions: [
               TextButton(
@@ -239,7 +238,6 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
                 child: Text(
                   'نه، بعداً انجام میدم',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     color: colors.textSecondary,
                   ),
                 ),
@@ -257,7 +255,6 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
                 child: const Text(
                   'آره، انجام دادم',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -334,8 +331,7 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       const SizedBox(width: 48), // spacer balance
                     ],
@@ -412,8 +408,7 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: colors.textSecondary,
-                                          fontFamily: 'Vazirmatn',
-                                        ),
+                                          ),
                                       ),
                                     ],
                                   ),
@@ -435,8 +430,7 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   const SizedBox(height: 8),
                   if (widget.routine.description != null)
@@ -446,8 +440,7 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
                       style: TextStyle(
                         fontSize: 14,
                         color: colors.textSecondary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
 
                   const Spacer(),

@@ -144,11 +144,11 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
           child: AlertDialog(
             backgroundColor: colors.card,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('ویرایش حافظه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold)),
+            title: const Text('ویرایش حافظه', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             content: TextField(
               controller: editController,
               maxLines: 3,
-              style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 13),
+              style: TextStyle(color: colors.textPrimary, fontSize: 13),
               decoration: RitmoTheme.inputDecoration(
                 context,
                 label: 'محتوای حافظه شناختی',
@@ -158,7 +158,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
@@ -182,7 +182,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                     await _loadSettingsAndData();
                   }
                 },
-                child: const Text('ذخیره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                child: const Text('ذخیره', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -220,15 +220,15 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
           child: AlertDialog(
             backgroundColor: colors.card,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('حذف دائمی حافظه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold)),
+            title: const Text('حذف دائمی حافظه', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
             content: const Text(
               'آیا مطمئن هستید که می‌خواهید این حافظه را برای همیشه و بدون امکان بازیابی حذف کنید؟',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, height: 1.5),
+              style: TextStyle(fontSize: 12, height: 1.5),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
@@ -240,7 +240,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                   _showToast('حافظه برای همیشه حذف شد.');
                   await _loadSettingsAndData();
                 },
-                child: const Text('حذف دائمی', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                child: const Text('حذف دائمی', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -259,15 +259,15 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
           child: AlertDialog(
             backgroundColor: colors.card,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('پاک‌سازی کل حافظه دستیار', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+            title: const Text('پاک‌سازی کل حافظه دستیار', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.redAccent)),
             content: const Text(
               '⚠️ هشدار بسیار مهم:\nبا تأیید این عملیات، تمامی اطلاعات و فکت‌های شناختی که دستیار از گفتگو با شما به خاطر سپرده است، کاملاً پاک شده و هوش مصنوعی تمام پیش‌فرض‌های مربوط به شما را فراموش خواهد کرد.\n\nآیا مایل به ادامه هستید؟',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, height: 1.6),
+              style: TextStyle(fontSize: 12, height: 1.6),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
@@ -276,7 +276,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                   // Double confirmation step
                   _showSecondClearConfirmation();
                 },
-                child: const Text('ادامه پاک‌سازی', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                child: const Text('ادامه پاک‌سازی', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -295,15 +295,15 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
           child: AlertDialog(
             backgroundColor: colors.card,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('تأیید نهایی پاک‌سازی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold)),
+            title: const Text('تأیید نهایی پاک‌سازی', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
             content: const Text(
               'برای پاک کردن نهایی و قطعی کل داده‌های حافظه، روی دکمه زیر کلیک کنید.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, height: 1.5),
+              style: TextStyle(fontSize: 12, height: 1.5),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
@@ -315,7 +315,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                   _showToast('کل حافظه شناختی با موفقیت پاک‌سازی شد.');
                   await _loadSettingsAndData();
                 },
-                child: const Text('بله، کاملاً فراموش کن!', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                child: const Text('بله، کاملاً فراموش کن!', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -330,7 +330,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+          style: const TextStyle(fontSize: 12),
         ),
         backgroundColor: isError ? Colors.redAccent : const Color(0xff5B8AF5),
         duration: const Duration(seconds: 2),
@@ -374,7 +374,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
           elevation: 0,
           title: Text(
             'مدیریت حافظه دستیار 🧠',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 17, color: colors.textPrimary),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: colors.textPrimary),
           ),
           leading: IconButton(
             icon: RitmoIcons.back(context, color: colors.textPrimary),
@@ -415,7 +415,6 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                 Text(
                                   'تنظیمات حریم خصوصی و یادگیری',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13.5,
                                     color: colors.textPrimary,
@@ -425,8 +424,8 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                 SwitchListTile(
                                   activeThumbColor: colors.primary,
                                   contentPadding: EdgeInsets.zero,
-                                  title: Text('فعال‌سازی سیستم حافظه', style: TextStyle(fontSize: 12.5, fontFamily: 'Vazirmatn', color: colors.textPrimary)),
-                                  subtitle: Text('به دستیار اجازه می‌دهد داده‌های از پیش‌دانسته شما را در گفتگوها استفاده کند.', style: TextStyle(fontSize: 10.5, fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                                  title: Text('فعال‌سازی سیستم حافظه', style: TextStyle(fontSize: 12.5, color: colors.textPrimary)),
+                                  subtitle: Text('به دستیار اجازه می‌دهد داده‌های از پیش‌دانسته شما را در گفتگوها استفاده کند.', style: TextStyle(fontSize: 10.5, color: colors.textSecondary)),
                                   value: _memoryEnabled,
                                   onChanged: (val) => _toggleSetting('ai_memory_enabled', val),
                                 ),
@@ -434,8 +433,8 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                 SwitchListTile(
                                   activeThumbColor: colors.primary,
                                   contentPadding: EdgeInsets.zero,
-                                  title: Text('یادگیری خودکار تدریجی', style: TextStyle(fontSize: 12.5, fontFamily: 'Vazirmatn', color: colors.textPrimary)),
-                                  subtitle: Text('استخراج خودکار علایق و محدودیت‌های شما در پس‌زمینه گفتگوها', style: TextStyle(fontSize: 10.5, fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                                  title: Text('یادگیری خودکار تدریجی', style: TextStyle(fontSize: 12.5, color: colors.textPrimary)),
+                                  subtitle: Text('استخراج خودکار علایق و محدودیت‌های شما در پس‌زمینه گفتگوها', style: TextStyle(fontSize: 10.5, color: colors.textSecondary)),
                                   value: _implicitEnabled,
                                   onChanged: _memoryEnabled ? (val) => _toggleSetting('ai_memory_implicit_enabled', val) : null,
                                 ),
@@ -453,7 +452,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                       Expanded(
                                         child: Text(
                                           '🔒 حریم خصوصی: حافظه شناختی ریتمو به صورت کاملاً آفلاین و محلی بر روی دستگاه شما ذخیره می‌شود و با هیچ سرور ابری همگام‌سازی نخواهد شد.',
-                                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary, height: 1.4),
+                                          style: TextStyle(fontSize: 10, color: colors.textSecondary, height: 1.4),
                                         ),
                                       ),
                                     ],
@@ -477,7 +476,6 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                   Text(
                                     'افزودن دستی فکت به حافظه دستیار',
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13.5,
                                       color: colors.textPrimary,
@@ -487,7 +485,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                   TextField(
                                     controller: _textController,
                                     maxLines: 2,
-                                    style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 12.5),
+                                    style: TextStyle(color: colors.textPrimary, fontSize: 12.5),
                                     decoration: RitmoTheme.inputDecoration(
                                       context,
                                       label: 'مثال: به بادام‌زمینی آلرژی دارم یا کمردرد خفیف دارم.',
@@ -499,7 +497,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                     children: [
                                       Text(
                                         'حوزه مربوطه: ',
-                                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, color: colors.textSecondary),
+                                        style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
@@ -514,7 +512,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                             child: DropdownButton<String>(
                                               value: _selectedDomain,
                                               dropdownColor: colors.card,
-                                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textPrimary),
+                                              style: TextStyle(fontSize: 12, color: colors.textPrimary),
                                               onChanged: (val) {
                                                 if (val != null) {
                                                   setState(() => _selectedDomain = val);
@@ -544,7 +542,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                       onPressed: _addManualMemory,
                                       child: const Text(
                                         'ذخیره حافظه جدید 💾',
-                                        style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
                                       ),
                                     ),
                                   ),
@@ -559,7 +557,6 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                         Text(
                           'فهرست حافظه‌های فعال دستیار',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                             color: colors.textPrimary,
@@ -573,7 +570,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                             child: Center(
                               child: Text(
                                 'هنوز حافظه‌ای ثبت نشده است.',
-                                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary, fontSize: 12),
+                                style: TextStyle(color: colors.textSecondary, fontSize: 12),
                               ),
                             ),
                           )
@@ -594,7 +591,6 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                       Text(
                                         _getDomainLabel(domain),
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
                                           color: colors.textPrimary,
@@ -609,7 +605,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                         ),
                                         child: Text(
                                           '${list.length} مورد',
-                                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.primary),
+                                          style: TextStyle(fontSize: 10, color: colors.primary),
                                         ),
                                       ),
                                     ],
@@ -624,7 +620,6 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                         title: Text(
                                           m.content,
                                           style: TextStyle(
-                                            fontFamily: 'Vazirmatn',
                                             fontSize: 12.5,
                                             color: colors.textPrimary,
                                             height: 1.4,
@@ -645,7 +640,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                                 ),
                                                 child: Text(
                                                   _getTypeLabel(m.type),
-                                                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 9.5, color: colors.textSecondary),
+                                                  style: TextStyle(fontSize: 9.5, color: colors.textSecondary),
                                                 ),
                                               ),
                                               // Source badge
@@ -660,7 +655,6 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                                 child: Text(
                                                   m.source == MemorySource.explicit ? 'صریح' : 'خودکار',
                                                   style: TextStyle(
-                                                    fontFamily: 'Vazirmatn',
                                                     fontSize: 9.5,
                                                     color: m.source == MemorySource.explicit ? Colors.tealAccent : Colors.lightBlueAccent,
                                                   ),
@@ -675,7 +669,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                                 ),
                                                 child: Text(
                                                   'اهمیت: ${m.importance}',
-                                                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 9.5, color: Colors.orangeAccent),
+                                                  style: const TextStyle(fontSize: 9.5, color: Colors.orangeAccent),
                                                 ),
                                               ),
                                               if (m.sensitive)
@@ -687,7 +681,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                                   ),
                                                   child: const Text(
                                                     'حساس 🔒',
-                                                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 9.5, color: Colors.redAccent),
+                                                    style: TextStyle(fontSize: 9.5, color: Colors.redAccent),
                                                   ),
                                                 ),
                                             ],
@@ -723,7 +717,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                                     children: [
                                                       Icon(CupertinoIcons.pencil, size: 14, color: colors.textPrimary),
                                                       const SizedBox(width: 8),
-                                                      Text('ویرایش', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 12)),
+                                                      Text('ویرایش', style: TextStyle(color: colors.textPrimary, fontSize: 12)),
                                                     ],
                                                   ),
                                                 ),
@@ -733,7 +727,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                                     children: [
                                                       Icon(CupertinoIcons.archivebox, size: 14, color: colors.textPrimary),
                                                       const SizedBox(width: 8),
-                                                      Text('بایگانی', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 12)),
+                                                      Text('بایگانی', style: TextStyle(color: colors.textPrimary, fontSize: 12)),
                                                     ],
                                                   ),
                                                 ),
@@ -763,7 +757,6 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                   Text(
                                     'حافظه‌های بایگانی‌شده',
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
                                       color: colors.textPrimary,
@@ -778,7 +771,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                     ),
                                     child: Text(
                                       '${_archivedMemories.length} مورد',
-                                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary),
+                                      style: TextStyle(fontSize: 10, color: colors.textSecondary),
                                     ),
                                   ),
                                 ],
@@ -793,7 +786,6 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                     title: Text(
                                       m.content,
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 12,
                                         color: colors.textSecondary,
                                         decoration: TextDecoration.lineThrough,
@@ -803,7 +795,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                                       padding: const EdgeInsets.only(top: 4),
                                       child: Text(
                                         'حوزه: ${_getDomainLabel(m.domain)}',
-                                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.6)),
+                                        style: TextStyle(fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.6)),
                                       ),
                                     ),
                                     trailing: Row(
@@ -842,7 +834,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
                               icon: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 16),
                               label: const Text(
                                 'پاک‌کردن کل حافظه دستیار',
-                                style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 12.5),
+                                style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 12.5),
                               ),
                               onPressed: _clearAllMemories,
                             ),

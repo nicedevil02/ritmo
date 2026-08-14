@@ -77,7 +77,6 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                     style: TextStyle(
                       fontSize: 13,
                       color: colors.textSecondary,
-                      fontFamily: 'Vazirmatn',
                       height: 1.4,
                     ),
                   ),
@@ -125,8 +124,7 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: isDark ? Colors.white : colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -141,8 +139,7 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                               fontSize: 14,
                               color: indicatorColor,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                         ),
                       ],
@@ -156,7 +153,7 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                           children: [
                             Text(
                               'ضریب پیرسون: ',
-                              style: TextStyle(fontSize: 13, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                              style: TextStyle(fontSize: 13, color: colors.textSecondary),
                             ),
                             Text(
                               _toPersianDigits(coeff.toStringAsFixed(2)),
@@ -164,8 +161,7 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: isDark ? Colors.white : colors.textPrimary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ],
                         ),
@@ -175,7 +171,6 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                       style: TextStyle(
                         fontSize: 13,
                         color: isDark ? Colors.white70 : colors.textSecondary,
-                        fontFamily: 'Vazirmatn',
                         height: 1.5,
                       ),
                     ),

@@ -38,6 +38,15 @@ jobs:
       - name: Analyze code
         run: flutter analyze --fatal-warnings .
 
+      - name: Design system guard
+        run: dart run tool/theme_audit.dart --check
+
+      - name: Golden tests
+        run: flutter test test/golden
+
+      - name: Contrast tests (5 palettes x 2 brightness)
+        run: flutter test test/theme/contrast_test.dart
+
       - name: Run unit & integration tests
         run: flutter test --coverage
 

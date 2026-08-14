@@ -43,7 +43,7 @@ class AssistantActionRegistry {
         content: const Text(
           'برای حفظ ایمنی، اطلاعات پزشکی، یادآورهای دارویی و تغییرات سلامت از طریق دستیار هوشمند مدیریت نمی‌شوند؛ لطفاً این موارد را مستقیماً در بخش سلامت مدیریت کنید.',
           textAlign: TextAlign.right,
-          style: TextStyle(fontFamily: 'Vazirmatn'),
+          style: TextStyle(),
         ),
         actions: [
           TextButton(
@@ -296,7 +296,7 @@ class AssistantActionRegistry {
                 content: const Text(
                   'تغییر این تنظیمات به دلایل امنیتی از طریق دستیار هوشمند امکان‌پذیر نیست.',
                   textAlign: TextAlign.right,
-                  style: TextStyle(fontFamily: 'Vazirmatn'),
+                  style: TextStyle(),
                 ),
                 actions: [
                   TextButton(onPressed: () => Navigator.pop(context), child: const Text('تایید')),
@@ -317,7 +317,7 @@ class AssistantActionRegistry {
                 content: const Text(
                   'مقدار پیشنهادی برای تنظیمات معتبر نیست.',
                   textAlign: TextAlign.right,
-                  style: TextStyle(fontFamily: 'Vazirmatn'),
+                  style: TextStyle(),
                 ),
                 actions: [
                   TextButton(onPressed: () => Navigator.pop(context), child: const Text('تایید')),
@@ -337,15 +337,15 @@ class AssistantActionRegistry {
             builder: (context) => Directionality(
               textDirection: TextDirection.rtl,
               child: AlertDialog(
-                title: const Text('تایید تغییر تنظیمات', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                title: const Text('تایید تغییر تنظیمات', style: TextStyle(fontWeight: FontWeight.bold)),
                 content: Text(
                   'آیا مایلید تنظیم «$humanLabel» را از «$oldValue» به «$normalized» تغییر دهید؟',
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                  style: const TextStyle(fontSize: 13),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
+                    child: const Text('لغو', style: TextStyle(color: Colors.grey)),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -355,7 +355,7 @@ class AssistantActionRegistry {
                         onComplete();
                       }
                     },
-                    child: const Text('تایید', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                    child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -378,15 +378,15 @@ class AssistantActionRegistry {
             builder: (context) => Directionality(
               textDirection: TextDirection.rtl,
               child: AlertDialog(
-                title: const Text('تایید انجام روتین', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                title: const Text('تایید انجام روتین', style: TextStyle(fontWeight: FontWeight.bold)),
                 content: Text(
                   'آیا روتین «$title» را امروز انجام داده‌اید؟',
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                  style: const TextStyle(fontSize: 13),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
+                    child: const Text('لغو', style: TextStyle(color: Colors.grey)),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -400,7 +400,7 @@ class AssistantActionRegistry {
                       RitmoEvents.notifyRoutineChanged();
                       onComplete();
                     },
-                    child: const Text('تایید', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                    child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -423,15 +423,15 @@ class AssistantActionRegistry {
             builder: (context) => Directionality(
               textDirection: TextDirection.rtl,
               child: AlertDialog(
-                title: const Text('تایید رد کردن روتین', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                title: const Text('تایید رد کردن روتین', style: TextStyle(fontWeight: FontWeight.bold)),
                 content: Text(
                   'آیا روتین «$title» را برای امروز رد می‌کنید؟',
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                  style: const TextStyle(fontSize: 13),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
+                    child: const Text('لغو', style: TextStyle(color: Colors.grey)),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -445,7 +445,7 @@ class AssistantActionRegistry {
                       RitmoEvents.notifyRoutineChanged();
                       onComplete();
                     },
-                    child: const Text('تایید', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                    child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -515,15 +515,15 @@ class AssistantActionRegistry {
             builder: (context) => Directionality(
               textDirection: TextDirection.rtl,
               child: AlertDialog(
-                title: const Text('تایید حذف روتین', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                title: const Text('تایید حذف روتین', style: TextStyle(fontWeight: FontWeight.bold)),
                 content: Text(
                   'آیا از حذف روتین «$title» اطمینان دارید؟ این عمل قابل بازگشت نیست.',
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                  style: const TextStyle(fontSize: 13),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
+                    child: const Text('لغو', style: TextStyle(color: Colors.grey)),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -548,7 +548,7 @@ class AssistantActionRegistry {
                       RitmoEvents.notifyRoutineChanged();
                       onComplete();
                     },
-                    child: const Text('تایید حذف', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red, fontWeight: FontWeight.bold)),
+                    child: const Text('تایید حذف', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -629,15 +629,15 @@ class AssistantActionRegistry {
             builder: (context) => Directionality(
               textDirection: TextDirection.rtl,
               child: AlertDialog(
-                title: const Text('تایید تکمیل گام هدف', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                title: const Text('تایید تکمیل گام هدف', style: TextStyle(fontWeight: FontWeight.bold)),
                 content: Text(
                   'آیا گام «$title» را تکمیل کرده‌اید؟',
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                  style: const TextStyle(fontSize: 13),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
+                    child: const Text('لغو', style: TextStyle(color: Colors.grey)),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -661,7 +661,7 @@ class AssistantActionRegistry {
 
                       onComplete();
                     },
-                    child: const Text('تایید', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                    child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -1127,7 +1127,7 @@ class AssistantActionRegistry {
                 backgroundColor: context.colors.bg,
                 content: Text(
                   'برنامه روز با موفقیت ثبت شد ⚡',
-                  style: TextStyle(fontFamily: 'Vazirmatn', color: context.colors.textPrimary),
+                  style: TextStyle(color: context.colors.textPrimary),
                 ),
                 action: SnackBarAction(
                   textColor: context.colors.goldAccent,

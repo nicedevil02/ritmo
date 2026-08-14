@@ -39,7 +39,6 @@ class SleepPatternsSection extends StatelessWidget {
                   Text(
                     '🌙 هنوز در حالِ یادگیریِ الگوی خوابتم',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: colors.cardTitle,
@@ -50,7 +49,6 @@ class SleepPatternsSection extends StatelessWidget {
                   Text(
                     'لطفاً حداقل خواب ۳ شب اخیر خود را ثبت کنید تا الگوهای نظم، بدهی خواب و بهترین زمان استراحت شما تحلیل شوند.',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: colors.textSecondary,
                     ),
@@ -82,7 +80,6 @@ class SleepPatternsSection extends StatelessWidget {
                   Text(
                     'نمره نظم و ثبات خواب شما',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: colors.cardTitle,
@@ -115,7 +112,6 @@ class SleepPatternsSection extends StatelessWidget {
                           Text(
                             _getConsistencyLabel(consistencyScore),
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 10,
                               color: colors.textSecondary,
                             ),
@@ -128,7 +124,6 @@ class SleepPatternsSection extends StatelessWidget {
                   Text(
                     'ثبات ساعت خواب و بیداری، ریتم شبانه‌روزی (Circadian Rhythm) را منظم نگه داشته و کیفیت انرژی روزانه را ارتقا می‌دهد.',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       color: colors.textSecondary,
                     ),
@@ -179,7 +174,6 @@ class SleepPatternsSection extends StatelessWidget {
                         Text(
                           'بدهی خواب انباشته',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: colors.cardTitle,
@@ -191,7 +185,6 @@ class SleepPatternsSection extends StatelessWidget {
                               ? '$sleepDebtMinutes دقیقه کمبود خواب'
                               : 'بدون بدهی خواب (عالی!)',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: sleepDebtMinutes > 0 ? colors.warning : colors.success,
@@ -201,7 +194,6 @@ class SleepPatternsSection extends StatelessWidget {
                         Text(
                           'کمبود خواب تجمعی نسبت به هدف خواب شما',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 10,
                             color: colors.textSecondary,
                           ),
@@ -229,7 +221,6 @@ class SleepPatternsSection extends StatelessWidget {
           Text(
             'یادداشت‌های شب‌های اخیر',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: colors.cardTitle,
@@ -280,7 +271,6 @@ class SleepPatternsSection extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       color: colors.cardSubtitle,
                     ),
@@ -289,7 +279,6 @@ class SleepPatternsSection extends StatelessWidget {
                   Text(
                     value,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: colors.cardTitle,
@@ -299,7 +288,6 @@ class SleepPatternsSection extends StatelessWidget {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 10,
                       color: colors.textSecondary,
                     ),

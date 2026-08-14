@@ -310,7 +310,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
       SnackBar(
         content: Text(
           'ساعت ${toPersianDigits('${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}')} روی همهٔ روزها اعمال شد ✓',
-          style: const TextStyle(fontFamily: _fontFa),
+          style: const TextStyle(),
         ),
         duration: const Duration(seconds: 2),
       ),
@@ -335,7 +335,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
         const SnackBar(
           content: Text(
             'حداقل یک روز در هفته را انتخاب کن',
-            style: TextStyle(fontFamily: _fontFa),
+            style: TextStyle(),
           ),
         ),
       );
@@ -370,7 +370,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
           SnackBar(
             content: Text(
               _isEditing ? 'برنامه با موفقیت ویرایش شد ✓' : 'برنامهٔ هفته با موفقیت ثبت شد 🎉',
-              style: const TextStyle(fontFamily: _fontFa),
+              style: const TextStyle(),
             ),
           ),
         );
@@ -381,7 +381,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('خطا در ذخیره برنامه: $e', style: const TextStyle(fontFamily: _fontFa)),
+            content: Text('خطا در ذخیره برنامه: $e', style: const TextStyle()),
           ),
         );
       }
@@ -404,7 +404,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('برنامه آرشیو شد 📥', style: TextStyle(fontFamily: _fontFa))),
+          const SnackBar(content: Text('برنامه آرشیو شد 📥', style: TextStyle())),
         );
         widget.onSaved?.call();
         Navigator.of(context).pop();
@@ -412,7 +412,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطا در آرشیو برنامه: $e', style: const TextStyle(fontFamily: _fontFa))),
+          SnackBar(content: Text('خطا در آرشیو برنامه: $e', style: const TextStyle())),
         );
       }
     } finally {
@@ -457,7 +457,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                       Text(
                         _isEditing ? 'ویرایش برنامهٔ حرکت' : 'افزودن به هفته',
                         style: TextStyle(
-                          fontFamily: _fontFa,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -467,7 +466,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                       Text(
                         _stepSubtitle(_currentStep),
                         style: TextStyle(
-                          fontFamily: _fontFa,
                           fontSize: 12,
                           color: colors.primary,
                           fontWeight: FontWeight.w700,
@@ -485,7 +483,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                     child: Text(
                       '${toPersianDigits((_currentStep + 1).toString())} از ۳',
                       style: TextStyle(
-                        fontFamily: _fontFa,
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: colors.primary,
@@ -577,7 +574,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                     Text(
                       'تمرکز عضلهٔ تمرین',
                       style: TextStyle(
-                        fontFamily: _fontFa,
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -587,7 +583,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                     Text(
                       '(اختیاری)',
                       style: TextStyle(
-                        fontFamily: _fontFa,
                         fontSize: 11,
                         color: colors.textSecondary,
                       ),
@@ -598,7 +593,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 Text(
                   'برای فیلتر هوشمند کتابخانهٔ حرکات در جلسات',
                   style: TextStyle(
-                    fontFamily: _fontFa,
                     fontSize: 11.5,
                     color: colors.textSecondary,
                   ),
@@ -644,7 +638,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: _fontFa,
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             color: isSelected ? colors.primary : colors.textPrimary,
@@ -667,7 +660,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
         Text(
           'روزهای تکرار در هفته:',
           style: TextStyle(
-            fontFamily: _fontFa,
             fontSize: 14,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -693,7 +685,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               Text(
                 'ساعت اختصاصی هر روز:',
                 style: TextStyle(
-                  fontFamily: _fontFa,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -709,7 +700,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                   label: Text(
                     'یکسان‌سازی ساعت',
                     style: TextStyle(
-                      fontFamily: _fontFa,
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
                       color: colors.primary,
@@ -730,7 +720,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
             child: Center(
               child: Text(
                 'برای تنظیم ساعت، حداقل یک روز را انتخاب کنید.',
-                style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 13),
+                style: TextStyle(color: colors.textSecondary, fontSize: 13),
               ),
             ),
           ),
@@ -769,7 +759,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
             child: Text(
               dayName,
               style: TextStyle(
-                fontFamily: _fontFa,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -793,7 +782,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                   Text(
                     timeFormatted,
                     style: TextStyle(
-                      fontFamily: _fontFa,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -838,7 +826,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                       Text(
                         'ارسال یادآوری قبل از حرکت',
                         style: TextStyle(
-                          fontFamily: _fontFa,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                           color: colors.textPrimary,
@@ -863,7 +850,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 Text(
                   'زمان یادآوری:',
                   style: TextStyle(
-                    fontFamily: _fontFa,
                     fontSize: 12,
                     color: colors.textSecondary,
                   ),
@@ -900,7 +886,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               Text(
                 'هدف هر جلسه (${kind.emoji} ${kind.titleFa}):',
                 style: TextStyle(
-                  fontFamily: _fontFa,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                   color: colors.textPrimary,
@@ -910,11 +895,10 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('مدت زمان هدف:', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary)),
+                  Text('مدت زمان هدف:', style: TextStyle(color: colors.textPrimary)),
                   Text(
                     '${toPersianDigits(_durationMinutes.toString())} دقیقه',
                     style: TextStyle(
-                      fontFamily: _fontFa,
                       fontWeight: FontWeight.bold,
                       color: colors.primary,
                       fontSize: 15,
@@ -935,10 +919,10 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('مسافت هدف:', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary)),
+                    Text('مسافت هدف:', style: TextStyle(color: colors.textPrimary)),
                     Text(
                       '${toPersianDigits(_distanceKm.toStringAsFixed(1))} کیلومتر',
-                      style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, color: colors.primary),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary),
                     ),
                   ],
                 ),
@@ -955,10 +939,10 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('تعداد طول (استخر ۲۵ متری):', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary)),
+                    Text('تعداد طول (استخر ۲۵ متری):', style: TextStyle(color: colors.textPrimary)),
                     Text(
                       '${toPersianDigits(_laps.toString())} طول (${toPersianDigits((_laps * 25).toString())} متر)',
-                      style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, color: colors.primary),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary),
                     ),
                   ],
                 ),
@@ -975,10 +959,10 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('ارتفاع صعود:', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary)),
+                    Text('ارتفاع صعود:', style: TextStyle(color: colors.textPrimary)),
                     Text(
                       '${toPersianDigits(_elevationMeters.round().toString())} متر',
-                      style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, color: colors.primary),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary),
                     ),
                   ],
                 ),
@@ -995,10 +979,10 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('تعداد گام:', style: TextStyle(fontFamily: _fontFa, color: colors.textPrimary)),
+                    Text('تعداد گام:', style: TextStyle(color: colors.textPrimary)),
                     Text(
                       '${toPersianDigits(_steps.toString())} گام',
-                      style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, color: colors.primary),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary),
                     ),
                   ],
                 ),
@@ -1022,7 +1006,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               icon: const Icon(CupertinoIcons.trash, size: 18),
               label: const Text(
                 'آرشیو و حذف این برنامه',
-                style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               onPressed: _archiveRoutine,
             ),
@@ -1035,12 +1019,11 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
   Widget _reminderChip(String label, int minutes, RitmoColors colors) {
     final isSelected = _reminderMinutes == minutes;
     return ChoiceChip(
-      label: Text(label, style: const TextStyle(fontFamily: _fontFa, fontSize: 12)),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
       selected: isSelected,
       selectedColor: colors.primary,
       backgroundColor: colors.surfaceSunken,
       labelStyle: TextStyle(
-        fontFamily: _fontFa,
         color: isSelected ? colors.onPrimary : colors.textPrimary,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
@@ -1080,7 +1063,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               child: Text(
                 'قبلی',
                 style: TextStyle(
-                  fontFamily: _fontFa,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
                 ),
@@ -1106,7 +1088,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                             const SnackBar(
                               content: Text(
                                 'لطفاً نوع ورزش را انتخاب کن',
-                                style: TextStyle(fontFamily: _fontFa),
+                                style: TextStyle(),
                               ),
                             ),
                           );
@@ -1117,7 +1099,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                             const SnackBar(
                               content: Text(
                                 'حداقل یک روز در هفته را انتخاب کن',
-                                style: TextStyle(fontFamily: _fontFa),
+                                style: TextStyle(),
                               ),
                             ),
                           );
@@ -1139,7 +1121,6 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                           ? 'ادامه'
                           : (_isEditing ? 'ذخیره تغییرات' : 'ثبت برنامه در هفته'),
                       style: const TextStyle(
-                        fontFamily: _fontFa,
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),

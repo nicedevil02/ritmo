@@ -105,7 +105,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Text(
                   isPremium ? 'اشتراک پرمیوم ریتمو پلاس 💎' : 'ریتمو پایه (نسخه رایگان) ⚡',
                   style: const TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -117,7 +116,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ? 'دسترسی کامل به تمام امکانات هوشمند اپلیکیشن'
                       : 'سقف ۴ ماژول، ۷ روتین و ۳ هدف همزمان',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11,
                     color: Colors.white.withValues(alpha: 0.7),
                   ),
@@ -140,7 +138,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Text(
               isPremium ? 'مدیریت' : 'ارتقا 💎',
               style: const TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
@@ -293,8 +290,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: colors.primary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -344,7 +340,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                       color: colors.primary,
-                      fontFamily: 'Vazirmatn',
                       letterSpacing: 0.2,
                     ),
                   ),
@@ -414,14 +409,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('۷ شب لاگ خواب نمونه ثبت شد (دیباگ)', style: TextStyle(fontFamily: 'Vazirmatn')),
+                          content: Text('۷ شب لاگ خواب نمونه ثبت شد (دیباگ)', style: TextStyle()),
                           backgroundColor: Color(0xff8B5CF6),
                         ),
                       );
                     }
                   },
                   icon: const Icon(Icons.bug_report, size: 18, color: Color(0xff8B5CF6)),
-                  label: const Text('تولید ۷ شب لاگ خواب تستی (دیباگ)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Color(0xff8B5CF6))),
+                  label: const Text('تولید ۷ شب لاگ خواب تستی (دیباگ)', style: TextStyle(fontSize: 12, color: Color(0xff8B5CF6))),
                 ),
               ),
             ],
@@ -441,8 +436,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -450,8 +444,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           color: colors.textTertiary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -550,8 +543,7 @@ class _Ios26SettingsTileState extends State<_Ios26SettingsTile> {
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -560,7 +552,6 @@ class _Ios26SettingsTileState extends State<_Ios26SettingsTile> {
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                       color: colors.textSecondary,
-                      fontFamily: 'Vazirmatn',
                       height: 1.35,
                     ),
                     maxLines: 2,
@@ -588,8 +579,7 @@ class _Ios26SettingsTileState extends State<_Ios26SettingsTile> {
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: widget.gradient.first,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ),
             const SizedBox(width: 6),

@@ -40,8 +40,7 @@ class StepFirstRoutine extends StatelessWidget {
             fontSize: 18,
             fontWeight: FontWeight.w900,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 4),
         Text(
@@ -50,8 +49,7 @@ class StepFirstRoutine extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             color: colors.textSecondary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 16),
         Column(
@@ -79,7 +77,6 @@ class StepFirstRoutine extends StatelessWidget {
                 title: Text(
                   template.titleFa,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     color: colors.textPrimary,
@@ -88,7 +85,6 @@ class StepFirstRoutine extends StatelessWidget {
                 subtitle: Text(
                   _toPersianDigits('زمان: ${template.defaultTime} · مدت: ${template.durationMinutes} دقیقه'),
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 10,
                     color: colors.textSecondary,
                   ),

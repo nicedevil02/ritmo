@@ -29,8 +29,7 @@ class StepSimpleName extends StatelessWidget {
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -39,8 +38,7 @@ class StepSimpleName extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               color: colors.textSecondary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -52,15 +50,13 @@ class StepSimpleName extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               color: colors.textPrimary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
             textAlign: TextAlign.center,
             decoration: InputDecoration(
               hintText: 'نام یا نام‌مستعار',
               hintStyle: TextStyle(
                 color: colors.textSecondary.withValues(alpha: 0.5),
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
               filled: true,
               fillColor: colors.surface,
               border: OutlineInputBorder(
@@ -84,8 +80,7 @@ class StepSimpleName extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ),
         ],

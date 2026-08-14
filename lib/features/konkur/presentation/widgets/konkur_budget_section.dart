@@ -93,32 +93,32 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('افزودن درس جدید', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          title: const Text('افزودن درس جدید', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: _subjectNameController,
-                decoration: const InputDecoration(labelText: 'نام درس', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                decoration: const InputDecoration(labelText: 'نام درس', labelStyle: TextStyle()),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _subjectFactorController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'ضریب درس در کنکور', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                decoration: const InputDecoration(labelText: 'ضریب درس در کنکور', labelStyle: TextStyle()),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _subjectQuestionsController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'تعداد کل سؤالات در کنکور', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                decoration: const InputDecoration(labelText: 'تعداد کل سؤالات در کنکور', labelStyle: TextStyle()),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
@@ -141,7 +141,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                 widget.onRefresh();
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('✓ ذخیره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('✓ ذخیره', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -159,25 +159,25 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('ویرایش درس', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          title: const Text('ویرایش درس', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: _subjectNameController,
-                decoration: const InputDecoration(labelText: 'نام درس', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                decoration: const InputDecoration(labelText: 'نام درس', labelStyle: TextStyle()),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _subjectFactorController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'ضریب درس در کنکور', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                decoration: const InputDecoration(labelText: 'ضریب درس در کنکور', labelStyle: TextStyle()),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _subjectQuestionsController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'تعداد کل سؤالات در کنکور', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                decoration: const InputDecoration(labelText: 'تعداد کل سؤالات در کنکور', labelStyle: TextStyle()),
               ),
             ],
           ),
@@ -188,11 +188,11 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (dialogCtx) => AlertDialog(
-                    title: const Text('حذف درس؟', style: TextStyle(fontFamily: 'Vazirmatn')),
-                    content: Text('آیا مطمئن هستید که می‌خواهید درس "${sub.name}" و تمام مباحث زیرمجموعه آن را حذف کنید؟ این عمل غیرقابل بازگشت است.', style: const TextStyle(fontFamily: 'Vazirmatn')),
+                    title: const Text('حذف درس؟', style: TextStyle()),
+                    content: Text('آیا مطمئن هستید که می‌خواهید درس "${sub.name}" و تمام مباحث زیرمجموعه آن را حذف کنید؟ این عمل غیرقابل بازگشت است.', style: const TextStyle()),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn'))),
-                      TextButton(onPressed: () => Navigator.pop(dialogCtx, true), child: const Text('حذف کاملا', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red))),
+                      TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('انصراف', style: TextStyle())),
+                      TextButton(onPressed: () => Navigator.pop(dialogCtx, true), child: const Text('حذف کاملا', style: TextStyle(color: Colors.red))),
                     ],
                   ),
                 );
@@ -208,7 +208,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             const Spacer(),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
@@ -235,7 +235,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                 widget.onRefresh();
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('✓ بروزرسانی', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('✓ بروزرسانی', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -256,47 +256,47 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text('افزودن مبحث جدید به ${sub.name}', style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 15)),
+          title: Text('افزودن مبحث جدید به ${sub.name}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: _topicNameController,
-                  decoration: const InputDecoration(labelText: 'نام مبحث', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                  decoration: const InputDecoration(labelText: 'نام مبحث', labelStyle: TextStyle()),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _topicQuestionsController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'تعداد تست احتمالی در کنکور', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                  decoration: const InputDecoration(labelText: 'تعداد تست احتمالی در کنکور', labelStyle: TextStyle()),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _topicTargetMinutesController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'زمان هدف مطالعه (دقیقه)', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                  decoration: const InputDecoration(labelText: 'زمان هدف مطالعه (دقیقه)', labelStyle: TextStyle()),
                 ),
                 const SizedBox(height: 12),
                 ExpansionTile(
-                  title: const Text('تنظیم هدف فازبندی (اختیاری)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold)),
+                  title: const Text('تنظیم هدف فازبندی (اختیاری)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   children: [
                     TextField(
                       controller: _topicConceptTargetController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'زمان هدف مطالعه مفهومی (دقیقه — اختیاری)', hintText: '0 = بدون هدف مشخص', labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                      decoration: const InputDecoration(labelText: 'زمان هدف مطالعه مفهومی (دقیقه — اختیاری)', hintText: '0 = بدون هدف مشخص', labelStyle: TextStyle(fontSize: 11)),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _topicPracticeTargetController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'زمان هدف تمرین/تست (دقیقه — اختیاری)', labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                      decoration: const InputDecoration(labelText: 'زمان هدف تمرین/تست (دقیقه — اختیاری)', labelStyle: TextStyle(fontSize: 11)),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _topicReviewTargetController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'زمان هدف مرور (دقیقه — اختیاری)', labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                      decoration: const InputDecoration(labelText: 'زمان هدف مرور (دقیقه — اختیاری)', labelStyle: TextStyle(fontSize: 11)),
                     ),
                   ],
                 ),
@@ -306,7 +306,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
@@ -335,7 +335,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                 widget.onRefresh();
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('✓ ذخیره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('✓ ذخیره', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -356,47 +356,47 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text('ویرایش مبحث (${topic.name})', style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14)),
+          title: Text('ویرایش مبحث (${topic.name})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: _topicNameController,
-                  decoration: const InputDecoration(labelText: 'نام مبحث', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                  decoration: const InputDecoration(labelText: 'نام مبحث', labelStyle: TextStyle()),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _topicQuestionsController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'تعداد تست احتمالی در کنکور', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                  decoration: const InputDecoration(labelText: 'تعداد تست احتمالی در کنکور', labelStyle: TextStyle()),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _topicTargetMinutesController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'زمان هدف مطالعه (دقیقه)', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                  decoration: const InputDecoration(labelText: 'زمان هدف مطالعه (دقیقه)', labelStyle: TextStyle()),
                 ),
                 const SizedBox(height: 12),
                 ExpansionTile(
-                  title: const Text('تنظیم هدف فازبندی (اختیاری)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold)),
+                  title: const Text('تنظیم هدف فازبندی (اختیاری)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   children: [
                     TextField(
                       controller: _topicConceptTargetController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'زمان هدف مطالعه مفهومی (دقیقه — اختیاری)', hintText: '0 = بدون هدف مشخص', labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                      decoration: const InputDecoration(labelText: 'زمان هدف مطالعه مفهومی (دقیقه — اختیاری)', hintText: '0 = بدون هدف مشخص', labelStyle: TextStyle(fontSize: 11)),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _topicPracticeTargetController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'زمان هدف تمرین/تست (دقیقه — اختیاری)', labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                      decoration: const InputDecoration(labelText: 'زمان هدف تمرین/تست (دقیقه — اختیاری)', labelStyle: TextStyle(fontSize: 11)),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _topicReviewTargetController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'زمان هدف مرور (دقیقه — اختیاری)', labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                      decoration: const InputDecoration(labelText: 'زمان هدف مرور (دقیقه — اختیاری)', labelStyle: TextStyle(fontSize: 11)),
                     ),
                   ],
                 ),
@@ -410,11 +410,11 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (dialogCtx) => AlertDialog(
-                    title: const Text('حذف مبحث؟', style: TextStyle(fontFamily: 'Vazirmatn')),
-                    content: Text('آیا مطمئن هستید که می‌خواهید مبحث "${topic.name}" را حذف کنید؟', style: const TextStyle(fontFamily: 'Vazirmatn')),
+                    title: const Text('حذف مبحث؟', style: TextStyle()),
+                    content: Text('آیا مطمئن هستید که می‌خواهید مبحث "${topic.name}" را حذف کنید؟', style: const TextStyle()),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn'))),
-                      TextButton(onPressed: () => Navigator.pop(dialogCtx, true), child: const Text('حذف مبحث', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red))),
+                      TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('انصراف', style: TextStyle())),
+                      TextButton(onPressed: () => Navigator.pop(dialogCtx, true), child: const Text('حذف مبحث', style: TextStyle(color: Colors.red))),
                     ],
                   ),
                 );
@@ -428,7 +428,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             const Spacer(),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
@@ -469,7 +469,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                 widget.onRefresh();
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('✓ بروزرسانی', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('✓ بروزرسانی', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -517,7 +517,6 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               Text(
                 'سرفصل‌ها و مباحث درس‌ها:',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -528,7 +527,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                 icon: const Icon(Icons.add, size: 16, color: Color(0xFF8B5CF6)),
                 label: const Text(
                   'افزودن درس',
-                  style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold, fontSize: 12),
+                  style: TextStyle(color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold, fontSize: 12),
                 ),
               ),
             ],
@@ -564,7 +563,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
       child: Row(
         children: [
           FilterChip(
-            label: const Text('همه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+            label: const Text('همه', style: TextStyle(fontSize: 11)),
             selected: _selectedMasteryFilter == null,
             onSelected: (_) => setState(() => _selectedMasteryFilter = null),
           ),
@@ -574,7 +573,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               padding: const EdgeInsets.only(left: 6),
               child: FilterChip(
                 avatar: Text(lvl.emoji),
-                label: Text(lvl.label, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                label: Text(lvl.label, style: const TextStyle(fontSize: 11)),
                 selected: _selectedMasteryFilter == lvl,
                 onSelected: (sel) => setState(() => _selectedMasteryFilter = sel ? lvl : null),
               ),
@@ -608,12 +607,11 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             children: [
               const Text(
                 'پوشش بودجه‌بندی کنکور',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
               Text(
                 '${toPersianDigits(percent)}٪ مباحث خوانده شده',
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF8B5CF6),
@@ -637,11 +635,11 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             children: [
               Text(
                 'زمان مطالعه: ${toPersianDigits(completedHours)} از ${toPersianDigits(targetHours)} ساعت',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 10, color: colors.textSecondary, fontWeight: FontWeight.bold),
               ),
               Text(
                 'مسلط: ${toPersianDigits(masteredCount)} از ${toPersianDigits(widget.topics.length)} مبحث',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 10, color: colors.textSecondary, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -684,7 +682,6 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               child: Text(
                 subject.name,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -699,13 +696,12 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             children: [
               Text(
                 'ضریب: ${toPersianDigits(subject.importanceFactor)}',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+                style: TextStyle(fontSize: 11, color: colors.textSecondary),
               ),
               const SizedBox(width: 12),
               Text(
                 'آمادگی درس: ${toPersianDigits(percent)}٪',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   color: percent >= 70
@@ -735,7 +731,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 'مبحثی برای این درس ثبت نشده است.',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                style: TextStyle(fontSize: 12, color: colors.textSecondary),
               ),
             )
           else ...[
@@ -758,7 +754,6 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                           Text(
                             entry.key,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: colors.textSecondary,
@@ -792,7 +787,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               icon: const Icon(Icons.add_circle_outline, size: 18, color: Color(0xFF8B5CF6)),
               label: const Text(
                 'افزودن مبحث',
-                style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold, fontSize: 12),
+                style: TextStyle(color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ),
           ),
@@ -823,7 +818,6 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                       child: Text(
                         topic.name,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -840,7 +834,6 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                         child: Text(
                           '≈ ${toPersianDigits(topic.examQuestionCount)} تست',
                           style: const TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 10,
                             color: Color(0xFF8B5CF6),
                             fontWeight: FontWeight.bold,
@@ -866,7 +859,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                     const SizedBox(width: 12),
                     Text(
                       '${toPersianDigits(topic.studyCompletedMinutes)} / ${toPersianDigits(topic.studyTargetMinutes)} د.',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary),
+                      style: TextStyle(fontSize: 10, color: colors.textSecondary),
                     ),
                   ],
                 ),
@@ -882,7 +875,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               avatar: Text(topic.masteryLevel.emoji),
               label: Text(
                 topic.masteryLevel.label,
-                style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 10),
+                style: const TextStyle(fontSize: 10),
               ),
               backgroundColor: colors.bg,
               side: BorderSide(color: colors.border),
@@ -909,7 +902,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                   children: [
                     Icon(Icons.menu_book, size: 16, color: Colors.blue),
                     SizedBox(width: 8),
-                    Text('شروع مطالعه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                    Text('شروع مطالعه', style: TextStyle(fontSize: 12)),
                   ],
                 ),
               ),
@@ -919,7 +912,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                   children: [
                     Icon(Icons.edit, size: 16, color: Colors.green),
                     SizedBox(width: 8),
-                    Text('تست‌زنی و کارنامه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                    Text('تست‌زنی و کارنامه', style: TextStyle(fontSize: 12)),
                   ],
                 ),
               ),
@@ -929,7 +922,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                   children: [
                     Icon(Icons.edit_note, size: 16, color: Colors.grey),
                     SizedBox(width: 8),
-                    Text('ویرایش مبحث', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                    Text('ویرایش مبحث', style: TextStyle(fontSize: 12)),
                   ],
                 ),
               ),
@@ -975,7 +968,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text('مفهومی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 9, color: Colors.grey)),
+                const Text('مفهومی', style: TextStyle(fontSize: 9, color: Colors.grey)),
               ],
             ),
           ),
@@ -994,7 +987,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text('تمرین', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 9, color: Colors.grey)),
+                const Text('تمرین', style: TextStyle(fontSize: 9, color: Colors.grey)),
               ],
             ),
           ),
@@ -1013,7 +1006,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text('مرور', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 9, color: Colors.grey)),
+                const Text('مرور', style: TextStyle(fontSize: 9, color: Colors.grey)),
               ],
             ),
           ),
@@ -1039,7 +1032,6 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             Text(
               'هیچ درسی ثبت نشده است. دکمه «افزودن درس» را لمس کنید.',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: Colors.grey,
               ),

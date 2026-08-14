@@ -138,7 +138,6 @@ class AiDayPlannerLauncher {
                 Text(
                   'برنامه‌ریز هوشمند',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -153,7 +152,6 @@ class AiDayPlannerLauncher {
                 Text(
                   'روزت را در چند جمله تعریف کن؛ ریتمو با توجه به برنامه‌های موجود، چیدمان پیشنهادی را می‌سازد.',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12.5,
                     height: 1.6,
                     color: colors.textSecondary,
@@ -166,14 +164,12 @@ class AiDayPlannerLauncher {
                   maxLines: 3,
                   textAlign: TextAlign.right,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     color: colors.textPrimary,
                   ),
                   decoration: InputDecoration(
                     hintText: 'مثلاً: تا ۲ سرکارم، بعدش باشگاه، شب دو ساعت مطالعه',
                     hintStyle: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: colors.textTertiary,
                     ),
@@ -202,7 +198,6 @@ class AiDayPlannerLauncher {
                 child: Text(
                   'انصراف',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     color: colors.textSecondary,
                   ),
                 ),
@@ -219,7 +214,6 @@ class AiDayPlannerLauncher {
                 child: const Text(
                   'بچین',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -263,7 +257,6 @@ class _ProgressDialog extends StatelessWidget {
                   builder: (_, value, _) => Text(
                     value,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12.5,
                       height: 1.6,
                       color: colors.textPrimary,

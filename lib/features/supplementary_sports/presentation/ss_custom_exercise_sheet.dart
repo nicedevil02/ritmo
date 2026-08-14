@@ -69,7 +69,6 @@ class _SSCustomExerciseSheetState extends State<SSCustomExerciseSheet> {
               Text(
                 'ایجاد حرکت ورزشی سفارشی 🏋️',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,

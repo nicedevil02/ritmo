@@ -221,7 +221,7 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
     return showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('شماره تماس بیمارستان یا پزشک', style: TextStyle(fontFamily: 'Vazirmatn')),
+        title: const Text('شماره تماس بیمارستان یا پزشک', style: TextStyle()),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.phone,
@@ -233,11 +233,11 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn')),
+            child: const Text('لغو', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('ذخیره و تماس', style: TextStyle(fontFamily: 'Vazirmatn')),
+            child: const Text('ذخیره و تماس', style: TextStyle()),
           ),
         ],
       ),
@@ -248,20 +248,20 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
     final res = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('خروج از حالت زایمان؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+        title: const Text('خروج از حالت زایمان؟', style: TextStyle()),
         content: const Text(
           'آیا از خروج از حالت ثبت انقباض اطمینان دارید؟ داده‌های ثبت شده محفوظ می‌مانند.',
-          style: TextStyle(fontFamily: 'Vazirmatn'),
+          style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+            child: const Text('انصراف', style: TextStyle()),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('خروج', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+            child: const Text('خروج', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -291,7 +291,7 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
           ),
           title: const Text(
             'حالت زایمان (سنجش انقباضات)',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, color: Colors.white),
+            style: TextStyle(fontSize: 18, color: Colors.white),
           ),
           centerTitle: true,
         ),
@@ -314,7 +314,7 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                       const Expanded(
                         child: Text(
                           'الگوی ۵-۱-۱ کامل شد — با بیمارستان تماس بگیرید.',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
                         ),
                       ),
                       ElevatedButton.icon(
@@ -323,7 +323,7 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                           foregroundColor: Colors.red.shade900,
                         ),
                         icon: const Icon(CupertinoIcons.phone_fill, size: 16),
-                        label: const Text('تماس', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                        label: const Text('تماس', style: TextStyle(fontWeight: FontWeight.bold)),
                         onPressed: _handleHospitalCall,
                       ),
                     ],
@@ -349,7 +349,6 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
               Text(
                 _formatMmSs(_elapsedSeconds),
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 54,
                   fontWeight: FontWeight.bold,
                   color: _isContracting ? Colors.pinkAccent : Colors.white70,
@@ -372,7 +371,7 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                       color: _isContracting ? Colors.pinkAccent : const Color(0xFF2C2C3E),
                       boxShadow: [
                         BoxShadow(
-                          color: _isContracting ? Colors.pinkAccent.withOpacity(0.5) : Colors.black45,
+                          color: _isContracting ? Colors.pinkAccent.withValues(alpha: 0.5) : Colors.black45,
                           blurRadius: _isContracting ? 30 : 10,
                           spreadRadius: _isContracting ? 8 : 2,
                         ),
@@ -391,7 +390,6 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                           Text(
                             _isContracting ? 'انقباض تمام شد' : 'انقباض شروع شد',
                             style: const TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -419,7 +417,7 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                   children: [
                     const Text(
                       'تاریخچه انقباضات اخیر',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 13),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 13),
                     ),
                     const SizedBox(height: 8),
                     Expanded(
@@ -427,7 +425,7 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                           ? const Center(
                               child: Text(
                                 'هنوز انقباضی ثبت نشده است',
-                                style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white38, fontSize: 12),
+                                style: TextStyle(color: Colors.white38, fontSize: 12),
                               ),
                             )
                           : ListView.builder(
@@ -445,15 +443,15 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                                     children: [
                                       Text(
                                         'انقباض #${_contractions.length - idx}',
-                                        style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontSize: 13),
+                                        style: const TextStyle(color: Colors.white, fontSize: 13),
                                       ),
                                       Text(
                                         'مدت: $dur',
-                                        style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.pinkAccent, fontSize: 13),
+                                        style: const TextStyle(color: Colors.pinkAccent, fontSize: 13),
                                       ),
                                       Text(
                                         intervalText,
-                                        style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54, fontSize: 12),
+                                        style: const TextStyle(color: Colors.white54, fontSize: 12),
                                       ),
                                     ],
                                   ),
@@ -490,7 +488,6 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
         Text(
           label,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 11,
             color: isActive ? Colors.white : Colors.white38,
           ),

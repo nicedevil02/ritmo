@@ -95,7 +95,7 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
           SnackBar(
             content: Text(
               '${toPersianDigits(selectedSuggestions.length.toString())} برنامه به هفته اضافه شد 🎉',
-              style: const TextStyle(fontFamily: _fontFa),
+              style: const TextStyle(),
             ),
           ),
         );
@@ -108,7 +108,7 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
           SnackBar(
             content: Text(
               'خطا در چیدن برنامه‌ها: $e',
-              style: const TextStyle(fontFamily: _fontFa),
+              style: const TextStyle(),
             ),
           ),
         );
@@ -154,7 +154,6 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
                       Text(
                         'پر کردن هوشمند هفته ✨',
                         style: TextStyle(
-                          fontFamily: _fontFa,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -164,7 +163,6 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
                       Text(
                         'پیشنهاد واقعی، بدون برنامهٔ اجباری',
                         style: TextStyle(
-                          fontFamily: _fontFa,
                           fontSize: 12,
                           color: colors.textSecondary,
                         ),
@@ -233,7 +231,6 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
                                   Text(
                                     s.kind.titleFa,
                                     style: TextStyle(
-                                      fontFamily: _fontFa,
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
                                       color: colors.textPrimary,
@@ -243,7 +240,6 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
                                   Text(
                                     '$dayName · ساعت $timeStr (${toPersianDigits(s.suggestedMinutes.toString())} دقیقه)',
                                     style: TextStyle(
-                                      fontFamily: _fontFa,
                                       fontSize: 12,
                                       color: colors.primary,
                                       fontWeight: FontWeight.w600,
@@ -274,7 +270,6 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
                               child: Text(
                                 'ویرایش',
                                 style: TextStyle(
-                                  fontFamily: _fontFa,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   color: colors.textSecondary,
@@ -293,7 +288,6 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
                           child: Text(
                             s.reasonFa,
                             style: TextStyle(
-                              fontFamily: _fontFa,
                               fontSize: 11.5,
                               color: colors.textSecondary,
                               height: 1.4,
@@ -338,7 +332,6 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
                               ? 'حداقل یک پیشنهاد را انتخاب کن'
                               : 'چیدن ${_selectedIndices.length.toPersianDigits()} جلسه در هفته',
                           style: const TextStyle(
-                            fontFamily: _fontFa,
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                           ),

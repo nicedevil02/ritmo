@@ -104,7 +104,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
             label: Text(
               'ثبت تجربه جدید',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
                 color: colors.onPrimary,
@@ -158,8 +157,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                             fontSize: 18.5,
                             fontWeight: FontWeight.w900,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),
@@ -262,7 +260,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                                             Text(
                                               'همه آموزه‌ها (${PersianDigits.convert(filtered.length.toString())})',
                                               style: TextStyle(
-                                                fontFamily: 'Vazirmatn',
                                                 fontSize: 13.5,
                                                 fontWeight: FontWeight.w800,
                                                 color: colors.textPrimary,
@@ -328,7 +325,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 11.5,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             color: isSelected ? insightsColor : colors.textSecondary,
@@ -386,7 +382,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                     Text(
                       'درس برگزیده • ${exp.category.labelFa}',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: insightsColor,
@@ -414,7 +409,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
           Text(
             '« ${exp.lesson} »',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 16,
               fontWeight: FontWeight.w900,
               color: colors.textPrimary,
@@ -428,7 +422,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: colors.textSecondary.withValues(alpha: 0.8),
                 height: 1.4,
@@ -505,7 +498,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                         Text(
                           exp.category.labelFa,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 10.5,
                             fontWeight: FontWeight.bold,
                             color: insightsColor,
@@ -546,7 +538,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
               Text(
                 '« ${exp.lesson} »',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: colors.textPrimary,
@@ -561,7 +552,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11.5,
                     color: colors.textSecondary.withValues(alpha: 0.75),
                     height: 1.35,
@@ -577,7 +567,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                   Text(
                     'مرور شده: ${PersianDigits.convert(exp.showCount.toString())} بار',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 10.5,
                       color: colors.textTertiary,
                     ),
@@ -589,7 +578,6 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                       Text(
                         '${PersianDigits.convert(exp.acknowledgedCount.toString())} تایید',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 10.5,
                           fontWeight: FontWeight.bold,
                           color: colors.success,

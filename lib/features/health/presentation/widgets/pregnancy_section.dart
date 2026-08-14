@@ -283,20 +283,20 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: context.colors.card,
-          title: const Text('پایان دوره بارداری', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          title: const Text('پایان دوره بارداری', style: TextStyle(fontWeight: FontWeight.bold)),
           content: const Text(
             'آیا مطمئن هستید که می‌خواهید پایش دوره بارداری فعلی را پایان دهید؟ اطلاعات این دوره حفظ می‌شود اما دیگر در این صفحه نمایش داده نمی‌شود.',
-            style: TextStyle(fontFamily: 'Vazirmatn'),
+            style: TextStyle(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(backgroundColor: context.colors.medicalRed),
-              child: const Text('تایید و پایان', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('تایید و پایان', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -610,7 +610,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('علائم و مکمل‌های روز با موفقیت ثبت شدند.', style: TextStyle(fontFamily: 'Vazirmatn'))),
+        const SnackBar(content: Text('علائم و مکمل‌های روز با موفقیت ثبت شدند.', style: TextStyle())),
       );
 
       await _checkVisibilityAndLoad();
@@ -649,7 +649,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
                 TextButton.icon(
                   onPressed: _endTracker,
                   icon: Icon(Icons.power_settings_new, color: colors.medicalRed, size: 16),
-                  label: Text('پایان بارداری', style: TextStyle(color: colors.medicalRed, fontSize: 12, fontFamily: 'Vazirmatn')),
+                  label: Text('پایان بارداری', style: TextStyle(color: colors.medicalRed, fontSize: 12)),
                 ),
             ],
           ),
@@ -680,8 +680,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
                                 color: colors.medicalRed,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ),
                         ],
@@ -689,7 +688,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
                       const SizedBox(height: 6),
                       Text(
                         'این برنامه یک ابزار پزشکی نیست و جایگزین نظر پزشک متخصص نمی‌شود.',
-                        style: TextStyle(color: colors.textSecondary, fontSize: 10, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(color: colors.textSecondary, fontSize: 10),
                       ),
                     ],
                   ),
@@ -739,7 +738,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
           // Medical Disclaimer (PREG-29)
           Text(
             'این برنامه یک ابزار پزشکی نیست و جایگزین نظر پزشک متخصص نمی‌شود. در هر وضعیت نگران‌کننده با پزشک یا ماما تماس بگیرید.',
-            style: TextStyle(fontSize: 10, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+            style: TextStyle(fontSize: 10, color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -783,7 +782,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
                 _hasSelectedLmp
                     ? toPersianDigits('LMP: ${jalaliLmp.year}/${jalaliLmp.month.toString().padLeft(2, "0")}/${jalaliLmp.day.toString().padLeft(2, "0")}')
                     : 'انتخاب تاریخ LMP',
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
               ),
               style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
             ),
@@ -793,7 +792,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
               style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
               child: _isStarting
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('شروع پایش بارداری', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+                  : const Text('شروع پایش بارداری', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -968,7 +967,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
                     ElevatedButton(
                       onPressed: _startKickSession,
                       style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-                      child: const Text('شروع شمارش حرکات جنین', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+                      child: const Text('شروع شمارش حرکات جنین', style: TextStyle(color: Colors.white)),
                     ),
                   ] else ...[
                     Text(
@@ -990,13 +989,13 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
                           child: ElevatedButton.icon(
                             onPressed: _recordKick,
                             icon: const Icon(Icons.add, color: Colors.white),
-                            label: const Text('ثبت حرکت / لگد', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+                            label: const Text('ثبت حرکت / لگد', style: TextStyle(color: Colors.white)),
                             style: ElevatedButton.styleFrom(backgroundColor: colors.success),
                           ),
                         ),
                         OutlinedButton(
                           onPressed: _saveKickSession,
-                          child: const Text('پایان و ذخیره', style: TextStyle(fontFamily: 'Vazirmatn')),
+                          child: const Text('پایان و ذخیره', style: TextStyle()),
                         ),
                       ],
                     ),
@@ -1104,7 +1103,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
                       ),
                       child: Text(
                         _isTimingContraction ? 'پایان انقباض' : 'شروع انقباض',
-                        style: const TextStyle(color: Colors.white, fontFamily: 'Vazirmatn'),
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
@@ -1188,9 +1187,9 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
                 value: _symptomSeverity,
                 dropdownColor: colors.card,
                 items: const [
-                  DropdownMenuItem(value: 'MILD', child: Text('خفیف', style: TextStyle(fontFamily: 'Vazirmatn'))),
-                  DropdownMenuItem(value: 'MODERATE', child: Text('متوسط', style: TextStyle(fontFamily: 'Vazirmatn'))),
-                  DropdownMenuItem(value: 'SEVERE', child: Text('شدید', style: TextStyle(fontFamily: 'Vazirmatn'))),
+                  DropdownMenuItem(value: 'MILD', child: Text('خفیف', style: TextStyle())),
+                  DropdownMenuItem(value: 'MODERATE', child: Text('متوسط', style: TextStyle())),
+                  DropdownMenuItem(value: 'SEVERE', child: Text('شدید', style: TextStyle())),
                 ],
                 onChanged: (val) {
                   if (val != null) {
@@ -1220,7 +1219,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
           ElevatedButton(
             onPressed: _saveSymptomsAndSupplements,
             style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-            child: const Text('ثبت علائم و مکمل‌های امروز', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+            child: const Text('ثبت علائم و مکمل‌های امروز', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1232,7 +1231,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
     final isSelected = _selectedSymptoms[key] ?? false;
 
     return FilterChip(
-      label: Text(label, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: isSelected ? Colors.white : colors.textPrimary)),
+      label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : colors.textPrimary)),
       selected: isSelected,
       selectedColor: colors.primary,
       backgroundColor: colors.card,
@@ -1249,7 +1248,7 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
     final isSelected = _selectedSupplements[key] ?? false;
 
     return FilterChip(
-      label: Text(label, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: isSelected ? Colors.white : colors.textPrimary)),
+      label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : colors.textPrimary)),
       selected: isSelected,
       selectedColor: colors.success,
       backgroundColor: colors.card,

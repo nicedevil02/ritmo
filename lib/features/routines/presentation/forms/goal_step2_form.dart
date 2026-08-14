@@ -24,7 +24,7 @@ class _GoalStep2FormState extends State<GoalStep2Form> {
         children: [
           const Text(
             'بازه زمانی هدف (SMART)',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
           const SizedBox(height: 8),
           Row(
@@ -42,7 +42,7 @@ class _GoalStep2FormState extends State<GoalStep2Form> {
             children: [
               const Text(
                 'تاریخ اتمام هدف',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               TextButton(
                 onPressed: () async {
@@ -59,7 +59,7 @@ class _GoalStep2FormState extends State<GoalStep2Form> {
                 },
                 child: Text(
                   '${controller.goalTargetDate.year}/${controller.goalTargetDate.month}/${controller.goalTargetDate.day}',
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -70,7 +70,7 @@ class _GoalStep2FormState extends State<GoalStep2Form> {
             children: [
               const Text(
                 'تعریف مراحل (Steps)',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               IconButton(
                 onPressed: () {
@@ -93,7 +93,7 @@ class _GoalStep2FormState extends State<GoalStep2Form> {
                   children: [
                     Expanded(
                       child: TextField(
-                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                        style: const TextStyle(fontSize: 13),
                         decoration: InputDecoration(
                           hintText: 'گام ${idx + 1}',
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -130,7 +130,7 @@ class _GoalStep2FormState extends State<GoalStep2Form> {
     final controller = widget.controller;
     final sel = controller.goalType == type;
     return ChoiceChip(
-      label: Text(label, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
       selected: sel,
       selectedColor: Colors.deepOrange,
       labelStyle: TextStyle(color: sel ? Colors.white : Colors.black),

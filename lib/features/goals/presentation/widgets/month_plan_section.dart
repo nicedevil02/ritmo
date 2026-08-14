@@ -26,13 +26,13 @@ class MonthPlanSection extends StatelessWidget {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: const Text('افزودن به لیست «عمداً انجام نمی‌دهم»', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16)),
+          title: const Text('افزودن به لیست «عمداً انجام نمی‌دهم»', style: TextStyle(fontSize: 16)),
           content: TextField(
             controller: textController,
             autofocus: true,
             decoration: const InputDecoration(
               hintText: 'مثلاً: پروژه فرعی، آزمون‌های آزمایشی اضافی...',
-              hintStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+              hintStyle: TextStyle(fontSize: 12),
             ),
           ),
           actions: [
@@ -115,7 +115,6 @@ class MonthPlanSection extends StatelessWidget {
                     Text(
                       'واقعیت‌های قطعی این ماه',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -128,7 +127,6 @@ class MonthPlanSection extends StatelessWidget {
                   Text(
                     'سررسید یا رویداد قفل‌شده‌ای برای این ماه ثبت نشده است.',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       color: colors.textSecondary,
                     ),
@@ -155,7 +153,6 @@ class MonthPlanSection extends StatelessWidget {
                               child: Text(
                                 title,
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 13,
                                   color: colors.textPrimary,
                                 ),
@@ -189,7 +186,6 @@ class MonthPlanSection extends StatelessWidget {
                     Text(
                       'تمرکزهای اصلی ماه (حداکثر ۳ مورد)',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -205,7 +201,7 @@ class MonthPlanSection extends StatelessWidget {
                           );
                         },
                         icon: const Icon(Icons.add, size: 16),
-                        label: const Text('افزودن تمرکز', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                        label: const Text('افزودن تمرکز', style: TextStyle(fontSize: 12)),
                       ),
                   ],
                 ),
@@ -214,7 +210,6 @@ class MonthPlanSection extends StatelessWidget {
                   Text(
                     'هنوز تمرکز ماهانه‌ای تعریف نشده است. اهداف فعال به عنوان پیش‌فرض در نظر گرفته می‌شوند.',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       color: colors.textSecondary,
                     ),
@@ -238,7 +233,6 @@ class MonthPlanSection extends StatelessWidget {
                 Text(
                   'نگهداری زندگی (بدون سقف)',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: colors.textSecondary,
@@ -248,7 +242,6 @@ class MonthPlanSection extends StatelessWidget {
                 Text(
                   'ورزش، خواب منظم، روتین‌های روزانه',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12,
                     color: colors.textSecondary,
                   ),
@@ -273,7 +266,6 @@ class MonthPlanSection extends StatelessWidget {
                 Text(
                   'بودجهٔ ماهانه در برابر ظرفیت',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -298,7 +290,6 @@ class MonthPlanSection extends StatelessWidget {
                     Text(
                       'بودجه تعهدشده: ${PersianDigits.toPersian(totalCommitmentHours.toString())} ساعت',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12,
                         color: colors.textSecondary,
                       ),
@@ -306,7 +297,6 @@ class MonthPlanSection extends StatelessWidget {
                     Text(
                       'ظرفیت برآوردی ماه: ${PersianDigits.toPersian('120')} ساعت',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12,
                         color: colors.primary,
                         fontWeight: FontWeight.bold,
@@ -334,7 +324,6 @@ class MonthPlanSection extends StatelessWidget {
                 Text(
                   'هفته‌به‌هفته',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -368,7 +357,6 @@ class MonthPlanSection extends StatelessWidget {
                     Text(
                       'این ماه عمداً انجام نمی‌دهم 🚫',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -378,7 +366,7 @@ class MonthPlanSection extends StatelessWidget {
                       TextButton.icon(
                         onPressed: () => _showAddSkippedItemDialog(context, cycle),
                         icon: const Icon(Icons.add, size: 16),
-                        label: const Text('افزودن مورد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                        label: const Text('افزودن مورد', style: TextStyle(fontSize: 12)),
                       ),
                   ],
                 ),
@@ -387,7 +375,6 @@ class MonthPlanSection extends StatelessWidget {
                   Text(
                     'هیچ کاری عمداً کنار گذاشته نشده است.',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: colors.textSecondary,
                     ),
@@ -410,7 +397,6 @@ class MonthPlanSection extends StatelessWidget {
                                 child: Text(
                                   item,
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 13,
                                     color: colors.textSecondary,
                                   ),
@@ -451,7 +437,6 @@ class MonthPlanSection extends StatelessWidget {
                 Text(
                   commitment.title,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -461,7 +446,6 @@ class MonthPlanSection extends StatelessWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11,
                     color: colors.textSecondary,
                   ),
@@ -474,7 +458,6 @@ class MonthPlanSection extends StatelessWidget {
               Text(
                 hours,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: colors.primary,
@@ -518,7 +501,6 @@ class MonthPlanSection extends StatelessWidget {
           Text(
             weekName,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13,
               color: colors.textPrimary,
             ),
@@ -526,7 +508,6 @@ class MonthPlanSection extends StatelessWidget {
           Text(
             status,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 12,
               color: status == 'فعال' ? colors.primary : colors.textSecondary,
             ),

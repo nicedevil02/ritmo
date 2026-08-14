@@ -54,18 +54,18 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('افزودن سرفصل جدید', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+        title: const Text('افزودن سرفصل جدید', style: TextStyle(fontWeight: FontWeight.bold)),
         content: TextField(
           controller: controller,
           autofocus: true,
           decoration: const InputDecoration(hintText: 'نام سرفصل'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn'))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle())),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
             style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.primary),
-            child: const Text('افزودن', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+            child: const Text('افزودن', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -135,7 +135,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.subject.name, style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.textPrimary)),
+          title: Text(widget.subject.name, style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
           backgroundColor: colors.surface,
           elevation: 0,
         ),
@@ -150,7 +150,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _addTopicSingle,
                           icon: const Icon(Icons.add, color: Colors.white),
-                          label: const Text('افزودن سرفصل', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+                          label: const Text('افزودن سرفصل', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                           style: ElevatedButton.styleFrom(backgroundColor: colors.primary, padding: const EdgeInsets.symmetric(vertical: 12)),
                         ),
                       ),
@@ -159,7 +159,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                         child: OutlinedButton.icon(
                           onPressed: _addBulkTopics,
                           icon: Icon(Icons.playlist_add, color: colors.primary),
-                          label: Text('افزودن دسته‌جمعی', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.primary)),
+                          label: Text('افزودن دسته‌جمعی', style: TextStyle(color: colors.primary)),
                           style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
                         ),
                       ),
@@ -172,7 +172,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                         padding: const EdgeInsets.all(32),
                         child: Text(
                           'هنوز هیچ سرفصلی برای این درس ثبت نشده است.',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+                          style: TextStyle(fontSize: 13, color: colors.textSecondary),
                         ),
                       ),
                     )
@@ -187,7 +187,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                       },
                     ),
                   const SizedBox(height: 24),
-                  Text('یادداشت‌های این درس', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                  Text('یادداشت‌های این درس', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                   const SizedBox(height: 8),
                   ModuleNoteHistorySection(module: 'study', entityId: widget.subject.id),
                 ],
@@ -238,11 +238,11 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(topic.name, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                Text(topic.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                 const SizedBox(height: 4),
                 Text(
                   '${RitmoNumber.faInt(topic.studyCompletedMinutes)} دقیقه مطالعه · آخرین بار: $lastStudiedText',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
                 ),
               ],
             ),
@@ -255,7 +255,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                 color: chipColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Text(chipLabel, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold, color: chipColor)),
+              child: Text(chipLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: chipColor)),
             ),
           ),
           IconButton(

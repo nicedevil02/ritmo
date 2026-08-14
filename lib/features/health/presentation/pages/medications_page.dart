@@ -39,7 +39,6 @@ class MedicationsPage extends StatelessWidget {
               Text(
                 l10n.medicationsToday,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
                   fontSize: 16,

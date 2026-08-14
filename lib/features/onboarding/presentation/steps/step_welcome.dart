@@ -22,7 +22,6 @@ class StepWelcome extends StatelessWidget {
             fontSize: 32,
             fontWeight: FontWeight.w900,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
             shadows: [
               Shadow(
                 color: const Color(0xff5B8AF5).withValues(alpha: 0.3),
@@ -39,8 +38,7 @@ class StepWelcome extends StatelessWidget {
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: Color(0xff9B89FF),
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 20),
         Text(
@@ -50,8 +48,7 @@ class StepWelcome extends StatelessWidget {
             fontSize: 14,
             height: 1.6,
             color: colors.textSecondary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 32),
         SizedBox(
@@ -70,7 +67,6 @@ class StepWelcome extends StatelessWidget {
             child: const Text(
               'شروع سفر',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
               ),

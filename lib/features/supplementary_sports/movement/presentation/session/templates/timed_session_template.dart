@@ -41,7 +41,6 @@ class TimedSessionTemplate extends SessionTemplate {
 				Text(
 					toPersianDigits(formatSessionDuration(ctx.elapsedMs)),
 					style: const TextStyle(
-						fontFamily: _fontFa,
 						color: Colors.white,
 						fontSize: 62,
 						fontWeight: FontWeight.w900,
@@ -156,7 +155,7 @@ class _PhaseSelector extends StatelessWidget {
 										const SizedBox(width: 6),
 										Text(
 											p.label,
-											style: const TextStyle(fontFamily: _fontFa, color: Colors.white, fontSize: 12),
+											style: const TextStyle(color: Colors.white, fontSize: 12),
 										),
 									],
 								),

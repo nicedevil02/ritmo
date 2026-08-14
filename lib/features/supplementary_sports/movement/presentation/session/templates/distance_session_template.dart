@@ -31,7 +31,6 @@ class DistanceSessionTemplate extends SessionTemplate {
 						Text(
 							toPersianDigits(distKm.toStringAsFixed(2)),
 							style: const TextStyle(
-								fontFamily: _fontFa,
 								color: Colors.white,
 								fontSize: 62,
 								fontWeight: FontWeight.w900,
@@ -43,7 +42,7 @@ class DistanceSessionTemplate extends SessionTemplate {
 							padding: EdgeInsets.only(bottom: 10),
 							child: Text(
 								'کیلومتر',
-								style: TextStyle(fontFamily: _fontFa, color: Colors.white60, fontSize: 18),
+								style: TextStyle(color: Colors.white60, fontSize: 18),
 							),
 						),
 					],
@@ -51,7 +50,7 @@ class DistanceSessionTemplate extends SessionTemplate {
 				const SizedBox(height: 4),
 				Text(
 					toPersianDigits(formatSessionDuration(ctx.elapsedMs)),
-					style: const TextStyle(fontFamily: _fontFa, color: Colors.white70, fontSize: 20),
+					style: const TextStyle(color: Colors.white70, fontSize: 20),
 				),
 				const SizedBox(height: 14),
 				SessionChip(

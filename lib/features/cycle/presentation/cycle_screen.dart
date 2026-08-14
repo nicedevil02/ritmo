@@ -331,7 +331,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               const SnackBar(
                 content: Text(
                   'راه‌اندازی چرخه بدن با موفقیت انجام شد. اطلاعات شما به‌صورت محرمانه ثبت گردید.',
-                  style: TextStyle(fontFamily: 'Vazirmatn'),
+                  style: TextStyle(),
                 ),
                 backgroundColor: Color(0xff10B981),
                 behavior: SnackBarBehavior.floating,
@@ -569,7 +569,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           Text(
                             'تغییر متوسط $name',
                             style: const TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 14,
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -584,7 +583,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       const SizedBox(height: 16),
                       Text(
                         'یک عدد بین ${_toPersianDigits(minVal.toString())} تا ${_toPersianDigits(maxVal.toString())} روز انتخاب کنید:',
-                        style: const TextStyle(fontSize: 14, color: Colors.white70, fontFamily: 'Vazirmatn'),
+                        style: const TextStyle(fontSize: 14, color: Colors.white70),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -601,7 +600,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           const SizedBox(width: 16),
                           Text(
                             '${_toPersianDigits(selectedVal.toString())} روز',
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                           ),
                           const SizedBox(width: 16),
                           IconButton(
@@ -625,7 +624,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           onPressed: () => Navigator.pop(context, true),
-                          child: const Text('ذخیره تغییرات', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14)),
+                          child: const Text('ذخیره تغییرات', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -671,7 +670,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         title: Text(
           title,
           style: TextStyle(
-            fontFamily: 'Vazirmatn', 
             color: isDark ? Colors.white : colors.textPrimary, 
             fontSize: 14, 
             fontWeight: FontWeight.bold
@@ -680,7 +678,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         content: Text(
           content,
           style: TextStyle(
-            fontFamily: 'Vazirmatn', 
             color: isDark ? Colors.white70 : colors.textSecondary, 
             fontSize: 14, 
             height: 1.5
@@ -692,7 +689,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             child: Text(
               'خیر', 
               style: TextStyle(
-                fontFamily: 'Vazirmatn', 
                 color: isDark ? Colors.white54 : colors.textSecondary.withValues(alpha: 0.6)
               )
             ),
@@ -705,7 +701,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: Text(confirmText, style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14)),
+            child: Text(confirmText, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           ),
         ],
       ),
@@ -1072,8 +1068,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1167,9 +1162,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                 const SizedBox(height: 4),
-                Text(subtitle, style: TextStyle(fontSize: 14, color: colors.textSecondary, fontFamily: 'Vazirmatn', height: 1.5)),
+                Text(subtitle, style: TextStyle(fontSize: 14, color: colors.textSecondary, height: 1.5)),
               ],
             ),
           ),
@@ -1309,8 +1304,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     fontSize: 14,
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                     color: isActive ? activeThemeColor : (isDark ? Colors.white70 : colors.textSecondary),
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
               ],
             ),
@@ -1345,14 +1339,14 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     const SizedBox(width: 8),
                     Text(
                       'دفترچه قضای روزه‌های واجب',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'بر اساس فقه اسلامی و رضایت عبادی شما، روزهای روزه واجب که به علت عذر شرعی بدنی از دست رفته‌اند در این دفترچه ثبت می‌شوند تا بتوانید به مرور زمان قضای آن‌ها را به جا آورید.',
-                  style: TextStyle(fontSize: 15.5, color: colors.textSecondary, fontFamily: 'Vazirmatn', height: 1.5),
+                  style: TextStyle(fontSize: 15.5, color: colors.textSecondary, height: 1.5),
                 ),
                 const SizedBox(height: 12),
                 Divider(color: isDark ? Colors.white10 : colors.border, height: 1),
@@ -1362,7 +1356,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   children: [
                     Text(
                       'ارسال بدهی‌ها به بخش عبادت',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
                     ),
                     CupertinoSwitch(
                       value: _settings['cycle_send_fasting_debt_to_worship'] == 'true',
@@ -1386,7 +1380,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   child: Center(
                     child: Text(
                       'هیچ بدهی قضای روزه‌ای ثبت نشده است 🌸',
-                      style: TextStyle(color: colors.textSecondary, fontSize: 14, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(color: colors.textSecondary, fontSize: 14),
                     ),
                   ),
                 ),
@@ -1409,11 +1403,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       child: ListTile(
                         title: Text(
                           _toPersianDigits('بدهی روزه: ${debt.daysOwed} روز'),
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary),
                         ),
                         subtitle: Text(
                           'شروع دوره: $dateStr • ${debt.reason ?? "عذر شرعی"}',
-                          style: TextStyle(fontSize: 14, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 14, color: colors.textSecondary),
                         ),
                         trailing: CupertinoButton(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -1430,8 +1424,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               fontSize: 14,
                               color: debt.isResolved ? Colors.white38 : Colors.black,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                         ),
                       ),
@@ -1465,8 +1458,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ),
               ],
@@ -1477,7 +1469,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               style: TextStyle(
                 fontSize: 14,
                 color: colors.textSecondary,
-                fontFamily: 'Vazirmatn',
                 height: 1.5,
               ),
             ),
@@ -1495,7 +1486,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     onPressed: () => _closeForgottenPeriod(_forgottenPeriod!),
                     child: Text(
                       'ثبت پایان (${_toPersianDigits(_settings['cycle_avg_period'] ?? '6')} روزه)',
-                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -1511,7 +1502,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     onPressed: () => _editPeriod(_forgottenPeriod!),
                     child: const Text(
                       'ویرایش تاریخ‌ها',
-                      style: TextStyle(fontSize: 14.5, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 14.5),
                     ),
                   ),
                 ),
@@ -1554,8 +1545,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
               ],
             ),
@@ -1566,8 +1556,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: Color(0xffF43F5E),
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -1575,15 +1564,14 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               style: TextStyle(
                 fontSize: 14,
                 color: colors.textSecondary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
             const SizedBox(height: 6),
             Row(
               children: [
                 Text(
                   'وضعیت ریتم چرخه: ',
-                  style: TextStyle(fontSize: 14, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 14, color: colors.textSecondary),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1605,8 +1593,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           : hasEnoughData
                               ? (isDark ? const Color(0xffF5B95B) : const Color(0xffD97706))
                               : colors.textSecondary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ),
               ],
@@ -1617,7 +1604,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               style: TextStyle(
                 fontSize: 12,
                 color: colors.textSecondary.withValues(alpha: 0.8),
-                fontFamily: 'Vazirmatn',
                 height: 1.5,
               ),
             ),
@@ -1765,8 +1751,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           style: TextStyle(
                             fontSize: 12,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         const SizedBox(height: 1),
                         Text(
@@ -1779,8 +1764,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: phaseColor,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),
@@ -1811,8 +1795,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : phaseColor,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ],
               ),
@@ -1826,8 +1809,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white70 : colors.textPrimary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
             const SizedBox(height: 8),
             
@@ -1840,7 +1822,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 style: TextStyle(
                   fontSize: 12,
                   color: isDark ? Colors.white54 : colors.textSecondary.withValues(alpha: 0.95),
-                  fontFamily: 'Vazirmatn',
                   height: 1.5,
                 ),
               ),
@@ -1879,8 +1860,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),
@@ -1911,8 +1891,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),
@@ -1992,7 +1971,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                         Text(
                           'احوال امروز با موفقیت ثبت شد 🌸',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: isDark ? Colors.white : colors.textPrimary,
@@ -2026,7 +2004,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           Text(
                             'ثبت علائم و احوال امروز',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 14,
                               color: isDark ? Colors.white : colors.textPrimary,
                               fontWeight: FontWeight.bold,
@@ -2055,7 +2032,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           final label = item['label']!;
                           final active = flowLevel == f;
                           return ChoiceChip(
-                            label: Text(label, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: active ? Colors.white : (isDark ? Colors.white70 : colors.textSecondary))),
+                            label: Text(label, style: TextStyle(fontSize: 14, color: active ? Colors.white : (isDark ? Colors.white70 : colors.textSecondary))),
                             selected: active,
                             selectedColor: _getActivePhaseColor(),
                             backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200,
@@ -2088,7 +2065,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           final label = item['label']!;
                           final active = mood == m;
                           return ChoiceChip(
-                            label: Text(label, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: active ? Colors.white : (isDark ? Colors.white70 : colors.textSecondary))),
+                            label: Text(label, style: TextStyle(fontSize: 14, color: active ? Colors.white : (isDark ? Colors.white70 : colors.textSecondary))),
                             selected: active,
                             selectedColor: _getActivePhaseColor(),
                             backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200,
@@ -2118,7 +2095,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           final label = item['label']!;
                           final active = energyTag == e;
                           return ChoiceChip(
-                            label: Text(label, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: active ? Colors.white : (isDark ? Colors.white70 : colors.textSecondary))),
+                            label: Text(label, style: TextStyle(fontSize: 14, color: active ? Colors.white : (isDark ? Colors.white70 : colors.textSecondary))),
                             selected: active,
                             selectedColor: _getActivePhaseColor(),
                             backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200,
@@ -2202,7 +2179,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                   Text(
                                     label,
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 13,
                                       fontWeight: active ? FontWeight.bold : FontWeight.normal,
                                       color: active ? activeColor : (isDark ? Colors.white70 : colors.textSecondary),
@@ -2221,11 +2197,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       const SizedBox(height: 8),
                       TextField(
                         controller: noteController,
-                        style: TextStyle(color: isDark ? Colors.white : colors.textPrimary, fontSize: 14, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(color: isDark ? Colors.white : colors.textPrimary, fontSize: 14),
                         maxLines: 2,
                         decoration: InputDecoration(
                           hintText: 'جزئیات یا مشاهدات خود را بنویسید...',
-                          hintStyle: TextStyle(color: isDark ? Colors.white30 : colors.textSecondary.withValues(alpha: 0.3), fontSize: 14, fontFamily: 'Vazirmatn'),
+                          hintStyle: TextStyle(color: isDark ? Colors.white30 : colors.textSecondary.withValues(alpha: 0.3), fontSize: 14),
                           filled: true,
                           fillColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey.shade100,
                           border: OutlineInputBorder(
@@ -2283,7 +2259,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             }
                             await _loadData();
                           },
-                          child: const Text('ذخیره احوال امروز', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14)),
+                          child: const Text('ذخیره احوال امروز', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -2307,7 +2283,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         Text(
           title,
           style: TextStyle(
-            fontFamily: 'Vazirmatn', 
             fontSize: 15.5, 
             color: isDark ? Colors.white70 : colors.textSecondary, 
             fontWeight: FontWeight.bold
@@ -2400,8 +2375,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       fontSize: 14.5,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -2409,7 +2383,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     style: TextStyle(
                       fontSize: 12.5,
                       color: isDark ? Colors.white70 : colors.textSecondary,
-                      fontFamily: 'Vazirmatn',
                       height: 1.45,
                     ),
                   ),
@@ -2466,8 +2439,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       fontSize: 14.5,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -2475,7 +2447,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     style: TextStyle(
                       fontSize: 13,
                       color: isDark ? Colors.white70 : colors.textSecondary,
-                      fontFamily: 'Vazirmatn',
                       height: 1.45,
                     ),
                   ),
@@ -2486,7 +2457,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Color(0xffF59E0B),
-                      fontFamily: 'Vazirmatn',
                       height: 1.4,
                     ),
                   ),
@@ -2536,18 +2506,14 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       style: TextStyle(
                         fontSize: 14, 
                         fontWeight: FontWeight.bold, 
-                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary, 
-                        fontFamily: 'Vazirmatn'
-                      ),
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       _toPersianDigits(year.toString()),
                       style: TextStyle(
                         fontSize: 10, 
-                        color: colors.textSecondary.withValues(alpha: 0.7), 
-                        fontFamily: 'Vazirmatn'
-                      ),
+                        color: colors.textSecondary.withValues(alpha: 0.7)),
                     ),
                   ],
                 ),
@@ -2570,7 +2536,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   child: Center(
                     child: Text(
                       header,
-                      style: TextStyle(fontSize: 9.5, color: colors.textSecondary.withValues(alpha: 0.8), fontFamily: 'Vazirmatn', fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 9.5, color: colors.textSecondary.withValues(alpha: 0.8), fontWeight: FontWeight.w500),
                     ),
                   ),
                 );
@@ -2660,8 +2626,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: textColor,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ),
                     ),
@@ -2696,7 +2661,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         Divider(color: isDarkTheme ? Colors.white10 : colors.border, height: 24),
         Text(
           'راهنمای تقویم چرخه بدنی:',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkTheme ? Colors.white70 : colors.textPrimary, fontFamily: 'Vazirmatn'),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkTheme ? Colors.white70 : colors.textPrimary),
         ),
         const SizedBox(height: 10),
         Wrap(
@@ -2718,7 +2683,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   decoration: BoxDecoration(color: _getActivePhaseColor(), shape: BoxShape.circle),
                 ),
                 const SizedBox(width: 6),
-                Text('علائم ثبت شده', style: TextStyle(fontSize: 12, color: isDarkTheme ? Colors.white70 : colors.textSecondary, fontFamily: 'Vazirmatn')),
+                Text('علائم ثبت شده', style: TextStyle(fontSize: 12, color: isDarkTheme ? Colors.white70 : colors.textSecondary)),
               ],
             ),
           ],
@@ -2741,7 +2706,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           ),
         ),
         const SizedBox(width: 6),
-        Text(text, style: TextStyle(fontSize: 14, color: textColor, fontFamily: 'Vazirmatn')),
+        Text(text, style: TextStyle(fontSize: 14, color: textColor)),
       ],
     );
   }
@@ -2848,7 +2813,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 const SizedBox(width: 8),
                 Text(
                   'آمار و ریتم بیولوژیک',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
                 ),
               ],
             ),
@@ -2877,7 +2842,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     Expanded(
                       child: Text(
                         'نوسان در طول چرخه‌ها مشاهده شد. این موضوع غالباً طبیعی است؛ در صورت تداوم می‌توانید آن را با پزشک متخصص مطرح کنید.',
-                        style: TextStyle(fontSize: 14, color: Colors.amber, fontFamily: 'Vazirmatn', height: 1.5),
+                        style: TextStyle(fontSize: 14, color: Colors.amber, height: 1.5),
                       ),
                     ),
                   ],
@@ -2893,9 +2858,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   Widget _buildStatPill(String title, String val) {
     return Column(
       children: [
-        Text(title, style: TextStyle(fontSize: 12, color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : context.colors.textSecondary, fontFamily: 'Vazirmatn')),
+        Text(title, style: TextStyle(fontSize: 12, color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : context.colors.textSecondary)),
         const SizedBox(height: 4),
-        Text(val, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xffF43F5E), fontFamily: 'Vazirmatn')),
+        Text(val, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xffF43F5E))),
       ],
     );
   }
@@ -2957,7 +2922,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               const SizedBox(width: 8),
               Text(
                 'تنظیمات و اتصالات حریم خصوصی',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary),
               ),
             ],
           ),
@@ -2997,8 +2962,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -3071,8 +3035,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                         style: TextStyle(
                           fontSize: 14,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -3236,8 +3199,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           color: _settings['cycle_pregnancy_mode'] == 'true'
                               ? const Color(0xffEC4899)
                               : colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -3249,7 +3211,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           Divider(height: 24, color: isDark ? Colors.white10 : colors.border),
           Text(
             'تنظیمات طول چرخه بدنی',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : colors.textPrimary, fontFamily: 'Vazirmatn'),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : colors.textPrimary),
           ),
           const SizedBox(height: 12),
           _buildParameterRow(
@@ -3290,14 +3252,14 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             Expanded(
               child: Text(
                 title,
-                style: TextStyle(fontSize: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : context.colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : context.colors.textPrimary),
               ),
             ),
             Row(
               children: [
                 Text(
                   value,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xffF43F5E), fontFamily: 'Vazirmatn'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xffF43F5E)),
                 ),
                 const SizedBox(width: 8),
                 const Icon(CupertinoIcons.pencil, color: Color(0xffF43F5E), size: 16),
@@ -3317,7 +3279,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: TextStyle(fontSize: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : context.colors.textPrimary, fontFamily: 'Vazirmatn')),
+        Text(title, style: TextStyle(fontSize: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : context.colors.textPrimary)),
         CupertinoSwitch(
           value: value,
           activeTrackColor: const Color(0xffF43F5E),
@@ -3338,14 +3300,14 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             children: [
               Text(
                 'تاریخچه دوره‌های قبلی',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary),
               ),
               TextButton.icon(
                 onPressed: _addNewPeriodSheet,
                 icon: const Icon(CupertinoIcons.plus, size: 16, color: Color(0xffF43F5E)),
                 label: const Text(
                   'افزودن دوره قبلی',
-                  style: TextStyle(fontSize: 14, color: Color(0xffF43F5E), fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 14, color: Color(0xffF43F5E), fontWeight: FontWeight.bold),
                 ),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -3363,7 +3325,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: Text(
                 'هیچ دوره‌ای ثبت نشده است.',
-                style: TextStyle(fontSize: 14, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 14, color: colors.textSecondary),
               ),
             ),
           )
@@ -3392,11 +3354,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   title: Text(
                     endStr != null ? 'دوره تکمیل‌شده' : 'دوره فعال بدنی',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
                   ),
                   subtitle: Text(
                     subtitle,
-                    style: TextStyle(fontSize: 14, color: isDark ? Colors.white54 : colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 14, color: isDark ? Colors.white54 : colors.textSecondary),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -3439,13 +3401,13 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   Text(
                     'فعالسازی حالت بارداری',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'آیا باردار هستید؟ با فعالسازی این حالت، پیگیری چرخه قاعدگی متوقف می‌شود و اطلاعات دوران بارداری نمایش داده می‌شود.',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary, height: 1.5),
+                    style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary, height: 1.5),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -3453,7 +3415,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: isDark ? Colors.white60 : colors.textSecondary.withValues(alpha: 0.7))),
+                        child: Text('انصراف', style: TextStyle(color: isDark ? Colors.white60 : colors.textSecondary.withValues(alpha: 0.7))),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
@@ -3462,7 +3424,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('بله، فعالسازی', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: const Text('بله، فعالسازی', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -3545,13 +3507,13 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   Text(
                     'غیرفعال‌سازی حالت بارداری',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'آیا مایل به خروج از حالت بارداری و بازگشت به پیگیری چرخه قاعدگی معمولی هستید؟ داده‌های چرخه قبلی شما حفظ خواهند شد.',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary, height: 1.5),
+                    style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary, height: 1.5),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -3559,7 +3521,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: isDark ? Colors.white60 : colors.textSecondary.withValues(alpha: 0.7))),
+                        child: Text('انصراف', style: TextStyle(color: isDark ? Colors.white60 : colors.textSecondary.withValues(alpha: 0.7))),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
@@ -3568,7 +3530,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('بله، بازگشت', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: const Text('بله، بازگشت', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -3691,7 +3653,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       Navigator.pop(context); // Close sheet
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('رمز عبور چرخه با موفقیت ذخیره شد.', style: TextStyle(fontFamily: 'Vazirmatn')),
+                          content: Text('رمز عبور چرخه با موفقیت ذخیره شد.', style: TextStyle()),
                         ),
                       );
                     }
@@ -3735,8 +3697,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ),
               ),
@@ -3770,8 +3731,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         IconButton(
                           icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
@@ -3787,8 +3747,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       style: TextStyle(
                         fontSize: 12,
                         color: colors.textSecondary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     if (errorMessage.isNotEmpty) ...[
                       const SizedBox(height: 10),
@@ -3799,8 +3758,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           fontSize: 12,
                           color: Colors.redAccent,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                     const SizedBox(height: 20),
@@ -3952,7 +3910,6 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                   Text(
                     widget.period != null ? 'ویرایش تاریخ‌های دوره قاعدگی' : 'افزودن دوره قاعدگی جدید',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       color: isDark ? Colors.white : colors.textPrimary,
                       fontWeight: FontWeight.bold,
@@ -3980,7 +3937,7 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                       Expanded(
                         child: Text(
                           _errorText!,
-                          style: const TextStyle(color: Colors.redAccent, fontSize: 14, fontFamily: 'Vazirmatn'),
+                          style: const TextStyle(color: Colors.redAccent, fontSize: 14),
                         ),
                       ),
                     ],
@@ -3988,7 +3945,7 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                 ),
                 const SizedBox(height: 16),
               ],
-              Text('تاریخ شروع دوره:', style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary, fontFamily: 'Vazirmatn')),
+              Text('تاریخ شروع دوره:', style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary)),
               const SizedBox(height: 8),
               InkWell(
                 onTap: () async {
@@ -4040,7 +3997,7 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                     children: [
                       Text(
                         _formatJalaliDate(_startDate),
-                        style: TextStyle(color: isDark ? Colors.white : colors.textPrimary, fontSize: 14, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(color: isDark ? Colors.white : colors.textPrimary, fontSize: 14),
                       ),
                       const Icon(CupertinoIcons.calendar, color: Color(0xffF43F5E), size: 20),
                     ],
@@ -4051,7 +4008,7 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('این دوره پایان یافته است', style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary, fontFamily: 'Vazirmatn')),
+                  Text('این دوره پایان یافته است', style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary)),
                   CupertinoSwitch(
                     value: _hasEndDate,
                     activeTrackColor: const Color(0xffF43F5E),
@@ -4069,7 +4026,7 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
               ),
               const SizedBox(height: 8),
               if (_hasEndDate) ...[
-                Text('تاریخ پایان دوره:', style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary, fontFamily: 'Vazirmatn')),
+                Text('تاریخ پایان دوره:', style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary)),
                 const SizedBox(height: 8),
                 InkWell(
                   onTap: () async {
@@ -4121,7 +4078,7 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                       children: [
                         Text(
                           _endDate != null ? _formatJalaliDate(_endDate!) : 'انتخاب تاریخ',
-                          style: TextStyle(color: isDark ? Colors.white : colors.textPrimary, fontSize: 14, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(color: isDark ? Colors.white : colors.textPrimary, fontSize: 14),
                         ),
                         const Icon(CupertinoIcons.calendar, color: Color(0xffF43F5E), size: 20),
                       ],
@@ -4152,7 +4109,7 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                   },
                   child: Text(
                     widget.period != null ? 'ذخیره تغییرات' : 'افزودن دوره',
-                    style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
               ),

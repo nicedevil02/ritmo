@@ -95,8 +95,7 @@ class _NoticeHeader extends StatelessWidget {
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
               if (description != null && description!.isNotEmpty) ...[
                 const SizedBox(height: 3),
@@ -106,8 +105,7 @@ class _NoticeHeader extends StatelessWidget {
                     fontSize: 10.5,
                     height: 1.5,
                     color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
               ],
             ],
@@ -164,8 +162,7 @@ class CriticalAlertsCard extends StatelessWidget {
                         fontSize: 11.5,
                         height: 1.6,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ),
                 ],
@@ -251,7 +248,6 @@ class ReflectionSuggestionCard extends StatelessWidget {
                   l10n.laterOrDismiss,
                   style: const TextStyle(
                     fontSize: 11,
-                    fontFamily: 'Vazirmatn',
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -275,7 +271,6 @@ class ReflectionSuggestionCard extends StatelessWidget {
                   l10n.yesRecord,
                   style: const TextStyle(
                     fontSize: 11,
-                    fontFamily: 'Vazirmatn',
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -331,7 +326,6 @@ class MidDayReplanCard extends StatelessWidget {
                 child: const Text(
                   'انصراف',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
                   ),
@@ -355,7 +349,6 @@ class MidDayReplanCard extends StatelessWidget {
                 child: const Text(
                   'بازچینی برنامه',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
                   ),
@@ -400,8 +393,7 @@ class RecentInboxCard extends StatelessWidget {
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ),
             TextButton(
@@ -415,7 +407,6 @@ class RecentInboxCard extends StatelessWidget {
                 'مشاهده همه',
                 style: TextStyle(
                   fontSize: 11,
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -482,8 +473,7 @@ class RecentInboxCard extends StatelessWidget {
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       if (item.body != null && item.body!.isNotEmpty) ...[
                         const SizedBox(height: 2),
@@ -494,8 +484,7 @@ class RecentInboxCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 9.5,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ],

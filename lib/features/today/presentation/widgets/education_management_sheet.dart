@@ -112,7 +112,7 @@ class _EducationManagementSheetState extends State<EducationManagementSheet> {
                   children: [
                     const Text(
                       'دوره‌ها و برنامه‌های آموزشی',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
@@ -125,7 +125,7 @@ class _EducationManagementSheetState extends State<EducationManagementSheet> {
                       icon: const Icon(CupertinoIcons.square_stack_3d_up, size: 16),
                       label: const Text(
                         'باز کردن دوره‌ها',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -133,7 +133,7 @@ class _EducationManagementSheetState extends State<EducationManagementSheet> {
                 const SizedBox(height: 4),
                 Text(
                   'دوره‌ها و جلسات یادگیری فعال خود را مدیریت و دنبال کنید.',
-                  style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
                 const Divider(color: Colors.white10, height: 20),
 
@@ -161,7 +161,7 @@ class _EducationManagementSheetState extends State<EducationManagementSheet> {
             const SizedBox(height: 12),
             Text(
               'هنوز هیچ دوره‌ای ثبت نکرده‌اید.',
-              style: TextStyle(color: colors.textSecondary, fontSize: 13, fontFamily: 'Vazirmatn'),
+              style: TextStyle(color: colors.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 12),
             ElevatedButton(
@@ -172,7 +172,7 @@ class _EducationManagementSheetState extends State<EducationManagementSheet> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               onPressed: _openCoursesScreen,
-              child: const Text('باز کردن دوره‌های آموزشی', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+              child: const Text('باز کردن دوره‌های آموزشی', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -214,8 +214,7 @@ class _EducationManagementSheetState extends State<EducationManagementSheet> {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: isFinished ? colors.success : Colors.white,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ),
                   IconButton(
@@ -228,7 +227,7 @@ class _EducationManagementSheetState extends State<EducationManagementSheet> {
                   const SizedBox(width: 8),
                   Text(
                     '${toPersianDigits(completedCount)} از ${toPersianDigits(total)} جلسه',
-                    style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
                   ),
                 ],
               ),
@@ -256,7 +255,7 @@ class _EducationManagementSheetState extends State<EducationManagementSheet> {
                   const SizedBox(width: 12),
                   Text(
                     '$completedCount از $total جلسه',
-                    style: TextStyle(fontSize: 10, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 10, color: colors.textSecondary),
                   ),
                 ],
               ),

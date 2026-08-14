@@ -66,8 +66,7 @@ class _CalendarGroupScreenState extends State<CalendarGroupScreen> {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       const SizedBox(height: 12),
                       RitmoSegmentedControl<String>(

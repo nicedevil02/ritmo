@@ -48,7 +48,6 @@ class ReflectionHero extends StatelessWidget {
                         Text(
                           'زنجیره خودارزیابی',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 12,
                             color: colors.textSecondary,
                           ),
@@ -56,7 +55,6 @@ class ReflectionHero extends StatelessWidget {
                         Text(
                           '${stats.currentStreak} روز پیاپی',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
@@ -75,7 +73,6 @@ class ReflectionHero extends StatelessWidget {
                   child: Text(
                     'بیشترین: ${stats.longestStreak} روز',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: colors.primary,
@@ -90,7 +87,6 @@ class ReflectionHero extends StatelessWidget {
             Text(
               'وضعیت امروز شما',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -147,7 +143,6 @@ class ReflectionHero extends StatelessWidget {
                 label: const Text(
                   'ثبت ارزیابی صبحگاهی امروز',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -178,7 +173,6 @@ class ReflectionHero extends StatelessWidget {
               label: Text(
                 todayReflectionDone ? 'ویرایش تأمل امروز' : 'ثبت تأمل و بازتاب امروز',
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                 ),
@@ -217,7 +211,6 @@ class ReflectionHero extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 11,
               color: colors.textPrimary,
               fontWeight: FontWeight.bold,
@@ -227,7 +220,6 @@ class ReflectionHero extends StatelessWidget {
           Text(
             isDone ? 'انجام شده' : 'در انتظار ثبت',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 10,
               color: isDone ? colors.success : colors.textSecondary,
             ),

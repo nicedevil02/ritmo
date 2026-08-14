@@ -82,7 +82,7 @@ class _PsychLayerSettingsSheetState extends State<PsychLayerSettingsSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('لایهٔ عادت و اجرا', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                  Text('لایهٔ عادت و اجرا', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
                 ],
               ),
@@ -99,8 +99,8 @@ class _PsychLayerSettingsSheetState extends State<PsychLayerSettingsSheet> {
                   return SwitchListTile(
                     value: isChecked,
                     activeThumbColor: colors.primary,
-                    title: Text(title, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                    subtitle: Text(desc, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary)),
+                    title: Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                    subtitle: Text(desc, style: TextStyle(fontSize: 12, color: colors.textSecondary)),
                     onChanged: (val) => _toggleSetting(key, val),
                   );
                 }),

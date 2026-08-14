@@ -225,7 +225,6 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
             Text(
               'ارتقا به نسخه پرمیوم ریتمو',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -235,7 +234,6 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
             Text(
               'باز کردن قفل تمام ویژگی‌های هوشمند اپلیکیشن',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: colors.textSecondary,
               ),
@@ -305,7 +303,7 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
                     },
                     child: Text(
                       PremiumService.instance.isDebugMockActive ? 'غیرفعال‌سازی شبیه‌ساز تست' : 'فعال‌سازی تست (شبیه‌ساز)',
-                      style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.amber),
+                      style: const TextStyle(color: Colors.amber),
                     ),
                   ),
                 ],
@@ -324,7 +322,6 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
                       : const Text(
                           'تایید و خرید پرمیوم',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -337,7 +334,6 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
                   child: Text(
                     'بازیابی خریدهای قبلی',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       color: colors.textSecondary,
                       fontSize: 13,
                     ),
@@ -374,7 +370,6 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
                 Text(
                   title,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -384,7 +379,6 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
                 Text(
                   desc,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11,
                     color: colors.textSecondary,
                   ),
@@ -435,7 +429,6 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
                       Text(
                         title,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -452,7 +445,6 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
                           child: Text(
                             discountLabel,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 9,
                               color: colors.primary,
                               fontWeight: FontWeight.bold,
@@ -471,7 +463,6 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
                           child: const Text(
                             'پیشنهاد ما',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 9,
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -485,7 +476,6 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
                   Text(
                     price,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isSelected ? colors.primary : colors.textSecondary,

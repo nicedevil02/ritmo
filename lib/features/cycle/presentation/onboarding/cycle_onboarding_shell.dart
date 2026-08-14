@@ -95,20 +95,20 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
               : Colors.white,
           title: const Text(
             'خروج از راه‌اندازی',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           content: const Text(
             'آیا از خروج از راه‌اندازی اطمینان دارید؟ اطلاعات واردشده تا قبل از ثبت نهایی ذخیره نخواهند شد.',
-            style: TextStyle(fontSize: 13, height: 1.5, fontFamily: 'Vazirmatn'),
+            style: TextStyle(fontSize: 13, height: 1.5),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('ادامه راه‌اندازی', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('ادامه راه‌اندازی', style: TextStyle()),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('خروج', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+              child: const Text('خروج', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -153,8 +153,7 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -163,7 +162,6 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
                       style: TextStyle(
                         fontSize: 12,
                         color: colors.textSecondary,
-                        fontFamily: 'Vazirmatn',
                         height: 1.5,
                       ),
                     ),
@@ -177,7 +175,7 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
                       ),
                       onPressed: _handleSave,
                       icon: const Icon(CupertinoIcons.refresh, size: 18),
-                      label: const Text('تلاش مجدد', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                      label: const Text('تلاش مجدد', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -266,8 +264,7 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -281,8 +278,7 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                   color: primaryColor,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ),
           ],

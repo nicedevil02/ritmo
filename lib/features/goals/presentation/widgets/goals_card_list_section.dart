@@ -75,7 +75,7 @@ class GoalsCardListSection extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'هیچ هدف فعالی در حال حاضر وجود ندارد.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14.5, color: colors.textSecondary),
+              style: TextStyle(fontSize: 14.5, color: colors.textSecondary),
             ),
           ],
         ),
@@ -138,8 +138,7 @@ class GoalsCardListSection extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -170,8 +169,7 @@ class GoalsCardListSection extends StatelessWidget {
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
                       color: colors.primary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ],
               ),
@@ -189,7 +187,6 @@ class GoalsCardListSection extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12.5,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
                           fontWeight: FontWeight.w500,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -207,7 +204,6 @@ class GoalsCardListSection extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12.5,
                         color: colors.success,
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -225,7 +221,7 @@ class GoalsCardListSection extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${toPersianDigits(routineConnCount)} روتین',
-                        style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', color: colors.textSecondary, fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 11, color: colors.textSecondary, fontWeight: FontWeight.w600),
                       ),
                     ],
                     if (routineConnCount > 0 && courseConnCount > 0)
@@ -235,7 +231,7 @@ class GoalsCardListSection extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${toPersianDigits(courseConnCount)} دوره آموزش',
-                        style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', color: colors.textSecondary, fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 11, color: colors.textSecondary, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ],
@@ -262,7 +258,6 @@ class GoalsCardListSection extends StatelessWidget {
         level.label,
         style: TextStyle(
           fontSize: 11,
-          fontFamily: 'Vazirmatn',
           fontWeight: FontWeight.bold,
           color: chipText,
         ),
@@ -467,7 +462,6 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                                 'بازگشت',
                                 style: TextStyle(
                                   fontSize: 12.5,
-                                  fontFamily: 'Vazirmatn',
                                   color: colors.primary,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -480,7 +474,6 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                           '·  بازگشت به ${_navigationStack.last.title}',
                           style: TextStyle(
                             fontSize: 11,
-                            fontFamily: 'Vazirmatn',
                             color: colors.textSecondary,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -506,8 +499,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                                 fontSize: 18.5,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -523,7 +515,6 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                           style: TextStyle(
                             fontSize: 13.5,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
                             height: 1.4,
                           ),
                         ),
@@ -542,7 +533,6 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                                   : 'مهلت انجام: ${formatShamsiDate(_currentGoal.targetDate)} (${toPersianDigits(_currentGoal.daysUntilTarget)} روز مانده)',
                               style: TextStyle(
                                 fontSize: 12.5,
-                                fontFamily: 'Vazirmatn',
                                 color: _currentGoal.isOverdue ? colors.warning : colors.textSecondary,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -573,8 +563,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w900,
                                     color: colors.textPrimary,
-                                    fontFamily: 'Vazirmatn',
-                                  ),
+                                    ),
                                 ),
                               ],
                             ),
@@ -590,8 +579,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: colors.textPrimary,
-                                    fontFamily: 'Vazirmatn',
-                                  ),
+                                    ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -599,8 +587,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: colors.textSecondary,
-                                    fontFamily: 'Vazirmatn',
-                                  ),
+                                    ),
                                 ),
                               ],
                             ),
@@ -616,14 +603,13 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                           fontSize: 14.5,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       const SizedBox(height: 8),
                       if (steps.isEmpty)
                         Text(
                           'هیچ گامی برای این هدف تعریف نشده است.',
-                          style: TextStyle(fontSize: 12.5, fontFamily: 'Vazirmatn', color: colors.textSecondary),
+                          style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
                         )
                       else
                         ...steps.map((step) => _buildStepRow(step, colors)),
@@ -637,8 +623,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                             fontSize: 14.5,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         const SizedBox(height: 10),
                         Wrap(
@@ -671,7 +656,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                                     const SizedBox(width: 8),
                                     Text(
                                       sg.title,
-                                      style: TextStyle(fontSize: 12.5, fontFamily: 'Vazirmatn', color: colors.textPrimary, fontWeight: FontWeight.w600),
+                                      style: TextStyle(fontSize: 12.5, color: colors.textPrimary, fontWeight: FontWeight.w600),
                                     ),
                                   ],
                                 ),
@@ -690,8 +675,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                             fontSize: 14.5,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         const SizedBox(height: 8),
                         ...connectedRoutines.map((r) => _buildRoutineTile(r, colors)),
@@ -706,7 +690,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                           Expanded(
                             child: ElevatedButton.icon(
                               icon: const Icon(CupertinoIcons.pencil, size: 14),
-                              label: const Text('ویرایش', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                              label: const Text('ویرایش', style: TextStyle(fontWeight: FontWeight.bold)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: colors.primary.withValues(alpha: 0.1),
                                 foregroundColor: colors.primary,
@@ -728,7 +712,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                               ),
                               label: Text(
                                 _currentGoal.status == 'COMPLETED' ? 'بازگردانی' : 'آرشیو',
-                                style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white.withValues(alpha: 0.05),
@@ -755,7 +739,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                       const SizedBox(height: 12),
                       ElevatedButton.icon(
                         icon: const Icon(CupertinoIcons.trash, size: 14),
-                        label: const Text('حذف کامل هدف', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                        label: const Text('حذف کامل هدف', style: TextStyle(fontWeight: FontWeight.bold)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
                           foregroundColor: Colors.redAccent,
@@ -767,16 +751,16 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                           final confirm = await showCupertinoDialog<bool>(
                             context: context,
                             builder: (context) => CupertinoAlertDialog(
-                              title: const Text('حذف هدف', style: TextStyle(fontFamily: 'Vazirmatn')),
-                              content: const Text('آیا از حذف کامل این هدف و تمامی گام‌های آن مطمئن هستید؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+                              title: const Text('حذف هدف', style: TextStyle()),
+                              content: const Text('آیا از حذف کامل این هدف و تمامی گام‌های آن مطمئن هستید؟', style: TextStyle()),
                               actions: [
                                 CupertinoDialogAction(
-                                  child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn')),
+                                  child: const Text('لغو', style: TextStyle()),
                                   onPressed: () => Navigator.pop(context, false),
                                 ),
                                 CupertinoDialogAction(
                                   isDestructiveAction: true,
-                                  child: const Text('حذف', style: TextStyle(fontFamily: 'Vazirmatn')),
+                                  child: const Text('حذف', style: TextStyle()),
                                   onPressed: () => Navigator.pop(context, true),
                                 ),
                               ],
@@ -812,7 +796,6 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
           step.title,
           style: TextStyle(
             fontSize: 13,
-            fontFamily: 'Vazirmatn',
             color: step.isCompleted ? colors.textSecondary : colors.textPrimary,
             decoration: step.isCompleted ? TextDecoration.lineThrough : null,
           ),
@@ -820,7 +803,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
         subtitle: step.scheduledDate != null
             ? Text(
                 'برنامه‌ریزی: ${formatShamsiDate(step.scheduledDate)}',
-                style: TextStyle(fontSize: 10.5, fontFamily: 'Vazirmatn', color: colors.textSecondary),
+                style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
               )
             : null,
         value: step.isCompleted,
@@ -856,11 +839,11 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
         leading: Icon(CupertinoIcons.repeat, size: 16, color: colors.primary),
         title: Text(
           routine.title,
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
           'دوره روتین تکرارشونده',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+          style: TextStyle(fontSize: 11, color: colors.textSecondary),
         ),
         trailing: const Icon(CupertinoIcons.chevron_left, size: 12),
         onTap: () {
@@ -884,11 +867,11 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
         leading: Icon(CupertinoIcons.book, size: 16, color: colors.primary),
         title: Text(
           course.title,
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
           'دوره آموزشی متصل',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+          style: TextStyle(fontSize: 11, color: colors.textSecondary),
         ),
         trailing: const Icon(CupertinoIcons.chevron_left, size: 12),
         onTap: () {
@@ -911,7 +894,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
       ),
       child: Text(
         level.label,
-        style: TextStyle(fontSize: 10, fontFamily: 'Vazirmatn', color: colors.primary, fontWeight: FontWeight.bold),
+        style: TextStyle(fontSize: 10, color: colors.primary, fontWeight: FontWeight.bold),
       ),
     );
   }

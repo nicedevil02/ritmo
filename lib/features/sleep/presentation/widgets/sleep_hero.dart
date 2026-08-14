@@ -108,7 +108,6 @@ class _SleepHeroState extends State<SleepHero> {
                   Text(
                     'وضعیت خواب اخیر شما',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: colors.cardSubtitle,
@@ -128,7 +127,6 @@ class _SleepHeroState extends State<SleepHero> {
                           Text(
                             lastLog.quality.label,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11,
                               color: colors.cardTitle,
                             ),
@@ -159,7 +157,6 @@ class _SleepHeroState extends State<SleepHero> {
                     Text(
                       'ساعت',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 14,
                         color: colors.cardSubtitle,
                       ),
@@ -177,7 +174,6 @@ class _SleepHeroState extends State<SleepHero> {
                     Text(
                       'دقیقه',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 14,
                         color: colors.cardSubtitle,
                       ),
@@ -198,7 +194,6 @@ class _SleepHeroState extends State<SleepHero> {
                     Text(
                       'خواب دیشب ثبت نشده 🌙',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: colors.cardTitle,
@@ -208,7 +203,6 @@ class _SleepHeroState extends State<SleepHero> {
                     Text(
                       'برای سنجش بدهی خواب و تأثیر آن روی انرژی، وضعیت خواب خود را ثبت کنید.',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12,
                         color: colors.textSecondary,
                       ),
@@ -247,7 +241,6 @@ class _SleepHeroState extends State<SleepHero> {
                       child: Text(
                         _countdownText,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: _isWinddownActive ? FontWeight.bold : FontWeight.normal,
                           color: _isWinddownActive ? colors.cardTitle : colors.textSecondary,
@@ -275,7 +268,6 @@ class _SleepHeroState extends State<SleepHero> {
                 child: Text(
                   lastLog != null ? 'ثبت مجدد خواب دیشب' : 'ثبت خواب دیشب',
                   style: const TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -314,7 +306,6 @@ class _SleepHeroState extends State<SleepHero> {
           Text(
             isOk ? 'به هدف خواب رسیدی' : '${diff.abs()} دقیقه کمتر از هدف',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 11,
               fontWeight: FontWeight.bold,
               color: isOk ? colors.success : colors.medicalRed,

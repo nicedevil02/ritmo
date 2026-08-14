@@ -282,7 +282,6 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
         title: Text(
           'خلاصه تمرین امروز',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
           ),
@@ -398,7 +397,6 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
                                     Text(
                                       'رکوردهای جدید ثبت‌شده 🏆',
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
@@ -429,7 +427,6 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
                                     child: Text(
                                       toPersianDigits(label),
                                       style: const TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.white,
@@ -488,7 +485,6 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
                           label: const Text(
                             'ثبت در تقویم اصلی ریتمو 🗓',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -525,7 +521,6 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
                             Text(
                               'در تقویم اصلی ثبت شد',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF2E7D5B),

@@ -84,7 +84,6 @@ class InsightsTimeWindowRuler extends StatelessWidget {
                   child: Text(
                     window.label,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       color: isSelected ? Colors.white : colors.textSecondary,

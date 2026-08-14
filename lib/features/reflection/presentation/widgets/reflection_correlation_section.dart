@@ -29,7 +29,6 @@ class ReflectionCorrelationSection extends StatelessWidget {
             Text(
               '🧠 تحلیل همبستگی خودآگاهی',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -39,7 +38,6 @@ class ReflectionCorrelationSection extends StatelessWidget {
             Text(
               'رابطه آماری بین دفعات ژورنال‌نویسی با سطح انرژی و خلق‌وخوی شما',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 11,
                 color: colors.textSecondary,
               ),
@@ -61,7 +59,6 @@ class ReflectionCorrelationSection extends StatelessWidget {
                         'داده‌های همبستگی هنوز کافی نیست 📊',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -72,7 +69,6 @@ class ReflectionCorrelationSection extends StatelessWidget {
                         'حداقل به ثبت ۳ روز تأمل عصرگاهی و ثبت انرژی/خلق‌وخو در طول روز نیاز دارید.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 10,
                           color: colors.textSecondary,
                         ),
@@ -124,7 +120,6 @@ class ReflectionCorrelationSection extends StatelessWidget {
                           Text(
                             'تفسیر الگوها:',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: colors.primary,
@@ -134,7 +129,6 @@ class ReflectionCorrelationSection extends StatelessWidget {
                           Text(
                             insight,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11,
                               color: colors.textPrimary,
                               height: 1.5,
@@ -144,7 +138,6 @@ class ReflectionCorrelationSection extends StatelessWidget {
                           Text(
                             '* توجه: این همبستگی ریاضی است و نشان‌دهنده رابطه علّی قطعی نیست؛ ممکن است ثبت بازتاب به بهبود روحیه کمک کند یا در روزهای خوب تمایل بیشتری به نوشتن داشته باشید.',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 9,
                               color: colors.textSecondary,
                             ),
@@ -196,7 +189,6 @@ class ReflectionCorrelationSection extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -205,7 +197,6 @@ class ReflectionCorrelationSection extends StatelessWidget {
             Text(
               '${value > 0 ? "+" : ""}${value.toStringAsFixed(2)} ($strengthText)',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 11,
                 color: barColor,
                 fontWeight: FontWeight.bold,
@@ -250,15 +241,15 @@ class ReflectionCorrelationSection extends StatelessWidget {
           children: [
             Text(
               '-۱.۰ (منفی)',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 9, color: colors.textSecondary),
+              style: TextStyle(fontSize: 9, color: colors.textSecondary),
             ),
             Text(
               '۰.۰',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 9, color: colors.textSecondary),
+              style: TextStyle(fontSize: 9, color: colors.textSecondary),
             ),
             Text(
               '+۱.۰ (مثبت)',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 9, color: colors.textSecondary),
+              style: TextStyle(fontSize: 9, color: colors.textSecondary),
             ),
           ],
         ),

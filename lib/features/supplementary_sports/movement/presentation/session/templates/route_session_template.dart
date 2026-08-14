@@ -79,7 +79,6 @@ class RouteSessionTemplate extends SessionTemplate {
 						Text(
 							toPersianDigits(elevation.round().toString()),
 							style: const TextStyle(
-								fontFamily: _fontFa,
 								color: Colors.white,
 								fontSize: 62,
 								fontWeight: FontWeight.w900,
@@ -91,7 +90,7 @@ class RouteSessionTemplate extends SessionTemplate {
 							padding: EdgeInsets.only(bottom: 10),
 							child: Text(
 								'متر صعود',
-								style: TextStyle(fontFamily: _fontFa, color: Colors.white60, fontSize: 18),
+								style: TextStyle(color: Colors.white60, fontSize: 18),
 							),
 						),
 					],
@@ -99,7 +98,7 @@ class RouteSessionTemplate extends SessionTemplate {
 				const SizedBox(height: 4),
 				Text(
 					toPersianDigits(formatSessionDuration(ctx.elapsedMs)),
-					style: const TextStyle(fontFamily: _fontFa, color: Colors.white70, fontSize: 20),
+					style: const TextStyle(color: Colors.white70, fontSize: 20),
 				),
 				const SizedBox(height: 14),
 				Wrap(
@@ -285,7 +284,6 @@ class _TurnaroundCard extends StatelessWidget {
 								const Text(
 									'نقطهٔ بازگشت',
 									style: TextStyle(
-										fontFamily: _fontFa,
 										color: Colors.white,
 										fontSize: 13,
 										fontWeight: FontWeight.bold,
@@ -296,7 +294,7 @@ class _TurnaroundCard extends StatelessWidget {
 									subtitle,
 									maxLines: 2,
 									overflow: TextOverflow.ellipsis,
-									style: const TextStyle(fontFamily: _fontFa, color: Colors.white60, fontSize: 11),
+									style: const TextStyle(color: Colors.white60, fontSize: 11),
 								),
 							],
 						),
@@ -357,7 +355,6 @@ class _GearChecklist extends StatelessWidget {
 									maxLines: 1,
 									overflow: TextOverflow.ellipsis,
 									style: TextStyle(
-										fontFamily: _fontFa,
 										color: Colors.white,
 										fontSize: 13,
 										fontWeight: FontWeight.bold,
@@ -366,7 +363,7 @@ class _GearChecklist extends StatelessWidget {
 							),
 							Text(
 								'${toPersianDigits(selected.length.toString())} از ${toPersianDigits(_gearItems.length.toString())}',
-								style: const TextStyle(fontFamily: _fontFa, color: Colors.white54, fontSize: 11),
+								style: const TextStyle(color: Colors.white54, fontSize: 11),
 							),
 						],
 					),
@@ -435,7 +432,6 @@ class _GearChip extends StatelessWidget {
 								Text(
 									label,
 									style: TextStyle(
-										fontFamily: _fontFa,
 										color: isOn ? Colors.white : Colors.white70,
 										fontSize: 11,
 										fontWeight: isOn ? FontWeight.bold : FontWeight.normal,
@@ -481,7 +477,7 @@ class _EditChip extends StatelessWidget {
 								const SizedBox(width: 6),
 								Text(
 									label,
-									style: const TextStyle(fontFamily: _fontFa, color: Colors.white, fontSize: 11),
+									style: const TextStyle(color: Colors.white, fontSize: 11),
 								),
 							],
 						),
@@ -521,7 +517,6 @@ class _RouteActionButton extends StatelessWidget {
 						maxLines: 1,
 						overflow: TextOverflow.ellipsis,
 						style: const TextStyle(
-							fontFamily: _fontFa,
 							color: Colors.white,
 							fontSize: 12,
 							fontWeight: FontWeight.bold,

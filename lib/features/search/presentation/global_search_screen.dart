@@ -222,13 +222,11 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   color: colors.textPrimary,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                                 decoration: InputDecoration(
                                   hintText: 'جستجو در همه‌چیز…',
                                   hintStyle: TextStyle(
                                     color: colors.textSecondary.withValues(alpha: 0.6),
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 14,
                                   ),
                                   border: InputBorder.none,
@@ -266,8 +264,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                           style: TextStyle(
                             color: colors.primary,
                             fontSize: 14,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ),
                     ),
@@ -306,8 +303,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               style: TextStyle(
                 color: colors.textSecondary,
                 fontSize: 14,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ],
         ),
@@ -327,8 +323,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               style: TextStyle(
                 color: colors.textSecondary,
                 fontSize: 14,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -364,7 +359,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: colors.textSecondary,
-                  fontFamily: 'Vazirmatn',
                   letterSpacing: 0.3,
                 ),
               ),
@@ -374,8 +368,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   color: colors.textSecondary.withValues(alpha: 0.6),
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ],
           ),
@@ -427,7 +420,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                       task.title,
                       style: TextStyle(
                         fontSize: 15,
-                        fontFamily: 'Vazirmatn',
                         color: task.isDone
                             ? colors.textSecondary.withValues(alpha: 0.6)
                             : colors.textPrimary,
@@ -443,7 +435,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         task.note!,
                         style: TextStyle(
                           fontSize: 12,
-                          fontFamily: 'Vazirmatn',
                           color: colors.textSecondary.withValues(alpha: 0.7),
                         ),
                         maxLines: 1,
@@ -466,8 +457,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       color: colors.primary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ),
               ],
@@ -501,7 +491,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                       entry.title,
                       style: TextStyle(
                         fontSize: 15,
-                        fontFamily: 'Vazirmatn',
                         color: colors.textPrimary,
                       ),
                       maxLines: 1,
@@ -513,7 +502,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         entry.subtitle!,
                         style: TextStyle(
                           fontSize: 12,
-                          fontFamily: 'Vazirmatn',
                           color: colors.textSecondary.withValues(alpha: 0.7),
                         ),
                         maxLines: 1,

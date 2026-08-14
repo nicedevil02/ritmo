@@ -271,8 +271,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                       fontSize: 17.5,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   IconButton(
                     icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
@@ -316,8 +315,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: _activeTab == 0 ? colors.primary : colors.textSecondary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ),
                         ),
@@ -346,8 +344,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: _activeTab == 1 ? colors.primary : colors.textSecondary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ),
                         ),
@@ -381,7 +378,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
         // Search TextField
         TextField(
           onChanged: _filterCities,
-          style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn'),
+          style: TextStyle(color: colors.textPrimary, fontSize: 14.5),
           decoration: InputDecoration(
             hintText: 'جستجوی نام شهر یا استان...',
             hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
@@ -407,7 +404,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               ? Center(
                   child: Text(
                     'هیچ شهری یافت نشد.',
-                    style: TextStyle(color: colors.textSecondary, fontSize: 14.5, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(color: colors.textSecondary, fontSize: 14.5),
                   ),
                 )
               : ListView.builder(
@@ -441,16 +438,14 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                             color: isSelected ? colors.primary : colors.textPrimary,
                             fontSize: 15,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         subtitle: Text(
                           provinceName,
                           style: TextStyle(
                             color: colors.textSecondary,
                             fontSize: 12.5,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         trailing: isSelected
                             ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary, size: 18)
@@ -478,8 +473,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               fontSize: 14.5,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
           const SizedBox(height: 8),
           ..._methods.map((method) {
@@ -515,8 +509,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                           fontSize: 14,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           color: isSelected ? colors.primary : colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ),
                     if (isSelected)
@@ -541,7 +534,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
             icon: Icon(CupertinoIcons.cloud_download, size: 20, color: colors.primary),
             label: Text(
               'به‌روزرسانی آنلاین اوقات شرعی از API',
-              style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', fontSize: 14, color: colors.primary),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colors.primary),
             ),
             onPressed: () async {
               unawaited(HapticFeedback.mediumImpact());
@@ -580,8 +573,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                   fontSize: 14.5,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
               Switch(
                 value: _showAsrIsha,
@@ -607,8 +599,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                   fontSize: 14.5,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
               Text(
                 _hijriOffset == 0
@@ -618,8 +609,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: colors.primary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ],
           ),
@@ -631,7 +621,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
               thumbColor: colors.primary,
               overlayColor: colors.primary.withValues(alpha: 0.2),
               valueIndicatorColor: colors.primary,
-              valueIndicatorTextStyle: TextStyle(fontFamily: 'Vazirmatn', color: colors.onPrimary),
+              valueIndicatorTextStyle: TextStyle(color: colors.onPrimary),
             ),
             child: Slider(
               value: _hijriOffset.toDouble(),
@@ -669,7 +659,6 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                     style: TextStyle(
                       fontSize: 15.5,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'Vazirmatn',
                       color: colors.onPrimary,
                     ),
                   ),

@@ -59,7 +59,6 @@ Future<void> showCycleAiConsentSheet(
                   child: Text(
                     isPregnancyMode ? 'دستیار هوشمند بارداری' : 'دستیار هوشمند سیکل بانوان',
                     style: const TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -73,7 +72,6 @@ Future<void> showCycleAiConsentSheet(
             const Text(
               'دستیار هوشمند برای ارائه توصیه‌های دقیق فیزیولوژیک، علائم و تحلیل الگوی دوره‌ای شما را بررسی می‌کند. تمام داده‌ها طبق استانداردهای حفظ حریم خصوصی به صورت امن پردازش می‌شوند.',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 color: Colors.white70,
                 height: 1.6,
@@ -92,7 +90,7 @@ Future<void> showCycleAiConsentSheet(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+                    child: const Text('انصراف', style: TextStyle()),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -124,7 +122,7 @@ Future<void> showCycleAiConsentSheet(
                     },
                     child: const Text(
                       'تایید و ورود به گفتگو',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),

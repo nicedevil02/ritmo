@@ -111,16 +111,16 @@ class _MustahabSectionState extends State<MustahabSection> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
               'ثبت قضای ${practice.title}',
-              style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontSize: 16.5, fontWeight: FontWeight.bold),
+              style: TextStyle(color: colors.textPrimary, fontSize: 16.5, fontWeight: FontWeight.bold),
             ),
             content: Text(
               'آیا مایلید ${practice.title} را به بدهی‌های عبادی خود (بخش قضا) اضافه کنید؟',
-              style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn', fontSize: 14.5),
+              style: TextStyle(color: colors.textSecondary, fontSize: 14.5),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('خیر', style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                child: Text('خیر', style: TextStyle(color: colors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -130,7 +130,7 @@ class _MustahabSectionState extends State<MustahabSection> {
                   elevation: 0,
                 ),
                 onPressed: () => Navigator.pop(context, true),
-                child: Text('بله، اضافه کن', style: TextStyle(color: colors.onPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                child: Text('بله، اضافه کن', style: TextStyle(color: colors.onPrimary, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -258,7 +258,6 @@ class _MustahabSectionState extends State<MustahabSection> {
                                 Text(
                                   'مستحبات و ادعیه',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 16.5,
                                     fontWeight: FontWeight.w800,
                                     color: colors.textPrimary,
@@ -268,7 +267,6 @@ class _MustahabSectionState extends State<MustahabSection> {
                                 Text(
                                   'اعمال، زیارات و نوافل روزانه',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
                                     color: colors.textSecondary
@@ -312,7 +310,6 @@ class _MustahabSectionState extends State<MustahabSection> {
                             Text(
                               'مدیریت و افزودن',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                                 color: colors.primary,
@@ -374,8 +371,7 @@ class _MustahabSectionState extends State<MustahabSection> {
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           const SizedBox(height: 6),
                           Text(
@@ -384,7 +380,6 @@ class _MustahabSectionState extends State<MustahabSection> {
                             style: TextStyle(
                               fontSize: 12,
                               color: colors.textSecondary.withValues(alpha: 0.7),
-                              fontFamily: 'Vazirmatn',
                               height: 1.55,
                               fontWeight: FontWeight.w500,
                             ),
@@ -416,7 +411,6 @@ class _MustahabSectionState extends State<MustahabSection> {
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      fontFamily: 'Vazirmatn',
                                       color: colors.onPrimary,
                                     ),
                                   ),
@@ -516,7 +510,6 @@ class _MustahabSectionState extends State<MustahabSection> {
                                   Text(
                                     practice.title,
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 16,
                                       fontWeight: FontWeight.w800,
                                       color: isDone ? iconColor : colors.textPrimary,
@@ -541,7 +534,6 @@ class _MustahabSectionState extends State<MustahabSection> {
                                           Text(
                                             practice.reminderTime != null ? toPersianDigits(practice.reminderTime!) : 'یادآور',
                                             style: TextStyle(
-                                              fontFamily: 'Vazirmatn',
                                               fontSize: 10.5,
                                               fontWeight: FontWeight.bold,
                                               color: colors.accent,
@@ -558,7 +550,6 @@ class _MustahabSectionState extends State<MustahabSection> {
                                 Text(
                                   practice.notes!,
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 13,
                                     color: colors.textSecondary.withValues(alpha: 0.6),
                                     height: 1.4,
@@ -757,7 +748,6 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                 child: Text(
                   'مستحب سفارشی غیرفعال شد',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13.5,
                     color: colors.textPrimary,
                   ),
@@ -773,7 +763,6 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                 child: Text(
                   'بازگرداندن (Undo)',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: colors.accent,
@@ -856,8 +845,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                             fontSize: 16.5,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),
@@ -867,8 +855,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                       style: TextStyle(
                         fontSize: 14,
                         color: colors.textPrimary.withValues(alpha: 0.9),
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     SizedBox(height: 12),
                     Container(
@@ -884,8 +871,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: colors.primary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -903,7 +889,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                       },
                       child: Text(
                         'تایید و ثبت با یادآور پیش‌فرض',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.onPrimary),
                       ),
                     ),
                     SizedBox(height: 8),
@@ -954,7 +940,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                       },
                       child: Text(
                         'ویرایش یادآور',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                     ),
                     SizedBox(height: 8),
@@ -968,7 +954,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                       },
                       child: Text(
                         'ثبت بدون یادآور',
-                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
                       ),
                     ),
                     TextButton(
@@ -980,7 +966,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                       },
                       child: const Text(
                         'انصراف',
-                        style: TextStyle(fontSize: 13, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 13),
                       ),
                     ),
                   ],
@@ -1143,8 +1129,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                       fontSize: 17.5,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   IconButton(
                     icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
@@ -1183,8 +1168,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                 color: isDark ? colors.accent : colors.primary,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ),
           ..._customPractices.map((practice) {
@@ -1202,12 +1186,12 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                 dense: true,
                 title: Text(
                   practice.title,
-                  style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
                 ),
                 subtitle: practice.notes != null && practice.notes!.isNotEmpty
                     ? Text(
                         practice.notes!,
-                        style: TextStyle(color: colors.textSecondary, fontSize: 12.5, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(color: colors.textSecondary, fontSize: 12.5),
                       )
                     : null,
                 trailing: Row(
@@ -1240,8 +1224,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
               color: isDark ? colors.accent : colors.primary,
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
         ),
         ..._presets.map((preset) {
@@ -1259,11 +1242,11 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
               dense: true,
               title: Text(
                 preset['title'] as String,
-                style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
               ),
               subtitle: Text(
                 preset['notes'] as String,
-                style: TextStyle(color: colors.textSecondary, fontSize: 12.5, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textSecondary, fontSize: 12.5),
               ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1331,8 +1314,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                     fontSize: 14.5,
                     fontWeight: FontWeight.bold,
                     color: isDark ? colors.accent : colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
               ],
             ),
@@ -1466,8 +1448,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                       fontSize: 16.5,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   IconButton(
                     icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 18),
@@ -1480,12 +1461,12 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
               // Title field
               Text(
                 'عنوان مستحب:',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
               ),
               const SizedBox(height: 6),
               TextField(
                 controller: _titleController,
-                style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
                 decoration: InputDecoration(
                   hintText: 'مثلا: زیارت آل یاسین، دعای سمات...',
                   hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.4), fontSize: 13),
@@ -1506,12 +1487,12 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
               // Description/Notes field
               Text(
                 'توضیحات کوتاه:',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
               ),
               const SizedBox(height: 6),
               TextField(
                 controller: _notesController,
-                style: TextStyle(color: colors.textPrimary, fontSize: 14, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'مثلا: سه شنبه شب ها، هدیه به اموات...',
                   hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.4), fontSize: 13),
@@ -1552,8 +1533,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: colors.primary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -1561,8 +1541,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                               style: TextStyle(
                                 fontSize: 12,
                                 color: colors.textPrimary.withValues(alpha: 0.7),
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ],
                         ),
@@ -1589,7 +1568,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                             icon: const Icon(CupertinoIcons.trash, size: 14),
                             label: const Text(
                               'حذف',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -1621,7 +1600,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                             icon: const Icon(CupertinoIcons.pencil, size: 14),
                             label: const Text(
                               'ویرایش',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -1681,8 +1660,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                             fontSize: 14.5,
                             fontWeight: FontWeight.bold,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),
@@ -1708,7 +1686,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                         },
                         child: const Text(
                           'حذف مستحب',
-                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -1726,7 +1704,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                         onPressed: _saveCustom,
                         child: Text(
                           'ثبت تغییرات',
-                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary),
+                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: colors.onPrimary),
                         ),
                       ),
                     ),
@@ -1744,7 +1722,7 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
                   onPressed: _saveCustom,
                   child: Text(
                     widget.practice != null ? 'ثبت تغییرات' : 'ثبت و افزودن مستحب',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary),
                   ),
                 ),
               ],

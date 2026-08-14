@@ -387,7 +387,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
           final colors = context.colors;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('تسبیحات حضرت زهرا (س) به پایان رسید. قبول باشد ✨', style: TextStyle(fontFamily: 'Vazirmatn')),
+              content: const Text('تسبیحات حضرت زهرا (س) به پایان رسید. قبول باشد ✨', style: TextStyle()),
               backgroundColor: colors.primary,
             ),
           );
@@ -551,7 +551,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
               'ثبت دستی تعداد ${practice.title}',
-              style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontSize: 15.5, fontWeight: FontWeight.bold),
+              style: TextStyle(color: colors.textPrimary, fontSize: 15.5, fontWeight: FontWeight.bold),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -559,13 +559,13 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
               children: [
                 Text(
                   'تعداد انجام شده امروز را وارد کنید:',
-                  style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn', fontSize: 13.5),
+                  style: TextStyle(color: colors.textSecondary, fontSize: 13.5),
                 ),
                 SizedBox(height: 12),
                 TextField(
                   controller: controller,
                   keyboardType: TextInputType.number,
-                  style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(color: colors.textPrimary),
                   decoration: InputDecoration(
                     fillColor: colors.inputBackground,
                     filled: true,
@@ -584,7 +584,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('انصراف', style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -594,7 +594,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                   elevation: 0,
                 ),
                 onPressed: () => Navigator.pop(context, true),
-                child: Text('ذخیره', style: TextStyle(color: colors.onPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                child: Text('ذخیره', style: TextStyle(color: colors.onPrimary, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -854,8 +854,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                               color: colors.textPrimary,
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           SizedBox(height: 2),
                           Text(
@@ -863,7 +862,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                             style: TextStyle(
                               color: colors.textSecondary.withValues(alpha: 0.75),
                               fontSize: 11.5,
-                              fontFamily: 'Vazirmatn',
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -901,7 +899,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                           Text(
                             'هدف: ${toPersianDigits('$target')} صفحه',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11.5,
                               fontWeight: FontWeight.bold,
                               color: isDark ? colors.primary : colors.primary,
@@ -961,7 +958,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                 fontSize: 50,
                                 fontWeight: FontWeight.w900,
                                 color: isDark ? colors.primary : colors.primary,
-                                fontFamily: 'Vazirmatn',
                                 height: 1.0,
                               ),
                             ),
@@ -1016,8 +1012,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         SizedBox(height: 4),
                         Row(
@@ -1038,8 +1033,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
                                 color: colors.textSecondary.withValues(alpha: 0.75),
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ],
                         ),
@@ -1071,7 +1065,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                             Text(
                               toPersianDigits('$countVal'),
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11.5,
                                 fontWeight: isToday ? FontWeight.w900 : FontWeight.w600,
                                 color: isToday
@@ -1133,7 +1126,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                           child: Text(
                             days[idx],
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12,
                               fontWeight: isToday ? FontWeight.w900 : FontWeight.w600,
                               color: isToday
@@ -1336,7 +1328,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                       ),
                                       isDense: true,
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 16.5,
                                         fontWeight: FontWeight.w800,
                                         color: colors.textPrimary,
@@ -1347,7 +1338,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                           child: Text(
                                             d.id == 'wp_dhikr_zahra' ? 'تسبیحات حضرت زهرا' : d.title,
                                             style: TextStyle(
-                                              fontFamily: 'Vazirmatn',
                                               fontSize: 15.5,
                                               fontWeight: FontWeight.w800,
                                               color: colors.textPrimary,
@@ -1375,7 +1365,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                         ? 'ذکر کوتاه و آرام برای امروز'
                                         : 'ذکر روزانه',
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 11,
                                       fontWeight: FontWeight.w500,
                                       color: colors.textSecondary
@@ -1442,7 +1431,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                               Text(
                                 'افزودن',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
                                   color: colors.primary,
@@ -1538,7 +1526,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                     phrase,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 22,
                                       fontWeight: FontWeight.w900,
                                       color: isDark
@@ -1561,7 +1548,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                           value.round().toString(),
                                         ),
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           fontSize: 52,
                                           height: 0.95,
                                           fontWeight: FontWeight.w300,
@@ -1574,7 +1560,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                   Text(
                                     'از ${toPersianDigits(currentTarget.toString())}',
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: colors.textSecondary
@@ -1609,7 +1594,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                               child: Text(
                                 '${toPersianDigits((progress * 100).round().toString())}٪',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w800,
                                   color: isDark
@@ -1669,7 +1653,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                       Text(
                                         'یک ذکر',
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           fontSize: 15,
                                           fontWeight: FontWeight.w800,
                                           color: colors.onPrimary,
@@ -1801,7 +1784,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                           Text(
                             'امروز ${toPersianDigits(done.toString())} دور کامل',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
                               color: isDark
@@ -1890,7 +1872,6 @@ TextStyle _stepLabelStyle({
   required bool isDark,
 }) {
   return TextStyle(
-    fontFamily: 'Vazirmatn',
     fontSize: 10.5,
     fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
     color: isActive
@@ -1934,7 +1915,6 @@ Widget _actionDivider(
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 11.5,
                 color: color,
                 fontWeight: FontWeight.w600,
@@ -2053,8 +2033,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                         fontSize: 16.5,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),
@@ -2087,8 +2066,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       Text(
                         toPersianDigits('$_targetPages صفحه در روز'),
@@ -2096,8 +2074,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: isDark ? colors.primary : colors.primary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -2131,8 +2108,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                             fontSize: 32,
                             fontWeight: FontWeight.w900,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ),
                       InkWell(
@@ -2181,7 +2157,6 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                           child: Text(
                             p == 20 ? '۲۰ (یک جزء)' : '${toPersianDigits('$p')} صفحه',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11.5,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               color: isSelected ? colors.onPrimary : colors.textSecondary,
@@ -2219,8 +2194,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         SizedBox(height: 2),
                         Text(
@@ -2228,8 +2202,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                           style: TextStyle(
                             fontSize: 11,
                             color: colors.textSecondary.withValues(alpha: 0.8),
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),
@@ -2260,7 +2233,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
               onPressed: _save,
               child: Text(
                 'ذخیره تنظیمات',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary),
               ),
             ),
           ],
@@ -2349,7 +2322,7 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
                 children: [
                   Text(
                     'افزودن ذکر سفارشی جدید',
-                    style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
                   ),
                   IconButton(
                     icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 18),
@@ -2362,7 +2335,7 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
               // Title
               TextField(
                 controller: _titleController,
-                style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary, fontSize: 14.5),
                 decoration: InputDecoration(
                   hintText: 'نام ذکر (مثلا: لا اله الا الله)',
                   hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
@@ -2384,7 +2357,7 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
               TextField(
                 controller: _targetController,
                 keyboardType: TextInputType.number,
-                style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary, fontSize: 14.5),
                 decoration: InputDecoration(
                   hintText: 'هدف روزانه (تعداد مرتبه)',
                   hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
@@ -2419,12 +2392,12 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
                         children: [
                           Text(
                             'نمایش در تقویم و برنامه روزانه',
-                            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
                           SizedBox(height: 2),
                           Text(
                             'این ذکر در لیست کارهای روزانه تقویم ظاهر شود',
-                            style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.8), fontFamily: 'Vazirmatn'),
+                            style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.8)),
                           ),
                         ],
                       ),
@@ -2451,7 +2424,7 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: _save,
-                child: Text('ثبت و افزودن ذکر', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary)),
+                child: Text('ثبت و افزودن ذکر', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary)),
               ),
             ],
           ),
@@ -2527,17 +2500,17 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
         child: AlertDialog(
           backgroundColor: colors.card,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('حذف ذکر', style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-          content: Text('آیا از حذف «${widget.practice.title}» اطمینان دارید؟', style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+          title: Text('حذف ذکر', style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold)),
+          content: Text('آیا از حذف «${widget.practice.title}» اطمینان دارید؟', style: TextStyle(color: colors.textSecondary)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('انصراف', style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: colors.error, elevation: 0),
               onPressed: () => Navigator.pop(context, true),
-              child: Text('حذف', style: TextStyle(color: colors.textOnColor, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+              child: Text('حذف', style: TextStyle(color: colors.textOnColor, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -2612,8 +2585,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),
@@ -2633,14 +2605,13 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                   fontSize: 13.5,
                   fontWeight: FontWeight.w600,
                   color: colors.textSecondary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
               SizedBox(height: 8),
               TextField(
                 controller: _targetController,
                 keyboardType: TextInputType.number,
-                style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary, fontSize: 14.5),
                 decoration: InputDecoration(
                   fillColor: colors.inputBackground,
                   filled: true,
@@ -2680,8 +2651,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         SizedBox(height: 2),
                         Text(
@@ -2689,8 +2659,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                           style: TextStyle(
                             fontSize: 11,
                             color: colors.textSecondary.withValues(alpha: 0.8),
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),
@@ -2732,7 +2701,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                     onPressed: _save,
                     child: Text(
                       'ذخیره تنظیمات',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.onPrimary),
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary),
                     ),
                   ),
                 ),

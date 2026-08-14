@@ -127,7 +127,6 @@ class _RegistryCountdownBadgeState extends State<RegistryCountdownBadge> {
         child: Text(
           text,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 11.5,
             fontWeight: FontWeight.w600,
             color: textColor,

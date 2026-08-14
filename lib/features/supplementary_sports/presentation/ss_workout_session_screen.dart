@@ -366,7 +366,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           const SnackBar(
             content: Directionality(
               textDirection: TextDirection.rtl,
-              child: Text('حرکت جایگزین مناسبی یافت نشد.', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: Text('حرکت جایگزین مناسبی یافت نشد.', style: TextStyle()),
             ),
           ),
         );
@@ -426,10 +426,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 controller: ctrl,
                 textDirection: TextDirection.rtl,
                 maxLines: 3,
-                style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white),
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: 'مثلاً: وزنه سنگین بود، ست آخر کمک گرفتم...',
-                  hintStyle: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white38),
+                  hintStyle: const TextStyle(color: Colors.white38),
                   filled: true,
                   fillColor: const Color(0xFF1E293B),
                   border: OutlineInputBorder(
@@ -487,7 +487,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         child: AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(title, style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)),
           content: TextField(
             controller: ctrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -496,10 +496,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             maxLength: 6,
             autofocus: true,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
             decoration: InputDecoration(
               suffixText: suffix,
-              suffixStyle: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70),
+              suffixStyle: const TextStyle(color: Colors.white70),
               filled: true,
               fillColor: const Color(0xFF0F172A),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF334155))),
@@ -508,7 +508,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54)),
+              child: const Text('انصراف', style: TextStyle(color: Colors.white54)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -522,7 +522,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 }
                 Navigator.pop(ctx);
               },
-              child: const Text('تایید', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
             ),
           ],
         ),
@@ -540,24 +540,24 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text(
             'خروج از تمرین؟ ⚠️',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
           ),
           content: const Text(
             'می‌توانید تمرین را موقتاً متوقف کنید و بعداً ادامه دهید، یا آن را کاملاً لغو کنید.',
-            style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70),
+            style: TextStyle(color: Colors.white70),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, 'cancel_workout'),
-              child: const Text('لغو کامل', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.redAccent)),
+              child: const Text('لغو کامل', style: TextStyle(color: Colors.redAccent)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, 'pause_workout'),
-              child: const Text('توقف موقت (بعدا ادامه میدم)', style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xFF10B981))),
+              child: const Text('توقف موقت (بعدا ادامه میدم)', style: TextStyle(color: Color(0xFF10B981))),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, 'stay'),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70)),
+              child: const Text('انصراف', style: TextStyle(color: Colors.white70)),
             ),
           ],
         ),
@@ -586,20 +586,20 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Text(
               'انصراف از تمرین؟ ⚠️',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
             content: const Text(
               'شما هیچ حرکتی را کامل نکرده‌اید. آیا می‌خواهید از تمرین انصراف دهید؟\n(در صورت انصراف، این تمرین در تاریخچه ثبت نخواهد شد)',
-              style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70),
+              style: TextStyle(color: Colors.white70),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('ادامه تمرین', style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xFF10B981))),
+                child: const Text('ادامه تمرین', style: TextStyle(color: Color(0xFF10B981))),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('انصراف و خروج', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.redAccent)),
+                child: const Text('انصراف و خروج', style: TextStyle(color: Colors.redAccent)),
               ),
             ],
           ),
@@ -621,16 +621,16 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text(
             'اتمام تمرین؟ 🏁',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
           ),
           content: const Text(
             'آیا می‌خواهید تمرین امروز را به پایان برسانید و نتایج را ثبت کنید؟',
-            style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70),
+            style: TextStyle(color: Colors.white70),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('ادامه تمرین', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white60)),
+              child: const Text('ادامه تمرین', style: TextStyle(color: Colors.white60)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -638,7 +638,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('ثبت و پایان', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text('ثبت و پایان', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
             ),
           ],
         ),
@@ -688,21 +688,21 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                   const SizedBox(width: 8),
                   Text(
                     'محاسبه‌گر صفحه وزنه (${toPersianDigits(totalWeight.toStringAsFixed(1))} کیلوگرم)',
-                    style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
                 'وزن هر سمت میله (با فرض میله ۲۰ کیلویی): ${toPersianDigits(perSide.toStringAsFixed(1))} کیلوگرم',
-                style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white70),
+                style: const TextStyle(fontSize: 13, color: Colors.white70),
               ),
               const SizedBox(height: 24),
 
               if (platesPerSide.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Text('فقط وزن میله خالی (۲۰ کیلوگرم)', style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+                  child: Text('فقط وزن میله خالی (۲۰ کیلوگرم)', style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
                 )
               else
                 Wrap(
@@ -729,12 +729,12 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                         children: [
                           Text(
                             toPersianDigits('${plateWeight.toStringAsFixed(plateWeight % 1 == 0 ? 0 : 1)} kg'),
-                            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: plateColor),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: plateColor),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             toPersianDigits('$count عدد هر طرف'),
-                            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.white70),
+                            style: const TextStyle(fontSize: 11, color: Colors.white70),
                           ),
                         ],
                       ),
@@ -751,7 +751,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('متوجه شدم', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: const Text('متوجه شدم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
             ],
@@ -778,7 +778,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 textDirection: TextDirection.rtl,
                 child: Text(
                   toPersianDigits('اطلاعات سابقه قبلی (${lastWeight.round()}kg × $lastReps تکرار) روی ست‌ها کپی شد ✨'),
-                  style: const TextStyle(fontFamily: 'Vazirmatn'),
+                  style: const TextStyle(),
                 ),
               ),
               backgroundColor: const Color(0xFF10B981),
@@ -792,7 +792,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             const SnackBar(
               content: Directionality(
                 textDirection: TextDirection.rtl,
-                child: Text('سابقه قبلی برای این حرکت ثبت نشده است.', style: TextStyle(fontFamily: 'Vazirmatn')),
+                child: Text('سابقه قبلی برای این حرکت ثبت نشده است.', style: TextStyle()),
               ),
               backgroundColor: Colors.orangeAccent,
               behavior: SnackBarBehavior.floating,
@@ -831,7 +831,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               textDirection: TextDirection.rtl,
               child: Text(
                 'ذخیره تمرین ناموفق بود. لطفا دوباره تلاش کنید.',
-                style: TextStyle(fontFamily: 'Vazirmatn'),
+                style: TextStyle(),
               ),
             ),
             backgroundColor: Colors.redAccent,
@@ -862,13 +862,13 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             children: [
               const Text(
                 'سلامت شما اولویت اول است. در صورت احساس هرگونه درد غیرعادی، یکی از گزینه‌های زیر را انتخاب کنید:',
-                style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 16),
               ListTile(
                 leading: const Icon(Icons.arrow_downward_rounded, color: Colors.amberAccent),
-                title: const Text('کاهش وزن و شدت حرکت', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: const Text('کاهش ۳۰ درصدی وزنه یا تکرار ست‌های باقی‌مانده', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54, fontSize: 12)),
+                title: const Text('کاهش وزن و شدت حرکت', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                subtitle: const Text('کاهش ۳۰ درصدی وزنه یا تکرار ست‌های باقی‌مانده', style: TextStyle(color: Colors.white54, fontSize: 12)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 tileColor: const Color(0xFF1E293B),
                 onTap: () async {
@@ -897,8 +897,8 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               const SizedBox(height: 8),
               ListTile(
                 leading: const Icon(Icons.swap_horiz_rounded, color: Color(0xFF38BDF8)),
-                title: const Text('تعویض با حرکت جایگزین ایمن', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: const Text('انتخاب از بین حرکات کم‌فشارتر بدون فشار به این مفصل', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54, fontSize: 12)),
+                title: const Text('تعویض با حرکت جایگزین ایمن', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                subtitle: const Text('انتخاب از بین حرکات کم‌فشارتر بدون فشار به این مفصل', style: TextStyle(color: Colors.white54, fontSize: 12)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 tileColor: const Color(0xFF1E293B),
                 onTap: () async {
@@ -920,8 +920,8 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               const SizedBox(height: 8),
               ListTile(
                 leading: const Icon(Icons.stop_circle_outlined, color: Colors.redAccent),
-                title: const Text('پایان امن تمرین امروز', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: const Text('ثبت ست‌های انجام‌شده تا الان بدون افت رکورد', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54, fontSize: 12)),
+                title: const Text('پایان امن تمرین امروز', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                subtitle: const Text('ثبت ست‌های انجام‌شده تا الان بدون افت رکورد', style: TextStyle(color: Colors.white54, fontSize: 12)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 tileColor: const Color(0xFF1E293B),
                 onTap: () async {
@@ -980,7 +980,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               Text(
                 'برای ثبت دقیق‌تر شدت تمرین شما در الگوریتم هوشمند',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   color: Colors.grey[400],
                 ),
@@ -1020,7 +1019,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               Text(
                 label,
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -1074,7 +1072,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               SizedBox(height: 16),
               Text(
                 'درحال آماده‌سازی آمادگی جسمانی...',
-                style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70),
+                style: TextStyle(color: Colors.white70),
               ),
             ],
           ),
@@ -1097,7 +1095,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           ),
           title: Text(
             'تمرین ورزشی',
-            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontWeight: FontWeight.bold),
+            style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold),
           ),
         ),
         body: Center(
@@ -1111,13 +1109,13 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 Text(
                   errorMessage,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, color: colors.textPrimary, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 15, color: colors.textPrimary, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'می‌توانید از بخش «برنامه» حرکات تمرینی را بازتولید یا دوباره تلاش کنید.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+                  style: TextStyle(fontSize: 13, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 24),
                 Row(
@@ -1129,7 +1127,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                         backgroundColor: const Color(0xFF1E293B),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('بازگشت به برنامه', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                      child: const Text('بازگشت به برنامه', style: TextStyle(color: Colors.white)),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
@@ -1138,7 +1136,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                         backgroundColor: colors.primary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('تلاش دوباره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text('تلاش دوباره', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -1257,7 +1255,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     Text(
                       _formatElapsed(_elapsedSeconds),
                       style: const TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -1279,7 +1276,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 child: Text(
                   toPersianDigits('حرکت ${_currentExerciseIndex + 1} از $totalCount'),
                   style: const TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -1369,7 +1365,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: isActive ? Colors.white : Colors.white54,
@@ -1427,7 +1422,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                         : Text(
                             toPersianDigits('${index + 1}'),
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
                               color: isCurrent ? const Color(0xFF10B981) : Colors.white54,
@@ -1444,7 +1438,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       Text(
                         ex.exercise.name,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: isCurrent ? const Color(0xFF10B981) : Colors.white,
@@ -1453,7 +1446,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       const SizedBox(height: 4),
                       Text(
                         toPersianDigits('${ex.referenceSets} ست × ${ex.referenceReps} تکرار  •  $completedSets/${ex.referenceSets} انجام شده'),
-                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white54),
+                        style: const TextStyle(fontSize: 12, color: Colors.white54),
                       ),
                     ],
                   ),
@@ -1465,7 +1458,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       color: const Color(0xFF10B981),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text('جاری', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                    child: const Text('جاری', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
                   )
                 else if (isDone)
                   const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22)
@@ -1519,7 +1512,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       children: [
                         const Icon(Icons.history_rounded, size: 15, color: Color(0xFF06B6D4)),
                         const SizedBox(width: 4),
-                        const Text('دفعه قبل', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xFF06B6D4))),
+                        const Text('دفعه قبل', style: TextStyle(fontSize: 11, color: Color(0xFF06B6D4))),
                         const Spacer(),
                         InkWell(
                           onTap: () => _copyPreviousRecord(entry),
@@ -1527,7 +1520,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                             padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                             child: Text(
                               'کپی روی ست‌ها 📋',
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Color(0xFF38BDF8), fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 10, color: Color(0xFF38BDF8), fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
@@ -1538,17 +1531,17 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       future: ref.read(ssWorkoutProvider(_key).notifier).getLastLoggedSetForExercise(entry.exercise.id),
                       builder: (context, snap) {
                         if (snap.connectionState == ConnectionState.waiting) {
-                          return const Text('...', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white54));
+                          return const Text('...', style: TextStyle(fontSize: 13, color: Colors.white54));
                         }
                         final data = snap.data;
                         if (data == null) {
-                          return const Text('سابقه‌ای ندارد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white38));
+                          return const Text('سابقه‌ای ندارد', style: TextStyle(fontSize: 13, color: Colors.white38));
                         }
                         final lw = (data['weight'] as num?)?.toDouble() ?? 0.0;
                         final lr = (data['reps'] as num?)?.toInt() ?? 0;
                         return Text(
                           toPersianDigits('${lw.round()} kg × $lr تکرار'),
-                          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                         );
                       },
                     ),
@@ -1569,7 +1562,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       children: [
                         Icon(Icons.bolt_rounded, size: 15, color: Color(0xFFF59E0B)),
                         SizedBox(width: 4),
-                        Text('۱ تکرار بیشینه (1RM)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xFFF59E0B))),
+                        Text('۱ تکرار بیشینه (1RM)', style: TextStyle(fontSize: 11, color: Color(0xFFF59E0B))),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -1578,7 +1571,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                           ? toPersianDigits('~${oneRM.toStringAsFixed(1)} kg')
                           : 'وزن را وارد کنید',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: oneRM != null ? Colors.white : Colors.white38,
@@ -1610,7 +1602,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     'دفعه قبل: ${entry.optionalNote}',
                     textDirection: TextDirection.rtl,
                     style: const TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11.5,
                       color: Colors.white,
                     ),
@@ -1647,7 +1638,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               SizedBox(width: 6),
               Text(
                 'درصد درگیری عضلات',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6)),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6)),
               ),
             ],
           ),
@@ -1663,8 +1654,8 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     textDirection: TextDirection.rtl,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(e.key, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white70)),
-                      Text(toPersianDigits('${e.value}٪'), style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors)),
+                      Text(e.key, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                      Text(toPersianDigits('${e.value}٪'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors)),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -1766,7 +1757,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                             child: Text(
                               _categoryLabel,
                               style: const TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF10B981),
@@ -1784,7 +1774,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                               child: Text(
                                 entry.exercise.equipment!,
                                 style: const TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 11,
                                   color: Color(0xFF06B6D4),
                                 ),
@@ -1796,7 +1785,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       Text(
                         entry.exercise.name,
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -1808,7 +1796,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                         Text(
                           entry.exercise.nameEn!,
                           style: const TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 12,
                             color: Colors.white38,
                           ),
@@ -1872,7 +1859,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.white54),
+          style: const TextStyle(fontSize: 11, color: Colors.white54),
         ),
       ],
     );
@@ -1900,7 +1887,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               const Text(
                 'ثبت ست‌های تمرین',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -1910,7 +1896,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               Text(
                 toPersianDigits('${entry.completedSetsCount} از ${entry.referenceSets} تکمیل شده'),
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   color: Colors.white54,
                 ),
@@ -1967,7 +1952,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                           ? 'ثبت و تکمیل ست ${toPersianDigits((currentSetIndex + 1).toString())}'
                           : 'همه ست‌ها انجام شد! 🏆',
                       style: const TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
@@ -2025,7 +2009,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               child: Text(
                 toPersianDigits('${row.setNumber}'),
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                   color: isCurrent ? const Color(0xFF10B981) : Colors.white70,
@@ -2067,7 +2050,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 : Center(
                     child: Text(
                       toPersianDigits('${row.weight.round()} kg'),
-                      style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70, fontSize: 13),
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ),
           ),
@@ -2103,7 +2086,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 : Center(
                     child: Text(
                       toPersianDigits('${row.reps} تکرار'),
-                      style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70, fontSize: 13),
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ),
           ),
@@ -2115,7 +2098,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                   ? _rirDropdownDark(row)
                   : Text(
                       isDone ? toPersianDigits('${row.rir}') : '-',
-                      style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white54, fontSize: 13),
+                      style: const TextStyle(color: Colors.white54, fontSize: 13),
                     ),
             ),
           ),
@@ -2168,7 +2151,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             child: Text(
               valueText,
               style: const TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF10B981),
@@ -2209,7 +2191,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             value: v,
             child: Text(
               toPersianDigits('$v'),
-              style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white),
+              style: const TextStyle(fontSize: 13, color: Colors.white),
             ),
           );
         }).toList(),
@@ -2239,7 +2221,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           Expanded(
             child: Text(
               'شاخص RIR (تکرار در زاپاس): تعداد تکراری که قبل از ناتوانی کامل عضلانی می‌توانید انجام دهید.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white70),
+              style: TextStyle(fontSize: 12, color: Colors.white70),
             ),
           ),
         ],
@@ -2353,7 +2335,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     Text(
                       'پایان تمرین 🏁',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -2414,7 +2395,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: color,
@@ -2453,7 +2433,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                   child: const Text(
                     'استراحت و تنفس عمیق 🧘‍♂️',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF10B981),
@@ -2482,7 +2461,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                         Text(
                           toPersianDigits('$_restRemainingSeconds'),
                           style: const TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 64,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -2490,7 +2468,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                         ),
                         const Text(
                           'ثانیه استراحت',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white54),
+                          style: TextStyle(fontSize: 13, color: Colors.white54),
                         ),
                       ],
                     ),
@@ -2516,7 +2494,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       ),
                       label: Text(
                         _isTimerPaused ? 'ادامه' : 'توقف',
-                        style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       onPressed: () => _dispatchIntent(const PauseResumeTimer()),
                     ),
@@ -2531,7 +2509,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       onPressed: () => _dispatchIntent(const SkipRestTimer()),
                       child: const Text(
                         'شروع ست بعدی ⏭',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -2557,7 +2535,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                             Text(
                               'ست بعدی: ست ${toPersianDigits(nextSet.setNumber.toString())}',
                               style: const TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
@@ -2565,7 +2542,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                             Text(
                               entry.exercise.name,
                               style: const TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 12,
                                 color: Color(0xFF10B981),
                               ),
@@ -2595,9 +2571,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   Widget _nextSetMetric(String title, String val) {
     return Column(
       children: [
-        Text(title, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.white38)),
+        Text(title, style: const TextStyle(fontSize: 11, color: Colors.white38)),
         const SizedBox(height: 2),
-        Text(val, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text(val, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
       ],
     );
   }
@@ -2616,13 +2592,12 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             children: [
               const Text(
                 'آماده باشید! حرکت اول',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, color: Color(0xFF10B981)),
+                style: TextStyle(fontSize: 16, color: Color(0xFF10B981)),
               ),
               const SizedBox(height: 8),
               Text(
                 entry.exercise.name,
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -2639,7 +2614,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               Text(
                 toPersianDigits('شروع تمرین تا ${state.timerRemainingSeconds} ثانیه...'),
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 22,
                   color: Colors.amberAccent,
                   fontWeight: FontWeight.bold,
@@ -2656,7 +2630,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 icon: const Icon(Icons.play_arrow_rounded),
                 label: const Text(
                   'شروع بدون معطلی',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () => _dispatchIntent(const SkipRestTimer()),
               ),
@@ -2674,7 +2648,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         child: Text(
           toPersianDigits(state.timerRemainingSeconds.toString()),
           style: const TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 140,
             fontWeight: FontWeight.bold,
             color: Color(0xFF10B981),
@@ -2696,7 +2669,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             Text(
               'تعویض جهت! 🔄',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 38,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -2705,7 +2677,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             SizedBox(height: 8),
             Text(
               'شروع حرکت برای سمت مقابل',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, color: Colors.white70),
+              style: TextStyle(fontSize: 18, color: Colors.white70),
             ),
           ],
         ),
@@ -2725,7 +2697,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             const Text(
               'تمرین شما با موفقیت تمام شد!',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -2742,7 +2713,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               onPressed: _finishAndLogWorkout,
               child: const Text(
                 'مشاهده خلاصه تمرین',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -2776,7 +2747,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     const Text(
                       'حالت ورزشی Hands-Free 🦾',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFFF59E0B),
@@ -2804,7 +2774,6 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       Text(
                         entry.exercise.name,
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -2816,7 +2785,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       const SizedBox(height: 8),
                       Text(
                         'درحال اجرای حرکت ${_currentExerciseIndex + 1} از ${_exercises.length}',
-                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: Colors.white38),
+                        style: const TextStyle(fontSize: 14, color: Colors.white38),
                       ),
                       const SizedBox(height: 36),
 
@@ -2837,12 +2806,12 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Text('استراحت', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+                                const Text('استراحت', style: TextStyle(fontSize: 14, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
                                 Text(
                                   toPersianDigits('$_restRemainingSeconds'),
-                                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 64, fontWeight: FontWeight.bold, color: Colors.white),
+                                  style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold, color: Colors.white),
                                 ),
-                                const Text('ثانیه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white38)),
+                                const Text('ثانیه', style: TextStyle(fontSize: 12, color: Colors.white38)),
                               ],
                             ),
                           ],
@@ -2860,7 +2829,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                             onPressed: () => _dispatchIntent(const SkipRestTimer()),
                             child: const Text(
                               'رد کردن استراحت ⏭',
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                           ),
                         ),
@@ -2876,7 +2845,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                             children: [
                               Text(
                                 'ست شماره ${toPersianDigits(curSet.setNumber.toString())}',
-                                style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFF59E0B)),
+                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFF59E0B)),
                               ),
                               const SizedBox(height: 24),
                               Row(
@@ -2906,7 +2875,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                             onPressed: () => _dispatchIntent(const CompleteCurrentSet()),
                             label: Text(
                               'ثبت ست ${toPersianDigits(curSet.setNumber.toString())}',
-                              style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                           ),
                         ),
@@ -2925,10 +2894,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   Widget _handsFreeMetric(String title, String val, String unit) {
     return Column(
       children: [
-        Text(title, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white38)),
+        Text(title, style: const TextStyle(fontSize: 13, color: Colors.white38)),
         const SizedBox(height: 6),
-        Text(toPersianDigits(val), style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
-        Text(unit, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white38)),
+        Text(toPersianDigits(val), style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text(unit, style: const TextStyle(fontSize: 12, color: Colors.white38)),
       ],
     );
   }
@@ -2943,7 +2912,6 @@ class _DarkHeaderCell extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        fontFamily: 'Vazirmatn',
         fontSize: 12,
         fontWeight: FontWeight.bold,
         color: Colors.white54,

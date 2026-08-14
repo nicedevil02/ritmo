@@ -81,7 +81,7 @@ class EnergyTrendsSection extends StatelessWidget {
                     SizedBox(width: 8),
                     Text(
                       'روند میانگین هفتگی (۴ هفته اخیر)',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ],
                 ),
@@ -125,7 +125,7 @@ class EnergyTrendsSection extends StatelessWidget {
                         const SizedBox(height: 10),
                         Text(
                           _toPersianDigits('هفته ${4 - index}'),
-                          style: const TextStyle(fontSize: 9, color: Colors.white30, fontFamily: 'Vazirmatn'),
+                          style: const TextStyle(fontSize: 9, color: Colors.white30),
                         ),
                       ],
                     );
@@ -164,7 +164,7 @@ class EnergyTrendsSection extends StatelessWidget {
                     SizedBox(width: 8),
                     Text(
                       'تحلیل همبستگی و بینش زیستی',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ],
                 ),
@@ -176,11 +176,11 @@ class EnergyTrendsSection extends StatelessWidget {
                   children: [
                     const Text(
                       'حس و حال غالب دورانی:',
-                      style: TextStyle(fontSize: 11, color: Colors.white54, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 11, color: Colors.white54),
                     ),
                     Text(
                       dominantMood != null ? '${dominantMood!.emoji} ${dominantMood!.label}' : 'ثبت نشده',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ],
                 ),
@@ -189,7 +189,7 @@ class EnergyTrendsSection extends StatelessWidget {
                 // Correlation text
                 Text(
                   _toPersianDigits(correlationInsight),
-                  style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn', height: 1.6),
+                  style: TextStyle(fontSize: 11, color: colors.textSecondary, height: 1.6),
                 ),
               ],
             ),
@@ -208,7 +208,7 @@ class EnergyTrendsSection extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
-        Text(text, style: const TextStyle(fontSize: 9.5, color: Colors.white54, fontFamily: 'Vazirmatn')),
+        Text(text, style: const TextStyle(fontSize: 9.5, color: Colors.white54)),
       ],
     );
   }

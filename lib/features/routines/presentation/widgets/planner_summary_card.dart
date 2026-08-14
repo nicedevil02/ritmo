@@ -68,7 +68,7 @@ class PlannerSummaryCard extends StatelessWidget {
                   ),
                   child: Text(
                     '$catEmoji $catLabel',
-                    style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const Spacer(),
@@ -82,7 +82,6 @@ class PlannerSummaryCard extends StatelessWidget {
             Text(
               controller.title.isEmpty ? fallbackTitle : controller.title,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -93,7 +92,6 @@ class PlannerSummaryCard extends StatelessWidget {
               Text(
                 controller.description,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 11.5,
                   color: colors.textSecondary.withValues(alpha: 0.7),
                 ),
@@ -122,7 +120,6 @@ class PlannerSummaryCard extends StatelessWidget {
         Text(
           title,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 12,
             color: colors.textSecondary.withValues(alpha: 0.8),
           ),
@@ -131,7 +128,6 @@ class PlannerSummaryCard extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 12,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,

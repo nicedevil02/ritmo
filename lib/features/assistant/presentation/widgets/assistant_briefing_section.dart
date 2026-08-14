@@ -45,7 +45,6 @@ class AssistantBriefingSection extends StatelessWidget {
               Text(
                 'هنوز دارم اپت رو می‌شناسم ✨',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -56,7 +55,6 @@ class AssistantBriefingSection extends StatelessWidget {
                 'داده‌های کافی برای سنتز بریفینگ وجود ندارد. با ثبت روتین‌ها، خواب و وضعیت روزانه به من کمک کنید تا شما را بهتر بشناسم.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   color: colors.textSecondary,
                   height: 1.6,
@@ -83,7 +81,6 @@ class AssistantBriefingSection extends StatelessWidget {
             Text(
               'خلاصه وضعیت امروز',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -118,7 +115,6 @@ class AssistantBriefingSection extends StatelessWidget {
                         Text(
                           briefing.text,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             height: 1.6,
                             color: colors.textPrimary,
@@ -163,7 +159,6 @@ class AssistantBriefingSection extends StatelessWidget {
             Text(
               'بهترین اقدام‌های بعدی',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -187,7 +182,6 @@ class AssistantBriefingSection extends StatelessWidget {
             Text(
               'وضعیت ماژول‌ها',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -251,14 +245,14 @@ class AssistantBriefingSection extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10.5, color: colors.textSecondary),
+                  style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                 ),
               ],
             ),
@@ -357,7 +351,6 @@ class AssistantBriefingSection extends StatelessWidget {
                           child: Text(
                             item.title,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -378,7 +371,6 @@ class AssistantBriefingSection extends StatelessWidget {
                     child: Text(
                       categoryName,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 9.5,
                         fontWeight: FontWeight.bold,
                         color: themeColor,
@@ -391,7 +383,6 @@ class AssistantBriefingSection extends StatelessWidget {
               Text(
                 item.reason,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 11,
                   color: colors.textSecondary,
                   height: 1.55,
@@ -421,7 +412,6 @@ class AssistantBriefingSection extends StatelessWidget {
                     label: const Text(
                       'اعمال پیشنهاد',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         color: Colors.white,
                         fontSize: 10.5,
                         fontWeight: FontWeight.bold,
@@ -499,7 +489,6 @@ class AssistantBriefingSection extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
                       color: iconColor,
@@ -512,7 +501,6 @@ class AssistantBriefingSection extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 10,
                         height: 1.45,
                         color: colors.textPrimary,

@@ -145,33 +145,33 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
               children: [
                 Text(
                   'فعال‌سازی دستی قلمرو «${realm.name}»',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'مدت زمان فعال ماندن قلمرو را انتخاب کنید:',
-                  style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 16),
 
                 ListTile(
                   leading: const Icon(CupertinoIcons.timer, color: Color(0xFF6366F1)),
-                  title: const Text('۲۵ دقیقه (کار تمرکزی کوتاه)', style: TextStyle(fontSize: 14, fontFamily: 'Vazirmatn')),
+                  title: const Text('۲۵ دقیقه (کار تمرکزی کوتاه)', style: TextStyle(fontSize: 14)),
                   onTap: () => _activateManualOverride(realm.id, 25),
                 ),
                 ListTile(
                   leading: const Icon(CupertinoIcons.timer, color: Color(0xFF8B5CF6)),
-                  title: const Text('۵۰ دقیقه (یک پومودورو کامل)', style: TextStyle(fontSize: 14, fontFamily: 'Vazirmatn')),
+                  title: const Text('۵۰ دقیقه (یک پومودورو کامل)', style: TextStyle(fontSize: 14)),
                   onTap: () => _activateManualOverride(realm.id, 50),
                 ),
                 ListTile(
                   leading: const Icon(CupertinoIcons.timer, color: Color(0xFFEC4899)),
-                  title: const Text('۹۰ دقیقه (جلسه عمیق)', style: TextStyle(fontSize: 14, fontFamily: 'Vazirmatn')),
+                  title: const Text('۹۰ دقیقه (جلسه عمیق)', style: TextStyle(fontSize: 14)),
                   onTap: () => _activateManualOverride(realm.id, 90),
                 ),
                 ListTile(
                   leading: const Icon(CupertinoIcons.moon_stars_fill, color: Color(0xFFFFD700)),
-                  title: const Text('تا پایان امروز', style: TextStyle(fontSize: 14, fontFamily: 'Vazirmatn')),
+                  title: const Text('تا پایان امروز', style: TextStyle(fontSize: 14)),
                   onTap: () {
                     final now = DateTime.now();
                     final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
@@ -207,21 +207,21 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            title: Text('حذف قلمرو «${realm.name}»', style: const TextStyle(fontFamily: 'Vazirmatn')),
+            title: Text('حذف قلمرو «${realm.name}»', style: const TextStyle()),
             content: Text(
               connectedCount > 0
                   ? 'با حذف این قلمرو، تعداد $connectedCount روتین متصل به آن آزاد خواهند شد. آیا مطمئن هستید؟'
                   : 'آیا از حذف این قلمرو اطمینان دارید؟',
-              style: const TextStyle(fontFamily: 'Vazirmatn'),
+              style: const TextStyle(),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+                child: const Text('انصراف', style: TextStyle()),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('حذف قلمرو', style: TextStyle(color: Colors.redAccent, fontFamily: 'Vazirmatn')),
+                child: const Text('حذف قلمرو', style: TextStyle(color: Colors.redAccent)),
               ),
             ],
           ),
@@ -236,7 +236,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('قلمرو «${realm.name}» حذف شد.', style: const TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text('قلمرو «${realm.name}» حذف شد.', style: const TextStyle()),
             action: SnackBarAction(
               label: 'بازگردانی',
               textColor: const Color(0xFFFFD700),
@@ -273,14 +273,14 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
               children: [
                 Icon(CupertinoIcons.info_circle_fill, color: Color(0xFF6366F1), size: 20),
                 SizedBox(width: 8),
-                Text('چرا این قلمرو؟', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16)),
+                Text('چرا این قلمرو؟', style: TextStyle(fontSize: 16)),
               ],
             ),
-            content: Text(text, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary, height: 1.5)),
+            content: Text(text, style: TextStyle(fontSize: 13, color: colors.textPrimary, height: 1.5)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('متوجه شدم', style: TextStyle(fontFamily: 'Vazirmatn')),
+                child: const Text('متوجه شدم', style: TextStyle()),
               ),
             ],
           ),
@@ -328,8 +328,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
@@ -377,13 +376,12 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                             ElevatedButton.icon(
                               onPressed: _openCreateSheet,
                               icon: const Icon(CupertinoIcons.add, size: 16, color: Colors.white),
-                              label: const Text('قلمرو جدید', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn')),
+                              label: const Text('قلمرو جدید', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: colors.primary,
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -445,20 +443,20 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
                     children: [
                       Text(
                         realm.name,
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
                       ),
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
-                        child: const Text('قلمرو فعلی', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn')),
+                        child: const Text('قلمرو فعلی', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'باقیمانده: ${state.remaining.inMinutes} دقیقه',
-                    style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
                   ),
                 ],
               ),
@@ -505,26 +503,26 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
                     children: [
                       Row(
                         children: [
-                          Text(realm.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                          Text(realm.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(color: const Color(0xFFD4A843), borderRadius: BorderRadius.circular(6)),
-                            child: const Text('فعال موقت', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn')),
+                            child: const Text('فعال موقت', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'تا ساعت ${_formatTime(state.expireAt)} (${state.remaining.inMinutes} دقیقه باقی مانده)',
-                        style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
                       ),
                     ],
                   ),
                 ),
                 TextButton(
                   onPressed: _clearManualOverride,
-                  child: const Text('لغو', style: TextStyle(color: Colors.redAccent, fontFamily: 'Vazirmatn')),
+                  child: const Text('لغو', style: TextStyle(color: Colors.redAccent)),
                 ),
               ],
             ),
@@ -532,7 +530,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
               const SizedBox(height: 8),
               Text(
                 'بعد از این برمی‌گردد به: ${state.nextRealmName} (${state.nextRealmTimeStr})',
-                style: TextStyle(fontSize: 11, color: colors.textTertiary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 11, color: colors.textTertiary),
               ),
             ],
           ],
@@ -555,7 +553,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
           Expanded(
             child: Text(
               'الان در زمان آزاد هستید و هیچ قلمرویی فعال نیست.',
-              style: TextStyle(fontSize: 13, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+              style: TextStyle(fontSize: 13, color: colors.textSecondary),
             ),
           ),
           IconButton(
@@ -611,7 +609,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
                   children: [
                     Text(
                       realm.name,
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
                     ),
                     const SizedBox(width: 8),
                     Container(
@@ -622,7 +620,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
                       ),
                       child: Text(
                         '$routineCount روتین',
-                        style: TextStyle(fontSize: 10, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 10, color: colors.textSecondary),
                       ),
                     ),
                   ],
@@ -631,7 +629,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
 
                 // Schedules Summary Chips
                 if (realmSchedules.isEmpty)
-                  Text('بدون زمان‌بندی فعال', style: TextStyle(fontSize: 11, color: colors.textTertiary, fontFamily: 'Vazirmatn'))
+                  Text('بدون زمان‌بندی فعال', style: TextStyle(fontSize: 11, color: colors.textTertiary))
                 else
                   Wrap(
                     spacing: 4,
@@ -645,7 +643,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
                         ),
                         child: Text(
                           '${s.startTime} الی ${s.endTime}',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
                         ),
                       );
                     }).toList(),
@@ -669,15 +667,15 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
             itemBuilder: (context) => [
               const PopupMenuItem(
                 value: 'manual',
-                child: Row(children: [Icon(CupertinoIcons.play, size: 16), SizedBox(width: 8), Text('فعال‌سازی دستی', style: TextStyle(fontSize: 13, fontFamily: 'Vazirmatn'))]),
+                child: Row(children: [Icon(CupertinoIcons.play, size: 16), SizedBox(width: 8), Text('فعال‌سازی دستی', style: TextStyle(fontSize: 13))]),
               ),
               const PopupMenuItem(
                 value: 'edit',
-                child: Row(children: [Icon(CupertinoIcons.pencil, size: 16), SizedBox(width: 8), Text('ویرایش قلمرو', style: TextStyle(fontSize: 13, fontFamily: 'Vazirmatn'))]),
+                child: Row(children: [Icon(CupertinoIcons.pencil, size: 16), SizedBox(width: 8), Text('ویرایش قلمرو', style: TextStyle(fontSize: 13))]),
               ),
               const PopupMenuItem(
                 value: 'delete',
-                child: Row(children: [Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 16), SizedBox(width: 8), Text('حذف', style: TextStyle(fontSize: 13, color: Colors.redAccent, fontFamily: 'Vazirmatn'))]),
+                child: Row(children: [Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 16), SizedBox(width: 8), Text('حذف', style: TextStyle(fontSize: 13, color: Colors.redAccent))]),
               ),
             ],
           ),
@@ -700,19 +698,19 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
           const SizedBox(height: 8),
           Text(
             'هیچ قلمرویی تعریف نشده است',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
           ),
           const SizedBox(height: 4),
           Text(
             'با قلمروها می‌توانید برنامه‌ریزی روزانه خود را بخش‌بندی کرده و تمرکز عمیق را تجربه کنید.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn', height: 1.4),
+            style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 12),
           ElevatedButton(
             onPressed: _openCreateSheet,
             style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-            child: const Text('ساخت اولین قلمرو', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+            child: const Text('ساخت اولین قلمرو', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

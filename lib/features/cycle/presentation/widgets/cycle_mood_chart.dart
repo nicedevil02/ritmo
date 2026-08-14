@@ -249,7 +249,6 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
                 'هنوز در حالِ یادگیریِ الگوی احساست هستم 🌸',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: colors.textPrimary,
@@ -260,7 +259,6 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
                 'با ثبتِ روزانهی احوال، نمودار دقیقتر میشود.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 11.5,
                   color: colors.textSecondary,
                 ),
@@ -285,8 +283,7 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
                 fontSize: 13.5,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white70 : colors.textPrimary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -294,7 +291,6 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
               style: TextStyle(
                 fontSize: 11.5,
                 color: isDark ? Colors.white60 : colors.textSecondary,
-                fontFamily: 'Vazirmatn',
                 height: 1.4,
               ),
             ),
@@ -349,8 +345,7 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
           style: TextStyle(
             fontSize: 10.5, 
             color: isDark ? Colors.white60 : colors.textSecondary, 
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
       ],
     );
@@ -430,7 +425,7 @@ class _MoodChartPainter extends CustomPainter {
       // Draw label on the left space
       textPainter.text = TextSpan(
         text: label,
-        style: TextStyle(fontSize: 8.5, color: textColor, fontFamily: 'Vazirmatn'),
+        style: TextStyle(fontSize: 8.5, color: textColor),
       );
       textPainter.layout();
       textPainter.paint(canvas, Offset(paddingLeft - textPainter.width - 6, y - 6));
@@ -446,7 +441,7 @@ class _MoodChartPainter extends CustomPainter {
       // Label
       textPainter.text = TextSpan(
         text: _toPersianDigits('روز $day'),
-        style: TextStyle(fontSize: 8.5, color: textColor, fontFamily: 'Vazirmatn'),
+        style: TextStyle(fontSize: 8.5, color: textColor),
       );
       textPainter.layout();
       textPainter.paint(canvas, Offset(x - textPainter.width / 2, paddingTop + chartHeight + 4));
@@ -518,7 +513,7 @@ class _MoodChartPainter extends CustomPainter {
         // Draw Label text above
         textPainter.text = const TextSpan(
           text: 'اوج بی‌حوصلگی 😰',
-          style: TextStyle(fontSize: 8.5, color: Color(0xffF43F5E), fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+          style: TextStyle(fontSize: 8.5, color: Color(0xffF43F5E), fontWeight: FontWeight.bold),
         );
         textPainter.layout();
         final textX = x - textPainter.width / 2;
@@ -554,7 +549,7 @@ class _MoodChartPainter extends CustomPainter {
 
         textPainter.text = const TextSpan(
           text: 'اوج انرژی ⚡',
-          style: TextStyle(fontSize: 8.5, color: Color(0xff4ADE80), fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+          style: TextStyle(fontSize: 8.5, color: Color(0xff4ADE80), fontWeight: FontWeight.bold),
         );
         textPainter.layout();
         final textX = x - textPainter.width / 2;

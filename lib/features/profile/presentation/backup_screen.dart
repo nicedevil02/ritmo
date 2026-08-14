@@ -186,8 +186,7 @@ class _BackupScreenState extends State<BackupScreen> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -195,7 +194,6 @@ class _BackupScreenState extends State<BackupScreen> {
                       style: TextStyle(
                         fontSize: 11.5,
                         color: colors.textSecondary,
-                        fontFamily: 'Vazirmatn',
                         height: 1.5,
                       ),
                     ),
@@ -203,7 +201,7 @@ class _BackupScreenState extends State<BackupScreen> {
                     TextFormField(
                       controller: passController,
                       obscureText: true,
-                      style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(color: colors.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'رمز عبور (حداقل ۸ کاراکتر)',
                         hintStyle: TextStyle(color: colors.textTertiary),
@@ -232,7 +230,7 @@ class _BackupScreenState extends State<BackupScreen> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: hintController,
-                      style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(color: colors.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'راهنما / نشانه برای یادآوری رمز (اختیاری)',
                         hintStyle: TextStyle(color: colors.textTertiary),
@@ -278,7 +276,7 @@ class _BackupScreenState extends State<BackupScreen> {
                       },
                       child: const Text(
                         'ذخیره و تایید رمز عبور',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -343,7 +341,7 @@ class _BackupScreenState extends State<BackupScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 title: Text(
                   'بازیابی اطلاعات ☁️',
-                  style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: colors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 content: Form(
                   key: formKey,
@@ -353,20 +351,20 @@ class _BackupScreenState extends State<BackupScreen> {
                     children: [
                       Text(
                         'با بازیابی، تمام اطلاعات فعلی این دستگاه حذف شده و با اطلاعات فایل پشتیبان جایگزین خواهد شد. رمز عبوری که در زمان تهیه این پشتیبان تنظیم کرده بودید را وارد کنید:',
-                        style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn', fontSize: 12.5, height: 1.5),
+                        style: TextStyle(color: colors.textSecondary, fontSize: 12.5, height: 1.5),
                       ),
                       const SizedBox(height: 16),
                       if (_passcodeHint != null) ...[
                         Text(
                           'راهنمای رمز شما: $_passcodeHint',
-                          style: TextStyle(color: colors.primary, fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: colors.primary, fontSize: 11.5, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 10),
                       ],
                       TextFormField(
                         controller: passController,
                         obscureText: true,
-                        style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(color: colors.textPrimary),
                         decoration: InputDecoration(
                           hintText: 'رمز عبور پشتیبان‌گیری',
                           hintStyle: TextStyle(color: colors.textTertiary),
@@ -402,7 +400,7 @@ class _BackupScreenState extends State<BackupScreen> {
                 actions: [
                   TextButton(
                     onPressed: localLoading ? null : () => Navigator.pop(dialogContext),
-                    child: Text('انصراف', style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                    child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -433,7 +431,7 @@ class _BackupScreenState extends State<BackupScreen> {
                         }
                       }
                     },
-                    child: const Text('شروع بازیابی', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                    child: const Text('شروع بازیابی', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               );
@@ -466,13 +464,13 @@ class _BackupScreenState extends State<BackupScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'بازیابی با موفقیت انجام شد 🎉',
-                    style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'برای بارگذاری اطلاعات جدید، اپلیکیشن به صورت خودکار راه‌اندازی مجدد می‌شود.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn', fontSize: 13, height: 1.45),
+                    style: TextStyle(color: colors.textSecondary, fontSize: 13, height: 1.45),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
@@ -486,7 +484,7 @@ class _BackupScreenState extends State<BackupScreen> {
                       Navigator.pop(dialogContext);
                       RestartWidget.restart(context);
                     },
-                    child: const Text('راه‌اندازی مجدد', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                    child: const Text('راه‌اندازی مجدد', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -575,7 +573,6 @@ class _BackupScreenState extends State<BackupScreen> {
           title: Text(
             'پشتیبان‌گیری ابری ☁️',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.bold,
               fontSize: 17,
               color: colors.textPrimary,
@@ -618,7 +615,6 @@ class _BackupScreenState extends State<BackupScreen> {
                           Text(
                             'حساب گوگل درایو',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
                               fontSize: 14,
@@ -629,7 +625,6 @@ class _BackupScreenState extends State<BackupScreen> {
                             Text(
                               'برای پشتیبان‌گیری ابری و بازیابی آسان داده‌ها، باید به حساب گوگل درایو خود متصل شوید.',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 color: colors.textSecondary,
                                 fontSize: 11.5,
                                 height: 1.5,
@@ -639,7 +634,6 @@ class _BackupScreenState extends State<BackupScreen> {
                             Text(
                               '🔒 حریم خصوصی: ما فقط به یک پوشه مخفی اختصاصی ریتمو (appDataFolder) دسترسی داریم و فایل‌های شخصی شما هرگز خوانده یا لمس نخواهند شد.',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 color: colors.primary,
                                 fontSize: 10.5,
                                 height: 1.5,
@@ -655,7 +649,7 @@ class _BackupScreenState extends State<BackupScreen> {
                               ),
                               onPressed: _isLoading ? null : _connectGoogle,
                               icon: const Icon(CupertinoIcons.link),
-                              label: const Text('اتصال به گوگل درایو', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                              label: const Text('اتصال به گوگل درایو', style: TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ] else ...[
                             Row(
@@ -668,7 +662,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                       Text(
                                         'متصل شده با حساب:',
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           color: colors.textTertiary,
                                           fontSize: 11,
                                         ),
@@ -677,7 +670,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                       Text(
                                         _googleEmail ?? '',
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           color: colors.textPrimary,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13.5,
@@ -694,7 +686,7 @@ class _BackupScreenState extends State<BackupScreen> {
                                   ),
                                   onPressed: _isLoading ? null : _disconnectGoogle,
                                   icon: const Icon(CupertinoIcons.power, size: 16),
-                                  label: const Text('خروج', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold)),
+                                  label: const Text('خروج', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                                 ),
                               ],
                             ),
@@ -716,7 +708,6 @@ class _BackupScreenState extends State<BackupScreen> {
                             Text(
                               'پشتیبان‌گیری دستی',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
                                 fontSize: 14,
@@ -727,7 +718,6 @@ class _BackupScreenState extends State<BackupScreen> {
                               Text(
                                 'برای اجرای اولین پشتیبان‌گیری، ابتدا باید یک رمز عبور (passcode) امن تعریف کنید.',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   color: colors.textSecondary,
                                   fontSize: 11.5,
                                   height: 1.5,
@@ -743,7 +733,7 @@ class _BackupScreenState extends State<BackupScreen> {
                                 ),
                                 onPressed: () => _showPasscodeSheet(onSuccess: () {}),
                                 icon: const Icon(CupertinoIcons.lock),
-                                label: const Text('تنظیم رمز عبور پشتیبان‌گیری', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                                label: const Text('تنظیم رمز عبور پشتیبان‌گیری', style: TextStyle(fontWeight: FontWeight.bold)),
                               ),
                             ] else ...[
                               Row(
@@ -753,7 +743,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                   Text(
                                     'رمز عبور پشتیبان قبلاً ثبت شده است.',
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       color: colors.success,
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
@@ -762,7 +751,7 @@ class _BackupScreenState extends State<BackupScreen> {
                                   const Spacer(),
                                   TextButton(
                                     onPressed: () => _showPasscodeSheet(onSuccess: () => _showToast('رمز عبور جدید با موفقیت تنظیم شد.')),
-                                    child: Text('تغییر رمز 🔑', style: TextStyle(color: colors.primary, fontFamily: 'Vazirmatn', fontSize: 11)),
+                                    child: Text('تغییر رمز 🔑', style: TextStyle(color: colors.primary, fontSize: 11)),
                                   ),
                                 ],
                               ),
@@ -776,7 +765,7 @@ class _BackupScreenState extends State<BackupScreen> {
                                 ),
                                 onPressed: _isLoading ? null : _runManualBackup,
                                 icon: const Icon(CupertinoIcons.cloud_upload),
-                                label: const Text('پشتیبان‌گیری اکنون', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                                label: const Text('پشتیبان‌گیری اکنون', style: TextStyle(fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ],
@@ -795,7 +784,6 @@ class _BackupScreenState extends State<BackupScreen> {
                             Text(
                               'پشتیبان‌گیری خودکار',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
                                 fontSize: 14,
@@ -808,7 +796,6 @@ class _BackupScreenState extends State<BackupScreen> {
                               title: Text(
                                 'پشتیبان‌گیری خودکار هفتگی',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   color: colors.textPrimary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -817,7 +804,6 @@ class _BackupScreenState extends State<BackupScreen> {
                               subtitle: Text(
                                 'داده‌های شما هفته‌ای یک‌بار در صورت اتصال به Wi-Fi در پس‌زمینه پشتیبان‌گیری می‌شوند.',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   color: colors.textSecondary,
                                   fontSize: 10.5,
                                   height: 1.5,
@@ -845,7 +831,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                 Text(
                                   'لیست نسخه‌های پشتیبان ابری',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontWeight: FontWeight.bold,
                                     color: colors.textPrimary,
                                     fontSize: 14,
@@ -869,7 +854,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                     'هیچ نسخه‌ای یافت نشد. اولین نسخه پشتیبان خود را تهیه کنید.',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       color: colors.textTertiary,
                                       fontSize: 11.5,
                                     ),
@@ -902,7 +886,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                               Text(
                                                 _formatDateTime(meta.createdAt),
                                                 style: TextStyle(
-                                                  fontFamily: 'Vazirmatn',
                                                   color: colors.textPrimary,
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 12.5,
@@ -912,7 +895,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                               Text(
                                                 'حجم: ${_formatSize(meta.sizeBytes)}',
                                                 style: TextStyle(
-                                                  fontFamily: 'Vazirmatn',
                                                   color: colors.textSecondary,
                                                   fontSize: 10.5,
                                                 ),
@@ -937,7 +919,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                                   'حذف فایل پشتیبان؟',
                                                   style: TextStyle(
                                                     color: colors.medicalRed,
-                                                    fontFamily: 'Vazirmatn',
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.bold,
                                                   ),
@@ -946,7 +927,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                                   'آیا مطمئن هستید که می‌خواهید این فایل پشتیبان را از گوگل درایو حذف کنید؟ این عمل غیرقابل بازگشت است.',
                                                   style: TextStyle(
                                                     color: colors.textSecondary,
-                                                    fontFamily: 'Vazirmatn',
                                                     fontSize: 13,
                                                     height: 1.5,
                                                   ),
@@ -954,11 +934,11 @@ class _BackupScreenState extends State<BackupScreen> {
                                                 actions: [
                                                   TextButton(
                                                     onPressed: () => Navigator.pop(dialogCtx, false),
-                                                    child: Text('انصراف', style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                                                    child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
                                                   ),
                                                   TextButton(
                                                     onPressed: () => Navigator.pop(dialogCtx, true),
-                                                    child: Text('بله، حذف کن', style: TextStyle(color: colors.medicalRed, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                                                    child: Text('بله، حذف کن', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
                                                   ),
                                                 ],
                                               ),
@@ -998,7 +978,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                 Text(
                                   'هشدار امنیتی بسیار مهم ⚠️',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontWeight: FontWeight.bold,
                                     color: colors.warning,
                                     fontSize: 13,
@@ -1008,7 +987,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                 Text(
                                   'رمز عبوری که برای فایل‌های پشتیبان تنظیم می‌کنید کاملاً مستقل از رمز عبور حساب گوگل شماست. ما این رمز را روی سرور ذخیره نمی‌کنیم؛ بنابراین اگر رمز عبور خود را فراموش کنید، به هیچ عنوان داده‌های شما در دستگاه‌های دیگر قابل بازیابی نخواهند بود.',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     color: colors.textSecondary,
                                     fontSize: 11,
                                     height: 1.5,

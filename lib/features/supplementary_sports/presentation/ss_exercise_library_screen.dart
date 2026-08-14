@@ -239,7 +239,7 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
         SnackBar(
           content: Text(
             'حرکت "${exercise['name']}" با موفقیت به برنامه امروز شما اضافه شد.',
-            style: const TextStyle(fontFamily: 'Vazirmatn'),
+            style: const TextStyle(),
             textDirection: TextDirection.rtl,
           ),
           backgroundColor: const Color(0xFF10B981),
@@ -252,7 +252,7 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
         const SnackBar(
           content: Text(
             'خطا در اضافه کردن حرکت به برنامه.',
-            style: TextStyle(fontFamily: 'Vazirmatn'),
+            style: TextStyle(),
             textDirection: TextDirection.rtl,
           ),
           backgroundColor: Colors.redAccent,
@@ -296,7 +296,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                 Text(
                   exercise['name']?.toString() ?? '',
                   style: const TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
@@ -322,7 +321,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                   Text(
                     exercise['nameEn'].toString(),
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       color: isDark ? Colors.white38 : Colors.black38,
                     ),
@@ -340,7 +338,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                       child: Text(
                         _translateCategory(exercise['category']?.toString() ?? ''),
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: Color(0xFF2E7D5B),
                           fontWeight: FontWeight.bold,
@@ -357,7 +354,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                       child: Text(
                         _translateEquipment(exercise['equipment']?.toString()),
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: isDark ? Colors.white60 : Colors.black54,
                         ),
@@ -369,7 +365,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                 const Text(
                   'راهنمای اجرا:',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -378,7 +373,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                 Text(
                   exercise['instructions']?.toString() ?? 'راهنمایی برای این حرکت ثبت نشده است.',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 14,
                     height: 1.6,
                     color: isDark ? Colors.white70 : Colors.black87,
@@ -398,7 +392,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                       label: Text(
                         'مشاهده ویدیو آموزش حرکت 🎥',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.redAccent : Colors.red,
@@ -427,7 +420,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                     label: const Text(
                       'اضافه کردن به برنامه امروز',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -465,7 +457,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
         title: Text(
           'کتابخانه حرکات ورزشی 📚',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -490,11 +481,11 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: TextField(
-                      style: const TextStyle(fontFamily: 'Vazirmatn'),
+                      style: const TextStyle(),
                       decoration: InputDecoration(
                         icon: const Icon(CupertinoIcons.search, color: Colors.grey),
                         hintText: 'جستجوی نام حرکت یا تجهیزات...',
-                        hintStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.grey),
+                        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
                         border: InputBorder.none,
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
@@ -552,7 +543,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                             child: Text(
                               _translateCategory(cat),
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 12,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
@@ -575,7 +565,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                           child: Text(
                             'هیچ حرکتی یافت نشد.',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 14,
                               color: isDark ? Colors.white38 : Colors.black38,
                             ),
@@ -596,7 +585,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                                 title: Text(
                                   ex['name']?.toString() ?? '',
                                   style: const TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -608,7 +596,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                                       Text(
                                         _translateCategory(ex['category']?.toString() ?? ''),
                                         style: const TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           fontSize: 12,
                                           color: Color(0xFF2E7D5B),
                                         ),
@@ -617,7 +604,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                                       Text(
                                         '• ${_translateEquipment(ex['equipment']?.toString())}',
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           fontSize: 12,
                                           color: isDark ? Colors.white38 : Colors.black38,
                                         ),

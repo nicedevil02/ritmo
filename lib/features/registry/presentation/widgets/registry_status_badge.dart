@@ -42,7 +42,6 @@ class RegistryStatusBadge extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
               color: dotColor,

@@ -173,8 +173,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                             fontSize: 18.5,
                             fontWeight: FontWeight.w900,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),
@@ -192,7 +191,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                         child: Text(
                           '${PersianDigits.convert((_currentIndex + 1).toString())} از ${PersianDigits.convert(_dueNotes.length.toString())}',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: isDark ? colors.accent : colors.primary,
@@ -263,7 +261,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
             Text(
               'همه موارد امروز مرور شدند!',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 20,
                 fontWeight: FontWeight.w900,
                 color: colors.textPrimary,
@@ -274,7 +271,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               'تمام یادداشت‌ها و درس‌های معوقه امروز با موفقیت مرور و در تقویم حافظه ثبت شدند.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 color: colors.textSecondary.withValues(alpha: 0.8),
                 height: 1.5,
@@ -308,7 +304,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                     Text(
                       'بازگشت به دفترچه',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
                         color: colors.onPrimary,
@@ -368,7 +363,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
             'میزان تسلط و به خاطرسپاری:',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 12.5,
               fontWeight: FontWeight.bold,
               color: colors.textSecondary,
@@ -461,7 +455,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                     Text(
                       _currentExp != null ? _currentExp!.category.labelFa : style.labelFa,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: style.accentColor,
@@ -473,7 +466,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               Text(
                 'مرحله مرور: ${PersianDigits.convert(note.reviewStage.toString())}',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                   color: colors.textSecondary,
@@ -489,7 +481,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               '« ${_currentExp?.lesson ?? note.title ?? note.body} »',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 19,
                 fontWeight: FontWeight.w900,
                 color: colors.textPrimary,
@@ -509,7 +500,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                 Text(
                   'برای مشاهده جزئیات و پاسخ، کارت را لمس کنید',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11.5,
                     fontWeight: FontWeight.bold,
                     color: style.accentColor,
@@ -550,7 +540,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               Text(
                 'جزئیات و متن کامل',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: style.accentColor,
@@ -578,7 +567,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                       Text(
                         'ویرایش',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: colors.primary,
@@ -599,7 +587,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               child: Text(
                 note.body,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13.5,
                   color: colors.textPrimary,
                   height: 1.65,
@@ -617,7 +604,6 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
                 Text(
                   'لمس کارت برای بازگشت به روی کارت',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11,
                     color: colors.textSecondary.withValues(alpha: 0.8),
                   ),
@@ -689,7 +675,6 @@ class _SrsFeedbackButtonState extends State<_SrsFeedbackButton> {
                 Text(
                   widget.label,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11.5,
                     fontWeight: FontWeight.bold,
                     color: widget.color,
@@ -699,7 +684,6 @@ class _SrsFeedbackButtonState extends State<_SrsFeedbackButton> {
                 Text(
                   widget.subtext,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 9.5,
                     fontWeight: FontWeight.w600,
                     color: widget.color.withValues(alpha: 0.8),

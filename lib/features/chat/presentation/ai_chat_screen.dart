@@ -395,7 +395,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                           ? Center(
                               child: Text(
                                 'در حال بارگذاری تحلیل امروز...',
-                                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary),
+                                style: TextStyle(color: colors.textSecondary),
                               ),
                             )
                           : AssistantBriefingSection(
@@ -454,7 +454,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                             children: [
                               Text(
                                 'دفتر ممیزی و تغییرات دستیار',
-                                style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16, color: colors.textPrimary),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.textPrimary),
                               ),
                               IconButton(
                                 icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary),
@@ -468,7 +468,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                               child: Center(
                                 child: Text(
                                   'هیچ تغییری توسط دستیار ثبت نشده است.',
-                                  style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary),
+                                  style: TextStyle(color: colors.textSecondary),
                                 ),
                               ),
                             )
@@ -503,13 +503,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
                                     child: ListTile(
                                       title: Text(
                                         '$actionLabel - $key',
-                                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
                                       ),
                                       subtitle: Text(
                                         type == 'updateSetting'
                                             ? 'مقدار قبلی: $oldValue ➔ مقدار جدید: $newValue\nساعت: $timeStr'
                                             : 'تغییر: $newValue\nساعت: $timeStr',
-                                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+                                        style: TextStyle(fontSize: 11, color: colors.textSecondary),
                                       ),
                                       trailing: type == 'updateSetting' && oldValue.isNotEmpty && oldValue != 'null'
                                           ? TextButton(
@@ -519,7 +519,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                                                   setModalState(() {});
                                                 }
                                               },
-                                              child: const Text('بازگردانی', style: TextStyle(fontFamily: 'Vazirmatn', color: Color(0xff06B6D4))),
+                                              child: const Text('بازگردانی', style: TextStyle(color: Color(0xff06B6D4))),
                                             )
                                           : null,
                                     ),
@@ -632,7 +632,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
                       'رضایت‌نامه ارسال اطلاعات به هوش مصنوعی ابری',
                       textAlign: TextAlign.right,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         color: titleColor,
@@ -643,7 +642,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
                       contentText,
                       textAlign: TextAlign.right,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 13,
                         height: 1.6,
                         color: textColor,
@@ -657,7 +655,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                           onPressed: () => Navigator.pop(context, false),
                           child: Text(
                             'عدم موافقت',
-                            style: TextStyle(fontFamily: 'Vazirmatn', color: disagreeColor),
+                            style: TextStyle(color: disagreeColor),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -670,7 +668,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                           ),
                           child: const Text(
                             'موافقت و پذیرش',
-                            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -1166,7 +1164,6 @@ $friendlySummary
                   'دستیار هوشمند',
                   style: TextStyle(
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -1189,7 +1186,6 @@ $friendlySummary
                         Text(
                           'امروز',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 11,
                             color: Color(0xff06B6D4),
                             fontWeight: FontWeight.bold,
@@ -1243,7 +1239,7 @@ $friendlySummary
                       const Expanded(
                         child: Text(
                           'برنامه جدید چیده شده است. مایلید تغییرات ۲۴ ساعت گذشته را بازگردانید؟',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                          style: TextStyle(fontSize: 12),
                         ),
                       ),
                       TextButton(
@@ -1255,7 +1251,6 @@ $friendlySummary
                         child: Text(
                           'بازگردانی (Undo)',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: colors.primary,
@@ -1286,7 +1281,6 @@ $friendlySummary
                                     'چگونه می‌توانم به ارتقای ریتم روزانه‌ات کمک کنم؟',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 13.5,
                                       color: colors.textSecondary,
                                     ),
@@ -1298,7 +1292,6 @@ $friendlySummary
                                     label: const Text(
                                       'روزم رو بچین ✨',
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -1406,7 +1399,6 @@ $friendlySummary
                           label: Text(
                             text,
                             style: const TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12,
                             ),
                           ),
@@ -1473,7 +1465,6 @@ $friendlySummary
                             maxLines: 4,
                             enabled: !_isStreaming,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               color: colors.textPrimary,
                             ),
@@ -1482,7 +1473,6 @@ $friendlySummary
                               border: InputBorder.none,
                               hintText: _isStreaming ? 'دستیار در حال نوشتن است...' : 'گفتگو با دستیار ریتمو...',
                               hintStyle: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 12,
                                 color: colors.textSecondary.withValues(alpha: 0.6),
                               ),
@@ -1559,7 +1549,6 @@ $friendlySummary
             Text(
               'در حال تنظیم هوشمند برنامه روز',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -1573,7 +1562,6 @@ $friendlySummary
                 key: ValueKey<String>(stepMsg),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   height: 1.5,
                   color: Color(0xff06B6D4),

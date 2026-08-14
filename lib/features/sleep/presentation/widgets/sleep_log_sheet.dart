@@ -201,7 +201,7 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('خواب دیشب شما با موفقیت ثبت شد 🌿', style: TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text('خواب دیشب شما با موفقیت ثبت شد 🌿', style: TextStyle()),
             backgroundColor: Color(0xff8B5CF6),
           ),
         );
@@ -242,7 +242,7 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
                   children: [
                     Text(
                       'ثبت وضعیت خواب دیشب',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.cardTitle, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.cardTitle),
                     ),
                     IconButton(
                       icon: Icon(CupertinoIcons.xmark, color: colors.iconSecondary, size: 20),
@@ -253,7 +253,7 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
                 const SizedBox(height: 4),
                 Text(
                   'ساعات خواب و بیداری دیشب را مشخص کنید.',
-                  style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 20),
 
@@ -274,7 +274,7 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('زمان خوابیدن', style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                              Text('زمان خوابیدن', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                               const SizedBox(height: 6),
                               Text(
                                 '${_bedtime.hour.toString().padLeft(2, '0')}:${_bedtime.minute.toString().padLeft(2, '0')}',
@@ -300,7 +300,7 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('زمان بیدار شدن', style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                              Text('زمان بیدار شدن', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                               const SizedBox(height: 6),
                               Text(
                                 '${_wakeTime.hour.toString().padLeft(2, '0')}:${_wakeTime.minute.toString().padLeft(2, '0')}',
@@ -328,11 +328,11 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
                     children: [
                       Text(
                         'مدت زمان محاسبه‌شده:',
-                        style: TextStyle(fontSize: 13, color: colors.cardSubtitle, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 13, color: colors.cardSubtitle),
                       ),
                       Text(
                         hours > 0 ? '$hours ساعت و $minutes دقیقه' : '$minutes دقیقه',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.cardTitle, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.cardTitle),
                       ),
                     ],
                   ),
@@ -353,7 +353,7 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
                         Expanded(
                           child: Text(
                             'تمرین سخت یا دیرهنگام امروز ممکن است زمان به خواب رفتن شما را با تاخیر مواجه کند. پیشنهاد می‌کنیم دوش آب گرم بگیرید یا روتین آرام‌سازی انجام دهید. 💤',
-                            style: TextStyle(fontSize: 11.5, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
                           ),
                         ),
                       ],
@@ -363,7 +363,7 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
                 const SizedBox(height: 20),
 
                 // Sleep Quality Selector
-                Text('کیفیت خواب چطور بود؟', style: TextStyle(fontSize: 13, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                Text('کیفیت خواب چطور بود؟', style: TextStyle(fontSize: 13, color: colors.textPrimary)),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -397,8 +397,7 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: isSelected ? colors.cardTitle : colors.textSecondary,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                             ],
                           ),
@@ -413,7 +412,7 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('دفعات بیدار شدن در شب:', style: TextStyle(fontSize: 13, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                    Text('دفعات بیدار شدن در شب:', style: TextStyle(fontSize: 13, color: colors.textPrimary)),
                     Row(
                       children: [
                         IconButton(
@@ -449,7 +448,7 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
                 // Note
                 TextField(
                   controller: _noteController,
-                  style: TextStyle(color: colors.cardTitle, fontSize: 13, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(color: colors.cardTitle, fontSize: 13),
                   maxLines: 2,
                   decoration: InputDecoration(
                     hintText: 'جزئیات بیشتر یا دلیل بیداری (اختیاری)',
@@ -485,7 +484,7 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
                         )
                       : const Text(
                           'تایید و ثبت وضعیت خواب',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                 ),
               ],

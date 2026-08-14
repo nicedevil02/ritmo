@@ -46,13 +46,13 @@ class EnergyPatternsSection extends StatelessWidget {
               const Text(
                 'هنوز در حالِ یادگیریِ الگوهای توام',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               const SizedBox(height: 8),
               Text(
                 'با ثبت منظم وضعیت انرژی و احوال روحی در ساعات مختلف روزهای آینده، ریتمو الگوهای زیستی و اوج کارایی فیزیکی اختصاصی شما را استخراج خواهد کرد.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn', height: 1.6),
+                style: TextStyle(fontSize: 11, color: colors.textSecondary, height: 1.6),
               ),
             ],
           ),
@@ -130,17 +130,17 @@ class EnergyPatternsSection extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(fontSize: 10.5, color: Colors.white54, fontFamily: 'Vazirmatn'),
+                    style: const TextStyle(fontSize: 10.5, color: Colors.white54),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     value,
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: accentColor, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: accentColor),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     description,
-                    style: TextStyle(fontSize: 10.5, color: colors.textSecondary, fontFamily: 'Vazirmatn', height: 1.5),
+                    style: TextStyle(fontSize: 10.5, color: colors.textSecondary, height: 1.5),
                   ),
                 ],
               ),

@@ -192,7 +192,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                           Text(
                             'افزودن تعهد جدید',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -201,7 +200,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                           Text(
                             'تعهدی را برای امروز، این هفته یا این ماه ثبت کنید',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12,
                               color: colors.textSecondary,
                             ),
@@ -225,7 +223,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                       child: Text(
                         'امروز',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: _horizon == PlanningHorizon.day ? FontWeight.bold : FontWeight.normal,
                           color: _horizon == PlanningHorizon.day ? Colors.white : colors.textPrimary,
@@ -237,7 +234,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                       child: Text(
                         'این هفته',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: _horizon == PlanningHorizon.week ? FontWeight.bold : FontWeight.normal,
                           color: _horizon == PlanningHorizon.week ? Colors.white : colors.textPrimary,
@@ -249,7 +245,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                       child: Text(
                         'این ماه',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: _horizon == PlanningHorizon.month ? FontWeight.bold : FontWeight.normal,
                           color: _horizon == PlanningHorizon.month ? Colors.white : colors.textPrimary,
@@ -269,20 +264,17 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                   controller: _titleController,
                   autofocus: true,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 14,
                     color: colors.textPrimary,
                   ),
                   decoration: InputDecoration(
                     labelText: 'عنوان تعهد یا کار',
                     labelStyle: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       color: colors.textSecondary,
                     ),
                     hintText: 'مثلاً: مطالعه ۳۰ صفحه کتاب، پیاده‌سازی فرم لاگین...',
                     hintStyle: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: colors.textSecondary.withValues(alpha: 0.5),
                     ),
@@ -309,7 +301,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                 Text(
                   'مدت زمان تخمینی:',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -336,7 +327,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                         child: Text(
                           '${PersianDigits.toPersian(mins.toString())} دقیقه',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 12,
                             fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
                             color: isSel ? Colors.white : colors.textPrimary,
@@ -359,7 +349,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                           Text(
                             'اولویت:',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -379,15 +368,15 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                                 items: const [
                                   DropdownMenuItem(
                                     value: CommitmentImportance.must,
-                                    child: Text('ضروری (Must)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                                    child: Text('ضروری (Must)', style: TextStyle(fontSize: 12)),
                                   ),
                                   DropdownMenuItem(
                                     value: CommitmentImportance.should,
-                                    child: Text('مهم (Should)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                                    child: Text('مهم (Should)', style: TextStyle(fontSize: 12)),
                                   ),
                                   DropdownMenuItem(
                                     value: CommitmentImportance.could,
-                                    child: Text('در صورت امکان (Could)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                                    child: Text('در صورت امکان (Could)', style: TextStyle(fontSize: 12)),
                                   ),
                                 ],
                                 onChanged: (val) {
@@ -407,7 +396,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                           Text(
                             'نوع کار:',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -427,15 +415,15 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                                 items: const [
                                   DropdownMenuItem(
                                     value: WorkKind.deep,
-                                    child: Text('کار عمیق (Deep)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                                    child: Text('کار عمیق (Deep)', style: TextStyle(fontSize: 12)),
                                   ),
                                   DropdownMenuItem(
                                     value: WorkKind.light,
-                                    child: Text('کار سبک (Light)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                                    child: Text('کار سبک (Light)', style: TextStyle(fontSize: 12)),
                                   ),
                                   DropdownMenuItem(
                                     value: WorkKind.admin,
-                                    child: Text('اداری (Admin)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                                    child: Text('اداری (Admin)', style: TextStyle(fontSize: 12)),
                                   ),
                                 ],
                                 onChanged: (val) {
@@ -455,7 +443,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                   Text(
                     'تخصیص به روز مشخص:',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -482,7 +469,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                           child: Text(
                             _getDayNameShort(dk),
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11,
                               fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
                               color: isSel ? colors.primary : colors.textPrimary,
@@ -511,7 +497,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                       : const Text(
                           'ثبت تعهد',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,

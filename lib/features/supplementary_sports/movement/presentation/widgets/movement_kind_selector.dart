@@ -118,7 +118,6 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
           const Text(
             'انواع اخیر:',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.bold,
               fontSize: 13,
             ),
@@ -135,7 +134,6 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
                     label: Text(
                       '${k.emoji} ${k.titleFa}',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         color: isSelected ? Colors.white : colors.onSurface,
                       ),
                     ),
@@ -159,7 +157,7 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
               child: TextField(
                 controller: _searchController,
                 onChanged: _onSearchChanged,
-                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.onSurface),
+                style: TextStyle(color: colors.onSurface),
                 decoration: InputDecoration(
                   hintText: 'جست‌وجوی نوع ورزش...',
                   prefixIcon: const Icon(CupertinoIcons.search, size: 20),
@@ -174,7 +172,7 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
               icon: const Icon(CupertinoIcons.add, size: 18),
               label: const Text(
                 'نوع دلخواه',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                style: TextStyle(fontSize: 12),
               ),
               style: OutlinedButton.styleFrom(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -197,7 +195,6 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
                   label: Text(
                     '${f.emoji} ${f.titleFa}',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: isSelected ? Colors.white : colors.onSurface,
                     ),
@@ -226,7 +223,6 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
                     child: Text(
                       'ورزشی در این دسته یافت نشد. می‌توانید با «نوع دلخواه» اضافه کنید.',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12,
                         color: colors.onSurfaceVariant,
                       ),
@@ -263,7 +259,6 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
                               Text(
                                 k.titleFa,
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 13,
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                   color: isSelected ? const Color(0xFF10B981) : colors.onSurface,

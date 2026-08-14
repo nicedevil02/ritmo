@@ -328,12 +328,12 @@ class _VaccinationsSectionState extends State<VaccinationsSection> {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: colors.card,
-          title: const Text('حذف واکسن', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
-          content: const Text('آیا مطمئن هستید که می‌خواهید اطلاعات این واکسیناسیون را حذف کنید؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+          title: const Text('حذف واکسن', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: const Text('آیا مطمئن هستید که می‌خواهید اطلاعات این واکسیناسیون را حذف کنید؟', style: TextStyle()),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () {
@@ -341,7 +341,7 @@ class _VaccinationsSectionState extends State<VaccinationsSection> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-              child: const Text('حذف', style: TextStyle(color: Colors.white, fontFamily: 'Vazirmatn')),
+              child: const Text('حذف', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -497,20 +497,20 @@ class _VaccinationFormState extends State<_VaccinationForm> {
             children: [
               Text(
                 widget.vaccination == null ? 'ثبت واکسیناسیون جدید' : 'ویرایش واکسیناسیون',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.vaccineName, icon: Icons.vaccines),
                 validator: (val) => val == null || val.trim().isEmpty ? 'لطفاً نام واکسن را وارد کنید' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _diseaseController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.vaccineDiseaseTarget, icon: Icons.bug_report),
               ),
               const SizedBox(height: 12),
@@ -520,7 +520,7 @@ class _VaccinationFormState extends State<_VaccinationForm> {
                     child: TextFormField(
                       controller: _doseController,
                       keyboardType: TextInputType.number,
-                      style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(color: colors.textPrimary),
                       decoration: RitmoTheme.inputDecoration(context, label: l10n.vaccineDoseNumber, icon: Icons.pin),
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) return 'اجباری';
@@ -534,7 +534,7 @@ class _VaccinationFormState extends State<_VaccinationForm> {
                     child: TextFormField(
                       controller: _totalDosesController,
                       keyboardType: TextInputType.number,
-                      style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(color: colors.textPrimary),
                       decoration: RitmoTheme.inputDecoration(context, label: l10n.vaccineTotalDoses, icon: Icons.summarize),
                     ),
                   ),
@@ -551,7 +551,7 @@ class _VaccinationFormState extends State<_VaccinationForm> {
                         _dateAdministered != null
                             ? _toPersianDigits('${Jalali.fromDateTime(_dateAdministered!).year}/${Jalali.fromDateTime(_dateAdministered!).month}/${Jalali.fromDateTime(_dateAdministered!).day}')
                             : 'تاریخ تزریق',
-                        style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontSize: 12),
+                        style: TextStyle(color: colors.textPrimary, fontSize: 12),
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -569,7 +569,7 @@ class _VaccinationFormState extends State<_VaccinationForm> {
                         _nextDoseDue != null
                             ? _toPersianDigits('${Jalali.fromDateTime(_nextDoseDue!).year}/${Jalali.fromDateTime(_nextDoseDue!).month}/${Jalali.fromDateTime(_nextDoseDue!).day}')
                             : 'سررسید دوز بعدی',
-                        style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontSize: 12),
+                        style: TextStyle(color: colors.textPrimary, fontSize: 12),
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -583,19 +583,19 @@ class _VaccinationFormState extends State<_VaccinationForm> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _clinicController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.vaccineClinicName, icon: Icons.business),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _batchController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.vaccineBatchNumber, icon: Icons.qr_code),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _notesController,
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: RitmoTheme.inputDecoration(context, label: l10n.vaccineNotes, icon: Icons.notes),
                 maxLines: 2,
               ),
@@ -609,7 +609,7 @@ class _VaccinationFormState extends State<_VaccinationForm> {
                 ),
                 child: const Text(
                   'ذخیره واکسن',
-                  style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

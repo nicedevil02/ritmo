@@ -70,7 +70,6 @@ class ReflectionTrendsSection extends StatelessWidget {
                   Text(
                     '📈 روند حال روحی شما',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -80,7 +79,6 @@ class ReflectionTrendsSection extends StatelessWidget {
                   Text(
                     'نمودار نوسانات خلق‌وخوی ثبت‌شده در روزهای اخیر',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       color: colors.textSecondary,
                     ),
@@ -94,7 +92,6 @@ class ReflectionTrendsSection extends StatelessWidget {
                               'داده‌های کافی برای رسم نمودار وجود ندارد. بازتاب‌های بیشتری ثبت کنید.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11,
                                 color: colors.textSecondary,
                               ),
@@ -135,7 +132,6 @@ class ReflectionTrendsSection extends StatelessWidget {
                   Text(
                     '🏷️ کلمات و مفاهیم پرتکرار',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -145,7 +141,6 @@ class ReflectionTrendsSection extends StatelessWidget {
                   Text(
                     'تمرکزهای ذهنی و موضوعاتی که در بازتاب‌های خود بیشتر یادداشت کرده‌اید',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       color: colors.textSecondary,
                     ),
@@ -158,7 +153,6 @@ class ReflectionTrendsSection extends StatelessWidget {
                         child: Text(
                           'هنوز متنی برای استخراج تم‌های روزانه ثبت نشده است.',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 11,
                             color: colors.textSecondary,
                           ),
@@ -176,7 +170,6 @@ class ReflectionTrendsSection extends StatelessWidget {
                           label: Text(
                             entry.key,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: size,
                               color: colors.primary,
                               fontWeight: FontWeight.bold,
@@ -218,7 +211,6 @@ class ReflectionTrendsSection extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12,
                     color: colors.textSecondary,
                   ),
@@ -230,7 +222,6 @@ class ReflectionTrendsSection extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -239,7 +230,6 @@ class ReflectionTrendsSection extends StatelessWidget {
             Text(
               subtitle,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 10,
                 color: colors.textSecondary,
               ),
@@ -305,7 +295,6 @@ class MoodTrendPainter extends CustomPainter {
       textPainter.text = TextSpan(
         text: (i + 1).toString(),
         style: TextStyle(
-          fontFamily: 'Vazirmatn',
           fontSize: 9,
           color: labelColor,
         ),

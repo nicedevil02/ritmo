@@ -68,7 +68,7 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('کارت رشد هفتگی قابل اشتراک‌گذاری', style: TextStyle(fontFamily: 'Vazirmatn')),
+        title: const Text('کارت رشد هفتگی قابل اشتراک‌گذاری', style: TextStyle()),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
@@ -109,17 +109,17 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
                           children: [
                             Text(
                               trimesterName,
-                              style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white.withOpacity(0.7), fontSize: 14, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.24),
+                                color: Colors.white.withValues(alpha: 0.24),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Text(
                                 'ریتمو 🌸',
-                                style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -133,12 +133,12 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
                             children: [
                               Text(
                                 'هفته $weeks',
-                                style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 44, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: const TextStyle(fontSize: 44, fontWeight: FontWeight.bold, color: Colors.white),
                               ),
                               if (days > 0)
                                 Text(
                                   '+ $days روز',
-                                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, color: Colors.white.withOpacity(0.87)),
+                                  style: TextStyle(fontSize: 16, color: Colors.white.withValues(alpha: 0.87)),
                                 ),
                             ],
                           ),
@@ -150,7 +150,7 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.18),
+                            color: Colors.white.withValues(alpha: 0.18),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Column(
@@ -159,14 +159,14 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
                               const SizedBox(height: 8),
                               Text(
                                 'اندازه جنین: $babySize',
-                                style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                                 textAlign: TextAlign.center,
                               ),
                               if (babyWeight.isNotEmpty) ...[
                                 const SizedBox(height: 4),
                                 Text(
                                   'وزن تقریبی: $babyWeight',
-                                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white.withOpacity(0.87)),
+                                  style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.87)),
                                 ),
                               ],
                             ],
@@ -182,10 +182,10 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                TextStyle(fontFamily: 'Vazirmatn', color: Colors.white.withOpacity(0.7), fontSize: 12) == null
+                                TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12) == null
                                     ? const SizedBox()
-                                    : Text('پیشرفت بارداری', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white.withOpacity(0.7), fontSize: 12)),
-                                Text('${(progressFraction * 100).toInt()}%', style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                                    : Text('پیشرفت بارداری', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
+                                Text('${(progressFraction * 100).toInt()}%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
                               ],
                             ),
                             const SizedBox(height: 6),
@@ -194,7 +194,7 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
                               child: LinearProgressIndicator(
                                 value: progressFraction,
                                 minHeight: 8,
-                                backgroundColor: Colors.white.withOpacity(0.24),
+                                backgroundColor: Colors.white.withValues(alpha: 0.24),
                                 valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             ),
@@ -215,7 +215,7 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
                   foregroundColor: Colors.white,
                 ),
                 icon: const Icon(Icons.share),
-                label: const Text('اشتراک‌گذاری کارت رشد در شبکه‌های اجتماعی', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                label: const Text('اشتراک‌گذاری کارت رشد در شبکه‌های اجتماعی', style: TextStyle(fontWeight: FontWeight.bold)),
                 onPressed: _exportAndShare,
               ),
             ],

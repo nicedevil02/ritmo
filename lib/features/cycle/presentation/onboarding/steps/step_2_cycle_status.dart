@@ -42,8 +42,7 @@ class Step2CycleStatus extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.w900,
               color: colors.textPrimary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -51,7 +50,6 @@ class Step2CycleStatus extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.5,
               color: colors.textSecondary,
-              fontFamily: 'Vazirmatn',
               height: 1.5,
             ),
           ),
@@ -93,8 +91,7 @@ class Step2CycleStatus extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
             const SizedBox(height: 8),
             InkWell(
@@ -120,8 +117,7 @@ class Step2CycleStatus extends StatelessWidget {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: primaryColor,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),
@@ -130,8 +126,7 @@ class Step2CycleStatus extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: colors.textSecondary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),
@@ -163,8 +158,7 @@ class Step2CycleStatus extends StatelessWidget {
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: isDark ? const Color(0xffF472B6) : const Color(0xffDB2777),
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ),
                   Icon(
@@ -191,7 +185,7 @@ class Step2CycleStatus extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: onBack,
-                  child: const Text('بازگشت', style: TextStyle(fontFamily: 'Vazirmatn')),
+                  child: const Text('بازگشت', style: TextStyle()),
                 ),
               ),
               const SizedBox(width: 12),
@@ -207,7 +201,7 @@ class Step2CycleStatus extends StatelessWidget {
                   onPressed: onNext,
                   child: const Text(
                     'مرحله بعد',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -266,8 +260,7 @@ class Step2CycleStatus extends StatelessWidget {
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -275,7 +268,6 @@ class Step2CycleStatus extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       color: colors.textSecondary,
-                      fontFamily: 'Vazirmatn',
                       height: 1.3,
                     ),
                   ),

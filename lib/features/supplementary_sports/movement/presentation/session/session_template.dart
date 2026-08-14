@@ -147,14 +147,14 @@ Future<double?> showSessionMetricDialog({
 				builder: (builderContext, setDialogState) => AlertDialog(
 					title: Text(
 						title,
-						style: const TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, fontSize: 15),
+						style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
 					),
 					content: Column(
 						mainAxisSize: MainAxisSize.min,
 						children: [
 							Text(
 								'${toPersianDigits(value.round().toString())} $unit',
-								style: const TextStyle(fontFamily: _fontFa, fontSize: 26, fontWeight: FontWeight.bold),
+								style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
 							),
 							Slider(
 								value: value,
@@ -167,19 +167,19 @@ Future<double?> showSessionMetricDialog({
 							),
 							Text(
 								'هر پله ${toPersianDigits(step.round().toString())} $unit',
-								style: const TextStyle(fontFamily: _fontFa, fontSize: 11, color: Colors.grey),
+								style: const TextStyle(fontSize: 11, color: Colors.grey),
 							),
 						],
 					),
 					actions: [
 						TextButton(
 							onPressed: () => Navigator.of(dialogContext).pop(),
-							child: const Text('لغو', style: TextStyle(fontFamily: _fontFa, color: Colors.grey)),
+							child: const Text('لغو', style: TextStyle(color: Colors.grey)),
 						),
 						ElevatedButton(
 							style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
 							onPressed: () => Navigator.of(dialogContext).pop(value),
-							child: const Text('ثبت', style: TextStyle(fontFamily: _fontFa, color: Colors.white)),
+							child: const Text('ثبت', style: TextStyle(color: Colors.white)),
 						),
 					],
 				),

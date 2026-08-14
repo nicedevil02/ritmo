@@ -322,8 +322,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -0.4,
                                 color: colors.textPrimary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                             if (totalActiveCount > 0)
                               Text(
@@ -332,8 +331,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
                                   color: colors.textSecondary.withValues(alpha: 0.7),
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                           ],
                         ),
@@ -378,8 +376,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w800,
                                   color: colors.primary,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                             ],
                           ),
@@ -435,12 +432,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     labelColor: isDark ? colors.accent : colors.primary,
                     unselectedLabelColor: colors.textSecondary.withValues(alpha: 0.7),
                     labelStyle: const TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12.5,
                       fontWeight: FontWeight.w800,
                     ),
                     unselectedLabelStyle: const TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -560,14 +555,12 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                           focusNode: _searchFocusNode,
                           textDirection: TextDirection.rtl,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13.5,
                             color: colors.textPrimary,
                           ),
                           decoration: InputDecoration(
                             hintText: 'جستجو در یادداشت‌ها، متن یا برچسب‌ها...',
                             hintStyle: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12.5,
                               color: colors.textSecondary.withValues(alpha: 0.6),
                             ),
@@ -604,7 +597,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                         child: Text(
                           'انصراف',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             color: colors.primary,
                             fontWeight: FontWeight.bold,
                           ),
@@ -742,7 +734,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                         Text(
                           'سنجاق‌شده (${PersianDigits.convert(pinnedNotes.length.toString())})',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: colors.textSecondary,
@@ -759,7 +750,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       child: Text(
                         'سایر یادداشت‌ها',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: colors.textSecondary,
@@ -875,7 +865,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   Text(
                     'همه آموزه‌ها (${PersianDigits.convert(filtered.length.toString())})',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13.5,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -987,7 +976,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       Text(
                         'مرور فاصله‌دار هوشمند (SRS)',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 15.5,
                           fontWeight: FontWeight.w800,
                           color: colors.textPrimary,
@@ -997,7 +985,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       Text(
                         'تثبیت دائمی درس‌ها و یادداشت‌ها در حافظه بلندمدت',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 11.5,
                           fontWeight: FontWeight.w500,
                           color: colors.textSecondary.withValues(alpha: 0.7),
@@ -1018,7 +1005,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   child: Text(
                     '${PersianDigits.convert(_dueNotesCount.toString())} سررسید امروز',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: colors.error,
@@ -1033,7 +1019,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 ? 'امروز ${_dueNotesCount} کارت برای مرور و یادآوری طبق منحنی فراموشی آماده هستند.'
                 : 'آفرین! کارت سررسیدشده‌ای برای مرور امروز نداری. تمام آموخته‌هایت به‌روز هستند.',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13,
               color: colors.textSecondary,
               height: 1.45,
@@ -1072,7 +1057,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   Text(
                     'شروع مرور فلش‌کارت‌ها',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13.5,
                       fontWeight: FontWeight.bold,
                       color: colors.onPrimary,
@@ -1142,7 +1126,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       Text(
                         'مرور و تحلیل هفتگی',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 15.5,
                           fontWeight: FontWeight.w800,
                           color: colors.textPrimary,
@@ -1152,7 +1135,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       Text(
                         'گزارش جامع دستاوردهای ۷ روز اخیر',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                           color: colors.success,
@@ -1173,7 +1155,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   child: Text(
                     '${PersianDigits.convert(_dustyNotes.length.toString())} خاک‌خورده',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: colors.accent,
@@ -1205,7 +1186,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       Text(
                         PersianDigits.convert((stats?.notesCreatedCount ?? _createdThisWeekCount).toString()),
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
                           color: colors.textPrimary,
@@ -1215,7 +1195,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       Text(
                         'یادداشت جدید',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 10.5,
                           color: colors.textSecondary,
                         ),
@@ -1243,7 +1222,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       Text(
                         PersianDigits.convert((stats?.experiencesAddedCount ?? 0).toString()),
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
                           color: context.modules.insights,
@@ -1253,7 +1231,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       Text(
                         'درس زندگی',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 10.5,
                           color: colors.textSecondary,
                         ),
@@ -1281,7 +1258,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       Text(
                         PersianDigits.convert((stats?.wordCountSum ?? 0).toString()),
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
                           color: colors.success,
@@ -1291,7 +1267,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       Text(
                         'کلمه ثبت‌شده',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 10.5,
                           color: colors.textSecondary,
                         ),
@@ -1309,7 +1284,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
             Text(
               'موضوعات و برچسب‌های پرکاربرد هفته',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12.5,
                 fontWeight: FontWeight.bold,
                 color: colors.textSecondary,
@@ -1333,7 +1307,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   child: Text(
                     '#$tag',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11.5,
                       fontWeight: FontWeight.bold,
                       color: colors.primary,
@@ -1357,7 +1330,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   Text(
                     'صف مرور یادداشت‌های خاک‌خورده (>۳۰ روز)',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13.5,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -1368,7 +1340,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               Text(
                 '${PersianDigits.convert(_dustyNotes.length.toString())} مورد',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: _dustyNotes.isEmpty ? colors.success : colors.accent,
@@ -1380,7 +1351,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
           Text(
             'یادداشت‌هایی که مدتی است بازبینی نشده‌اند و نیازمند تعیین تکلیف هستند.',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 11,
               color: colors.textSecondary.withValues(alpha: 0.7),
             ),
@@ -1407,7 +1377,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     child: Text(
                       'آفرین! هیچ یادداشت خاک‌خورده‌ای نداری و تمام دفترچه‌ات به‌روز و مرتب است.',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: colors.success,
@@ -1450,7 +1419,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 child: Text(
                   note.title ?? 'بدون عنوان',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -1466,7 +1434,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: colors.textSecondary.withValues(alpha: 0.8),
                 height: 1.4,
@@ -1491,7 +1458,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 icon: const Icon(CupertinoIcons.pencil, size: 13),
                 label: const Text(
                   'ویرایش',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
                 ),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
@@ -1512,7 +1479,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 icon: const Icon(CupertinoIcons.archivebox, size: 13),
                 label: const Text(
                   'بایگانی',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
                 ),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
@@ -1528,7 +1495,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 icon: const Icon(CupertinoIcons.trash, size: 13),
                 label: const Text(
                   'حذف',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
                 ),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
@@ -1567,7 +1534,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
           Text(
             'بایگانی و مدیریت حذف‌شده‌ها',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 15,
               fontWeight: FontWeight.w800,
               color: colors.textPrimary,
@@ -1606,11 +1572,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                           children: [
                             const Text(
                               'بایگانی',
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                             ),
                             Text(
                               '${PersianDigits.convert(_archivedCount.toString())} مورد',
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+                              style: TextStyle(fontSize: 11, color: colors.textSecondary),
                             ),
                           ],
                         ),
@@ -1650,11 +1616,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                           children: [
                             const Text(
                               'سطل زباله',
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                             ),
                             Text(
                               '${PersianDigits.convert(_trashCount.toString())} مورد',
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+                              style: TextStyle(fontSize: 11, color: colors.textSecondary),
                             ),
                           ],
                         ),
@@ -1733,7 +1699,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
         label: Text(
           fabLabel,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontWeight: FontWeight.bold,
             color: colors.onPrimary,
           ),
@@ -1788,7 +1753,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     Text(
                       'درس برگزیده • ${exp.category.labelFa}',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
                         color: insightsColor,
@@ -1816,7 +1780,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
           Text(
             '« ${exp.lesson} »',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.w800,
               fontSize: 16,
               color: colors.textPrimary,
@@ -1830,7 +1793,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12.5,
                 color: colors.textSecondary.withValues(alpha: 0.75),
                 height: 1.45,
@@ -1885,7 +1847,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     Text(
                       exp.category.labelFa,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
                         color: insightsColor,
@@ -1922,7 +1883,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
           Text(
             exp.lesson,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 14.5,
               fontWeight: FontWeight.w700,
               color: colors.textPrimary,
@@ -1936,7 +1896,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: colors.textSecondary.withValues(alpha: 0.65),
                 height: 1.4,

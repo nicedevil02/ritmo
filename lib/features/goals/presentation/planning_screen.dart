@@ -64,7 +64,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
           child: Text(
             'امروز',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13,
               fontWeight: _controller.selectedHorizon == PlanningHorizon.day ? FontWeight.bold : FontWeight.normal,
               color: _controller.selectedHorizon == PlanningHorizon.day ? Colors.white : colors.textPrimary,
@@ -76,7 +75,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
           child: Text(
             'این هفته',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13,
               fontWeight: _controller.selectedHorizon == PlanningHorizon.week ? FontWeight.bold : FontWeight.normal,
               color: _controller.selectedHorizon == PlanningHorizon.week ? Colors.white : colors.textPrimary,
@@ -88,7 +86,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
           child: Text(
             'این ماه',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13,
               fontWeight: _controller.selectedHorizon == PlanningHorizon.month ? FontWeight.bold : FontWeight.normal,
               color: _controller.selectedHorizon == PlanningHorizon.month ? Colors.white : colors.textPrimary,
@@ -152,7 +149,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
             Text(
               _controller.errorMessage ?? 'خطا در بارگذاری داده‌ها',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 14,
                 color: colors.textSecondary,
               ),
@@ -209,7 +205,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 Text(
                   'از برنامهٔ هفته: ${_controller.commitments.length} تعهد برای امروز مانده',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -219,7 +214,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 Text(
                   'می‌توانی فعالیت‌های امروزت را هوشمندانه بچینی.',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12,
                     color: colors.textSecondary,
                   ),
@@ -264,7 +258,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   label: const Text(
                     'چیدمان امروز با ✨',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -280,7 +273,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
           Text(
             'تعهدات امروز:',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
@@ -304,7 +296,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     'امروز هیچ تعهدی نداری. نیازی به هدف قبلی نیست؛ می‌توانی هر کاری را برای امروز ثبت کنی.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       color: colors.textSecondary,
                     ),
@@ -330,7 +321,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                           label: const Text(
                             '+ افزودن تعهد برای امروز',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -354,7 +344,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                         icon: const Icon(Icons.auto_awesome, size: 16),
                         label: const Text(
                           'برنامه‌ریزی هفته',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                          style: TextStyle(fontSize: 12),
                         ),
                       ),
                     ],
@@ -406,7 +396,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                             Text(
                               c.title,
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 decoration: isDone ? TextDecoration.lineThrough : null,
@@ -416,7 +405,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                             Text(
                               '${PersianDigits.toPersian(c.effortMinutes.toString())} دقیقه · اولویت: ${c.importance.name.toUpperCase()}',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11,
                                 color: colors.textSecondary,
                               ),
@@ -467,7 +455,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
               icon: const Icon(Icons.add, size: 18),
               label: const Text(
                 '+ افزودن تعهد دیگر برای امروز',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -507,7 +495,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                               ? 'برنامهٔ این هفته: فعال · نسخهٔ ${PersianDigits.toPersian(active.version.toString())}'
                               : 'هنوز برنامه‌ای برای این هفته نداری',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
@@ -577,7 +564,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                           Text(
                             'ظرفیت هفته: ${PersianDigits.toPersian(totalCommittable.toString())} دقیقه',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               color: colors.textSecondary,
                             ),
@@ -585,7 +571,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                           Text(
                             'تعهدها: ${PersianDigits.toPersian(totalCommitmentMinutes.toString())} دقیقه',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: totalCommitmentMinutes > totalCommittable ? colors.error : colors.primary,
@@ -608,7 +593,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                         Text(
                           '${PersianDigits.toPersian((totalCommitmentMinutes - totalCommittable).toString())} دقیقه بیشتر از ظرفیت برنامه‌ریزی شده است.',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 11,
                             color: colors.error,
                           ),
@@ -627,7 +611,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     Text(
                       'برنامهٔ روزهای هفته:',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -636,7 +619,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     Text(
                       'برای مشاهده یا ویرایش تعهدات روی روز بزنید',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11,
                         color: colors.textSecondary,
                       ),
@@ -689,7 +671,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                         Text(
                                           _getDayNameFa(dLoad.dayKey),
                                           style: TextStyle(
-                                            fontFamily: 'Vazirmatn',
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
                                             color: colors.textPrimary,
@@ -699,7 +680,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                           const Text(
                                             'سبک 🌙',
                                             style: TextStyle(
-                                              fontFamily: 'Vazirmatn',
                                               fontSize: 10,
                                               color: Colors.indigoAccent,
                                             ),
@@ -715,7 +695,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                         Text(
                                           '${PersianDigits.toPersian(dayAllocations.length.toString())} تعهد · ${PersianDigits.toPersian(dayMinutes.toString())} دقیقه',
                                           style: TextStyle(
-                                            fontFamily: 'Vazirmatn',
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
                                             color: colors.textPrimary,
@@ -760,7 +739,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                       child: Text(
                                         'تعهدی برای این روز تخصیص نیافته است.',
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           fontSize: 12,
                                           color: colors.textSecondary,
                                         ),
@@ -812,7 +790,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                                   Text(
                                                     commitment.title,
                                                     style: TextStyle(
-                                                      fontFamily: 'Vazirmatn',
                                                       fontSize: 13,
                                                       fontWeight: FontWeight.bold,
                                                       decoration: isDone ? TextDecoration.lineThrough : null,
@@ -822,7 +799,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                                   Text(
                                                     '${PersianDigits.toPersian(alloc.plannedMinutes.toString())} دقیقه · اولویت: ${commitment.importance.name.toUpperCase()}',
                                                     style: TextStyle(
-                                                      fontFamily: 'Vazirmatn',
                                                       fontSize: 11,
                                                       color: colors.textSecondary,
                                                     ),
@@ -867,7 +843,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                       icon: const Icon(Icons.add, size: 14),
                                       label: Text(
                                         '+ افزودن تعهد به ${_getDayNameFa(dLoad.dayKey)}',
-                                        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11),
+                                        style: const TextStyle(fontSize: 11),
                                       ),
                                     ),
                                   ),
@@ -901,7 +877,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                             Text(
                               'صف «جا نشد» (${PersianDigits.toPersian(_controller.allocationResult!.unplaced.length.toString())} مورد)',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: colors.error,
@@ -928,7 +903,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                         Text(
                                           unp.commitment.title,
                                           style: TextStyle(
-                                            fontFamily: 'Vazirmatn',
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
                                             color: colors.textPrimary,
@@ -937,7 +911,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                         Text(
                                           unp.detailFa,
                                           style: TextStyle(
-                                            fontFamily: 'Vazirmatn',
                                             fontSize: 11,
                                             color: colors.error,
                                           ),
@@ -1001,7 +974,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     icon: const Icon(Icons.auto_awesome, size: 16),
                     label: const Text(
                       'پیشنهاد هوشمند ✨',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                      style: TextStyle(fontSize: 13),
                     ),
                   ),
                 ),
@@ -1021,7 +994,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     child: const Text(
                       'بازطراحی هفته',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,

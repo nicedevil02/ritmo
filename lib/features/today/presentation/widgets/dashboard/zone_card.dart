@@ -134,8 +134,7 @@ class ZoneCard extends StatelessWidget {
                             fontSize: 11,
                             color: colors.textSecondary,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         Container(
                           padding: const EdgeInsets.all(4),
@@ -175,8 +174,7 @@ class ZoneCard extends StatelessWidget {
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w900,
                                   color: colors.textPrimary,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                             ),
                           ),
@@ -192,8 +190,7 @@ class ZoneCard extends StatelessWidget {
                                   fontSize: 15,
                                   fontWeight: FontWeight.w900,
                                   color: energyColor,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                               const SizedBox(height: 2),
                               Text(
@@ -201,7 +198,6 @@ class ZoneCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 9.5,
                                   color: colors.textSecondary,
-                                  fontFamily: 'Vazirmatn',
                                   height: 1.3,
                                 ),
                                 maxLines: 2,
@@ -232,8 +228,7 @@ class ZoneCard extends StatelessWidget {
                                   fontSize: 9.5,
                                   color: colors.textPrimary,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                               const SizedBox(width: 3),
                               Icon(
@@ -320,8 +315,7 @@ class ZoneCard extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 11,
                                   color: colors.textSecondary,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Vazirmatn'),
+                                  fontWeight: FontWeight.bold),
                             ),
                             if (activeZoneIcon != null)
                               Text(activeZoneIcon!, style: const TextStyle(fontSize: 14))
@@ -340,8 +334,7 @@ class ZoneCard extends StatelessWidget {
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -352,8 +345,7 @@ class ZoneCard extends StatelessWidget {
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         const SizedBox(height: 4),
                         if (activeZone != null && !isOutOfZone)
@@ -365,8 +357,7 @@ class ZoneCard extends StatelessWidget {
                                 fontSize: 11,
                                 color: _parseColorSafe(activeZoneColorHex, colors.primary),
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ),
                         Text(
@@ -377,8 +368,7 @@ class ZoneCard extends StatelessWidget {
                             fontSize: 10,
                             color: _parseColorSafe(activeZoneColorHex, colors.primary),
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -389,8 +379,7 @@ class ZoneCard extends StatelessWidget {
                             fontSize: 10,
                             color: colors.textSecondary,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),

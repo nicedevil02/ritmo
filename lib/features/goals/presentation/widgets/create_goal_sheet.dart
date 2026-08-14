@@ -207,7 +207,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('لطفاً ابتدا عنوان هدف را وارد کنید.', style: TextStyle(fontFamily: 'Vazirmatn')),
+          content: Text('لطفاً ابتدا عنوان هدف را وارد کنید.', style: TextStyle()),
         ),
       );
       return;
@@ -455,7 +455,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
           SnackBar(
             content: Text(
               e is GoalCycleException ? e.toString() : 'خطا در ذخیره هدف: $e',
-              style: const TextStyle(fontFamily: 'Vazirmatn'),
+              style: const TextStyle(),
             ),
             backgroundColor: Colors.redAccent,
           ),
@@ -504,7 +504,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
           Expanded(
             child: Text(
               'برای برنامه‌ریزی $moduleName بخش اختصاصی وجود دارد.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5, color: colors.textPrimary),
+              style: TextStyle(fontSize: 11.5, color: colors.textPrimary),
             ),
           ),
           TextButton(
@@ -519,7 +519,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             },
             child: Text(
               'ورود به بخش',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.primary, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 11, color: colors.primary, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -627,7 +627,6 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             toPersianDigits(stepIndex + 1),
             style: TextStyle(
               fontSize: 11,
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.bold,
               color: isActive ? Colors.white : colors.textSecondary,
             ),
@@ -638,7 +637,6 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
           title,
           style: TextStyle(
             fontSize: 11.5,
-            fontFamily: 'Vazirmatn',
             fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
             color: isCurrent ? colors.textPrimary : colors.textSecondary,
           ),
@@ -677,7 +675,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             children: [
               Text(
                 'پیش‌نمایش هدف',
-                style: TextStyle(fontSize: 10, fontFamily: 'Vazirmatn', color: colors.primary, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 10, color: colors.primary, fontWeight: FontWeight.bold),
               ),
               Icon(CupertinoIcons.eye, size: 12, color: colors.primary),
             ],
@@ -689,7 +687,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
               Expanded(
                 child: Text(
                   title,
-                  style: TextStyle(fontSize: 14, fontFamily: 'Vazirmatn', color: colors.textPrimary, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 14, color: colors.textPrimary, fontWeight: FontWeight.w700),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -702,7 +700,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                 ),
                 child: Text(
                   typeLabel,
-                  style: TextStyle(fontSize: 10, fontFamily: 'Vazirmatn', color: colors.primary, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 10, color: colors.primary, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -714,7 +712,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
               const SizedBox(width: 4),
               Text(
                 'مهلت: $dateStr',
-                style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', color: colors.textSecondary),
+                style: TextStyle(fontSize: 11, color: colors.textSecondary),
               ),
             ],
           ),
@@ -732,14 +730,14 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
       children: [
         const Text(
           'چه چیزی می‌خواهید بسازید؟',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
 
         // Title field
         TextField(
           controller: _titleController,
-          style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn'),
+          style: TextStyle(color: colors.textPrimary, fontSize: 14.5),
           decoration: InputDecoration(
             hintText: 'مثال: تسلط بر مکالمه انگلیسی',
             labelText: 'عنوان هدف',
@@ -760,7 +758,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
         // Description field
         TextField(
           controller: _descController,
-          style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontFamily: 'Vazirmatn'),
+          style: TextStyle(color: colors.textPrimary, fontSize: 14.5),
           maxLines: 2,
           decoration: InputDecoration(
             hintText: 'مثال: تمرین مکالمه روزانه به مدت ۳ ماه متوالی',
@@ -776,7 +774,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
         // Level chips selection
         Text(
           'بازه برنامه‌ریزی هدف (سطح)',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.textSecondary),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textSecondary),
         ),
         const SizedBox(height: 8),
         Row(
@@ -795,7 +793,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
         if (widget.activeGoals.isNotEmpty) ...[
           Text(
             'هدف والد (اختیاری)',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.textSecondary),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textSecondary),
           ),
           const SizedBox(height: 8),
           Container(
@@ -810,17 +808,17 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                 value: _selectedParentGoalId,
                 isExpanded: true,
                 dropdownColor: colors.card,
-                hint: const Text('انتخاب هدف والد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white30)),
+                hint: const Text('انتخاب هدف والد', style: TextStyle(fontSize: 13, color: Colors.white30)),
                 items: [
                   const DropdownMenuItem<String?>(
-                    child: Text('بدون والد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13)),
+                    child: Text('بدون والد', style: TextStyle(fontSize: 13)),
                   ),
                   ...widget.activeGoals
                       .where((g) => g.id != widget.goalToEdit?.id)
                       .map((g) {
                     return DropdownMenuItem<String?>(
                       value: g.id,
-                      child: Text(g.title, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13)),
+                      child: Text(g.title, style: const TextStyle(fontSize: 13)),
                     );
                   }),
                 ],
@@ -838,8 +836,8 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
 
         // Private toggle
         CheckboxListTile(
-          title: const Text('تنظیم به عنوان هدف خصوصی', style: TextStyle(fontSize: 13, fontFamily: 'Vazirmatn')),
-          subtitle: const Text('در چت دستیار و گزارشات پنهان می‌ماند.', style: TextStyle(fontSize: 10.5, fontFamily: 'Vazirmatn')),
+          title: const Text('تنظیم به عنوان هدف خصوصی', style: TextStyle(fontSize: 13)),
+          subtitle: const Text('در چت دستیار و گزارشات پنهان می‌ماند.', style: TextStyle(fontSize: 10.5)),
           value: _isPrivate,
           activeColor: colors.primary,
           checkColor: Colors.white,
@@ -874,7 +872,6 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
           label,
           style: TextStyle(
             fontSize: 12.5,
-            fontFamily: 'Vazirmatn',
             fontWeight: FontWeight.bold,
             color: isSelected ? Colors.white : colors.textSecondary,
           ),
@@ -890,7 +887,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
       children: [
         const Text(
           'چه زمانی مهلت پایان هدف است؟',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
 
@@ -926,14 +923,14 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                     children: [
                       Text(
                         _targetDate == null ? 'انتخاب تاریخ پایان' : 'تاریخ پایان تنظیم شده',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+                        style: TextStyle(fontSize: 13, color: colors.textSecondary),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         _targetDate == null
                             ? 'بدون تاریخ (مهلت نامحدود)'
                             : formatShamsiDate(_targetDate!.toIso8601String().substring(0, 10)),
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, color: colors.textPrimary, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 16, color: colors.textPrimary, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -949,7 +946,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
         // Quick Shortcuts
         Text(
           'میان‌برهای سریع تاریخ',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.textSecondary),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textSecondary),
         ),
         const SizedBox(height: 10),
         
@@ -1009,7 +1006,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
         },
         child: Text(
           label,
-          style: TextStyle(fontSize: 13, fontFamily: 'Vazirmatn', color: colors.textPrimary, fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -1025,7 +1022,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
           children: [
             const Text(
               'گام‌های اجرایی و اتصال روتین‌ها',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
             
             // AI breakdown assistant trigger
@@ -1041,7 +1038,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       ),
                       icon: const Icon(CupertinoIcons.wand_stars, size: 14, color: Color(0xFFF59E0B)),
-                      label: const Text('شکستن با هوش مصنوعی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xFFF59E0B), fontWeight: FontWeight.bold)),
+                      label: const Text('شکستن با هوش مصنوعی', style: TextStyle(fontSize: 11, color: Color(0xFFF59E0B), fontWeight: FontWeight.bold)),
                       onPressed: _triggerAiBreakdown,
                     ),
           ],
@@ -1066,7 +1063,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
         // Add Step Button
         OutlinedButton.icon(
           icon: Icon(CupertinoIcons.add, size: 14, color: colors.primary),
-          label: const Text('افزودن گام دستی جدید', style: TextStyle(fontFamily: 'Vazirmatn')),
+          label: const Text('افزودن گام دستی جدید', style: TextStyle()),
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: colors.primary.withValues(alpha: 0.5)),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1110,7 +1107,6 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'Vazirmatn',
                   color: colors.textPrimary,
                 ),
               ),
@@ -1130,7 +1126,6 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                     child: Text(
                       'عنوان پیشنهادی SMART: «$_aiSmartTitle»',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: colors.primary,
@@ -1155,7 +1150,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                       ),
                       child: const Text(
                         'اعمال',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -1167,7 +1162,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             const SizedBox(height: 12),
             Text(
               'موانع محتمل و خطرات مسیر:',
-              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', color: colors.textSecondary),
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: colors.textSecondary),
             ),
             const SizedBox(height: 6),
             ..._aiRisks.map((risk) => Padding(
@@ -1179,7 +1174,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                       Expanded(
                         child: Text(
                           risk,
-                          style: TextStyle(fontSize: 11.5, fontFamily: 'Vazirmatn', color: colors.textPrimary),
+                          style: TextStyle(fontSize: 11.5, color: colors.textPrimary),
                         ),
                       ),
                     ],
@@ -1202,7 +1197,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                   Expanded(
                     child: Text(
                       'راهکار پشتیبان: $_aiContingencyPlan',
-                      style: TextStyle(fontSize: 11.5, fontFamily: 'Vazirmatn', color: colors.textPrimary),
+                      style: TextStyle(fontSize: 11.5, color: colors.textPrimary),
                     ),
                   ),
                 ],
@@ -1230,7 +1225,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
               Expanded(
                 child: TextField(
                   controller: stepInput.titleController,
-                  style: TextStyle(color: colors.textPrimary, fontSize: 13.5, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
                   decoration: InputDecoration(
                     hintText: 'مثال: مطالعه فصل اول کتاب',
                     labelText: 'گام ${index + 1}',
@@ -1261,7 +1256,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                     stepInput.scheduledDate == null
                         ? 'تاریخ برنامه‌ریزی'
                         : formatShamsiDate(stepInput.scheduledDate!.toIso8601String().substring(0, 10)),
-                    style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', color: colors.textPrimary),
+                    style: TextStyle(fontSize: 11, color: colors.textPrimary),
                     overflow: TextOverflow.ellipsis,
                   ),
                   style: OutlinedButton.styleFrom(
@@ -1297,17 +1292,17 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                     child: DropdownButton<String?>(
                       value: stepInput.linkedRoutineId,
                       isExpanded: true,
-                      hint: const Text('اتصال به روتین', style: TextStyle(fontSize: 11.5, color: Colors.white38, fontFamily: 'Vazirmatn')),
+                      hint: const Text('اتصال به روتین', style: TextStyle(fontSize: 11.5, color: Colors.white38)),
                       dropdownColor: colors.card,
-                      style: TextStyle(color: colors.textPrimary, fontSize: 11.5, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(color: colors.textPrimary, fontSize: 11.5),
                       items: [
                         const DropdownMenuItem<String?>(
-                          child: Text('بدون روتین', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5)),
+                          child: Text('بدون روتین', style: TextStyle(fontSize: 11.5)),
                         ),
                         ...widget.routines.map((r) {
                           return DropdownMenuItem<String?>(
                             value: r['id'] as String,
-                            child: Text(r['title'] as String, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11.5), overflow: TextOverflow.ellipsis),
+                            child: Text(r['title'] as String, style: const TextStyle(fontSize: 11.5), overflow: TextOverflow.ellipsis),
                           );
                         }),
                       ],
@@ -1348,12 +1343,12 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              child: const Text('مرحله قبل', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+              child: const Text('مرحله قبل', style: TextStyle(fontWeight: FontWeight.bold)),
             )
           else
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
             ),
 
           // Next / Save button
@@ -1373,7 +1368,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                   )
                 : Text(
                     _currentStep == 2 ? (widget.goalToEdit != null ? 'ذخیره تغییرات' : 'ایجاد هدف') : 'مرحله بعد',
-                    style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
           ),
         ],
@@ -1439,7 +1434,6 @@ class _AiBreakdownProgressSheet extends StatelessWidget {
                           Text(
                             'هوش مصنوعی در حال تحلیل هدف...',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -1449,7 +1443,6 @@ class _AiBreakdownProgressSheet extends StatelessWidget {
                           Text(
                             'مراحل شکستن و برنامه‌ریزی هوشمند',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12,
                               color: colors.textSecondary,
                             ),
@@ -1503,7 +1496,6 @@ class _AiBreakdownProgressSheet extends StatelessWidget {
                           child: Text(
                             _stageTitles[idx],
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               fontWeight: isCurrent || isDone ? FontWeight.bold : FontWeight.normal,
                               color: isDone

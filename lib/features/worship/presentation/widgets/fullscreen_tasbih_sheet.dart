@@ -377,11 +377,11 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('قبول باشد 🤲', style: TextStyle(fontFamily: 'Vazirmatn')),
-        content: const Text('ذکر به پایان رسید. ان‌شاءالله قبول حق باشد ✨', style: TextStyle(fontFamily: 'Vazirmatn')),
+        title: const Text('قبول باشد 🤲', style: TextStyle()),
+        content: const Text('ذکر به پایان رسید. ان‌شاءالله قبول حق باشد ✨', style: TextStyle()),
         actions: [
           CupertinoDialogAction(
-            child: const Text('تکرار مجدد', style: TextStyle(fontFamily: 'Vazirmatn')),
+            child: const Text('تکرار مجدد', style: TextStyle()),
             onPressed: () {
               Navigator.pop(context);
               _reset();
@@ -389,7 +389,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
           ),
           CupertinoDialogAction(
             isDefaultAction: true,
-            child: Text('پایان و بستن', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+            child: Text('پایان و بستن', style: TextStyle(fontWeight: FontWeight.bold)),
             onPressed: () {
               Navigator.pop(context);
               _onPop();
@@ -511,7 +511,6 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                 child: Text(
                                   st.titleFa,
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 13.5,
                                     fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
                                     color: isActive
@@ -536,7 +535,6 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                             style: TextStyle(
                               fontSize: 42,
                               fontWeight: FontWeight.w900,
-                              fontFamily: 'Vazirmatn',
                               color: colors.textPrimary,
                               height: 1.3,
                               letterSpacing: -0.8,
@@ -556,7 +554,6 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                             color: isDark
                                 ? colors.accent
                                 : colors.accent,
-                            fontFamily: 'Vazirmatn',
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -622,7 +619,6 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                         fontSize: 76,
                                         fontWeight: FontWeight.w900,
                                         color: colors.textPrimary,
-                                        fontFamily: 'Vazirmatn',
                                         height: 1.05,
                                         letterSpacing: -1.5,
                                       ),
@@ -642,8 +638,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                           fontSize: 14,
                                           fontWeight: FontWeight.w800,
                                           color: activeColor,
-                                          fontFamily: 'Vazirmatn',
-                                        ),
+                                          ),
                                       ),
                                     ),
                                   ],
@@ -681,7 +676,6 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                 'برای افزایش شمارش، هر جای صفحه را لمس کنید یا کلید ولوم را بزنید',
                                 style: TextStyle(
                                   fontSize: 12.5,
-                                  fontFamily: 'Vazirmatn',
                                   fontWeight: FontWeight.w600,
                                   color: colors.textPrimary.withValues(alpha: 0.85),
                                 ),
@@ -748,7 +742,6 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                   ),
                                   isDense: true,
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 14.5,
                                     fontWeight: FontWeight.w800,
                                     color: colors.textPrimary,
@@ -759,7 +752,6 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
                                       child: Text(
                                         d.id == 'wp_dhikr_zahra' ? 'تسبیحات حضرت زهرا' : d.title,
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           fontSize: 14,
                                           fontWeight: FontWeight.w800,
                                           color: colors.textPrimary,

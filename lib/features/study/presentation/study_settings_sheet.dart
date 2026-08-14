@@ -42,17 +42,17 @@ class _StudySettingsSheetState extends State<StudySettingsSheet> {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('خروج از حالت کنکور', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          title: const Text('خروج از حالت کنکور', style: TextStyle(fontWeight: FontWeight.bold)),
           content: const Text(
             'سرفصل‌ها، آزمون‌ها و روزشمار کنکورت پاک نمی‌شن؛ فقط پنهان می‌شن و هر وقت خواستی برمی‌گردن.',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+            style: TextStyle(fontSize: 13),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn'))),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('انصراف', style: TextStyle())),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.primary),
-              child: const Text('خروج از کنکور', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('خروج از کنکور', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -78,22 +78,22 @@ class _StudySettingsSheetState extends State<StudySettingsSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('تنظیمات درس و مطالعه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+              Text('تنظیمات درس و مطالعه', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
               IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
             ],
           ),
           const SizedBox(height: 16),
           SwitchListTile(
-            title: const Text('حالت کنکور', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-            subtitle: const Text('فعال‌سازی روزشمار، ضرایب دروس و آزمون‌های آزمایشی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+            title: const Text('حالت کنکور', style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: const Text('فعال‌سازی روزشمار، ضرایب دروس و آزمون‌های آزمایشی', style: TextStyle(fontSize: 12)),
             value: _konkurMode,
             activeTrackColor: colors.primary.withValues(alpha: 0.5),
             onChanged: _toggleKonkurMode,
           ),
           const Divider(),
           SwitchListTile(
-            title: const Text('مرور فاصله‌دار (Spaced Repetition)', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-            subtitle: const Text('یادآوری مباحث در فواصل زمانی علمی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+            title: const Text('مرور فاصله‌دار (Spaced Repetition)', style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: const Text('یادآوری مباحث در فواصل زمانی علمی', style: TextStyle(fontSize: 12)),
             value: _reviewEnabled,
             activeTrackColor: colors.primary.withValues(alpha: 0.5),
             onChanged: (val) async {
@@ -102,7 +102,7 @@ class _StudySettingsSheetState extends State<StudySettingsSheet> {
             },
           ),
           SwitchListTile(
-            title: const Text('نمایش در داشبورد امروز', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+            title: const Text('نمایش در داشبورد امروز', style: TextStyle(fontWeight: FontWeight.bold)),
             value: _showInDashboard,
             activeTrackColor: colors.primary.withValues(alpha: 0.5),
             onChanged: (val) async {

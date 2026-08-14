@@ -69,11 +69,11 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('حذف کارنامه؟', style: TextStyle(fontFamily: 'Vazirmatn')),
-        content: const Text('آیا مطمئن هستید که می‌خواهید این کارنامه و تمام نتایج ثبت شده برای آن را حذف کنید؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+        title: const Text('حذف کارنامه؟', style: TextStyle()),
+        content: const Text('آیا مطمئن هستید که می‌خواهید این کارنامه و تمام نتایج ثبت شده برای آن را حذف کنید؟', style: TextStyle()),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn'))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('حذف کارنامه', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('انصراف', style: TextStyle())),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('حذف کارنامه', style: TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -109,7 +109,6 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
               Text(
                 'کارنامه‌های ثبت شده آزمون‌ها:',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -120,7 +119,7 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
                 icon: const Icon(Icons.add, size: 16, color: Colors.white),
                 label: const Text(
                   'ثبت آزمون جدید',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8B5CF6),
@@ -169,7 +168,7 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
               children: [
                 const Text(
                   'روند درصدهای دروس در آزمون‌ها 📈',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                 ),
                 DropdownButton<KonkurSubject>(
                   value: _selectedTrendSubject,
@@ -182,7 +181,7 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(sub.name, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold)),
+                          Text(sub.name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                           if (trend.length >= 2) ...[
                             const SizedBox(width: 6),
                             _buildTrendBadge(sub, trend),
@@ -215,7 +214,7 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
             Center(
               child: Text(
                 'نمودار پیشرفت درصدهای خالص درس انتخاب شده از اولین تا آخرین آزمون',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary),
+                style: TextStyle(fontSize: 10, color: colors.textSecondary),
               ),
             ),
           ],
@@ -262,7 +261,6 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
                   Text(
                     exam.title,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -271,7 +269,6 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
                   Text(
                     'برگزارکننده: ${exam.provider ?? "سایر"} · تاریخ: $dateStr',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       color: colors.textSecondary,
                     ),
@@ -290,7 +287,6 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
               child: Text(
                 'میانگین: ${toPersianDigits(avgPercent.toStringAsFixed(1))}٪',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: avgPercent >= 50.0 ? colors.success : colors.warning,
@@ -310,7 +306,7 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
                 'هیچ نتیجه درسی برای این آزمون ثبت نشده است.',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary),
+                style: TextStyle(fontSize: 11, color: colors.textSecondary),
               ),
             )
           else
@@ -342,19 +338,19 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Text(subject.name, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                        child: Text(subject.name, style: const TextStyle(fontSize: 11)),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Text(toPersianDigits(res.correctAnswers), textAlign: TextAlign.center, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                        child: Text(toPersianDigits(res.correctAnswers), textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Text(toPersianDigits(res.wrongAnswers), textAlign: TextAlign.center, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                        child: Text(toPersianDigits(res.wrongAnswers), textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Text(toPersianDigits(res.emptyAnswers), textAlign: TextAlign.center, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11)),
+                        child: Text(toPersianDigits(res.emptyAnswers), textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -362,7 +358,6 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
                           '${toPersianDigits(res.percentage.toStringAsFixed(1))}٪',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: res.percentage >= 50.0
@@ -416,7 +411,7 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
       ),
       child: Text(
         label,
-        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, fontWeight: FontWeight.bold, color: badgeColor),
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: badgeColor),
       ),
     );
   }
@@ -428,7 +423,6 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
         label,
         textAlign: label == 'درس' ? TextAlign.right : TextAlign.center,
         style: TextStyle(
-          fontFamily: 'Vazirmatn',
           fontSize: 10,
           fontWeight: FontWeight.bold,
           color: colors.textSecondary,
@@ -454,7 +448,6 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
             Text(
               'هنوز کارنامه‌ای ثبت نکرده‌اید. با دکمه بالا اولین آزمون را ثبت کنید.',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: Colors.grey,
               ),
@@ -536,7 +529,7 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
   Future<void> _saveExam() async {
     if (_titleController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('لطفاً عنوان آزمون را وارد کنید.', style: TextStyle(fontFamily: 'Vazirmatn'))),
+        const SnackBar(content: Text('لطفاً عنوان آزمون را وارد کنید.', style: TextStyle())),
       );
       return;
     }
@@ -640,7 +633,6 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                 const Text(
                   'اقدامات پیشنهادی بر اساس این آزمون 🎯',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -671,7 +663,6 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                                 Text(
                                   act.subjectName,
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     color: act.color,
@@ -681,7 +672,6 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                                 Text(
                                   act.description,
                                   style: const TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 12,
                                   ),
                                 ),
@@ -702,7 +692,7 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('باشه، فهمیدم', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                  child: const Text('باشه، فهمیدم', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -735,7 +725,7 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
               children: [
                 const Text(
                   '📝 ثبت کارنامه آزمون سراسری/آزمایشی',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
               ],
@@ -746,7 +736,7 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                 children: [
                   TextField(
                     controller: _titleController,
-                    decoration: const InputDecoration(labelText: 'عنوان آزمون (مثلا: قلم‌چی مرحله ۳)', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                    decoration: const InputDecoration(labelText: 'عنوان آزمون (مثلا: قلم‌چی مرحله ۳)', labelStyle: TextStyle()),
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -754,7 +744,7 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                       Expanded(
                         child: TextField(
                           controller: _providerController,
-                          decoration: const InputDecoration(labelText: 'برگزارکننده', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                          decoration: const InputDecoration(labelText: 'برگزارکننده', labelStyle: TextStyle()),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -762,7 +752,7 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                         child: TextButton.icon(
                           onPressed: _selectDate,
                           icon: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF8B5CF6)),
-                          label: Text(dateDisplay, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6))),
+                          label: Text(dateDisplay, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6))),
                         ),
                       ),
                     ],
@@ -770,7 +760,7 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                   const SizedBox(height: 20),
                   const Text(
                     'عملکرد شما در هر درس:',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
                   ...widget.subjects.map((sub) => _buildSubjectInputRow(sub, colors)),
@@ -778,7 +768,7 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                   TextField(
                     controller: _noteController,
                     maxLines: 2,
-                    decoration: const InputDecoration(labelText: 'یادداشت یا تحلیل کلی آزمون', labelStyle: TextStyle(fontFamily: 'Vazirmatn')),
+                    decoration: const InputDecoration(labelText: 'یادداشت یا تحلیل کلی آزمون', labelStyle: TextStyle()),
                   ),
                 ],
               ),
@@ -792,7 +782,7 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('✓ ثبت و محاسبه خودکار کارنامه', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+              child: const Text('✓ ثبت و محاسبه خودکار کارنامه', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -812,7 +802,7 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(sub.name, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold)),
+          Text(sub.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -835,11 +825,11 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
       textAlign: TextAlign.center,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 10),
+        labelStyle: const TextStyle(fontSize: 10),
         contentPadding: const EdgeInsets.symmetric(vertical: 4),
         border: const OutlineInputBorder(),
       ),
-      style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+      style: const TextStyle(fontSize: 12),
     );
   }
 }
@@ -884,7 +874,7 @@ class TrendChartPainter extends CustomPainter {
       // Draw label text
       final textSpan = TextSpan(
         text: toPersianDigits('${(ratio * 100).toInt()}%'),
-        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 8, color: textColor),
+        style: TextStyle(fontSize: 8, color: textColor),
       );
       final textPainter = TextPainter(
         text: textSpan,

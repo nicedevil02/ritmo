@@ -88,18 +88,18 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('افزودن درس جدید', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+        title: const Text('افزودن درس جدید', style: TextStyle(fontWeight: FontWeight.bold)),
         content: TextField(
           controller: controller,
           autofocus: true,
           decoration: const InputDecoration(hintText: 'نام درس (مثلاً: زبان انگلیسی)'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn'))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle())),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
             style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.primary),
-            child: const Text('افزودن', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+            child: const Text('افزودن', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -126,7 +126,7 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('درس و مطالعه', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.textPrimary)),
+          title: Text('درس و مطالعه', style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
           backgroundColor: colors.surface,
           elevation: 0,
           actions: [
@@ -160,11 +160,11 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('دروس من', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                                Text('دروس من', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                                 TextButton.icon(
                                   onPressed: _addSubject,
                                   icon: const Icon(Icons.add, size: 18),
-                                  label: const Text('درس جدید', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                                  label: const Text('درس جدید', style: TextStyle(fontSize: 12)),
                                 ),
                               ],
                             ),
@@ -201,7 +201,7 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
           },
           backgroundColor: colors.primary,
           icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-          label: const Text('شروع مطالعه', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+          label: const Text('شروع مطالعه', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         ),
       ),
     );
@@ -223,13 +223,13 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
             children: [
               Icon(Icons.auto_awesome, color: colors.primary, size: 18),
               const SizedBox(width: 8),
-              Text('الان چی بخونم؟', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: colors.primary)),
+              Text('الان چی بخونم؟', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.primary)),
             ],
           ),
           const SizedBox(height: 8),
-          Text('${rec.subject.name} — ${rec.topic.name}', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+          Text('${rec.subject.name} — ${rec.topic.name}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
           const SizedBox(height: 4),
-          Text('دلیل: ${rec.reason}', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary)),
+          Text('دلیل: ${rec.reason}', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
           const SizedBox(height: 12),
           ElevatedButton.icon(
             onPressed: () => SessionTimerSheet.show(context, subject: rec.subject, topic: rec.topic),
@@ -238,7 +238,7 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-            label: const Text('شروع جلسه', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+            label: const Text('شروع جلسه', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
           ),
         ],
       ),
@@ -261,21 +261,21 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('مطالعه امروز', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+              Text('مطالعه امروز', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
               TextButton.icon(
                 onPressed: () async {
                   await ManualSessionSheet.show(context, subjects: _subjects);
                   await _loadData();
                 },
                 icon: const Icon(Icons.edit_calendar, size: 16),
-                label: const Text('ثبت دستی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                label: const Text('ثبت دستی', style: TextStyle(fontSize: 12)),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             '${RitmoNumber.faInt(todayMinutes)} از ${RitmoNumber.faInt(targetMinutes)} دقیقه',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.primary, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 13, color: colors.primary, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           ClipRRect(
@@ -327,11 +327,11 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(subject.name, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                    Text(subject.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                     const SizedBox(height: 4),
                     Text(
                       '${RitmoNumber.fa(totalHours.toStringAsFixed(1))} ساعت مطالعه · ${StudyDate.formatRelative(stats?.lastStudiedDateIso)}',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
                     ),
                   ],
                 ),
@@ -356,15 +356,15 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
         children: [
           Icon(Icons.auto_stories_outlined, size: 48, color: colors.textSecondary),
           const SizedBox(height: 12),
-          Text('اولین درس خود را اضافه کنید', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+          Text('اولین درس خود را اضافه کنید', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
           const SizedBox(height: 4),
-          Text('با افزودن درس و سرفصل‌ها، پیشنهاد مطالعه روزانه فعال می‌شود.', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary), textAlign: TextAlign.center),
+          Text('با افزودن درس و سرفصل‌ها، پیشنهاد مطالعه روزانه فعال می‌شود.', style: TextStyle(fontSize: 12, color: colors.textSecondary), textAlign: TextAlign.center),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: _addSubject,
             style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
             icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('افزودن اولین درس', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+            label: const Text('افزودن اولین درس', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
           ),
         ],
       ),

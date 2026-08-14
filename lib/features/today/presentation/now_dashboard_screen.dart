@@ -1453,7 +1453,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
               const SizedBox(width: 8),
               Text(
                 'تحلیل هوشمند ریتمو',
-                style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),
@@ -1461,13 +1461,13 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
             textDirection: TextDirection.rtl,
             child: Text(
               explanationText,
-              style: TextStyle(fontSize: 13, height: 1.6, color: colors.textPrimary.withValues(alpha: 0.9), fontFamily: 'Vazirmatn'),
+              style: TextStyle(fontSize: 13, height: 1.6, color: colors.textPrimary.withValues(alpha: 0.9)),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('فهمیدم', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.primary)),
+              child: Text('فهمیدم', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
             ),
           ],
         );

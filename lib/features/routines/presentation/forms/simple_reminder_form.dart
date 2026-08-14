@@ -63,7 +63,7 @@ class SimpleReminderForm extends StatelessWidget {
                 const Text(
                   'تنظیم زمان هشدار پیش از موعد',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 ...options.map((opt) {
@@ -72,7 +72,6 @@ class SimpleReminderForm extends StatelessWidget {
                     title: Text(
                       opt['label']! as String,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 14,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         color: isSelected ? colors.primary : colors.textPrimary,
@@ -151,7 +150,6 @@ class SimpleReminderForm extends StatelessWidget {
                           Text(
                             'یادآور نقطه‌ای و اعلان سریع',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -161,7 +159,6 @@ class SimpleReminderForm extends StatelessWidget {
                           Text(
                             'بدون اشغال بازه زمانی روی تقویم، در ساعت مشخص هشدار می‌دهد.',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11,
                               color: colors.textSecondary.withValues(alpha: 0.8),
                             ),
@@ -178,7 +175,6 @@ class SimpleReminderForm extends StatelessWidget {
               TextFormField(
                 initialValue: controller.title,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -186,14 +182,12 @@ class SimpleReminderForm extends StatelessWidget {
                 decoration: InputDecoration(
                   labelText: 'عنوان یادآور *',
                   labelStyle: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: colors.primary,
                   ),
                   hintText: 'مثلاً: پرداخت قسط وام، آلارم پرواز، تماس با دکتر...',
                   hintStyle: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12.5,
                     color: colors.textSecondary.withValues(alpha: 0.4),
                   ),
@@ -242,7 +236,6 @@ class SimpleReminderForm extends StatelessWidget {
                             Text(
                               'تاریخ یادآوری: $dateLabel',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
@@ -270,7 +263,6 @@ class SimpleReminderForm extends StatelessWidget {
                                 child: Text(
                                   'امروز',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 12,
                                     color: isToday ? Colors.white : colors.textSecondary,
                                     fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
@@ -296,7 +288,6 @@ class SimpleReminderForm extends StatelessWidget {
                                 child: Text(
                                   'فردا',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 12,
                                     color: isTomorrow ? Colors.white : colors.textSecondary,
                                     fontWeight: isTomorrow ? FontWeight.bold : FontWeight.normal,
@@ -330,7 +321,6 @@ class SimpleReminderForm extends StatelessWidget {
                               Text(
                                 'ساعت دقیق هشدار',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: colors.textPrimary,
@@ -350,7 +340,6 @@ class SimpleReminderForm extends StatelessWidget {
                                 Text(
                                   formatTime,
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: colors.primary,
@@ -389,7 +378,6 @@ class SimpleReminderForm extends StatelessWidget {
                           Text(
                             'پیش‌هشدار',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -404,7 +392,6 @@ class SimpleReminderForm extends StatelessWidget {
                                 ? 'همزمان با موعد'
                                 : '${toPersianDigits(controller.reminderOffsetMinutes.toString())} دقیقه قبل',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               color: colors.textSecondary,
                             ),
@@ -440,7 +427,6 @@ class SimpleReminderForm extends StatelessWidget {
                             Text(
                               'یادآور مهم و ستاره‌دار',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
@@ -449,7 +435,6 @@ class SimpleReminderForm extends StatelessWidget {
                             Text(
                               'در بالای لیست کارهای روزانه رندر می‌شود.',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11,
                                 color: colors.textSecondary.withValues(alpha: 0.7),
                               ),
@@ -475,10 +460,10 @@ class SimpleReminderForm extends StatelessWidget {
               TextFormField(
                 initialValue: controller.description,
                 maxLines: 2,
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
+                style: TextStyle(fontSize: 13, color: colors.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'یادداشت یا جزئیات (اختیاری)',
-                  labelStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                  labelStyle: TextStyle(fontSize: 12, color: colors.textSecondary),
                   prefixIcon: Icon(Icons.notes_rounded, size: 20, color: colors.primary.withValues(alpha: 0.7)),
                   filled: true,
                   fillColor: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),

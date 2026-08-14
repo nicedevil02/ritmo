@@ -140,7 +140,7 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('تأمل روزانه شما با موفقیت ثبت شد 🌙', style: TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text('تأمل روزانه شما با موفقیت ثبت شد 🌙', style: TextStyle()),
             backgroundColor: Color(0xff10B981),
           ),
         );
@@ -210,8 +210,7 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     IconButton(
                       icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
@@ -225,8 +224,7 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
                     fontSize: 12,
                     color: colors.primary,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
@@ -241,8 +239,7 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -288,8 +285,7 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
                                       fontSize: 10,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                       color: isSelected ? colors.textPrimary : colors.textSecondary,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                 ],
                               ),
@@ -358,8 +354,8 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
                         ),
                         const SizedBox(height: 16),
                         SwitchListTile(
-                          title: Text('پنهان کردن از دستیار هوش مصنوعی (خصوصی)', style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn')),
-                          subtitle: Text('با فعال کردن این گزینه، اطلاعات این بازتاب هرگز به دستیار هوشمند ابری فرستاده نخواهد شد.', style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                          title: Text('پنهان کردن از دستیار هوش مصنوعی (خصوصی)', style: TextStyle(color: colors.textPrimary)),
+                          subtitle: Text('با فعال کردن این گزینه، اطلاعات این بازتاب هرگز به دستیار هوشمند ابری فرستاده نخواهد شد.', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                           value: _isPrivate,
                           onChanged: (val) => setState(() => _isPrivate = val),
                           activeThumbColor: colors.primary,
@@ -396,8 +392,7 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                 ),
               ],
@@ -424,13 +419,12 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
             fontSize: 12,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          style: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
+          style: TextStyle(color: colors.textPrimary, fontSize: 13),
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,

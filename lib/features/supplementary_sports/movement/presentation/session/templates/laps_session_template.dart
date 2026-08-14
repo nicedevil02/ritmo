@@ -33,7 +33,6 @@ class LapsSessionTemplate extends SessionTemplate {
 						Text(
 							toPersianDigits(lapCount.toString()),
 							style: const TextStyle(
-								fontFamily: _fontFa,
 								color: Colors.white,
 								fontSize: 72,
 								fontWeight: FontWeight.w900,
@@ -46,17 +45,17 @@ class LapsSessionTemplate extends SessionTemplate {
 								padding: const EdgeInsets.only(bottom: 12),
 								child: Text(
 									'/ ${toPersianDigits(lapTarget.toString())}',
-									style: const TextStyle(fontFamily: _fontFa, color: Colors.white38, fontSize: 28),
+									style: const TextStyle(color: Colors.white38, fontSize: 28),
 								),
 							),
 						],
 					],
 				),
-				const Text('دور', style: TextStyle(fontFamily: _fontFa, color: Colors.white60, fontSize: 18)),
+				const Text('دور', style: TextStyle(color: Colors.white60, fontSize: 18)),
 				const SizedBox(height: 4),
 				Text(
 					toPersianDigits(formatSessionDuration(ctx.elapsedMs)),
-					style: const TextStyle(fontFamily: _fontFa, color: Colors.white70, fontSize: 16),
+					style: const TextStyle(color: Colors.white70, fontSize: 16),
 				),
 			],
 		);

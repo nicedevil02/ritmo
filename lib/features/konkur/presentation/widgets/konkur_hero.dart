@@ -73,7 +73,6 @@ class KonkurHero extends StatelessWidget {
                         Text(
                           'روزشمار کنکور',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: subtitleColor,
@@ -88,7 +87,6 @@ class KonkurHero extends StatelessWidget {
                               Text(
                                 toPersianDigits(data.daysUntilExam),
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 36,
                                   fontWeight: FontWeight.w900,
                                   color: textColor,
@@ -98,7 +96,6 @@ class KonkurHero extends StatelessWidget {
                               Text(
                                 'روز تا آزمون سرنوشت‌ساز',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                   color: textColor,
@@ -114,7 +111,6 @@ class KonkurHero extends StatelessWidget {
                                 Text(
                                   'تاریخ کنکور را تعیین کنید',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: isDarkMode ? const Color(0xFFA78BFA) : Colors.yellowAccent,
@@ -187,7 +183,6 @@ class KonkurHero extends StatelessWidget {
             Text(
               '${toPersianDigits(percent)}٪',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: textColor,
@@ -199,7 +194,6 @@ class KonkurHero extends StatelessWidget {
         Text(
           'آمادگی کل',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 12,
             fontWeight: FontWeight.w500,
             color: textColor.withValues(alpha: 0.9),
@@ -226,7 +220,6 @@ class KonkurHero extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 11,
                 color: subtitleColor,
               ),
@@ -234,7 +227,6 @@ class KonkurHero extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: textColor,

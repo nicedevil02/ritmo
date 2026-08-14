@@ -45,8 +45,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: RitmoSpacing.sm),
                 RitmoSegmentedControl<ThemeMode>(
@@ -69,8 +68,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: RitmoSpacing.sm),
                 ...RitmoPalette.all.map((palette) {
@@ -114,8 +112,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: RitmoSpacing.sm),
                 RitmoCard(
@@ -135,16 +132,14 @@ class ThemeSettingsScreen extends StatelessWidget {
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           subtitle: Text(
                             'سطوح شیشه‌ای مات می‌شوند. روی گوشی‌های قدیمی‌تر روان‌تر است',
                             style: TextStyle(
                               fontSize: 12,
                               color: colors.textSecondary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           activeColor: colors.primary,
                         ),
@@ -167,8 +162,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                               color: prefs.mode == ThemeMode.light
                                   ? colors.disabled
                                   : colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           subtitle: Text(
                             prefs.mode == ThemeMode.light
@@ -177,8 +171,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               color: colors.textSecondary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           activeColor: colors.primary,
                         ),
@@ -206,8 +199,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         color: colors.error,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ),
                 ),
@@ -309,8 +301,7 @@ class _PalettePreviewCard extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         color: innerColors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -318,8 +309,7 @@ class _PalettePreviewCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: innerColors.textSecondary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     const SizedBox(height: RitmoSpacing.md),
 
@@ -336,8 +326,7 @@ class _PalettePreviewCard extends StatelessWidget {
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: innerColors.onPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ),
                     const SizedBox(height: RitmoSpacing.md),
@@ -367,8 +356,7 @@ class _PalettePreviewCard extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: innerColors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),

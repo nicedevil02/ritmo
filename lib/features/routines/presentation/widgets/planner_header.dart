@@ -46,7 +46,6 @@ class PlannerHeader extends StatelessWidget {
                 Text(
                   controller.isEditing ? '✏️ ویرایش کار' : '✨ کار جدید',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -56,7 +55,6 @@ class PlannerHeader extends StatelessWidget {
                 Text(
                   controller.isEditing ? 'تغییر جزئیات این کار' : 'ایجاد مستقیم کار جدید در مسیر زندگی',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11,
                     color: colors.textSecondary.withValues(alpha: 0.65),
                   ),

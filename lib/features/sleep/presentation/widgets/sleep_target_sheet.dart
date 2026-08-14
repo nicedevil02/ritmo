@@ -174,7 +174,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('اهداف خواب شما با موفقیت ذخیره شدند 🌙', style: TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text('اهداف خواب شما با موفقیت ذخیره شدند 🌙', style: TextStyle()),
             backgroundColor: Color(0xff8B5CF6),
           ),
         );
@@ -213,7 +213,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                   children: [
                     Text(
                       'تنظیم اهداف خواب و بیداری',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.cardTitle, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.cardTitle),
                     ),
                     IconButton(
                       icon: Icon(CupertinoIcons.xmark, color: colors.iconSecondary, size: 20),
@@ -224,7 +224,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                 const SizedBox(height: 4),
                 Text(
                   'ساعات ایده‌آل و مورد نظر خود را برای خواب و بیداری منظم مشخص کنید.',
-                  style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 20),
 
@@ -245,7 +245,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('ساعت خواب هدف', style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                              Text('ساعت خواب هدف', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                               const SizedBox(height: 6),
                               Text(
                                 '${_bedtime.hour.toString().padLeft(2, '0')}:${_bedtime.minute.toString().padLeft(2, '0')}',
@@ -271,7 +271,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('ساعت بیداری هدف', style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                              Text('ساعت بیداری هدف', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                               const SizedBox(height: 6),
                               Text(
                                 '${_wakeTime.hour.toString().padLeft(2, '0')}:${_wakeTime.minute.toString().padLeft(2, '0')}',
@@ -302,12 +302,12 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                         children: [
                           Text(
                             'مدت زمان خواب هدف:',
-                            style: TextStyle(fontSize: 13, color: colors.cardTitle, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(fontSize: 13, color: colors.cardTitle),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             hours > 0 ? '$hours ساعت و $minutes دقیقه' : '$minutes دقیقه',
-                            style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(fontSize: 11, color: colors.textSecondary),
                           ),
                         ],
                       ),
@@ -324,7 +324,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                           ),
                           Text(
                             '$_targetDuration د',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.cardTitle, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.cardTitle),
                           ),
                           IconButton(
                             icon: Icon(CupertinoIcons.plus_circle, color: colors.iconSecondary),
@@ -346,11 +346,11 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                 SwitchListTile(
                   title: Text(
                     'یادآور پیش‌خواب (Wind-down)',
-                    style: TextStyle(fontSize: 13, color: colors.cardTitle, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 13, color: colors.cardTitle),
                   ),
                   subtitle: Text(
                     'ارسال اعلان ملایم برای آماده‌شدن جهت خواب',
-                    style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
                   ),
                   value: _winddownEnabled,
                   activeThumbColor: const Color(0xff8B5CF6),
@@ -365,7 +365,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                   const SizedBox(height: 10),
                   Text(
                     'زمان یادآوری: $_winddownMinutes دقیقه قبل از خواب',
-                    style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
                   ),
                   Slider(
                     value: _winddownMinutes.toDouble(),
@@ -390,12 +390,12 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                   children: [
                     Text(
                       'شب آزاد هفتگی',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.cardTitle, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.cardTitle),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'یک شب در هفته که برنامه هیچ انتظاری از شما ندارد و از سنجش پایبندی حذف می‌شود.',
-                      style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 11, color: colors.textSecondary),
                     ),
                     const SizedBox(height: 10),
                     SingleChildScrollView(
@@ -403,7 +403,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                       child: Row(
                         children: [
                           ChoiceChip(
-                            label: const Text('بدون شب آزاد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                            label: const Text('بدون شب آزاد', style: TextStyle(fontSize: 12)),
                             selected: _freeNightWeekday == null,
                             selectedColor: const Color(0xff8B5CF6).withValues(alpha: 0.2),
                             onSelected: (selected) {
@@ -429,7 +429,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                             return Padding(
                               padding: const EdgeInsets.only(left: 6),
                               child: ChoiceChip(
-                                label: Text(name, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: isSelected ? const Color(0xff8B5CF6) : colors.textPrimary)),
+                                label: Text(name, style: TextStyle(fontSize: 12, color: isSelected ? const Color(0xff8B5CF6) : colors.textPrimary)),
                                 selected: isSelected,
                                 selectedColor: const Color(0xff8B5CF6).withValues(alpha: 0.2),
                                 onSelected: (selected) {
@@ -463,7 +463,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
                         )
                       : const Text(
                           'ذخیره اهداف خواب',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                 ),
               ],

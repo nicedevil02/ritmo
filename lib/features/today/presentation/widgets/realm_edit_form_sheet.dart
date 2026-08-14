@@ -252,8 +252,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
@@ -273,8 +272,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 8),
                 SingleChildScrollView(
@@ -285,7 +283,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                         padding: const EdgeInsets.only(left: 8),
                         child: ActionChip(
                           avatar: Text(template.icon, style: const TextStyle(fontSize: 14)),
-                          label: Text(template.name, style: const TextStyle(fontSize: 12, fontFamily: 'Vazirmatn')),
+                          label: Text(template.name, style: const TextStyle(fontSize: 12)),
                           onPressed: () => _applyTemplate(template),
                           backgroundColor: colors.textPrimary.withValues(alpha: 0.05),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -300,7 +298,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
               // Name Field & Icon Picker
               Text(
                 'نام و آیکون قلمرو:',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
               ),
               const SizedBox(height: 8),
 
@@ -322,10 +320,10 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                   Expanded(
                     child: TextField(
                       controller: _nameController,
-                      style: TextStyle(fontSize: 14, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 14, color: colors.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'مثلاً: کار عمیق، مطالعات شبانه...',
-                        hintStyle: TextStyle(fontSize: 13, color: colors.textTertiary, fontFamily: 'Vazirmatn'),
+                        hintStyle: TextStyle(fontSize: 13, color: colors.textTertiary),
                         filled: true,
                         fillColor: colors.textPrimary.withValues(alpha: 0.04),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -342,13 +340,13 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
               // Inline Name Validation Error (ق-۱۹)
               if (_nameError != null) ...[
                 const SizedBox(height: 4),
-                Text(_nameError!, style: const TextStyle(fontSize: 11, color: Colors.redAccent, fontFamily: 'Vazirmatn')),
+                Text(_nameError!, style: const TextStyle(fontSize: 11, color: Colors.redAccent)),
               ],
 
               const SizedBox(height: 16),
 
               // Icon Grid Picker (ق-۲۱)
-              Text('انتخاب آیکون:', style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+              Text('انتخاب آیکون:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
@@ -374,7 +372,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
               const SizedBox(height: 16),
 
               // Color Palette Picker (ق-۳)
-              Text('رنگ قلمرو:', style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+              Text('رنگ قلمرو:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
               const SizedBox(height: 6),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -401,14 +399,14 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
               const SizedBox(height: 18),
 
               // Realm Mode Picker with Live Preview (F-2)
-              Text('حالت و سطح تمرکز قلمرو:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+              Text('حالت و سطح تمرکز قلمرو:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary)),
               const SizedBox(height: 8),
 
               SegmentedButton<RealmMode>(
                 segments: const [
-                  ButtonSegment(value: RealmMode.focus, label: Text('تمرکز عمیق', style: TextStyle(fontSize: 12, fontFamily: 'Vazirmatn'))),
-                  ButtonSegment(value: RealmMode.silent, label: Text('بی‌صدا', style: TextStyle(fontSize: 12, fontFamily: 'Vazirmatn'))),
-                  ButtonSegment(value: RealmMode.normal, label: Text('عادی', style: TextStyle(fontSize: 12, fontFamily: 'Vazirmatn'))),
+                  ButtonSegment(value: RealmMode.focus, label: Text('تمرکز عمیق', style: TextStyle(fontSize: 12))),
+                  ButtonSegment(value: RealmMode.silent, label: Text('بی‌صدا', style: TextStyle(fontSize: 12))),
+                  ButtonSegment(value: RealmMode.normal, label: Text('عادی', style: TextStyle(fontSize: 12))),
                 ],
                 selected: {_selectedMode},
                 onSelectionChanged: (set) {
@@ -432,7 +430,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                       : (_selectedMode == RealmMode.silent
                           ? '💊 روتین‌های دارویی همیشه عبور می‌کنند؛ روتین‌های غیرضروری ساکت می‌شوند.'
                           : '☀️ همه روتین‌ها بر اساس برنامه عادی عمل می‌کنند.'),
-                  style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
                 ),
               ),
 
@@ -442,16 +440,16 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('روزهای فعال:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                  Text('روزهای فعال:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                   Row(
                     children: [
                       TextButton(
                         onPressed: () => setState(() => _selectedDays = {6, 7, 1, 2, 3, 4, 5}),
-                        child: const Text('همه روزها', style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn')),
+                        child: const Text('همه روزها', style: TextStyle(fontSize: 11)),
                       ),
                       TextButton(
                         onPressed: () => setState(() => _selectedDays = {6, 7, 1, 2, 3, 4}),
-                        child: const Text('روزهای کاری', style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn')),
+                        child: const Text('روزهای کاری', style: TextStyle(fontSize: 11)),
                       ),
                     ],
                   ),
@@ -473,13 +471,13 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
 
               if (_daysError != null) ...[
                 const SizedBox(height: 4),
-                Text(_daysError!, style: const TextStyle(fontSize: 11, color: Colors.redAccent, fontFamily: 'Vazirmatn')),
+                Text(_daysError!, style: const TextStyle(fontSize: 11, color: Colors.redAccent)),
               ],
 
               const SizedBox(height: 18),
 
               // Time Range Selector
-              Text('ساعات فعال‌سازی:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+              Text('ساعات فعال‌سازی:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary)),
               const SizedBox(height: 8),
 
               Row(
@@ -501,8 +499,8 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('شروع:', style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
-                            Text(_formatTimeOfDay(_startTime), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                            Text('شروع:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                            Text(_formatTimeOfDay(_startTime), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                           ],
                         ),
                       ),
@@ -526,8 +524,8 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('پایان:', style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
-                            Text(_formatTimeOfDay(_endTime), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                            Text('پایان:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                            Text(_formatTimeOfDay(_endTime), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                           ],
                         ),
                       ),
@@ -552,7 +550,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : Text(
                           isEditing ? 'ذخیره تغییرات' : 'ایجاد قلمرو',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn'),
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                 ),
               ),
@@ -568,7 +566,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
     final colors = context.colors;
 
     return FilterChip(
-      label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : colors.textPrimary, fontFamily: 'Vazirmatn')),
+      label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : colors.textPrimary)),
       selected: isSelected,
       onSelected: (val) {
         setState(() {

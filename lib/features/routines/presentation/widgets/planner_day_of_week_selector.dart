@@ -63,7 +63,6 @@ class PlannerDayOfWeekSelector extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 color: isSelected ? colors.primary : colors.textSecondary,

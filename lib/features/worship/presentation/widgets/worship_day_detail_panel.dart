@@ -329,17 +329,17 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('ثبت نماز قضا', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-        content: Text('آیا می‌خواهید این نماز به عنوان نماز قضاشده ثبت گردد؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+        title: Text('ثبت نماز قضا', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('آیا می‌خواهید این نماز به عنوان نماز قضاشده ثبت گردد؟', style: TextStyle()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn')),
+            child: Text('انصراف', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: colors.error),
-            child: const Text('ثبت قضا', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+            child: const Text('ثبت قضا', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -436,8 +436,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       SizedBox(height: 2),
                       Text(
@@ -445,8 +444,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                         style: TextStyle(
                           fontSize: 11,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -467,8 +465,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: colors.primary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ),
                 ],
@@ -496,8 +493,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),
@@ -643,8 +639,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ],
               ),
@@ -671,7 +666,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                   SizedBox(width: 6),
                   Text(
                     'معافیت شرعی (پریود) اعمال شده است.',
-                    style: TextStyle(fontSize: 11, color: colors.accent, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 11, color: colors.accent),
                   ),
                 ],
               ),
@@ -762,7 +757,6 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
-                fontFamily: 'Vazirmatn',
                 decoration: state.isDone ? TextDecoration.lineThrough : null,
               ),
               maxLines: 1,
@@ -776,8 +770,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               style: TextStyle(
                 fontSize: 9.5,
                 color: colors.textTertiary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
             const SizedBox(height: 8),
             // Status Icon
@@ -795,8 +788,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: state.textBadgeColor,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ],
         ),
@@ -832,8 +824,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ],
               ),
@@ -856,8 +847,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: colors.primary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ),
               ),
@@ -877,7 +867,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                 children: [
                   Text(
                     'هیچ برنامه مستحبی برای این روز فعال نیست.',
-                    style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
                   ),
                   SizedBox(height: 6),
                   ElevatedButton(
@@ -895,7 +885,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: const Text('فعال‌سازی مستحبات', style: TextStyle(fontSize: 11, color: Colors.white, fontFamily: 'Vazirmatn')),
+                    child: const Text('فعال‌سازی مستحبات', style: TextStyle(fontSize: 11, color: Colors.white)),
                   ),
                 ],
               ),
@@ -928,7 +918,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                     } else {
                       final res = await WorshipEngine.instance.logDone(practiceId: practice.id, date: date);
                       if (res is WorshipLogBlocked) {
-                        sm.showSnackBar(SnackBar(content: Text(res.userMessage, style: const TextStyle(fontFamily: 'Vazirmatn'))));
+                        sm.showSnackBar(SnackBar(content: Text(res.userMessage, style: const TextStyle())));
                       }
                     }
                     if (!mounted) return;
@@ -942,9 +932,9 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                           final title = practice.title;
                           final res = await WorshipEngine.instance.logSkip(practiceId: practice.id, date: date, addToQada: true);
                           if (res is WorshipLogBlocked) {
-                            sm.showSnackBar(SnackBar(content: Text(res.userMessage, style: const TextStyle(fontFamily: 'Vazirmatn'))));
+                            sm.showSnackBar(SnackBar(content: Text(res.userMessage, style: const TextStyle())));
                           } else {
-                            sm.showSnackBar(SnackBar(content: Text('قضای $title به بدهی‌های شما اضافه شد ✨', style: const TextStyle(fontFamily: 'Vazirmatn'))));
+                            sm.showSnackBar(SnackBar(content: Text('قضای $title به بدهی‌های شما اضافه شد ✨', style: const TextStyle())));
                           }
                           if (!mounted) return;
                           WorshipEngine.instance.invalidate();
@@ -1022,8 +1012,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ],
           ),
@@ -1051,15 +1040,13 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           Text(
                             rec['note']!,
                             style: TextStyle(
                               fontSize: 11,
                               color: colors.textSecondary,
-                              fontFamily: 'Vazirmatn',
                               height: 1.3,
                             ),
                           ),
@@ -1128,8 +1115,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ),
         ],
@@ -1154,8 +1140,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               style: TextStyle(
                 fontSize: 12,
                 color: colors.textSecondary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ),
         ],
@@ -1196,8 +1181,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ),
@@ -1208,8 +1192,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: colors.primary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
               ],
             ),
@@ -1250,8 +1233,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                 ],
               ),

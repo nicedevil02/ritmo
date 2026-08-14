@@ -221,7 +221,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('برنامه‌های تداخلی با موفقیت سازماندهی و آلارم‌ها تنظیم شدند.', style: TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text('برنامه‌های تداخلی با موفقیت سازماندهی و آلارم‌ها تنظیم شدند.', style: TextStyle()),
           ),
         );
         Navigator.pop(context);
@@ -308,7 +308,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                 children: [
                   Text(
                     'سازماندهی مجدد برنامه (Reshuffle)',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                   ),
                   IconButton(
                     icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
@@ -319,7 +319,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
               const SizedBox(height: 6),
               Text(
                 'رفع تداخل هوشمند برنامه روتین‌ها با رویدادهای موقت.',
-                style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 11, color: colors.textSecondary),
               ),
               const SizedBox(height: 16),
 
@@ -330,7 +330,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                     children: [
                       Text(
                         'هیچ رویداد موقتی برای امروز ثبت نشده است.',
-                        style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
@@ -341,7 +341,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                         ),
                         icon: const Icon(CupertinoIcons.add, size: 16),
-                        label: const Text('ثبت رویداد موقت جدید', style: TextStyle(fontSize: 12, fontFamily: 'Vazirmatn')),
+                        label: const Text('ثبت رویداد موقت جدید', style: TextStyle(fontSize: 12)),
                         onPressed: _openCreateEventSheet,
                       ),
                     ],
@@ -351,7 +351,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                 // Event selector drop down
                 Text(
                   'انتخاب رویداد جهت رفع تداخل:',
-                  style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -370,7 +370,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                           value: evt,
                           child: Text(
                             '${evt['title']} (${evt['startTime']} به مدت ${evt['durationMinutes']} دقیقه)',
-                            style: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(color: colors.textPrimary, fontSize: 13),
                           ),
                         );
                       }).toList(),
@@ -394,7 +394,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: _runReshuffle,
-                    child: const Text('شروع هوشمند سازماندهی مجدد برنامه', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                    child: const Text('شروع هوشمند سازماندهی مجدد برنامه', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                   ),
                 ] else ...[
                   // Show Reshuffle Results
@@ -413,7 +413,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                           Expanded(
                             child: Text(
                               _reshuffleResult!.message ?? 'امکان سازماندهی مجدد برنامه به دلیل تداخل با روتین‌های حیاتی وجود ندارد.',
-                              style: TextStyle(fontSize: 12, color: colors.textPrimary, height: 1.5, fontFamily: 'Vazirmatn'),
+                              style: TextStyle(fontSize: 12, color: colors.textPrimary, height: 1.5),
                             ),
                           ),
                         ],
@@ -432,13 +432,13 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                           _reshuffleResult = null;
                         });
                       },
-                      child: const Text('بازگشت', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13)),
+                      child: const Text('بازگشت', style: TextStyle(fontSize: 13)),
                     ),
                   ] else if (_reshuffleResult!.actions.isEmpty) ...[
                     Text(
                       'هیچ تداخلی بین رویداد و روتین‌های امروز یافت نشد! برنامه نیاز به سازماندهی ندارد. ✨',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: colors.success, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 12, color: colors.success),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -449,13 +449,13 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('تایید و بستن', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13)),
+                      child: const Text('تایید و بستن', style: TextStyle(fontSize: 13)),
                     ),
                   ] else ...[
                     // Proposed Actions List
                     Text(
                       'تغییرات پیشنهادی سیستم:',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                     ),
                     const SizedBox(height: 10),
                     Container(
@@ -496,7 +496,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                                   ),
                                   child: Text(
                                     _getActionTypeName(action.actionType),
-                                    style: TextStyle(fontSize: 9, color: colors.primary, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                                    style: TextStyle(fontSize: 9, color: colors.primary, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -506,12 +506,12 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                                     children: [
                                       Text(
                                         action.routineTitle,
-                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         detailText,
-                                        style: TextStyle(fontSize: 10, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                                        style: TextStyle(fontSize: 10, color: colors.textSecondary),
                                       ),
                                     ],
                                   ),
@@ -537,7 +537,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                             onPressed: _isApplying ? null : _applyReshuffle,
                             child: _isApplying
                                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : const Text('تایید و اعمال سازماندهی', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                                : const Text('تایید و اعمال سازماندهی', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -554,7 +554,7 @@ class _ReshufflePreviewSheetState extends State<ReshufflePreviewSheet> {
                                 _reshuffleResult = null;
                               });
                             },
-                            child: const Text('انصراف / ویرایش', style: TextStyle(fontSize: 13, fontFamily: 'Vazirmatn')),
+                            child: const Text('انصراف / ویرایش', style: TextStyle(fontSize: 13)),
                           ),
                         ),
                       ],

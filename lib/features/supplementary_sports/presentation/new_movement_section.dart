@@ -47,12 +47,10 @@ class _NewMovementSectionState extends State<NewMovementSection>
             indicatorColor: accent,
             indicatorWeight: 2.5,
             labelStyle: const TextStyle(
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.bold,
               fontSize: 13,
             ),
             unselectedLabelStyle: const TextStyle(
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.w500,
               fontSize: 13,
             ),
@@ -72,13 +70,13 @@ class _NewMovementSectionState extends State<NewMovementSection>
                   const Center(
                     child: Text(
                       'ورزش‌ها',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
+                      style: TextStyle(fontSize: 14),
                     ),
                   ),
               const Center(
                 child: Text(
                   'محتوای تب ۳',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
+                  style: TextStyle(fontSize: 14),
                 ),
               ),
             ],

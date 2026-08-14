@@ -396,7 +396,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           fontWeight: FontWeight.w500,
                           letterSpacing: 10,
                           color: textPrimaryColor,
-                          fontFamily: 'Vazirmatn', // Clean sans fallback
+                          // Clean sans fallback
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -409,8 +409,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           fontWeight: FontWeight.w400,
                           letterSpacing: 0.5,
                           color: textSecondaryColor,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       const SizedBox(height: 4),
 
@@ -434,8 +433,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           fontSize: 11.5,
                           fontWeight: FontWeight.w400,
                           color: textSecondaryColor.withValues(alpha: 0.45),
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),

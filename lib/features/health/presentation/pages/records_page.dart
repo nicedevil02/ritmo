@@ -104,7 +104,6 @@ class _RecordsPageState extends State<RecordsPage> {
               Text(
                 l10n.medicalProfile, // or پرونده پزشکی
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
                   fontSize: 16,
@@ -213,7 +212,6 @@ class _RecordsPageState extends State<RecordsPage> {
                     child: Text(
                       title,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: colors.textPrimary,

@@ -224,7 +224,7 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('گزارش ویژه پزشک زنان', style: TextStyle(fontFamily: 'Vazirmatn')),
+        title: const Text('گزارش ویژه پزشک زنان', style: TextStyle()),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
@@ -245,14 +245,14 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
                         const SizedBox(height: 12),
                         Text(
                           _errorMessage ?? 'خطا در بارگذاری گزارش',
-                          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
+                          style: const TextStyle(fontSize: 14),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: _loadReport,
                           icon: const Icon(Icons.refresh),
-                          label: const Text('تلاش مجدد', style: TextStyle(fontFamily: 'Vazirmatn')),
+                          label: const Text('تلاش مجدد', style: TextStyle()),
                         ),
                       ],
                     ),
@@ -284,12 +284,12 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
                                     children: [
                                       const Text(
                                         'گزارش مراقبت‌های بارداری',
-                                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                                       ),
                                       if (_data!.userName.isNotEmpty)
                                         Text(
                                           'نام بیمار: ${_data!.userName}',
-                                          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.black54),
+                                          style: const TextStyle(fontSize: 13, color: Colors.black54),
                                         ),
                                     ],
                                   ),
@@ -301,13 +301,13 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
                                     ),
                                     child: Text(
                                       'سن: هفته ${_data!.gestationalAge.weeks} + ${_data!.gestationalAge.days} روز',
-                                      style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.pink.shade700, fontSize: 12),
+                                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.pink.shade700, fontSize: 12),
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 6),
-                              Text('تاریخ تقریبی زایمان: ${_data!.eddJalali}', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.black54)),
+                              Text('تاریخ تقریبی زایمان: ${_data!.eddJalali}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
                               const Divider(height: 24),
 
                               // 1. Blood Pressure Section
@@ -320,7 +320,7 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
                                   final dia = bp['diastolic'];
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 2),
-                                    child: Text('• فشار خون: $sys / $dia mmHg', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.black87)),
+                                    child: Text('• فشار خون: $sys / $dia mmHg', style: const TextStyle(fontSize: 12, color: Colors.black87)),
                                   );
                                 }),
                               const SizedBox(height: 14),
@@ -335,7 +335,7 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
                                   final type = sg['type'] ?? sg['measurementType'] ?? 'تست قند';
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 2),
-                                    child: Text('• $type: $val mg/dL', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.black87)),
+                                    child: Text('• $type: $val mg/dL', style: const TextStyle(fontSize: 12, color: Colors.black87)),
                                   );
                                 }),
                               const SizedBox(height: 14),
@@ -350,7 +350,7 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
                                   final date = ks['date'] ?? '';
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 2),
-                                    child: Text('• تاریخ $date: $count حرکت ثبت شد', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.black87)),
+                                    child: Text('• تاریخ $date: $count حرکت ثبت شد', style: const TextStyle(fontSize: 12, color: Colors.black87)),
                                   );
                                 }),
                               const SizedBox(height: 14),
@@ -364,7 +364,7 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
                                   final title = chk['titleFa'] ?? chk['title'] ?? 'مراقبت بارداری';
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 2),
-                                    child: Text('✓ $title', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.green, fontWeight: FontWeight.w500)),
+                                    child: Text('✓ $title', style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w500)),
                                   );
                                 }),
                               const SizedBox(height: 18),
@@ -378,7 +378,7 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
                                 ),
                                 child: Text(
                                   disclaimer,
-                                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Colors.black54),
+                                  style: const TextStyle(fontSize: 10, color: Colors.black54),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
@@ -394,7 +394,7 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
                           foregroundColor: Colors.white,
                         ),
                         icon: const Icon(Icons.share),
-                        label: const Text('اشتراک‌گذاری تصویر گزارش جهت ارائه به پزشک', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                        label: const Text('اشتراک‌گذاری تصویر گزارش جهت ارائه به پزشک', style: TextStyle(fontWeight: FontWeight.bold)),
                         onPressed: _exportAndShare,
                       ),
                     ],
@@ -408,7 +408,7 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         title,
-        style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.indigo),
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.indigo),
       ),
     );
   }
@@ -416,7 +416,7 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
   Widget _buildEmptyRow(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Text(text, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Colors.black45, fontStyle: FontStyle.italic)),
+      child: Text(text, style: const TextStyle(fontSize: 11, color: Colors.black45, fontStyle: FontStyle.italic)),
     );
   }
 }

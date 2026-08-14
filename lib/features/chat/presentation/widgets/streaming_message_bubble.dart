@@ -78,7 +78,6 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
     final alignment = isUser ? Alignment.centerRight : Alignment.centerLeft;
 
     final baseStyle = TextStyle(
-      fontFamily: 'Vazirmatn',
       fontSize: 13.5,
       height: 1.6,
       color: textColor,

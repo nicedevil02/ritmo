@@ -201,17 +201,17 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: colors.card,
-          title: Text('$actionText دارو', style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-          content: Text('آیا $actionText دارو «$title» را تایید می‌کنید؟', style: const TextStyle(fontFamily: 'Vazirmatn')),
+          title: Text('$actionText دارو', style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text('آیا $actionText دارو «$title» را تایید می‌کنید؟', style: const TextStyle()),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('لغو', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(backgroundColor: status == 'TAKEN' ? colors.primary : colors.textSecondary),
-              child: const Text('تایید', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('تایید', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -298,7 +298,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
       if (check != OverdoseResult.safe) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('امکان مصرف دارو به علت ریسک اوردوز وجود ندارد.', style: TextStyle(fontFamily: 'Vazirmatn')),
+            content: const Text('امکان مصرف دارو به علت ریسک اوردوز وجود ندارد.', style: TextStyle()),
             backgroundColor: colors.medicalRed,
           ),
         );
@@ -313,17 +313,17 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: colors.card,
-          title: const Text('ثبت مصرف دارو', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-          content: Text('آیا مصرف دارو «$title» را تایید می‌کنید؟', style: const TextStyle(fontFamily: 'Vazirmatn')),
+          title: const Text('ثبت مصرف دارو', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Text('آیا مصرف دارو «$title» را تایید می‌کنید؟', style: const TextStyle()),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('لغو', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: const Text('تایید', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('تایید', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -489,17 +489,17 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
             children: [
               Icon(Icons.delete_forever_rounded, color: Colors.red, size: 24),
               SizedBox(width: 8),
-              Text('حذف دارو', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+              Text('حذف دارو', style: TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
           content: Text(
             'آیا از حذف داروی "${routine['title']}" مطمئن هستید؟ این عمل برنامه آلارم و تاریخچه مصرف آن را برای همیشه پاک می‌کند.',
-            style: const TextStyle(fontFamily: 'Vazirmatn'),
+            style: const TextStyle(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('لغو', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -518,7 +518,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                 backgroundColor: colors.medicalRed,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('حذف برای همیشه', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('حذف برای همیشه', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -539,17 +539,17 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
             children: [
               Icon(Icons.delete_outline_rounded, color: Colors.red, size: 24),
               SizedBox(width: 8),
-              Text('حذف ثبت مصرف', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+              Text('حذف ثبت مصرف', style: TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
           content: Text(
             'آیا مطمئن هستید که می‌خواهید این ثبت مصرف از داروی "${logItem['title']}" را حذف کنید؟',
-            style: const TextStyle(fontFamily: 'Vazirmatn'),
+            style: const TextStyle(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('لغو', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -568,7 +568,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                 backgroundColor: colors.medicalRed,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('حذف', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('حذف', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -610,8 +610,8 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                       ),
                     ],
                   ),
-                  labelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14),
-                  unselectedLabelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.normal, fontSize: 14),
+                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
                   dividerColor: Colors.transparent,
                   padding: const EdgeInsets.all(4),
                   tabs: const [
@@ -642,7 +642,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
               backgroundColor: colors.primary,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('داروی جدید', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14)),
+              label: const Text('داروی جدید', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               elevation: 4,
             ),
@@ -702,11 +702,11 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                   children: [
                     Text(
                       'پیشرفت داروها امروز',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colors.textSecondary),
                     ),
                     Text(
                       '$completedScheduled از $totalScheduled دوز',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.primary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.primary),
                     ),
                   ],
                 ),
@@ -744,7 +744,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
         ],
         Expanded(
           child: todayMeds.isEmpty
-              ? Center(child: Text('بدون داروی فعال برای امروز', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary, fontSize: 14.5)))
+              ? Center(child: Text('بدون داروی فعال برای امروز', style: TextStyle(color: colors.textSecondary, fontSize: 14.5)))
               : ListView.builder(
                   padding: const EdgeInsets.only(bottom: 90),
                   itemCount: todayMeds.length,
@@ -846,8 +846,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                                             fontSize: 16.5,
                                             fontWeight: FontWeight.bold,
                                             color: colors.textPrimary,
-                                            fontFamily: 'Vazirmatn',
-                                          ),
+                                            ),
                                         ),
                                         const SizedBox(height: 4),
                                         Row(
@@ -864,8 +863,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.bold,
                                                   color: isPrn ? colors.warning : colors.primary,
-                                                  fontFamily: 'Vazirmatn',
-                                                ),
+                                                  ),
                                               ),
                                             ),
                                             if (dose.isNotEmpty) ...[
@@ -875,8 +873,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                                                 style: TextStyle(
                                                   fontSize: 13.5,
                                                   color: colors.textSecondary,
-                                                  fontFamily: 'Vazirmatn',
-                                                ),
+                                                  ),
                                               ),
                                             ],
                                           ],
@@ -933,7 +930,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
               style: TextStyle(
                 fontSize: 13, 
                 color: colors.warning, 
-                fontFamily: 'Vazirmatn', 
                 fontWeight: FontWeight.w600
               ),
             ),
@@ -968,7 +964,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
           style: TextStyle(
             fontSize: 12,
             color: barColor,
-            fontFamily: 'Vazirmatn',
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -1023,7 +1018,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
               Text(
                 text,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: color,
@@ -1050,7 +1044,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
               icon: const Icon(Icons.done_all_rounded, size: 16),
               label: const Text(
                 'خوردم',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 8),
@@ -1067,7 +1061,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
               icon: const Icon(Icons.close_rounded, size: 16),
               label: const Text(
                 'رد کردم',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -1096,13 +1090,13 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
             ),
             child: Text(
               'غیرمجاز',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary.withValues(alpha: 0.5)),
+              style: TextStyle(fontSize: 13, color: colors.textSecondary.withValues(alpha: 0.5)),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             countdownStr,
-            style: TextStyle(fontSize: 10, color: colors.medicalRed, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 10, color: colors.medicalRed, fontWeight: FontWeight.bold),
           ),
         ],
       );
@@ -1122,12 +1116,12 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
             ),
             child: Text(
               'سقف پر شده',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary.withValues(alpha: 0.5)),
+              style: TextStyle(fontSize: 13, color: colors.textSecondary.withValues(alpha: 0.5)),
             ),
           ),
           Text(
             'حداکثر دوز مجاز امروز مصرف شده است.',
-            style: TextStyle(fontSize: 10, color: colors.medicalRed, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 10, color: colors.medicalRed, fontWeight: FontWeight.bold),
           ),
         ],
       );
@@ -1148,7 +1142,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
       icon: const Icon(Icons.local_pharmacy_rounded, size: 16),
       label: const Text(
         'ثبت مصرف',
-        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -1161,7 +1155,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
     }
 
     return _medicationRoutines.isEmpty
-        ? Center(child: Text('بدون داروی ثبت شده', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary, fontSize: 14.5)))
+        ? Center(child: Text('بدون داروی ثبت شده', style: TextStyle(color: colors.textSecondary, fontSize: 14.5)))
         : Column(
             children: [
               Container(
@@ -1180,7 +1174,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                       child: Text(
                         '💡 با کشیدن دارو به راست می‌توانید آن را «ویرایش» و با کشیدن به چپ «خاتمه مصرف» (آرشیو) کنید.',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 11.5,
                           fontWeight: FontWeight.w500,
                           color: colors.textPrimary.withValues(alpha: 0.85),
@@ -1233,12 +1226,12 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                               child: AlertDialog(
                                 backgroundColor: colors.card,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                title: const Text('خاتمه مصرف دارو', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-                                content: const Text('آیا مایلید مصرف این دارو را خاتمه دهید و آن را غیرفعال کنید؟ (این دارو به تاریخچه منتقل می‌شود)', style: TextStyle(fontFamily: 'Vazirmatn')),
+                                title: const Text('خاتمه مصرف دارو', style: TextStyle(fontWeight: FontWeight.bold)),
+                                content: const Text('آیا مایلید مصرف این دارو را خاتمه دهید و آن را غیرفعال کنید؟ (این دارو به تاریخچه منتقل می‌شود)', style: TextStyle()),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(context, false),
-                                    child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn')),
+                                    child: const Text('لغو', style: TextStyle()),
                                   ),
                                   ElevatedButton(
                                     onPressed: () => Navigator.pop(context, true),
@@ -1246,7 +1239,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                                       backgroundColor: colors.medicalRed,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                     ),
-                                    child: const Text('خاتمه مصرف', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                                    child: const Text('خاتمه مصرف', style: TextStyle(color: Colors.white)),
                                   ),
                                 ],
                               ),
@@ -1305,8 +1298,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                                           fontSize: 16.5,
                                           fontWeight: FontWeight.bold,
                                           color: colors.textPrimary,
-                                          fontFamily: 'Vazirmatn',
-                                        ),
+                                          ),
                                       ),
                                       const SizedBox(height: 4),
                                       Row(
@@ -1323,8 +1315,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,
                                                 color: isPrn ? colors.warning : colors.primary,
-                                                fontFamily: 'Vazirmatn',
-                                              ),
+                                                ),
                                             ),
                                           ),
                                           if (med['description'] != null && (med['description'] as String).isNotEmpty) ...[
@@ -1334,8 +1325,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                                               style: TextStyle(
                                                 fontSize: 13.5,
                                                 color: colors.textSecondary,
-                                                fontFamily: 'Vazirmatn',
-                                              ),
+                                                ),
                                             ),
                                           ],
                                         ],
@@ -1366,7 +1356,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_historyItems.isEmpty && _archivedRoutines.isEmpty) {
-      return Center(child: Text('سوابق مصرف یا داروی خاتمه‌یافته‌ای ثبت نشده است', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary, fontSize: 14.5)));
+      return Center(child: Text('سوابق مصرف یا داروی خاتمه‌یافته‌ای ثبت نشده است', style: TextStyle(color: colors.textSecondary, fontSize: 14.5)));
     }
 
     return ListView(
@@ -1382,7 +1372,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                 Text(
                   'داروهای خاتمه‌یافته',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -1432,7 +1421,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                             Text(
                               med['title'] as String,
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
@@ -1442,7 +1430,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                             Text(
                               '${isPrn ? "PRN (در صورت نیاز)" : "منظم"} ${dose.isNotEmpty ? "• دوز: $dose" : ""}',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 12,
                                 color: colors.textSecondary,
                               ),
@@ -1484,7 +1471,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                 Text(
                   'سوابق مصرف روزانه',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -1554,8 +1540,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                                 fontSize: 16.5,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -1563,8 +1548,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                               style: TextStyle(
                                 fontSize: 13.5,
                                 color: colors.textSecondary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ],
                         ),

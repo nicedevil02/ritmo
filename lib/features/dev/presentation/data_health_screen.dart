@@ -96,7 +96,7 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('پایش سلامت داده‌ها (توسعه‌دهنده)', style: TextStyle(fontFamily: 'Vazirmatn')),
+        title: const Text('پایش سلامت داده‌ها (توسعه‌دهنده)', style: TextStyle()),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -130,7 +130,6 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
                             Text(
                               title,
                               style: const TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
@@ -146,7 +145,6 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
                               child: Text(
                                 '$count مورد',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   color: hasIssue ? colors.error : colors.success,

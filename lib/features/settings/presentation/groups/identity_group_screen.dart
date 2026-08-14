@@ -76,7 +76,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
         title: Text(
           'ویرایش عکس پروفایل',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontWeight: FontWeight.bold,
             fontSize: 16,
             color: colors.textPrimary,
@@ -85,7 +84,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
         message: Text(
           'یک تصویر برای نمایهٔ کاربری خود انتخاب کنید',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 13,
             color: colors.textSecondary,
           ),
@@ -116,7 +114,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                 Text(
                   'انتخاب از گالری',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     color: colors.textPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -150,7 +147,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                 Text(
                   'ثبت عکس با دوربین',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     color: colors.textPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -179,7 +175,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                   Text(
                     'حذف عکس پروفایل',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       color: colors.medicalRed,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -194,7 +189,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
           child: Text(
             'انصراف',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.w600,
               fontSize: 15,
               color: colors.textSecondary,
@@ -278,7 +272,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                                   Text(
                                     'ویرایش نام کاربری',
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       color: colors.textPrimary,
@@ -287,7 +280,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                                   Text(
                                     'نامی که در پیام‌ها و تبریک‌ها نمایش داده می‌شود',
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 12,
                                       color: colors.textSecondary,
                                     ),
@@ -318,12 +310,10 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             placeholder: 'نام و نام خانوادگی خود را وارد کنید',
                             placeholderStyle: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 14,
                               color: colors.textTertiary,
                             ),
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 15,
                               color: colors.textPrimary,
                               fontWeight: FontWeight.w600,
@@ -341,7 +331,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                           Text(
                             localError!,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12,
                               color: colors.medicalRed,
                               fontWeight: FontWeight.w500,
@@ -362,7 +351,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                                 child: Text(
                                   'انصراف',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                     color: colors.textSecondary,
@@ -406,7 +394,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                                     Text(
                                       'ذخیره تغییرات',
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
@@ -515,7 +502,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                   Text(
                     'انتخاب جنسیت',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -525,7 +511,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                   Text(
                     'برای تنظیم هوشمند ماژول‌های مرتبط (مانند چرخه سلامت)',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       color: colors.textSecondary,
                     ),
@@ -587,7 +572,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                                     Text(
                                       opt['title'] as String,
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 15,
                                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                                         color: isSelected ? optColor : colors.textPrimary,
@@ -597,7 +581,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                                     Text(
                                       opt['subtitle'] as String,
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 12,
                                         color: colors.textSecondary,
                                       ),
@@ -681,7 +664,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                         child: Text(
                           'انصراف',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             color: colors.textSecondary,
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
@@ -691,7 +673,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                       Text(
                         'انتخاب سن',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -712,7 +693,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                         child: Text(
                           'تأیید',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             color: colors.primary,
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -738,7 +718,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                           child: Text(
                             '${toPersianDigits(10 + i)} سال',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 19,
                               fontWeight: FontWeight.w600,
                               color: colors.textPrimary,
@@ -837,7 +816,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
           Text(
             title,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
@@ -1016,7 +994,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                       Text(
                         displayName,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                           color: colors.textPrimary,
@@ -1099,7 +1076,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: color,
@@ -1248,7 +1224,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: colors.textPrimary,
@@ -1263,7 +1238,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                   Text(
                     value,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: colors.textSecondary,
@@ -1416,7 +1390,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                           Text(
                             title,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: isSelected ? themeColor : colors.textPrimary,
@@ -1432,7 +1405,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                             child: Text(
                               badge,
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: themeColor,
@@ -1473,7 +1445,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
             Text(
               description,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 color: colors.textSecondary,
                 height: 1.5,
@@ -1495,7 +1466,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                   child: Text(
                     '• $t',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11.5,
                       fontWeight: FontWeight.w500,
                       color: isSelected ? colors.textPrimary : colors.textSecondary,
@@ -1544,7 +1514,6 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
             child: Text(
               'تمام اطلاعات هویتی و تنظیمات شما به‌صورت کاملاً محلی، آفلاین و امن روی دستگاه ذخیره می‌شود.',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: colors.textSecondary,
                 height: 1.5,

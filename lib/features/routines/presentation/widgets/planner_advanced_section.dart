@@ -37,7 +37,6 @@ class PlannerAdvancedSection extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12.5,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected ? colors.textPrimary : colors.textSecondary,
@@ -97,7 +96,6 @@ class PlannerAdvancedSection extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: isSelected ? colors.textPrimary : colors.textPrimary.withValues(alpha: 0.85),
@@ -107,7 +105,6 @@ class PlannerAdvancedSection extends StatelessWidget {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       color: colors.textSecondary.withValues(alpha: 0.7),
                     ),
@@ -193,7 +190,6 @@ class PlannerAdvancedSection extends StatelessWidget {
                         Text(
                           'تنظیمات پیشرفته و هوشمند',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 14.5,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
@@ -229,7 +225,6 @@ class PlannerAdvancedSection extends StatelessWidget {
                     Text(
                       'اولویت کار در برنامه روزانه',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
                         color: colors.textSecondary.withValues(alpha: 0.85),
@@ -251,7 +246,6 @@ class PlannerAdvancedSection extends StatelessWidget {
                     Text(
                       'زون مربوطه (قلمرو زندگی)',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
                         color: colors.textSecondary.withValues(alpha: 0.85),
@@ -287,7 +281,6 @@ class PlannerAdvancedSection extends StatelessWidget {
                               child: Text(
                                 '🌐 عمومی',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 12,
                                   fontWeight: controller.selectedZoneId == null ? FontWeight.bold : FontWeight.normal,
                                   color: controller.selectedZoneId == null ? colors.textPrimary : colors.textSecondary,
@@ -324,7 +317,6 @@ class PlannerAdvancedSection extends StatelessWidget {
                                   child: Text(
                                     '$emoji $name',
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 12,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                       color: isSelected ? colors.textPrimary : colors.textSecondary,
@@ -343,7 +335,6 @@ class PlannerAdvancedSection extends StatelessWidget {
                     Text(
                       'مدیریت هوشمند بر اساس سطح انرژی (RIE)',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
                         color: colors.textSecondary.withValues(alpha: 0.85),
@@ -367,7 +358,6 @@ class PlannerAdvancedSection extends StatelessWidget {
                     Text(
                       'توضیحات و یادداشت‌های تکمیلی',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
                         color: colors.textSecondary.withValues(alpha: 0.85),
@@ -377,10 +367,10 @@ class PlannerAdvancedSection extends StatelessWidget {
                     TextFormField(
                       initialValue: controller.description,
                       maxLines: 2,
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textPrimary),
+                      style: TextStyle(fontSize: 13, color: colors.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'جزئیات، لینک‌ها، یا یادداشت‌های مرتبط با این کار...',
-                        hintStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary.withValues(alpha: 0.4)),
+                        hintStyle: TextStyle(fontSize: 12, color: colors.textSecondary.withValues(alpha: 0.4)),
                         prefixIcon: Icon(Icons.notes_rounded, size: 20, color: colors.primary.withValues(alpha: 0.7)),
                         filled: true,
                         fillColor: isDark ? const Color(0xFF1E2235).withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.02),

@@ -52,7 +52,6 @@ class VisitsPage extends StatelessWidget {
               Text(
                 l10n.doctorVisits,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
                   fontSize: 16,
@@ -69,7 +68,6 @@ class VisitsPage extends StatelessWidget {
                 label: const Text(
                   'خلاصه برای پزشک',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                     color: Color(0xff10B981),

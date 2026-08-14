@@ -78,7 +78,6 @@ class CycleSosSection extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -88,7 +87,6 @@ class CycleSosSection extends StatelessWidget {
                       Text(
                         subtitle,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 13,
                           color: colors.textSecondary,
                         ),
@@ -175,7 +173,6 @@ class CycleSosSection extends StatelessWidget {
                             Text(
                               sheetTitle,
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
@@ -367,7 +364,6 @@ class CycleSosSection extends StatelessWidget {
                 child: Text(
                   'همراه عزیز ریتمو، اگر درد شما بسیار شدید و غیرقابل تحمل است یا با علائمی چون تب یا خونریزی بسیار شدید همراه است، حتماً با پزشک مشورت کنید. 🌸',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 14,
                     color: colors.textSecondary,
                     height: 1.5,
@@ -387,7 +383,6 @@ class CycleSosSection extends StatelessWidget {
     return Text(
       title,
       style: TextStyle(
-        fontFamily: 'Vazirmatn',
         fontSize: 14,
         fontWeight: FontWeight.bold,
         color: colors.textPrimary,
@@ -426,7 +421,6 @@ class CycleSosSection extends StatelessWidget {
                   child: Text(
                     title,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: themeColor,
@@ -439,7 +433,6 @@ class CycleSosSection extends StatelessWidget {
             Text(
               description,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 color: colors.textSecondary,
                 height: 1.5,
@@ -480,7 +473,6 @@ class CycleSosSection extends StatelessWidget {
                   child: Text(
                     title,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -493,7 +485,6 @@ class CycleSosSection extends StatelessWidget {
             Text(
               description,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 color: colors.textSecondary,
                 height: 1.5,
@@ -555,7 +546,6 @@ class CycleSosSection extends StatelessWidget {
                       Text(
                         'گفتگو با دستیار هوشمند ریتمو 🔮',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -565,7 +555,6 @@ class CycleSosSection extends StatelessWidget {
                       Text(
                         'مشاوره اختصاصی و خودمراقبتی هوشمند برای تسکین درد و ارتقای سلامتی ✨',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 14,
                           color: Colors.white70,
                         ),

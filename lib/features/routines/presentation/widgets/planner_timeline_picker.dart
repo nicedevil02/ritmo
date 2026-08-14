@@ -138,7 +138,6 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                           Text(
                             line1,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 14.5,
                               fontWeight: FontWeight.bold,
                               color: isSelected ? Colors.white : colors.textPrimary,
@@ -149,7 +148,6 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                             Text(
                               line2,
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11,
                                 color: isSelected
                                     ? Colors.white.withValues(alpha: 0.8)
@@ -161,7 +159,6 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                           Text(
                             line3,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 11,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               color: isSelected
@@ -291,7 +288,6 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                                   child: Text(
                                     index.toString().padLeft(2, '0'),
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: isSelected ? 24 : 17,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                       color: isSelected
@@ -309,7 +305,6 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                         Text(
                           ':',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
@@ -337,7 +332,6 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                                   child: Text(
                                     index.toString().padLeft(2, '0'),
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: isSelected ? 24 : 17,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                       color: isSelected
@@ -390,7 +384,6 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
           Text(
             'تراکم زمانی امروز (۲۴ ساعت)',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 12,
               fontWeight: FontWeight.bold,
               color: colors.textSecondary.withValues(alpha: 0.7),
@@ -419,15 +412,15 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
             children: [
               Text(
                 '۰۰:۰۰',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.5)),
+                style: TextStyle(fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.5)),
               ),
               Text(
                 '۱۲:۰۰',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.5)),
+                style: TextStyle(fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.5)),
               ),
               Text(
                 '۲۴:۰۰',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.5)),
+                style: TextStyle(fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.5)),
               ),
             ],
           ),
@@ -474,7 +467,6 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                   child: Text(
                     '⚠️ تداخل زمانی با «${conflict.title}» (${toPersianDigits(conflict.timeStr)})',
                     style: const TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
@@ -521,7 +513,6 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                       Text(
                         'انتقال هوشمند به زمان آزاد (${toPersianDigits(nextFreeSlot)})',
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -549,7 +540,6 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
           Text(
             'زمان‌های پیشنهادی آزاد:',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 12,
               fontWeight: FontWeight.bold,
               color: colors.textSecondary.withValues(alpha: 0.8),
@@ -567,7 +557,6 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                     label: Text(
                       '${toPersianDigits(timeStr)} — وقت آزاد',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11.5,
                         color: colors.textPrimary,
                       ),

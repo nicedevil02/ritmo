@@ -398,7 +398,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         Text(
           'چگونه می‌خواهید ورزش کنید؟',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             color: colors.textPrimary,
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -408,7 +407,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         Text(
           'شما می‌توانید برنامه را بر اساس نیازتان ساده یا بسیار دقیق کنید.',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             color: colors.textSecondary,
             fontSize: 14,
           ),
@@ -491,7 +489,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                   Text(
                     title,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 16,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                       color: isSelected ? colors.primary : colors.textPrimary,
@@ -501,7 +498,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       color: colors.textSecondary,
                       height: 1.5,
@@ -540,7 +536,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             color: isSelected ? colors.primary : colors.textSecondary,
@@ -584,7 +579,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         title: Text(
           toPersianDigits('مرحله $_currentStep از $_totalSteps'),
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             color: colors.textPrimary,
             fontSize: 14,
             fontWeight: FontWeight.bold,
@@ -685,12 +679,12 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'مشخصات فیزیکی',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
           'قد، وزن و جنسیت به ما کمک می‌کنه شاخص توده بدنی (BMI) و برنامه تمرینی شما رو دقیق‌تر حساب کنیم.',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textSecondary),
+          style: TextStyle(fontSize: 14, color: colors.textSecondary),
         ),
         const SizedBox(height: 20),
 
@@ -699,7 +693,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           textDirection: TextDirection.rtl,
           children: [
-            Text('جنسیت شما:', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+            Text('جنسیت شما:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
             Row(
               children: [
                 _buildGenderToggleOption(
@@ -749,11 +743,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     textDirection: TextDirection.rtl,
                     children: [
-                      Text('شاخص توده بدنی (BMI)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary)),
+                      Text('شاخص توده بدنی (BMI)', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
                       const SizedBox(height: 4),
                       Text(
                         toPersianDigits(bmi.toStringAsFixed(1)),
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 28, fontWeight: FontWeight.bold, color: categoryColor),
+                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: categoryColor),
                       ),
                     ],
                   ),
@@ -766,7 +760,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                     ),
                     child: Text(
                       category,
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: categoryColor),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: categoryColor),
                     ),
                   ),
                 ],
@@ -778,7 +772,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           ),
         ),
         const SizedBox(height: 24),
-        Text('قد: ${toPersianDigits(_heightCm.toInt().toString())} سانتی‌متر', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        Text('قد: ${toPersianDigits(_heightCm.toInt().toString())} سانتی‌متر', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
         Slider(
           value: _heightCm,
           min: 130,
@@ -791,7 +785,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           },
         ),
         const SizedBox(height: 16),
-        Text('وزن: ${toPersianDigits(_weightKg.toInt().toString())} کیلوگرم', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        Text('وزن: ${toPersianDigits(_weightKg.toInt().toString())} کیلوگرم', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
         Slider(
           value: _weightKg,
           min: 40,
@@ -815,12 +809,12 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'هدف اصلی ورزشی شما چیه؟',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
           'برنامه بر اساس هدف شما تنظیم می‌شه.',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textSecondary),
+          style: TextStyle(fontSize: 14, color: colors.textSecondary),
         ),
         const SizedBox(height: 24),
         _buildChoiceItem(
@@ -863,12 +857,12 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'سطح تجربه ورزشی شما چقدره؟',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
           'برای جلوگیری از آسیب‌دیدگی و پیشرفت مناسب.',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textSecondary),
+          style: TextStyle(fontSize: 14, color: colors.textSecondary),
         ),
         const SizedBox(height: 24),
         _buildChoiceItem(
@@ -904,12 +898,12 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'کجا تمرین می‌کنی؟',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
           'در حال حاضر تمرینات تخصصی ویژه محیط خانه فعال می‌باشند.',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textSecondary),
+          style: TextStyle(fontSize: 14, color: colors.textSecondary),
         ),
         const SizedBox(height: 24),
         _buildChoiceItem(
@@ -960,12 +954,12 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'کدام بخش‌های بدن برات مهم‌تره؟',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
           'می‌تونی چند گزینه رو انتخاب کنی.',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textSecondary),
+          style: TextStyle(fontSize: 14, color: colors.textSecondary),
         ),
         const SizedBox(height: 24),
         _buildMultiChoiceItem(
@@ -1004,12 +998,12 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'چه تجهیزاتی در دسترس داری؟',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
           'در حال حاضر تمرینات بدون وسیله (وزن بدن) فعال می‌باشند.',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textSecondary),
+          style: TextStyle(fontSize: 14, color: colors.textSecondary),
         ),
         const SizedBox(height: 24),
         _buildMultiChoiceItem(
@@ -1077,12 +1071,12 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'آسیب‌دیدگی یا محدودیت جسمی داری؟',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
           'حرکاتی که به این بخش‌ها فشار می‌ارن از برنامه‌ات حذف می‌شن.',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textSecondary),
+          style: TextStyle(fontSize: 14, color: colors.textSecondary),
         ),
         const SizedBox(height: 24),
         _buildMultiChoiceItem(
@@ -1154,7 +1148,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         Text(
           'غیر از قدرتی، چه ورزش‌هایی دوست دارید؟',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -1164,7 +1157,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         Text(
           'برای هر انتخاب، یک برنامهٔ هفتگیٔ پیش‌فرض ساخته می‌شود. اختیاری است — بعداً از تب «برنامه» می‌توانید تغییرش دهید.',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             color: colors.textSecondary,
             fontSize: 13,
             height: 1.6,
@@ -1184,7 +1176,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                   child: Text(
                     'فهرست ورزش‌ها بارگذاری نشد؛ می‌توانید بدون انتخاب ادامه دهید.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary, fontSize: 13),
+                    style: TextStyle(color: colors.textSecondary, fontSize: 13),
                   ),
                 );
               }
@@ -1204,7 +1196,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                           child: Text(
                             '${family.emoji} ${family.titleFa}',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               color: colors.textSecondary,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -1273,7 +1264,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                 Text(
                   kind.titleFa,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     color: isSelected ? colors.primary : colors.textPrimary,
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -1381,22 +1371,22 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'زمان‌بندی هفتگی شما',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
           'چند روز در هفته و چقدر زمان می‌تونی وقت بگذاری؟',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textSecondary),
+          style: TextStyle(fontSize: 14, color: colors.textSecondary),
         ),
         const SizedBox(height: 20),
-        Text('تعداد روزهای تمرین در هفته: ${toPersianDigits(_selectedDays.toString())} روز', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        Text('تعداد روزهای تمرین در هفته: ${toPersianDigits(_selectedDays.toString())} روز', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [2, 3, 4, 5, 6].map((days) {
             final isSelected = _selectedDays == days;
             return ChoiceChip(
-              label: Text(toPersianDigits('$days روز'), style: TextStyle(fontFamily: 'Vazirmatn', color: isSelected ? Colors.white : colors.textPrimary)),
+              label: Text(toPersianDigits('$days روز'), style: TextStyle(color: isSelected ? Colors.white : colors.textPrimary)),
               selected: isSelected,
               selectedColor: colors.primary,
               backgroundColor: colors.card,
@@ -1410,14 +1400,14 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           }).toList(),
         ),
         const SizedBox(height: 24),
-        Text('مدت هر جلسه تمرین: ${toPersianDigits(_selectedMinutes.toString())} دقیقه', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        Text('مدت هر جلسه تمرین: ${toPersianDigits(_selectedMinutes.toString())} دقیقه', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [30, 45, 60].map((mins) {
             final isSelected = _selectedMinutes == mins;
             return ChoiceChip(
-              label: Text(toPersianDigits('$mins دقیقه'), style: TextStyle(fontFamily: 'Vazirmatn', color: isSelected ? Colors.white : colors.textPrimary)),
+              label: Text(toPersianDigits('$mins دقیقه'), style: TextStyle(color: isSelected ? Colors.white : colors.textPrimary)),
               selected: isSelected,
               selectedColor: colors.primary,
               backgroundColor: colors.card,
@@ -1453,7 +1443,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         duration: const Duration(seconds: 4),
         content: Text(
           '$name هنوز آماده نیست. الان برنامه برای تمرین خانگی با وزن بدن ساخته می‌شود و بقیه گزینه‌ها در نسخه‌های بعدی فعال می‌شوند.',
-          style: const TextStyle(fontFamily: 'Vazirmatn'),
+          style: const TextStyle(),
         ),
       ),
     );
@@ -1496,7 +1486,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 15,
                 fontWeight: isSelected && !isDisabled ? FontWeight.bold : FontWeight.normal,
                 color: isDisabled
@@ -1542,7 +1531,6 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 15,
                 fontWeight: isSelected && !isDisabled ? FontWeight.bold : FontWeight.normal,
                 color: isDisabled
@@ -1621,10 +1609,10 @@ class _BmiSpectrumGauge extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('کمبود', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary)),
-            Text('نرمال', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary)),
-            Text('اضافه وزن', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary)),
-            Text('چاقی', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary)),
+            Text('کمبود', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
+            Text('نرمال', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
+            Text('اضافه وزن', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
+            Text('چاقی', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
           ],
         ),
       ],
@@ -1699,7 +1687,6 @@ class _WorkoutPersonaCard extends StatelessWidget {
               Text(
                 'شناسنامه ورزشی اختصاصی شما',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -1732,7 +1719,6 @@ class _WorkoutPersonaCard extends StatelessWidget {
                   Text(
                     toPersianDigits('محافظت از $limitationsCount ناحیه حساس بدن فعال شد'),
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: colors.warning,
@@ -1757,9 +1743,9 @@ class _WorkoutPersonaCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(label, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 10, color: colors.textSecondary)),
           const SizedBox(height: 2),
-          Text(value, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary)),
         ],
       ),
     );
@@ -1797,7 +1783,6 @@ class _AiPlanBuildingProgressView extends StatelessWidget {
           Text(
             'در حال طراحی هوشمند برنامه تمرینی...',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
@@ -1851,7 +1836,6 @@ class _AiPlanBuildingProgressView extends StatelessWidget {
                       child: Text(
                         stages[index],
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 13,
                           fontWeight: isCurrent || isDone ? FontWeight.bold : FontWeight.normal,
                           color: isDone

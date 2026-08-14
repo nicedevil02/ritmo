@@ -55,7 +55,6 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
                   Text(
                     'مشکل با موفقیت برطرف شد 🎉',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF10B981),
@@ -100,7 +99,6 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
                         child: Text(
                           widget.issue.title,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: theme.textTheme.bodyLarge?.color,
@@ -113,7 +111,6 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
                   Text(
                     widget.issue.description,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12.5,
                       color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.75),
                     ),
@@ -166,7 +163,6 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
                       label: Text(
                         widget.issue.fixLabel,
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12.5,
                           fontWeight: FontWeight.bold,
                         ),

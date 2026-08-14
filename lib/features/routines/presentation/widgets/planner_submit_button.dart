@@ -66,7 +66,6 @@ class PlannerSubmitButton extends StatelessWidget {
                             Text(
                               label,
                               style: const TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,

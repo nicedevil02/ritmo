@@ -165,7 +165,6 @@ class _PrayerSheetState extends State<PrayerSheet> {
                           Text(
                             widget.target.titleFa,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 19,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -175,7 +174,6 @@ class _PrayerSheetState extends State<PrayerSheet> {
                           Text(
                             _startTime != null ? 'اذان: ${_formatTime(_startTime)}' : 'ثبت مستقیم با لمس گزینه',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12.5,
                               color: colors.textSecondary,
                             ),
@@ -224,8 +222,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.bold,
                                       color: colors.primary,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                   SizedBox(height: 2),
                                   Text(
@@ -233,8 +230,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       color: colors.primary,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                 ],
                               ),
@@ -265,8 +261,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.bold,
                                       color: colors.primary,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                   SizedBox(height: 2),
                                   Text(
@@ -274,8 +269,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       color: colors.primary.withValues(alpha: 0.8),
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                 ],
                               ),
@@ -390,7 +384,6 @@ class _PrayerSheetState extends State<PrayerSheet> {
                       Text(
                         title,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: isDisabled ? colors.textTertiary : colors.textPrimary,
@@ -400,7 +393,6 @@ class _PrayerSheetState extends State<PrayerSheet> {
                       Text(
                         subtitle,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: isDisabled ? colors.textTertiary : colors.textSecondary,
                         ),

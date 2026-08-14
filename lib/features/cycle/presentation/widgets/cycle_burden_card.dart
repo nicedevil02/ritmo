@@ -44,7 +44,6 @@ class CycleBurdenCard extends StatelessWidget {
                   Text(
                     'شاخص ریتم بدنی و تنظیم بار روزانه',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -61,7 +60,6 @@ class CycleBurdenCard extends StatelessWidget {
                 child: Text(
                   badgeTitleFa,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: badgeColor,
@@ -81,7 +79,6 @@ class CycleBurdenCard extends StatelessWidget {
                       child: Text(
                         rec,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: colors.textPrimary,
                         ),

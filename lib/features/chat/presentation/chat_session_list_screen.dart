@@ -70,7 +70,7 @@ class _ChatSessionListScreenState extends State<ChatSessionListScreen> {
       SnackBar(
         content: const Text(
           'گفتگو حذف شد.',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white),
+          style: TextStyle(fontSize: 13, color: Colors.white),
           textAlign: TextAlign.right,
           textDirection: TextDirection.rtl,
         ),
@@ -130,7 +130,6 @@ class _ChatSessionListScreenState extends State<ChatSessionListScreen> {
               'گفتگوهای دستیار هوشمند',
               style: TextStyle(
                 color: colors.textPrimary,
-                fontFamily: 'Vazirmatn',
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
@@ -144,7 +143,6 @@ class _ChatSessionListScreenState extends State<ChatSessionListScreen> {
                       child: Text(
                         'هنوز هیچ گفتگویی ایجاد نشده است.',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 13,
                           color: colors.textSecondary,
                         ),
@@ -185,7 +183,6 @@ class _ChatSessionListScreenState extends State<ChatSessionListScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                   color: colors.textPrimary,
@@ -196,7 +193,6 @@ class _ChatSessionListScreenState extends State<ChatSessionListScreen> {
                                 child: Text(
                                   '${session.messageCount} پیام · ${_formatRelativeTime(session.lastMessageAt)}',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 11,
                                     color: colors.textSecondary,
                                   ),

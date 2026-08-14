@@ -51,7 +51,7 @@ class SkipReasonSheet extends StatelessWidget {
     if (title != null && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$title: $desc', style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+          content: Text('$title: $desc', style: const TextStyle(fontSize: 12)),
           duration: const Duration(seconds: 4),
         ),
       );
@@ -83,10 +83,10 @@ class SkipReasonSheet extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('علت انجام نشدن؟', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+              Text('علت انجام نشدن؟', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('فعلاً نه', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                child: Text('فعلاً نه', style: TextStyle(color: colors.textSecondary)),
               ),
             ],
           ),
@@ -98,7 +98,7 @@ class SkipReasonSheet extends StatelessWidget {
 
             return ListTile(
               leading: Icon(icon, color: colors.primary),
-              title: Text(label, style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textPrimary)),
+              title: Text(label, style: TextStyle(fontSize: 14, color: colors.textPrimary)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               onTap: () => _selectReason(context, reason),
             );

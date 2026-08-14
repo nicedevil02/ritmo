@@ -39,8 +39,7 @@ class Step5Confirmation extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.w900,
               color: colors.textPrimary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -48,8 +47,7 @@ class Step5Confirmation extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.5,
               color: colors.textSecondary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
           const SizedBox(height: 16),
 
@@ -113,7 +111,7 @@ class Step5Confirmation extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: isSaving ? null : onBack,
-                  child: const Text('بازگشت', style: TextStyle(fontFamily: 'Vazirmatn')),
+                  child: const Text('بازگشت', style: TextStyle()),
                 ),
               ),
               const SizedBox(width: 12),
@@ -141,7 +139,7 @@ class Step5Confirmation extends StatelessWidget {
                             SizedBox(width: 6),
                             Text(
                               'ثبت و شروع',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -164,8 +162,7 @@ class Step5Confirmation extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.5,
             color: colors.textSecondary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -176,8 +173,7 @@ class Step5Confirmation extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
         ),
       ],

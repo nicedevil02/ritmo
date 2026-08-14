@@ -47,7 +47,6 @@ class StepCelebration extends StatelessWidget {
             fontSize: 20,
             fontWeight: FontWeight.w900,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
             height: 1.4,
           ),
         ),
@@ -59,8 +58,7 @@ class StepCelebration extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               color: colors.textSecondary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
           const SizedBox(height: 10),
           Container(
@@ -85,7 +83,6 @@ class StepCelebration extends StatelessWidget {
                         r.titleFa,
                         style: TextStyle(
                           fontSize: 12,
-                          fontFamily: 'Vazirmatn',
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
                         ),
@@ -94,7 +91,6 @@ class StepCelebration extends StatelessWidget {
                         _toPersianDigits('${r.defaultTime} (${r.durationMinutes} د)'),
                         style: TextStyle(
                           fontSize: 11,
-                          fontFamily: 'Vazirmatn',
                           color: colors.textSecondary,
                         ),
                       ),
@@ -110,8 +106,7 @@ class StepCelebration extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               color: colors.textSecondary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
         ],
 
@@ -129,8 +124,7 @@ class StepCelebration extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.redAccent,
                 fontSize: 11,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -159,8 +153,7 @@ class StepCelebration extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
           ),
         ),

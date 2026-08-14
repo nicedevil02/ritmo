@@ -224,7 +224,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('متن با موفقیت کپی شد 📋', style: TextStyle(fontFamily: 'Vazirmatn')),
+          content: Text('متن با موفقیت کپی شد 📋', style: TextStyle()),
           duration: Duration(seconds: 2),
         ),
       );
@@ -578,7 +578,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'Vazirmatn',
                   color: isDark ? Colors.white : Colors.black87,
                 ),
                 textAlign: TextAlign.center,
@@ -599,18 +598,18 @@ class _AssistantSheetState extends State<AssistantSheet> {
                           children: [
                             Text(
                               diff.entityLabelFa,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             if (diff.beforeFa != null || diff.afterFa != null) ...[
                               const SizedBox(height: 5),
                               Row(
                                 children: [
                                   if (diff.beforeFa != null) ...[
-                                    Text(diff.beforeFa!, style: const TextStyle(color: Colors.red, fontFamily: 'Vazirmatn')),
+                                    Text(diff.beforeFa!, style: const TextStyle(color: Colors.red)),
                                     const Icon(Icons.arrow_left),
                                   ],
                                   if (diff.afterFa != null)
-                                    Text(diff.afterFa!, style: const TextStyle(color: Colors.green, fontFamily: 'Vazirmatn')),
+                                    Text(diff.afterFa!, style: const TextStyle(color: Colors.green)),
                                 ],
                               ),
                             ],
@@ -618,7 +617,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
                               const SizedBox(height: 5),
                               Text(
                                 '⚠️ ${diff.warningFa}',
-                                style: const TextStyle(color: Colors.orange, fontSize: 12, fontFamily: 'Vazirmatn'),
+                                style: const TextStyle(color: Colors.orange, fontSize: 12),
                               ),
                             ]
                           ],
@@ -632,7 +631,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
               if (preview.needsBiometric)
                 const Text(
                   '🔒 این اقدام حساس است و نیاز به تایید هویت بیومتریک دارد.',
-                  style: TextStyle(color: Colors.redAccent, fontFamily: 'Vazirmatn', fontSize: 13),
+                  style: TextStyle(color: Colors.redAccent, fontSize: 13),
                   textAlign: TextAlign.center,
                 ),
               const SizedBox(height: 10),
@@ -688,14 +687,14 @@ class _AssistantSheetState extends State<AssistantSheet> {
                           });
                         }
                       },
-                      child: const Text('تایید و اجرا', style: TextStyle(fontFamily: 'Vazirmatn')),
+                      child: const Text('تایید و اجرا', style: TextStyle()),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(sheetCtx).pop(),
-                      child: const Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn')),
+                      child: const Text('لغو', style: TextStyle()),
                     ),
                   ),
                 ],
@@ -820,7 +819,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Vazirmatn',
                         color: colors.textPrimary,
                       ),
                     ),
@@ -834,7 +832,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
                         icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 16),
                         label: const Text(
                           'لغو اقدام اخیر',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                         onPressed: () => unawaited(_undoLastAction()),
                       ),
@@ -869,7 +867,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
                             'اطلاعات کلیدی پرونده (${_primaryBrief?.confidence.name ?? 'در حال محاسبه'})',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               color: colors.textPrimary,
                             ),
@@ -885,7 +882,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
                             avatar: const Icon(CupertinoIcons.bolt_fill, size: 14, color: Colors.amber),
                             label: Text(
                               skill.labelFa,
-                              style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                              style: const TextStyle(fontSize: 12),
                             ),
                             backgroundColor: isDark ? const Color(0xFF38384E) : Colors.white,
                             onPressed: () => unawaited(_sendMessage(skill.queryPrompt)),
@@ -936,7 +933,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: const Text('پیام حذف شد.', style: TextStyle(fontFamily: 'Vazirmatn')),
+                            content: const Text('پیام حذف شد.', style: TextStyle()),
                             action: SnackBarAction(
                               label: 'بازیابی',
                               textColor: Colors.amber,
@@ -1016,7 +1013,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
                             maxLines: 4,
                             enabled: !_isStreaming,
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 13,
                               color: colors.textPrimary,
                             ),
@@ -1027,7 +1023,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
                                   ? 'دستیار در حال نوشتن است...'
                                   : 'گفتگو با دستیار ${widget.persona.displayName}...',
                               hintStyle: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 12,
                                 color: colors.textSecondary.withValues(alpha: 0.6),
                               ),

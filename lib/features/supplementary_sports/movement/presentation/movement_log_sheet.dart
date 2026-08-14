@@ -166,7 +166,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
           SnackBar(
             content: Text(
               isPr ? '🎉 رکورد جدید ثبت شد! عهدی که بستی محکم‌تر شد 🔥' : 'فعالیت ورزشی با موفقیت ثبت شد ✨',
-              style: const TextStyle(fontFamily: 'Vazirmatn'),
+              style: const TextStyle(),
             ),
             backgroundColor: isPr ? const Color(0xFF10B981) : null,
           ),
@@ -222,7 +222,6 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                   Text(
                     'ثبت فعالیت حرکتی',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: colors.onSurface,
@@ -263,7 +262,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                     if (_selectedKind != null) ...[
                       Text(
                         'ثبت جزئیات: ${_selectedKind!.emoji} ${_selectedKind!.titleFa}',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 15, color: colors.primary),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: colors.primary),
                       ),
                       const SizedBox(height: 16),
 
@@ -271,10 +270,10 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('مدت زمان:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                          const Text('مدت زمان:', style: TextStyle(fontWeight: FontWeight.bold)),
                           Text(
                             '${_durationMinutes.toPersianDigits()} دقیقه',
-                            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.primary, fontSize: 16),
+                            style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary, fontSize: 16),
                           ),
                         ],
                       ),
@@ -293,8 +292,8 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('مسافت (کیلومتر):', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-                            Text('${_distanceKm.toStringAsFixed(1).toPersianDigits()} km', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.primary)),
+                            const Text('مسافت (کیلومتر):', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text('${_distanceKm.toStringAsFixed(1).toPersianDigits()} km', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
                           ],
                         ),
                         Slider(
@@ -310,7 +309,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               'سرعت متوسط: ${(_durationMinutes / _distanceKm).toStringAsFixed(1).toPersianDigits()} min/km',
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.onSurfaceVariant),
+                              style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
                             ),
                           ),
                         const SizedBox(height: 12),
@@ -318,8 +317,8 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('تعداد طول (استخر ۲۵ متری):', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-                            Text('${_laps.toPersianDigits()} طول (${(_laps * 25).toPersianDigits()} متر)', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.primary)),
+                            const Text('تعداد طول (استخر ۲۵ متری):', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text('${_laps.toPersianDigits()} طول (${(_laps * 25).toPersianDigits()} متر)', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
                           ],
                         ),
                         Slider(
@@ -335,8 +334,8 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('ارتفاع گرفته‌شده (متر):', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-                            Text('${_elevationMeters.toInt().toPersianDigits()} متر', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.primary)),
+                            const Text('ارتفاع گرفته‌شده (متر):', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text('${_elevationMeters.toInt().toPersianDigits()} متر', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
                           ],
                         ),
                         Slider(
@@ -352,8 +351,8 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('تعداد گام:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-                            Text('${_steps.toPersianDigits()} گام', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: colors.primary)),
+                            const Text('تعداد گام:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text('${_steps.toPersianDigits()} گام', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
                           ],
                         ),
                         Slider(
@@ -369,7 +368,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                     ],
 
                     // --- STAGE 3: INTENSITY, FEELING, VENUE ---
-                    const Text('شدت تمرین:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                    const Text('شدت تمرین:', style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Row(
                       children: MovementIntensity.values.map((i) {
@@ -378,7 +377,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: ChoiceChip(
-                              label: Center(child: Text(i.titleFa, style: TextStyle(fontFamily: 'Vazirmatn', color: isSelected ? Colors.white : colors.onSurface))),
+                              label: Center(child: Text(i.titleFa, style: TextStyle(color: isSelected ? Colors.white : colors.onSurface))),
                               selected: isSelected,
                               selectedColor: colors.primary,
                               onSelected: (_) => setState(() => _intensity = i),
@@ -389,7 +388,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                     ),
                     const SizedBox(height: 16),
 
-                    const Text('حالت و احساس تمرین:', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                    const Text('حالت و احساس تمرین:', style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -397,7 +396,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                       children: _feelings.map((f) {
                         final isSelected = f == _feeling;
                         return ChoiceChip(
-                          label: Text(f, style: TextStyle(fontFamily: 'Vazirmatn', color: isSelected ? Colors.white : colors.onSurface)),
+                          label: Text(f, style: TextStyle(color: isSelected ? Colors.white : colors.onSurface)),
                           selected: isSelected,
                           selectedColor: colors.primary,
                           onSelected: (_) => setState(() => _feeling = f),
@@ -409,7 +408,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                     if (_selectedKind != null && _selectedKind!.needsVenue) ...[
                       TextFormField(
                         controller: _venueController,
-                        style: TextStyle(fontFamily: 'Vazirmatn', color: colors.onSurface),
+                        style: TextStyle(color: colors.onSurface),
                         decoration: InputDecoration(
                           labelText: 'نام مکان / سالن (مثلاً: استخر آزادی)',
                           prefixIcon: const Icon(CupertinoIcons.location_solid, size: 20),
@@ -422,7 +421,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                     if (_selectedKind != null && _selectedKind!.isSocial) ...[
                       TextFormField(
                         controller: _companionsController,
-                        style: TextStyle(fontFamily: 'Vazirmatn', color: colors.onSurface),
+                        style: TextStyle(color: colors.onSurface),
                         decoration: InputDecoration(
                           labelText: 'همراهان (مثلاً: علی، رضا)',
                           prefixIcon: const Icon(CupertinoIcons.person_2_fill, size: 20),
@@ -434,7 +433,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
 
                     TextFormField(
                       controller: _noteController,
-                      style: TextStyle(fontFamily: 'Vazirmatn', color: colors.onSurface),
+                      style: TextStyle(color: colors.onSurface),
                       decoration: InputDecoration(
                         labelText: 'یادداشت تمرین (اختیاری)',
                         prefixIcon: const Icon(CupertinoIcons.doc_text, size: 20),
@@ -477,7 +476,6 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                       Text(
                         '≈ ${_calculatedCalories.round().toPersianDigits()} کالری',
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF10B981),
                           fontSize: 13,
@@ -487,7 +485,6 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                       Text(
                         '${_calculatedMetMinutes.round().toPersianDigits()} MET-min',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.primary,
                           fontSize: 13,
@@ -497,7 +494,6 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                       Text(
                         '${((_calculatedMetMinutes / 500.0) * 100).round().toPersianDigits()}٪ بودجه هفته',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontWeight: FontWeight.bold,
                           color: Colors.amber.shade400,
                           fontSize: 13,
@@ -529,7 +525,6 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                           : const Text(
                               'ثبت و ذخیره فعالیت',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                                 color: Colors.white,

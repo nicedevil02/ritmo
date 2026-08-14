@@ -375,7 +375,7 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
   Widget _buildWeekdayChip(int isoDay, String label, RitmoColors colors, bool isDark) {
     final isSelected = _selectedWeekdays.contains(isoDay);
     return FilterChip(
-      label: Text(label, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13)),
+      label: Text(label, style: const TextStyle(fontSize: 13)),
       selected: isSelected,
       onSelected: (v) => setState(() {
         if (v) {
@@ -439,8 +439,7 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                             _isEdit ? 'ویرایش اطلاعات دارو' : 'ثبت داروی جدید',
                             style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold,
-                              color: colors.textPrimary, fontFamily: 'Vazirmatn',
-                            ),
+                              color: colors.textPrimary, ),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 20),
@@ -448,12 +447,12 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                           // Drug name
                           TextFormField(
                             controller: _nameController,
-                            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 14),
+                            style: TextStyle(color: colors.textPrimary, fontSize: 14),
                             decoration: InputDecoration(
                               labelText: 'نام دارو',
-                              labelStyle: const TextStyle(fontFamily: 'Vazirmatn'),
+                              labelStyle: const TextStyle(),
                               errorText: _nameHasError ? 'وارد کردن نام دارو الزامی است' : null,
-                              errorStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11),
+                              errorStyle: const TextStyle(fontSize: 11),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                             onChanged: (val) {
@@ -480,7 +479,7 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                                   child: Text(
                                     'هشدار: تداخل آلرژیک با «$_matchedAllergen»!',
                                     style: TextStyle(color: colors.medicalRed, fontSize: 12,
-                                        fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ]),
@@ -491,12 +490,12 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                           // Dose
                           TextFormField(
                             controller: _doseController,
-                            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 14),
+                            style: TextStyle(color: colors.textPrimary, fontSize: 14),
                             decoration: InputDecoration(
                               labelText: 'دوز یا مقدار مصرف (مثلا: ۱ قرص، ۵ سی‌سی)',
-                              labelStyle: const TextStyle(fontFamily: 'Vazirmatn'),
+                              labelStyle: const TextStyle(),
                              errorText: _doseHasError ? 'مقدار دوز مصرفی باید شامل عدد باشد (مثلاً: ۱ قرص)' : null,
-                              errorStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11),
+                              errorStyle: const TextStyle(fontSize: 11),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                             onChanged: (val) {
@@ -511,10 +510,10 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                           // Type
                           DropdownButtonFormField<String>(
                             initialValue: _type,
-                            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 14),
+                            style: TextStyle(color: colors.textPrimary, fontSize: 14),
                             decoration: InputDecoration(
                               labelText: 'نوع برنامه مصرفی',
-                              labelStyle: const TextStyle(fontFamily: 'Vazirmatn'),
+                              labelStyle: const TextStyle(),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                             items: const [
@@ -528,7 +527,7 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                           if (_type == 'FIXED') ...[
                             Text('دوره تکرار مصرف:',
                                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold,
-                                    color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                                    color: colors.textPrimary)),
                             const SizedBox(height: 8),
                             // Repeat-type toggle
                             Container(
@@ -559,26 +558,26 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                             ] else ...[
                               const SizedBox(height: 12),
                               Row(children: [
-                                Text('هر ', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary)),
+                                Text('هر ', style: TextStyle(fontSize: 13, color: colors.textSecondary)),
                                 const SizedBox(width: 8),
                                 DropdownButton<int>(
                                   value: _intervalDays,
                                   dropdownColor: colors.card,
-                                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14,
+                                  style: TextStyle(fontSize: 14,
                                       color: colors.textPrimary, fontWeight: FontWeight.bold),
                                   underline: const SizedBox(),
                                   items: List.generate(89, (i) => i + 2)
                                       .map((d) => DropdownMenuItem(value: d,
-                                          child: Text('$d', style: const TextStyle(fontFamily: 'Vazirmatn'))))
+                                          child: Text('$d', style: const TextStyle())))
                                       .toList(),
                                   onChanged: (v) { if (v != null) setState(() => _intervalDays = v); },
                                 ),
                                 const SizedBox(width: 8),
-                                Text('روز یک‌بار', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary)),
+                                Text('روز یک‌بار', style: TextStyle(fontSize: 13, color: colors.textSecondary)),
                               ]),
                               const SizedBox(height: 12),
                               Row(children: [
-                                Text('شروع از:', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary)),
+                                Text('شروع از:', style: TextStyle(fontSize: 13, color: colors.textSecondary)),
                                 const SizedBox(width: 8),
                                 InkWell(
                                   onTap: () async {
@@ -605,7 +604,7 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                                         final j = Jalali.fromDateTime(_startDate);
                                         return Text(
                                           '${j.year}/${j.month.toString().padLeft(2, '0')}/${j.day.toString().padLeft(2, '0')}',
-                                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13,
+                                          style: TextStyle(fontSize: 13,
                                               color: colors.textPrimary, fontWeight: FontWeight.bold),
                                         );
                                       }),
@@ -618,7 +617,7 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                             const SizedBox(height: 20),
                             Text('ساعات مصرف دارو:',
                                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold,
-                                    color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                                    color: colors.textPrimary)),
                             const SizedBox(height: 8),
                             ..._scheduledTimes.asMap().entries.map((entry) {
                               final idx = entry.key;
@@ -639,7 +638,7 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Text(time.format(context),
-                                            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary)),
+                                            style: TextStyle(color: colors.textPrimary)),
                                       ),
                                     ),
                                   ),
@@ -657,7 +656,7 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                               onPressed: () => setState(() =>
                                   _scheduledTimes.add(const TimeOfDay(hour: 12, minute: 0))),
                               icon: const Icon(Icons.add),
-                              label: const Text('افزودن ساعت مصرف', style: TextStyle(fontFamily: 'Vazirmatn')),
+                              label: const Text('افزودن ساعت مصرف', style: TextStyle()),
                             ),
                           ] else ...[
                             // PRN
@@ -665,10 +664,10 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                               Expanded(
                                 child: DropdownButtonFormField<int>(
                                   initialValue: _minInterval,
-                                  style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 13),
+                                  style: TextStyle(color: colors.textPrimary, fontSize: 13),
                                   decoration: InputDecoration(
                                     labelText: 'حداقل فاصله مصرف (ساعت)',
-                                    labelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11),
+                                    labelStyle: const TextStyle(fontSize: 11),
                                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                   ),
                                   items: [2, 4, 6, 8, 12, 24]
@@ -681,10 +680,10 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                               Expanded(
                                 child: DropdownButtonFormField<int>(
                                   initialValue: _maxDoses,
-                                  style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 13),
+                                  style: TextStyle(color: colors.textPrimary, fontSize: 13),
                                   decoration: InputDecoration(
                                     labelText: 'سقف دوز در روز',
-                                    labelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11),
+                                    labelStyle: const TextStyle(fontSize: 11),
                                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                   ),
                                   items: [1, 2, 3, 4, 6, 8, 10]
@@ -705,12 +704,12 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                               child: TextFormField(
                                 initialValue: _stockCount.toString(),
                                 keyboardType: TextInputType.number,
-                                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 14),
+                                style: TextStyle(color: colors.textPrimary, fontSize: 14),
                                 decoration: InputDecoration(
                                   labelText: 'موجودی اولیه (تعداد دوز)',
-                                  labelStyle: const TextStyle(fontFamily: 'Vazirmatn'),
+                                  labelStyle: const TextStyle(),
                                   errorText: _stockHasError ? 'باید بزرگتر از ۰ باشد' : null,
-                                  errorStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11),
+                                  errorStyle: const TextStyle(fontSize: 11),
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
                                 onChanged: (v) {
@@ -727,12 +726,12 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                               child: TextFormField(
                                 initialValue: _warningThreshold.toString(),
                                 keyboardType: TextInputType.number,
-                                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 14),
+                                style: TextStyle(color: colors.textPrimary, fontSize: 14),
                                 decoration: InputDecoration(
                                   labelText: 'آستانه هشدار اتمام',
-                                  labelStyle: const TextStyle(fontFamily: 'Vazirmatn'),
+                                  labelStyle: const TextStyle(),
                                   errorText: _warningHasError ? 'باید کمتر از موجودی باشد' : null,
-                                  errorStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11),
+                                  errorStyle: const TextStyle(fontSize: 11),
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
                                 onChanged: (v) {
@@ -758,7 +757,7 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                             ),
                             child: Text(
                               _isEdit ? 'ادامه و مشاهده پیش‌نمایش' : 'ادامه ←',
-                              style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -792,7 +791,7 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Vazirmatn', fontSize: 13,
+              fontSize: 13,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               color: isActive ? (isDark ? Colors.white : colors.primary) : colors.textSecondary,
             ),
@@ -874,11 +873,11 @@ class MedicationPreviewCard extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(data.name,
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 17,
+                      style: TextStyle(fontSize: 17,
                           fontWeight: FontWeight.bold, color: colors.textPrimary)),
                   if (data.dose.isNotEmpty)
                     Text(data.dose,
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary)),
+                        style: TextStyle(fontSize: 13, color: colors.textSecondary)),
                 ]),
               ),
               if (onEdit != null) ...[
@@ -900,7 +899,7 @@ class MedicationPreviewCard extends StatelessWidget {
                 child: Text(
                   data.type == 'PRN' ? 'PRN' : 'منظم',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold,
+                    fontSize: 11, fontWeight: FontWeight.bold,
                     color: data.type == 'PRN' ? colors.warning : colors.primary,
                   ),
                 ),
@@ -925,10 +924,10 @@ class MedicationPreviewCard extends StatelessWidget {
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Icon(icon, size: 16, color: colors.textSecondary.withValues(alpha: 0.7)),
       const SizedBox(width: 8),
-      Text('$label: ', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5, color: colors.textSecondary)),
+      Text('$label: ', style: TextStyle(fontSize: 12.5, color: colors.textSecondary)),
       Expanded(
         child: Text(value,
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5,
+            style: TextStyle(fontSize: 12.5,
                 fontWeight: FontWeight.bold, color: colors.textPrimary)),
       ),
     ]);
@@ -1012,13 +1011,13 @@ class _MedicationPreviewSheetState extends State<MedicationPreviewSheet> {
                 Text(
                   '👁️ پیش‌نمایش دارو',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,
-                      color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      color: colors.textPrimary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'اطلاعات زیر را بررسی کنید. تا تأیید نکنید، ذخیره نمی‌شود.',
-                  style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
@@ -1036,7 +1035,7 @@ class _MedicationPreviewSheetState extends State<MedicationPreviewSheet> {
                     }
                   },
                   icon: const Icon(Icons.edit_rounded, size: 18),
-                  label: const Text('ویرایش اطلاعات', style: TextStyle(fontFamily: 'Vazirmatn')),
+                  label: const Text('ویرایش اطلاعات', style: TextStyle()),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 44),
                     side: BorderSide(color: colors.border),
@@ -1061,7 +1060,7 @@ class _MedicationPreviewSheetState extends State<MedicationPreviewSheet> {
                         )
                       : Text(
                           widget.data.isEdit ? '✅ ذخیره تغییرات' : '✅ ثبت دارو',
-                          style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                 ),
                 const SizedBox(height: 16),

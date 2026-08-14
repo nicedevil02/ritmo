@@ -43,8 +43,7 @@ class StepFocus extends StatelessWidget {
             fontSize: 18,
             fontWeight: FontWeight.w900,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 4),
         Text(
@@ -53,8 +52,7 @@ class StepFocus extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             color: colors.textSecondary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 16),
         Wrap(
@@ -83,7 +81,6 @@ class StepFocus extends StatelessWidget {
                 onAreaToggled(area);
               },
               labelStyle: TextStyle(
-                fontFamily: 'Vazirmatn',
                 color: isSelected ? Colors.white : colors.textSecondary,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 fontSize: 13,
@@ -114,7 +111,7 @@ class StepFocus extends StatelessWidget {
             icon: const Icon(CupertinoIcons.location_solid, size: 16),
             label: const Text(
               'انتخاب شهر برای اوقات شرعی',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+              style: TextStyle(fontSize: 12),
             ),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 44),
@@ -138,7 +135,7 @@ class StepFocus extends StatelessWidget {
                 const Expanded(
                   child: Text(
                     'ردیابی چرخه سلامتی بانوان (کاملاً محرمانه و آفلاین)',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                    style: TextStyle(fontSize: 12),
                   ),
                 ),
                 Switch(
@@ -159,8 +156,7 @@ class StepFocus extends StatelessWidget {
             fontSize: 13,
             fontWeight: FontWeight.bold,
             color: colors.textSecondary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 12),
         Row(
@@ -237,8 +233,7 @@ class _EnergyChoiceChip extends StatelessWidget {
             fontSize: 11,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             color: isSelected ? colors.textPrimary : colors.textSecondary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
       ),
     );

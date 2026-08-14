@@ -23,14 +23,14 @@ class GenericStep2Form extends StatelessWidget {
             backgroundColor: colors.sheetBackground,
             title: const Text(
               'وارد کردن دستی مدت زمان',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
                   'مدت زمان مورد نظر خود را به دقیقه وارد کنید:',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -38,10 +38,10 @@ class GenericStep2Form extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   autofocus: true,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
                     suffixText: 'دقیقه',
-                    suffixStyle: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                    suffixStyle: const TextStyle(fontSize: 13),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -50,7 +50,7 @@ class GenericStep2Form extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('لغو', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                child: Text('لغو', style: TextStyle(color: colors.textSecondary)),
               ),
               TextButton(
                 onPressed: () {
@@ -61,7 +61,7 @@ class GenericStep2Form extends StatelessWidget {
                   }
                   Navigator.pop(context);
                 },
-                child: const Text('تایید', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -98,7 +98,7 @@ class GenericStep2Form extends StatelessWidget {
                 const Text(
                   'تنظیم زمان یادآوری',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 ...options.map((opt) {
@@ -107,7 +107,6 @@ class GenericStep2Form extends StatelessWidget {
                     title: Text(
                       opt['label']! as String,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 14,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         color: isSelected ? colors.primary : colors.textPrimary,
@@ -155,7 +154,7 @@ class GenericStep2Form extends StatelessWidget {
                 const Text(
                   'تنظیم نوع تکرار',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 ...options.map((opt) {
@@ -164,7 +163,6 @@ class GenericStep2Form extends StatelessWidget {
                     title: Text(
                       opt['label']!,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 14,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         color: isSelected ? colors.primary : colors.textPrimary,
@@ -203,7 +201,6 @@ class GenericStep2Form extends StatelessWidget {
               TextFormField(
                 initialValue: controller.title,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -211,14 +208,12 @@ class GenericStep2Form extends StatelessWidget {
                 decoration: InputDecoration(
                   labelText: 'عنوان رویداد یا عادت *',
                   labelStyle: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: colors.primary,
                   ),
                   hintText: 'مثلاً: جلسه کاری با تیم، تمرین شنا، مطالعه کتاب...',
                   hintStyle: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 12.5,
                     color: colors.textSecondary.withValues(alpha: 0.4),
                   ),
@@ -264,7 +259,6 @@ class GenericStep2Form extends StatelessWidget {
                     Text(
                       'مدت زمان',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -292,7 +286,6 @@ class GenericStep2Form extends StatelessWidget {
                               child: Text(
                                 '${toPersianDigits(controller.targetDuration.toString())} دقیقه',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: colors.primary,
@@ -332,7 +325,6 @@ class GenericStep2Form extends StatelessWidget {
                       Text(
                         'تکرار',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -347,7 +339,6 @@ class GenericStep2Form extends StatelessWidget {
                                     ? 'روزهای انتخابی'
                                     : 'فقط یک‌بار'),
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 14,
                               color: colors.textSecondary,
                             ),
@@ -377,7 +368,6 @@ class GenericStep2Form extends StatelessWidget {
                       Text(
                         'روزهای تکرار در هفته:',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: colors.textSecondary.withValues(alpha: 0.8),
@@ -415,7 +405,6 @@ class GenericStep2Form extends StatelessWidget {
                       Text(
                         'یادآوری',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -428,7 +417,6 @@ class GenericStep2Form extends StatelessWidget {
                                 ? 'همزمان با شروع'
                                 : '${toPersianDigits(controller.reminderOffsetMinutes.toString())} دقیقه قبل',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 14,
                               color: colors.textSecondary,
                             ),

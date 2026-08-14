@@ -121,8 +121,7 @@ class _AlarmDiagnosticsSheetState extends State<AlarmDiagnosticsSheet> {
                   'عیب‌یابی و سلامت آلارم‌ها',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -198,10 +197,10 @@ class _AlarmDiagnosticsSheetState extends State<AlarmDiagnosticsSheet> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isOk ? Colors.green.withOpacity(0.08) : Colors.amber.withOpacity(0.08),
+        color: isOk ? Colors.green.withValues(alpha: 0.08) : Colors.amber.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isOk ? Colors.green.withOpacity(0.3) : Colors.amber.withOpacity(0.3),
+          color: isOk ? Colors.green.withValues(alpha: 0.3) : Colors.amber.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -210,13 +209,12 @@ class _AlarmDiagnosticsSheetState extends State<AlarmDiagnosticsSheet> {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, fontWeight: FontWeight.w600),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
           Text(
             status,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: isOk ? Colors.green.shade700 : Colors.amber.shade800,

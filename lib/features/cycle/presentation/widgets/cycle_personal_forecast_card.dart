@@ -34,7 +34,6 @@ class CyclePersonalForecastCard extends StatelessWidget {
               Text(
                 'پیش‌بینی الگوهای شخصی',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -54,7 +53,6 @@ class CyclePersonalForecastCard extends StatelessWidget {
                       child: Text(
                         f.insightFa,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: colors.textSecondary,
                         ),

@@ -123,7 +123,6 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                     Text(
                       'درس امروز • ${exp.category.labelFa}',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
                         color: insightsColor,
@@ -160,7 +159,6 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
           Text(
             '« ${exp.lesson} »',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.w800,
               fontSize: 15,
               color: colors.textPrimary,
@@ -175,7 +173,6 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 12,
                 color: colors.textSecondary.withValues(alpha: 0.75),
                 height: 1.4,
@@ -225,7 +222,6 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                         Text(
                           _acknowledged ? 'به خاطر سپرده شد' : 'به خاطر سپردم',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 11.5,
                             fontWeight: FontWeight.bold,
                             color: _acknowledged ? colors.success : colors.primary,
@@ -249,7 +245,6 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                     Text(
                       'مشاهده متن کامل',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                         color: colors.textSecondary,

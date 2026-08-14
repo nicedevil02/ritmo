@@ -209,7 +209,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
           SnackBar(
             content: Text(
               _baselineFeedback ?? '۱۰ حرکت کامل شد و جلسه با موفقیت ثبت گردید 🎉',
-              style: const TextStyle(fontFamily: 'Vazirmatn'),
+              style: const TextStyle(),
             ),
             backgroundColor: Colors.green,
           ),
@@ -226,7 +226,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
           const SnackBar(
             content: Text(
               'اگر پس از ۲ ساعت به ۱۰ حرکت نرسیدید، امروز با پزشک خود تماس بگیرید.',
-              style: TextStyle(fontFamily: 'Vazirmatn'),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.orange,
           ),
@@ -256,14 +256,14 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
             children: [
               const Text(
                 'پایان دوره بارداری',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, padding: const EdgeInsets.all(14)),
                 icon: const Icon(CupertinoIcons.heart_fill),
-                label: const Text('تولد نوزاد 🎉', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+                label: const Text('تولد نوزاد 🎉', style: TextStyle(fontWeight: FontWeight.bold)),
                 onPressed: () {
                   Navigator.of(sheetCtx).pop();
                   _handleBirthPath();
@@ -273,7 +273,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade800, foregroundColor: Colors.white, padding: const EdgeInsets.all(14)),
                 icon: const Icon(CupertinoIcons.heart),
-                label: const Text('پایان بارداری', style: TextStyle(fontFamily: 'Vazirmatn')),
+                label: const Text('پایان بارداری', style: TextStyle()),
                 onPressed: () {
                   Navigator.of(sheetCtx).pop();
                   _handleLossPath();
@@ -285,7 +285,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                   Navigator.of(sheetCtx).pop();
                   _handleMistakePath();
                 },
-                child: const Text('اشتباه ثبت شده بود', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white70)),
+                child: const Text('اشتباه ثبت شده بود', style: TextStyle(color: Colors.white70)),
               ),
             ],
           ),
@@ -305,15 +305,15 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
       unawaited(showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('تبریک! این سفر به زیباترین مقصد رسید. 🌸', style: TextStyle(fontFamily: 'Vazirmatn')),
-          content: const Text('می‌خواهید ردیابی چرخه دوباره فعال شود؟', style: TextStyle(fontFamily: 'Vazirmatn')),
+          title: const Text('تبریک! این سفر به زیباترین مقصد رسید. 🌸', style: TextStyle()),
+          content: const Text('می‌خواهید ردیابی چرخه دوباره فعال شود؟', style: TextStyle()),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(ctx).pop();
                 widget.onDeactivated();
               },
-              child: const Text('بلافاصله', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('بلافاصله', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -324,7 +324,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                     conflictAlgorithm: ConflictAlgorithm.replace);
                 widget.onDeactivated();
               },
-              child: const Text('بعداً یادآوری کن (۴۰ روز بعد)', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('بعداً یادآوری کن (۴۰ روز بعد)', style: TextStyle()),
             ),
           ],
         ),
@@ -336,8 +336,8 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
     unawaited(showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('متأسفیم که این سفر به این شکل به پایان رسید.', style: TextStyle(fontFamily: 'Vazirmatn')),
-        content: const Text('هر وقت آماده بودید، این بخش دوباره در کنار شماست.', style: TextStyle(fontFamily: 'Vazirmatn')),
+        title: const Text('متأسفیم که این سفر به این شکل به پایان رسید.', style: TextStyle()),
+        content: const Text('هر وقت آماده بودید، این بخش دوباره در کنار شماست.', style: TextStyle()),
         actions: [
           TextButton(
             onPressed: () async {
@@ -347,7 +347,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                   conflictAlgorithm: ConflictAlgorithm.replace);
               widget.onDeactivated();
             },
-            child: const Text('پنهان کردن کامل این بخش', style: TextStyle(fontFamily: 'Vazirmatn')),
+            child: const Text('پنهان کردن کامل این بخش', style: TextStyle()),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -356,7 +356,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
               await _purgeAllPregnancyTables();
               widget.onDeactivated();
             },
-            child: const Text('حذف کامل داده‌های این دوره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+            child: const Text('حذف کامل داده‌های این دوره', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -393,13 +393,13 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
             const SizedBox(height: 12),
             const Text(
               'اطلاعات بارداری شما فقط روی همین گوشی ذخیره می‌شود.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => Navigator.of(sheetCtx).pop(),
-              child: const Text('متوجه شدم', style: TextStyle(fontFamily: 'Vazirmatn')),
+              child: const Text('متوجه شدم', style: TextStyle()),
             ),
           ],
         ),
@@ -490,7 +490,6 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                   Text(
                     _pregTone == 'neutral' ? 'بارداری شما' : 'دوران شیرین بارداری 🎀',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -567,7 +566,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                       SizedBox(width: 4),
                       Text(
                         'اطلاعات فقط روی گوشی',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -585,7 +584,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                   ),
                   child: const Text(
                     'سونوگرافی 🩺',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -605,7 +604,6 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                     Text(
                       'هفته ${toPersianDigits(_currentWeek)} + ${toPersianDigits(_currentDayInWeek)} روز',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: isDark ? Colors.pink.shade200 : Colors.pink.shade700,
@@ -615,7 +613,6 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                     Text(
                       '• ${PregnancyHelpers.formatHumanCountdown(_remainingDays)}',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.purple.shade200 : Colors.purple.shade700,
@@ -648,7 +645,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
               isScrollable: true,
               labelColor: colors.primary,
               unselectedLabelColor: colors.textSecondary,
-              labelStyle: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               tabs: const [
                 Tab(text: 'امروز و وضعیت'),
                 Tab(text: 'مراقبت‌ها'),
@@ -778,7 +775,6 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                         Text(
                           'هفته ${toPersianDigits(_currentWeek)}',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
@@ -787,18 +783,18 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                         const SizedBox(height: 2),
                         Text(
                           '+ ${toPersianDigits(_currentDayInWeek)} روز',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: isDark ? Colors.white70 : Colors.black54),
+                          style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black54),
                         ),
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(0xffEC4899).withOpacity(0.12),
+                            color: const Color(0xffEC4899).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             '${toPersianDigits((_progressPercent * 100).toInt())}% کل مسیر',
-                            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: Color(0xffEC4899), fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontSize: 11, color: Color(0xffEC4899), fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -817,7 +813,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xff8B5CF6).withOpacity(0.15)),
+                border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.15)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,7 +823,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xffEC4899).withOpacity(0.12),
+                          color: const Color(0xffEC4899).withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(CupertinoIcons.heart_circle_fill, color: Color(0xffEC4899), size: 22),
@@ -840,7 +836,6 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                             Text(
                               'جنین هفته ${toPersianDigits(_currentWeek)}: $babySize',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
@@ -849,7 +844,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                             if (babyWeight.isNotEmpty)
                               Text(
                                 'وزن تقریبی: $babyWeight',
-                                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: isDark ? Colors.white60 : colors.textSecondary),
+                                style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : colors.textSecondary),
                               ),
                           ],
                         ),
@@ -860,9 +855,8 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                   Text(
                     developmentText,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
-                      color: isDark ? Colors.white.withOpacity(0.87) : colors.textPrimary,
+                      color: isDark ? Colors.white.withValues(alpha: 0.87) : colors.textPrimary,
                       height: 1.5,
                     ),
                   ),
@@ -874,7 +868,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                       Expanded(
                         child: Text(
                           'نکته هفته: $tipText',
-                          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5, color: isDark ? Colors.white70 : colors.textSecondary),
+                          style: TextStyle(fontSize: 12.5, color: isDark ? Colors.white70 : colors.textSecondary),
                         ),
                       ),
                     ],
@@ -897,7 +891,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xffEC4899).withOpacity(0.25),
+                  color: const Color(0xffEC4899).withValues(alpha: 0.25),
                   blurRadius: 14,
                   offset: const Offset(0, 5),
                 ),
@@ -915,7 +909,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
+                          color: Colors.white.withValues(alpha: 0.25),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(CupertinoIcons.sparkles, color: Colors.white, size: 22),
@@ -928,7 +922,6 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                             const Text(
                               'دستیار هوشمند بارداری ریتمو 🤖',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -938,9 +931,8 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                             Text(
                               'مشاوره تغذیه، علائم و خودمراقبتی هفته ${toPersianDigits(_currentWeek)} بارداری',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 12,
-                                color: Colors.white.withOpacity(0.85),
+                                color: Colors.white.withValues(alpha: 0.85),
                               ),
                             ),
                           ],
@@ -962,7 +954,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xff8B5CF6).withOpacity(0.1)),
+                border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.1)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -970,7 +962,6 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                   Text(
                     trimesterTitle,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
@@ -980,7 +971,6 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
                   Text(
                     trimesterTips,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       color: isDark ? Colors.white70 : colors.textSecondary,
                       height: 1.5,
@@ -1023,19 +1013,19 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: colors.primary.withOpacity(0.2)),
+                side: BorderSide(color: colors.primary.withValues(alpha: 0.2)),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('🎒 چک‌لیست ساک بیمارستان (هفته ۳۲ به بعد)', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text('🎒 چک‌لیست ساک بیمارستان (هفته ۳۲ به بعد)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 8),
                     ..._hospitalBagItems.map((item) {
                       return CheckboxListTile(
                         dense: true,
-                        title: Text(item['title'] as String, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                        title: Text(item['title'] as String, style: const TextStyle(fontSize: 12)),
                         value: item['done'] as bool,
                         onChanged: (val) {
                           setState(() {
@@ -1067,9 +1057,9 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1078,7 +1068,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: color),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color),
             ),
           ],
         ),
@@ -1114,16 +1104,16 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
-            title: Text(item['title'] as String, style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13)),
-            subtitle: Text(statusText, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.purple)),
+            title: Text(item['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            subtitle: Text(statusText, style: const TextStyle(fontSize: 12, color: Colors.purple)),
             trailing: _currentWeek >= start && _currentWeek <= end
                 ? TextButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('یادآوری مراقبت ثبت شد ⏰', style: TextStyle(fontFamily: 'Vazirmatn'))),
+                        const SnackBar(content: Text('یادآوری مراقبت ثبت شد ⏰', style: TextStyle())),
                       );
                     },
-                    child: const Text('یادآوری', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12)),
+                    child: const Text('یادآوری', style: TextStyle(fontSize: 12)),
                   )
                 : null,
           ),
@@ -1138,11 +1128,11 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('جلسه واقعی «شمارش تا ۱۰» حرکات جنین', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text('جلسه واقعی «شمارش تا ۱۰» حرکات جنین', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Text(
             'تعداد حرکات ثبت شده: ${toPersianDigits(_kickTracker.count)} / ۱۰',
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 24, fontWeight: FontWeight.bold, color: Colors.pinkAccent),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.pinkAccent),
           ),
           const SizedBox(height: 20),
           GestureDetector(
@@ -1152,7 +1142,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
               height: 140,
               decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.pinkAccent),
               child: const Center(
-                child: Text('ثبت حرکت 🦶', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text('ثبت حرکت 🦶', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -1167,12 +1157,12 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('انقباض‌سنج و حالت زایمان', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text('انقباض‌سنج و حالت زایمان', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16), backgroundColor: Colors.indigoAccent),
             icon: const Icon(CupertinoIcons.fullscreen, color: Colors.white),
-            label: const Text('ورود به حالت زایمان (تمام‌صفحه)', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white)),
+            label: const Text('ورود به حالت زایمان (تمام‌صفحه)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
             onPressed: () => LaborModeScreen.show(context, pregnancyId: 'preg_default'),
           ),
         ],
@@ -1185,7 +1175,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView> with Ti
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          const Text('ثبت علائم و حالت امروز', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+          const Text('ثبت علائم و حالت امروز', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           TextField(
             controller: _noteController,
@@ -1215,7 +1205,7 @@ class _PregnancyRingPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: center, radius: radius);
 
     final paintBg = Paint()
-      ..color = colors.first.withOpacity(0.1)
+      ..color = colors.first.withValues(alpha: 0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
     canvas.drawCircle(center, radius, paintBg);

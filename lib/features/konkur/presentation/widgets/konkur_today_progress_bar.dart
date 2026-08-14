@@ -46,7 +46,6 @@ class KonkurTodayProgressBar extends StatelessWidget {
                     Text(
                       formatDuration(actualMinutes),
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -56,7 +55,6 @@ class KonkurTodayProgressBar extends StatelessWidget {
                     Text(
                       'مطالعه واقعی امروز',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11,
                         color: colors.textSecondary,
                       ),
@@ -71,7 +69,6 @@ class KonkurTodayProgressBar extends StatelessWidget {
                     Text(
                       formatDuration(plannedMinutes),
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -81,7 +78,6 @@ class KonkurTodayProgressBar extends StatelessWidget {
                     Text(
                       'هدف امروز',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 11,
                         color: colors.textSecondary,
                       ),
@@ -105,7 +101,6 @@ class KonkurTodayProgressBar extends StatelessWidget {
           Text(
             '${toPersianDigits(completedItems)} از ${toPersianDigits(totalItems)} مبحث تکمیل شده',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 11,
               color: colors.textSecondary,
             ),

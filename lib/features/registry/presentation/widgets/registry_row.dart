@@ -121,7 +121,6 @@ class _RegistryRowState extends State<RegistryRow> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: isArchived
@@ -139,7 +138,6 @@ class _RegistryRowState extends State<RegistryRow> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 13,
                         color: theme.textTheme.bodySmall?.color
                             ?.withValues(alpha: 0.55),
@@ -226,7 +224,6 @@ class _RegistryRowState extends State<RegistryRow> {
               Text(
                 'بایگانی',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
@@ -278,7 +275,7 @@ class _RegistryRowState extends State<RegistryRow> {
                   SizedBox(width: 8),
                   Text(
                     'ویرایش',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                    style: TextStyle(fontSize: 13),
                   ),
                 ],
               ),
@@ -292,7 +289,7 @@ class _RegistryRowState extends State<RegistryRow> {
                   SizedBox(width: 8),
                   Text(
                     'بایگانی',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+                    style: TextStyle(fontSize: 13),
                   ),
                 ],
               ),

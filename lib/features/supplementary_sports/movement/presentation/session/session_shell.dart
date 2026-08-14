@@ -98,7 +98,7 @@ class _SessionShellState extends State<SessionShell> {
 	void _showMessage(String text) {
 		if (!mounted) return;
 		ScaffoldMessenger.of(context).showSnackBar(
-			SnackBar(content: Text(text, style: const TextStyle(fontFamily: _fontFa))),
+			SnackBar(content: Text(text, style: const TextStyle())),
 		);
 	}
 
@@ -151,22 +151,22 @@ class _SessionShellState extends State<SessionShell> {
 				child: AlertDialog(
 					title: const Text(
 						'جلسه هنوز در جریان است',
-						style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, fontSize: 15),
+						style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
 					),
 					content: const Text(
 						'تا وقتی جلسه متوقف یا ثبت نشود، زمان شمرده می‌شود. چه کار کنیم؟',
-						style: TextStyle(fontFamily: _fontFa, fontSize: 13),
+						style: TextStyle(fontSize: 13),
 					),
 					actions: [
 						TextButton(
 							onPressed: () => Navigator.of(dialogContext).pop('continue'),
-							child: const Text('ادامهٔ تمرین', style: TextStyle(fontFamily: _fontFa)),
+							child: const Text('ادامهٔ تمرین', style: TextStyle()),
 						),
 						TextButton(
 							onPressed: () => Navigator.of(dialogContext).pop('pause'),
 							child: const Text(
 								'توقف موقت و خروج',
-								style: TextStyle(fontFamily: _fontFa, color: Colors.amber),
+								style: TextStyle(color: Colors.amber),
 							),
 						),
 						ElevatedButton(
@@ -174,7 +174,7 @@ class _SessionShellState extends State<SessionShell> {
 							onPressed: () => Navigator.of(dialogContext).pop('finish'),
 							child: const Text(
 								'پایان و ثبت',
-								style: TextStyle(fontFamily: _fontFa, color: Colors.white),
+								style: TextStyle(color: Colors.white),
 							),
 						),
 					],
@@ -323,7 +323,6 @@ class _SessionShellState extends State<SessionShell> {
 									maxLines: 1,
 									overflow: TextOverflow.ellipsis,
 									style: const TextStyle(
-										fontFamily: _fontFa,
 										color: Colors.white,
 										fontSize: 17,
 										fontWeight: FontWeight.bold,
@@ -333,7 +332,7 @@ class _SessionShellState extends State<SessionShell> {
 									'${widget.kind.family.emoji} ${widget.kind.family.titleFa}',
 									maxLines: 1,
 									overflow: TextOverflow.ellipsis,
-									style: const TextStyle(fontFamily: _fontFa, color: Colors.white54, fontSize: 11),
+									style: const TextStyle(color: Colors.white54, fontSize: 11),
 								),
 							],
 						),
@@ -360,7 +359,6 @@ class _SessionShellState extends State<SessionShell> {
 									child: Text(
 										isDetail ? 'حالت حرفه‌ای' : 'حالت ساده',
 										style: const TextStyle(
-											fontFamily: _fontFa,
 											color: Colors.amber,
 											fontSize: 11,
 											fontWeight: FontWeight.bold,
@@ -393,7 +391,7 @@ class _SessionShellState extends State<SessionShell> {
 							banner.text,
 							maxLines: 3,
 							overflow: TextOverflow.ellipsis,
-							style: const TextStyle(fontFamily: _fontFa, color: Colors.white, fontSize: 12),
+							style: const TextStyle(color: Colors.white, fontSize: 12),
 						),
 					),
 				],
@@ -414,12 +412,11 @@ class _SessionShellState extends State<SessionShell> {
 						children: [
 							Text(
 								'پیشرفت هدف',
-								style: TextStyle(fontFamily: _fontFa, color: colors.textSecondary, fontSize: 11),
+								style: TextStyle(color: colors.textSecondary, fontSize: 11),
 							),
 							Text(
 								'${toPersianDigits((percent * 100).round().toString())}٪',
 								style: const TextStyle(
-									fontFamily: _fontFa,
 									color: Colors.white,
 									fontSize: 11,
 									fontWeight: FontWeight.bold,
@@ -461,13 +458,12 @@ class _SessionShellState extends State<SessionShell> {
 								children: [
 									Text(
 										stat.label,
-										style: const TextStyle(fontFamily: _fontFa, color: Colors.white54, fontSize: 11),
+										style: const TextStyle(color: Colors.white54, fontSize: 11),
 									),
 									const SizedBox(height: 4),
 									Text(
 										stat.value,
 										style: const TextStyle(
-											fontFamily: _fontFa,
 											color: Colors.white,
 											fontSize: 13,
 											fontWeight: FontWeight.bold,
@@ -571,7 +567,7 @@ class _FinishDialogState extends State<_FinishDialog> {
 		return AlertDialog(
 			title: const Text(
 				'ثبت و پایان جلسه',
-				style: TextStyle(fontFamily: _fontFa, fontWeight: FontWeight.bold, fontSize: 15),
+				style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
 			),
 			content: Column(
 				mainAxisSize: MainAxisSize.min,
@@ -579,7 +575,7 @@ class _FinishDialogState extends State<_FinishDialog> {
 				children: [
 					const Text(
 						'خسته نباشی! بعد از این جلسه چه حالی داری؟',
-						style: TextStyle(fontFamily: _fontFa, fontSize: 13),
+						style: TextStyle(fontSize: 13),
 					),
 					const SizedBox(height: 12),
 					Wrap(
@@ -607,10 +603,10 @@ class _FinishDialogState extends State<_FinishDialog> {
 						maxLength: 140,
 						textInputAction: TextInputAction.done,
 						inputFormatters: [LengthLimitingTextInputFormatter(140)],
-						style: const TextStyle(fontFamily: _fontFa, fontSize: 13),
+						style: const TextStyle(fontSize: 13),
 						decoration: const InputDecoration(
 							labelText: 'یادداشت جلسه (اختیاری)',
-							labelStyle: TextStyle(fontFamily: _fontFa, fontSize: 13),
+							labelStyle: TextStyle(fontSize: 13),
 							border: OutlineInputBorder(),
 							counterText: '',
 						),
@@ -620,7 +616,7 @@ class _FinishDialogState extends State<_FinishDialog> {
 			actions: [
 				TextButton(
 					onPressed: () => Navigator.of(context).pop(),
-					child: const Text('بازگشت', style: TextStyle(fontFamily: _fontFa, color: Colors.grey)),
+					child: const Text('بازگشت', style: TextStyle(color: Colors.grey)),
 				),
 				ElevatedButton(
 					style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
@@ -629,7 +625,7 @@ class _FinishDialogState extends State<_FinishDialog> {
 					),
 					child: const Text(
 						'ذخیره',
-						style: TextStyle(fontFamily: _fontFa, color: Colors.white, fontWeight: FontWeight.bold),
+						style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
 					),
 				),
 			],

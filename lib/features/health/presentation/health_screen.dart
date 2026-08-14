@@ -405,7 +405,7 @@ class _HealthScreenState extends State<HealthScreen> {
             ),
             child: const Text(
               'فعال',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: Color(0xffEF4444), fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 10, color: Color(0xffEF4444), fontWeight: FontWeight.bold),
             ),
           ),
           actions: [
@@ -487,7 +487,6 @@ class _HealthScreenState extends State<HealthScreen> {
                   child: Text(
                     _toPersianDigits(alert),
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: colors.medicalRed,
@@ -535,7 +534,6 @@ class _HealthScreenState extends State<HealthScreen> {
                     Text(
                       'پایبندی دارویی',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                         color: colors.textPrimary,
@@ -547,7 +545,6 @@ class _HealthScreenState extends State<HealthScreen> {
                           ? '🔥 ${_toPersianDigits(streak.toString())} روز پایبندی متوالی! فوق‌العاده است.'
                           : 'با ثبت به‌موقع مصرف داروها، وضعیت خود را بهبود دهید.',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12,
                         color: colors.textSecondary,
                       ),
@@ -571,7 +568,6 @@ class _HealthScreenState extends State<HealthScreen> {
                     Text(
                       '%${_toPersianDigits(rate.toStringAsFixed(0))}',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
                         color: colors.textPrimary,
@@ -603,7 +599,6 @@ class _HealthScreenState extends State<HealthScreen> {
                   child: Text(
                     _toPersianDigits(_countdownText),
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       fontWeight: hasMeds ? FontWeight.bold : FontWeight.normal,
                       color: hasMeds ? colors.textPrimary : colors.textSecondary,
@@ -708,7 +703,6 @@ class _HealthScreenState extends State<HealthScreen> {
                 Text(
                   title,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: colors.textPrimary,
@@ -720,7 +714,6 @@ class _HealthScreenState extends State<HealthScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11,
                     color: colors.textSecondary,
                   ),
@@ -773,7 +766,6 @@ class _HealthScreenState extends State<HealthScreen> {
                   const Text(
                     'روندها و تحلیل سلامت',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                       color: Colors.white,
@@ -783,7 +775,6 @@ class _HealthScreenState extends State<HealthScreen> {
                   Text(
                     'بررسی پایبندی دارویی و همبستگی شاخص‌های حیاتی',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 11,
                       color: Colors.white.withValues(alpha: 0.9),
                     ),

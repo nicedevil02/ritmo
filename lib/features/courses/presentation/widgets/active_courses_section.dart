@@ -30,12 +30,12 @@ class ActiveCoursesSection extends StatelessWidget {
             children: [
               Text(
                 '📚 هنوز دوره‌ای تعریف نکرده‌اید.',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: colors.textSecondary),
+                style: TextStyle(fontSize: 13, color: colors.textSecondary),
               ),
               const SizedBox(height: 4),
               Text(
                 'با زدن دکمه «+» اولین دوره مطالعاتی خود را شروع کنید!',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.8)),
+                style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.8)),
               ),
             ],
           ),
@@ -49,7 +49,6 @@ class ActiveCoursesSection extends StatelessWidget {
         Text(
           'دوره‌های در حال یادگیری',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 15,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -105,7 +104,6 @@ class ActiveCoursesSection extends StatelessWidget {
                                 Text(
                                   course.title,
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: colors.textPrimary,
@@ -123,7 +121,6 @@ class ActiveCoursesSection extends StatelessWidget {
                                 child: Text(
                                   'متوقف‌شده',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.bold,
                                     color: colors.textSecondary,
@@ -144,7 +141,6 @@ class ActiveCoursesSection extends StatelessWidget {
                                     Text(
                                       '${toPersianDigits(behindCount)} جلسه عقب، جبران می‌کنی 💪',
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.bold,
                                         color: colors.warning,
@@ -167,7 +163,6 @@ class ActiveCoursesSection extends StatelessWidget {
                                     const Text(
                                       'روی برنامه',
                                       style: TextStyle(
-                                        fontFamily: 'Vazirmatn',
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.bold,
                                         color: Color(0xff10A37F),
@@ -185,7 +180,6 @@ class ActiveCoursesSection extends StatelessWidget {
                             Text(
                               'پیشرفت: ${toPersianDigits(completedCount)} از ${toPersianDigits(course.totalSessions)} ${course.unitLabelResolved}',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11.5,
                                 color: colors.textSecondary,
                               ),
@@ -193,7 +187,6 @@ class ActiveCoursesSection extends StatelessWidget {
                             Text(
                               '${toPersianDigits(progressPercent)}٪',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,

@@ -116,7 +116,7 @@ class _MorningCheckinSheetState extends State<MorningCheckinSheet> {
           const SnackBar(
             content: Text(
               'ارزیابی صبحگاهی شما با موفقیت ثبت شد 🌿',
-              style: TextStyle(fontFamily: 'Vazirmatn'),
+              style: TextStyle(),
             ),
             backgroundColor: Color(0xff10B981),
           ),
@@ -163,8 +163,7 @@ class _MorningCheckinSheetState extends State<MorningCheckinSheet> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: colors.cardTitle,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     IconButton(
                       icon: Icon(
@@ -182,8 +181,7 @@ class _MorningCheckinSheetState extends State<MorningCheckinSheet> {
                   style: TextStyle(
                     fontSize: 12,
                     color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 20),
 
@@ -237,8 +235,7 @@ class _MorningCheckinSheetState extends State<MorningCheckinSheet> {
                                     isSelected
                                         ? colors.cardTitle
                                         : colors.textPrimary,
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ),
                           if (isSelected)
@@ -260,8 +257,7 @@ class _MorningCheckinSheetState extends State<MorningCheckinSheet> {
                   style: TextStyle(
                     color: colors.cardTitle,
                     fontSize: 13,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                   maxLines: 2,
                   decoration: InputDecoration(
                     hintText: 'یادداشت کوتاه از احساس امروز (اختیاری)',
@@ -311,8 +307,7 @@ class _MorningCheckinSheetState extends State<MorningCheckinSheet> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                 ),
               ],

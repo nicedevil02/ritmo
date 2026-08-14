@@ -176,7 +176,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
               Text(
                 exercise['name']?.toString() ?? '',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                   color: colors.textPrimary,
@@ -187,7 +186,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                 Text(
                   exercise['nameEn'].toString(),
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 13,
                     color: colors.textSecondary,
                   ),
@@ -218,7 +216,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                     child: Text(
                       widget.categoryName,
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12,
                         color: colors.primary,
                         fontWeight: FontWeight.bold,
@@ -235,7 +232,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                     child: Text(
                       _translateEquipment(exercise['equipment']?.toString()),
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12,
                         color: colors.textSecondary,
                       ),
@@ -247,7 +243,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
               Text(
                 'راهنمای اجرا:',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -257,7 +252,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
               Text(
                 exercise['instructions']?.toString() ?? 'راهنمایی برای این حرکت ثبت نشده است.',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13.5,
                   height: 1.6,
                   color: colors.textSecondary,
@@ -276,7 +270,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                     label: const Text(
                       'مشاهده ویدیو آموزش حرکت 🎥',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: Colors.red,
@@ -304,7 +297,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                   child: const Text(
                     'متوجه شدم',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -333,7 +325,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
           title: Text(
             widget.categoryName,
             style: const TextStyle(
-              fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
@@ -360,14 +351,14 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                       border: Border.all(color: colors.border.withValues(alpha: 0.5)),
                     ),
                     child: TextField(
-                      style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary, fontSize: 14),
+                      style: TextStyle(color: colors.textPrimary, fontSize: 14),
                       onChanged: (val) {
                         _searchQuery = val;
                         _filterExercises();
                       },
                       decoration: InputDecoration(
                         hintText: 'جستجوی نام حرکت...',
-                        hintStyle: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary, fontSize: 13),
+                        hintStyle: TextStyle(color: colors.textSecondary, fontSize: 13),
                         prefixIcon: Icon(CupertinoIcons.search, color: colors.textSecondary, size: 20),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -401,7 +392,7 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                       ? Center(
                           child: Text(
                             'حرکتی یافت نشد.',
-                            style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary, fontSize: 14),
+                            style: TextStyle(color: colors.textSecondary, fontSize: 14),
                           ),
                         )
                       : GridView.builder(
@@ -465,7 +456,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
-                                            fontFamily: 'Vazirmatn',
                                             fontWeight: FontWeight.bold,
                                             fontSize: 12,
                                             color: colors.textPrimary,
@@ -475,7 +465,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                                         Text(
                                           equipText,
                                           style: TextStyle(
-                                            fontFamily: 'Vazirmatn',
                                             fontSize: 10,
                                             color: colors.textSecondary,
                                           ),
@@ -518,7 +507,6 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
         child: Text(
           title,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             color: isSelected ? Colors.white : colors.textPrimary,

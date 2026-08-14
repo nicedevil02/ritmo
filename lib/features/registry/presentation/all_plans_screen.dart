@@ -314,7 +314,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                   label: const Text(
                     'افزودن برنامه',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -357,7 +356,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                 Text(
                   'مخزن روتین‌ها',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: theme.textTheme.bodyLarge?.color,
@@ -367,7 +365,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                   Text(
                     '${toPersianDigits(_entries.length.toString())} برنامه فعال',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 13,
                       color: theme.textTheme.bodySmall?.color
                           ?.withValues(alpha: 0.55),
@@ -407,11 +404,10 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
           controller: _searchController,
           onChanged: _onSearchChanged,
           textDirection: TextDirection.rtl,
-          style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
+          style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
             hintText: 'جست‌وجو در برنامه‌ها',
             hintStyle: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13.5,
               color: theme.textTheme.bodySmall?.color
                   ?.withValues(alpha: 0.4),
@@ -480,7 +476,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                               _activeFilterCount.toString(),
                             ),
                             style: const TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -542,7 +537,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               ),
@@ -666,7 +660,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 fontWeight:
                     isActive ? FontWeight.bold : FontWeight.w500,
@@ -681,7 +674,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
               Text(
                 badgeText,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: isActive
@@ -794,7 +786,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 13,
             fontWeight:
                 isSelected ? FontWeight.bold : FontWeight.w500,
@@ -830,7 +821,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                   ? 'نتیجه‌ای یافت نشد'
                   : 'هنوز برنامه‌ای ثبت نشده',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: theme.textTheme.bodySmall?.color
@@ -842,7 +832,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
               Text(
                 'با دکمه «افزودن برنامه» شروع کنید.',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   color: theme.textTheme.bodySmall?.color
                       ?.withValues(alpha: 0.3),
@@ -884,7 +873,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                 Text(
                   'بایگانی',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
@@ -956,7 +944,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             const Text(
               'همه چیز مرتب است',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF10B981),
@@ -966,7 +953,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             Text(
               'هیچ ناهنجاری یا مشکلی در دیتابیس برنامه‌ها یافت نشد.',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 13,
                 color: Colors.grey.shade500,
               ),

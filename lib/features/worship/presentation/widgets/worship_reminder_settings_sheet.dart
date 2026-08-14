@@ -357,15 +357,13 @@ class _WorshipReminderSettingsSheetState
                 'تنظیم یادآوری',
                 style: TextStyle(
                   fontSize: 17, fontWeight: FontWeight.bold,
-                  color: colors.textPrimary, fontFamily: 'Vazirmatn',
-                ),
+                  color: colors.textPrimary, ),
               ),
               Text(
                 widget.practice.title,
                 style: TextStyle(
                   fontSize: 12.5, color: colors.textSecondary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
                 maxLines: 1, overflow: TextOverflow.ellipsis,
               ),
             ],
@@ -424,8 +422,7 @@ class _WorshipReminderSettingsSheetState
                       number,
                       style: TextStyle(
                         fontSize: 13, fontWeight: FontWeight.bold,
-                        color: colors.accent, fontFamily: 'Vazirmatn',
-                      ),
+                        color: colors.accent, ),
                     ),
                   ),
                 ),
@@ -434,8 +431,7 @@ class _WorshipReminderSettingsSheetState
                   title,
                   style: TextStyle(
                     fontSize: 14, fontWeight: FontWeight.w700,
-                    color: colors.textPrimary, fontFamily: 'Vazirmatn',
-                  ),
+                    color: colors.textPrimary, ),
                 ),
               ],
             ),
@@ -476,7 +472,6 @@ class _WorshipReminderSettingsSheetState
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 12,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               color: isActive ? colors.accent : colors.textSecondary,
@@ -553,8 +548,7 @@ class _WorshipReminderSettingsSheetState
                           fontSize: 12.5,
                           fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                           color: selected ? colors.primary : colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -599,8 +593,7 @@ class _WorshipReminderSettingsSheetState
                         color: sel ? colors.onPrimary : colors.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ),
                 ),
@@ -646,7 +639,6 @@ class _WorshipReminderSettingsSheetState
                 iconEnabledColor: colors.accent,
                 style: TextStyle(
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
                     fontSize: 14),
                 isExpanded: true,
                 onChanged: (v) {
@@ -718,7 +710,6 @@ class _WorshipReminderSettingsSheetState
                       style: TextStyle(
                         fontSize: 13.5,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -795,8 +786,7 @@ class _WorshipReminderSettingsSheetState
                               ? FontWeight.bold
                               : FontWeight.normal,
                           color: sel ? colors.accent : colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -844,8 +834,7 @@ class _WorshipReminderSettingsSheetState
           style: TextStyle(
             fontSize: 12.5,
             color: colors.textSecondary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         SizedBox(height: 10),
         Wrap(
@@ -878,8 +867,7 @@ class _WorshipReminderSettingsSheetState
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: colors.accent,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       if (_reminderTimesList.length > 1) ...[
                         SizedBox(width: 8),
@@ -927,8 +915,7 @@ class _WorshipReminderSettingsSheetState
                         style: TextStyle(
                           fontSize: 13,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -983,8 +970,7 @@ class _WorshipReminderSettingsSheetState
                         ? FontWeight.bold
                         : FontWeight.normal,
                     fontSize: 12.5,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
               ),
             ),
@@ -1020,8 +1006,7 @@ class _WorshipReminderSettingsSheetState
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: colors.primary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ),
         ),
@@ -1056,8 +1041,7 @@ class _WorshipReminderSettingsSheetState
                   fontSize: 10,
                   color:
                       colors.textSecondary.withValues(alpha: 0.45),
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
               Text(
                 '۱۸۰ دقیقه بعد',
@@ -1065,8 +1049,7 @@ class _WorshipReminderSettingsSheetState
                   fontSize: 10,
                   color:
                       colors.textSecondary.withValues(alpha: 0.45),
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ],
           ),
@@ -1088,8 +1071,7 @@ class _WorshipReminderSettingsSheetState
                 style: TextStyle(
                   fontSize: 13.5,
                   color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
               const SizedBox(height: 2),
               Text(
@@ -1097,8 +1079,7 @@ class _WorshipReminderSettingsSheetState
                 style: TextStyle(
                   fontSize: 11,
                   color: colors.textSecondary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ],
           ),
@@ -1144,8 +1125,7 @@ class _WorshipReminderSettingsSheetState
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: colors.error,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ),
                   ),
@@ -1180,8 +1160,7 @@ class _WorshipReminderSettingsSheetState
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: colors.onPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ),
                 ),

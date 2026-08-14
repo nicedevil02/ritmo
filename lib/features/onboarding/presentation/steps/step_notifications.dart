@@ -84,8 +84,7 @@ class _StepNotificationsState extends State<StepNotifications> {
             fontSize: 20,
             fontWeight: FontWeight.w900,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 12),
         Text(
@@ -95,8 +94,7 @@ class _StepNotificationsState extends State<StepNotifications> {
             fontSize: 14,
             height: 1.6,
             color: colors.textSecondary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 32),
         if (_isLoading)
@@ -116,8 +114,7 @@ class _StepNotificationsState extends State<StepNotifications> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ),
           const SizedBox(height: 12),
@@ -149,8 +146,7 @@ class _StepNotificationsState extends State<StepNotifications> {
               'حالا نه',
               style: TextStyle(
                 fontSize: 13,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ),
         ],

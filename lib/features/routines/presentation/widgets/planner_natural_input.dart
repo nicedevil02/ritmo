@@ -107,7 +107,6 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
           Text(
             toPersianDigits(label),
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 11.5,
               color: colors.textPrimary,
             ),
@@ -154,14 +153,12 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
                   child: TextFormField(
                     controller: widget.controller.inputController,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 14,
                       color: colors.textPrimary,
                     ),
                     decoration: InputDecoration(
                       hintText: _placeholders[_placeholderIndex],
                       hintStyle: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 12.5,
                         color: colors.textSecondary.withValues(alpha: 0.4),
                       ),
@@ -243,7 +240,6 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
                         child: Text(
                           widget.controller.title,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
@@ -262,7 +258,6 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
                         child: Text(
                           'پیش‌نمایش زنده ✨',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: colors.goldAccent,
@@ -339,7 +334,6 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
                           Text(
                             'ثبت سریع با همین اطلاعات ⚡',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12.5,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -365,7 +359,6 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
                 label: const Text(
                   '✨ تحلیل با هوش مصنوعی',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 11.5,
                     color: Color(0xff8B5CF6),
                     fontWeight: FontWeight.bold,

@@ -77,7 +77,6 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
             Text(
               labelFa,
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 10,
                 color: isSelected ? colors.textPrimary : colors.textSecondary,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -115,7 +114,6 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
               Text(
                 'ثبت تمرین امروز',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -126,7 +124,6 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
               Text(
                 widget.prescription.headlineFa,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   color: sportsAccent,
                 ),
@@ -138,8 +135,8 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('مدت زمان', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary)),
-                  Text(toPersianDigits('$_minutes دقیقه'), style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: sportsAccent)),
+                  Text('مدت زمان', style: TextStyle(color: colors.textPrimary)),
+                  Text(toPersianDigits('$_minutes دقیقه'), style: TextStyle(fontWeight: FontWeight.bold, color: sportsAccent)),
                 ],
               ),
               Slider(
@@ -154,7 +151,7 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
               const SizedBox(height: 24),
 
               // RPE Faces
-              Text('چقدر سخت بود؟', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary)),
+              Text('چقدر سخت بود؟', style: TextStyle(color: colors.textPrimary)),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -169,14 +166,14 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
               const SizedBox(height: 24),
 
               // Location
-              Text('کجا تمرین کردی؟', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary)),
+              Text('کجا تمرین کردی؟', style: TextStyle(color: colors.textPrimary)),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 children: ['خانه', 'باشگاه', 'فضای باز', 'سایر'].map((loc) {
                   final isSelected = _location == loc;
                   return ChoiceChip(
-                    label: Text(loc, style: const TextStyle(fontFamily: 'Vazirmatn')),
+                    label: Text(loc, style: const TextStyle()),
                     selected: isSelected,
                     onSelected: (val) {
                       if (val) setState(() => _location = loc);
@@ -195,7 +192,7 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
                 controller: _noteController,
                 decoration: InputDecoration(
                   hintText: 'یادداشت (اختیاری)',
-                  hintStyle: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary),
+                  hintStyle: TextStyle(color: colors.textSecondary),
                   filled: true,
                   fillColor: colors.surfaceSunken,
                   border: OutlineInputBorder(
@@ -203,7 +200,7 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
+                style: TextStyle(color: colors.textPrimary),
               ),
               const SizedBox(height: 32),
 

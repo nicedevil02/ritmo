@@ -109,8 +109,7 @@ class _StepDayArcState extends State<StepDayArc> {
             fontSize: 18,
             fontWeight: FontWeight.w900,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 4),
         Text(
@@ -119,8 +118,7 @@ class _StepDayArcState extends State<StepDayArc> {
           style: TextStyle(
             fontSize: 11,
             color: colors.textSecondary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
         const SizedBox(height: 12),
 
@@ -144,8 +142,7 @@ class _StepDayArcState extends State<StepDayArc> {
               style: TextStyle(
                 fontSize: 11,
                 color: colors.textSecondary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ),
           const SizedBox(height: 12),
@@ -269,8 +266,7 @@ class _StatTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 color: colors.textSecondary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ],
         ),
@@ -281,8 +277,7 @@ class _StatTile extends StatelessWidget {
             fontSize: 13,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
         ),
       ],
     );

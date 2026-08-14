@@ -137,13 +137,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   const Text(
                     'حذف دوره آموزشی',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
                   ),
                   const SizedBox(height: 12),
                   const Text(
                     'آیا از حذف کامل این دوره و تمام جلسات مطالعاتی و یادآورهای مربوط به آن اطمینان دارید؟ این عمل غیرقابل بازگشت است.',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, color: Colors.white70, height: 1.5),
+                    style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.5),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -151,7 +151,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+                        child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
@@ -160,7 +160,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           backgroundColor: colors.warning,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('بله، حذف کن', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+                        child: const Text('بله، حذف کن', style: TextStyle(color: Colors.white)),
                       ),
                     ],
                   ),
@@ -278,7 +278,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           title: Text(
             _course.title,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
@@ -328,7 +327,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                               Text(
                                 _course.courseType.label,
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                   color: colors.textPrimary,
@@ -350,7 +348,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                   ? 'در حال یادگیری'
                                   : 'متوقف‌شده',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 color: _course.status == CourseStatus.active
@@ -368,7 +365,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           Text(
                             'پیشرفت کلی دوره: ${toPersianDigits(completedCount)} از ${toPersianDigits(_course.totalSessions)} ${_course.unitLabelResolved}',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12,
                               color: colors.textSecondary,
                             ),
@@ -376,7 +372,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           Text(
                             '${toPersianDigits(progressPercent)}٪',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -429,7 +424,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                               Text(
                                 'هدف متصل',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 10,
                                   color: colors.textSecondary,
                                 ),
@@ -438,7 +432,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                               Text(
                                 _linkedGoal!['title'] as String,
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                   color: colors.textPrimary,
@@ -453,7 +446,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             Text(
                               'پیشرفت کل هدف',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 9,
                                 color: colors.textSecondary,
                               ),
@@ -462,7 +454,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             Text(
                               '${toPersianDigits((_linkedGoalProgress * 100).round())}٪',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: colors.primary,
@@ -481,7 +472,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               Text(
                 'برنامه زمانی مطالعاتی',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -535,7 +525,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               Text(
                 'سرفصل‌ها و جلسات دوره',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -581,7 +570,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                 Text(
                                   session.sessionTitle ?? '${_course.unitLabelResolved} ${session.sessionNumber}',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                     color: isCompleted ? colors.textSecondary : colors.textPrimary,
@@ -597,7 +585,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                             ? 'برنامه‌ریزی: ${toPersianDigits(session.plannedDate)} 📅'
                                             : 'بدون تاریخ زمان‌بندی',
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           fontSize: 10.5,
                                           color: isCompleted ? colors.textSecondary : colors.primary,
                                           decoration: isCompleted ? null : TextDecoration.underline,
@@ -609,7 +596,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                       Text(
                                         '• مدت مطالعه: ${toPersianDigits(session.actualDurationMinutes)} دقیقه',
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
                                           fontSize: 10.5,
                                           color: colors.textSecondary,
                                         ),
@@ -661,12 +647,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           children: [
             Text(
               '💡 برداشت‌های من از دوره',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
               'هنوز برداشتی ثبت نکرده‌ای. پس از هر جلسه، نکته‌های کلیدی و سوالات باز خود را ثبت کن.',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+              style: TextStyle(fontSize: 12, color: colors.textSecondary),
             ),
           ],
         ),
@@ -686,7 +672,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         children: [
           Text(
             '💡 برداشت‌های من از این دوره',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
           ),
           const SizedBox(height: 12),
 
@@ -694,7 +680,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           if (takeaways.isNotEmpty) ...[
             Text(
               '💡 نکته‌های کلیدی (${toPersianDigits(takeaways.length)})',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary),
             ),
             const SizedBox(height: 6),
             ...takeaways.map((s) => Padding(
@@ -707,7 +693,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     child: Text(
                       '${s.keyTakeaway!} (جلسه ${toPersianDigits(s.sessionNumber)})',
                       textDirection: TextDirection.rtl,
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textPrimary),
+                      style: TextStyle(fontSize: 12, color: colors.textPrimary),
                     ),
                   ),
                 ],
@@ -720,7 +706,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           if (questions.isNotEmpty) ...[
             Text(
               '❓ سؤال‌های باز (${toPersianDigits(questions.length)})',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.warning),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.warning),
             ),
             const SizedBox(height: 6),
             ...questions.map((s) {
@@ -754,7 +740,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         '${s.openQuestion!} (جلسه ${toPersianDigits(s.sessionNumber)})',
                         textDirection: TextDirection.rtl,
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           color: isResolved ? colors.textSecondary : colors.textPrimary,
                           decoration: isResolved ? TextDecoration.lineThrough : null,
@@ -764,7 +749,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     if (isResolved)
                       Text(
                         'حل شد ✓',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 10, color: colors.success, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 10, color: colors.success, fontWeight: FontWeight.bold),
                       ),
                   ],
                 ),
@@ -777,7 +762,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           if (freeNotes.isNotEmpty) ...[
             Text(
               '📝 یادداشت‌های آزاد (${toPersianDigits(freeNotes.length)})',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.textSecondary),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textSecondary),
             ),
             const SizedBox(height: 6),
             ...freeNotes.map((s) => Padding(
@@ -790,7 +775,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     child: Text(
                       '${s.note!} (جلسه ${toPersianDigits(s.sessionNumber)})',
                       textDirection: TextDirection.rtl,
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textPrimary),
+                      style: TextStyle(fontSize: 12, color: colors.textPrimary),
                     ),
                   ),
                 ],
@@ -812,11 +797,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       children: [
         Text(
           title,
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+          style: TextStyle(fontSize: 12, color: colors.textSecondary),
         ),
         Text(
           value,
-          style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
         ),
       ],
     );

@@ -48,7 +48,7 @@ class AdherenceCard extends StatelessWidget {
           children: [
             Text(
               'پایبندی به داروها',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
             ),
             const SizedBox(height: 16),
             if (!hasData)
@@ -59,7 +59,7 @@ class AdherenceCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'هنوز دُز سررسیدشده‌ای ثبت نشده است. با اولین ثبت مصرف، درصد پایبندی و زنجیره‌ها همین‌جا نمایش داده می‌شود.',
-                      style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5),
                       textAlign: TextAlign.justify,
                     ),
                   ),
@@ -91,11 +91,11 @@ class AdherenceCard extends StatelessWidget {
                         children: [
                           Text(
                             _toPersianDigits('${ratePct.toStringAsFixed(0)}٪'),
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
                           Text(
                             'پایبندی',
-                            style: TextStyle(fontSize: 9, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(fontSize: 9, color: colors.textSecondary),
                           ),
                         ],
                       ),
@@ -113,12 +113,12 @@ class AdherenceCard extends StatelessWidget {
                               children: [
                                 Icon(Icons.local_fire_department, color: colors.warning, size: 18),
                                 const SizedBox(width: 4),
-                                Text('زنجیره فعلی:', style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                                Text('زنجیره فعلی:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
                               ],
                             ),
                             Text(
                               _toPersianDigits('${stats.currentStreak} روز پیاپی'),
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                             ),
                           ],
                         ),
@@ -130,12 +130,12 @@ class AdherenceCard extends StatelessWidget {
                               children: [
                                 Icon(Icons.emoji_events_outlined, color: colors.primary, size: 18),
                                 const SizedBox(width: 4),
-                                Text('بهترین زنجیره:', style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                                Text('بهترین زنجیره:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
                               ],
                             ),
                             Text(
                               _toPersianDigits('${stats.longestStreak} روز'),
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                             ),
                           ],
                         ),
@@ -160,7 +160,7 @@ class AdherenceCard extends StatelessWidget {
                       Expanded(
                         child: RichText(
                           text: TextSpan(
-                            style: TextStyle(fontSize: 11, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(fontSize: 11, color: colors.textPrimary),
                             children: [
                               const TextSpan(text: 'الگوی فراموشی: ', style: TextStyle(fontWeight: FontWeight.bold)),
                               TextSpan(text: stats.missedPattern),
@@ -175,7 +175,7 @@ class AdherenceCard extends StatelessWidget {
               const Divider(height: 24),
               Text(
                 message,
-                style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5),
                 textAlign: TextAlign.justify,
               ),
             ],

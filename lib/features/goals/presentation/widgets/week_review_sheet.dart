@@ -201,7 +201,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                     Text(
                       'مرور و بازتاب پایان هفته 🌿',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -211,7 +210,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                     Text(
                       'بررسی واقع‌بینانهٔ برنامه برای یادگیری و تنظیم ظرفیت هفته‌های آینده.',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontSize: 13,
                         color: colors.textSecondary,
                       ),
@@ -235,7 +233,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                               Text(
                                 'انجام‌شده:',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 13,
                                   color: colors.textSecondary,
                                 ),
@@ -243,7 +240,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                               Text(
                                 '${PersianDigits.toPersian(_stats.completedMinutes.toString())} از ${PersianDigits.toPersian(_stats.plannedMinutes.toString())} دقیقه',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: colors.textPrimary,
@@ -259,7 +255,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                                 Text(
                                   'دقت تخمین برنامه‌ریزی:',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 13,
                                     color: colors.textSecondary,
                                   ),
@@ -273,7 +268,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                                   child: Text(
                                     '${PersianDigits.toPersian((_stats.calibrationScore! * 100).round().toString())}٪',
                                     style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                       color: colors.primary,
@@ -301,7 +295,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                             Text(
                               'تعهدات با بیش از دو بار جابه‌جایی:',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 color: colors.primary,
@@ -311,7 +304,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                             ..._frequentlyMovedTitles.map((t) => Text(
                                   '• $t (نیاز به بازنگری در اندازه یا زمان‌بندی)',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 12,
                                     color: colors.textSecondary,
                                   ),
@@ -370,7 +362,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                         : const Text(
                             'ثبت مرور و بستن هفته',
                             style: TextStyle(
-                              fontFamily: 'Vazirmatn',
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -398,7 +389,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
         Text(
           question,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 14,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -409,14 +399,12 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
           controller: controller,
           maxLines: 2,
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 13,
             color: colors.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 12,
               color: colors.textSecondary.withValues(alpha: 0.6),
             ),

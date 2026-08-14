@@ -60,8 +60,7 @@ class TodaysTasksSection extends StatelessWidget {
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: colors.sectionTitle,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ),
                   if (tasks.length > 4) ...[
@@ -71,8 +70,7 @@ class TodaysTasksSection extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         color: colors.textTertiary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ],
                 ],
@@ -98,8 +96,7 @@ class TodaysTasksSection extends StatelessWidget {
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: colors.primary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                   ),
               ],
@@ -115,8 +112,7 @@ class TodaysTasksSection extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 color: colors.textSecondary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           )
         else
@@ -217,8 +213,7 @@ class TodaysTasksSection extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: isCompleted ? colors.textSecondary : colors.textPrimary,
                           decoration: isCompleted ? TextDecoration.lineThrough : null,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -228,8 +223,7 @@ class TodaysTasksSection extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       if (hasConflict) ...[
                         const SizedBox(height: 4),
@@ -252,8 +246,7 @@ class TodaysTasksSection extends StatelessWidget {
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                   color: colors.warning,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                             ),
                           ],
@@ -304,8 +297,7 @@ class TodaysTasksSection extends StatelessWidget {
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
             if (item.subtitle != null && item.subtitle!.trim().isNotEmpty) ...[
               const SizedBox(height: RitmoSpacing.xs),
@@ -314,8 +306,7 @@ class TodaysTasksSection extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   color: colors.textSecondary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ],
             const SizedBox(height: RitmoSpacing.md),
@@ -345,8 +336,7 @@ class TodaysTasksSection extends StatelessWidget {
                 fontSize: 12,
                 color: colors.textSecondary,
                 height: 1.6,
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
             const SizedBox(height: RitmoSpacing.lg),
             Row(
@@ -486,8 +476,7 @@ class _ConflictChip extends StatelessWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   color: colors.warning,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ],
           ),
@@ -517,8 +506,7 @@ class _InfoPill extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.bold,
           color: color,
-          fontFamily: 'Vazirmatn',
-        ),
+          ),
       ),
     );
   }

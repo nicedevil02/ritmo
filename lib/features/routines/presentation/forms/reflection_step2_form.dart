@@ -19,7 +19,7 @@ class ReflectionStep2Form extends StatelessWidget {
         children: [
           const Text(
             'حس و حال امروز شما',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
           const SizedBox(height: 8),
           Row(
@@ -45,11 +45,11 @@ class ReflectionStep2Form extends StatelessWidget {
           const SizedBox(height: 20),
           const Text(
             'موفقیت‌های امروز',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
           const SizedBox(height: 8),
           TextField(
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+            style: const TextStyle(fontSize: 13),
             decoration: InputDecoration(
               hintText: 'امروز چه موفقیت‌هایی داشتید؟',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -62,11 +62,11 @@ class ReflectionStep2Form extends StatelessWidget {
           const SizedBox(height: 16),
           const Text(
             'شکرگزاری امروز',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
           const SizedBox(height: 8),
           TextField(
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+            style: const TextStyle(fontSize: 13),
             decoration: InputDecoration(
               hintText: 'امروز بابت چه چیزی شکرگزار هستید؟',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -79,11 +79,11 @@ class ReflectionStep2Form extends StatelessWidget {
           const SizedBox(height: 16),
           const Text(
             'آموخته‌های امروز',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
           const SizedBox(height: 8),
           TextField(
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+            style: const TextStyle(fontSize: 13),
             decoration: InputDecoration(
               hintText: 'امروز چه چیز جدیدی یاد گرفتید؟',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -99,7 +99,7 @@ class ReflectionStep2Form extends StatelessWidget {
             children: [
               const Text(
                 'یادداشت محرمانه باشد؟',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               Switch(
                 value: controller.reflectionIsPrivate,

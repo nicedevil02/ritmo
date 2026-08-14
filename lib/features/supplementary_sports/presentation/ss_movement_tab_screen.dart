@@ -72,12 +72,10 @@ class _SSMovementTabScreenState extends State<SSMovementTabScreen>
               indicatorColor: accent,
               indicatorWeight: 2.5,
               labelStyle: const TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
               ),
               unselectedLabelStyle: const TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontWeight: FontWeight.w500,
                 fontSize: 13,
               ),
@@ -151,11 +149,11 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
           child: AlertDialog(
             title: const Text(
               'جلسهٔ زندهٔ ناتمام',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             content: const Text(
               'یک جلسهٔ ورزشی ناتمام پیدا شد. می‌خواهی چه کار کنی؟',
-              style: TextStyle(fontFamily: 'Vazirmatn'),
+              style: TextStyle(),
             ),
             actions: [
               TextButton(
@@ -164,7 +162,7 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
                   await MovementSessionRepository.instance.abandonSession(active.id);
                   await _loadData();
                 },
-                child: const Text('حذف جلسه', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.red)),
+                child: const Text('حذف جلسه', style: TextStyle(color: Colors.red)),
               ),
               TextButton(
                 onPressed: () async {
@@ -172,7 +170,7 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
                   await MovementSessionRepository.instance.finishSession(active.id);
                   await _loadData();
                 },
-                child: const Text('پایان و ذخیره', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.amber)),
+                child: const Text('پایان و ذخیره', style: TextStyle(color: Colors.amber)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -185,7 +183,7 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
                 },
                 child: const Text(
                   'ادامهٔ جلسه',
-                  style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -300,7 +298,6 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
               const Text(
                 'شروع جلسه جدید: انتخاب ورزش',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -454,7 +451,6 @@ class _SuggestionCard extends StatelessWidget {
                 child: Text(
                   'پیشنهاد امروز: ${suggestion.kind.titleFa}',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                     color: theme.textPrimary,
@@ -467,7 +463,6 @@ class _SuggestionCard extends StatelessWidget {
           Text(
             suggestion.reasonFa,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 12,
               color: theme.textSecondary,
             ),
@@ -486,7 +481,6 @@ class _SuggestionCard extends StatelessWidget {
               child: const Text(
                 'شروع پیشنهاد امروز',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                   color: Colors.white,
@@ -535,7 +529,6 @@ class _ThreeActionButtons extends StatelessWidget {
             label: const Text(
               'شروع الان',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
                 color: Colors.white,
@@ -564,7 +557,6 @@ class _ThreeActionButtons extends StatelessWidget {
             label: Text(
               'برای بعد برنامه‌ریزی کن',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
                 color: theme.emeraldPrimary,
@@ -580,7 +572,6 @@ class _ThreeActionButtons extends StatelessWidget {
           child: Text(
             'ثبت فعالیت انجام‌شده',
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               fontSize: 13,
               color: theme.textSecondary,
             ),
@@ -618,7 +609,6 @@ class _WeekTimeline extends StatelessWidget {
         Text(
           'تایم‌لاین فعالیت‌های این هفته',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontWeight: FontWeight.bold,
             fontSize: 15,
             color: theme.textPrimary,
@@ -636,7 +626,6 @@ class _WeekTimeline extends StatelessWidget {
               child: Text(
                 'در این هفته هنوز فعالیتی ثبت نشده است.',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   color: theme.textSecondary,
                 ),
@@ -657,18 +646,18 @@ class _WeekTimeline extends StatelessWidget {
                         builder: (ctx) => AlertDialog(
                           title: const Text(
                             'حذف فعالیت',
-                            style: TextStyle(fontFamily: 'Vazirmatn'),
+                            style: TextStyle(),
                           ),
                           content: const Text(
                             'این فعالیت برای همیشه حذف می‌شود. مطمئنی؟',
-                            style: TextStyle(fontFamily: 'Vazirmatn'),
+                            style: TextStyle(),
                           ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(ctx).pop(false),
                               child: const Text(
                                 'انصراف',
-                                style: TextStyle(fontFamily: 'Vazirmatn'),
+                                style: TextStyle(),
                               ),
                             ),
                             TextButton(
@@ -676,7 +665,6 @@ class _WeekTimeline extends StatelessWidget {
                               child: const Text(
                                 'حذف',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   color: Colors.red,
                                 ),
                               ),
@@ -697,7 +685,7 @@ class _WeekTimeline extends StatelessWidget {
                       const SnackBar(
                         content: Text(
                           'این رکورد متعلق به جلسهٔ بدنسازی است و از اینجا حذف نمی‌شود.',
-                          style: TextStyle(fontFamily: 'Vazirmatn'),
+                          style: TextStyle(),
                         ),
                       ),
                     );
@@ -709,7 +697,7 @@ class _WeekTimeline extends StatelessWidget {
                     SnackBar(
                       content: const Text(
                         'فعالیت حذف شد',
-                        style: TextStyle(fontFamily: 'Vazirmatn'),
+                        style: TextStyle(),
                       ),
                       action: SnackBarAction(
                         label: 'بازگردانی',
@@ -735,7 +723,6 @@ class _WeekTimeline extends StatelessWidget {
                           ? e.kindCode
                           : '${snapshot!.kindsByCode[e.kindCode]!.emoji} ${snapshot!.kindsByCode[e.kindCode]!.titleFa}',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         fontWeight: FontWeight.bold,
                         color: theme.textPrimary,
                       ),
@@ -743,7 +730,6 @@ class _WeekTimeline extends StatelessWidget {
                     subtitle: Text(
                       '$duration دقیقه · $met MET-min',
                       style: TextStyle(
-                        fontFamily: 'Vazirmatn',
                         color: theme.textSecondary,
                       ),
                     ),
@@ -785,7 +771,6 @@ class _MovementExercisesTab extends StatelessWidget {
                 'ورزش مورد نظرت را انتخاب کن',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: theme.textPrimary,
@@ -796,7 +781,6 @@ class _MovementExercisesTab extends StatelessWidget {
                 'از میان ده‌ها نوع حرکت، یکی را انتخاب و مستقیم شروع کن.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   color: theme.textSecondary,
                   height: 1.5,
@@ -824,7 +808,6 @@ class _MovementExercisesTab extends StatelessWidget {
                   label: const Text(
                     'انتخاب و شروع',
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: Colors.white,

@@ -464,7 +464,6 @@ ${jsonEncode(digest.json)}
               Text(
                 'تحلیل هوشمند ریتمو 🧠',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
@@ -475,7 +474,6 @@ ${jsonEncode(digest.json)}
               Text(
                 'هنوز هیچ تحلیلی ثبت نشده است. دکمه زیر را برای اجرای اولین تحلیل عمیق الگوهای رفتاری خود فشار دهید.',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   color: colors.textSecondary,
                   height: 1.6,
@@ -493,7 +491,7 @@ ${jsonEncode(digest.json)}
                 icon: const Icon(CupertinoIcons.sparkles, size: 16, color: Colors.white),
                 label: const Text(
                   'تحلیل عمیق با هوش مصنوعی',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
             ],
@@ -514,7 +512,6 @@ ${jsonEncode(digest.json)}
                 Text(
                   'تحلیل هوشمند ریتمو 🧠',
                   style: TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -538,7 +535,6 @@ ${jsonEncode(digest.json)}
               Text(
                 _briefing!.headline,
                 style: const TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.cyanAccent,
@@ -549,7 +545,6 @@ ${jsonEncode(digest.json)}
               Text(
                 _briefing!.summary,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   color: colors.textSecondary,
                   height: 1.6,
@@ -568,7 +563,7 @@ ${jsonEncode(digest.json)}
                     const SizedBox(height: 12),
                     Text(
                       'در حال تحلیل عمیق الگوهای رفتاری شما... لطفاً صبور باشید 🧐',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: colors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
                     ),
                   ],
                 ),
@@ -579,7 +574,6 @@ ${jsonEncode(digest.json)}
               const Text(
                 'گزارش تحلیل عمیق:',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: Colors.cyanAccent,
@@ -598,7 +592,6 @@ ${jsonEncode(digest.json)}
                   child: Text(
                     _deepAnalysisResult!,
                     style: TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: colors.textSecondary,
                       height: 1.6,
@@ -619,7 +612,7 @@ ${jsonEncode(digest.json)}
                 icon: const Icon(CupertinoIcons.sparkles, size: 16, color: Colors.white),
                 label: const Text(
                   'تحلیل عمیق با هوش مصنوعی',
-                  style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
             ],
@@ -715,8 +708,7 @@ ${jsonEncode(digest.json)}
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -724,8 +716,7 @@ ${jsonEncode(digest.json)}
                 style: TextStyle(
                   fontSize: 12,
                   color: colors.textSecondary,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ],
           ),
@@ -780,8 +771,7 @@ ${jsonEncode(digest.json)}
           fontSize: 11,
           fontWeight: FontWeight.bold,
           color: color,
-          fontFamily: 'Vazirmatn',
-        ),
+          ),
       ),
     );
   }
@@ -809,8 +799,7 @@ ${jsonEncode(digest.json)}
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -820,8 +809,7 @@ ${jsonEncode(digest.json)}
                     fontSize: 12,
                     color: colors.textSecondary,
                     height: 1.6,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
                 const SizedBox(height: 16),
                 _buildMaturityBadge(),
@@ -876,12 +864,12 @@ ${jsonEncode(digest.json)}
           children: [
             Text(
               title,
-              style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+              style: TextStyle(fontSize: 12, color: colors.textSecondary),
             ),
             const SizedBox(height: 10),
             Text(
               val,
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color, fontFamily: 'Vazirmatn'),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color),
             ),
           ],
         ),
@@ -962,8 +950,7 @@ ${jsonEncode(digest.json)}
         fontSize: 15,
         fontWeight: FontWeight.bold,
         color: colors.textPrimary,
-        fontFamily: 'Vazirmatn',
-      ),
+        ),
     );
   }
 
@@ -983,7 +970,7 @@ ${jsonEncode(digest.json)}
                 children: [
                   Text(
                     'نبض زندگی جاری (میانگین ۷ روزه)',
-                    style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
                   ),
                   Icon(CupertinoIcons.chevron_left, size: 16, color: colors.textSecondary.withValues(alpha: 0.5)),
                 ],
@@ -995,8 +982,7 @@ ${jsonEncode(digest.json)}
                   fontSize: 48,
                   fontWeight: FontWeight.w900,
                   color: colors.success,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
               const SizedBox(height: 12),
               // Trend indicator
@@ -1037,7 +1023,7 @@ ${jsonEncode(digest.json)}
     if (value == 0) {
       return Text(
         'پایدار $label',
-        style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+        style: TextStyle(fontSize: 11, color: colors.textSecondary),
       );
     }
     final trendColor = isUp ? colors.success : colors.medicalRed;
@@ -1047,7 +1033,7 @@ ${jsonEncode(digest.json)}
         const SizedBox(width: 3),
         Text(
           '$value٪ $label',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: trendColor, fontFamily: 'Vazirmatn'),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: trendColor),
         ),
       ],
     );
@@ -1090,11 +1076,11 @@ ${jsonEncode(digest.json)}
                         children: [
                           Text(
                             'تایم‌لاین نبض زندگی',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
                           Text(
                             'ثبت‌شده: ${_pulseHistoryList.length} روز',
-                            style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
                           ),
                         ],
                       ),
@@ -1105,7 +1091,7 @@ ${jsonEncode(digest.json)}
                           ? Center(
                               child: Text(
                                 'هنوز هیچ نبض روزانه‌ای ثبت نشده است.',
-                                style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                                style: TextStyle(color: colors.textSecondary),
                               ),
                             )
                           : ListView.builder(
@@ -1159,8 +1145,7 @@ ${jsonEncode(digest.json)}
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
                                               color: score >= 80 ? colors.success : (score >= 50 ? colors.primary : colors.medicalRed),
-                                              fontFamily: 'Vazirmatn',
-                                            ),
+                                              ),
                                           ),
                                         ],
                                       )
@@ -1194,7 +1179,7 @@ ${jsonEncode(digest.json)}
               Text(
                 'هنوز در این ابعاد روتینی تکمیل نشده است تا تعادل محاسبه شود. برای دیدن تعادل ابعاد زندگی، روتین‌های روزانه خود را تکمیل کنید.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.6, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.6),
               ),
             ],
           ),
@@ -1229,12 +1214,12 @@ ${jsonEncode(digest.json)}
                     children: [
                       Text(
                         'شاخص تعادل کل زندگی',
-                        style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '$_lifeBalanceScore٪',
-                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: colors.primary, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: colors.primary),
                       ),
                     ],
                   ),
@@ -1262,10 +1247,10 @@ ${jsonEncode(digest.json)}
                           children: [
                             Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
                             const SizedBox(width: 8),
-                            Text(name, style: TextStyle(fontSize: 12, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                            Text(name, style: TextStyle(fontSize: 12, color: colors.textPrimary)),
                           ],
                         ),
-                        Text('${percent.toStringAsFixed(0)}٪', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                        Text('${percent.toStringAsFixed(0)}٪', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textSecondary)),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -1310,9 +1295,9 @@ ${jsonEncode(digest.json)}
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('تداوم فعلی', style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                          Text('تداوم فعلی', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                           const SizedBox(height: 4),
-                          Text(toPersianDigits('$_currentStreak روز متوالی'), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                          Text(toPersianDigits('$_currentStreak روز متوالی'), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                         ],
                       )
                     ],
@@ -1328,9 +1313,9 @@ ${jsonEncode(digest.json)}
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('طولانی‌ترین تداوم', style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                          Text('طولانی‌ترین تداوم', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                           const SizedBox(height: 4),
-                          Text(toPersianDigits('$_longestStreak روز متوالی'), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                          Text(toPersianDigits('$_longestStreak روز متوالی'), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                         ],
                       )
                     ],
@@ -1350,7 +1335,7 @@ ${jsonEncode(digest.json)}
                     _pulseDiffUp
                         ? 'شتاب انرژی رفتاری شما در ۷ روز اخیر با افزایش ${toPersianDigits('$_pulseDiffPercentage٪')} همراه بوده است.'
                         : 'شتاب انرژی رفتاری شما در ۷ روز اخیر با تغییر ${toPersianDigits('$_pulseDiffPercentage٪')} نیازمند پایش است.',
-                    style: TextStyle(fontSize: 11, color: colors.textSecondary, height: 1.5, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 11, color: colors.textSecondary, height: 1.5),
                   ),
                 ),
               ],
@@ -1371,7 +1356,7 @@ ${jsonEncode(digest.json)}
         alignment: Alignment.center,
         child: Text(
           'هنوز دسته‌بندی در روتین‌ها برای تحلیل روند وجود ندارد.',
-          style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+          style: TextStyle(fontSize: 12, color: colors.textSecondary),
         ),
       );
     }
@@ -1398,7 +1383,7 @@ ${jsonEncode(digest.json)}
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                    Text(name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                     Container(
                       width: 6,
                       height: 6,
@@ -1412,7 +1397,7 @@ ${jsonEncode(digest.json)}
                   children: [
                     Text(
                       toPersianDigits('${e.value.toStringAsFixed(0)}٪'),
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: colors.textPrimary),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -1426,8 +1411,7 @@ ${jsonEncode(digest.json)}
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: color,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ),
                   ],
@@ -1482,7 +1466,7 @@ ${jsonEncode(digest.json)}
           child: Center(
             child: Text(
               'داده‌های ثبت انرژی کافی نیست.',
-              style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+              style: TextStyle(fontSize: 12, color: colors.textSecondary),
             ),
           ),
         ),
@@ -1509,8 +1493,8 @@ ${jsonEncode(digest.json)}
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title, style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
-            Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color, fontFamily: 'Vazirmatn')),
+            Text(title, style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+            Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
           ],
         ),
       ),
@@ -1629,8 +1613,7 @@ ${jsonEncode(digest.json)}
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ),
                     IconButton(
@@ -1647,8 +1630,7 @@ ${jsonEncode(digest.json)}
                     fontSize: 12,
                     color: colors.textSecondary,
                     height: 1.6,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                    ),
                 ),
               ],
             ),
@@ -1674,7 +1656,7 @@ ${jsonEncode(digest.json)}
               children: [
                 Icon(CupertinoIcons.doc_text_search, color: colors.primary, size: 20),
                 const SizedBox(width: 8),
-                const Text('شناسنامه و ردیابی شاخص', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, color: Colors.white)),
+                const Text('شناسنامه و ردیابی شاخص', style: TextStyle(fontSize: 15, color: Colors.white)),
               ],
             ),
             content: Column(
@@ -1693,7 +1675,7 @@ ${jsonEncode(digest.json)}
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('بستن', style: TextStyle(color: Color(0xff5B8AF5), fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                child: const Text('بستن', style: TextStyle(color: Color(0xff5B8AF5), fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -1706,7 +1688,7 @@ ${jsonEncode(digest.json)}
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+        Text(label, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1764,9 +1746,9 @@ ${jsonEncode(digest.json)}
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(milestone.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Vazirmatn')),
+                      Text(milestone.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
                       const SizedBox(height: 4),
-                      Text(milestone.description, style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                      Text(milestone.description, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                       if (!milestone.isUnlocked) ...[
                         const SizedBox(height: 8),
                         ClipRRect(
@@ -1865,20 +1847,20 @@ ${jsonEncode(digest.json)}
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+            Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary)),
             const SizedBox(height: 10),
             if (hasEnough) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(value, style: TextStyle(fontSize: 13, color: colors.textSecondary, fontFamily: 'Vazirmatn')),
-                  Text(changeStr, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isBetter ? colors.success : colors.medicalRed, fontFamily: 'Vazirmatn')),
+                  Text(value, style: TextStyle(fontSize: 13, color: colors.textSecondary)),
+                  Text(changeStr, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isBetter ? colors.success : colors.medicalRed)),
                 ],
               )
             ] else ...[
               Text(
                 toPersianDigits('هنوز داده کافی برای این تحلیل وجود ندارد (نیاز به حداقل $requiredDays روز داده فعالیتی)'),
-                style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.6), fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.6)),
               )
             ]
           ],
@@ -1914,8 +1896,7 @@ ${jsonEncode(digest.json)}
                   fontSize: 12,
                   color: colors.textSecondary,
                   height: 1.6,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ),
           ],
@@ -1939,7 +1920,6 @@ ${jsonEncode(digest.json)}
             title: Text(
               'انتخاب محدوده زمانی',
               style: TextStyle(
-                fontFamily: 'Vazirmatn',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
@@ -1955,8 +1935,7 @@ ${jsonEncode(digest.json)}
                     style: TextStyle(
                       fontSize: 13,
                       color: colors.textPrimary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                      ),
                   ),
                   leading: Icon(
                     isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
@@ -1978,7 +1957,7 @@ ${jsonEncode(digest.json)}
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   'بستن',
-                  style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(color: colors.textSecondary),
                 ),
               ),
             ],
@@ -2005,12 +1984,12 @@ ${jsonEncode(digest.json)}
                 children: [
                   Text(
                     'خروجی از بینش‌ها',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'گزارش وضعیت روندها و تعادل ابعاد زندگی شما آماده خروجی گرفتن است.',
-                    style: TextStyle(fontSize: 12, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
@@ -2021,7 +2000,7 @@ ${jsonEncode(digest.json)}
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                     icon: const Icon(CupertinoIcons.doc_richtext, size: 18),
-                    label: const Text('دانلود فایل متنی PDF', style: TextStyle(fontFamily: 'Vazirmatn')),
+                    label: const Text('دانلود فایل متنی PDF', style: TextStyle()),
                     onPressed: () {
                       Navigator.pop(context);
                       _executeExport(colors, 'PDF');
@@ -2036,7 +2015,7 @@ ${jsonEncode(digest.json)}
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                     icon: const Icon(CupertinoIcons.photo, size: 18),
-                    label: const Text('ذخیره تصویر روندها (Image)', style: TextStyle(fontFamily: 'Vazirmatn')),
+                    label: const Text('ذخیره تصویر روندها (Image)', style: TextStyle()),
                     onPressed: () {
                       Navigator.pop(context);
                       _executeExport(colors, 'IMAGE');
@@ -2066,19 +2045,19 @@ ${jsonEncode(digest.json)}
               children: [
                 Icon(CupertinoIcons.checkmark_circle_fill, color: colors.success, size: 22),
                 const SizedBox(width: 8),
-                Text('خروجی با موفقیت آماده شد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, color: colors.textPrimary)),
+                Text('خروجی با موفقیت آماده شد', style: TextStyle(fontSize: 15, color: colors.textPrimary)),
               ],
             ),
             content: Text(
               _isFemale
                   ? 'گزارش نبض زندگی و تعادل ابعاد شما با موفقیت آماده شد.\n\n⚠️ توجه: به دلیل مسائل حریم خصوصی، داده‌های محرمانه چرخه بدنی و سلامت خصوصی هرگز در خروجی قرار نگرفته‌اند.'
                   : 'گزارش نبض زندگی و تعادل ابعاد شما با موفقیت آماده شد.\n\n⚠️ توجه: به دلیل مسائل حریم خصوصی، داده‌های شخصی و حساس هرگز در خروجی قرار نگرفته‌اند.',
-              style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.6, fontFamily: 'Vazirmatn'),
+              style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.6),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('تایید', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn')),
+                child: Text('تایید', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -2125,14 +2104,14 @@ ${jsonEncode(digest.json)}
                   const SizedBox(width: 10),
                   Text(
                     'اشتراک‌گذاری گزارش بینش‌ها',
-                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               ListTile(
                 leading: const Icon(CupertinoIcons.doc_on_clipboard, color: Color(0xFF10B981)),
-                title: Text('کپی متن گزارش در حافظه (کپی سریع)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textPrimary)),
+                title: Text('کپی متن گزارش در حافظه (کپی سریع)', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   await Clipboard.setData(ClipboardData(text: text));
@@ -2143,7 +2122,7 @@ ${jsonEncode(digest.json)}
               ),
               ListTile(
                 leading: const Icon(CupertinoIcons.paperplane, color: Color(0xFF3B82F6)),
-                title: Text('ارسال به پیام‌رسان‌ها (اشتراک سیستم)', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: colors.textPrimary)),
+                title: Text('ارسال به پیام‌رسان‌ها (اشتراک سیستم)', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final box = buttonContext.findRenderObject() as RenderBox?;

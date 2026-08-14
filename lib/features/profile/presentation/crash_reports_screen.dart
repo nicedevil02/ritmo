@@ -50,7 +50,7 @@ class _CrashReportsScreenState extends State<CrashReportsScreen> {
         backgroundColor: colors.background,
         appBar: AppBar(
           backgroundColor: colors.background,
-          title: const Text('گزارش‌های فنی خطا', style: TextStyle(fontFamily: 'Vazirmatn')),
+          title: const Text('گزارش‌های فنی خطا', style: TextStyle()),
           actions: [
             if (_reports.isNotEmpty)
               IconButton(
@@ -71,7 +71,7 @@ class _CrashReportsScreenState extends State<CrashReportsScreen> {
                         const SizedBox(height: 16),
                         Text(
                           'هیچ خطایی ثبت نشده است 🌿',
-                          style: TextStyle(color: colors.textPrimary, fontSize: 16, fontFamily: 'Vazirmatn'),
+                          style: TextStyle(color: colors.textPrimary, fontSize: 16),
                         ),
                       ],
                     ),
@@ -95,7 +95,7 @@ class _CrashReportsScreenState extends State<CrashReportsScreen> {
                                 context: context,
                                 builder: (ctx) => AlertDialog(
                                   backgroundColor: colors.card,
-                                  title: Text(filename, style: const TextStyle(fontSize: 14, fontFamily: 'Vazirmatn')),
+                                  title: Text(filename, style: const TextStyle(fontSize: 14)),
                                   content: SingleChildScrollView(
                                     child: SelectableText(
                                       text,

@@ -409,7 +409,6 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                         const Text(
                           'وضعیت امروز ثبت شد ✓',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF10B981),
@@ -421,7 +420,6 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                           '${toPersianDigits('$_availableMinutes')} دقیقه'
                           '${_soreBodyParts.isNotEmpty ? ' · کوفتگی: $soreNames' : ''}',
                           style: const TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 10.5,
                             color: Colors.white54,
                           ),
@@ -453,7 +451,6 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                             Text(
                               'واگرد',
                               style: TextStyle(
-                                fontFamily: 'Vazirmatn',
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFFF59E0B),
@@ -507,7 +504,6 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                       ? 'وضعیت امروزت رو ثبت کن ⚡'
                       : 'وضعیت ثبت‌شدهٔ امروز',
                   style: const TextStyle(
-                    fontFamily: 'Vazirmatn',
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -524,7 +520,6 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                     child: const Text(
                       'ثبت شد ✓',
                       style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 11,
                           color: Color(0xFF10B981),
                           fontWeight: FontWeight.bold),
@@ -536,7 +531,7 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
 
             // 1. Energy selector
             const Text('سطح انرژی:',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white70)),
+                style: TextStyle(fontSize: 12, color: Colors.white70)),
             const SizedBox(height: 6),
             Row(
               children: [1, 2, 3, 4, 5].map((lvl) {
@@ -559,7 +554,6 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                       child: Text(
                         labels[lvl - 1],
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 10,
                           fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                           color: selected ? Colors.white : Colors.white70,
@@ -574,7 +568,7 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
 
             // 2. Sore Body Parts selector (multi-select chips)
             const Text('کوفتگی عضلانی (عضوهای کوفته رو انتخاب کن):',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white70)),
+                style: TextStyle(fontSize: 12, color: Colors.white70)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
@@ -606,7 +600,6 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                         Text(
                           part.titleFa,
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 11,
                             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                             color: selected ? const Color(0xFFF59E0B) : Colors.white70,
@@ -627,7 +620,6 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
               Text(
                 'تمرینات مرتبط با عضوهای کوفته بررسی و پیشنهاد جایگزین داده می‌شود.',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 10,
                   color: const Color(0xFFF59E0B).withValues(alpha: 0.7),
                   fontStyle: FontStyle.italic,
@@ -638,7 +630,7 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
 
             // 3. Available Minutes selector
             const Text('زمان در دسترس امروز:',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white70)),
+                style: TextStyle(fontSize: 12, color: Colors.white70)),
             const SizedBox(height: 6),
             Row(
               children: [15, 30, 45, 60].map((min) {
@@ -660,7 +652,6 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                       child: Text(
                         toPersianDigits('$min د'),
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 12,
                           fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                           color: selected ? Colors.white : Colors.white70,
@@ -694,7 +685,6 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                             ? 'ثبت وضعیت و تطبیق هوشمند تمرین'
                             : 'به‌روزرسانی وضعیت',
                         style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                           color: Colors.white,
@@ -830,7 +820,6 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
                         child: Text(
                           'پیشنهاد جایگزینی حرکات',
                           style: TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -844,7 +833,6 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
                     'با توجه به کوفتگی ${widget.sorePartNames}، حرکات زیر ممکنه فشار اضافه‌ای بیاره. '
                     'می‌خوای جایگزین بشن؟',
                     style: const TextStyle(
-                      fontFamily: 'Vazirmatn',
                       fontSize: 12,
                       color: Colors.white60,
                       height: 1.5,
@@ -888,7 +876,6 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
                               child: Text(
                                 name,
                                 style: const TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
@@ -905,7 +892,7 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
                           const Text(
                             'جایگزین:',
                             style: TextStyle(
-                                fontFamily: 'Vazirmatn', fontSize: 10.5, color: Colors.white54),
+                                fontSize: 10.5, color: Colors.white54),
                           ),
                           const SizedBox(height: 4),
                           // Alternative exercise dropdown
@@ -922,14 +909,13 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
                                 value: selectedAlt,
                                 dropdownColor: const Color(0xFF1E293B),
                                 style: const TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 12,
                                   color: Colors.white,
                                 ),
                                 hint: const Text(
                                   'انتخاب جایگزین...',
                                   style: TextStyle(
-                                      fontFamily: 'Vazirmatn', fontSize: 12, color: Colors.white38),
+                                      fontSize: 12, color: Colors.white38),
                                 ),
                                 items: widget.alternatives.take(15).map((alt) {
                                   final altId = alt['id']?.toString() ?? '';
@@ -937,7 +923,7 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
                                   return DropdownMenuItem<String>(
                                     value: altId,
                                     child: Text(altName,
-                                        style: const TextStyle(fontFamily: 'Vazirmatn')),
+                                        style: const TextStyle()),
                                   );
                                 }).toList(),
                                 onChanged: (val) {
@@ -983,7 +969,6 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
                               ? 'تغییرات اعمال شد ✓'
                               : 'تأیید و جایگزینی',
                           style: const TextStyle(
-                            fontFamily: 'Vazirmatn',
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                             color: Colors.white,
@@ -1005,7 +990,6 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
                       child: const Text(
                         'فعلاً نه',
                         style: TextStyle(
-                          fontFamily: 'Vazirmatn',
                           fontSize: 13,
                           color: Colors.white70,
                         ),

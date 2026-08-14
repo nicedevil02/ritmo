@@ -77,27 +77,23 @@ class _AiSecretFieldState extends State<AiSecretField> {
           style: TextStyle(
             fontSize: 15,
             color: colors.textPrimary,
-            fontFamily: 'Vazirmatn',
-          ),
+            ),
           decoration: InputDecoration(
             labelText: widget.label,
             labelStyle: TextStyle(
               color: colors.textSecondary,
               fontSize: 13,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
             hintText: widget.hint,
             hintStyle: TextStyle(
               color: colors.textTertiary,
               fontSize: 13,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
             errorText: widget.errorText,
             errorStyle: TextStyle(
               color: colors.error,
               fontSize: 11,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
             prefixIcon: Icon(Icons.key_rounded, color: colors.primary, size: 20),
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
@@ -155,8 +151,7 @@ class _AiSecretFieldState extends State<AiSecretField> {
                   color: colors.error,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'Vazirmatn',
-                ),
+                  ),
               ),
             ),
           ),

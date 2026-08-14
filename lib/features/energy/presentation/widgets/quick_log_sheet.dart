@@ -43,7 +43,7 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
     if (_selectedEnergy == null && _selectedMood == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('لطفاً حداقل یکی از موارد (انرژی یا حال روحی) را انتخاب کنید.', style: TextStyle(fontFamily: 'Vazirmatn')),
+          content: Text('لطفاً حداقل یکی از موارد (انرژی یا حال روحی) را انتخاب کنید.', style: TextStyle()),
           backgroundColor: Colors.amber,
         ),
       );
@@ -116,7 +116,7 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
         Navigator.pop(context);
         messenger.showSnackBar(
           const SnackBar(
-            content: Text('ارزیابی وضعیت شما با موفقیت ثبت شد 🌿', style: TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text('ارزیابی وضعیت شما با موفقیت ثبت شد 🌿', style: TextStyle()),
             backgroundColor: Color(0xffEC4899),
           ),
         );
@@ -158,7 +158,7 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
                 children: [
                   Text(
                     'الان چطورم؟',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
                   ),
                   IconButton(
                     icon: Icon(CupertinoIcons.xmark, color: isDark ? Colors.white60 : colors.textSecondary, size: 20),
@@ -171,7 +171,7 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
               // 1. Energy Level
               Text(
                 '⚡ سطح انرژی فیزیکی بدنی شما:',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : colors.textSecondary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : colors.textSecondary),
               ),
               const SizedBox(height: 8),
               Row(
@@ -223,8 +223,7 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
                                 fontSize: 13,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 color: isSelected ? (isDark ? Colors.white : activeColor) : (isDark ? Colors.white70 : colors.textSecondary),
-                                fontFamily: 'Vazirmatn',
-                              ),
+                                ),
                             ),
                           ],
                         ),
@@ -238,7 +237,7 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
               // 2. Mood Grid
               Text(
                 '🎭 احساس و حال روحی:',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : colors.textSecondary, fontFamily: 'Vazirmatn'),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : colors.textSecondary),
               ),
               const SizedBox(height: 8),
               GridView.builder(
@@ -287,8 +286,7 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               color: isSelected ? (isDark ? Colors.white : const Color(0xffEC4899)) : (isDark ? Colors.white70 : colors.textSecondary),
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                         ],
                       ),
@@ -304,11 +302,11 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
                 children: [
                   Text(
                     ' میزان خوشایی (میزان رضایت ذهنی):',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : colors.textSecondary),
                   ),
                   Text(
                     _toPersianDigits('${_valence.toInt()} از ۵'),
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xffEC4899), fontFamily: 'Vazirmatn'),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xffEC4899)),
                   ),
                 ],
               ),
@@ -329,9 +327,9 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('خیلی ناخوشایند 😞', style: TextStyle(fontSize: 11, color: isDark ? Colors.white30 : colors.textSecondary.withValues(alpha: 0.7), fontFamily: 'Vazirmatn')),
-                  Text('خنثی 😐', style: TextStyle(fontSize: 11, color: isDark ? Colors.white30 : colors.textSecondary.withValues(alpha: 0.7), fontFamily: 'Vazirmatn')),
-                  Text('خیلی خوشایند 🥰', style: TextStyle(fontSize: 11, color: isDark ? Colors.white30 : colors.textSecondary.withValues(alpha: 0.7), fontFamily: 'Vazirmatn')),
+                  Text('خیلی ناخوشایند 😞', style: TextStyle(fontSize: 11, color: isDark ? Colors.white30 : colors.textSecondary.withValues(alpha: 0.7))),
+                  Text('خنثی 😐', style: TextStyle(fontSize: 11, color: isDark ? Colors.white30 : colors.textSecondary.withValues(alpha: 0.7))),
+                  Text('خیلی خوشایند 🥰', style: TextStyle(fontSize: 11, color: isDark ? Colors.white30 : colors.textSecondary.withValues(alpha: 0.7))),
                 ],
               ),
               const SizedBox(height: 20),
@@ -339,11 +337,11 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
               // 4. Note
               TextField(
                 controller: _noteController,
-                style: TextStyle(color: isDark ? Colors.white : colors.textPrimary, fontSize: 14, fontFamily: 'Vazirmatn'),
+                style: TextStyle(color: isDark ? Colors.white : colors.textPrimary, fontSize: 14),
                 maxLines: 2,
                 decoration: InputDecoration(
                   hintText: 'توضیحات بیشتر یا علت این حس و حال (اختیاری)...',
-                  hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 12, fontFamily: 'Vazirmatn'),
+                  hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 12),
                   fillColor: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02),
                   filled: true,
                   enabledBorder: OutlineInputBorder(
@@ -375,7 +373,7 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
                       )
                     : const Text(
                         'ثبت و ذخیره وضعیت کنونی',
-                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
                       ),
               ),
             ],

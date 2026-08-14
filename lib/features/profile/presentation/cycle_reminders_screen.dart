@@ -215,8 +215,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           Icon(
                             _isLocked ? CupertinoIcons.lock_fill : CupertinoIcons.lock_open_fill,
@@ -288,8 +287,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -298,7 +296,6 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
                           height: 1.5,
                         ),
                       ),
@@ -311,8 +308,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                             fontSize: 11,
                             color: Colors.redAccent,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                       const SizedBox(height: 24),
@@ -351,7 +347,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                         icon: const Icon(CupertinoIcons.device_phone_portrait, size: 18),
                         label: const Text(
                           'ورود با اثر انگشت',
-                          style: TextStyle(fontSize: 13, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -360,8 +356,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                         style: TextStyle(
                           fontSize: 10,
                           color: colors.textSecondary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -436,8 +431,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
         ),
       ),
@@ -485,8 +479,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                           style: TextStyle(
                             fontSize: 10,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -495,8 +488,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -505,8 +497,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                             fontSize: 11,
                             color: Color(0xffF43F5E),
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                       ],
                     ),
@@ -524,8 +515,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
           const SizedBox(height: 12),
           RitmoTheme.glassCardLight(
@@ -561,7 +551,6 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
                               height: 1.4,
                             ),
                           ),
@@ -582,8 +571,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
-              fontFamily: 'Vazirmatn',
-            ),
+              ),
           ),
           const SizedBox(height: 12),
           RitmoTheme.glassCardLight(
@@ -597,23 +585,23 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                     children: [
                       Text(
                         'میانگین طول چرخه: ${_settings['cycle_length_days'] ?? '۲۸'} روز',
-                        style: TextStyle(fontSize: 11, color: colors.textPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 11, color: colors.textPrimary, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         'طول دوره خونریزی: ${_settings['period_duration_days'] ?? '۷'} روز',
-                        style: TextStyle(fontSize: 11, color: colors.textPrimary, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 11, color: colors.textPrimary, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                   const Divider(height: 20),
                   Text(
                     'تاریخچه‌ی دوره‌های ثبت شده:',
-                    style: TextStyle(fontSize: 10, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                    style: TextStyle(fontSize: 10, color: colors.textSecondary),
                   ),
                   const SizedBox(height: 8),
                   if (_cycleLogs.isEmpty) Text(
                           'تاکنون هیچ دوره‌ای ثبت نشده است. اطلاعات چرخه به مرور زمان و با ورود دوره‌ها در اینجا نمایش داده می‌شود.',
-                          style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn', height: 1.5),
+                          style: TextStyle(fontSize: 11, color: colors.textSecondary, height: 1.5),
                         ) else ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -629,11 +617,11 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                                 children: [
                                   Text(
                                     'شروع: $startStr',
-                                    style: TextStyle(fontSize: 11, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+                                    style: TextStyle(fontSize: 11, color: colors.textPrimary),
                                   ),
                                   Text(
                                     'پایان: $endStr',
-                                    style: TextStyle(fontSize: 11, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
                                   ),
                                 ],
                               ),
@@ -665,8 +653,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ],
                   ),
@@ -692,7 +679,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
               icon: const Icon(CupertinoIcons.lock_fill, size: 16, color: Color(0xffF43F5E)),
               label: const Text(
                 'قفل مجدد اطلاعات خصوصی',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, color: Color(0xffF43F5E), fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 12, color: Color(0xffF43F5E), fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -715,8 +702,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
               style: TextStyle(
                 fontSize: 10,
                 color: colors.textPrimary.withValues(alpha: 0.8),
-                fontFamily: 'Vazirmatn',
-              ),
+                ),
             ),
           ),
         ],

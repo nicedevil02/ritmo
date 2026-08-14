@@ -29,21 +29,21 @@ class CompletedCoursesSection extends StatelessWidget {
           backgroundColor: isDarkMode ? const Color(0xff12141C) : Colors.white,
           title: const Text(
             'بازیابی دوره',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           content: Text(
             'آیا می‌خواهید دوره "${course.title}" را مجدداً به وضعیت فعال بازگردانید تا جلسات آن را پیگیری کنید؟',
-            style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
+            style: const TextStyle(fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('انصراف', style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textSecondary)),
+              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: const Text('بازیابی', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.white)),
+              child: const Text('بازیابی', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -79,7 +79,6 @@ class CompletedCoursesSection extends StatelessWidget {
         Text(
           'دوره‌های تکمیل‌شده (تالار افتخارات)',
           style: TextStyle(
-            fontFamily: 'Vazirmatn',
             fontSize: 15,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
@@ -120,7 +119,6 @@ class CompletedCoursesSection extends StatelessWidget {
                               Text(
                                 course.title,
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: colors.textPrimary.withValues(alpha: 0.8),
@@ -142,7 +140,6 @@ class CompletedCoursesSection extends StatelessWidget {
                                 Text(
                                   'تکمیل‌شده 🏆',
                                   style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xff10A37F),
@@ -163,7 +160,6 @@ class CompletedCoursesSection extends StatelessWidget {
                               Text(
                                 'تعداد کل جلسات: ${toPersianDigits(course.totalSessions)} جلسه',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 11,
                                   color: colors.textSecondary,
                                 ),
@@ -172,7 +168,6 @@ class CompletedCoursesSection extends StatelessWidget {
                               Text(
                                 'مدت کل زمان مطالعه: ${toPersianDigits(totalMinutes)} دقیقه',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
                                   fontSize: 11,
                                   color: colors.textSecondary,
                                 ),
@@ -184,7 +179,7 @@ class CompletedCoursesSection extends StatelessWidget {
                             icon: const Icon(CupertinoIcons.refresh, size: 14),
                             label: const Text(
                               'بازیابی دوره',
-                              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 11, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],

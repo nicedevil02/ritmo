@@ -103,7 +103,6 @@ class NoteLinkTile extends StatelessWidget {
               child: Text(
                 'مرتبط با $moduleLabel ($shortEntityId)',
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 12,
                   color: colors.textPrimary,
                 ),
@@ -122,7 +121,6 @@ class NoteLinkTile extends StatelessWidget {
               child: Text(
                 relationLabel,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
                   fontSize: 10.5,
                   fontWeight: FontWeight.bold,
                   color: colors.primary,

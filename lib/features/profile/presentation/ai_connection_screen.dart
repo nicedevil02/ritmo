@@ -491,8 +491,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: _mode == AiMode.ritmoServer ? colors.primary : colors.textPrimary,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                               const SizedBox(height: RitmoSpacing.xs),
                               Text(
@@ -501,7 +500,6 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: colors.textSecondary,
-                                  fontFamily: 'Vazirmatn',
                                   height: 1.4,
                                 ),
                               ),
@@ -544,8 +542,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: _mode == AiMode.personalKey ? colors.primary : colors.textPrimary,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                               const SizedBox(height: RitmoSpacing.xs),
                               Text(
@@ -554,7 +551,6 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: colors.textSecondary,
-                                  fontFamily: 'Vazirmatn',
                                   height: 1.4,
                                 ),
                               ),
@@ -583,8 +579,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: colors.textPrimary,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                             ],
                           ),
@@ -595,8 +590,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                               fontSize: 13,
                               color: colors.textSecondary,
                               height: 1.6,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                         ],
                       ),
@@ -609,8 +603,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     const SizedBox(height: RitmoSpacing.sm),
                     for (final preset in kAiProviderPresets)
@@ -631,8 +624,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                      ),
+                        ),
                     ),
                     const SizedBox(height: RitmoSpacing.sm),
                     RitmoTextField(
@@ -656,8 +648,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           color: colors.textTertiary,
-                          fontFamily: 'Vazirmatn',
-                        ),
+                          ),
                       ),
                     ),
                     const SizedBox(height: RitmoSpacing.md),
@@ -688,11 +679,11 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                         for (final m in currentPreset.models)
                           DropdownMenuItem(
                             value: m,
-                            child: Text(m, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13)),
+                            child: Text(m, style: const TextStyle(fontSize: 13)),
                           ),
                         const DropdownMenuItem(
                           value: '__custom__',
-                          child: Text('مدل دلخواه...', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13)),
+                          child: Text('مدل دلخواه...', style: TextStyle(fontSize: 13)),
                         ),
                       ],
                       onChanged: (val) {
@@ -742,8 +733,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: colors.warning,
-                                  fontFamily: 'Vazirmatn',
-                                ),
+                                  ),
                               ),
                             ),
                           ],
@@ -762,16 +752,14 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         subtitle: Text(
                           'اختیاری · برای جابجایی خودکار در زمان اتمام سهمیه',
                           style: TextStyle(
                             fontSize: 12,
                             color: colors.textSecondary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         children: [
                           Padding(
@@ -785,8 +773,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                     fontSize: 12,
                                     color: colors.textSecondary,
                                     height: 1.5,
-                                    fontFamily: 'Vazirmatn',
-                                  ),
+                                    ),
                                 ),
                                 const SizedBox(height: RitmoSpacing.sm),
                                 RitmoTextField(
@@ -838,8 +825,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                            ),
                         ),
                         children: [
                           Padding(
@@ -853,8 +839,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                     color: colors.textPrimary,
-                                    fontFamily: 'Vazirmatn',
-                                  ),
+                                    ),
                                 ),
                                 const SizedBox(height: RitmoSpacing.xs),
                                 RitmoSegmentedControl<int>(
@@ -881,16 +866,14 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                       color: colors.textPrimary,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                   subtitle: Text(
                                     '«دستیار» چت زنده است و به سرعت نیاز دارد. «تحلیل‌ها» کارهای سنگین‌تر پس‌زمینه مثل خلاصهٔ هفتگی است. می‌توانید برای هرکدام سرویس‌دهندهٔ متفاوتی بگذارید.',
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: colors.textSecondary,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                   value: _separateFeaturesConfig,
                                   onChanged: (val) {
@@ -943,8 +926,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                           const SizedBox(height: RitmoSpacing.sm),
                           for (var i = 0; i < _chainEntries.length; i++) ...[
@@ -958,8 +940,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: colors.textPrimary,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                   const Spacer(),
                                   Text(
@@ -967,8 +948,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: colors.textSecondary,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
+                                      ),
                                   ),
                                   const SizedBox(width: RitmoSpacing.sm),
                                   Container(
@@ -982,8 +962,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: colors.textTertiary,
-                                        fontFamily: 'Vazirmatn',
-                                      ),
+                                        ),
                                     ),
                                   ),
                                 ],
@@ -996,8 +975,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               color: colors.textTertiary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                         ],
                       ),
@@ -1019,8 +997,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                              ),
                           ),
                         ],
                       ),

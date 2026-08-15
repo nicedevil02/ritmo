@@ -44,6 +44,18 @@ jobs:
       - name: Golden tests
         run: flutter test test/golden
 
+      # RFC Aurora §۷.۴ — تله‌ی سوم: Golden قرمزی که بازبین نتواند ببیند،
+      # فقط CI را کند می‌کند. تصویر تفاضل به‌عنوان artifact آپلود می‌شود.
+      - name: Upload golden failure diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-diffs
+          path: |
+            test/golden/failures/
+            test/golden/**/failures/
+          if-no-files-found: ignore
+
       - name: Contrast tests (5 palettes x 2 brightness)
         run: flutter test test/theme/contrast_test.dart
 
@@ -71,6 +83,7 @@ jobs:
         with:
           flutter-version: '3.44.2'
           channel: 'stable'
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get

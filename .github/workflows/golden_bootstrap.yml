@@ -1,0 +1,49 @@
+name: Golden Baseline Bootstrap (manual)
+
+# RFC «Ritmo Aurora» §۷.۴ — تله‌ی دوم Golden:
+# تصاویر مرجع فقط روی همین ایمیج CI (ubuntu-latest) تولید می‌شوند تا اختلاف
+# زیرپیکسلی بین ماشین لوکال و CI صفر شود. اجرای --update-goldens از ماشین
+# لوکال ممنوع است.
+#
+# روش استفاده (یک‌بار، یا بعد از هر تغییر عمدی در زبان بصری):
+#   ۱. این ورک‌فلو را از تب Actions به‌صورت دستی اجرا کنید.
+#   ۲. آرتیفکت golden-baselines را دانلود کنید.
+#   ۳. PNGها را در همان مسیرها کپی و در یک PR جدا کامیت کنید.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate:
+    name: Generate golden baselines on the CI image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Pinned Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate golden baselines
+        run: flutter test test/golden --update-goldens
+
+      - name: Upload golden baselines
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-baselines
+          path: test/golden/**/goldens/*.png
+          if-no-files-found: error

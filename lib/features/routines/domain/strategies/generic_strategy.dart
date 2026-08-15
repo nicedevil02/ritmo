@@ -93,7 +93,17 @@ class GenericStrategy implements PlannerCategoryStrategy {
 
     final effectiveDate = (isEvent && c.eventDate != null) ? c.eventDate! : c.selectedDate;
     RoutineRecurrence recurrence;
-    if (c.recurrenceType == 'ONCE' || c.itemType == 'TASK') {
+    // B-FIX-EVENT-1 — یک «رویداد» ذاتاً یک‌بار مصرف است.
+    //
+    // `PlannerController.recurrenceType` با مقدار 'EVERY_DAY' شروع می‌شود و
+    // مسیر ساخت رویداد هرگز به انتخابگر تکرار نمی‌رسد (تنها
+    // `generic_step2_form.dart` می‌تواند آن را 'ONCE' کند). در نتیجه رویداد به
+    // شاخهٔ else می‌افتاد و با DailyRecurrence ذخیره می‌شد، یعنی
+    // scheduleType='EVERY_DAY' و daysOfWeek='6,7,1,2,3,4,5' — یک روتین روزانهٔ
+    // بی‌پایان به جای یک رویداد تک‌نوبتی.
+    //
+    // EVENT دقیقاً مثل TASK باید یک‌بار مصرف باشد.
+    if (c.recurrenceType == 'ONCE' || c.itemType == 'TASK' || isEvent) {
       recurrence = OnceRecurrence(date: effectiveDate);
     } else if ((c.recurrenceType == 'CUSTOM_DAYS' || c.recurrenceType == 'WEEKLY') &&
         c.worshipSelectedDays.isNotEmpty) {

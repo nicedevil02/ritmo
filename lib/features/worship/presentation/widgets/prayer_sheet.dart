@@ -6,6 +6,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
 import 'package:ritmo/features/worship/domain/prayer_target.dart';
+import 'package:ritmo/features/worship/logic/worship_cache_bus.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 
 class PrayerSheet extends StatefulWidget {
@@ -13,8 +14,8 @@ class PrayerSheet extends StatefulWidget {
   
   const PrayerSheet({super.key, required this.target});
 
-  static Future<void> show(BuildContext context, PrayerTarget target) {
-    return showModalBottomSheet(
+  static Future<bool?> show(BuildContext context, PrayerTarget target) {
+    return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -105,8 +106,9 @@ class _PrayerSheetState extends State<PrayerSheet> {
       }
     }
 
-    WorshipEngine.instance.invalidate();
-    nav.pop();
+    WorshipEngine.instance.invalidate(date: widget.target.date);
+    WorshipCacheBus.invalidateAll(dateStr: dateStr);
+    nav.pop(true);
   }
 
   @override

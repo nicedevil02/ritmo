@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -33,11 +34,27 @@ class WorshipScreen extends StatefulWidget {
 class _WorshipScreenState extends State<WorshipScreen> {
   WorshipDay? _worshipDay;
   bool _isLoading = true;
+  StreamSubscription<RitmoEvent>? _eventSub;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _eventSub = RitmoEventBus().onEvents.listen((event) {
+      if (event.type == 'WorshipUpdated' ||
+          event.type == 'WorshipPracticeChanged' ||
+          event.type == RitmoEventType.completionRecorded.code) {
+        if (mounted) {
+          _loadData();
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _eventSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -214,14 +231,17 @@ class _WorshipScreenState extends State<WorshipScreen> {
                           if (isDone) {
                             final target = await PrayerTarget.fromGroupKey(group, DateTime.now());
                             if (!context.mounted) return;
-                            await PrayerSheet.show(context, target);
+                            final res = await PrayerSheet.show(context, target);
+                            if (res == true) {
+                              _onDataChanged();
+                            }
                           } else {
                             final target = await PrayerTarget.fromGroupKey(group, DateTime.now());
                             for (final pId in target.practiceIds) {
                               await WorshipEngine.instance.clearLog(practiceId: pId, date: DateTime.now());
                             }
+                            _onDataChanged();
                           }
-                          _onDataChanged();
                         },
                         onTravellerToggle: (isTraveller) async {
                           final currentCtx = _worshipDay?.context;

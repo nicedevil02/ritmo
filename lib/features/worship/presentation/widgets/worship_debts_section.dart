@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -26,11 +27,27 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
   List<WorshipDebt> _activeDebts = [];
   List<WorshipDebt> _archivedDebts = [];
   bool _showArchived = false;
+  StreamSubscription<RitmoEvent>? _eventSub;
 
   @override
   void initState() {
     super.initState();
     _loadDebts();
+    _eventSub = RitmoEventBus().onEvents.listen((event) {
+      if (event.type == 'WorshipUpdated' ||
+          event.type == 'WorshipPracticeChanged' ||
+          event.type == RitmoEventType.completionRecorded.code) {
+        if (mounted) {
+          _loadDebts();
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _eventSub?.cancel();
+    super.dispose();
   }
 
   @override

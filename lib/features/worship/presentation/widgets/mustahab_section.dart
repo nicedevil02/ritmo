@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
@@ -29,6 +30,7 @@ class _MustahabSectionState extends State<MustahabSection> {
   bool _isLoading = true;
   List<WorshipPractice> _activeMustahabs = [];
   Map<String, WorshipDayStatus> _statuses = {};
+  StreamSubscription<RitmoEvent>? _eventSub;
 
   String get _targetDateStr =>
       (widget.date ?? DateTime.now()).toIso8601String().substring(0, 10);
@@ -40,6 +42,21 @@ class _MustahabSectionState extends State<MustahabSection> {
   void initState() {
     super.initState();
     _loadMustahabs();
+    _eventSub = RitmoEventBus().onEvents.listen((event) {
+      if (event.type == 'WorshipUpdated' ||
+          event.type == 'WorshipPracticeChanged' ||
+          event.type == RitmoEventType.completionRecorded.code) {
+        if (mounted) {
+          _loadMustahabs();
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _eventSub?.cancel();
+    super.dispose();
   }
 
   @override

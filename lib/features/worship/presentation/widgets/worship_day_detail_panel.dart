@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
 import 'package:ritmo/features/worship/domain/prayer_target.dart';
@@ -64,6 +65,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
   bool _isLoadingDay = true;
   List<WorshipPractice> _activeMustahabs = [];
   Map<String, WorshipDayStatus> _mustahabStatuses = {};
+  StreamSubscription<RitmoEvent>? _eventSub;
 
   static const List<String> weekdayNamesFa = [
     'دوشنبه',   // 1
@@ -79,6 +81,21 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
   void initState() {
     super.initState();
     _loadDayData();
+    _eventSub = RitmoEventBus().onEvents.listen((event) {
+      if (event.type == 'WorshipUpdated' ||
+          event.type == 'WorshipPracticeChanged' ||
+          event.type == RitmoEventType.completionRecorded.code) {
+        if (mounted) {
+          _loadDayData();
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _eventSub?.cancel();
+    super.dispose();
   }
 
   @override
@@ -561,22 +578,17 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
       for (final id in target.practiceIds) {
         await WorshipEngine.instance.clearLog(practiceId: id, date: targetDate);
       }
-      WorshipEngine.instance.invalidate();
+      WorshipEngine.instance.invalidate(date: targetDate);
       await _loadDayData();
       widget.onChanged?.call();
       return;
     }
 
     if (!mounted) return;
-    final res = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => PrayerSheet(target: target),
-    );
+    final res = await PrayerSheet.show(context, target);
 
     if (res == true) {
-      WorshipEngine.instance.invalidate();
+      WorshipEngine.instance.invalidate(date: targetDate);
       await _loadDayData();
       widget.onChanged?.call();
     }

@@ -11,6 +11,7 @@ import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/services/end_of_day_sweep.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_reminder_service.dart';
+import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
@@ -22,6 +23,9 @@ class DatabaseHelper {
   static Database? _database;
   static const int _dbVersion = 105;
   static int get dbVersionForTest => _dbVersion;
+
+  /// Hijri month number of Ramadan - the only month qada fasting is owed for.
+  static const int _ramadanHijriMonth = 9;
 
   @visibleForTesting
   static set databaseInstance(Database? db) {
@@ -206,6 +210,24 @@ class DatabaseHelper {
     }
   }
 
+  /// Reads the user-configured Hijri offset (`hijri_offset`) so qada days are
+  /// counted against exactly the same Ramadan the worship screens display.
+  Future<int> _hijriOffsetDays(DatabaseExecutor db) async {
+    try {
+      final rows = await db.query(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: ['hijri_offset'],
+        limit: 1,
+      );
+      if (rows.isEmpty) return 0;
+      return int.tryParse(rows.first['value']?.toString() ?? '') ?? 0;
+    } catch (e) {
+      RitmoLog.warning('DatabaseHelper', 'hijri_offset read failed, assuming 0: $e');
+      return 0;
+    }
+  }
+
   /// Creates (or refreshes) a fasting-debt record for the period active on
   /// [dateStr] — but ONLY for days overlapping Ramadan, since qada is owed
   /// exclusively for missed Ramadan fasts. Uses the same `fd_<periodId>` id
@@ -243,29 +265,30 @@ class DatabaseHelper {
 
       final debtId = 'fd_$periodId';
 
-      // Qada is owed only for Ramadan days — compute the overlap between the
-      // period and the recorded Ramadan season (same rule as CycleScreen).
-      final seasons = await db.query(
-        'worship_seasons',
-        where: "id = 'ws_ramadan'",
-        limit: 1,
-      );
-      if (seasons.isEmpty) {
-        await db.delete('fasting_debt', where: 'id = ?', whereArgs: [debtId]);
-        return;
-      }
-      final rStart = DateTime.tryParse(seasons.first['startDate']?.toString() ?? '');
-      final rEnd = DateTime.tryParse(seasons.first['endDate']?.toString() ?? '');
-      if (rStart == null || rEnd == null) {
-        await db.delete('fasting_debt', where: 'id = ?', whereArgs: [debtId]);
-        return;
-      }
-
+      // Qada is owed only for Ramadan days. This used to read the `ws_ramadan`
+      // row of `worship_seasons`, but the worship-seasons feature was removed
+      // from the product and that table is now always empty - so this method
+      // took the "no season" branch on every single run, deleted the debt and
+      // returned. Menstruating during Ramadan therefore recorded no qada at
+      // all, silently. Ramadan is now derived from the Hijri calendar itself,
+      // honouring the user's own `hijri_offset`.
+      final offsetDays = await _hijriOffsetDays(db);
       final pStart = DateTime.parse(startDateClean);
       final pEnd = DateTime.parse(endDateClean);
-      final latestStart = pStart.isAfter(rStart) ? pStart : rStart;
-      final earliestEnd = pEnd.isBefore(rEnd) ? pEnd : rEnd;
-      final overlapDays = earliestEnd.difference(latestStart).inDays + 1;
+
+      // Counting day-by-day (instead of intersecting two ranges) also stays
+      // correct when a period straddles the first or last day of Ramadan.
+      // The cap only guards against a corrupt endDate producing a runaway loop.
+      const maxPeriodDays = 60;
+      var overlapDays = 0;
+      for (var i = 0; i < maxPeriodDays; i++) {
+        final day = DateTime(pStart.year, pStart.month, pStart.day + i);
+        if (day.isAfter(pEnd)) break;
+        final hijri = HijriCalendarCalculator.hijriFromGregorian(day, offsetDays: offsetDays);
+        if (hijri.month == _ramadanHijriMonth) {
+          overlapDays++;
+        }
+      }
 
       if (overlapDays <= 0) {
         // No Ramadan overlap -> no qada debt for this period.

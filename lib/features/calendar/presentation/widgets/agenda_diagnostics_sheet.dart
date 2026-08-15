@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/agenda/agenda_source_registry.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/routine_agenda_source.dart';
@@ -9,11 +10,10 @@ import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 /// Walks every layer between the database and the calendar agenda and reports
-/// where items are lost. Written so it can be read on-device: no adb, no log
-/// filtering, and every step isolated so one failure still yields a report.
-Future<String> collectAgendaDiagnostics() async {
+/// where items are lost with full per-source observability.
+Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
   final out = StringBuffer();
-  final now = DateTime.now();
+  final now = targetDate ?? DateTime.now();
   String ds(DateTime d) => d.toIso8601String().substring(0, 10);
 
   final todayStr = ds(now);
@@ -28,7 +28,8 @@ Future<String> collectAgendaDiagnostics() async {
   var svcDayItems = -1;
   var svcRangeItems = -1;
 
-  out.writeln('today=$todayStr');
+  out.writeln('=== RITMO AGENDA DIAGNOSTICS ===');
+  out.writeln('targetDate=$todayStr');
   out.writeln('range=$todayStr..$endStr');
   out.writeln('');
 
@@ -63,6 +64,8 @@ Future<String> collectAgendaDiagnostics() async {
     );
     out.writeln('calendar_show_tasks = ${settingsMap['calendar_show_tasks'] ?? '(unset)'}');
     out.writeln('calendar_show_events = ${settingsMap['calendar_show_events'] ?? '(unset)'}');
+    out.writeln('calendar_show_worship_obligatory = ${settingsMap['calendar_show_worship_obligatory'] ?? '(unset)'}');
+    out.writeln('calendar_show_worship_mustahab = ${settingsMap['calendar_show_worship_mustahab'] ?? '(unset)'}');
     out.writeln('');
 
     // ---- 2. raw database --------------------------------------------------
@@ -101,40 +104,76 @@ Future<String> collectAgendaDiagnostics() async {
       out.writeln('routine_occurrences FAILED: $e');
     }
     try {
+      out.writeln('simple_tasks=${await countOf('SELECT COUNT(*) FROM simple_tasks')}');
+      out.writeln('temporary_events=${await countOf('SELECT COUNT(*) FROM temporary_events')}');
       out.writeln('routine_completions=${await countOf('SELECT COUNT(*) FROM routine_completions')}');
+      out.writeln('worship_day_exceptions=${await countOf('SELECT COUNT(*) FROM worship_day_exceptions')}');
     } catch (e) {
-      out.writeln('routine_completions FAILED: $e');
+      out.writeln('tables count FAILED: $e');
     }
     out.writeln('');
 
-    // ---- 3. routine source ------------------------------------------------
-    out.writeln('-- RoutineAgendaSource');
+    // ---- 3. per-source metrics & observability -----------------------------
+    out.writeln('-- Per-Source Agenda Metrics (${AgendaSourceRegistry.instance.entries.length} registered sources)');
+    final failures = <String>[];
+    final loadCtx = AgendaSourceLoadContext(
+      db: db,
+      settingsMap: settingsMap,
+      start: now,
+      end: now,
+      startStr: todayStr,
+      endStr: todayStr,
+      todayStr: todayStr,
+      options: const AgendaQueryOptions(),
+      failures: failures,
+    );
+
+    final dayCtx = AgendaDayContext(
+      date: now,
+      dateStr: todayStr,
+      isToday: true,
+      prayerTimes: const {},
+      options: const AgendaQueryOptions(),
+    );
+
+    var loadedSourceCount = 0;
+    var totalSourceItems = 0;
+
+    for (final entry in AgendaSourceRegistry.instance.entries) {
+      try {
+        final source = await entry.loader(loadCtx);
+        if (source == null) {
+          out.writeln('  [DISABLED] ${entry.id.padRight(14)} domains=${entry.domains.map((d) => d.name).join(',')}');
+          continue;
+        }
+        loadedSourceCount++;
+        final items = source.itemsForDate(dayCtx);
+        totalSourceItems += items.length;
+        out.writeln(
+          '  [OK]       ${entry.id.padRight(14)} items=${items.length} '
+          'domains=${entry.domains.map((d) => d.name).join(',')}',
+        );
+        for (final it in items.take(2)) {
+          out.writeln('       * ${it.title} [${it.domain.name} / ${it.kind.name}] @ ${it.timeOfDay ?? 'floating'}');
+        }
+      } catch (e) {
+        failures.add(entry.id);
+        out.writeln('  [FAILED]   ${entry.id.padRight(14)} error=$e');
+      }
+    }
+    out.writeln('sources loaded: $loadedSourceCount, failed: ${failures.length}, totalItems: $totalSourceItems');
+    out.writeln('');
+
+    // ---- 4. routine source specific trace ---------------------------------
+    out.writeln('-- RoutineAgendaSource Detailed Trace');
     try {
       final source = await RoutineAgendaSource.load(db, settingsMap, todayStr, endStr);
-      out.writeln(
-        'loaded routines=${source.routines.length} '
-        'schedules=${source.schedules.length} '
-        'occurrences=${source.occurrences.length}',
-      );
-
       final active = source.activeForDate(now);
       srcActive = active.length;
-      out.writeln('activeForDate(today)=$srcActive');
-
-      final items = source.itemsForDate(AgendaDayContext(
-        date: now,
-        dateStr: todayStr,
-        isToday: true,
-        prayerTimes: const {},
-        options: const AgendaQueryOptions(),
-      ));
+      final items = source.itemsForDate(dayCtx);
       srcItems = items.length;
-      out.writeln('itemsForDate(today)=$srcItems');
-      for (final item in items.take(3)) {
-        out.writeln('  * ${item.title} @ ${item.timeOfDay ?? 'untimed'} [${item.domain.name}]');
-      }
+      out.writeln('activeForDate(today)=$srcActive, itemsForDate(today)=$srcItems');
 
-      // Per-routine trace: why a routine is or is not active today.
       for (final r in source.routines.take(5)) {
         final id = r['id']?.toString() ?? '?';
         final sched = source.schedules.firstWhere(
@@ -156,13 +195,13 @@ Future<String> collectAgendaDiagnostics() async {
         );
       }
     } catch (e, st) {
-      out.writeln('RoutineAgendaSource FAILED: $e');
+      out.writeln('RoutineAgendaSource trace FAILED: $e');
       out.writeln('$st'.split('\n').take(3).join('\n'));
     }
     out.writeln('');
 
-    // ---- 4. full service pipeline ----------------------------------------
-    out.writeln('-- DayAgendaService');
+    // ---- 5. full service pipeline ----------------------------------------
+    out.writeln('-- DayAgendaService Pipeline');
     try {
       DayAgendaService.instance.invalidateAll();
       final day = await DayAgendaService.instance.agendaForDate(now);
@@ -188,7 +227,8 @@ Future<String> collectAgendaDiagnostics() async {
       final status = DayAgendaService.instance.lastLoadStatus;
       out.writeln(
         'lastLoadStatus fatal=${status.fatal} '
-        'failed=${status.failedSources.isEmpty ? 'none' : status.failedSources.join(',')}',
+        'failed=${status.failedSources.isEmpty ? 'none' : status.failedSources.join(',')} '
+        'degraded=${status.isDegraded}',
       );
     } catch (e, st) {
       out.writeln('DayAgendaService FAILED: $e');

@@ -16,4 +16,5 @@ class AgendaLoadStatus {
   final bool fatal;
 
   bool get hasFailure => fatal || failedSources.isNotEmpty;
+  bool get isDegraded => failedSources.isNotEmpty;
 }

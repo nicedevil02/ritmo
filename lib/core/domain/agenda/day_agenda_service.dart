@@ -49,6 +49,10 @@ class DayAgendaService {
   /// already refreshes the UI for its own routine events, so for these we both
   /// invalidate the cache *and* fan out a single UI refresh signal. Routine
   /// events only invalidate the cache (no double refresh).
+  ///
+  /// INVARIANT: an event that `RitmoEvents.notifyRoutineChanged()` itself emits
+  /// must never appear in this set. Refreshing in response to our own signal is
+  /// a cycle by construction, and no debounce can end it - only bound its rate.
   static const Set<String> _uiRefreshEvents = {
     'CourseSessionCompleted',
     'CourseCreated',
@@ -65,7 +69,11 @@ class DayAgendaService {
     'RoutineCreated',
     'RoutineEdited',
     'RoutineUpdated',
-    'RoutineChanged',
+    // 'RoutineChanged' is deliberately absent: notifyRoutineChanged() fires it
+    // (models.dart), so answering it with another notify closed the loop
+    // notify -> bus -> here -> notify -> ... which froze the UI inside the
+    // microtask queue and exhausted the heap. Cache invalidation below still
+    // handles the event; invalidation is idempotent and emits nothing.
     'RoutineDeleted',
     'DataImported',
     'DayRolledOver',
@@ -131,10 +139,13 @@ class DayAgendaService {
   // مینویسد و رویداد جدید fire میکند، نوتیفایکردن از داخل این callback
   // یک حلقهٔ خودتغذیه در صف microtask میسازد: event loop هرگز کنترل را
   // پس نمیگیرد (فریز) و هر دور یک کنترلر و snapshot نو میسازد (OOM).
-  // دو قانون آن را برای همیشه میبندد:
+  // سه قانون آن را برای همیشه میبندد:
   //   ۱) هرگز از داخل callback استریم نوتیفای نکن؛ به Timer (macrotask) بپر
   //      تا فریمها بین دورها رندر شوند.
   //   ۲) رویدادهایی که خودِ همین رفرش تولید میکند را بیاثر کن.
+  //   ۳) و مهمتر از همه: به رویدادی که خودِ notifyRoutineChanged() صادر
+  //      میکند («RoutineChanged») هرگز پاسخ نده. آن حلقه ذاتی است و
+  //      debounce فقط نرخش را محدود میکند، تمامش نمیکند.
   static Timer? _uiRefreshTimer;
   static bool _uiRefreshInFlight = false;
   static const Duration _uiRefreshDebounce = Duration(milliseconds: 350);

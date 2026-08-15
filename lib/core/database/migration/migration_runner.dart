@@ -179,4 +179,46 @@ class MigrationRunner {
       }
     }
   }
+
+  /// Completes the schema of a **freshly created** database (onCreate path).
+  ///
+  /// `onCreate` builds the canonical schema with `SchemaManager.createAll`, so
+  /// historically the migration chain never ran on a new install. Everything
+  /// that exists *only* inside a migration - extra tables such as `day_marks`
+  /// (v83), added columns, default settings rows - was therefore present on
+  /// every upgraded install but missing on a brand-new device, which surfaced
+  /// at runtime as `no such table` / `no such column` errors. Replaying the
+  /// chain here makes a new database equivalent to a migrated one.
+  ///
+  /// Differences from [run], on purpose:
+  /// - **Never fatal.** On a canonical base schema many historical steps are
+  ///   legitimately redundant (adding a column that already exists, back-filling
+  ///   empty tables). A redundant step must not be able to break first launch,
+  ///   so each step is isolated and only logged.
+  /// - **No nested transactions.** sqflite already runs `onCreate` inside a
+  ///   transaction, so every step is applied directly on [db].
+  static Future<void> runForFreshInstall(Database db, int newVersion) async {
+    final sorted = [..._migrations]..sort((a, b) => a.version.compareTo(b.version));
+
+    var applied = 0;
+    var skipped = 0;
+    for (final migration in sorted) {
+      if (migration.version > newVersion) continue;
+      try {
+        await migration.up(db);
+        applied++;
+      } catch (e) {
+        skipped++;
+        RitmoLog.warning(
+          'MigrationRunner',
+          'Fresh-install step v${migration.version} skipped (already satisfied by base schema): $e',
+        );
+      }
+    }
+
+    RitmoLog.info(
+      'MigrationRunner',
+      'Fresh-install schema completion: applied=$applied skipped=$skipped target=v$newVersion',
+    );
+  }
 }

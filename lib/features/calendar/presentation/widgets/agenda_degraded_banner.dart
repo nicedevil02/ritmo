@@ -151,11 +151,10 @@ class AgendaDegradedBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Nothing is degraded: still offer a discreet way into the diagnostics
-    // report, so an unexplained empty agenda can be traced on-device.
-    if (degradedDomains.isEmpty) {
-      return _AgendaDiagnosticsChip(onRetry: onRetry);
-    }
+    // Nothing degraded -> render nothing. A permanent "why is the app empty?"
+    // chip on a perfectly healthy agenda was a debugging affordance, not a
+    // feature. The diagnostics report stays reachable from the sheet below.
+    if (degradedDomains.isEmpty) return const SizedBox.shrink();
 
     final colors = context.colors;
 
@@ -192,50 +191,6 @@ class AgendaDegradedBanner extends StatelessWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   color: colors.warning,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Discreet entry point to [AgendaDiagnosticsSheet].
-class _AgendaDiagnosticsChip extends StatelessWidget {
-  const _AgendaDiagnosticsChip({this.onRetry});
-
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return Semantics(
-      label: 'گزارش تشخیصی برنامه',
-      button: true,
-      child: GestureDetector(
-        onTap: () => AgendaDiagnosticsSheet.show(context, onRetry: onRetry),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: colors.textSecondary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(RitmoRadius.badge),
-            border: Border.all(color: colors.textSecondary.withValues(alpha: 0.2)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.bug_report_outlined, size: 12, color: colors.textSecondary),
-              const SizedBox(width: 4),
-              Text(
-                'چرا برنامه خالی است؟',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textSecondary,
                 ),
               ),
             ],

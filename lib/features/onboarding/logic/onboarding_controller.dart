@@ -26,6 +26,18 @@ class OnboardingController extends ChangeNotifier {
     _initDefaults();
   }
 
+  /// How long to wait before running post-save side effects.
+  ///
+  /// Covers the 650ms AnimatedSwitcher in `main.dart` plus the home shell's
+  /// first frames, so the transition owns the isolate and the sqflite
+  /// connection while it is on screen.
+  static const Duration postSaveDelay = Duration(milliseconds: 1200);
+
+  /// Hard ceilings for best-effort work. A platform channel that never answers
+  /// must not be able to keep the app on the celebration screen.
+  static const Duration widgetSnapshotTimeout = Duration(seconds: 8);
+  static const Duration alarmSchedulingTimeout = Duration(seconds: 25);
+
   int currentIndex = 0;
   String userName = '';
   String gender = 'OTHER';
@@ -233,7 +245,7 @@ class OnboardingController extends ChangeNotifier {
             'priority': 1.0,
             'targetDurationMinutes': duration,
             'displayOrder': 1,
-            'description': 'اولین روتین ثبت‌شده در آنبوردینگ',
+            'description': 'اولین روتین روتین ثبت‌شده در آنبوردینگ',
             'createdAt': nowMs,
             'updatedAt': nowMs,
           };
@@ -343,8 +355,21 @@ class OnboardingController extends ChangeNotifier {
       notifyListeners();
       onFinished();
 
-      // ── BEST-EFFORT SIDE EFFECTS: Must not block user navigation ──
-      unawaited(_postSaveBestEffort());
+      // ── BEST-EFFORT SIDE EFFECTS: must not compete with the first frames ──
+      //
+      // onFinished() swaps the widget tree through a 650ms AnimatedSwitcher, so
+      // for about a second the onboarding tree (BackdropFilter + a repeating
+      // ambient animation) and the whole home shell are mounted and painting
+      // together while the dashboard runs its first queries. Starting the side
+      // effects here used to drop alarm scheduling into exactly that window:
+      // dozens of writes plus one platform channel call per reminder, on the
+      // same isolate and the same sqflite connection, which starves the
+      // transition and reads as a freeze on the celebration screen.
+      //
+      // Let the app settle first, then run them with hard timeouts.
+      unawaited(
+        Future<void>.delayed(postSaveDelay, _postSaveBestEffort),
+      );
     } catch (e, st) {
       RitmoLog.error('OnboardingController', 'Failed to save onboarding data', e, st);
       isSaving = false;
@@ -353,9 +378,11 @@ class OnboardingController extends ChangeNotifier {
     }
   }
 
-  /// Post-save side effects. Every step is isolated: a failure in one (missing
-  /// widget channel, denied alarm permission, …) must never prevent the agenda
-  /// refresh signals that follow it.
+  /// Post-save side effects. Every step is isolated and time-boxed: a failure
+  /// or a hang in one (missing widget channel, denied alarm permission, a
+  /// platform call that never answers, …) must never prevent the agenda refresh
+  /// signals that follow it, and must never leave the user staring at a frozen
+  /// screen.
   Future<void> _postSaveBestEffort() async {
     // 1. Agenda cache + refresh signals first — these are what make the newly
     //    created routines visible on Home and in the Calendar.
@@ -387,14 +414,15 @@ class OnboardingController extends ChangeNotifier {
         nextActionTitle: firstRoutineTitle,
         rhythmScore: 100,
         currentEnergyLevel: energyProfile,
-      );
+      ).timeout(widgetSnapshotTimeout);
     } catch (e, st) {
       RitmoLog.error('OnboardingController', 'Widget snapshot update failed', e, st);
     }
 
-    // 3. Alarm scheduling (needs notification / exact-alarm permission).
+    // 3. Alarm scheduling (needs notification / exact-alarm permission, and
+    //    performs one platform call per reminder).
     try {
-      await AlarmSchedulerService.scheduleNextAlarms();
+      await AlarmSchedulerService.scheduleNextAlarms().timeout(alarmSchedulingTimeout);
     } catch (e, st) {
       RitmoLog.error('OnboardingController', 'Alarm scheduling failed', e, st);
     }

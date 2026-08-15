@@ -242,16 +242,23 @@ class DayPlanTemplate {
   });
 
   factory DayPlanTemplate.fromMap(Map<String, dynamic> map) {
-    final List<dynamic> itemsList = jsonDecode(map['itemsJson'] as String? ?? '[]');
+    final nameVal = (map['name'] as String?)?.trim() ?? (map['title'] as String?)?.trim() ?? '';
+    final rawItemsJson = (map['itemsJson'] as String?)?.trim() ?? (map['plan_json'] as String?)?.trim() ?? '[]';
+    final List<dynamic> itemsList = jsonDecode(rawItemsJson.isNotEmpty ? rawItemsJson : '[]');
+    final created = (map['createdAt'] as num?)?.toInt() ?? (map['created_at'] as num?)?.toInt() ?? 0;
+    final updated = (map['updatedAt'] as num?)?.toInt() ?? (map['updated_at'] as num?)?.toInt() ?? 0;
+    final lastUsed = (map['lastUsedAt'] as num?)?.toInt() ?? (map['last_used_at'] as num?)?.toInt() ?? 0;
+    final uses = (map['useCount'] as num?)?.toInt() ?? (map['use_count'] as num?)?.toInt() ?? 0;
+
     return DayPlanTemplate(
-      id: map['id'] as String,
-      name: map['name'] as String,
+      id: map['id']?.toString() ?? '',
+      name: nameVal,
       icon: map['icon'] as String?,
       items: itemsList.map((e) => DayPlanItemDraft.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
-      createdAt: map['createdAt'] as int,
-      updatedAt: map['updatedAt'] as int,
-      lastUsedAt: map['lastUsedAt'] as int,
-      useCount: map['useCount'] as int,
+      createdAt: created,
+      updatedAt: updated,
+      lastUsedAt: lastUsed,
+      useCount: uses,
     );
   }
   final String id;

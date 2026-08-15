@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/agenda_load_status.dart';
 import 'package:ritmo/core/domain/agenda/agenda_source_registry.dart';
@@ -120,8 +121,34 @@ class DayAgendaService {
       }
 
       if (_uiRefreshEvents.contains(event.type)) {
-        // Unified UI refresh notifier (Home + Calendar listen to this).
+        _scheduleUiRefresh();
+      }
+    });
+  }
+
+  // ۲۴ نوع رویداد به یک ValueNotifier استاتیک قیف میشوند که شنوندههایش
+  // «همگام» یک لود کامل داشبورد را شروع میکنند. چون خودِ آن لود در DB
+  // مینویسد و رویداد جدید fire میکند، نوتیفایکردن از داخل این callback
+  // یک حلقهٔ خودتغذیه در صف microtask میسازد: event loop هرگز کنترل را
+  // پس نمیگیرد (فریز) و هر دور یک کنترلر و snapshot نو میسازد (OOM).
+  // دو قانون آن را برای همیشه میبندد:
+  //   ۱) هرگز از داخل callback استریم نوتیفای نکن؛ به Timer (macrotask) بپر
+  //      تا فریمها بین دورها رندر شوند.
+  //   ۲) رویدادهایی که خودِ همین رفرش تولید میکند را بیاثر کن.
+  static Timer? _uiRefreshTimer;
+  static bool _uiRefreshInFlight = false;
+  static const Duration _uiRefreshDebounce = Duration(milliseconds: 350);
+  static const Duration _uiRefreshCooldown = Duration(milliseconds: 1500);
+
+  void _scheduleUiRefresh() {
+    if (_uiRefreshInFlight) return;
+    _uiRefreshTimer?.cancel();
+    _uiRefreshTimer = Timer(_uiRefreshDebounce, () {
+      _uiRefreshInFlight = true;
+      try {
         RitmoEvents.notifyRoutineChanged();
+      } finally {
+        Timer(_uiRefreshCooldown, () => _uiRefreshInFlight = false);
       }
     });
   }
@@ -343,6 +370,17 @@ class DayAgendaService {
 
     final dayMarksByDate = <String, String>{};
     try {
+      // day_marks فقط در migration v83 ساخته میشود، پس روی نصب تازه غایب است.
+      // خودترمیمی، بهجای پرتکردن استکتریس در هر بار ساخت اجندا.
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS day_marks (
+            date TEXT PRIMARY KEY,
+            kind TEXT NOT NULL DEFAULT 'NORMAL',
+            note TEXT,
+            createdAt INTEGER NOT NULL,
+            updatedAt INTEGER NOT NULL
+        );
+      ''');
       final markRows = await db.query(
         'day_marks',
         where: 'date >= ? AND date <= ?',
@@ -353,8 +391,8 @@ class DayAgendaService {
         final k = r['kind']?.toString();
         if (d != null && k != null) dayMarksByDate[d] = k;
       }
-    } catch (e, st) {
-      debugPrint('[AgendaDayMarks] day_marks load error: $e\n$st');
+    } catch (e) {
+      RitmoLog.error('DayAgendaService', 'day_marks load failed', e);
     }
 
     return _AgendaContext(

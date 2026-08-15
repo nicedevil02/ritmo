@@ -251,10 +251,16 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     }
   }
 
+  bool _dashboardLoadInFlight = false;
+  DateTime _lastDashboardLoad = DateTime.fromMillisecondsSinceEpoch(0);
+
   void _onRoutineChanges() {
-    if (mounted) {
-      _loadDashboardData();
+    if (_dashboardLoadInFlight) return;
+    if (DateTime.now().difference(_lastDashboardLoad) <
+        const Duration(seconds: 2)) {
+      return;
     }
+    _loadDashboardData();
   }
 
   Future<void> _checkActiveTimerOnStart() async {
@@ -310,103 +316,110 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
   Future<void> _loadDashboardData({bool showLoading = false}) async {
     if (!mounted) return;
-    // G-4: نسل جدید — هر نتیجهٔ کهنهای که بعداً برگردد دور ریخته میشود.
-    final generation = ++_loadGeneration;
-    bool isStale() => !mounted || generation != _loadGeneration;
+    if (_dashboardLoadInFlight) return;
+    _dashboardLoadInFlight = true;
+    _lastDashboardLoad = DateTime.now();
+    try {
+      // G-4: نسل جدید — هر نتیجهٔ کهنهای که بعداً برگردد دور ریخته میشود.
+      final generation = ++_loadGeneration;
+      bool isStale() => !mounted || generation != _loadGeneration;
 
-    if (showLoading || _isFirstLoad) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
-
-    final controller = DashboardController();
-
-    // P0: critical path (settings -> routines -> RIE -> timeline)
-    await controller.loadP0();
-
-    if (isStale()) return;
-    setState(() {
-      _isFirstLoad = false;
-      _isLoading = false;
-      _timelineItems = controller.timelineItems;
-      _settingsMap = controller.settingsMap;
-      _activeZone = controller.activeZone;
-      _activeZoneName = controller.activeZoneName;
-      _activeZoneIcon = controller.activeZoneIcon;
-      _activeZoneTimeRange = controller.activeZoneTimeRange;
-      _activeZoneColorHex = controller.activeZoneColorHex;
-      _activeZoneRoutinesCount = controller.activeZoneRoutinesCount;
-      _engineOutput = controller.engineOutput;
-      _needCheckin = controller.needCheckin;
-      _hasReflection = controller.hasReflection;
-      _reflectionDismissed = controller.reflectionDismissed;
-      // G-2: دوزهای واقعی باقیماندهٔ دارو (از P0 کنترلر)
-      _pendingMedDoses = controller.pendingMedicationDoseCount;
-      _lastLoadAt = DateTime.now();
-    });
-
-    // P1: deferred — runs after first frame is painted
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (isStale()) return;
-      await controller.loadP1();
-      if (isStale()) return;
-
-      var recentInbox = <InboxItem>[];
-      try {
-        recentInbox = await CentralInboxService.getItems(
-          statusFilter: InboxStatus.UNREAD,
-          limit: 3,
-        );
-      } catch (e) {
-        debugPrint('Error loading recent inbox: $e');
+      if (showLoading || _isFirstLoad) {
+        setState(() {
+          _isLoading = true;
+        });
       }
 
-      final showReplan = await MidDayReplanService.instance.shouldSuggestReplan();
+      final controller = DashboardController();
 
-      // G-4: وجود فایل آواتار بهصورت async و خارج از build چک میشود (نه existsSync)
-      var avatarExistsResult = false;
-      final avatarPath = controller.settingsMap['user_avatar_path'];
-      if (avatarPath != null && avatarPath.isNotEmpty) {
-        if (avatarPath.startsWith('http://') ||
-            avatarPath.startsWith('https://') ||
-            avatarPath.startsWith('blob:') ||
-            avatarPath.startsWith('data:')) {
-          avatarExistsResult = true;
-        } else {
-          try {
-            avatarExistsResult = await File(avatarPath).exists();
-          } catch (_) {
-            avatarExistsResult = false;
+      // P0: critical path (settings -> routines -> RIE -> timeline)
+      await controller.loadP0();
+
+      if (isStale()) return;
+      setState(() {
+        _isFirstLoad = false;
+        _isLoading = false;
+        _timelineItems = controller.timelineItems;
+        _settingsMap = controller.settingsMap;
+        _activeZone = controller.activeZone;
+        _activeZoneName = controller.activeZoneName;
+        _activeZoneIcon = controller.activeZoneIcon;
+        _activeZoneTimeRange = controller.activeZoneTimeRange;
+        _activeZoneColorHex = controller.activeZoneColorHex;
+        _activeZoneRoutinesCount = controller.activeZoneRoutinesCount;
+        _engineOutput = controller.engineOutput;
+        _needCheckin = controller.needCheckin;
+        _hasReflection = controller.hasReflection;
+        _reflectionDismissed = controller.reflectionDismissed;
+        // G-2: دوزهای واقعی باقیماندهٔ دارو (از P0 کنترلر)
+        _pendingMedDoses = controller.pendingMedicationDoseCount;
+        _lastLoadAt = DateTime.now();
+      });
+
+      // P1: deferred — runs after first frame is painted
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (isStale()) return;
+        await controller.loadP1();
+        if (isStale()) return;
+
+        var recentInbox = <InboxItem>[];
+        try {
+          recentInbox = await CentralInboxService.getItems(
+            statusFilter: InboxStatus.UNREAD,
+            limit: 3,
+          );
+        } catch (e) {
+          debugPrint('Error loading recent inbox: $e');
+        }
+
+        final showReplan = await MidDayReplanService.instance.shouldSuggestReplan();
+
+        // G-4: وجود فایل آواتار بهصورت async و خارج از build چک میشود (نه existsSync)
+        var avatarExistsResult = false;
+        final avatarPath = controller.settingsMap['user_avatar_path'];
+        if (avatarPath != null && avatarPath.isNotEmpty) {
+          if (avatarPath.startsWith('http://') ||
+              avatarPath.startsWith('https://') ||
+              avatarPath.startsWith('blob:') ||
+              avatarPath.startsWith('data:')) {
+            avatarExistsResult = true;
+          } else {
+            try {
+              avatarExistsResult = await File(avatarPath).exists();
+            } catch (_) {
+              avatarExistsResult = false;
+            }
           }
         }
-      }
 
-      if (isStale()) return;
-      setState(() {
-        _briefing = controller.briefing;
-        _isBriefingLoading = controller.isBriefingLoading;
-        _dailyBehavior = controller.dailyBehavior;
-        _currentEnergyPercent = controller.currentEnergyPercent;
-        _currentEnergyLabel = controller.currentEnergyLabel;
-        _currentEnergyDesc = controller.currentEnergyDesc;
-        _currentEnergyTimeAgo = controller.currentEnergyTimeAgo;
-        _peakPerformanceWindow = controller.peakPerformanceWindow;
-        _moduleSummaries = controller.moduleSummaries;
-        _recentInboxItems = recentInbox;
-        _showReplanBanner = showReplan;
-        _avatarFileExists = avatarExistsResult;
-        // G-2: منبع واحد Agenda برای کارت اقدام بعدی
-        _agendaItems = controller.agenda;
-        // P1-1: اسنپشات «مسیر امروز»
-        _todaySnapshot = controller.todaySnapshot;
+        if (isStale()) return;
+        setState(() {
+          _briefing = controller.briefing;
+          _isBriefingLoading = controller.isBriefingLoading;
+          _dailyBehavior = controller.dailyBehavior;
+          _currentEnergyPercent = controller.currentEnergyPercent;
+          _currentEnergyLabel = controller.currentEnergyLabel;
+          _currentEnergyDesc = controller.currentEnergyDesc;
+          _currentEnergyTimeAgo = controller.currentEnergyTimeAgo;
+          _peakPerformanceWindow = controller.peakPerformanceWindow;
+          _moduleSummaries = controller.moduleSummaries;
+          _recentInboxItems = recentInbox;
+          _showReplanBanner = showReplan;
+          _avatarFileExists = avatarExistsResult;
+          // G-2: منبع واحد Agenda برای کارت اقدام بعدی
+          _agendaItems = controller.agenda;
+          // P1-1: اسنپشات «مسیر امروز»
+          _todaySnapshot = controller.todaySnapshot;
+        });
+
+        if (isStale()) return;
+        await _pushCriticalAlerts();
+        if (isStale()) return;
+        await _pushCheckinsAndReflections();
       });
-
-      if (isStale()) return;
-      await _pushCriticalAlerts();
-      if (isStale()) return;
-      await _pushCheckinsAndReflections();
-    });
+    } finally {
+      _dashboardLoadInFlight = false;
+    }
   }
 
   void _openModuleScreen(String moduleId) {
@@ -1238,6 +1251,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         _openModuleScreen('cycle');
       case AgendaDomain.event:
       case AgendaDomain.task:
+      case AgendaDomain.commitment:
+      case AgendaDomain.appointment:
         widget.onNavigateToTab?.call(4);
     }
   }

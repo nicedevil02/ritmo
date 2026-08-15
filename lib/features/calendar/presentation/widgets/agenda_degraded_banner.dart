@@ -44,6 +44,10 @@ class AgendaDegradedBanner extends StatelessWidget {
         return 'چرخهٔ زیستی';
       case AgendaDomain.event:
         return 'رویدادهای موقت';
+      case AgendaDomain.commitment:
+        return 'تعهدات';
+      case AgendaDomain.appointment:
+        return 'قرارها و ملاقات‌ها';
     }
   }
 

@@ -1120,25 +1120,30 @@ class DashboardController {
 
   Future<void> _ensureWorshipDebtRoutineExists(DatabaseExecutor db) async {
     if (_worshipDebtRoutineEnsured) return;
-    final results = await db.query('routines', where: 'id = ?', whereArgs: ['worship_debt_routine']);
-    _worshipDebtRoutineEnsured = true;
-    if (results.isEmpty) {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await db.insert('routines', {
-        'id': 'worship_debt_routine',
-        'title': 'بدهی عبادی',
-        'category': 'religious',
-        'routineType': 'asNeeded',
-        'notificationLevel': 'none',
-        'isEssential': 0,
-        'energyRule': 'NONE',
-        'priority': 1.0,
-        'isArchived': 0,
-        'isPrivate': 0,
-        'displayOrder': 999,
-        'createdAt': now,
-        'updatedAt': now,
-      });
+    _worshipDebtRoutineEnsured = true; // قبل از اولین await — ضد ورود مجدد
+    try {
+      final results = await db.query('routines', where: 'id = ?', whereArgs: ['worship_debt_routine']);
+      if (results.isEmpty) {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await db.insert('routines', {
+          'id': 'worship_debt_routine',
+          'title': 'بدهی عبادی',
+          'category': 'religious',
+          'routineType': 'asNeeded',
+          'notificationLevel': 'none',
+          'isEssential': 0,
+          'energyRule': 'NONE',
+          'priority': 1.0,
+          'isArchived': 0,
+          'isPrivate': 0,
+          'displayOrder': 999,
+          'createdAt': now,
+          'updatedAt': now,
+        });
+      }
+    } catch (e) {
+      _worshipDebtRoutineEnsured = false; // فقط در خطای واقعی اجازهٔ تلاش مجدد
+      rethrow;
     }
   }
 

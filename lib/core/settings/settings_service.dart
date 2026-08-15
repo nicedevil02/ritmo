@@ -15,6 +15,10 @@ class SettingsService {
   final ValueNotifier<int> revision = ValueNotifier<int>(0);
   bool _initialized = false;
 
+  /// Coalescing window for the heavy "reload the day" refresh signal.
+  static const Duration agendaSignalDebounce = Duration(milliseconds: 350);
+  static bool _agendaSignalScheduled = false;
+
   bool get isInitialized => _initialized;
 
   Future<void> init() async {
@@ -195,7 +199,14 @@ class SettingsService {
       _cache[key] = value;
       revision.value++;
 
-      RitmoEvents.notifyRoutineChanged();
+      // A settings write used to fan out a *synchronous* routine-change
+      // notification for every single key. Home, Calendar and the systems hub
+      // all listen to that notifier and reload their entire day (syncAll plus
+      // several agenda builds), so a burst of writes - onboarding hand-off,
+      // module toggles, alarm rescheduling - multiplied into a reload storm
+      // that could exhaust the Dart heap. `revision` still fires immediately
+      // for settings UI; the heavy refresh is coalesced per burst.
+      _scheduleAgendaRefreshSignal();
 
       if (desc.group == SettingsGroup.notifications) {
         final notifSettings = <String, String>{
@@ -211,6 +222,17 @@ class SettingsService {
       debugPrint('[SettingsService] set error for $key: $e\n$st');
       return false;
     }
+  }
+
+  /// Emits at most one `notifyRoutineChanged()` per [agendaSignalDebounce]
+  /// window, no matter how many settings were written in that window.
+  void _scheduleAgendaRefreshSignal() {
+    if (_agendaSignalScheduled) return;
+    _agendaSignalScheduled = true;
+    Future<void>.delayed(agendaSignalDebounce, () {
+      _agendaSignalScheduled = false;
+      RitmoEvents.notifyRoutineChanged();
+    });
   }
 
   Object _parseRaw(SettingType type, String raw, Object fallback) {

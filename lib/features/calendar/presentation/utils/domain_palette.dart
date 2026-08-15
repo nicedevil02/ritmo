@@ -3,7 +3,32 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
-Color domainColor(BuildContext context, AgendaDomain domain) {
+Color kindColor(BuildContext context, AgendaItemKind kind) {
+  final modules = context.modules;
+  switch (kind) {
+    case AgendaItemKind.routine:
+      return modules.byModuleId('routines');
+    case AgendaItemKind.reminder:
+      return const Color(0xFFF59E0B);
+    case AgendaItemKind.task:
+      return context.colors.primary;
+    case AgendaItemKind.reflection:
+      return const Color(0xFF8B5CF6);
+    case AgendaItemKind.event:
+      return modules.byModuleId('planner');
+    case AgendaItemKind.session:
+      return modules.byModuleId('study');
+    case AgendaItemKind.dose:
+      return modules.byModuleId('health');
+    case AgendaItemKind.practice:
+      return modules.byModuleId('worship');
+  }
+}
+
+Color domainColor(BuildContext context, AgendaDomain domain, {AgendaItemKind? kind}) {
+  if (kind != null && domain == AgendaDomain.routine) {
+    return kindColor(context, kind);
+  }
   final modules = context.modules;
   switch (domain) {
     case AgendaDomain.routine:
@@ -26,17 +51,44 @@ Color domainColor(BuildContext context, AgendaDomain domain) {
       return modules.byModuleId('planner');
     case AgendaDomain.task:
       return context.colors.primary;
+    case AgendaDomain.commitment:
+    case AgendaDomain.appointment:
+      return modules.byModuleId('planner');
   }
 }
 
-Color domainContainerColor(BuildContext context, AgendaDomain domain) {
-  final baseColor = domainColor(context, domain);
+Color domainContainerColor(BuildContext context, AgendaDomain domain, {AgendaItemKind? kind}) {
+  final baseColor = domainColor(context, domain, kind: kind);
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final alpha = isDark ? 0.16 : 0.10;
   return baseColor.withValues(alpha: alpha);
 }
 
-IconData domainIcon(AgendaDomain domain) {
+IconData kindIcon(AgendaItemKind kind) {
+  switch (kind) {
+    case AgendaItemKind.routine:
+      return Icons.repeat_rounded;
+    case AgendaItemKind.reminder:
+      return Icons.notifications_active_rounded;
+    case AgendaItemKind.task:
+      return CupertinoIcons.checkmark_square;
+    case AgendaItemKind.reflection:
+      return Icons.psychology_alt_rounded;
+    case AgendaItemKind.event:
+      return Icons.event_rounded;
+    case AgendaItemKind.session:
+      return Icons.school_rounded;
+    case AgendaItemKind.dose:
+      return Icons.medication_rounded;
+    case AgendaItemKind.practice:
+      return Icons.mosque_rounded;
+  }
+}
+
+IconData domainIcon(AgendaDomain domain, {AgendaItemKind? kind}) {
+  if (kind != null && domain == AgendaDomain.routine) {
+    return kindIcon(kind);
+  }
   switch (domain) {
     case AgendaDomain.routine:
       return Icons.repeat_rounded;
@@ -62,10 +114,38 @@ IconData domainIcon(AgendaDomain domain) {
       return Icons.event_rounded;
     case AgendaDomain.task:
       return CupertinoIcons.checkmark_square;
+    case AgendaDomain.commitment:
+      return Icons.handshake_rounded;
+    case AgendaDomain.appointment:
+      return Icons.calendar_today_rounded;
   }
 }
 
-String domainLabelFa(AgendaDomain domain) {
+String kindLabelFa(AgendaItemKind kind) {
+  switch (kind) {
+    case AgendaItemKind.routine:
+      return 'روتین';
+    case AgendaItemKind.reminder:
+      return 'یادآور';
+    case AgendaItemKind.task:
+      return 'کار';
+    case AgendaItemKind.reflection:
+      return 'تأمل';
+    case AgendaItemKind.event:
+      return 'رویداد';
+    case AgendaItemKind.session:
+      return 'جلسه';
+    case AgendaItemKind.dose:
+      return 'نوبت دارو';
+    case AgendaItemKind.practice:
+      return 'عبادت';
+  }
+}
+
+String domainLabelFa(AgendaDomain domain, {AgendaItemKind? kind}) {
+  if (kind != null && domain == AgendaDomain.routine) {
+    return kindLabelFa(kind);
+  }
   switch (domain) {
     case AgendaDomain.routine:
       return 'روتین';
@@ -91,5 +171,14 @@ String domainLabelFa(AgendaDomain domain) {
       return 'رویداد';
     case AgendaDomain.task:
       return 'کار';
+    case AgendaDomain.commitment:
+      return 'تعهد';
+    case AgendaDomain.appointment:
+      return 'قرار';
   }
 }
+
+IconData itemIcon(AgendaItem item) => domainIcon(item.domain, kind: item.kind);
+Color itemColor(BuildContext context, AgendaItem item) => domainColor(context, item.domain, kind: item.kind);
+Color itemContainerColor(BuildContext context, AgendaItem item) => domainContainerColor(context, item.domain, kind: item.kind);
+String itemLabelFa(AgendaItem item) => domainLabelFa(item.domain, kind: item.kind);

@@ -101,7 +101,7 @@ class RoutineAgendaSource implements AgendaSource {
       final list = await db.rawQuery('''
         SELECT r.category, AVG(COALESCE(c.actual_duration_minutes, c.durationMinutes)) as avgDur 
         FROM routine_completions c
-        JOIN routines r ON (c.routineId = r.id OR c.routine_id = r.id)
+        JOIN routines r ON c.routineId = r.id
         WHERE (c.actual_duration_minutes IS NOT NULL AND c.actual_duration_minutes > 0)
            OR (c.durationMinutes IS NOT NULL AND c.durationMinutes > 0)
         GROUP BY r.category
@@ -142,14 +142,14 @@ class RoutineAgendaSource implements AgendaSource {
   static String _dateStr(DateTime dt) => dt.toIso8601String().substring(0, 10);
 
   /// Returns an empty, non-functional source (used as fallback on load failure).
-  static RoutineAgendaSource disabled() => RoutineAgendaSource(
-    routines: const [],
-    schedules: const [],
-    occurrences: const [],
-    avgDurations: const {},
-    categoryAvgDurations: const {},
-    completionsByDate: const {},
-    activeModules: const {},
+  static RoutineAgendaSource disabled() => const RoutineAgendaSource(
+    routines: [],
+    schedules: [],
+    occurrences: [],
+    avgDurations: {},
+    categoryAvgDurations: {},
+    completionsByDate: {},
+    activeModules: {},
   );
 
   /// Builds a weekly rule from the plain `daysOfWeek` column.
@@ -416,9 +416,26 @@ class RoutineAgendaSource implements AgendaSource {
         dur = DurationBounds.sanitize(dur);
       }
 
+      final itemTypeStr = (r['itemType'] as String? ?? 'ROUTINE').toUpperCase();
+      final AgendaItemKind kind;
+      switch (itemTypeStr) {
+        case 'REMINDER':
+          kind = AgendaItemKind.reminder;
+        case 'TASK':
+          kind = AgendaItemKind.task;
+        case 'REFLECT':
+          kind = AgendaItemKind.reflection;
+        case 'EVENT':
+          kind = AgendaItemKind.event;
+        case 'ROUTINE':
+        default:
+          kind = AgendaItemKind.routine;
+      }
+
       items.add(AgendaItem(
         id: buildAgendaItemId(itemDomain, routineId, dateStr),
         domain: itemDomain,
+        kind: kind,
         sourceId: routineId,
         title: r['title'] as String? ?? '',
         dateStr: dateStr,

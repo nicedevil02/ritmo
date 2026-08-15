@@ -61,6 +61,7 @@ class EventAgendaSource implements AgendaSource {
       result.add(AgendaItem(
         id: buildAgendaItemId(AgendaDomain.event, id, date),
         domain: AgendaDomain.event,
+        kind: AgendaItemKind.event,
         sourceId: id,
         title: title,
         dateStr: date,

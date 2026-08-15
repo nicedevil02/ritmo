@@ -47,8 +47,8 @@ class TimelineItemCard extends StatelessWidget {
     final item = layoutItem.item;
     final isDone = item.isCompleted;
 
-    final color = domainColor(context, item.domain);
-    final bgContainerColor = domainContainerColor(context, item.domain);
+    final color = itemColor(context, item);
+    final bgContainerColor = itemContainerColor(context, item);
 
     final height = displayHeightOverride ?? layoutItem.height;
     final isCompact = height < 36.0;
@@ -190,7 +190,7 @@ class TimelineItemCard extends StatelessWidget {
     final showTime = item.isTimed && height >= 54.0;
     return Row(
       children: [
-        Icon(domainIcon(item.domain), size: 14, color: color),
+        Icon(itemIcon(item), size: 14, color: color),
         const SizedBox(width: 6),
         Expanded(
           child: Column(
@@ -234,7 +234,7 @@ class TimelineItemCard extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(domainIcon(item.domain), size: 16, color: color),
+        Icon(itemIcon(item), size: 16, color: color),
         const SizedBox(width: 8),
         Expanded(
           child: Column(

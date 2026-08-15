@@ -59,6 +59,45 @@ class AgendaDeepLink {
   final Map<String, dynamic>? params;
 }
 
+/// Axis of the work nature / interaction kind, decoupled from domain.
+enum AgendaItemKind {
+  routine,
+  reminder,
+  task,
+  reflection,
+  event,
+  session,
+  dose,
+  practice,
+}
+
+/// Computes the fallback kind for a given domain when no specific kind is set.
+AgendaItemKind defaultKindFor(AgendaDomain domain) {
+  switch (domain) {
+    case AgendaDomain.routine:
+      return AgendaItemKind.routine;
+    case AgendaDomain.task:
+    case AgendaDomain.goalStep:
+    case AgendaDomain.commitment:
+      return AgendaItemKind.task;
+    case AgendaDomain.prayer:
+    case AgendaDomain.mustahab:
+    case AgendaDomain.worshipDebt:
+      return AgendaItemKind.practice;
+    case AgendaDomain.sport:
+    case AgendaDomain.course:
+    case AgendaDomain.konkur:
+      return AgendaItemKind.session;
+    case AgendaDomain.medicine:
+      return AgendaItemKind.dose;
+    case AgendaDomain.cycle:
+      return AgendaItemKind.reflection;
+    case AgendaDomain.event:
+    case AgendaDomain.appointment:
+      return AgendaItemKind.event;
+  }
+}
+
 /// The single normalized unit of "something on a day".
 ///
 /// Produced by `DayAgendaService` from each domain's own repo/engine and
@@ -67,7 +106,6 @@ class AgendaDeepLink {
 /// `'schedule'` so the existing `RoutineCard` and conflict logic keep working
 /// without a rewrite.
 class AgendaItem {
-
   AgendaItem({
     required this.id,
     required this.domain,
@@ -88,10 +126,12 @@ class AgendaItem {
     this.isEstimated = false,
     this.meta = const {},
     AgendaItemType? itemType,
-  }) : itemType = itemType ??
+    AgendaItemKind? kind,
+  })  : itemType = itemType ??
             (_isValidTime(timeOfDay)
                 ? AgendaItemType.fixed
-                : AgendaItemType.flexible);
+                : AgendaItemType.flexible),
+        kind = kind ?? defaultKindFor(domain);
 
   static bool _isValidTime(String? timeOfDay) {
     final value = timeOfDay?.trim();
@@ -111,6 +151,9 @@ class AgendaItem {
   final String id;
 
   final AgendaDomain domain;
+
+  /// Interaction / work nature kind.
+  final AgendaItemKind kind;
 
   /// Id of the underlying source row (sessionId, stepId, practiceId, ...).
   final String sourceId;
@@ -218,6 +261,7 @@ class AgendaItem {
     bool? isEstimated,
     Map<String, dynamic>? meta,
     AgendaItemType? itemType,
+    AgendaItemKind? kind,
   }) {
     return AgendaItem(
       id: id ?? this.id,
@@ -239,6 +283,7 @@ class AgendaItem {
       isEstimated: isEstimated ?? this.isEstimated,
       meta: meta ?? this.meta,
       itemType: itemType ?? this.itemType,
+      kind: kind ?? this.kind,
     );
   }
 }

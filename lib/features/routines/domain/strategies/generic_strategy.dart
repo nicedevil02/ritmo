@@ -92,13 +92,14 @@ class GenericStrategy implements PlannerCategoryStrategy {
     };
 
     final effectiveDate = (isEvent && c.eventDate != null) ? c.eventDate! : c.selectedDate;
-    RoutineRecurrence recurrence = const DailyRecurrence();
-    if (isEvent) {
+    RoutineRecurrence recurrence;
+    if (c.recurrenceType == 'ONCE' || c.itemType == 'TASK') {
       recurrence = OnceRecurrence(date: effectiveDate);
-    } else if (c.itemType == 'TASK') {
-      recurrence = OnceRecurrence(date: effectiveDate);
-    } else if (c.recurrenceType == 'CUSTOM_DAYS' && c.worshipSelectedDays.isNotEmpty) {
+    } else if ((c.recurrenceType == 'CUSTOM_DAYS' || c.recurrenceType == 'WEEKLY') &&
+        c.worshipSelectedDays.isNotEmpty) {
       recurrence = WeekdaysRecurrence(weekdays: c.worshipSelectedDays.toSet());
+    } else {
+      recurrence = const DailyRecurrence();
     }
 
     final (schedType, daysOfWeek) = deriveScheduleParams(recurrence);

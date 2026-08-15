@@ -30,6 +30,7 @@ class RoutineAgendaSource implements AgendaSource {
     required this.categoryAvgDurations,
     required this.completionsByDate,
     required this.activeModules,
+    this.eventsEnabled = true,
   });
   final List<Map<String, dynamic>> routines;
   final List<Map<String, dynamic>> schedules;
@@ -40,6 +41,15 @@ class RoutineAgendaSource implements AgendaSource {
 
   /// Module gates the routine list honors: keys `religion`, `medicine`, `courses`.
   final Map<String, bool> activeModules;
+
+  /// Mirrors the `calendar_show_events` setting.
+  ///
+  /// Registry entry #10 already gates [EventAgendaSource] (the
+  /// `temporary_events` pipeline) on this setting. This source emits the other
+  /// half of the events — `routines` rows tagged itemType='EVENT' — so it must
+  /// honour the same switch, otherwise turning events off hides only half of
+  /// them. Defaults to true so callers that never set it keep prior behaviour.
+  final bool eventsEnabled;
 
   @override
   Set<AgendaDomain> get domains => {AgendaDomain.routine, AgendaDomain.event};
@@ -125,6 +135,7 @@ class RoutineAgendaSource implements AgendaSource {
       avgDurations: avgDurations,
       categoryAvgDurations: categoryAvgDurations,
       completionsByDate: completionsByDate,
+      eventsEnabled: settingsMap['calendar_show_events'] != 'false',
       activeModules: {
         'religion': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled'),
         'medicine': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_medicine_enabled'),
@@ -385,6 +396,9 @@ class RoutineAgendaSource implements AgendaSource {
       // است» را حمل می‌کند؛ پس دامنه باید `routine` بماند.
       final isEvent = (r['itemType'] as String?) == 'EVENT';
       const itemDomain = AgendaDomain.routine;
+
+      // معادل دروازهٔ `calendar_show_events` که EventAgendaSource رعایت می‌کند.
+      if (isEvent && !eventsEnabled) continue;
 
       // درخواست‌های فقط‌رویداد یا فقط‌روتین بدون تغییر دامنه محترم شمرده می‌شوند.
       if (!(isEvent ? (wantsRoutine || wantsEvent) : wantsRoutine)) {

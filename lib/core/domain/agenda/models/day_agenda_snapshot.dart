@@ -12,6 +12,7 @@ class DayAgendaSnapshot {
     required this.freeGaps,
     required this.conflicts,
     required this.overloadScore,
+    this.previousActivity,
     this.currentActivity,
     this.nextActivity,
     required this.suggestions,
@@ -25,6 +26,7 @@ class DayAgendaSnapshot {
   final List<TimeGap> freeGaps;
   final List<AgendaConflict> conflicts;
   final double overloadScore;
+  final AgendaItem? previousActivity;
   final AgendaItem? currentActivity;
   final AgendaItem? nextActivity;
   final List<AgendaSuggestion> suggestions;

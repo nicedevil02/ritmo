@@ -88,6 +88,7 @@ class DayAgendaSnapshotBuilder {
       debugPrint('[DayAgendaSnapshotBuilder] suggestions failed for $ds: $e\n$st');
     }
 
+    AgendaItem? previous;
     AgendaItem? current;
     AgendaItem? next;
 
@@ -101,14 +102,22 @@ class DayAgendaSnapshotBuilder {
 
       final currentMinutes = (currentTime.hour * 60) + currentTime.minute;
 
-      for (final item in timedItems) {
+      for (int i = 0; i < timedItems.length; i++) {
+        final item = timedItems[i];
         final startMinutes = _parseMinutes(item.timeOfDay);
         var duration = item.durationMinutes ?? 30;
         if (duration <= 0) duration = 30;
         final endMinutes = startMinutes + duration;
 
-        if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
-          current ??= item;
+        if (endMinutes <= currentMinutes) {
+          previous = item;
+        } else if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+          if (current == null) {
+            current = item;
+            if (i > 0) {
+              previous = timedItems[i - 1];
+            }
+          }
         } else if (startMinutes > currentMinutes) {
           if (!item.isCompleted && next == null) {
             next = item;
@@ -126,6 +135,7 @@ class DayAgendaSnapshotBuilder {
       freeGaps: freeGaps,
       conflicts: conflicts,
       overloadScore: overloadScore,
+      previousActivity: previous,
       currentActivity: current,
       nextActivity: next,
       suggestions: suggestions,

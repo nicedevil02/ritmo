@@ -122,7 +122,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
 
     final semantic = Semantics(
       container: true,
-      label: 'اقدام بعدی: ${data.title}',
+      label: data.isCurrentActive ? 'کار جاری: ${data.title}' : 'اقدام بعدی: ${data.title}',
       child: card,
     );
 
@@ -171,6 +171,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
 
   Widget _content(BuildContext context, RitmoColors colors, Color tone) {
     final data = widget.data;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final onTone = ThemeData.estimateBrightnessForColor(tone) == Brightness.dark
         ? Colors.white
         : Colors.black87;
@@ -199,7 +200,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    _badgeText(data.type),
+                    _badgeText(data),
                     style: TextStyle(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
@@ -219,7 +220,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                 shape: BoxShape.circle,
                 border: Border.all(color: tone.withValues(alpha: 0.26)),
               ),
-              child: Icon(_iconFor(data.type), size: 17, color: tone),
+              child: Icon(_iconFor(data), size: 17, color: tone),
             ),
           ],
         ),
@@ -246,6 +247,11 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
             color: colors.textSecondary,
             ),
         ),
+        if (data.isCurrentActive &&
+            (data.previousTaskTitle != null || data.nextTaskTitle != null)) ...[
+          const SizedBox(height: RitmoSpacing.md),
+          _buildTemporalContextStrip(context, colors, tone, isDark, data),
+        ],
         if (widget.dayProgress != null) ...[
           const SizedBox(height: RitmoSpacing.md),
           _progress(context, colors, tone, widget.dayProgress!),
@@ -277,7 +283,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(_ctaIconFor(data.type), size: 18),
+                        Icon(_ctaIconFor(data), size: 18),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
@@ -327,6 +333,100 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
     );
   }
 
+  Widget _buildTemporalContextStrip(
+    BuildContext context,
+    RitmoColors colors,
+    Color tone,
+    bool isDark,
+    NextActionHeroData data,
+  ) {
+    final prevTitle = data.previousTaskTitle;
+    final nextTitle = data.nextTaskTitle;
+    final hasPrev = prevTitle != null;
+    final hasNext = nextTitle != null;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: (isDark ? Colors.black : Colors.white)
+            .withValues(alpha: isDark ? 0.26 : 0.55),
+        borderRadius: BorderRadius.circular(RitmoRadius.card - 4),
+        border: Border.all(
+          color: tone.withValues(alpha: isDark ? 0.22 : 0.16),
+          width: 0.9,
+        ),
+      ),
+      child: Row(
+        children: [
+          // 1. Previous Task (Right in RTL)
+          if (hasPrev) ...[
+            Icon(
+              data.isPreviousTaskCompleted == true
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              size: 13.5,
+              color: data.isPreviousTaskCompleted == true
+                  ? colors.success
+                  : colors.textSecondary.withValues(alpha: 0.65),
+            ),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                'قبل: ${toPersianDigits(prevTitle)}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
+                  decoration: data.isPreviousTaskCompleted == true
+                      ? TextDecoration.lineThrough
+                      : null,
+                ),
+              ),
+            ),
+          ],
+
+          // Flow Separator
+          if (hasPrev && hasNext) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Icon(
+                Icons.arrow_back_rounded,
+                size: 13,
+                color: tone.withValues(alpha: 0.75),
+              ),
+            ),
+          ],
+
+          // 2. Next Task (Left in RTL)
+          if (hasNext) ...[
+            Flexible(
+              child: Text(
+                'بعد: ${toPersianDigits(nextTitle)}${data.nextTaskTime != null ? ' (${data.nextTaskTime!})' : ''}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: hasPrev ? TextAlign.left : TextAlign.right,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: tone,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.schedule_rounded,
+              size: 12,
+              color: tone.withValues(alpha: 0.85),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _progress(
     BuildContext context,
     RitmoColors colors,
@@ -351,12 +451,13 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                 ),
             ),
             const Spacer(),
-            if (caption != null && caption.isNotEmpty)
+            if (caption != null)
               Text(
                 toPersianDigits(caption),
                 style: TextStyle(
-                  fontSize: 10.5,
-                  color: colors.textTertiary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
                   ),
               ),
           ],
@@ -364,18 +465,11 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
         const SizedBox(height: 6),
         ClipRRect(
           borderRadius: BorderRadius.circular(RitmoRadius.pill),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0, end: clamped),
-            duration: RitmoMotion.reduceMotion(context)
-                ? Duration.zero
-                : const Duration(milliseconds: 700),
-            curve: Curves.easeOutCubic,
-            builder: (context, animated, _) => LinearProgressIndicator(
-              value: animated,
-              minHeight: 7,
-              backgroundColor: colors.surfaceSunken.withValues(alpha: 0.85),
-              valueColor: AlwaysStoppedAnimation<Color>(tone),
-            ),
+          child: LinearProgressIndicator(
+            value: clamped,
+            minHeight: 7,
+            backgroundColor: tone.withValues(alpha: 0.16),
+            valueColor: AlwaysStoppedAnimation<Color>(tone),
           ),
         ),
       ],
@@ -393,8 +487,9 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
     };
   }
 
-  static IconData _iconFor(HeroPriorityType type) {
-    return switch (type) {
+  static IconData _iconFor(NextActionHeroData data) {
+    if (data.isCurrentActive) return Icons.bolt_rounded;
+    return switch (data.type) {
       HeroPriorityType.activeTimer => Icons.timer_outlined,
       HeroPriorityType.overdueOrNextItem => CupertinoIcons.flag_fill,
       HeroPriorityType.medicalSafety => CupertinoIcons.bandage_fill,
@@ -403,8 +498,9 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
     };
   }
 
-  static IconData _ctaIconFor(HeroPriorityType type) {
-    return switch (type) {
+  static IconData _ctaIconFor(NextActionHeroData data) {
+    if (data.isCurrentActive) return Icons.check_circle_outline_rounded;
+    return switch (data.type) {
       HeroPriorityType.activeTimer => Icons.play_arrow_rounded,
       HeroPriorityType.overdueOrNextItem => Icons.play_arrow_rounded,
       HeroPriorityType.medicalSafety => CupertinoIcons.capsule_fill,
@@ -413,8 +509,9 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
     };
   }
 
-  static String _badgeText(HeroPriorityType type) {
-    return switch (type) {
+  static String _badgeText(NextActionHeroData data) {
+    if (data.isCurrentActive) return 'اکنون';
+    return switch (data.type) {
       HeroPriorityType.activeTimer => 'در حال اجرا',
       HeroPriorityType.overdueOrNextItem => 'اقدام بعدی',
       HeroPriorityType.medicalSafety => 'هشدار دارویی',

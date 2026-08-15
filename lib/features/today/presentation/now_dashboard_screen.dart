@@ -1151,15 +1151,41 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
       case HomeFocusLevel.agendaItem:
         final chosen = decision.agendaItem!;
         final timeLabel = PersianDigits.convert(chosen.timeOfDay!);
+        final isNow = decision.isCurrentActive;
+
+        String subtitleText;
+        if (isNow) {
+          final parts = chosen.timeOfDay!.split(':');
+          final startM = (int.tryParse(parts[0]) ?? 0) * 60 + (int.tryParse(parts[1]) ?? 0);
+          final duration = (chosen.durationMinutes != null && chosen.durationMinutes! > 0)
+              ? chosen.durationMinutes!
+              : 30;
+          final endM = startM + duration;
+          final now = DateTime.now();
+          final nowM = now.hour * 60 + now.minute;
+          final remainingM = (endM - nowM).clamp(1, duration);
+          subtitleText = 'زمان: $timeLabel · ${PersianDigits.convert(remainingM.toString())} دقیقه باقیمانده از بازه';
+        } else if (decision.isOverdue) {
+          subtitleText = 'عقب‌افتاده · $timeLabel';
+        } else {
+          subtitleText = 'زمان: $timeLabel';
+        }
+
         return NextActionHeroData(
           type: HeroPriorityType.overdueOrNextItem,
           title: chosen.title,
-          subtitle: decision.isOverdue
-              ? 'عقبافتاده · $timeLabel'
-              : 'زمان: $timeLabel',
-          primaryCtaLabel:
-              chosen.domain == AgendaDomain.routine ? 'ثبت / شروع' : 'مشاهده',
+          subtitle: subtitleText,
+          primaryCtaLabel: isNow
+              ? 'تکمیل / ثبت'
+              : (chosen.domain == AgendaDomain.routine ? 'ثبت / شروع' : 'مشاهده'),
           onPrimaryTap: () => _openAgendaItem(chosen),
+          isCurrentActive: isNow,
+          previousTaskTitle: decision.previousItem?.title,
+          isPreviousTaskCompleted: decision.previousItem?.isCompleted,
+          nextTaskTitle: decision.nextItem?.title,
+          nextTaskTime: decision.nextItem?.timeOfDay != null
+              ? PersianDigits.convert(decision.nextItem!.timeOfDay!)
+              : null,
         );
 
       // fallback روتینی (پنجرهٔ قبل از لود P1)

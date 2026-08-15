@@ -129,5 +129,39 @@ void main() {
       ));
       expect(d.level, HomeFocusLevel.emptyState);
     });
+
+    test('T13: کار در حال اجرا (در بازه زمانی ۱۱:۴۵ تا ۱۲:۱۵) ⇒ isCurrentActive = true', () {
+      final d = HomeFocusRanker.decide(HomeFocusInput(
+        now: _noon, // 12:00
+        agendaItems: [
+          _item('prev', '10:00', completion: AgendaCompletion.done),
+          _item('current', '11:45'), // ends at 12:15
+          _item('next', '14:00'),
+        ],
+      ));
+      expect(d.level, HomeFocusLevel.agendaItem);
+      expect(d.agendaItem!.sourceId, 'current');
+      expect(d.isCurrentActive, isTrue);
+      expect(d.previousItem?.sourceId, 'prev');
+      expect(d.previousItem?.isCompleted, isTrue);
+      expect(d.nextItem?.sourceId, 'next');
+    });
+
+    test('T14: کار قبلی تیک‌نخورده در زنجیره زمانی شناسایی می‌شود', () {
+      final d = HomeFocusRanker.decide(HomeFocusInput(
+        now: _noon, // 12:00
+        agendaItems: [
+          _item('prev_undone', '09:00', completion: AgendaCompletion.none),
+          _item('current', '11:50'),
+          _item('next', '15:00'),
+        ],
+      ));
+      expect(d.level, HomeFocusLevel.agendaItem);
+      expect(d.agendaItem!.sourceId, 'current');
+      expect(d.isCurrentActive, isTrue);
+      expect(d.previousItem?.sourceId, 'prev_undone');
+      expect(d.previousItem?.isCompleted, isFalse);
+      expect(d.nextItem?.sourceId, 'next');
+    });
   });
 }

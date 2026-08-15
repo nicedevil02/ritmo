@@ -22,6 +22,11 @@ class NextActionHeroData {
     this.secondaryCtaLabel,
     this.onSecondaryTap,
     this.isMedicalAlert = false,
+    this.isCurrentActive = false,
+    this.previousTaskTitle,
+    this.isPreviousTaskCompleted,
+    this.nextTaskTitle,
+    this.nextTaskTime,
   });
 
   final HeroPriorityType type;
@@ -32,6 +37,11 @@ class NextActionHeroData {
   final String? secondaryCtaLabel;
   final VoidCallback? onSecondaryTap;
   final bool isMedicalAlert;
+  final bool isCurrentActive;
+  final String? previousTaskTitle;
+  final bool? isPreviousTaskCompleted;
+  final String? nextTaskTitle;
+  final String? nextTaskTime;
 }
 
 /// کارت هیروی اقدام بعدی (Next Action Hero)

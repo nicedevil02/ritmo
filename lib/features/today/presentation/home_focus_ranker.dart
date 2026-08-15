@@ -60,6 +60,9 @@ class HomeFocusDecision {
     this.level, {
     this.agendaItem,
     this.isOverdue = false,
+    this.isCurrentActive = false,
+    this.previousItem,
+    this.nextItem,
   });
 
   final HomeFocusLevel level;
@@ -69,6 +72,15 @@ class HomeFocusDecision {
 
   /// true یعنی آیتم منتخب از ساعتش گذشته (هیچ آیتم آیندهای نبود).
   final bool isOverdue;
+
+  /// true یعنی کاربر دقیقاً در بازهٔ زمانی این کار قرار دارد (اکنون / در حال اجرا).
+  final bool isCurrentActive;
+
+  /// کار قبلی برای نمایش در نوار زمینه
+  final AgendaItem? previousItem;
+
+  /// کار بعدی برای نمایش در نوار زمینه
+  final AgendaItem? nextItem;
 }
 
 /// رتبهبند خالص «اقدام بعدی». بدون state، بدون side-effect، کاملاً قطعی.
@@ -103,28 +115,85 @@ class HomeFocusRanker {
 
     // ── سطح ۴: نزدیکترین آیتم زماندارِ انجامنشده از Agenda ──
     final nowMinutes = input.now.hour * 60 + input.now.minute;
-    final candidates = input.agendaItems
+    final allTimedItems = input.agendaItems
         .where((i) =>
-            !i.isCompleted &&
             i.hasValidTimeOfDay &&
             i.domain != AgendaDomain.worshipDebt)
         .toList()
       ..sort((a, b) => a.timeOfDay!.compareTo(b.timeOfDay!));
 
-    if (candidates.isNotEmpty) {
-      for (final item in candidates) {
-        final m = _minutesOf(item.timeOfDay);
-        if (m != null && m >= nowMinutes) {
-          // اولین آیتمِ هنوز-نرسیده
-          return HomeFocusDecision(HomeFocusLevel.agendaItem, agendaItem: item);
+    if (allTimedItems.isNotEmpty) {
+      // الف) جستجوی کار جاری (اکنون در حال اجرا):
+      AgendaItem? currentActive;
+      AgendaItem? previousItem;
+      AgendaItem? nextItem;
+
+      for (int i = 0; i < allTimedItems.length; i++) {
+        final item = allTimedItems[i];
+        final start = _minutesOf(item.timeOfDay) ?? 0;
+        final duration = (item.durationMinutes != null && item.durationMinutes! > 0)
+            ? item.durationMinutes!
+            : 30;
+        final end = start + duration;
+
+        if (nowMinutes >= start && nowMinutes < end) {
+          if (!item.isCompleted) {
+            currentActive = item;
+            if (i > 0) {
+              previousItem = allTimedItems[i - 1];
+            }
+            for (int j = i + 1; j < allTimedItems.length; j++) {
+              if (!allTimedItems[j].isCompleted) {
+                nextItem = allTimedItems[j];
+                break;
+              }
+            }
+            break;
+          }
         }
       }
-      // همه گذشتهاند ⇒ اولین (قدیمیترین) عقبافتاده
-      return HomeFocusDecision(
-        HomeFocusLevel.agendaItem,
-        agendaItem: candidates.first,
-        isOverdue: true,
-      );
+
+      if (currentActive != null) {
+        return HomeFocusDecision(
+          HomeFocusLevel.agendaItem,
+          agendaItem: currentActive,
+          isCurrentActive: true,
+          previousItem: previousItem,
+          nextItem: nextItem,
+        );
+      }
+
+      // ب) جستجوی نزدیک‌ترین اقدام بعدی در پیش‌رو:
+      final pendingCandidates = allTimedItems.where((i) => !i.isCompleted).toList();
+      if (pendingCandidates.isNotEmpty) {
+        for (int i = 0; i < pendingCandidates.length; i++) {
+          final item = pendingCandidates[i];
+          final start = _minutesOf(item.timeOfDay);
+          if (start != null && start >= nowMinutes) {
+            final itemIdx = allTimedItems.indexOf(item);
+            if (itemIdx > 0) {
+              previousItem = allTimedItems[itemIdx - 1];
+            }
+            if (i + 1 < pendingCandidates.length) {
+              nextItem = pendingCandidates[i + 1];
+            }
+            return HomeFocusDecision(
+              HomeFocusLevel.agendaItem,
+              agendaItem: item,
+              isCurrentActive: false,
+              previousItem: previousItem,
+              nextItem: nextItem,
+            );
+          }
+        }
+
+        // ج) همه گذشته‌اند ⇒ اولین (قدیمی‌ترین) عقب‌افتاده
+        return HomeFocusDecision(
+          HomeFocusLevel.agendaItem,
+          agendaItem: pendingCandidates.first,
+          isOverdue: true,
+        );
+      }
     }
 
     // ── سطح ۵: fallback روتینی (پنجرهٔ قبل از لود P1) ──

@@ -10,14 +10,22 @@ class TaskAgendaSource implements AgendaSource {
   TaskAgendaSource({
     required this.tasksByDate,
     required this.overdueTasks,
+    required this.datelessTasks,
+    required this.totalOverdueCount,
     required this.stepCounts,
   });
 
   /// dateStr -> rows of simple_tasks
   final Map<String, List<Map<String, dynamic>>> tasksByDate;
 
-  /// کارهای انجام‌نشده با dueDate قبل از امروز
+  /// کارهای انجام‌نشده با dueDate قبل از امروز (حداکثر ۲۰ مورد)
   final List<Map<String, dynamic>> overdueTasks;
+
+  /// کارهای بدون تاریخ (فقط برای نمایش در روز جاری)
+  final List<Map<String, dynamic>> datelessTasks;
+
+  /// کل تعداد کارهای معوقه در بازهٔ بازگشت
+  final int totalOverdueCount;
 
   /// taskId -> (done, total)
   final Map<String, ({int done, int total})> stepCounts;
@@ -33,7 +41,8 @@ class TaskAgendaSource implements AgendaSource {
     DateTime start,
     DateTime end,
     String todayStr,
-    [String? appStartDateStr]
+    [String? appStartDateStr,
+    int lookbackDays = 14]
   ) async {
     try {
       final startStr = start.toIso8601String().substring(0, 10);
@@ -57,12 +66,37 @@ class TaskAgendaSource implements AgendaSource {
         }
       }
 
-      // 2) Overdue tasks: isDone = 0 AND dueDate IS NOT NULL AND dueDate < todayStr
-      String overdueWhere = 'isDone = 0 AND dueDate IS NOT NULL AND dueDate < ?';
-      List<Object?> overdueArgs = [todayStr];
-      if (appStartDateStr != null) {
-        overdueWhere += ' AND dueDate >= ?';
-        overdueArgs.add(appStartDateStr);
+      // 2) Dateless pending tasks (M2-7)
+      final datelessRows = await db.query(
+        'simple_tasks',
+        where: 'isDone = 0 AND (dueDate IS NULL OR dueDate = "")',
+        orderBy: 'isImportant DESC, updatedAt DESC',
+      );
+      for (final r in datelessRows) {
+        taskIds.add(r['id'].toString());
+      }
+
+      // 3) Overdue tasks with configurable lookback window (M2-7)
+      final parsedToday = DateTime.tryParse(todayStr) ?? DateTime.now();
+      final lookbackDate = parsedToday.subtract(Duration(days: lookbackDays > 0 ? lookbackDays : 14));
+      final lookbackStartStr = lookbackDate.toIso8601String().substring(0, 10);
+
+      String effectiveStartDate = lookbackStartStr;
+      if (appStartDateStr != null && appStartDateStr.compareTo(lookbackStartStr) > 0) {
+        effectiveStartDate = appStartDateStr;
+      }
+
+      const overdueWhere = 'isDone = 0 AND dueDate IS NOT NULL AND dueDate != "" AND dueDate < ? AND dueDate >= ?';
+      final overdueArgs = [todayStr, effectiveStartDate];
+
+      // Count total overdue
+      int totalOverdue = 0;
+      final countRes = await db.rawQuery(
+        'SELECT COUNT(*) as cnt FROM simple_tasks WHERE $overdueWhere',
+        overdueArgs,
+      );
+      if (countRes.isNotEmpty) {
+        totalOverdue = (countRes.first['cnt'] as num?)?.toInt() ?? 0;
       }
 
       final overdueRows = await db.query(
@@ -76,7 +110,7 @@ class TaskAgendaSource implements AgendaSource {
         taskIds.add(r['id'].toString());
       }
 
-      // 3) Step counts for all loaded tasks
+      // 4) Step counts for all loaded tasks
       final stepCounts = <String, ({int done, int total})>{};
       if (taskIds.isNotEmpty) {
         final placeholders = List.filled(taskIds.length, '?').join(',');
@@ -100,11 +134,19 @@ class TaskAgendaSource implements AgendaSource {
       return TaskAgendaSource(
         tasksByDate: tasksByDate,
         overdueTasks: overdueRows,
+        datelessTasks: datelessRows,
+        totalOverdueCount: totalOverdue,
         stepCounts: stepCounts,
       );
     } catch (e, st) {
       debugPrint('[TaskAgendaSource] Load error: $e\n$st');
-      return TaskAgendaSource(tasksByDate: const {}, overdueTasks: const [], stepCounts: const {});
+      return TaskAgendaSource(
+        tasksByDate: const {},
+        overdueTasks: const [],
+        datelessTasks: const [],
+        totalOverdueCount: 0,
+        stepCounts: const {},
+      );
     }
   }
 
@@ -136,6 +178,7 @@ class TaskAgendaSource implements AgendaSource {
       result.add(AgendaItem(
         id: buildAgendaItemId(AgendaDomain.task, taskId, ctx.dateStr),
         domain: AgendaDomain.task,
+        kind: AgendaItemKind.task,
         sourceId: taskId,
         title: title,
         subtitle: subtitle,
@@ -156,7 +199,49 @@ class TaskAgendaSource implements AgendaSource {
       ));
     }
 
-    // 2) Overdue tasks (Only if isToday is true)
+    // 2) Dateless tasks (ONLY on today, M2-7)
+    if (ctx.isToday && datelessTasks.isNotEmpty) {
+      for (final row in datelessTasks) {
+        final taskId = row['id'].toString();
+        final title = row['title'] as String? ?? '';
+        final note = row['note'] as String?;
+        final isImportant = (row['isImportant'] as int? ?? 0) == 1;
+        final steps = stepCounts[taskId];
+
+        String? subtitle = 'بدون تاریخ مشخص';
+        if (steps != null && steps.total > 0) {
+          subtitle = '${toPersianDigits(steps.done)} از ${toPersianDigits(steps.total)} (بدون تاریخ)';
+        } else if (note != null && note.trim().isNotEmpty) {
+          final trimmed = note.trim();
+          subtitle = trimmed.length > 40 ? '${trimmed.substring(0, 40)}…' : trimmed;
+        }
+
+        result.add(AgendaItem(
+          id: 'task:$taskId:dateless:${ctx.dateStr}',
+          domain: AgendaDomain.task,
+          kind: AgendaItemKind.task,
+          sourceId: taskId,
+          title: title,
+          subtitle: subtitle,
+          dateStr: ctx.dateStr,
+          timeOfDay: null,
+          durationMinutes: null,
+          category: Category.personal,
+          itemType: AgendaItemType.floating,
+          completion: AgendaCompletion.pending,
+          priority: isImportant ? 1.8 : 0.9,
+          isEssential: false,
+          deepLink: AgendaDeepLink(domain: AgendaDomain.task, targetId: taskId),
+          meta: {
+            'taskRow': row,
+            'isDateless': true,
+            'isImportant': isImportant,
+          },
+        ));
+      }
+    }
+
+    // 3) Overdue tasks (Only on today, M2-7)
     if (ctx.isToday && overdueTasks.isNotEmpty) {
       for (final row in overdueTasks) {
         final taskId = row['id'].toString();
@@ -178,6 +263,7 @@ class TaskAgendaSource implements AgendaSource {
           // Exception: overdue tasks deliberately have a distinct ID pattern.
           id: 'task:$taskId:overdue:${ctx.dateStr}',
           domain: AgendaDomain.task,
+          kind: AgendaItemKind.task,
           sourceId: taskId,
           title: title,
           subtitle: jalaliSubtitle,
@@ -194,6 +280,32 @@ class TaskAgendaSource implements AgendaSource {
             'isOverdue': true,
             'originalDueDate': origDateStr,
             'isImportant': isImportant,
+          },
+        ));
+      }
+
+      // Overflow card for overdue tasks (M2-7)
+      final remaining = totalOverdueCount - overdueTasks.length;
+      if (remaining > 0) {
+        result.add(AgendaItem(
+          id: 'task:overdue_overflow:${ctx.dateStr}',
+          domain: AgendaDomain.task,
+          kind: AgendaItemKind.task,
+          sourceId: 'overdue_overflow',
+          title: '${toPersianDigits(remaining)} مورد دیگر از کارهای معوقه',
+          subtitle: 'برای مشاهده همه کارهای معوقه به بخش کارها بروید',
+          dateStr: ctx.dateStr,
+          timeOfDay: null,
+          durationMinutes: null,
+          category: Category.personal,
+          itemType: AgendaItemType.flexible,
+          completion: AgendaCompletion.overdue,
+          priority: 0.1,
+          isEssential: false,
+          deepLink: const AgendaDeepLink(domain: AgendaDomain.task, targetId: 'tasks_all'),
+          meta: {
+            'isOverdueOverflow': true,
+            'remainingCount': remaining,
           },
         ));
       }

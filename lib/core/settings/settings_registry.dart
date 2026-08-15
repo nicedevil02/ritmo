@@ -880,6 +880,16 @@ class SettingsRegistry {
       searchTerms: ['چرخه', 'پریود', 'بانوان', 'فاز چرخه'],
     ),
     SettingDescriptor(
+      key: 'calendar_overdue_lookback_days',
+      type: SettingType.integer,
+      scope: SettingScope.db,
+      defaultValue: 14,
+      labelFa: 'بازهٔ بازگشت کارهای معوقه در تقویم (روز)',
+      group: SettingsGroup.calendar,
+      descriptionFa: 'تعداد روزهای گذشته برای جستجو و نمایش کارهای انجام‌نشده در نمای امروز',
+      searchTerms: ['معوقه', 'کارهای عقب‌افتاده', 'تسک', 'بازه'],
+    ),
+    SettingDescriptor(
       key: 'calendar_compress_recurring',
       type: SettingType.boolean,
       scope: SettingScope.db,

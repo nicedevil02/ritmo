@@ -3,6 +3,7 @@ import 'package:ritmo/features/routines/domain/strategies/generic_strategy.dart'
 import 'package:ritmo/features/routines/domain/strategies/planner_category_strategy.dart';
 import 'package:ritmo/features/routines/domain/strategies/reflection_strategy.dart';
 import 'package:ritmo/features/routines/domain/strategies/sports_strategy.dart';
+import 'package:ritmo/features/routines/domain/strategies/task_strategy.dart';
 import 'package:ritmo/features/routines/domain/strategies/worship_strategy.dart';
 
 class PlannerStrategyRegistry {
@@ -11,6 +12,7 @@ class PlannerStrategyRegistry {
   /// Ordered list — first strategy whose [matches] returns true wins.
   static final List<PlannerCategoryStrategy> _strategies = [
     const ReflectionStrategy(), // must come BEFORE GenericStrategy (itemType check)
+    const TaskStrategy(),       // routes itemType == 'TASK' to simple_tasks
     const WorshipStrategy(),
     const SportsStrategy(),
     const GenericStrategy(),    // fallback — always matches

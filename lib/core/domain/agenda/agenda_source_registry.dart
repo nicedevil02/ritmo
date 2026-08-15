@@ -184,6 +184,7 @@ class AgendaSourceRegistry {
         if (!tasksEnabled || !ctx.options.wants(AgendaDomain.task)) {
           return null;
         }
+        final lookbackDays = int.tryParse(ctx.settingsMap['calendar_overdue_lookback_days'] ?? '') ?? 14;
         return ctx.guardSource<AgendaSource?>(
           'task',
           () => TaskAgendaSource.load(
@@ -192,6 +193,7 @@ class AgendaSourceRegistry {
             ctx.end,
             ctx.todayStr,
             ctx.settingsMap['app_start_date'],
+            lookbackDays,
           ),
           () => null,
         );

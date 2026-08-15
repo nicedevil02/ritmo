@@ -38,6 +38,7 @@ class CommitmentAgendaSource implements AgendaSource {
         FROM planning_allocations a
         JOIN planning_commitments c ON a.commitmentId = c.id
         WHERE a.dayKey >= ? AND a.dayKey <= ? AND a.status != 'DROPPED' AND c.status != 'DROPPED'
+          AND (a.materializedEntityType IS NULL OR a.materializedEntityType != 'TASK' OR a.materializedEntityId IS NULL)
         ORDER BY a.exactTime ASC, a.timeWindowStart ASC, a.createdAt ASC
       ''', [startStr, endStr]);
 
@@ -65,6 +66,12 @@ class CommitmentAgendaSource implements AgendaSource {
 
     final items = <AgendaItem>[];
     for (final row in rows) {
+      final matType = row['materializedEntityType']?.toString();
+      final matId = row['materializedEntityId']?.toString();
+      if (matType == 'TASK' && matId != null && matId.isNotEmpty) {
+        continue;
+      }
+
       final allocId = row['allocId']?.toString() ?? '';
       final title = row['commTitle']?.toString() ?? 'برنامه و تعهد';
       final exactTime = row['exactTime']?.toString();

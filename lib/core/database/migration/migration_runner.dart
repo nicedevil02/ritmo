@@ -40,6 +40,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v98_movement_
 import 'package:ritmo/core/database/migration/migrations/migration_v99_movement_muscle_focus.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v100_sleep_program.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v101_notification_control_center.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v102_unify_one_off_tasks.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -143,6 +144,7 @@ class MigrationRunner {
     MigrationV99MovementMuscleFocus(), // Tab 1: muscle focus for strength movements
     MigrationV100SleepProgram(), // قدم ۲ مسیر خواب: sleep_programs + sleep_plan_days
     MigrationV101NotificationControlCenter(), // Notification Control Center and Privacy Engine
+    MigrationV102UnifyOneOffTasks(), // Unify one-off tasks from routines into simple_tasks
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

@@ -4,12 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 
 class TemporaryEventCreateSheet extends StatefulWidget {
+  const TemporaryEventCreateSheet({
+    super.key,
+    required this.onSaved,
+    this.initialDate,
+  });
 
-  const TemporaryEventCreateSheet({super.key, required this.onSaved});
   final VoidCallback onSaved;
+  final DateTime? initialDate;
 
   @override
   State<TemporaryEventCreateSheet> createState() => _TemporaryEventCreateSheetState();
@@ -17,6 +27,7 @@ class TemporaryEventCreateSheet extends StatefulWidget {
 
 class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
   final _titleController = TextEditingController();
+  late DateTime _selectedDate;
   TimeOfDay _startTime = TimeOfDay.now();
   int _durationMinutes = 60;
   bool _isSaving = false;
@@ -24,15 +35,36 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
   final List<int> _durations = [30, 60, 90, 120, 180, 240];
 
   @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.initialDate ?? DateTime.now();
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     super.dispose();
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final now = DateTime.now();
+    final picked = await RitmoDatePicker.show(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now.add(const Duration(days: 365 * 2)),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
   Future<void> _selectTime(BuildContext context) async {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     final picked = await showTimePicker(
       context: context,
       initialTime: _startTime,
@@ -55,7 +87,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
         );
       },
     );
-    if (picked != null && picked != _startTime) {
+    if (picked != null && picked != _startTime && mounted) {
       setState(() {
         _startTime = picked;
       });
@@ -71,7 +103,10 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
 
     try {
       final db = await DatabaseHelper.instance.database;
-      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      final yearStr = _selectedDate.year.toString().padLeft(4, '0');
+      final monthStr = _selectedDate.month.toString().padLeft(2, '0');
+      final dayStr = _selectedDate.day.toString().padLeft(2, '0');
+      final dateStr = '$yearStr-$monthStr-$dayStr';
       final nowMs = DateTime.now().millisecondsSinceEpoch;
 
       final startHourStr = _startTime.hour.toString().padLeft(2, '0');
@@ -88,7 +123,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
       await db.insert('temporary_events', {
         'id': 'temp_$nowMs',
         'title': _titleController.text.trim(),
-        'date': todayStr,
+        'date': dateStr,
         'startTime': startTimeStr,
         'endTime': endTimeStr,
         'durationMinutes': _durationMinutes,
@@ -97,6 +132,15 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
       });
 
       DayAgendaService.instance.invalidateAll();
+      RitmoEvents.notifyRoutineChanged();
+      RitmoEventBus().fire(RitmoEvent(
+        type: 'EventCreated',
+        timestamp: DateTime.now(),
+        payload: {
+          'id': 'temp_$nowMs',
+          'date': dateStr,
+        },
+      ));
 
       unawaited(HapticFeedback.mediumImpact());
       widget.onSaved();
@@ -104,7 +148,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
         Navigator.pop(context);
       }
     } catch (e) {
-      debugPrint('Error saving temporary event: $e');
+      debugPrint('Error saving event: $e');
     }
 
     if (mounted) {
@@ -112,6 +156,11 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
         _isSaving = false;
       });
     }
+  }
+
+  String _formatJalaliDate(DateTime dt) {
+    final j = Jalali.fromDateTime(dt);
+    return '${j.formatter.wN}، ${j.day} ${j.formatter.mN} ${j.year}'.toPersianDigits();
   }
 
   @override
@@ -133,7 +182,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'ثبت رویداد موقت جدید',
+                      'ثبت رویداد جدید',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.cardTitle),
                     ),
                     IconButton(
@@ -144,7 +193,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'یک رویداد ناگهانی یا موقت (مثلاً ناهار کاری غیرمنتظره) ثبت کنید تا برنامه امروز بر اساس آن فشرده‌سازی شود.',
+                  'یک رویداد زمان‌دار ثبت کنید تا برنامهٔ روز بر اساس آن تنظیم شود.',
                   style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 20),
@@ -154,13 +203,36 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                   controller: _titleController,
                   style: TextStyle(color: colors.cardTitle, fontSize: 13),
                   decoration: InputDecoration(
-                    hintText: 'عنوان رویداد (مثلاً: جلسه کاری اضطراری)',
+                    hintText: 'عنوان رویداد (مثلاً: جلسه کاری)',
                     hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 12),
                     fillColor: colors.inputBackground,
                     filled: true,
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: colors.glassBorder)),
                     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: colors.primary.withValues(alpha: 0.4))),
                   ),
+                ),
+                const SizedBox(height: 16),
+
+                // Date Picker row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('تاریخ رویداد:', style: TextStyle(fontSize: 12, color: colors.cardTitle)),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colors.cardFill,
+                        foregroundColor: colors.cardTitle,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: Icon(CupertinoIcons.calendar, size: 16, color: colors.primary),
+                      label: Text(
+                        _formatJalaliDate(_selectedDate),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.cardTitle),
+                      ),
+                      onPressed: () => _selectDate(context),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
 
@@ -178,8 +250,8 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                       ),
                       icon: Icon(CupertinoIcons.clock, size: 16, color: colors.primary),
                       label: Text(
-                        _startTime.format(context),
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'monospace', color: colors.cardTitle),
+                        _startTime.format(context).toPersianDigits(),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.cardTitle),
                       ),
                       onPressed: () => _selectTime(context),
                     ),
@@ -212,12 +284,12 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                           ),
                         ),
                         child: Text(
-                          '$dur دقیقه',
+                          '$dur دقیقه'.toPersianDigits(),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             color: isSelected ? colors.primary : colors.textSecondary,
-                            ),
+                          ),
                         ),
                       ),
                     );
@@ -236,7 +308,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
                   onPressed: _isSaving ? null : _saveEvent,
                   child: _isSaving
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('ثبت رویداد موقت', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                      : const Text('ثبت رویداد', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),

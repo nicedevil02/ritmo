@@ -12,7 +12,6 @@ import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_occasions_data.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/presentation/widgets/fullscreen_tasbih_sheet.dart';
-import 'package:ritmo/features/worship/presentation/widgets/mustahab_section.dart';
 import 'package:ritmo/features/worship/presentation/widgets/prayer_agenda_card.dart';
 import 'package:ritmo/features/worship/presentation/widgets/prayer_sheet.dart';
 
@@ -157,7 +156,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     bool isToday,
     RitmoColors colors,
   ) {
-    List<WorshipPracticeState> members = [];
+    final List<WorshipPracticeState> members = [];
     if (pKey == 'DHUHR_ASR') {
       if (practiceMap.containsKey('DHUHR')) members.add(practiceMap['DHUHR']!);
       if (practiceMap.containsKey('ASR')) members.add(practiceMap['ASR']!);
@@ -329,12 +328,12 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('ثبت نماز قضا', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('آیا می‌خواهید این نماز به عنوان نماز قضاشده ثبت گردد؟', style: TextStyle()),
+        title: const Text('ثبت نماز قضا', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('آیا می‌خواهید این نماز به عنوان نماز قضاشده ثبت گردد؟', style: TextStyle()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('انصراف', style: TextStyle()),
+            child: const Text('انصراف', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -378,11 +377,11 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedSwitcher(
-      duration: Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 250),
       child: Container(
         key: ValueKey('${j.year}-${j.month}-${j.day}'),
-        margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        padding: EdgeInsets.all(20),
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(32),
           color: isDark
@@ -401,7 +400,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                   : colors.shadow.withValues(alpha: 0.08),
               blurRadius: 35,
               spreadRadius: 0,
-              offset: Offset(0, 12),
+              offset: const Offset(0, 12),
             ),
           ],
         ),
@@ -425,7 +424,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                     color: colors.primary,
                   ),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -438,7 +437,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                           color: colors.textPrimary,
                           ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         fullDateText,
                         style: TextStyle(
@@ -453,7 +452,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                 // Badges: Today / Qamari Night
                 if (selectedDay.isToday) ...[
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: colors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
@@ -474,10 +473,10 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
 
             // Qamari Night Badge (if active for today after Maghrib)
             if (selectedDay.isToday && widget.qamariNightText != null) ...[
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: colors.surfaceElevated,
                   borderRadius: BorderRadius.circular(10),
@@ -486,7 +485,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                 child: Row(
                   children: [
                     Icon(CupertinoIcons.moon_stars_fill, size: 14, color: colors.warning),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       widget.qamariNightText!,
                       style: TextStyle(
@@ -500,7 +499,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               ),
             ],
 
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Divider(height: 1, color: colors.textPrimary.withValues(alpha: 0.08)),
             const SizedBox(height: 14),
 
@@ -513,10 +512,11 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
             // 2. Obligatory Prayers Section
             _buildObligatoryPrayersCard(context, colors),
 
-            const SizedBox(height: 14),
-
-            // 3. Scheduled Mustahabat Section (INT-02)
-            _buildScheduledMustahabsCard(context, colors),
+            // 3. Planned Mustahabat Rows (Rendered only if active for this day)
+            if (_activeMustahabs.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              ..._buildScheduledMustahabsRows(context, colors),
+            ],
 
             const SizedBox(height: 14),
 
@@ -586,7 +586,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
   Widget _buildObligatoryPrayersCard(BuildContext context, RitmoColors colors) {
     if (_worshipDay == null) {
       return Container(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: colors.surfaceElevated.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(16),
@@ -617,7 +617,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     final maghribState = _computeGroupState('MAGHRIB_ISHA', practiceMap, isFuture, isToday, colors);
 
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.surfaceElevated.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
@@ -632,7 +632,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               Row(
                 children: [
                   Icon(CupertinoIcons.checkmark_seal_fill, size: 15, color: colors.primary),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Text(
                     'وضعیت نمازهای واجب این روز',
                     style: TextStyle(
@@ -653,9 +653,9 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
           ),
 
           if (isExempt) ...[
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: colors.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
@@ -663,7 +663,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               child: Row(
                 children: [
                   Icon(CupertinoIcons.info_circle_fill, size: 13, color: colors.accent),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Text(
                     'معافیت شرعی (پریود) اعمال شده است.',
                     style: TextStyle(fontSize: 11, color: colors.accent),
@@ -736,8 +736,8 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
         _handleExplicitQada(groupKey);
       },
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 250),
-        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
         decoration: BoxDecoration(
           color: state.bgBadge,
           borderRadius: BorderRadius.circular(14),
@@ -762,7 +762,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             // Azan Time
             Text(
               'اذان $azanTime',
@@ -797,157 +797,67 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
   }
 
 
-  Widget _buildScheduledMustahabsCard(BuildContext context, RitmoColors colors) {
+  List<Widget> _buildScheduledMustahabsRows(BuildContext context, RitmoColors colors) {
     final date = widget.selectedDay.dateTime;
     final isFuture = date.isAfter(DateTime.now());
 
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.surfaceElevated.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.textPrimary.withValues(alpha: 0.06)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(CupertinoIcons.heart_fill, size: 15, color: colors.primary),
-                  SizedBox(width: 6),
-                  Text(
-                    'مستحبات برنامه‌ریزی‌شده',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                      ),
-                  ),
-                ],
-              ),
-              InkWell(
-                onTap: () {
-                  ManageMustahabSheet.present(
-                    context,
-                    onSaved: () async {
-                      await _loadDayData();
-                      widget.onChanged?.call();
-                    },
-                  );
-                },
-                borderRadius: BorderRadius.circular(6),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  child: Text(
-                    '➕ مدیریت',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: colors.primary,
-                      ),
-                  ),
-                ),
-              ),
-            ],
+    return _activeMustahabs.map((practice) {
+      final status = _mustahabStatuses[practice.id];
+      final isDone = status?.isDone == true;
+      final isSkipped = status?.isSkipped == true;
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.textPrimary.withValues(alpha: 0.06)),
           ),
-          SizedBox(height: 10),
-
-          if (_activeMustahabs.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colors.textPrimary.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'هیچ برنامه مستحبی برای این روز فعال نیست.',
-                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                  ),
-                  SizedBox(height: 6),
-                  ElevatedButton(
-                    onPressed: () {
-                      ManageMustahabSheet.present(
-                        context,
-                        onSaved: () async {
-                          await _loadDayData();
-                          widget.onChanged?.call();
-                        },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('فعال‌سازی مستحبات', style: TextStyle(fontSize: 11, color: Colors.white)),
-                  ),
-                ],
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _activeMustahabs.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final practice = _activeMustahabs[index];
-                final status = _mustahabStatuses[practice.id];
-                final isDone = status?.isDone == true;
-                final isSkipped = status?.isSkipped == true;
-
-                return PrayerAgendaCard(
-                  title: practice.title,
-                  timeStr: practice.notes ?? 'مستحب',
-                  isDone: isDone,
-                  isSkipped: isSkipped,
-                  isSnoozed: false,
-                  deferCount: 0,
-                  hasReminder: practice.reminderEnabled,
-                  disableControls: isFuture,
-                  onToggle: (_) async {
+          child: PrayerAgendaCard(
+            title: practice.title,
+            timeStr: practice.notes ?? 'مستحب',
+            isDone: isDone,
+            isSkipped: isSkipped,
+            isSnoozed: false,
+            deferCount: 0,
+            hasReminder: practice.reminderEnabled,
+            disableControls: isFuture,
+            onToggle: (_) async {
+              final sm = ScaffoldMessenger.of(context);
+              if (isDone) {
+                await WorshipEngine.instance.clearLog(practiceId: practice.id, date: date);
+              } else {
+                final res = await WorshipEngine.instance.logDone(practiceId: practice.id, date: date);
+                if (res is WorshipLogBlocked) {
+                  sm.showSnackBar(SnackBar(content: Text(res.userMessage, style: const TextStyle())));
+                }
+              }
+              if (!mounted) return;
+              WorshipEngine.instance.invalidate();
+              await _loadDayData();
+              widget.onChanged?.call();
+            },
+            onSkip: practice.allowQada
+                ? () async {
                     final sm = ScaffoldMessenger.of(context);
-                    if (isDone) {
-                      await WorshipEngine.instance.clearLog(practiceId: practice.id, date: date);
+                    final title = practice.title;
+                    final res = await WorshipEngine.instance.logSkip(practiceId: practice.id, date: date, addToQada: true);
+                    if (res is WorshipLogBlocked) {
+                      sm.showSnackBar(SnackBar(content: Text(res.userMessage, style: const TextStyle())));
                     } else {
-                      final res = await WorshipEngine.instance.logDone(practiceId: practice.id, date: date);
-                      if (res is WorshipLogBlocked) {
-                        sm.showSnackBar(SnackBar(content: Text(res.userMessage, style: const TextStyle())));
-                      }
+                      sm.showSnackBar(SnackBar(content: Text('قضای $title به بدهی‌های شما اضافه شد ✨', style: const TextStyle())));
                     }
                     if (!mounted) return;
                     WorshipEngine.instance.invalidate();
                     await _loadDayData();
                     widget.onChanged?.call();
-                  },
-                  onSkip: practice.allowQada
-                      ? () async {
-                          final sm = ScaffoldMessenger.of(context);
-                          final title = practice.title;
-                          final res = await WorshipEngine.instance.logSkip(practiceId: practice.id, date: date, addToQada: true);
-                          if (res is WorshipLogBlocked) {
-                            sm.showSnackBar(SnackBar(content: Text(res.userMessage, style: const TextStyle())));
-                          } else {
-                            sm.showSnackBar(SnackBar(content: Text('قضای $title به بدهی‌های شما اضافه شد ✨', style: const TextStyle())));
-                          }
-                          if (!mounted) return;
-                          WorshipEngine.instance.invalidate();
-                          await _loadDayData();
-                          widget.onChanged?.call();
-                        }
-                      : null,
-                );
-              },
-            ),
-        ],
-      ),
-    );
+                  }
+                : null,
+          ),
+        ),
+      );
+    }).toList();
   }
 
   Widget _buildMafatihRecommendationsCard(BuildContext context, RitmoColors colors) {
@@ -989,11 +899,11 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     }
 
     if (recommendations.isEmpty) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
 
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
@@ -1005,7 +915,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
           Row(
             children: [
               Icon(CupertinoIcons.book_fill, size: 15, color: colors.primary),
-              SizedBox(width: 6),
+              const SizedBox(width: 6),
               Text(
                 'توصیه‌های امروز',
                 style: TextStyle(
@@ -1016,20 +926,20 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
               ),
             ],
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
 
           ...recommendations.map((rec) => Padding(
-                padding: EdgeInsets.only(bottom: 8.0),
+                padding: const EdgeInsets.only(bottom: 8.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      margin: EdgeInsets.only(top: 4),
+                      margin: const EdgeInsets.only(top: 4),
                       width: 6,
                       height: 6,
                       decoration: BoxDecoration(color: colors.primary, shape: BoxShape.circle),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1097,8 +1007,8 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     final displayTitle = occ.isHoliday ? '${occ.title} - تعطیل' : occ.title;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 10),
-      padding: EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: bgBadge,
         borderRadius: BorderRadius.circular(12),
@@ -1107,7 +1017,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
       child: Row(
         children: [
           Icon(icon, size: 16, color: iconColor),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               displayTitle,
@@ -1123,36 +1033,12 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     );
   }
 
-  Widget _buildEmptyOccasionsCard(BuildContext context, RitmoColors colors) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-      decoration: BoxDecoration(
-        color: colors.textPrimary.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(CupertinoIcons.info_circle, size: 16, color: colors.textTertiary),
-          SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'مناسبت عبادی خاصی برای این روز ثبت نشده است.',
-              style: TextStyle(
-                fontSize: 12,
-                color: colors.textSecondary,
-                ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildDailyZikrCard(BuildContext context, RitmoColors colors) {
     final targetCount = _parseZikrTargetCount(widget.selectedDay.dailyZikr);
 
     return Container(
-      padding: EdgeInsets.all(14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -1174,7 +1060,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                 Row(
                   children: [
                     Icon(CupertinoIcons.circle_grid_hex_fill, size: 14, color: colors.primary),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     Text(
                       'ذکر روز هفته',
                       style: TextStyle(
@@ -1185,7 +1071,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
                     ),
                   ],
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   widget.selectedDay.dailyZikr,
                   style: TextStyle(
@@ -1211,7 +1097,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
             },
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: colors.primary,
                 borderRadius: BorderRadius.circular(10),
@@ -1289,12 +1175,12 @@ class WorshipDayDetailSheet extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           // Drag handle
           Container(
             width: 36,

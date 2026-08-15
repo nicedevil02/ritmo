@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
-import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
+import 'package:ritmo/core/domain/engines/routine_occurrence_generator.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
@@ -267,12 +267,21 @@ class OnboardingController extends ChangeNotifier {
             'updatedAt': nowMs,
           };
 
-          final command = CreateRoutineCommand(
-            routineData: routineData,
-            scheduleData: scheduleData,
+          await txn.insert(
+            'routines',
+            routineData,
+            conflictAlgorithm: ConflictAlgorithm.replace,
           );
-
-          await RitmoExecutionKernel.instance.execute(command, txn: txn);
+          await txn.insert(
+            'routine_schedules',
+            scheduleData,
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+          await RoutineOccurrenceGenerator.generateFutureOccurrences(
+            txn,
+            rId,
+            rule,
+          );
           createdCount++;
         }
 
@@ -350,9 +359,16 @@ class OnboardingController extends ChangeNotifier {
       // Clear draft store immediately after successful transaction
       await OnboardingDraftStore.clear();
 
+      // Dual redundancy sync to SharedPreferences outside transaction
+      unawaited(OnboardingGate.syncToPrefs(
+        version: OnboardingGate.currentVersion,
+        userName: userName,
+      ));
+
       // ── CRITICAL STEP COMPLETED: Release user navigation immediately ──
       isSaving = false;
       notifyListeners();
+      debugPrint('[OnboardingController] Calling onFinished() navigation callback');
       onFinished();
 
       // ── BEST-EFFORT SIDE EFFECTS: must not compete with the first frames ──
@@ -371,6 +387,7 @@ class OnboardingController extends ChangeNotifier {
         Future<void>.delayed(postSaveDelay, _postSaveBestEffort),
       );
     } catch (e, st) {
+      debugPrint('[OnboardingController] Failed to save onboarding data: $e\n$st');
       RitmoLog.error('OnboardingController', 'Failed to save onboarding data', e, st);
       isSaving = false;
       errorMessage = 'ذخیرهٔ اطلاعات ناموفق بود. لطفاً دوباره تلاش کنید.';

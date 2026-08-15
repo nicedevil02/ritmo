@@ -1176,13 +1176,16 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
             return Container(
               margin: EdgeInsets.symmetric(vertical: 4),
               decoration: BoxDecoration(
-                color: isDark ? colors.surface : colors.card,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isDark ? colors.accent.withValues(alpha: 0.15) : colors.border,
                 ),
               ),
-              child: ListTile(
+              child: Material(
+                color: isDark ? colors.surface : colors.card,
+                borderRadius: BorderRadius.circular(14),
+                clipBehavior: Clip.antiAlias,
+                child: ListTile(
                 dense: true,
                 title: Text(
                   practice.title,
@@ -1210,6 +1213,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                   ],
                 ),
               ),
+              ),
             );
           }),
           SizedBox(height: 12),
@@ -1232,13 +1236,16 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
           return Container(
             margin: EdgeInsets.symmetric(vertical: 4),
             decoration: BoxDecoration(
-              color: isDark ? colors.surface : colors.card,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isDark ? colors.accent.withValues(alpha: 0.15) : colors.border,
               ),
             ),
-            child: ListTile(
+            child: Material(
+              color: isDark ? colors.surface : colors.card,
+              borderRadius: BorderRadius.circular(14),
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
               dense: true,
               title: Text(
                 preset['title'] as String,
@@ -1269,6 +1276,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                   ),
                 ],
               ),
+            ),
             ),
           );
         }),

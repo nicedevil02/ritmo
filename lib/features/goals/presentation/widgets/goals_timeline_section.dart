@@ -368,7 +368,7 @@ class GoalsTimelineSection extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.25),
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color:
@@ -388,85 +388,90 @@ class GoalsTimelineSection extends StatelessWidget {
                 ]
                 : null,
       ),
-      child: ListTile(
-        onTap: () => _handleItemTap(context, item),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: _getSourceColor(item.source, colors).withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            item.source.icon,
-            size: 16,
-            color: _getSourceColor(item.source, colors),
-          ),
-        ),
-        title: Text(
-          item.title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: item.isDone ? colors.textSecondary : colors.textPrimary,
-            decoration: item.isDone ? TextDecoration.lineThrough : null,
-          ),
-        ),
-        subtitle: Row(
-          children: [
-            Text(
-              item.source.label,
-              style: TextStyle(
-                fontSize: 11,
-                color: _getSourceColor(item.source, colors),
-                fontWeight: FontWeight.bold,
-              ),
+      child: Material(
+        color: colors.card.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          onTap: () => _handleItemTap(context, item),
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _getSourceColor(item.source, colors).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            if (item.subtitle != null) ...[
+            child: Icon(
+              item.source.icon,
+              size: 16,
+              color: _getSourceColor(item.source, colors),
+            ),
+          ),
+          title: Text(
+            item.title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: item.isDone ? colors.textSecondary : colors.textPrimary,
+              decoration: item.isDone ? TextDecoration.lineThrough : null,
+            ),
+          ),
+          subtitle: Row(
+            children: [
               Text(
-                ' · ',
-                style: TextStyle(color: colors.textSecondary, fontSize: 11.5),
-              ),
-              Expanded(
-                child: Text(
-                  item.subtitle!,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colors.textSecondary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                item.source.label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: _getSourceColor(item.source, colors),
+                  fontWeight: FontWeight.w500,
                 ),
               ),
+              if (item.subtitle != null) ...[
+                Text(
+                  ' · ',
+                  style: TextStyle(color: colors.textSecondary, fontSize: 11.5),
+                ),
+                Expanded(
+                  child: Text(
+                    item.subtitle!,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colors.textSecondary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ],
-          ],
-        ),
-        trailing:
-            item.source == TimelineSource.goalStep
-                ? IconButton(
-                  icon: Icon(
-                    item.isDone
-                        ? CupertinoIcons.checkmark_square_fill
-                        : CupertinoIcons.square,
+          ),
+          trailing:
+              item.source == TimelineSource.goalStep
+                  ? IconButton(
+                    icon: Icon(
+                      item.isDone
+                          ? CupertinoIcons.checkmark_square_fill
+                          : CupertinoIcons.square,
+                      color: item.isDone ? colors.success : colors.textSecondary,
+                      size: 18,
+                    ),
+                    onPressed: () {
+                      final targetGoalId = item.goalId ?? '';
+                      final step = GoalStep(
+                        id: item.sourceId,
+                        goalId: targetGoalId,
+                        title: item.title,
+                        isCompleted: item.isDone,
+                        displayOrder: 0,
+                        createdAt: 0,
+                      );
+                      onToggleStep(step, targetGoalId);
+                    },
+                  )
+                  : Icon(
+                    item.isDone ? Icons.check_circle : Icons.arrow_forward_ios,
+                    size: item.isDone ? 16 : 12,
                     color: item.isDone ? colors.success : colors.textSecondary,
-                    size: 18,
                   ),
-                  onPressed: () {
-                    final targetGoalId = item.goalId ?? '';
-                    final step = GoalStep(
-                      id: item.sourceId,
-                      goalId: targetGoalId,
-                      title: item.title,
-                      isCompleted: item.isDone,
-                      displayOrder: 0,
-                      createdAt: 0,
-                    );
-                    onToggleStep(step, targetGoalId);
-                  },
-                )
-                : Icon(
-                  item.isDone ? Icons.check_circle : Icons.arrow_forward_ios,
-                  size: item.isDone ? 16 : 12,
-                  color: item.isDone ? colors.success : colors.textSecondary,
-                ),
+        ),
       ),
     );
   }

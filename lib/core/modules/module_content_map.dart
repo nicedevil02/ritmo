@@ -64,6 +64,24 @@ class ModuleContentMap {
       dataTables: {'workout_logs', 'ss_session_prescription', 'ss_fitness_assessments'},
     ),
     ModuleContent(
+      moduleKey: 'module_supplementary_sports_enabled',
+      agendaDomains: {AgendaDomain.sport},
+      routineCategories: {'sports', 'fitness'},
+      dataTables: {
+        'ss_user_profile',
+        'ss_workout_plan',
+        'ss_workout_exercise_crossref',
+        'ss_workout_session_log',
+        'ss_exercise_feeling_log',
+        'ss_plan_version_history',
+        'ss_decision_log',
+        'ss_weight_log',
+        'ss_workout_set_log',
+        'workout_logs',
+      },
+      settingsPrefixes: {'ss_'},
+    ),
+    ModuleContent(
       moduleKey: 'module_cycle_enabled',
       agendaDomains: {AgendaDomain.cycle},
       dataTables: {'cycle_logs', 'cycle_predictions'},
@@ -85,7 +103,7 @@ class ModuleContentMap {
     ModuleContent(
       moduleKey: 'module_today_routines',
       agendaDomains: {AgendaDomain.routine, AgendaDomain.task, AgendaDomain.event},
-      routineCategories: {'personal', 'custom', 'free'},
+      routineCategories: {'personal', 'custom', 'free', 'work'},
     ),
     ModuleContent(
       moduleKey: 'module_calendar_journey',
@@ -107,8 +125,30 @@ class ModuleContentMap {
   }
 
   static String? ownerOfCategory(String category) {
+    final cat = category.toLowerCase().trim();
+    if (cat == 'religious' || cat == 'worship') {
+      return 'module_religion_enabled';
+    }
+    if (cat == 'medical' || cat == 'health') {
+      return 'module_medicine_enabled';
+    }
+    if (cat == 'sports' || cat == 'fitness') {
+      return 'module_sports_enabled';
+    }
+    if (cat == 'learning') {
+      return 'module_courses_enabled';
+    }
+    if (cat == 'konkur') {
+      return 'module_study_enabled';
+    }
+    if (cat == 'habits') {
+      return 'module_progressive_habits_enabled';
+    }
+    if (cat == 'personal' || cat == 'work' || cat == 'free' || cat == 'custom') {
+      return 'module_today_routines';
+    }
     for (final c in map) {
-      if (c.routineCategories.contains(category)) return c.moduleKey;
+      if (c.routineCategories.contains(cat)) return c.moduleKey;
     }
     return null;
   }

@@ -34,7 +34,7 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
   void _loadModules() {
     setState(() {
       for (final mod in ModuleRegistry.modules) {
-        _moduleStates[mod.key] = SettingsService.instance.get<bool>(mod.key);
+        _moduleStates[mod.key] = ModuleGate.instance.isEnabled(mod.key);
       }
       _isLoading = false;
     });
@@ -46,13 +46,13 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
       if (!confirmed) return;
       
       setState(() {
-        _moduleStates[mod.key] = val;
+        _moduleStates[mod.key] = false;
       });
       await ModuleDeactivationService.deactivate(mod.key);
-      await SettingsService.instance.set(mod.key, val);
+      _loadModules();
     } else {
       // Check module cap before enabling
-      final result = await ModuleManagementService.instance.setModuleEnabled(mod.key, val);
+      final result = await ModuleManagementService.instance.setModuleEnabled(mod.key, true);
       if (result == ModuleToggleResult.limitReached) {
         if (!mounted) return;
         final limit = FeatureLimits.current.maxActiveModules;
@@ -66,10 +66,9 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
         return;
       }
       setState(() {
-        _moduleStates[mod.key] = val;
+        _moduleStates[mod.key] = true;
       });
-      await ModuleGate.instance.refresh();
-      await SettingsService.instance.set(mod.key, val);
+      _loadModules();
     }
   }
 

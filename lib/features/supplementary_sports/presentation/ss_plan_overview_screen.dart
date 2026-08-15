@@ -629,7 +629,6 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: SupplementarySportsTheme.spacing8),
       decoration: BoxDecoration(
-        color: day.status == DayStatus.today ? statusColor : SupplementarySportsTheme.getSurfaceColor(context),
         borderRadius: SupplementarySportsTheme.borderRadiusCard,
         border: Border.all(
           color: day.status == DayStatus.today 
@@ -640,60 +639,70 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
           width: day.status == DayStatus.today ? 2.0 : 1.0,
         ),
       ),
-      child: ListTile(
-        onTap: () {
-          // Open details (rest days can also be tapped to add a plan!)
-          final dayIndex = _weekDays.indexOf(day) + 1;
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SSPlanDayDetailScreen(
-                dayOfWeek: dayIndex,
-                dayName: day.dayName,
-                dateIso: day.dateIso,
+      child: Material(
+        color: day.status == DayStatus.today ? statusColor : SupplementarySportsTheme.getSurfaceColor(context),
+        borderRadius: SupplementarySportsTheme.borderRadiusCard,
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          onTap: () {
+            // Open details (rest days can also be tapped to add a plan!)
+            final dayIndex = _weekDays.indexOf(day) + 1;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SSPlanDayDetailScreen(
+                  dayOfWeek: dayIndex,
+                  dayName: day.dayName,
+                  dateIso: day.dateIso,
+                ),
               ),
-            ),
-          ).then((_) => _loadWeeklyPlan());
-        },
-        leading: day.status != DayStatus.rest
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  SSMuscleImageResolver.resolve(day.muscleGroups, _userGender),
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                  errorBuilder: (ctx, err, stack) => const Icon(Icons.fitness_center, size: 24),
-                ),
-              )
-            : null,
-        title: Row(
-          textDirection: TextDirection.rtl,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              textDirection: TextDirection.rtl,
-              children: [
-                Text(
-                  day.dayName,
-                  style: SupplementarySportsTheme.body.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: SupplementarySportsTheme.getTextPrimary(context),
+            ).then((_) => _loadWeeklyPlan());
+          },
+          leading: day.status != DayStatus.rest
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.asset(
+                    SSMuscleImageResolver.resolve(day.muscleGroups, _userGender),
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 48,
+                      height: 48,
+                      color: Colors.grey[800],
+                      child: const Icon(Icons.fitness_center, color: Colors.white70),
+                    ),
                   ),
-                ),
-                const SizedBox(width: SupplementarySportsTheme.spacing16),
-                Text(
-                  day.muscleGroups,
-                  style: SupplementarySportsTheme.body.copyWith(
-                    color: day.status == DayStatus.rest
-                        ? SupplementarySportsTheme.getTextSecondary(context).withValues(alpha: 0.6)
-                        : SupplementarySportsTheme.getTextSecondary(context),
+                )
+              : null,
+          title: Row(
+            textDirection: TextDirection.rtl,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                textDirection: TextDirection.rtl,
+                children: [
+                  Text(
+                    day.dayName,
+                    style: SupplementarySportsTheme.body.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: SupplementarySportsTheme.getTextPrimary(context),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            statusIcon,
-          ],
+                  const SizedBox(width: SupplementarySportsTheme.spacing16),
+                  Text(
+                    day.muscleGroups,
+                    style: SupplementarySportsTheme.body.copyWith(
+                      color: day.status == DayStatus.rest
+                          ? SupplementarySportsTheme.getTextSecondary(context).withValues(alpha: 0.6)
+                          : SupplementarySportsTheme.getTextSecondary(context),
+                    ),
+                  ),
+                ],
+              ),
+              statusIcon,
+            ],
+          ),
         ),
       ),
     );

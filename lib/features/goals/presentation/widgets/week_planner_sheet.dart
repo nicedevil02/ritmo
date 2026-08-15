@@ -394,25 +394,26 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
           final isChecked = _candidateSelection[title] ?? true;
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
+            child: Material(
               color: colors.card,
               borderRadius: BorderRadius.circular(14),
-            ),
-            child: CheckboxListTile(
-              value: isChecked,
-              activeColor: colors.primary,
-              title: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: colors.textPrimary,
+              clipBehavior: Clip.antiAlias,
+              child: CheckboxListTile(
+                value: isChecked,
+                activeColor: colors.primary,
+                title: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colors.textPrimary,
+                  ),
                 ),
+                onChanged: (val) {
+                  setState(() {
+                    _candidateSelection[title] = val ?? true;
+                  });
+                },
               ),
-              onChanged: (val) {
-                setState(() {
-                  _candidateSelection[title] = val ?? true;
-                });
-              },
             ),
           );
         }),

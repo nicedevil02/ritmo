@@ -257,13 +257,16 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
-                          color: colors.card,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isDark ? Colors.white.withValues(alpha: 0.05) : colors.border.withValues(alpha: 0.3),
                           ),
                         ),
-                        child: ListTile(
+                        child: Material(
+                          color: colors.card,
+                          borderRadius: BorderRadius.circular(16),
+                          clipBehavior: Clip.antiAlias,
+                          child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           title: Text(
                             template.name,
@@ -297,6 +300,7 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                               ),
                             ],
                           ),
+                        ),
                         ),
                       );
                     },

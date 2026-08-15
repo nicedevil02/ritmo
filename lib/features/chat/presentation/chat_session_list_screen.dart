@@ -170,42 +170,46 @@ class _ChatSessionListScreenState extends State<ChatSessionListScreen> {
                           child: Container(
                             margin: const EdgeInsets.symmetric(vertical: 6),
                             decoration: BoxDecoration(
-                              color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
                               ),
                             ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              title: Text(
-                                session.summary ?? 'گفتگوی بدون عنوان',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 6),
-                                child: Text(
-                                  '${session.messageCount} پیام · ${_formatRelativeTime(session.lastMessageAt)}',
+                            child: Material(
+                              color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                              borderRadius: BorderRadius.circular(16),
+                              clipBehavior: Clip.antiAlias,
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                title: Text(
+                                  session.summary ?? 'گفتگوی بدون عنوان',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 11,
-                                    color: colors.textSecondary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: colors.textPrimary,
                                   ),
                                 ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Text(
+                                    '${session.messageCount} پیام · ${_formatRelativeTime(session.lastMessageAt)}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: colors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                                trailing: Icon(
+                                  CupertinoIcons.chevron_left,
+                                  color: colors.textSecondary.withValues(alpha: 0.5),
+                                  size: 16,
+                                ),
+                                onTap: () {
+                                  Navigator.pop(context, session.id);
+                                },
                               ),
-                              trailing: Icon(
-                                CupertinoIcons.chevron_left,
-                                color: colors.textSecondary.withValues(alpha: 0.5),
-                                size: 16,
-                              ),
-                              onTap: () {
-                                Navigator.pop(context, session.id);
-                              },
                             ),
                           ),
                         );

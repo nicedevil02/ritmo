@@ -123,39 +123,43 @@ class _TaskCardItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: colors.card,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: colors.border, width: 1),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        onTap: onTap,
-        leading: IconButton(
-          icon: Icon(
-            task.isDone ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
-            color: task.isDone ? colors.success : colors.textTertiary,
-            size: 22,
+      child: Material(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          onTap: onTap,
+          leading: IconButton(
+            icon: Icon(
+              task.isDone ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
+              color: task.isDone ? colors.success : colors.textTertiary,
+              size: 22,
+            ),
+            onPressed: onToggleDone,
           ),
-          onPressed: onToggleDone,
-        ),
-        title: Text(
-          task.title,
-          style: TextStyle(
-            
-            fontSize: 13.5,
-            fontWeight: FontWeight.w600,
-            color: task.isDone ? colors.textTertiary : colors.textPrimary,
-            decoration: task.isDone ? TextDecoration.lineThrough : null,
+          title: Text(
+            task.title,
+            style: TextStyle(
+              
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: task.isDone ? colors.textTertiary : colors.textPrimary,
+              decoration: task.isDone ? TextDecoration.lineThrough : null,
+            ),
           ),
-        ),
-        subtitle: _buildSubtitle(colors, info, dueTime),
-        trailing: IconButton(
-          icon: Icon(
-            task.isImportant ? CupertinoIcons.star_fill : CupertinoIcons.star,
-            color: task.isImportant ? colors.accent : colors.textTertiary,
-            size: 20,
+          subtitle: _buildSubtitle(colors, info, dueTime),
+          trailing: IconButton(
+            icon: Icon(
+              task.isImportant ? CupertinoIcons.star_fill : CupertinoIcons.star,
+              color: task.isImportant ? colors.accent : colors.textTertiary,
+              size: 20,
+            ),
+            onPressed: onToggleStar,
           ),
-          onPressed: onToggleStar,
         ),
       ),
     );

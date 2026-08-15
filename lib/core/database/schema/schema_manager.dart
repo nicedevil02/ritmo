@@ -38,4 +38,24 @@ class SchemaManager {
     await NoteTables.create(db);
     await SleepTables.create(db);
   }
+
+  /// Safely checks if a column exists in a given SQLite table without throwing exceptions.
+  static Future<bool> columnExists(DatabaseExecutor db, String table, String column) async {
+    try {
+      final columns = await db.rawQuery('PRAGMA table_info($table)');
+      return columns.any((c) => c['name']?.toString().toLowerCase() == column.toLowerCase());
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Safely adds a column to an SQLite table only if it does not already exist.
+  static Future<void> safeAddColumn(DatabaseExecutor db, String table, String column, String typeDefinition) async {
+    try {
+      final exists = await columnExists(db, table, column);
+      if (!exists) {
+        await db.execute('ALTER TABLE $table ADD COLUMN $column $typeDefinition;');
+      }
+    } catch (_) {}
+  }
 }

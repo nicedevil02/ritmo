@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/modules/module_deactivation_service.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/modules/module_registry.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/services/feature_limits.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/di/service_locator.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
@@ -77,8 +79,14 @@ class ModuleManagementService {
   /// and global event bus notification.
   Future<ModuleToggleResult> setModuleEnabled(String key, bool enabled) async {
     try {
+      if (!enabled) {
+        // Complete deactivation: clear occurrences, cancel alarms, update settings
+        await ModuleDeactivationService.deactivate(key);
+        return ModuleToggleResult.success;
+      }
+
       // Check concurrent module limit when enabling a non-core module
-      if (enabled && !ModuleRegistry.isCoreModule(key)) {
+      if (!ModuleRegistry.isCoreModule(key)) {
         if (!ModuleGate.instance.canActivateMoreModules) {
           final limit = FeatureLimits.current.maxActiveModules;
           debugPrint('ModuleManagementService: Module cap ($limit) reached. Upgrade required.');
@@ -94,40 +102,76 @@ class ModuleManagementService {
         'app_settings',
         {
           'key': key,
-          'value': enabled.toString(),
+          'value': 'true',
           'updatedAt': now,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      // 2. Alarm Scheduler handling when disabling specific modules
-      if (!enabled) {
-        final categoryName = key == 'module_religion_enabled'
-            ? 'religious'
-            : key == 'module_medicine_enabled'
-                ? 'medical'
-                : '';
-
-        if (categoryName.isNotEmpty) {
-          final routines = await db.query(
-            'routines',
-            where: 'category = ?',
-            whereArgs: [categoryName],
-          );
-          for (final r in routines) {
-            final id = r['id']! as String;
-            await AlarmSchedulerService.cancelAllAlarmsForRoutine(id);
-          }
-        }
-      } else {
-        await AlarmSchedulerService.scheduleNextAlarms();
+      if (key == 'module_sports_enabled' || key == 'module_supplementary_sports_enabled') {
+        await db.insert(
+          'app_settings',
+          {
+            'key': 'module_sports_enabled',
+            'value': 'true',
+            'updatedAt': now,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        await db.insert(
+          'app_settings',
+          {
+            'key': 'module_supplementary_sports_enabled',
+            'value': 'true',
+            'updatedAt': now,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
 
-      // 3. Broadcast global event to notify all listeners (UI screens, engines, services)
-      RitmoEvents.notifyRoutineChanged();
+      if (key == 'module_medicine_enabled' || key == 'module_health_enabled') {
+        await db.insert(
+          'app_settings',
+          {
+            'key': 'module_medicine_enabled',
+            'value': 'true',
+            'updatedAt': now,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        await db.insert(
+          'app_settings',
+          {
+            'key': 'module_health_enabled',
+            'value': 'true',
+            'updatedAt': now,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      // 2. Update in-memory settings service
+      try {
+        await SettingsService.instance.set(key, true);
+        if (key == 'module_sports_enabled' || key == 'module_supplementary_sports_enabled') {
+          await SettingsService.instance.set('module_sports_enabled', true);
+          await SettingsService.instance.set('module_supplementary_sports_enabled', true);
+        }
+        if (key == 'module_medicine_enabled' || key == 'module_health_enabled') {
+          await SettingsService.instance.set('module_medicine_enabled', true);
+          await SettingsService.instance.set('module_health_enabled', true);
+        }
+      } catch (_) {}
+
+      // 3. Invalidate DayAgenda cache & schedule alarms
+      DayAgendaService.instance.invalidateAll();
+      await AlarmSchedulerService.scheduleNextAlarms();
 
       // 4. Refresh ModuleGate state
       await ModuleGate.instance.refresh();
+
+      // 5. Broadcast global event to notify all listeners (UI screens, engines, services)
+      RitmoEvents.notifyRoutineChanged();
 
       return ModuleToggleResult.success;
     } catch (e) {

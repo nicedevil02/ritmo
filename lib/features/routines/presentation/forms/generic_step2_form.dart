@@ -1,12 +1,15 @@
 // lib/features/routines/presentation/forms/generic_step2_form.dart
 
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/routines/presentation/planner_controller.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_advanced_section.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_timeline_picker.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_weekdays_picker.dart';
+import 'package:ritmo/features/routines/presentation/widgets/routine_type_picker.dart';
 
 class GenericStep2Form extends StatelessWidget {
   const GenericStep2Form({super.key, required this.controller});
@@ -196,6 +199,7 @@ class GenericStep2Form extends StatelessWidget {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 0. Title Field Input (عنوان رویداد/عادت)
               TextFormField(
@@ -206,13 +210,13 @@ class GenericStep2Form extends StatelessWidget {
                   color: colors.textPrimary,
                 ),
                 decoration: InputDecoration(
-                  labelText: 'عنوان رویداد یا عادت *',
+                  labelText: 'عنوان فعالیت *',
                   labelStyle: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: colors.primary,
                   ),
-                  hintText: 'مثلاً: جلسه کاری با تیم، تمرین شنا، مطالعه کتاب...',
+                  hintText: 'مثلاً: نوشیدن آب، تمرین یوگا، مطالعه کتاب...',
                   hintStyle: TextStyle(
                     fontSize: 12.5,
                     color: colors.textSecondary.withValues(alpha: 0.4),
@@ -239,204 +243,632 @@ class GenericStep2Form extends StatelessWidget {
                   controller.inputController.text = val;
                 },
               ),
+              const SizedBox(height: 20),
+
+              // 1. Routine Type Selector (مدل اجرای روتین)
+              RoutineTypePicker(
+                selectedType: controller.routineType,
+                onTypeSelected: (type) {
+                  controller.setRoutineType(type);
+                },
+              ),
+              const SizedBox(height: 24),
+
+              // 2. Dynamic Type-Specific Configuration Sections
+              ..._buildTypeSpecificSections(context, colors, isDark),
+
               const SizedBox(height: 16),
-              PlannerTimelinePicker(controller: controller),
-              const SizedBox(height: 28),
-              
-              // 1. Duration Picker Card
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: colors.border.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'مدت زمان',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E2235).withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove, size: 18),
-                            onPressed: () => controller.adjustDuration(-15),
-                            color: colors.textPrimary.withValues(alpha: 0.6),
-                          ),
-                          GestureDetector(
-                            onTap: () => _showDurationManualDialog(context, colors),
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              child: Text(
-                                '${toPersianDigits(controller.targetDuration.toString())} دقیقه',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: colors.primary,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add, size: 18),
-                            onPressed: () => controller.adjustDuration(15),
-                            color: colors.textPrimary.withValues(alpha: 0.6),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
 
-              // 2. Recurrence Card
-              GestureDetector(
-                onTap: () => _showRecurrencePicker(context, colors),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: colors.border.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'تکرار',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            controller.recurrenceType == 'EVERY_DAY'
-                                ? 'روزانه (هر روز)'
-                                : (controller.recurrenceType == 'CUSTOM_DAYS' || controller.recurrenceType == 'WEEKLY'
-                                    ? 'روزهای انتخابی'
-                                    : 'فقط یک‌بار'),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(Icons.sync_rounded, size: 18, color: colors.textSecondary.withValues(alpha: 0.7)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Weekdays selector if custom days or weekly
-              if (controller.recurrenceType == 'CUSTOM_DAYS' || controller.recurrenceType == 'WEEKLY') ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.02),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: colors.border.withValues(alpha: 0.08)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'روزهای تکرار در هفته:',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textSecondary.withValues(alpha: 0.8),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      PlannerWeekdaysPicker(
-                        selectedDays: controller.worshipSelectedDays,
-                        onChanged: (days) {
-                          controller.worshipSelectedDays = days;
-                          controller.notifyListeners();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: 12),
-
-              // 3. Reminder Card
-              GestureDetector(
-                onTap: () => _showReminderPicker(context, colors),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: colors.border.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'یادآوری',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            controller.reminderOffsetMinutes == 0
-                                ? 'همزمان با شروع'
-                                : '${toPersianDigits(controller.reminderOffsetMinutes.toString())} دقیقه قبل',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: colors.textSecondary.withValues(alpha: 0.6)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // 4. Advanced Settings Card
+              // 3. Advanced Settings Accordion
               PlannerAdvancedSection(controller: controller),
             ],
           ),
         );
       },
+    );
+  }
+
+  List<Widget> _buildTypeSpecificSections(BuildContext context, RitmoColors colors, bool isDark) {
+    switch (controller.routineType) {
+      case RoutineType.timeBased:
+        return [
+          PlannerTimelinePicker(controller: controller),
+          const SizedBox(height: 20),
+          _buildDurationCard(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildRecurrenceCard(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildReminderCard(context, colors, isDark),
+        ];
+
+      case RoutineType.countBased:
+        return [
+          _buildCountBasedSection(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildRecurrenceCard(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildReminderCard(context, colors, isDark),
+        ];
+
+      case RoutineType.progressive:
+        return [
+          _buildProgressiveSection(context, colors, isDark),
+          const SizedBox(height: 12),
+          PlannerTimelinePicker(controller: controller),
+          const SizedBox(height: 12),
+          _buildRecurrenceCard(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildReminderCard(context, colors, isDark),
+        ];
+
+      case RoutineType.intervalBased:
+        return [
+          _buildIntervalBasedSection(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildReminderCard(context, colors, isDark),
+        ];
+
+      case RoutineType.dependent:
+        return [
+          _buildDependentSection(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildDurationCard(context, colors, isDark),
+        ];
+
+      case RoutineType.asNeeded:
+        return [
+          _buildAsNeededSection(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildDurationCard(context, colors, isDark),
+        ];
+    }
+  }
+
+  Widget _buildDurationCard(BuildContext context, RitmoColors colors, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.border.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'مدت زمان',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E2235).withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove, size: 18),
+                  onPressed: () => controller.adjustDuration(-15),
+                  color: colors.textPrimary.withValues(alpha: 0.6),
+                ),
+                GestureDetector(
+                  onTap: () => _showDurationManualDialog(context, colors),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Text(
+                      '${toPersianDigits(controller.targetDuration.toString())} دقیقه',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add, size: 18),
+                  onPressed: () => controller.adjustDuration(15),
+                  color: colors.textPrimary.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecurrenceCard(BuildContext context, RitmoColors colors, bool isDark) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () => _showRecurrencePicker(context, colors),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: colors.border.withValues(alpha: 0.1)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'تکرار',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      controller.recurrenceType == 'EVERY_DAY'
+                          ? 'روزانه (هر روز)'
+                          : (controller.recurrenceType == 'CUSTOM_DAYS' || controller.recurrenceType == 'WEEKLY'
+                              ? 'روزهای انتخابی'
+                              : 'فقط یک‌بار'),
+                      style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.sync_rounded, size: 18, color: colors.textSecondary.withValues(alpha: 0.7)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (controller.recurrenceType == 'CUSTOM_DAYS' || controller.recurrenceType == 'WEEKLY') ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.02),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: colors.border.withValues(alpha: 0.08)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'روزهای تکرار در هفته:',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textSecondary.withValues(alpha: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                PlannerWeekdaysPicker(
+                  selectedDays: controller.worshipSelectedDays,
+                  onChanged: (days) {
+                    controller.worshipSelectedDays = days;
+                    controller.notifyListeners();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildReminderCard(BuildContext context, RitmoColors colors, bool isDark) {
+    return GestureDetector(
+      onTap: () => _showReminderPicker(context, colors),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: colors.border.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'یادآوری',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+            Row(
+              children: [
+                Text(
+                  controller.reminderOffsetMinutes == 0
+                      ? 'همزمان با شروع'
+                      : '${toPersianDigits(controller.reminderOffsetMinutes.toString())} دقیقه قبل',
+                  style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.arrow_forward_ios_rounded, size: 14, color: colors.textSecondary.withValues(alpha: 0.6)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCountBasedSection(BuildContext context, RitmoColors colors, bool isDark) {
+    final units = ['لیوان', 'صفحه', 'رکعت', 'بار', 'کیلومتر', 'دقیقه'];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.border.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'هدف عددی روزانه',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle_outline, size: 22),
+                    onPressed: () {
+                      if (controller.countTarget > 1) {
+                        RitmoHaptics.selection();
+                        controller.countTarget--;
+                        controller.notifyListeners();
+                      }
+                    },
+                    color: colors.primary,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${toPersianDigits(controller.countTarget.toString())} ${controller.countUnit}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline, size: 22),
+                    onPressed: () {
+                      RitmoHaptics.selection();
+                      controller.countTarget++;
+                      controller.notifyListeners();
+                    },
+                    color: colors.primary,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'واحد شمارش:',
+            style: TextStyle(fontSize: 12, color: colors.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: units.map((u) {
+              final isSel = controller.countUnit == u;
+              return ChoiceChip(
+                label: Text(u),
+                selected: isSel,
+                selectedColor: colors.primary.withValues(alpha: 0.2),
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                  color: isSel ? colors.primary : colors.textSecondary,
+                ),
+                onSelected: (val) {
+                  if (val) {
+                    RitmoHaptics.selection();
+                    controller.countUnit = u;
+                    controller.notifyListeners();
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressiveSection(BuildContext context, RitmoColors colors, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.border.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.trending_up_rounded, size: 18, color: colors.primary),
+              const SizedBox(width: 8),
+              Text(
+                'تنظیمات پیشرفت تدریجی (عادت اتمی)',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _buildNumberInputField(
+                  label: 'مدت شروع (دقیقه)',
+                  value: controller.progressionStart,
+                  onChanged: (v) {
+                    controller.progressionStart = v;
+                    controller.notifyListeners();
+                  },
+                  colors: colors,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildNumberInputField(
+                  label: 'پله افزایش (دقیقه)',
+                  value: controller.progressionStep,
+                  onChanged: (v) {
+                    controller.progressionStep = v;
+                    controller.notifyListeners();
+                  },
+                  colors: colors,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildNumberInputField(
+                  label: 'هدف نهایی (دقیقه)',
+                  value: controller.progressionTarget,
+                  onChanged: (v) {
+                    controller.progressionTarget = v;
+                    controller.notifyListeners();
+                  },
+                  colors: colors,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.auto_awesome_rounded, size: 16, color: colors.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'مسیر: از ${toPersianDigits(controller.progressionStart.toString())} دقیقه شروع می‌شود و با هر ۷ بار اجرای موفق، ${toPersianDigits(controller.progressionStep.toString())} دقیقه به آن اضافه خواهد شد تا به ${toPersianDigits(controller.progressionTarget.toString())} دقیقه برسد.',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: colors.primary,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIntervalBasedSection(BuildContext context, RitmoColors colors, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.border.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.timelapse_rounded, size: 18, color: colors.primary),
+              const SizedBox(width: 8),
+              Text(
+                'تنظیم فاصله تکرار',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _buildNumberInputField(
+                  label: 'فاصله زمانی (ساعت)',
+                  value: controller.minIntervalHours,
+                  onChanged: (v) {
+                    controller.minIntervalHours = v;
+                    controller.notifyListeners();
+                  },
+                  colors: colors,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildNumberInputField(
+                  label: 'حداکثر دفعات در روز',
+                  value: controller.maxDosesPerDay,
+                  onChanged: (v) {
+                    controller.maxDosesPerDay = v;
+                    controller.notifyListeners();
+                  },
+                  colors: colors,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'یادآور بعدی پس از هر بار ثبت، به طور خودکار ${toPersianDigits(controller.minIntervalHours.toString())} ساعت بعد فعال می‌شود.',
+            style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDependentSection(BuildContext context, RitmoColors colors, bool isDark) {
+    final available = controller.todayOtherRoutines;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.border.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.link_rounded, size: 18, color: colors.primary),
+              const SizedBox(width: 8),
+              Text(
+                'انتخاب روتین والد (زنجیره عادت)',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (available.isEmpty)
+            Text(
+              'ابتدا یک روتین اصلی ثبت کنید تا بتوانید این روتین را به آن پیوند دهید.',
+              style: TextStyle(fontSize: 12, color: colors.textSecondary),
+            )
+          else
+            DropdownButtonFormField<String>(
+              value: controller.dependsOnRoutineId,
+              hint: const Text('انتخاب روتین پیش‌نیاز...'),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              items: available.map((r) {
+                return DropdownMenuItem<String>(
+                  value: r['id'] as String,
+                  child: Text(r['title'] as String? ?? 'بدون عنوان'),
+                );
+              }).toList(),
+              onChanged: (val) {
+                controller.dependsOnRoutineId = val;
+                controller.notifyListeners();
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAsNeededSection(BuildContext context, RitmoColors colors, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.border.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.bolt_rounded, size: 20, color: colors.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'این روتین ساعت مشخصی در طول روز ندارد و هر زمان مایل بودید می‌توانید آن را ثبت کنید.',
+              style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNumberInputField({
+    required String label,
+    required int value,
+    required ValueChanged<int> onChanged,
+    required RitmoColors colors,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.textSecondary),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          initialValue: value.toString(),
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          decoration: InputDecoration(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          ),
+          onChanged: (v) {
+            final parsed = int.tryParse(v);
+            if (parsed != null && parsed > 0) {
+              onChanged(parsed);
+            }
+          },
+        ),
+      ],
     );
   }
 }

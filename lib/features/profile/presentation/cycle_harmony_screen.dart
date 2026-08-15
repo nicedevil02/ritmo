@@ -764,11 +764,14 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                 // Last start date picker ticket
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.02),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                   ),
-                  child: ListTile(
+                  child: Material(
+                    color: Colors.white.withValues(alpha: 0.02),
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     title: const Text('تاریخ شروع آخرین دوره شما:', style: TextStyle(fontSize: 12, color: Colors.white60)),
                     subtitle: Padding(
@@ -805,6 +808,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                         });
                       }
                     },
+                  ),
                   ),
                 ),
                 const SizedBox(height: 28),

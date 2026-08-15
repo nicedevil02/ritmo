@@ -419,9 +419,6 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                     return Container(
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? colors.primary.withValues(alpha: 0.12)
-                            : colors.surfaceSunken.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isSelected
@@ -429,7 +426,13 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                               : colors.border.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: ListTile(
+                      child: Material(
+                        color: isSelected
+                            ? colors.primary.withValues(alpha: 0.12)
+                            : colors.surfaceSunken.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(14),
+                        clipBehavior: Clip.antiAlias,
+                        child: ListTile(
                         dense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                         title: Text(
@@ -451,6 +454,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                             ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary, size: 18)
                             : Icon(CupertinoIcons.location, color: colors.textSecondary.withValues(alpha: 0.4), size: 16),
                         onTap: () => _selectCity(cityId),
+                      ),
                       ),
                     );
                   },

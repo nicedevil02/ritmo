@@ -136,6 +136,24 @@ class PlannerController extends ChangeNotifier {
   TimeOfDay eventEndTime = const TimeOfDay(hour: 10, minute: 0);
   String eventLocation = '';
 
+  // Routine Type Behavioral Model
+  RoutineType routineType = RoutineType.timeBased;
+  int countTarget = 8;
+  String countUnit = 'بار';
+  int progressionStart = 5;
+  int progressionStep = 2;
+  int progressionTarget = 30;
+  int progressionEveryN = 7;
+  int minIntervalHours = 4;
+  int maxDosesPerDay = 4;
+  DependencyType dependencyType = DependencyType.afterCompletion;
+  int dependencyOffsetMinutes = 0;
+
+  void setRoutineType(RoutineType type) {
+    routineType = type;
+    notifyListeners();
+  }
+
   // Advanced accordion properties
   bool isAdvancedExpanded = false;
   String notes = '';
@@ -314,6 +332,35 @@ class PlannerController extends ChangeNotifier {
     selectedZoneId = data['zoneId'] as String?;
     energyRule = data['energyRule'] as String? ?? 'NONE';
     reminderOffsetMinutes = data['reminderOffsetMinutes'] as int? ?? 15;
+
+    // Routine type & behavioral fields
+    final routineTypeStr = data['routineType'] as String?;
+    if (routineTypeStr != null) {
+      routineType = RoutineType.values.firstWhere(
+        (e) => e.name == routineTypeStr,
+        orElse: () => RoutineType.timeBased,
+      );
+    }
+    countTarget = data['maxDosesPerDay'] as int? ?? 8;
+    if (countTarget <= 0) countTarget = 8;
+    countUnit = data['countUnit'] as String? ?? 'بار';
+
+    progressionStart = data['progressionStart'] as int? ?? 5;
+    progressionStep = data['progressionStep'] as int? ?? 2;
+    progressionTarget = data['progressionTarget'] as int? ?? 30;
+    progressionEveryN = data['progressionEveryN'] as int? ?? 7;
+
+    minIntervalHours = data['minIntervalHours'] as int? ?? 4;
+    maxDosesPerDay = data['maxDosesPerDay'] as int? ?? 4;
+
+    final depTypeStr = data['dependencyType'] as String?;
+    if (depTypeStr != null) {
+      dependencyType = DependencyType.values.firstWhere(
+        (e) => e.name == depTypeStr,
+        orElse: () => DependencyType.afterCompletion,
+      );
+    }
+    dependencyOffsetMinutes = data['dependencyOffsetMinutes'] as int? ?? 0;
     
     // Load Time and Recurrence
     final timeStr = data['timeOfDay'] as String? ?? '08:00';
@@ -1320,6 +1367,18 @@ class PlannerController extends ChangeNotifier {
       routineToEdit: routineToEdit,
       selectedCategory: selectedCategory,
       itemType: itemType,
+      // Routine Type Behavioral Model
+      routineType: routineType,
+      countTarget: countTarget,
+      countUnit: countUnit,
+      progressionStart: progressionStart,
+      progressionStep: progressionStep,
+      progressionTarget: progressionTarget,
+      progressionEveryN: progressionEveryN,
+      minIntervalHours: minIntervalHours,
+      maxDosesPerDay: maxDosesPerDay,
+      dependencyType: dependencyType,
+      dependencyOffsetMinutes: dependencyOffsetMinutes,
       // Generic
       recurrenceType: recurrenceType,
       targetDuration: targetDuration,

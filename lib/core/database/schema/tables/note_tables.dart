@@ -123,18 +123,35 @@ class NoteTables {
       ''');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_experience_active ON note_experience_meta(isActive, importance DESC);');
 
-      // 7. FTS5 table in independent try/catch block
+      // 7. FTS5 table if supported by sqlite runtime
       try {
-        await db.execute('''
-          CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(
-            noteId UNINDEXED,
-            titleN,
-            bodyN,
-            tagsN,
-            tokenize = "unicode61 remove_diacritics 2",
-            prefix = '2 3'
-          );
-        ''');
+        bool fts5Available = false;
+        try {
+          final options = await db.rawQuery('PRAGMA compile_options');
+          fts5Available = options.any((o) => o.values.any((v) => v.toString().toUpperCase().contains('ENABLE_FTS5')));
+        } catch (_) {}
+
+        if (!fts5Available) {
+          try {
+            final modules = await db.rawQuery('PRAGMA module_list');
+            fts5Available = modules.any((m) => m.values.any((v) => v.toString().toLowerCase() == 'fts5'));
+          } catch (_) {}
+        }
+
+        if (fts5Available) {
+          await db.execute('''
+            CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(
+              noteId UNINDEXED,
+              titleN,
+              bodyN,
+              tagsN,
+              tokenize = "unicode61 remove_diacritics 2",
+              prefix = '2 3'
+            );
+          ''');
+        } else {
+          debugPrint('[NOTE_TABLES] FTS5 module not present in current SQLite build; skipping virtual table.');
+        }
       } catch (e) {
         debugPrint('[NOTE_TABLES] FTS5 not available or failed: $e');
       }

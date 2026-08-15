@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 export 'models/completion_result.dart';
 
 enum Category {
@@ -308,6 +309,11 @@ class RitmoEvents {
 
   static void notifyRoutineChanged() {
     routineChanges.value++;
+    RitmoEventBus().fire(RitmoEvent(
+      type: 'RoutineChanged',
+      timestamp: DateTime.now(),
+      payload: const {},
+    ));
   }
 }
 

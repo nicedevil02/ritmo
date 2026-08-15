@@ -23,6 +23,11 @@ import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dar
 import 'package:ritmo/features/routines/shared/routine_actions.dart';
 import 'package:ritmo/features/routines/shared/widgets/routine_details_sheet.dart';
 import 'package:ritmo/features/routines/shared/widgets/routine_niyyah_sheet.dart';
+import 'package:ritmo/features/routines/shared/widgets/routine_count_sheet.dart';
+import 'package:ritmo/features/routines/shared/widgets/routine_interval_sheet.dart';
+import 'package:ritmo/features/routines/shared/widgets/routine_progressive_sheet.dart';
+import 'package:ritmo/features/routines/shared/widgets/routine_dependent_sheet.dart';
+import 'package:ritmo/features/routines/shared/widgets/routine_as_needed_sheet.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
@@ -302,6 +307,58 @@ class ActionRouter {
         },
       );
       return;
+    }
+
+    // Specialized Action Sheet routing based on routineType
+    switch (targetRoutine.routineType) {
+      case RoutineType.countBased:
+        await RoutineCountSheet.show(
+          context: context,
+          routine: targetRoutine,
+          targetDate: item.dateStr,
+          onChanged: onChanged,
+        );
+        return;
+
+      case RoutineType.intervalBased:
+        await RoutineIntervalSheet.show(
+          context: context,
+          routine: targetRoutine,
+          targetDate: item.dateStr,
+          onChanged: onChanged,
+        );
+        return;
+
+      case RoutineType.progressive:
+        await RoutineProgressiveSheet.show(
+          context: context,
+          routine: targetRoutine,
+          targetDate: item.dateStr,
+          onChanged: onChanged,
+        );
+        return;
+
+      case RoutineType.dependent:
+        await RoutineDependentSheet.show(
+          context: context,
+          routine: targetRoutine,
+          targetDate: item.dateStr,
+          onChanged: onChanged,
+        );
+        return;
+
+      case RoutineType.asNeeded:
+        await RoutineAsNeededSheet.show(
+          context: context,
+          routine: targetRoutine,
+          targetDate: item.dateStr,
+          onChanged: onChanged,
+        );
+        return;
+
+      case RoutineType.timeBased:
+        // Default time-based Niyyah sheet
+        break;
     }
 
     await RoutineNiyyahSheet.show(

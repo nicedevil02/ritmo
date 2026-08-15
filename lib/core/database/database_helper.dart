@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/legacy_database_recovery.dart';
 import 'package:ritmo/core/database/migration/migration_runner.dart';
 import 'package:ritmo/core/database/schema/schema_manager.dart';
+import 'package:ritmo/core/database/schema/tables/routine_tables.dart';
 import 'package:ritmo/core/database/seed/seed_service.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
@@ -68,9 +69,8 @@ class DatabaseHelper {
   /// Explicitly warms up background database tasks and seed verification (BOOT-07).
   static Future<void> warmUp(Database db) async {
     try {
-      try {
-        await db.execute('ALTER TABLE worship_practices ADD COLUMN showInCalendar INTEGER DEFAULT 0;');
-      } catch (_) {}
+      await SchemaManager.safeAddColumn(db, 'worship_practices', 'showInCalendar', 'INTEGER DEFAULT 0');
+      await RoutineTables.ensureSchema(db);
       try {
         await db.execute("UPDATE routines SET energyRule = 'NONE' WHERE energyRule = 'none';");
       } catch (_) {}

@@ -129,6 +129,12 @@ class RoutineAgendaSource implements AgendaSource {
         'religion': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled'),
         'medicine': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_medicine_enabled'),
         'courses': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_courses_enabled'),
+        'study': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_study_enabled'),
+        'sports': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sports_enabled') ||
+            ModuleGate.instance.isEnabledFrom(settingsMap, 'module_supplementary_sports_enabled'),
+        'goals': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_goals_enabled'),
+        'habits': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_progressive_habits_enabled'),
+        'cycle': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled'),
       },
     );
   }
@@ -180,13 +186,20 @@ class RoutineAgendaSource implements AgendaSource {
     for (final r in routines) {
       final routineId = r['id']?.toString() ?? '';
       if (routineId.isEmpty) continue;
+      final catStr = r['category']?.toString() ?? 'personal';
       // Build a settings-compatible map from the stored module flags.
       final settingsForVisibility = <String, String>{
         'module_religion_enabled': (activeModules['religion'] ?? false).toString(),
         'module_medicine_enabled': (activeModules['medicine'] ?? false).toString(),
         'module_courses_enabled': (activeModules['courses'] ?? false).toString(),
+        'module_study_enabled': (activeModules['study'] ?? false).toString(),
+        'module_sports_enabled': (activeModules['sports'] ?? false).toString(),
+        'module_supplementary_sports_enabled': (activeModules['sports'] ?? false).toString(),
+        'module_goals_enabled': (activeModules['goals'] ?? false).toString(),
+        'module_progressive_habits_enabled': (activeModules['habits'] ?? false).toString(),
+        'module_cycle_enabled': (activeModules['cycle'] ?? false).toString(),
       };
-      if (!RoutineVisibility.isVisible(routineId: routineId, settings: settingsForVisibility)) continue;
+      if (!RoutineVisibility.isVisible(routineId: routineId, category: catStr, settings: settingsForVisibility)) continue;
 
       Map<String, dynamic>? matchedSchedule;
       for (final sched in schedules) {

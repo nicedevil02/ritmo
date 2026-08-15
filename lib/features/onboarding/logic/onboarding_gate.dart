@@ -74,7 +74,7 @@ class OnboardingGate {
     return 0;
   }
 
-  /// Marks onboarding as completed in SQLite and SharedPreferences.
+  /// Marks onboarding as completed in SQLite.
   static Future<void> markCompleted(DatabaseExecutor txn, {required int version, String? userName}) async {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     await txn.insert(
@@ -107,8 +107,10 @@ class OnboardingGate {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     }
+  }
 
-    // Save to SharedPreferences for dual redundancy across app restarts
+  /// Syncs onboarding completion state to SharedPreferences asynchronously outside transactions.
+  static Future<void> syncToPrefs({required int version, String? userName}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('onboarding_completed', true);

@@ -94,11 +94,14 @@ class _TaskStepListState extends State<TaskStepList> {
                 key: ValueKey(step.id),
                 margin: const EdgeInsets.only(bottom: 6),
                 decoration: BoxDecoration(
-                  color: colors.surfaceSunken,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: colors.border.withValues(alpha: 0.5)),
                 ),
-                child: ListTile(
+                child: Material(
+                  color: colors.surfaceSunken,
+                  borderRadius: BorderRadius.circular(10),
+                  clipBehavior: Clip.antiAlias,
+                  child: ListTile(
                   dense: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   leading: IconButton(
@@ -124,6 +127,7 @@ class _TaskStepListState extends State<TaskStepList> {
                     icon: Icon(CupertinoIcons.xmark, color: colors.textTertiary, size: 16),
                     onPressed: () => _deleteStep(step.id),
                   ),
+                ),
                 ),
               );
             },

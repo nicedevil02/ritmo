@@ -1,3 +1,4 @@
+import 'package:ritmo/core/database/schema/schema_manager.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/seed/movement_kinds_seed.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -291,20 +292,12 @@ class SupplementarySportsTables {
 
   /// Ensures all 21 columns of ss_user_profile exist on existing legacy databases safely.
   static Future<void> ensureUserProfileSchema(DatabaseExecutor db) async {
-    final alterStatements = [
-      "ALTER TABLE ss_user_profile ADD COLUMN programStartDate TEXT;",
-      "ALTER TABLE ss_user_profile ADD COLUMN deloadEveryNWeeks INTEGER DEFAULT 4;",
-      "ALTER TABLE ss_user_profile ADD COLUMN trainingDays TEXT;",
-      "ALTER TABLE ss_user_profile ADD COLUMN splitPattern TEXT DEFAULT 'AUTO';",
-      "ALTER TABLE ss_user_profile ADD COLUMN defaultIntensity TEXT DEFAULT 'MODERATE';",
-      "ALTER TABLE ss_user_profile ADD COLUMN usesExternalApp INTEGER DEFAULT 0;",
-    ];
-
-    for (final statement in alterStatements) {
-      try {
-        await db.execute(statement);
-      } catch (_) {}
-    }
+    await SchemaManager.safeAddColumn(db, 'ss_user_profile', 'programStartDate', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_user_profile', 'deloadEveryNWeeks', 'INTEGER DEFAULT 4');
+    await SchemaManager.safeAddColumn(db, 'ss_user_profile', 'trainingDays', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_user_profile', 'splitPattern', "TEXT DEFAULT 'AUTO'");
+    await SchemaManager.safeAddColumn(db, 'ss_user_profile', 'defaultIntensity', "TEXT DEFAULT 'MODERATE'");
+    await SchemaManager.safeAddColumn(db, 'ss_user_profile', 'usesExternalApp', 'INTEGER DEFAULT 0');
   }
 
   /// Ensures prescription tables exist on SQLite database safely.
@@ -550,8 +543,6 @@ class SupplementarySportsTables {
 
   /// Tab 1 Phase 2: muscle focus on routines.
   static Future<void> ensureMovementMuscleFocus(DatabaseExecutor db) async {
-    try {
-      await db.execute('ALTER TABLE routines ADD COLUMN movementMuscleFocus TEXT;');
-    } catch (_) {}
+    await SchemaManager.safeAddColumn(db, 'routines', 'movementMuscleFocus', 'TEXT');
   }
 }

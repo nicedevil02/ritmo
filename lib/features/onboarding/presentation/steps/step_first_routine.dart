@@ -59,37 +59,41 @@ class StepFirstRoutine extends StatelessWidget {
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xff9B89FF).withValues(alpha: 0.15)
-                    : colors.textPrimary.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isSelected ? const Color(0xff9B89FF) : colors.border.withValues(alpha: 0.12),
                 ),
               ),
-              child: CheckboxListTile(
-                value: isSelected,
-                onChanged: (_) {
-                  HapticFeedback.selectionClick();
-                  onTemplateToggled(template);
-                },
-                activeColor: const Color(0xff9B89FF),
-                title: Text(
-                  template.titleFa,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: colors.textPrimary,
+              child: Material(
+                color: isSelected
+                    ? const Color(0xff9B89FF).withValues(alpha: 0.15)
+                    : colors.textPrimary.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(14),
+                clipBehavior: Clip.antiAlias,
+                child: CheckboxListTile(
+                  value: isSelected,
+                  onChanged: (_) {
+                    HapticFeedback.selectionClick();
+                    onTemplateToggled(template);
+                  },
+                  activeColor: const Color(0xff9B89FF),
+                  title: Text(
+                    template.titleFa,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: colors.textPrimary,
+                    ),
                   ),
-                ),
-                subtitle: Text(
-                  _toPersianDigits('زمان: ${template.defaultTime} · مدت: ${template.durationMinutes} دقیقه'),
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: colors.textSecondary,
+                  subtitle: Text(
+                    _toPersianDigits('زمان: ${template.defaultTime} · مدت: ${template.durationMinutes} دقیقه'),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: colors.textSecondary,
+                    ),
                   ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
             );
           }).toList(),

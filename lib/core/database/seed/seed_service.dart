@@ -615,9 +615,12 @@ class SeedService {
       final similarityJsonStr = await rootBundle.loadString('assets/data/fitify_exercise_similarity_relations.json');
       final similarityData = await compute(jsonDecode, similarityJsonStr) as Map<String, dynamic>;
 
+      final existingExerciseRows = await db.query('ss_exercise', columns: ['id']);
+      final validExerciseIds = existingExerciseRows.map((r) => r['id'].toString()).toSet();
+
       final simBatch = db.batch();
       similarityData.forEach((sourceId, targets) {
-        if (targets is Map<String, dynamic>) {
+        if (validExerciseIds.contains(sourceId) && targets is Map<String, dynamic>) {
           targets.forEach((targetId, info) {
             if (info is Map<String, dynamic>) {
               final score = (info['similarity'] as num?)?.toDouble() ?? 0.0;

@@ -1,3 +1,4 @@
+import 'package:ritmo/core/database/schema/schema_manager.dart';
 import 'package:sqflite/sqflite.dart';
 
 class RoutineTables {
@@ -46,6 +47,16 @@ class RoutineTables {
           cognitiveLoad TEXT,
           firstPhysicalStep TEXT,
           temptationBundle TEXT,
+          defaultDurationMinutes INTEGER,
+          travelBeforeMinutes INTEGER,
+          travelAfterMinutes INTEGER,
+          fullScreenAlarm INTEGER DEFAULT 0,
+          movementKind TEXT,
+          movementTargetMetric TEXT,
+          movementTargetValue REAL,
+          movementVenue TEXT,
+          movementIsMeetup INTEGER DEFAULT 0,
+          movementMuscleFocus TEXT,
           FOREIGN KEY(dependsOnRoutineId) REFERENCES routines(id) ON DELETE SET NULL
       );
     ''');
@@ -157,5 +168,19 @@ class RoutineTables {
 
   ''');
 
+  }
+
+  /// Self-healing schema validation to ensure all routine columns exist on legacy databases.
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
+    await SchemaManager.safeAddColumn(db, 'routines', 'defaultDurationMinutes', 'INTEGER');
+    await SchemaManager.safeAddColumn(db, 'routines', 'travelBeforeMinutes', 'INTEGER');
+    await SchemaManager.safeAddColumn(db, 'routines', 'travelAfterMinutes', 'INTEGER');
+    await SchemaManager.safeAddColumn(db, 'routines', 'fullScreenAlarm', 'INTEGER DEFAULT 0');
+    await SchemaManager.safeAddColumn(db, 'routines', 'movementKind', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'routines', 'movementTargetMetric', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'routines', 'movementTargetValue', 'REAL');
+    await SchemaManager.safeAddColumn(db, 'routines', 'movementVenue', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'routines', 'movementIsMeetup', 'INTEGER DEFAULT 0');
+    await SchemaManager.safeAddColumn(db, 'routines', 'movementMuscleFocus', 'TEXT');
   }
 }

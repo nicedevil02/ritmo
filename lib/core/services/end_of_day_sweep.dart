@@ -26,9 +26,9 @@ class EndOfDaySweep {
 
     try {
       final staleRows = await db.rawQuery('''
-        SELECT o.id, o.routineId, o.date, r.isEssential, r.category
+        SELECT o.routine_id, o.date, r.isEssential, r.category
         FROM routine_occurrences o
-        LEFT JOIN routines r ON o.routineId = r.id
+        LEFT JOIN routines r ON o.routine_id = r.id
         WHERE o.status IN ('pending', 'snoozed') AND o.date < ?
       ''', [todayStr]);
 
@@ -39,16 +39,17 @@ class EndOfDaySweep {
 
       await db.transaction((txn) async {
         for (final row in staleRows) {
-          final occId = row['id']! as String;
-          final routineId = row['routineId'] as String?;
+          final routineId = row['routine_id'] as String;
+          final occDate = row['date'] as String;
+          final occId = '${routineId}_$occDate';
           final isEssential = row['isEssential'] == 1;
           final category = row['category'] as String?;
 
           await txn.update(
             'routine_occurrences',
             {'status': 'missed'},
-            where: 'id = ?',
-            whereArgs: [occId],
+            where: 'routine_id = ? AND date = ?',
+            whereArgs: [routineId, occDate],
           );
           sweptCount++;
 
@@ -65,21 +66,19 @@ class EndOfDaySweep {
             );
           }
 
-          if (routineId != null) {
-            await txn.update(
-              'pending_reminders',
-              {'state': ReminderState.expired.dbValue},
-              where:
-                  'routineId = ? AND state IN (?, ?, ?, ?)',
-              whereArgs: [
-                routineId,
-                ReminderState.active.dbValue,
-                ReminderState.delayed.dbValue,
-                ReminderState.unknown.dbValue,
-                ReminderState.cancelled.dbValue,
-              ],
-            );
-          }
+          await txn.update(
+            'pending_reminders',
+            {'state': ReminderState.expired.dbValue},
+            where:
+                'routineId = ? AND state IN (?, ?, ?, ?)',
+            whereArgs: [
+              routineId,
+              ReminderState.active.dbValue,
+              ReminderState.delayed.dbValue,
+              ReminderState.unknown.dbValue,
+              ReminderState.cancelled.dbValue,
+            ],
+          );
         }
 
         // Worship Sweep with pre-fetched contexts
@@ -98,8 +97,8 @@ class EndOfDaySweep {
       await db.delete('notification_history', where: 'sentAt < ?', whereArgs: [ninetyDaysAgoMs]);
 
       await db.execute(
-        "INSERT OR REPLACE INTO app_settings (key, value) VALUES ('last_worship_sweep_date', ?)",
-        [todayStr],
+        "INSERT OR REPLACE INTO app_settings (key, value, updatedAt) VALUES ('last_worship_sweep_date', ?, ?)",
+        [todayStr, DateTime.now().millisecondsSinceEpoch],
       );
     } catch (e) {
       debugPrint('EndOfDaySweep error: $e');

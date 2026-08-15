@@ -805,7 +805,10 @@ class RitmoGlassCard extends StatelessWidget {
                       : Colors.white.withValues(alpha: 0.45),
                 ),
           ),
-          child: child,
+          child: Material(
+            type: MaterialType.transparency,
+            child: child,
+          ),
         ),
       ),
     );
@@ -857,7 +860,10 @@ class RitmoGlassCardLight extends StatelessWidget {
                     width: 1.5,
                   ),
             ),
-            child: child,
+            child: Material(
+              type: MaterialType.transparency,
+              child: child,
+            ),
           ),
         ),
       ),

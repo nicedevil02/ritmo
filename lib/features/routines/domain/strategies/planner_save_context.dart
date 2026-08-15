@@ -19,6 +19,17 @@ class PlannerSaveContext {
     required this.routineToEdit,
     required this.selectedCategory,
     required this.itemType,
+    this.routineType = RoutineType.timeBased,
+    this.countTarget = 8,
+    this.countUnit = 'بار',
+    this.progressionStart = 5,
+    this.progressionStep = 2,
+    this.progressionTarget = 30,
+    this.progressionEveryN = 7,
+    this.minIntervalHours = 4,
+    this.maxDosesPerDay = 4,
+    this.dependencyType = DependencyType.afterCompletion,
+    this.dependencyOffsetMinutes = 0,
     required this.recurrenceType,
     required this.targetDuration,
     required this.reminderOffsetMinutes,
@@ -75,6 +86,19 @@ class PlannerSaveContext {
   final Map<String, dynamic>? routineToEdit;
   final Category selectedCategory;
   final String itemType; // ROUTINE | REMINDER | TASK | REFLECT | EVENT
+
+  // ── Routine Type Behavioral Model ───────────────────────────────────────────
+  final RoutineType routineType;
+  final int countTarget;
+  final String countUnit;
+  final int progressionStart;
+  final int progressionStep;
+  final int progressionTarget;
+  final int progressionEveryN;
+  final int minIntervalHours;
+  final int maxDosesPerDay;
+  final DependencyType dependencyType;
+  final int dependencyOffsetMinutes;
 
   // ── Event-specific ──────────────────────────────────────────────────────────
   final DateTime? eventDate;

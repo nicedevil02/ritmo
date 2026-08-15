@@ -171,12 +171,12 @@ class RitmoExecutionKernel {
         final handler = _handlers.resolve(command);
         result = await handler.handle(context, command);
       });
-    }
 
-    await PostCommitPipeline.run(result.postCommitTasks);
+      await PostCommitPipeline.run(result.postCommitTasks);
 
-    for (final event in result.domainEvents) {
-      _eventBus.fire(event);
+      for (final event in result.domainEvents) {
+        _eventBus.fire(event);
+      }
     }
 
     return result;

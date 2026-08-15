@@ -59,9 +59,9 @@ class GenericStrategy implements PlannerCategoryStrategy {
       'category': c.selectedCategory.name,
       'customCategoryId': null,
       'zoneId': c.selectedZoneId,
-      'routineType': (c.itemType == 'ROUTINE' || isEvent)
+      'routineType': isEvent
           ? RoutineType.timeBased.name
-          : RoutineType.asNeeded.name,
+          : (c.itemType == 'TASK' ? RoutineType.timeBased.name : c.routineType.name),
       'notificationLevel': NotificationLevel.normal.name,
       'isEssential': 0,
       'isEssentialLocked': 0,
@@ -76,6 +76,17 @@ class GenericStrategy implements PlannerCategoryStrategy {
       'createdAt': c.isEditing ? c.routineToEdit!['createdAt'] ?? now : now,
       'updatedAt': now,
       'dependsOnRoutineId': c.dependsOnRoutineId,
+      'dependencyType': c.dependencyType.name,
+      'dependencyOffsetMinutes': c.dependencyOffsetMinutes,
+      'minIntervalHours': c.minIntervalHours,
+      'maxDosesPerDay': c.routineType == RoutineType.countBased ? c.countTarget : c.maxDosesPerDay,
+      'progressionMode': c.routineType == RoutineType.progressive ? 'DURATION_RAMP' : 'NONE',
+      'progressionStart': c.progressionStart,
+      'progressionStep': c.progressionStep,
+      'progressionTarget': c.progressionTarget,
+      'progressionEveryN': c.progressionEveryN,
+      'progressionCurrent': c.isEditing ? (c.routineToEdit!['progressionCurrent'] ?? c.progressionStart) : c.progressionStart,
+      'progressionDoneSinceAdvance': c.isEditing ? (c.routineToEdit!['progressionDoneSinceAdvance'] ?? 0) : 0,
       'itemType': c.itemType,
       'reminderOffsetMinutes': c.reminderOffsetMinutes,
     };

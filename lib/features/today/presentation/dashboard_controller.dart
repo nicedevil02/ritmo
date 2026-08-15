@@ -235,10 +235,9 @@ class DashboardController {
           medRoutines.add(rMap);
         }
 
-        // T5: User-created routines are never hidden by module gates.
-        // Only system routines (e.g. worship_debt_routine) follow their owning module.
         final moduleEnabled = RoutineVisibility.isVisible(
           routineId: rId,
+          category: categoryStr,
           settings: settingsMap,
         );
 

@@ -12,10 +12,15 @@ class SyncModuleGate {
         return ModuleGate.instance.isEnabledFrom(settings, 'module_courses_enabled');
       case Category.konkur:
         return ModuleGate.instance.isEnabledFrom(settings, 'module_study_enabled');
+      case Category.fitness:
+        return ModuleGate.instance.isEnabledFrom(settings, 'module_sports_enabled') ||
+            ModuleGate.instance.isEnabledFrom(settings, 'module_supplementary_sports_enabled');
       case Category.custom:
-        return true;
-      default:
+      case Category.personal:
+      case Category.work:
+      case Category.free:
         return true;
     }
   }
 }
+

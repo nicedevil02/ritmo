@@ -47,7 +47,20 @@ class ModuleGate {
   }
 
   bool isEnabled(String moduleKey) {
+    if (moduleKey == 'module_sports_enabled') {
+      return states.value['module_supplementary_sports_enabled'] ??
+          states.value['module_sports_enabled'] ??
+          true;
+    }
+    if (moduleKey == 'module_health_enabled') {
+      return states.value['module_medicine_enabled'] ?? true;
+    }
     if (!states.value.containsKey(moduleKey)) {
+      final desc = ModuleRegistry.findByKey(moduleKey);
+      if (desc != null) {
+        if (desc.isCore) return true;
+        return desc.defaultEnabled;
+      }
       RitmoLogger.error('ModuleGate: Unknown module key "$moduleKey" requested.');
       return false;
     }
@@ -55,18 +68,26 @@ class ModuleGate {
   }
 
   bool isEnabledFrom(Map<String, String> settings, String moduleKey) {
-    final desc = ModuleRegistry.findByKey(moduleKey);
+    var effectiveKey = moduleKey;
+    if (moduleKey == 'module_sports_enabled' && !ModuleRegistry.modules.any((m) => m.key == 'module_sports_enabled')) {
+      effectiveKey = 'module_supplementary_sports_enabled';
+    }
+    if (moduleKey == 'module_health_enabled') {
+      effectiveKey = 'module_medicine_enabled';
+    }
+
+    final desc = ModuleRegistry.findByKey(effectiveKey);
     if (desc == null) {
       RitmoLogger.error('ModuleGate: Unknown module key "$moduleKey" requested from settings.');
       return false;
     }
     String? rawVal;
-    if (moduleKey == 'module_medicine_enabled') {
+    if (effectiveKey == 'module_medicine_enabled' || moduleKey == 'module_health_enabled') {
       rawVal = settings['module_medicine_enabled'] ?? settings['module_health_enabled'];
-    } else if (moduleKey == 'module_supplementary_sports_enabled') {
+    } else if (effectiveKey == 'module_supplementary_sports_enabled' || moduleKey == 'module_sports_enabled') {
       rawVal = settings['module_supplementary_sports_enabled'] ?? settings['module_sports_enabled'];
     } else {
-      rawVal = settings[moduleKey];
+      rawVal = settings[effectiveKey];
     }
     return _resolve(desc, rawVal);
   }

@@ -328,6 +328,7 @@ class _RitmoAppState extends State<RitmoApp> {
                               : OnboardingScreen(
                                   key: const ValueKey('onboarding'),
                                   onFinished: () {
+                                    debugPrint('[Main] Onboarding onFinished received! Setting _onboardingCompleted = true');
                                     setState(() {
                                       _onboardingCompleted = true;
                                     });

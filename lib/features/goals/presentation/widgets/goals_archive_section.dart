@@ -65,11 +65,14 @@ class GoalsArchiveSection extends StatelessWidget {
           return Container(
             margin: const EdgeInsets.symmetric(vertical: 6),
             decoration: BoxDecoration(
-              color: colors.card.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: colors.border.withValues(alpha: 0.4)),
             ),
-            child: ListTile(
+            child: Material(
+              color: colors.card.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(16),
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               leading: Container(
                 padding: const EdgeInsets.all(8),
@@ -110,6 +113,7 @@ class GoalsArchiveSection extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
             ),
           );
         },

@@ -787,41 +787,42 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
   Widget _buildStepRow(GoalStep step, RitmoColors colors) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
+      child: Material(
         color: colors.card.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: CheckboxListTile(
-        title: Text(
-          step.title,
-          style: TextStyle(
-            fontSize: 13,
-            color: step.isCompleted ? colors.textSecondary : colors.textPrimary,
-            decoration: step.isCompleted ? TextDecoration.lineThrough : null,
+        clipBehavior: Clip.antiAlias,
+        child: CheckboxListTile(
+          title: Text(
+            step.title,
+            style: TextStyle(
+              fontSize: 13,
+              color: step.isCompleted ? colors.textSecondary : colors.textPrimary,
+              decoration: step.isCompleted ? TextDecoration.lineThrough : null,
+            ),
           ),
+          subtitle: step.scheduledDate != null
+              ? Text(
+                  'برنامه‌ریزی: ${formatShamsiDate(step.scheduledDate)}',
+                  style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
+                )
+              : null,
+          value: step.isCompleted,
+          activeColor: colors.primary,
+          checkColor: Colors.white,
+          onChanged: (val) {
+            HapticFeedback.lightImpact(); // Haptic feedback on toggle!
+            widget.onToggleStep(step, _currentGoal.id);
+            // Auto update the step's value locally in state to reflect change instantly
+            setState(() {
+              final idx = widget.stepsByGoal[_currentGoal.id]!.indexOf(step);
+              if (idx != -1) {
+                final updatedStep = step.copyWith(isCompleted: val ?? false);
+                widget.stepsByGoal[_currentGoal.id]![idx] = updatedStep;
+              }
+            });
+          },
+          controlAffinity: ListTileControlAffinity.leading,
         ),
-        subtitle: step.scheduledDate != null
-            ? Text(
-                'برنامه‌ریزی: ${formatShamsiDate(step.scheduledDate)}',
-                style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
-              )
-            : null,
-        value: step.isCompleted,
-        activeColor: colors.primary,
-        checkColor: Colors.white,
-        onChanged: (val) {
-          HapticFeedback.lightImpact(); // Haptic feedback on toggle!
-          widget.onToggleStep(step, _currentGoal.id);
-          // Auto update the step's value locally in state to reflect change instantly
-          setState(() {
-            final idx = widget.stepsByGoal[_currentGoal.id]!.indexOf(step);
-            if (idx != -1) {
-              final updatedStep = step.copyWith(isCompleted: val ?? false);
-              widget.stepsByGoal[_currentGoal.id]![idx] = updatedStep;
-            }
-          });
-        },
-        controlAffinity: ListTileControlAffinity.leading,
       ),
     );
   }
@@ -830,26 +831,30 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colors.border.withValues(alpha: 0.3)),
       ),
-      child: ListTile(
-        dense: true,
-        leading: Icon(CupertinoIcons.repeat, size: 16, color: colors.primary),
-        title: Text(
-          routine.title,
-          style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w600),
+      child: Material(
+        color: colors.card.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          dense: true,
+          leading: Icon(CupertinoIcons.repeat, size: 16, color: colors.primary),
+          title: Text(
+            routine.title,
+            style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w600),
+          ),
+          subtitle: Text(
+            'دوره روتین تکرارشونده',
+            style: TextStyle(fontSize: 11, color: colors.textSecondary),
+          ),
+          trailing: const Icon(CupertinoIcons.chevron_left, size: 12),
+          onTap: () {
+            // Simply pop details sheet and show routines
+            Navigator.pop(context);
+          },
         ),
-        subtitle: Text(
-          'دوره روتین تکرارشونده',
-          style: TextStyle(fontSize: 11, color: colors.textSecondary),
-        ),
-        trailing: const Icon(CupertinoIcons.chevron_left, size: 12),
-        onTap: () {
-          // Simply pop details sheet and show routines
-          Navigator.pop(context);
-        },
       ),
     );
   }
@@ -858,29 +863,33 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colors.border.withValues(alpha: 0.3)),
       ),
-      child: ListTile(
-        dense: true,
-        leading: Icon(CupertinoIcons.book, size: 16, color: colors.primary),
-        title: Text(
-          course.title,
-          style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w600),
+      child: Material(
+        color: colors.card.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          dense: true,
+          leading: Icon(CupertinoIcons.book, size: 16, color: colors.primary),
+          title: Text(
+            course.title,
+            style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w600),
+          ),
+          subtitle: Text(
+            'دوره آموزشی متصل',
+            style: TextStyle(fontSize: 11, color: colors.textSecondary),
+          ),
+          trailing: const Icon(CupertinoIcons.chevron_left, size: 12),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CourseDetailScreen(course: course)),
+            );
+          },
         ),
-        subtitle: Text(
-          'دوره آموزشی متصل',
-          style: TextStyle(fontSize: 11, color: colors.textSecondary),
-        ),
-        trailing: const Icon(CupertinoIcons.chevron_left, size: 12),
-        onTap: () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => CourseDetailScreen(course: course)),
-          );
-        },
       ),
     );
   }

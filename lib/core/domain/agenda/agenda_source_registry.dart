@@ -124,7 +124,8 @@ class AgendaSourceRegistry {
       domains: {AgendaDomain.sport},
       loader: (ctx) async {
         final sportsEnabled =
-            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_supplementary_sports_enabled');
+            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_supplementary_sports_enabled') ||
+            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_sports_enabled');
         if (!sportsEnabled) {
           return SportsAgendaSource.disabled(ctx.db);
         }
@@ -159,6 +160,11 @@ class AgendaSourceRegistry {
       id: 'goalSteps',
       domains: {AgendaDomain.goalStep},
       loader: (ctx) async {
+        final goalsEnabled =
+            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_goals_enabled');
+        if (!goalsEnabled) {
+          return GoalStepsAgendaSource.empty();
+        }
         return ctx.guardSource<AgendaSource>(
           'goalSteps',
           () => GoalStepsAgendaSource.load(ctx.db, ctx.start, ctx.end),

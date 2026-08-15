@@ -884,11 +884,11 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       children: list.map((item) {
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
-          decoration: BoxDecoration(
+          child: Material(
             color: SupplementarySportsTheme.getSurfaceColor(context),
             borderRadius: SupplementarySportsTheme.borderRadiusCard,
-          ),
-          child: ListTile(
+            clipBehavior: Clip.antiAlias,
+            child: ListTile(
             title: Text(
               item.exerciseName,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -908,6 +908,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                 ),
               ),
             ),
+          ),
           ),
         );
       }).toList(),

@@ -20,7 +20,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 103;
+  static const int _dbVersion = 104;
   static int get dbVersionForTest => _dbVersion;
 
   @visibleForTesting

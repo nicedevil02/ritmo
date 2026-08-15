@@ -42,6 +42,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v100_sleep_pr
 import 'package:ritmo/core/database/migration/migrations/migration_v101_notification_control_center.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v102_unify_one_off_tasks.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v103_unify_day_plan_columns.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v104_worship_day_exceptions.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -147,6 +148,7 @@ class MigrationRunner {
     MigrationV101NotificationControlCenter(), // Notification Control Center and Privacy Engine
     MigrationV102UnifyOneOffTasks(), // Unify one-off tasks from routines into simple_tasks
     MigrationV103UnifyDayPlanColumns(), // Unify day_plan_templates & day_plan_commits columns to canonical camelCase
+    MigrationV104WorshipDayExceptions(), // Worship day exceptions and occurrence overrides
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

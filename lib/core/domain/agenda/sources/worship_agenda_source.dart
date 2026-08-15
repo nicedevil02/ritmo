@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
@@ -21,6 +20,8 @@ class WorshipAgendaSource implements AgendaSource {
   final Map<String, HijriDate> cachedHijriDates;
   final bool hasLunarMonthly;
   final Database db;
+  final Map<String, Map<String, dynamic>> exceptionsByDate;
+  final Map<String, Map<String, dynamic>> overridesByKey;
 
   WorshipAgendaSource({
     required this.prayerPractices,
@@ -33,6 +34,8 @@ class WorshipAgendaSource implements AgendaSource {
     required this.contextsByDate,
     required this.hasLunarMonthly,
     required this.db,
+    this.exceptionsByDate = const {},
+    this.overridesByKey = const {},
   });
 
   final Map<String, Map<String, WorshipDayStatus>> statusesByDate;
@@ -52,11 +55,13 @@ class WorshipAgendaSource implements AgendaSource {
         worshipDebts: const [],
         settingsMap: settingsMap,
         religionEnabled: false,
-        cachedHijriDates: {},
-        statusesByDate: {},
-        contextsByDate: {},
+        cachedHijriDates: const {},
+        statusesByDate: const {},
+        contextsByDate: const {},
         hasLunarMonthly: false,
         db: db,
+        exceptionsByDate: const {},
+        overridesByKey: const {},
       );
 
   static Future<WorshipAgendaSource> load(
@@ -80,12 +85,43 @@ class WorshipAgendaSource implements AgendaSource {
       where: "(practiceType = 'MUSTAHAB' OR ((practiceType = 'DHIKR' OR practiceType = 'QURAN') AND showInCalendar = 1)) AND ${WorshipEngine.activePracticesWhere}",
       orderBy: WorshipEngine.activePracticesOrderBy,
     );
-    // Worship debts are no longer shown in the calendar per user request
-    final worshipDebts = const <Map<String, dynamic>>[];
+    // Worship debts are loaded only when setting is enabled
+    const worshipDebts = <Map<String, dynamic>>[];
 
     final startStr = _dateStr(start);
     final endStr = _dateStr(end);
     
+    // Fetch worship day exceptions (M2-10)
+    final exceptionsByDate = <String, Map<String, dynamic>>{};
+    try {
+      final excRows = await db.query(
+        'worship_day_exceptions',
+        where: 'dateStr >= ? AND dateStr <= ?',
+        whereArgs: [startStr, endStr],
+      );
+      for (final r in excRows) {
+        final dStr = r['dateStr'] as String?;
+        if (dStr != null) exceptionsByDate[dStr] = r;
+      }
+    } catch (_) {}
+
+    // Fetch occurrence overrides for worship (M2-12)
+    final overridesByKey = <String, Map<String, dynamic>>{};
+    try {
+      final ovrRows = await db.query(
+        'occurrence_overrides',
+        where: "sourceType = 'WORSHIP' AND dateStr >= ? AND dateStr <= ?",
+        whereArgs: [startStr, endStr],
+      );
+      for (final r in ovrRows) {
+        final sId = r['sourceId'] as String?;
+        final dStr = r['dateStr'] as String?;
+        if (sId != null && dStr != null) {
+          overridesByKey['${sId}_$dStr'] = r;
+        }
+      }
+    } catch (_) {}
+
     // Fetch all statuses at once (E-14 N+1 fix)
     final statusesByDate = await WorshipCompletionRepository.instance.statusForRange(startStr, endStr);
     
@@ -108,9 +144,7 @@ class WorshipAgendaSource implements AgendaSource {
       final d = current.day.toString().padLeft(2, '0');
       final key = 'hijri_date_${y}_${m}_$d';
       final hDate = await HijriDate.getOrFetch(current, db);
-      if (hDate != null) {
-        cachedHijriDates[key] = hDate;
-      }
+      cachedHijriDates[key] = hDate;
       
       current = current.add(const Duration(days: 1));
     }
@@ -126,6 +160,8 @@ class WorshipAgendaSource implements AgendaSource {
       contextsByDate: contextsByDate,
       hasLunarMonthly: mustahabPractices.any((p) => p['reminderFrequency'] == 'LUNAR_MONTHLY'),
       db: db,
+      exceptionsByDate: exceptionsByDate,
+      overridesByKey: overridesByKey,
     );
   }
 
@@ -135,12 +171,22 @@ class WorshipAgendaSource implements AgendaSource {
     
     final items = <AgendaItem>[];
     final worshipStatuses = statusesByDate[ctx.dateStr] ?? {};
+
+    // Settings checks (M2-13)
+    final showObligatory = settingsMap['calendar_show_worship_obligatory'] != 'false';
+    final showMustahab = settingsMap['calendar_show_worship_mustahab'] != 'false';
+    final showQada = settingsMap['calendar_show_worship_qada'] == 'true';
+
+    // Day exceptions check (M2-10)
+    final dayEx = exceptionsByDate[ctx.dateStr];
+    final isObligatorySuppressed = dayEx != null && (dayEx['suppressObligatory'] as int? ?? 1) == 1;
+    final isMustahabSuppressed = dayEx != null && (dayEx['suppressMustahab'] as int? ?? 0) == 1;
     
-    if (ctx.options.wants(AgendaDomain.prayer)) {
+    if (showObligatory && !isObligatorySuppressed && ctx.options.wants(AgendaDomain.prayer)) {
       items.addAll(_collectPrayers(ctx.dateStr, ctx.isToday, ctx.prayerTimes, worshipStatuses, contextsByDate[ctx.dateStr]));
     }
     
-    if (ctx.options.wants(AgendaDomain.mustahab)) {
+    if (showMustahab && !isMustahabSuppressed && ctx.options.wants(AgendaDomain.mustahab)) {
       HijriDate? hijriDate;
       if (hasLunarMonthly) {
         hijriDate = _getHijriDateSync(ctx.date);
@@ -148,7 +194,7 @@ class WorshipAgendaSource implements AgendaSource {
       items.addAll(_collectMustahab(ctx.dateStr, ctx.isToday, ctx.prayerTimes, hijriDate, worshipStatuses));
     }
     
-    if (ctx.options.wants(AgendaDomain.worshipDebt)) {
+    if (showQada && ctx.options.wants(AgendaDomain.worshipDebt)) {
       items.addAll(_collectWorshipDebts(ctx.dateStr));
     }
     
@@ -204,8 +250,6 @@ class WorshipAgendaSource implements AgendaSource {
       }
     }
 
-    final showSeparate = false; // Always group prayers in the calendar
-
     // Exemption check helpers
     bool isExempt(String groupKey) {
       if (context == null) return false;
@@ -246,74 +290,20 @@ class WorshipAgendaSource implements AgendaSource {
     final dhuhr = bySubType['DHUHR'];
     final asr = bySubType['ASR'];
 
-    if (showSeparate) {
-      if (dhuhr != null) {
-        final id = dhuhr['id'] as String;
-        final timeOfDay = prayerTimes['dhuhr'];
-        final status = statuses[id];
-        final completion = status?.isDone == true ? AgendaCompletion.done : AgendaCompletion.pending;
+    if (dhuhr != null || asr != null) {
+      if (!isExempt('DHUHR_ASR')) {
+        final representative = dhuhr ?? asr!;
+        final id = representative['id'] as String;
+        final timeOfDay = prayerTimes['dhuhr'] ?? prayerTimes['asr'];
+        
+        final dhuhrDone = dhuhr == null || statuses[dhuhr['id'] as String]?.isDone == true;
+        final asrDone = asr == null || statuses[asr['id'] as String]?.isDone == true;
+        final completion = (dhuhrDone && asrDone) ? AgendaCompletion.done : AgendaCompletion.pending;
+        
         final start = _parseDateTime(dateStr, prayerTimes['dhuhr']);
-        final end = _parseDateTime(dateStr, prayerTimes['asr']);
-        items.add(AgendaItem(
-          id: buildAgendaItemId(AgendaDomain.prayer, '$id:dhuhr', dateStr),
-          domain: AgendaDomain.prayer,
-          sourceId: id,
-          title: dhuhr['title'] as String? ?? 'نماز ظهر',
-          dateStr: dateStr,
-          timeOfDay: timeOfDay,
-          durationMinutes: 15,
-          category: Category.religious,
-          completion: completion,
-          priority: 3,
-          isEssential: true,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.prayer, targetId: id),
-          windowStart: start,
-          windowEnd: end,
-          meta: {'practice': dhuhr},
-        ));
-      }
-      if (asr != null) {
-        final id = asr['id'] as String;
-        final timeOfDay = prayerTimes['asr'];
-        final status = statuses[id];
-        final completion = status?.isDone == true ? AgendaCompletion.done : AgendaCompletion.pending;
-        final start = _parseDateTime(dateStr, prayerTimes['asr']);
         final end = _parseDateTime(dateStr, prayerTimes['maghrib']);
         items.add(AgendaItem(
-          id: buildAgendaItemId(AgendaDomain.prayer, '$id:asr', dateStr),
-          domain: AgendaDomain.prayer,
-          sourceId: id,
-          title: asr['title'] as String? ?? 'نماز عصر',
-          dateStr: dateStr,
-          timeOfDay: timeOfDay,
-          durationMinutes: 15,
-          category: Category.religious,
-          completion: completion,
-          priority: 3,
-          isEssential: true,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.prayer, targetId: id),
-          windowStart: start,
-          windowEnd: end,
-          meta: {'practice': asr},
-        ));
-      }
-    } else {
-      if (dhuhr != null || asr != null) {
-        if (isExempt('DHUHR_ASR')) {
-          // completely exempt
-        } else {
-          final representative = dhuhr ?? asr!;
-          final id = representative['id'] as String;
-          final timeOfDay = prayerTimes['dhuhr'] ?? prayerTimes['asr'];
-          
-          final dhuhrDone = dhuhr == null || statuses[dhuhr['id'] as String]?.isDone == true;
-          final asrDone = asr == null || statuses[asr['id'] as String]?.isDone == true;
-          final completion = (dhuhrDone && asrDone) ? AgendaCompletion.done : AgendaCompletion.pending;
-          
-          final start = _parseDateTime(dateStr, prayerTimes['dhuhr']);
-        final end = _parseDateTime(dateStr, prayerTimes['maghrib']);
-        items.add(AgendaItem(
-          id: buildAgendaItemId(AgendaDomain.prayer, '${id}:dhuhr_asr', dateStr),
+          id: buildAgendaItemId(AgendaDomain.prayer, '$id:dhuhr_asr', dateStr),
           domain: AgendaDomain.prayer,
           sourceId: id,
           title: 'نماز ظهر و عصر',
@@ -329,7 +319,6 @@ class WorshipAgendaSource implements AgendaSource {
           windowEnd: end,
           meta: {'practice': representative},
         ));
-        }
       }
     }
 
@@ -337,74 +326,20 @@ class WorshipAgendaSource implements AgendaSource {
     final maghrib = bySubType['MAGHRIB'];
     final isha = bySubType['ISHA'];
 
-    if (showSeparate) {
-      if (maghrib != null) {
-        final id = maghrib['id'] as String;
-        final timeOfDay = prayerTimes['maghrib'];
-        final status = statuses[id];
-        final completion = status?.isDone == true ? AgendaCompletion.done : AgendaCompletion.pending;
+    if (maghrib != null || isha != null) {
+      if (!isExempt('MAGHRIB_ISHA')) {
+        final representative = maghrib ?? isha!;
+        final id = representative['id'] as String;
+        final timeOfDay = prayerTimes['maghrib'] ?? prayerTimes['isha'];
+        
+        final maghribDone = maghrib == null || statuses[maghrib['id'] as String]?.isDone == true;
+        final ishaDone = isha == null || statuses[isha['id'] as String]?.isDone == true;
+        final completion = (maghribDone && ishaDone) ? AgendaCompletion.done : AgendaCompletion.pending;
+        
         final start = _parseDateTime(dateStr, prayerTimes['maghrib']);
-        final end = _parseDateTime(dateStr, prayerTimes['isha']);
-        items.add(AgendaItem(
-          id: buildAgendaItemId(AgendaDomain.prayer, '$id:maghrib', dateStr),
-          domain: AgendaDomain.prayer,
-          sourceId: id,
-          title: maghrib['title'] as String? ?? 'نماز مغرب',
-          dateStr: dateStr,
-          timeOfDay: timeOfDay,
-          durationMinutes: 15,
-          category: Category.religious,
-          completion: completion,
-          priority: 3,
-          isEssential: true,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.prayer, targetId: id),
-          windowStart: start,
-          windowEnd: end,
-          meta: {'practice': maghrib},
-        ));
-      }
-      if (isha != null) {
-        final id = isha['id'] as String;
-        final timeOfDay = prayerTimes['isha'];
-        final status = statuses[id];
-        final completion = status?.isDone == true ? AgendaCompletion.done : AgendaCompletion.pending;
-        final start = _parseDateTime(dateStr, prayerTimes['isha']);
         final end = _parseDateTime(dateStr, prayerTimes['midnightShari'], nextDayIfBefore: true, referenceTime: start);
         items.add(AgendaItem(
-          id: buildAgendaItemId(AgendaDomain.prayer, '$id:isha', dateStr),
-          domain: AgendaDomain.prayer,
-          sourceId: id,
-          title: isha['title'] as String? ?? 'نماز عشا',
-          dateStr: dateStr,
-          timeOfDay: timeOfDay,
-          durationMinutes: 15,
-          category: Category.religious,
-          completion: completion,
-          priority: 3,
-          isEssential: true,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.prayer, targetId: id),
-          windowStart: start,
-          windowEnd: end,
-          meta: {'practice': isha},
-        ));
-      }
-    } else {
-      if (maghrib != null || isha != null) {
-        if (isExempt('MAGHRIB_ISHA')) {
-          // completely exempt
-        } else {
-          final representative = maghrib ?? isha!;
-          final id = representative['id'] as String;
-          final timeOfDay = prayerTimes['maghrib'] ?? prayerTimes['isha'];
-          
-          final maghribDone = maghrib == null || statuses[maghrib['id'] as String]?.isDone == true;
-          final ishaDone = isha == null || statuses[isha['id'] as String]?.isDone == true;
-          final completion = (maghribDone && ishaDone) ? AgendaCompletion.done : AgendaCompletion.pending;
-          
-          final start = _parseDateTime(dateStr, prayerTimes['maghrib']);
-        final end = _parseDateTime(dateStr, prayerTimes['midnightShari'], nextDayIfBefore: true, referenceTime: start);
-        items.add(AgendaItem(
-          id: buildAgendaItemId(AgendaDomain.prayer, '${id}:maghrib_isha', dateStr),
+          id: buildAgendaItemId(AgendaDomain.prayer, '$id:maghrib_isha', dateStr),
           domain: AgendaDomain.prayer,
           sourceId: id,
           title: 'نماز مغرب و عشا',
@@ -420,7 +355,6 @@ class WorshipAgendaSource implements AgendaSource {
           windowEnd: end,
           meta: {'practice': representative},
         ));
-        }
       }
     }
 
@@ -494,7 +428,7 @@ class WorshipAgendaSource implements AgendaSource {
     if (parts.length == 2) {
       final h = int.tryParse(parts[0]) ?? 0;
       final m = int.tryParse(parts[1]) ?? 0;
-      var total = h * 60 + m + offsetMinutes;
+      final total = h * 60 + m + offsetMinutes;
       if (total < 0 || total >= 24 * 60) {
         return null; // Overflows to another day
       }
@@ -641,7 +575,7 @@ class WorshipAgendaSource implements AgendaSource {
 
         final anchor = p['reminderAnchor'] as String? ?? 'NONE';
         final offsetMinutes = p['reminderOffsetMinutes'] as int? ?? 0;
-        var resolvedTimes = <String?>[];
+        final resolvedTimes = <String?>[];
 
         if (anchor != 'NONE') {
           final resolved = _resolveAnchorTime(anchor, offsetMinutes, prayerTimes, settingsMap);
@@ -713,20 +647,39 @@ class WorshipAgendaSource implements AgendaSource {
           }
         }
 
+        // Occurrence overrides check (M2-12)
+        final override = overridesByKey['${id}_$dateStr'];
+        if (override != null && override['status'] == 'SKIPPED') {
+          continue; // Skipped for today
+        }
+        if (override != null && override['timeOfDay'] != null) {
+          bestTime = override['timeOfDay'] as String?;
+        }
+        final overrideDuration = override != null ? (override['durationMinutes'] as num?)?.toInt() : null;
+
+        final isFloating = (bestTime == null || bestTime.isEmpty) && dailyTarget > 0;
+
         items.add(AgendaItem(
           id: buildAgendaItemId(AgendaDomain.mustahab, id, dateStr),
           domain: AgendaDomain.mustahab,
+          kind: AgendaItemKind.practice,
           sourceId: id,
           title: p['title'] as String? ?? '',
           subtitle: subtitle,
           dateStr: dateStr,
           timeOfDay: bestTime,
-          durationMinutes: 15,
+          durationMinutes: overrideDuration ?? 15,
           category: Category.religious,
+          itemType: isFloating ? AgendaItemType.floating : AgendaItemType.flexible,
           priority: (p['sortOrder'] as num? ?? 0).toDouble(),
           completion: completion,
           deepLink: AgendaDeepLink(domain: AgendaDomain.mustahab, targetId: id),
-          meta: {'practice': p},
+          meta: {
+            'practice': p,
+            'isFloating': isFloating,
+            'countDone': countDone,
+            'dailyTarget': dailyTarget,
+          },
         ));
       } catch (e, st) {
         RitmoLogger.error('Error processing mustahab practice $id in _collectMustahab: $e\n$st');

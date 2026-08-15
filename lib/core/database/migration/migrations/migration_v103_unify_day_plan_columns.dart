@@ -10,9 +10,6 @@ class MigrationV103UnifyDayPlanColumns extends Migration {
   int get version => 103;
 
   @override
-  String get name => 'migration_v103_unify_day_plan_columns';
-
-  @override
   bool get requiresTransaction => true;
 
   @override

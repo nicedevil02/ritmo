@@ -41,6 +41,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v99_movement_
 import 'package:ritmo/core/database/migration/migrations/migration_v100_sleep_program.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v101_notification_control_center.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v102_unify_one_off_tasks.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v103_unify_day_plan_columns.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -145,6 +146,7 @@ class MigrationRunner {
     MigrationV100SleepProgram(), // قدم ۲ مسیر خواب: sleep_programs + sleep_plan_days
     MigrationV101NotificationControlCenter(), // Notification Control Center and Privacy Engine
     MigrationV102UnifyOneOffTasks(), // Unify one-off tasks from routines into simple_tasks
+    MigrationV103UnifyDayPlanColumns(), // Unify day_plan_templates & day_plan_commits columns to canonical camelCase
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

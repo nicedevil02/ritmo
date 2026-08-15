@@ -10,7 +10,7 @@ void main() {
     final date = DateTime(2026, 8, 14);
     const dateStr = '2026-08-14';
 
-    RoutineAgendaSource buildSource() {
+    RoutineAgendaSource buildSource({bool eventsEnabled = true}) {
       final rule = RecurrenceRule(
         weekdays: const [],
         startDate: date,
@@ -69,6 +69,7 @@ void main() {
         avgDurations: {},
         categoryAvgDurations: {},
         completionsByDate: {},
+        eventsEnabled: eventsEnabled,
         activeModules: {'religion': true, 'medicine': true, 'courses': true},
       );
     }
@@ -94,6 +95,8 @@ void main() {
 
       expect(source.domains, contains(AgendaDomain.routine));
       expect(source.domains, contains(AgendaDomain.event));
+      // پیش‌فرض باید روشن باشد تا ساختن مستقیم منبع رفتار قبلی را حفظ کند.
+      expect(source.eventsEnabled, isTrue);
     });
 
     // REGRESSION GUARD — این تست پیش‌تر دقیقاً همان باگ را تثبیت کرده بود.
@@ -146,6 +149,26 @@ void main() {
       );
 
       expect(items.map((i) => i.sourceId), containsAll(<String>['routine_normal', 'routine_event']));
+    });
+
+    // دروازهٔ `calendar_show_events` باید روی هر دو مسیر رویداد یکسان عمل کند:
+    // هم temporary_events (در EventAgendaSource) و هم رویدادهای روتین‌پایهٔ پلنر.
+    test('Disabling events hides the routine-backed event but keeps the routine', () {
+      final items = buildSource(eventsEnabled: false).itemsForDate(
+        ctxWith(const AgendaQueryOptions()),
+      );
+
+      expect(items, hasLength(1));
+      expect(items.first.sourceId, equals('routine_normal'));
+      expect(items.first.kind, equals(AgendaItemKind.routine));
+    });
+
+    test('Disabling events empties an events-only query', () {
+      final items = buildSource(eventsEnabled: false).itemsForDate(
+        ctxWith(const AgendaQueryOptions(domains: {AgendaDomain.event})),
+      );
+
+      expect(items, isEmpty);
     });
   });
 }

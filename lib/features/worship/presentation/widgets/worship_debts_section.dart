@@ -178,7 +178,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                     fontSize: 13,
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextField(
                   controller: controller,
                   keyboardType: TextInputType.number,
@@ -291,13 +291,12 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
       context: context,
       builder: (context) {
         final colors = context.colors;
-        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
             backgroundColor: colors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-            title: Text(
+            title: const Text(
               'حذف مورد قضای عبادات',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
@@ -317,7 +316,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () => Navigator.pop(context, true),
-                child: Text('حذف دائم', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text('حذف دائم', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -427,7 +426,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(32),
           color: isDark
@@ -453,7 +452,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(32),
           child: Padding(
-            padding: EdgeInsets.fromLTRB(18, 18, 18, 20),
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -494,7 +493,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                               color: colors.success,
                             ),
                           ),
-                          SizedBox(width: 11),
+                          const SizedBox(width: 11),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,7 +506,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                     color: colors.textPrimary,
                                   ),
                                 ),
-                                SizedBox(height: 2),
+                                const SizedBox(height: 2),
                                 Text(
                                   'پیگیری و جبران نماز و روزه قضا',
                                   style: TextStyle(
@@ -524,7 +523,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                       ),
                     ),
 
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
 
                     // Add Debt Button
                     InkWell(
@@ -566,12 +565,12 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                   ],
                 ),
 
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
 
                 // Card Content (Zero-State or Debts List)
                 if (_activeDebts.isEmpty)
                   Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
                     child: Center(
                       child: Column(
                         children: [
@@ -601,7 +600,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                     BoxShadow(
                                       color: colors.success.withValues(alpha: 0.15),
                                       blurRadius: 20,
-                                      offset: Offset(0, 4),
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 ),
@@ -615,7 +614,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Text(
                             'کاروان عبادات تسویه و به‌روز است ✨',
                             style: TextStyle(
@@ -625,7 +624,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                               letterSpacing: -0.3,
                             ),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             'هیچ بدهی یا قضای ثبت‌شده‌ای در انتظار نداری. با آرامش و سبک‌بالی به مسیرت ادامه بده.',
                             textAlign: TextAlign.center,
@@ -643,9 +642,9 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                 else ...[
                   ListView.separated(
                     shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: _activeDebts.length,
-                    separatorBuilder: (context, index) => SizedBox(height: 14),
+                    separatorBuilder: (context, index) => const SizedBox(height: 14),
                     itemBuilder: (context, index) {
                       final debt = _activeDebts[index];
                       final remaining = debt.remainingCount;
@@ -662,7 +661,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                       }
 
                       return Container(
-                        padding: EdgeInsets.all(15),
+                        padding: const EdgeInsets.all(15),
                         decoration: BoxDecoration(
                           color: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                           borderRadius: BorderRadius.circular(20),
@@ -677,8 +676,8 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                           children: [
                             Row(
                               children: [
-                                Text(typeEmoji, style: TextStyle(fontSize: 16)),
-                                SizedBox(width: 8),
+                                Text(typeEmoji, style: const TextStyle(fontSize: 16)),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     debt.title,
@@ -694,7 +693,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                   onTap: () => _showEditDebtSheet(debt),
                                   borderRadius: BorderRadius.circular(12),
                                   child: Padding(
-                                    padding: EdgeInsets.all(4),
+                                    padding: const EdgeInsets.all(4),
                                     child: Icon(
                                       CupertinoIcons.ellipsis_vertical,
                                       size: 16,
@@ -702,7 +701,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 6),
+                                const SizedBox(width: 6),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                                   decoration: BoxDecoration(
@@ -851,7 +850,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                         });
                       },
                       child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 6),
+                        padding: const EdgeInsets.symmetric(vertical: 6),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -868,16 +867,16 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                       ),
                     ),
                     if (_showArchived) ...[
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       ListView.builder(
                         shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: _archivedDebts.length,
                         itemBuilder: (context, index) {
                           final debt = _archivedDebts[index];
                           return Container(
-                            margin: EdgeInsets.symmetric(vertical: 4),
-                            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                             decoration: BoxDecoration(
                               color: isDark ? colors.surfaceSunken : colors.surfaceSunken,
                               borderRadius: BorderRadius.circular(14),
@@ -886,7 +885,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                             child: Row(
                               children: [
                                 Icon(CupertinoIcons.checkmark_seal_fill, color: colors.success, size: 18),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     debt.title,
@@ -902,7 +901,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                   onTap: () => _restoreDebt(debt),
                                   borderRadius: BorderRadius.circular(8),
                                   child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: colors.success.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
@@ -911,19 +910,19 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(CupertinoIcons.arrow_counterclockwise, size: 12, color: colors.success),
-                                        SizedBox(width: 4),
+                                        const SizedBox(width: 4),
                                         Text('بازگردانی', style: TextStyle(fontSize: 11, color: colors.success, fontWeight: FontWeight.bold)),
                                       ],
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 // Delete Permanently
                                 InkWell(
                                   onTap: () => _deleteDebt(debt),
                                   borderRadius: BorderRadius.circular(8),
                                   child: Padding(
-                                    padding: EdgeInsets.all(4),
+                                    padding: const EdgeInsets.all(4),
                                     child: Icon(CupertinoIcons.trash, size: 15, color: colors.textSecondary.withValues(alpha: 0.6)),
                                   ),
                                 ),
@@ -1045,7 +1044,6 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final presets = _debtType == 'PRAYER'
         ? _prayerPresets
@@ -1372,7 +1370,6 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,

@@ -156,7 +156,6 @@ class _WorshipScreenState extends State<WorshipScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -170,8 +169,8 @@ class _WorshipScreenState extends State<WorshipScreen> {
               backgroundColor: colors.surface,
               onRefresh: _refresh,
               child: SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.only(bottom: 40),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 40),
                 child: Column(
                   children: [
                     // 1. MODULE APP BAR WITH QUICK ACTIONS & STATUS BADGES

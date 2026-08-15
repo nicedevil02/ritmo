@@ -61,10 +61,10 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
 
     return Container(
       height: 440,
-      padding: EdgeInsets.all(24),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         children: [
@@ -77,7 +77,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // Title
           Text(
@@ -88,7 +88,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
               color: colors.textPrimary,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
 
           Text(
             'موقعیت: ${widget.cityName} ($degreesStr° نسبت به شمال)',
@@ -97,7 +97,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
               color: colors.textSecondary,
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
 
           // Compass Rose UI
           Expanded(
@@ -131,15 +131,15 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
                     top: 14,
                     child: Text('N', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.red)),
                   ),
-                  Positioned(
+                  const Positioned(
                     bottom: 14,
                     child: Text('S', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
-                  Positioned(
+                  const Positioned(
                     left: 14,
                     child: Text('W', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
-                  Positioned(
+                  const Positioned(
                     right: 14,
                     child: Text('E', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
@@ -164,7 +164,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
                               ),
                             ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             CupertinoIcons.location_fill,
                             size: 18,
                             color: Colors.black,
@@ -175,7 +175,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
                           height: 70,
                           color: colors.accent,
                         ),
-                        SizedBox(height: 70), // Center pivot offset
+                        const SizedBox(height: 70), // Center pivot offset
                       ],
                     ),
                   ),
@@ -195,7 +195,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> {
             ),
           ),
 
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           Text(
             'جهت قبله با علامت طلایی مشخص شده است 🕋',

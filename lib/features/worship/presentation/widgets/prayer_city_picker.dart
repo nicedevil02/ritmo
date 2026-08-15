@@ -249,7 +249,6 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -279,7 +278,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                   ),
                 ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
 
               // Segmented Tab bar
               Container(
@@ -353,7 +352,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                   ],
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Content Area
               Expanded(
@@ -385,7 +384,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
             prefixIcon: Icon(CupertinoIcons.search, color: colors.textSecondary, size: 20),
             fillColor: colors.textSecondary.withValues(alpha: 0.02),
             filled: true,
-            contentPadding: EdgeInsets.symmetric(vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(vertical: 10),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(color: colors.textSecondary.withValues(alpha: 0.06)),
@@ -396,7 +395,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
             ),
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
 
         // List of Cities
         Expanded(
@@ -465,7 +464,6 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
   }
 
   Widget _buildSettingsTab(RitmoColors colors) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

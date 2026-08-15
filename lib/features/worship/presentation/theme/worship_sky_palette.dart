@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:ritmo/features/worship/logic/prayer_times.dart';
 
 /// Independent "Sky" Palette for the Worship Arc Hero Card.

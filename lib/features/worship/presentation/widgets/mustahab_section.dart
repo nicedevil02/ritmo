@@ -7,7 +7,6 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
-import 'package:ritmo/features/worship/presentation/widgets/prayer_agenda_card.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/presentation/widgets/worship_reminder_settings_sheet.dart';
 import 'package:sqflite/sqflite.dart';
@@ -96,67 +95,65 @@ class _MustahabSectionState extends State<MustahabSection> {
     }
   }
 
-  Future<void> _skipPracticeAndPromptQada(WorshipPractice practice) async {
-    final colors = context.colors;
-    unawaited(HapticFeedback.vibrate());
-    
-    // Show confirmation dialog to add to Qada debts
-    final addToQada = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text(
-              'ثبت قضای ${practice.title}',
-              style: TextStyle(color: colors.textPrimary, fontSize: 16.5, fontWeight: FontWeight.bold),
-            ),
-            content: Text(
-              'آیا مایلید ${practice.title} را به بدهی‌های عبادی خود (بخش قضا) اضافه کنید؟',
-              style: TextStyle(color: colors.textSecondary, fontSize: 14.5),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text('خیر', style: TextStyle(color: colors.textSecondary)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: colors.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 0,
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: Text('بله، اضافه کن', style: TextStyle(color: colors.onPrimary, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
+  ({IconData icon, Color color, Color bg}) _getMustahabVisuals(String title, RitmoColors colors) {
+    if (title.contains('شب')) {
+      return (
+        icon: Icons.nightlight_round,
+        color: colors.primary,
+        bg: colors.primary.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('نافله')) {
+      if (title.contains('صبح')) {
+        return (
+          icon: Icons.wb_twilight_rounded,
+          color: colors.warning,
+          bg: colors.warning.withValues(alpha: 0.12),
         );
-      },
-    );
-
-    // Mark as skipped and delegate deterministic debt creation entirely to WorshipEngine
-    final targetDate = _targetDate;
-    final result = await WorshipEngine.instance.logSkip(
-      practiceId: practice.id,
-      date: targetDate,
-      addToQada: addToQada ?? false,
-    );
-
-    if (result is WorshipLogBlocked && mounted) {
-      RitmoSnackbar.warning(context, result.userMessage);
-    } else if (result is WorshipLogFailed && mounted) {
-      RitmoSnackbar.warning(context, 'خطا در ثبت عدم انجام: ${result.error}');
-    } else if ((addToQada ?? false) && mounted) {
-      RitmoSnackbar.success(context, 'قضای ${practice.title} به بدهی‌های شما اضافه شد ✨');
+      } else if (title.contains('ظهر') || title.contains('عصر')) {
+        return (
+          icon: Icons.wb_sunny_rounded,
+          color: colors.warning,
+          bg: colors.warning.withValues(alpha: 0.12),
+        );
+      } else {
+        return (
+          icon: Icons.nights_stay_rounded,
+          color: colors.primary,
+          bg: colors.primary.withValues(alpha: 0.12),
+        );
+      }
+    } else if (title.contains('عاشورا') || title.contains('زیارت')) {
+      return (
+        icon: Icons.auto_stories_rounded,
+        color: colors.success,
+        bg: colors.success.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('عهد') || title.contains('دعا')) {
+      return (
+        icon: Icons.volunteer_activism_rounded,
+        color: colors.accent,
+        bg: colors.accent.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('کمیل') || title.contains('ندبه')) {
+      return (
+        icon: Icons.favorite_rounded,
+        color: colors.error,
+        bg: colors.error.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('جعفر')) {
+      return (
+        icon: Icons.mosque_rounded,
+        color: colors.primary,
+        bg: colors.primary.withValues(alpha: 0.12),
+      );
     }
-
-    await _loadMustahabs();
-    widget.onChanged();
+    return (
+      icon: Icons.auto_awesome_rounded,
+      color: colors.primary,
+      bg: colors.primary.withValues(alpha: 0.12),
+    );
   }
+
 
   void _showManageSheet() {
     ManageMustahabSheet.present(
@@ -183,7 +180,7 @@ class _MustahabSectionState extends State<MustahabSection> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(32),
           color: isDark
@@ -209,7 +206,7 @@ class _MustahabSectionState extends State<MustahabSection> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(32),
           child: Padding(
-            padding: EdgeInsets.fromLTRB(18, 18, 18, 20),
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -250,7 +247,7 @@ class _MustahabSectionState extends State<MustahabSection> {
                               color: colors.accent,
                             ),
                           ),
-                          SizedBox(width: 11),
+                          const SizedBox(width: 11),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,7 +260,7 @@ class _MustahabSectionState extends State<MustahabSection> {
                                     color: colors.textPrimary,
                                   ),
                                 ),
-                                SizedBox(height: 2),
+                                const SizedBox(height: 2),
                                 Text(
                                   'اعمال، زیارات و نوافل روزانه',
                                   style: TextStyle(
@@ -280,7 +277,7 @@ class _MustahabSectionState extends State<MustahabSection> {
                       ),
                     ),
 
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
 
                     // Add / Manage Button
                     InkWell(
@@ -425,43 +422,25 @@ class _MustahabSectionState extends State<MustahabSection> {
           else
             ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: _activeMustahabs.length,
-              separatorBuilder: (context, index) => SizedBox(height: 12),
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final practice = _activeMustahabs[index];
                 final status = _statuses[practice.id];
                 final isDone = status?.isDone == true;
 
-                // Appropriate spiritual vector icon and accent color
-                IconData vectorIcon = CupertinoIcons.sparkles;
-                Color iconColor = colors.accent;
-                Color iconBg = colors.accent.withValues(alpha: 0.12);
-
-                if (practice.title.contains('شب')) {
-                  vectorIcon = CupertinoIcons.moon_stars_fill;
-                  iconColor = colors.primary;
-                  iconBg = colors.primary.withValues(alpha: 0.12);
-                } else if (practice.title.contains('عاشورا') || practice.title.contains('زیارت')) {
-                  vectorIcon = CupertinoIcons.book_fill;
-                  iconColor = colors.success;
-                  iconBg = colors.success.withValues(alpha: 0.12);
-                } else if (practice.title.contains('عهد')) {
-                  vectorIcon = CupertinoIcons.hand_raised_fill;
-                  iconColor = colors.warning;
-                  iconBg = colors.warning.withValues(alpha: 0.12);
-                } else if (practice.title.contains('کمیل') || practice.title.contains('ندبه')) {
-                  vectorIcon = CupertinoIcons.heart_fill;
-                  iconColor = colors.error;
-                  iconBg = colors.error.withValues(alpha: 0.12);
-                }
+                final visual = _getMustahabVisuals(practice.title, colors);
+                final iconColor = visual.color;
+                final iconBg = visual.bg;
+                final vectorIcon = visual.icon;
 
                 return GestureDetector(
                   onTap: () => _toggleDone(practice, !isDone),
                   child: AnimatedContainer(
-                    duration: Duration(milliseconds: 250),
+                    duration: const Duration(milliseconds: 250),
                     curve: Curves.easeOutCubic,
-                    padding: EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
                     decoration: BoxDecoration(
                       color: isDark ? colors.surface : colors.surface,
                       borderRadius: BorderRadius.circular(24),
@@ -473,7 +452,7 @@ class _MustahabSectionState extends State<MustahabSection> {
                         BoxShadow(
                           color: isDone
                               ? iconColor.withValues(alpha: 0.15)
-                              : (isDark ? Colors.black.withValues(alpha: 0.25) : colors.shadow.withValues(alpha: 0.08)),
+                              : (isDark ? colors.shadow.withValues(alpha: 0.25) : colors.shadow.withValues(alpha: 0.08)),
                           blurRadius: isDone ? 24 : 16,
                           offset: const Offset(0, 6),
                         ),
@@ -492,13 +471,13 @@ class _MustahabSectionState extends State<MustahabSection> {
                               BoxShadow(
                                 color: iconColor.withValues(alpha: isDone ? 0.4 : 0.0),
                                 blurRadius: isDone ? 12 : 0,
-                                offset: isDone ? Offset(0, 4) : Offset.zero,
+                                offset: isDone ? const Offset(0, 4) : Offset.zero,
                               ),
                             ],
                           ),
-                          child: Icon(vectorIcon, color: isDone ? Colors.white : iconColor, size: 22),
+                          child: Icon(vectorIcon, color: isDone ? colors.onPrimary : iconColor, size: 22),
                         ),
-                        SizedBox(width: 16),
+                        const SizedBox(width: 16),
 
                         // Title and Notes
                         Expanded(
@@ -519,9 +498,9 @@ class _MustahabSectionState extends State<MustahabSection> {
                                     ),
                                   ),
                                   if (practice.reminderEnabled) ...[
-                                    SizedBox(width: 10),
+                                    const SizedBox(width: 10),
                                     Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: colors.accent.withValues(alpha: 0.08),
                                         borderRadius: BorderRadius.circular(8),
@@ -530,7 +509,7 @@ class _MustahabSectionState extends State<MustahabSection> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(CupertinoIcons.bell_fill, size: 10, color: colors.accent),
-                                          SizedBox(width: 4),
+                                          const SizedBox(width: 4),
                                           Text(
                                             practice.reminderTime != null ? toPersianDigits(practice.reminderTime!) : 'یادآور',
                                             style: TextStyle(
@@ -546,7 +525,7 @@ class _MustahabSectionState extends State<MustahabSection> {
                                 ],
                               ),
                               if (practice.notes != null && practice.notes!.isNotEmpty) ...[
-                                SizedBox(height: 6),
+                                const SizedBox(height: 6),
                                 Text(
                                   practice.notes!,
                                   style: TextStyle(
@@ -560,11 +539,11 @@ class _MustahabSectionState extends State<MustahabSection> {
                             ],
                           ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
 
                         // 2026 Fluid Toggle Checkbox
                         AnimatedContainer(
-                          duration: Duration(milliseconds: 250),
+                          duration: const Duration(milliseconds: 250),
                           curve: Curves.easeOutCubic,
                           width: 32,
                           height: 32,
@@ -730,20 +709,20 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.all(12),
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: colors.border.withValues(alpha: 0.1), width: 0.8),
         ),
         backgroundColor: colors.card.withValues(alpha: 0.95),
-        duration: Duration(seconds: 5),
+        duration: const Duration(seconds: 5),
         content: Directionality(
           textDirection: TextDirection.rtl,
           child: Row(
             children: [
-              Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 20),
-              SizedBox(width: 10),
+              const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 20),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'مستحب سفارشی غیرفعال شد',
@@ -821,10 +800,10 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
           textDirection: TextDirection.rtl,
           child: Dialog(
             backgroundColor: Colors.transparent,
-            insetPadding: EdgeInsets.symmetric(horizontal: 24),
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
             child: RitmoTheme.glassCardLight(
               child: Container(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
@@ -838,7 +817,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                     Row(
                       children: [
                         Icon(CupertinoIcons.alarm_fill, color: colors.accent, size: 24),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Text(
                           'تنظیم یادآور مستحب',
                           style: TextStyle(
@@ -849,7 +828,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text(
                       'یادآور پیش‌فرض برای «${preset['title']}» به صورت زیر تنظیم شده است:',
                       style: TextStyle(
@@ -857,9 +836,9 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                         color: colors.textPrimary.withValues(alpha: 0.9),
                         ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Container(
-                      padding: EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: colors.accent.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
@@ -892,7 +871,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.onPrimary),
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: colors.textPrimary,
@@ -938,12 +917,12 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                           },
                         );
                       },
-                      child: Text(
+                      child: const Text(
                         'ویرایش یادآور',
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     TextButton(
                       style: TextButton.styleFrom(
                         foregroundColor: colors.textSecondary,
@@ -952,7 +931,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                         Navigator.pop(dialogContext);
                         _togglePresetWithReminder(preset, true, false);
                       },
-                      child: Text(
+                      child: const Text(
                         'ثبت بدون یادآور',
                         style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
                       ),
@@ -1012,9 +991,9 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
             'isActive': enable ? 1 : 0,
             'userDisabledAt': enable ? null : DateTime.now().toIso8601String(),
             'reminderEnabled': enableReminder ? 1 : 0,
-            if (customTime != null) 'reminderTime': customTime,
-            if (customFreq != null) 'reminderFrequency': customFreq,
-            if (customDay != null) 'reminderDaysOfWeek': customDay,
+            'reminderTime': ?customTime,
+            'reminderFrequency': ?customFreq,
+            'reminderDaysOfWeek': ?customDay,
             'updatedAt': nowMs,
           },
           where: 'id = ?',
@@ -1137,7 +1116,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                   ),
                 ],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               Expanded(
                 child: _buildPresetsTab(colors),
@@ -1149,6 +1128,65 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
     );
   }
 
+  ({IconData icon, Color color, Color bg}) _getMustahabVisuals(String title, RitmoColors colors) {
+    if (title.contains('شب')) {
+      return (
+        icon: Icons.nightlight_round,
+        color: colors.primary,
+        bg: colors.primary.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('نافله')) {
+      if (title.contains('صبح')) {
+        return (
+          icon: Icons.wb_twilight_rounded,
+          color: colors.warning,
+          bg: colors.warning.withValues(alpha: 0.12),
+        );
+      } else if (title.contains('ظهر') || title.contains('عصر')) {
+        return (
+          icon: Icons.wb_sunny_rounded,
+          color: colors.warning,
+          bg: colors.warning.withValues(alpha: 0.12),
+        );
+      } else {
+        return (
+          icon: Icons.nights_stay_rounded,
+          color: colors.primary,
+          bg: colors.primary.withValues(alpha: 0.12),
+        );
+      }
+    } else if (title.contains('عاشورا') || title.contains('زیارت')) {
+      return (
+        icon: Icons.auto_stories_rounded,
+        color: colors.success,
+        bg: colors.success.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('عهد') || title.contains('دعا')) {
+      return (
+        icon: Icons.volunteer_activism_rounded,
+        color: colors.accent,
+        bg: colors.accent.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('کمیل') || title.contains('ندبه')) {
+      return (
+        icon: Icons.favorite_rounded,
+        color: colors.error,
+        bg: colors.error.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('جعفر')) {
+      return (
+        icon: Icons.mosque_rounded,
+        color: colors.primary,
+        bg: colors.primary.withValues(alpha: 0.12),
+      );
+    }
+    return (
+      icon: Icons.auto_awesome_rounded,
+      color: colors.primary,
+      bg: colors.primary.withValues(alpha: 0.12),
+    );
+  }
+
   Widget _buildPresetsTab(RitmoColors colors) {
     if (_isLoadingPresets) {
       return Center(child: CircularProgressIndicator(color: colors.textPrimary));
@@ -1157,11 +1195,11 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ListView(
-      physics: BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       children: [
         if (_customPractices.isNotEmpty) ...[
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
             child: Text(
               'مستحبات سفارشی شما',
               style: TextStyle(
@@ -1173,8 +1211,9 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
           ),
           ..._customPractices.map((practice) {
             final isActive = practice.isActive == true;
+            final visual = _getMustahabVisuals(practice.title, colors);
             return Container(
-              margin: EdgeInsets.symmetric(vertical: 4),
+              margin: const EdgeInsets.symmetric(vertical: 4),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
@@ -1186,55 +1225,72 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                 borderRadius: BorderRadius.circular(14),
                 clipBehavior: Clip.antiAlias,
                 child: ListTile(
-                dense: true,
-                title: Text(
-                  practice.title,
-                  style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
-                ),
-                subtitle: practice.notes != null && practice.notes!.isNotEmpty
-                    ? Text(
-                        practice.notes!,
-                        style: TextStyle(color: colors.textSecondary, fontSize: 12.5),
-                      )
-                    : null,
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(CupertinoIcons.settings, color: colors.textSecondary, size: 18),
-                      onPressed: () => _editPractice(practice: practice),
+                  dense: true,
+                  leading: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: visual.bg,
                     ),
-                    SizedBox(width: 4),
-                    CupertinoSwitch(
-                      value: isActive,
-                      activeTrackColor: colors.primary,
-                      onChanged: (val) => _toggleCustomActive(practice, val),
+                    child: Center(
+                      child: Icon(
+                        visual.icon,
+                        size: 18,
+                        color: visual.color,
+                      ),
                     ),
-                  ],
+                  ),
+                  title: Text(
+                    practice.title,
+                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: practice.notes != null && practice.notes!.isNotEmpty
+                      ? Text(
+                          practice.notes!,
+                          style: TextStyle(color: colors.textSecondary, fontSize: 12.5),
+                        )
+                      : null,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(CupertinoIcons.settings, color: colors.textSecondary, size: 18),
+                        onPressed: () => _editPractice(practice: practice),
+                      ),
+                      const SizedBox(width: 4),
+                      CupertinoSwitch(
+                        value: isActive,
+                        activeTrackColor: colors.primary,
+                        onChanged: (val) => _toggleCustomActive(practice, val),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
               ),
             );
           }),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Divider(color: colors.border.withValues(alpha: 0.5)),
         ],
 
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           child: Text(
             'مستحبات پیش‌فرض',
             style: TextStyle(
               color: isDark ? colors.accent : colors.primary,
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              ),
+            ),
           ),
         ),
         ..._presets.map((preset) {
           final isActive = preset['isActive'] as bool;
+          final title = preset['title'] as String;
+          final visual = _getMustahabVisuals(title, colors);
           return Container(
-            margin: EdgeInsets.symmetric(vertical: 4),
+            margin: const EdgeInsets.symmetric(vertical: 4),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
@@ -1246,41 +1302,56 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
               borderRadius: BorderRadius.circular(14),
               clipBehavior: Clip.antiAlias,
               child: ListTile(
-              dense: true,
-              title: Text(
-                preset['title'] as String,
-                style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                preset['notes'] as String,
-                style: TextStyle(color: colors.textSecondary, fontSize: 12.5),
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(CupertinoIcons.settings, color: colors.textSecondary, size: 18),
-                    onPressed: () => _editPractice(preset: preset),
+                dense: true,
+                leading: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: visual.bg,
                   ),
-                  SizedBox(width: 4),
-                  CupertinoSwitch(
-                    value: isActive,
-                    activeTrackColor: colors.primary,
-                    onChanged: (val) {
-                      if (val) {
-                        _showPresetReminderDialog(preset);
-                      } else {
-                        _togglePreset(preset, false);
-                      }
-                    },
+                  child: Center(
+                    child: Icon(
+                      visual.icon,
+                      size: 18,
+                      color: visual.color,
+                    ),
                   ),
-                ],
+                ),
+                title: Text(
+                  title,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  preset['notes'] as String,
+                  style: TextStyle(color: colors.textSecondary, fontSize: 12.5),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(CupertinoIcons.settings, color: colors.textSecondary, size: 18),
+                      onPressed: () => _editPractice(preset: preset),
+                    ),
+                    const SizedBox(width: 4),
+                    CupertinoSwitch(
+                      value: isActive,
+                      activeTrackColor: colors.primary,
+                      onChanged: (val) {
+                        if (val) {
+                          _showPresetReminderDialog(preset);
+                        } else {
+                          _togglePreset(preset, false);
+                        }
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
             ),
           );
         }),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         GestureDetector(
           onTap: () {
             HapticFeedback.selectionClick();
@@ -1299,7 +1370,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
             );
           },
           child: Container(
-            padding: EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: 14),
             decoration: BoxDecoration(
               color: isDark ? colors.surface : colors.textSecondary.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(16),
@@ -1315,7 +1386,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                   size: 18,
                   color: isDark ? colors.accent : colors.primary,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
                   'اضافه کردن مستحبات سفارشی',
                   style: TextStyle(
@@ -1434,7 +1505,6 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,

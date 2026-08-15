@@ -344,7 +344,7 @@ class WorshipCompletionRepository {
         // If we strictly check dates, we need complex logic for MONTHLY/WEEKLY.
         // For DAILY, we can keep the strict check.
         if (freq == 'DAILY') {
-           final expectedPrev = currentExpected!.subtract(const Duration(days: 1));
+           final expectedPrev = currentExpected.subtract(const Duration(days: 1));
            if (date.year != expectedPrev.year ||
                date.month != expectedPrev.month ||
                date.day != expectedPrev.day) {

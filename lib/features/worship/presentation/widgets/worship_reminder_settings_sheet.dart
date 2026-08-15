@@ -167,7 +167,7 @@ class _WorshipReminderSettingsSheetState
   Future<void> _pickTime(int index) async {
     final initial = index >= 0 && index < _reminderTimesList.length
         ? _reminderTimesList[index]
-        : TimeOfDay(hour: 8, minute: 0);
+        : const TimeOfDay(hour: 8, minute: 0);
     final picked = await showTimePicker(
       context: context,
       initialTime: initial,
@@ -215,7 +215,7 @@ class _WorshipReminderSettingsSheetState
               '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}')
           .toList());
 
-      final daysStr = _reminderFrequency == 'ONCE' ? (_onceDateStr ?? '') : _selectedDays.join(',');
+      final daysStr = _reminderFrequency == 'ONCE' ? _onceDateStr : _selectedDays.join(',');
 
       final updated = widget.practice.copyWith(
         reminderEnabled:      _reminderEnabled,
@@ -282,7 +282,7 @@ class _WorshipReminderSettingsSheetState
                 // Handle bar
                 Container(
                   width: 40, height: 4,
-                  margin: EdgeInsets.only(bottom: 16),
+                  margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
                     color: colors.textSecondary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(2),
@@ -321,7 +321,7 @@ class _WorshipReminderSettingsSheetState
                           colors: colors, isDark: isDark, cardBg: cardBg,
                           child: _buildExtra(colors),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -348,7 +348,7 @@ class _WorshipReminderSettingsSheetState
           ),
           child: Icon(CupertinoIcons.bell_fill, color: colors.primary, size: 18),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -408,7 +408,7 @@ class _WorshipReminderSettingsSheetState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(14, 12, 14, 0),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
             child: Row(
               children: [
                 Container(
@@ -426,7 +426,7 @@ class _WorshipReminderSettingsSheetState
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
                   title,
                   style: TextStyle(
@@ -462,8 +462,8 @@ class _WorshipReminderSettingsSheetState
           });
         },
         child: AnimatedContainer(
-          duration: Duration(milliseconds: 200),
-          padding: EdgeInsets.symmetric(vertical: 8),
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: isActive ? colors.accent.withValues(alpha: 0.18) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
@@ -526,9 +526,9 @@ class _WorshipReminderSettingsSheetState
                   });
                 },
                 child: AnimatedContainer(
-                  duration: Duration(milliseconds: 200),
-                  margin: EdgeInsets.symmetric(horizontal: 4),
-                  padding: EdgeInsets.symmetric(vertical: 12),
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                     color: selected ? colors.primary.withValues(alpha: 0.15) : chipBg,
                     borderRadius: BorderRadius.circular(14),
@@ -541,7 +541,7 @@ class _WorshipReminderSettingsSheetState
                       Icon(f['icon']! as IconData,
                           size: 20,
                           color: selected ? colors.primary : colors.textSecondary),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       Text(
                         f['label']! as String,
                         style: TextStyle(
@@ -560,7 +560,7 @@ class _WorshipReminderSettingsSheetState
 
         // Weekly days
         if (isWeeklySelected) ...[
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: _weekDays.map((day) {
@@ -577,7 +577,7 @@ class _WorshipReminderSettingsSheetState
                   });
                 },
                 child: AnimatedContainer(
-                  duration: Duration(milliseconds: 200),
+                  duration: const Duration(milliseconds: 200),
                   width: 38, height: 38,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
@@ -604,9 +604,9 @@ class _WorshipReminderSettingsSheetState
 
         // Monthly day (Solar / Lunar switcher and day picker)
         if (isMonthlySelected) ...[
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           Container(
-            padding: EdgeInsets.all(4),
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: chipBg,
               borderRadius: BorderRadius.circular(12),
@@ -618,9 +618,9 @@ class _WorshipReminderSettingsSheetState
               ],
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
               color: chipBg,
               borderRadius: BorderRadius.circular(12),
@@ -673,8 +673,8 @@ class _WorshipReminderSettingsSheetState
               final picked = await RitmoDatePicker.show(
                 context: context,
                 initialDate: initial,
-                firstDate: DateTime.now().subtract(Duration(days: 365)),
-                lastDate: DateTime.now().add(Duration(days: 365 * 5)),
+                firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
               );
               if (picked != null) {
                 setState(() {
@@ -683,7 +683,7 @@ class _WorshipReminderSettingsSheetState
               }
             },
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: chipBg,
                 borderRadius: BorderRadius.circular(14),
@@ -694,7 +694,7 @@ class _WorshipReminderSettingsSheetState
               child: Row(
                 children: [
                   Icon(CupertinoIcons.calendar_today, size: 18, color: colors.accent),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'تاریخ یادآوری: ${() {
@@ -758,9 +758,9 @@ class _WorshipReminderSettingsSheetState
                   });
                 },
                 child: AnimatedContainer(
-                  duration: Duration(milliseconds: 200),
-                  margin: EdgeInsets.symmetric(horizontal: 3),
-                  padding: EdgeInsets.symmetric(vertical: 10),
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
                     color: sel
                         ? colors.accent.withValues(alpha: 0.15)
@@ -777,7 +777,7 @@ class _WorshipReminderSettingsSheetState
                       Icon(m['icon']! as IconData,
                           size: 18,
                           color: sel ? colors.accent : colors.textSecondary),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         m['label']! as String,
                         style: TextStyle(
@@ -796,7 +796,7 @@ class _WorshipReminderSettingsSheetState
           }).toList(),
         ),
 
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         // Divider
         Container(
           height: 1,
@@ -810,14 +810,14 @@ class _WorshipReminderSettingsSheetState
         // ── SHARIA: anchor chips + offset ──────────────
         if (_isSharia) ...[
           _buildAnchorChips(_shariaAnchors, colors, chipBg),
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           _buildOffsetSlider(colors),
         ],
 
         // ── SLEEP: anchor chips + offset ───────────────
         if (_isSleep) ...[
           _buildAnchorChips(_sleepAnchors, colors, chipBg),
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           _buildOffsetSlider(colors),
         ],
       ],
@@ -836,7 +836,7 @@ class _WorshipReminderSettingsSheetState
             color: colors.textSecondary,
             ),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -847,7 +847,7 @@ class _WorshipReminderSettingsSheetState
               return GestureDetector(
                 onTap: () => _pickTime(idx),
                 child: Container(
-                  padding: EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: colors.accent.withValues(alpha: 0.12),
@@ -860,7 +860,7 @@ class _WorshipReminderSettingsSheetState
                     children: [
                       Icon(CupertinoIcons.clock,
                           size: 15, color: colors.accent),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
                         _fmt(t),
                         style: TextStyle(
@@ -870,7 +870,7 @@ class _WorshipReminderSettingsSheetState
                           ),
                       ),
                       if (_reminderTimesList.length > 1) ...[
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         GestureDetector(
                           onTap: () {
                             HapticFeedback.lightImpact();
@@ -893,7 +893,7 @@ class _WorshipReminderSettingsSheetState
               GestureDetector(
                 onTap: () => _pickTime(-1),
                 child: Container(
-                  padding: EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: chipBg,
@@ -909,7 +909,7 @@ class _WorshipReminderSettingsSheetState
                       Icon(CupertinoIcons.plus,
                           size: 15,
                           color: colors.textSecondary),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
                         'افزودن ساعت',
                         style: TextStyle(
@@ -936,7 +936,7 @@ class _WorshipReminderSettingsSheetState
       height: 42,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        physics: BouncingScrollPhysics(),
+        physics: const BouncingScrollPhysics(),
         children: anchors.map((a) {
           final sel = _reminderAnchor == a['key'];
           return GestureDetector(
@@ -945,10 +945,10 @@ class _WorshipReminderSettingsSheetState
               setState(() => _reminderAnchor = a['key']!);
             },
             child: AnimatedContainer(
-              duration: Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 200),
               padding:
-                  EdgeInsets.symmetric(horizontal: 14),
-              margin: EdgeInsets.only(left: 6),
+                  const EdgeInsets.symmetric(horizontal: 14),
+              margin: const EdgeInsets.only(left: 6),
               decoration: BoxDecoration(
                 color: sel ? colors.accent : chipBg,
                 borderRadius: BorderRadius.circular(11),
@@ -995,7 +995,7 @@ class _WorshipReminderSettingsSheetState
         Center(
           child: Container(
             padding:
-                EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: colors.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),

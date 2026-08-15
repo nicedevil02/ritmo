@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/completion/completion_gateway.dart';
 import 'package:ritmo/core/domain/completion/completion_request.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_snackbar.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
 import 'package:ritmo/features/worship/domain/prayer_target.dart';
@@ -120,10 +119,10 @@ class _PrayerSheetState extends State<PrayerSheet> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
-          padding: EdgeInsets.fromLTRB(20, 16, 20, 32),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
           decoration: BoxDecoration(
             color: colors.surfaceElevated,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
             border: Border.all(
               color: colors.border,
               width: 1,
@@ -132,7 +131,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
               BoxShadow(
                 color: colors.shadow.withValues(alpha: isDark ? 0.4 : 0.12),
                 blurRadius: 30,
-                offset: Offset(0, -6),
+                offset: const Offset(0, -6),
               ),
             ],
           ),
@@ -153,7 +152,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                   // Header
                   Row(
@@ -170,7 +169,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                               color: colors.textPrimary,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
                             _startTime != null ? 'اذان: ${_formatTime(_startTime)}' : 'ثبت مستقیم با لمس گزینه',
                             style: TextStyle(
@@ -185,24 +184,24 @@ class _PrayerSheetState extends State<PrayerSheet> {
                         icon: Icon(Icons.close_rounded, color: colors.textSecondary),
                         style: IconButton.styleFrom(
                           backgroundColor: colors.surfaceSunken,
-                          padding: EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(8),
                         ),
                       ),
                     ],
                   ),
 
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
                   if (_isLoading)
                     Padding(
-                      padding: EdgeInsets.all(32.0),
+                      padding: const EdgeInsets.all(32.0),
                       child: CircularProgressIndicator(color: colors.primary),
                     )
                   else ...[
                     if (_isExempt)
                       Container(
-                        padding: EdgeInsets.all(14),
-                        margin: EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(14),
+                        margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
                           color: colors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
@@ -211,7 +210,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                         child: Row(
                           children: [
                             Icon(Icons.shield_rounded, color: colors.primary, size: 22),
-                            SizedBox(width: 10),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,7 +223,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                                       color: colors.primary,
                                       ),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
                                     'در این دوران خواندن نماز تکلیف شرعی ندارد.',
                                     style: TextStyle(
@@ -240,8 +239,8 @@ class _PrayerSheetState extends State<PrayerSheet> {
                       ),
                     if (_isFuture)
                       Container(
-                        padding: EdgeInsets.all(14),
-                        margin: EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(14),
+                        margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
                           color: colors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
@@ -250,7 +249,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                         child: Row(
                           children: [
                             Icon(Icons.info_outline_rounded, color: colors.primary, size: 22),
-                            SizedBox(width: 10),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,7 +262,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                                       color: colors.primary,
                                       ),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
                                     'زمان اذان: ${_formatTime(_startTime)}',
                                     style: TextStyle(
@@ -287,7 +286,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                       isDisabled: _isFuture,
                       disabledReason: 'وقت اذان نرسیده',
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     _buildOptionCard(
                       context,
                       quality: PrayerLogQuality.inTime,
@@ -298,7 +297,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                       isDisabled: _isFuture,
                       disabledReason: 'وقت اذان نرسیده',
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     _buildOptionCard(
                       context,
                       quality: PrayerLogQuality.qada,
@@ -345,7 +344,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
           splashColor: isDisabled ? null : accentColor.withValues(alpha: 0.15),
           highlightColor: isDisabled ? null : accentColor.withValues(alpha: 0.08),
           child: Ink(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: isDark ? colors.surfaceSunken.withValues(alpha: 0.7) : colors.surface,
               borderRadius: BorderRadius.circular(16),
@@ -376,7 +375,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                     size: 22,
                   ),
                 ),
-                SizedBox(width: 14),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,7 +388,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
                           color: isDisabled ? colors.textTertiary : colors.textPrimary,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         subtitle,
                         style: TextStyle(

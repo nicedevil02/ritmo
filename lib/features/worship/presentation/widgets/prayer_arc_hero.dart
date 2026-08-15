@@ -612,12 +612,6 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
     return nodes;
   }
 
-  String _formatTime(DateTime dt) {
-    final hh = dt.hour.toString().padLeft(2, '0');
-    final mm = dt.minute.toString().padLeft(2, '0');
-    final ss = dt.second.toString().padLeft(2, '0');
-    return '$hh:$mm:$ss';
-  }
 
   // ── Dynamic Sky Theme Calculation ──
   _SkyTheme _getSkyTheme(DateTime now, PrayerTimes times) {
@@ -1186,17 +1180,15 @@ class _StarsPainter extends CustomPainter {
 // ── 3D Cube Roll Single Digit (چرخش سه‌بعدی مکعبی به عقب: وجه پایین میاد روبرو) ──
 class _CubeRollDigit extends StatelessWidget {
   const _CubeRollDigit({
-    super.key,
     required this.digit,
     required this.style,
-    this.duration = const Duration(milliseconds: 320),
-    this.curve = Curves.easeOutCubic,
   });
+
+  static const Duration duration = Duration(milliseconds: 320);
+  static const Curve curve = Curves.easeOutCubic;
 
   final String digit;
   final TextStyle style;
-  final Duration duration;
-  final Curve curve;
 
   @override
   Widget build(BuildContext context) {
@@ -1272,7 +1264,6 @@ class _CubeRollDigit extends StatelessWidget {
 // ── 3D Cube Roll Digital Clock (Per-digit: فقط ارقام در حال تغییر می‌چرخند) ──
 class _RollUpClock extends StatelessWidget {
   const _RollUpClock({
-    super.key,
     required this.time,
     required this.style,
   });
@@ -1324,19 +1315,17 @@ class _RollUpClock extends StatelessWidget {
 // ── 3D Cube Roll Text (برای متون شمارش معکوس و تاریخ‌ها) ──
 class _RollUpText extends StatelessWidget {
   const _RollUpText({
-    super.key,
     required this.text,
     required this.style,
     this.textAlign = TextAlign.center,
-    this.duration = const Duration(milliseconds: 380),
-    this.curve = Curves.easeOutCubic,
   });
+
+  static const Duration duration = Duration(milliseconds: 380);
+  static const Curve curve = Curves.easeOutCubic;
 
   final String text;
   final TextStyle style;
   final TextAlign textAlign;
-  final Duration duration;
-  final Curve curve;
 
   @override
   Widget build(BuildContext context) {

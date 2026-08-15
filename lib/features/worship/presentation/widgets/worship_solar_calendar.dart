@@ -7,7 +7,6 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/worship/logic/worship_calendar_logic.dart';
 import 'package:ritmo/features/worship/logic/worship_occasions_data.dart';
-import 'package:ritmo/features/worship/models/worship_models.dart' hide toPersianDigits;
 import 'package:ritmo/features/worship/presentation/widgets/worship_day_detail_panel.dart';
 
 class WorshipSolarCalendar extends StatefulWidget {
@@ -176,8 +175,8 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
       children: [
         // Main Premium Solar Calendar Surface Card
         Container(
-          margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          padding: EdgeInsets.fromLTRB(18, 18, 18, 16),
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),
             color: isDark ? colors.surface : colors.surface,
@@ -225,14 +224,14 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                                   color: colors.textPrimary,
                                   ),
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               // Today Button Shortcut (Active whenever selected day is not today)
                               if (!isSelectedToday)
                                 InkWell(
                                   onTap: _goToToday,
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                                     decoration: BoxDecoration(
                                       color: colors.primaryContainer,
                                       borderRadius: BorderRadius.circular(12),
@@ -249,7 +248,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                                           size: 11,
                                           color: colors.primary,
                                         ),
-                                        SizedBox(width: 4),
+                                        const SizedBox(width: 4),
                                         Text(
                                           'امروز',
                                           style: TextStyle(
@@ -264,7 +263,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                                 ),
                             ],
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             '${_monthData.gregorianRangeText}  •  ${_monthData.hijriRangeText}',
                             style: TextStyle(
@@ -298,7 +297,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                         isDark: isDark,
                         colors: colors,
                       ),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       _buildNavBadge(
                         icon: CupertinoIcons.chevron_back,
                         tooltip: 'ماه قبل',
@@ -311,11 +310,11 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                 ],
               ),
 
-              SizedBox(height: 14),
+              const SizedBox(height: 14),
 
               // 2. WEEKDAY BAR (Saturday to Friday) with full names
               Container(
-                padding: EdgeInsets.symmetric(vertical: 7),
+                padding: const EdgeInsets.symmetric(vertical: 7),
                 decoration: BoxDecoration(
                   color: colors.surfaceSunken,
                   borderRadius: BorderRadius.circular(14),
@@ -416,7 +415,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Text(
               label,
               style: TextStyle(
@@ -463,7 +462,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
             BoxShadow(
               color: colors.error.withValues(alpha: 0.35),
               blurRadius: 10,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         );
@@ -484,7 +483,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
             BoxShadow(
               color: colors.primary.withValues(alpha: 0.35),
               blurRadius: 10,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         );
@@ -502,7 +501,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
       );
       mainTextColor = colors.primary;
     } else {
-      decoration = BoxDecoration(color: Colors.transparent);
+      decoration = const BoxDecoration(color: Colors.transparent);
 
       if (!isCurrentMonth) {
         mainTextColor = isHoliday
@@ -538,7 +537,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
               ),
             ),
 
-            SizedBox(height: 3),
+            const SizedBox(height: 3),
 
             // Occasion Micro-Dots
             if (isCurrentMonth && day.hasOccasions)

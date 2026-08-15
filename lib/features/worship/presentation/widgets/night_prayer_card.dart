@@ -48,7 +48,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
     final isNightTime = now.isAfter(midnight) || now.isBefore(fajr);
 
     if (!isNightTime) {
-      return SizedBox.shrink(); // Hide during day
+      return const SizedBox.shrink(); // Hide during day
     }
 
     final colors = context.colors;
@@ -57,8 +57,8 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
     final isCompleted = _currentRakah >= 11;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      padding: EdgeInsets.all(18),
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(28),
@@ -70,7 +70,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
           BoxShadow(
             color: colors.shadow.withValues(alpha: isDark ? 0.28 : 0.08),
             blurRadius: 28,
-            offset: Offset(0, 8),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -88,7 +88,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
                     size: 20,
                     color: colors.accent,
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
                     'آیین نماز شب (نافله شب)',
                     style: TextStyle(
@@ -100,7 +100,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
                 ],
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: colors.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
@@ -121,7 +121,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
             ],
           ),
 
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           Text(
             'وَمِنَ اللَّيْلِ فَتَهَجَّدْ بِهِ نَافِلَةً لَكَ عَسَىٰ أَنْ يَبْعَثَكَ رَبُّكَ مَقَامًا مَحْمُودًا',
@@ -132,7 +132,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
               ),
           ),
 
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // Stepper Counter Row
           Row(
@@ -149,7 +149,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
                       color: colors.textPrimary,
                       ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     '${PersianDigits.convert(_currentRakah.toString())} از ${PersianDigits.convert('11')} رکعت خوانده شده',
                     style: TextStyle(
@@ -196,7 +196,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
                     },
                     child: Text(
                       isCompleted ? 'تکمیل شد 🎉' : '+ ۲ رکعت',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                   ),
                 ],
@@ -204,7 +204,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
             ],
           ),
 
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           // Progress Bar
           ClipRRect(

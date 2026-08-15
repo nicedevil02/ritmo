@@ -303,17 +303,17 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              content: const Row(
+              content: Row(
                 children: [
-                  Icon(CupertinoIcons.checkmark_seal_fill, color: Colors.amber, size: 24),
-                  SizedBox(width: 12),
+                  Icon(Icons.check_circle_rounded, color: colors.warning, size: 24),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'قبول حق! هدف تلاوت قرآن امروز با موفقیت تکمیل شد 🌟',
                       style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: colors.onPrimary,
                       ),
                     ),
                   ),
@@ -878,9 +878,9 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                               child: Center(
                                 child: Icon(
                                   isGoalMet
-                                      ? CupertinoIcons.checkmark_seal_fill
-                                      : CupertinoIcons.book_fill,
-                                  color: colors.accent,
+                                      ? Icons.check_circle_rounded
+                                      : Icons.auto_stories_rounded,
+                                  color: colors.onPrimary,
                                   size: 22,
                                 ),
                               ),
@@ -939,12 +939,12 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                             children: [
                               Icon(
                                 isGoalMet
-                                    ? CupertinoIcons.checkmark_seal_fill
-                                    : CupertinoIcons.slider_horizontal_3,
+                                    ? Icons.check_circle_rounded
+                                    : Icons.tune_rounded,
                                 size: isGoalMet ? 14 : 13,
                                 color: isGoalMet
                                     ? colors.success
-                                    : (isDark ? colors.primary : colors.primary),
+                                    : colors.primary,
                               ),
                               const SizedBox(width: 5),
                               Text(
@@ -990,7 +990,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                     gradient: RadialGradient(
                                       colors: [
                                         colors.success.withValues(alpha: isDark ? 0.35 : 0.25),
-                                        Colors.amber.withValues(alpha: isDark ? 0.20 : 0.12),
+                                        colors.warning.withValues(alpha: isDark ? 0.20 : 0.12),
                                         Colors.transparent,
                                       ],
                                     ),
@@ -1078,42 +1078,58 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                 Column(
                                   children: [
                                     InkWell(
-                                      onTap: () => _updateQuranPages(1),
-                                      borderRadius: BorderRadius.circular(12),
+                                      onTap: () {
+                                        unawaited(HapticFeedback.selectionClick());
+                                        _updateQuranPages(1);
+                                      },
+                                      borderRadius: BorderRadius.circular(20),
                                       child: Container(
-                                        padding: const EdgeInsets.all(5),
+                                        width: 38,
+                                        height: 38,
                                         decoration: BoxDecoration(
                                           color: isGoalMet
-                                              ? colors.success.withValues(alpha: isDark ? 0.2 : 0.15)
-                                              : (isDark
-                                                  ? colors.surfaceSunken
-                                                  : colors.primary.withValues(alpha: 0.12)),
+                                              ? colors.success.withValues(alpha: isDark ? 0.25 : 0.18)
+                                              : colors.primary.withValues(alpha: isDark ? 0.25 : 0.15),
                                           shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: isGoalMet
+                                                ? colors.success.withValues(alpha: 0.35)
+                                                : colors.primary.withValues(alpha: 0.35),
+                                            width: 1.2,
+                                          ),
                                         ),
                                         child: Icon(
-                                          CupertinoIcons.plus,
-                                          size: 14,
+                                          Icons.add_rounded,
+                                          size: 20,
                                           color: isGoalMet
                                               ? colors.success
-                                              : (isDark ? colors.primary : colors.primary),
+                                              : colors.primary,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 6),
+                                    const SizedBox(height: 8),
                                     InkWell(
-                                      onTap: () => _updateQuranPages(-1),
-                                      borderRadius: BorderRadius.circular(12),
+                                      onTap: () {
+                                        unawaited(HapticFeedback.selectionClick());
+                                        _updateQuranPages(-1);
+                                      },
+                                      borderRadius: BorderRadius.circular(20),
                                       child: Container(
-                                        padding: const EdgeInsets.all(5),
+                                        width: 38,
+                                        height: 38,
                                         decoration: BoxDecoration(
                                           color: isDark
-                                              ? colors.surfaceSunken
-                                              : colors.border.withValues(alpha: 0.3),
+                                              ? colors.surfaceElevated
+                                              : colors.surface,
                                           shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: colors.border.withValues(alpha: 0.4),
+                                            width: 1.2,
+                                          ),
                                         ),
                                         child: Icon(
-                                          CupertinoIcons.minus,
-                                          size: 14,
+                                          Icons.remove_rounded,
+                                          size: 20,
                                           color: colors.textSecondary,
                                         ),
                                       ),
@@ -1211,7 +1227,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                     gradient: isToday
                                         ? LinearGradient(
                                             colors: isBarCompleted
-                                                ? [colors.success, Colors.amber]
+                                                ? [colors.success, colors.warning]
                                                 : [colors.primary, colors.success],
                                             begin: Alignment.bottomCenter,
                                             end: Alignment.topCenter,
@@ -1446,7 +1462,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                 ),
                               ),
                               child: Icon(
-                                CupertinoIcons.sparkles,
+                                Icons.auto_awesome_rounded,
                                 size: 20,
                                 color: isDark
                                     ? colors.accent
@@ -1466,9 +1482,9 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                       icon: Padding(
                                         padding: const EdgeInsets.only(right: 6),
                                         child: Icon(
-                                          CupertinoIcons.chevron_down,
-                                          color: isDark ? colors.accent : colors.accent,
-                                          size: 15,
+                                          Icons.keyboard_arrow_down_rounded,
+                                          color: colors.accent,
+                                          size: 18,
                                         ),
                                       ),
                                       isDense: true,
@@ -1539,8 +1555,8 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                             ),
                           ),
                           child: Icon(
-                            CupertinoIcons.slider_horizontal_3,
-                            size: 15,
+                            Icons.tune_rounded,
+                            size: 16,
                             color: colors.primary,
                           ),
                         ),
@@ -1568,8 +1584,8 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                CupertinoIcons.add,
-                                size: 14,
+                                Icons.add_rounded,
+                                size: 16,
                                 color: colors.primary,
                               ),
                               const SizedBox(width: 4),

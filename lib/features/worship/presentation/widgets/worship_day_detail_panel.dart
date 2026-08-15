@@ -12,7 +12,6 @@ import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_occasions_data.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/presentation/widgets/fullscreen_tasbih_sheet.dart';
-import 'package:ritmo/features/worship/presentation/widgets/prayer_agenda_card.dart';
 import 'package:ritmo/features/worship/presentation/widgets/prayer_sheet.dart';
 
 class GroupStateResult {
@@ -797,6 +796,65 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
   }
 
 
+  ({IconData icon, Color color, Color bg}) _getMustahabVisuals(String title, RitmoColors colors) {
+    if (title.contains('شب')) {
+      return (
+        icon: Icons.nightlight_round,
+        color: colors.primary,
+        bg: colors.primary.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('نافله')) {
+      if (title.contains('صبح')) {
+        return (
+          icon: Icons.wb_twilight_rounded,
+          color: colors.warning,
+          bg: colors.warning.withValues(alpha: 0.12),
+        );
+      } else if (title.contains('ظهر') || title.contains('عصر')) {
+        return (
+          icon: Icons.wb_sunny_rounded,
+          color: colors.warning,
+          bg: colors.warning.withValues(alpha: 0.12),
+        );
+      } else {
+        return (
+          icon: Icons.nights_stay_rounded,
+          color: colors.primary,
+          bg: colors.primary.withValues(alpha: 0.12),
+        );
+      }
+    } else if (title.contains('عاشورا') || title.contains('زیارت')) {
+      return (
+        icon: Icons.auto_stories_rounded,
+        color: colors.success,
+        bg: colors.success.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('عهد') || title.contains('دعا')) {
+      return (
+        icon: Icons.volunteer_activism_rounded,
+        color: colors.accent,
+        bg: colors.accent.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('کمیل') || title.contains('ندبه')) {
+      return (
+        icon: Icons.favorite_rounded,
+        color: colors.error,
+        bg: colors.error.withValues(alpha: 0.12),
+      );
+    } else if (title.contains('جعفر')) {
+      return (
+        icon: Icons.mosque_rounded,
+        color: colors.primary,
+        bg: colors.primary.withValues(alpha: 0.12),
+      );
+    }
+    return (
+      icon: Icons.auto_awesome_rounded,
+      color: colors.primary,
+      bg: colors.primary.withValues(alpha: 0.12),
+    );
+  }
+
   List<Widget> _buildScheduledMustahabsRows(BuildContext context, RitmoColors colors) {
     final date = widget.selectedDay.dateTime;
     final isFuture = date.isAfter(DateTime.now());
@@ -805,55 +863,125 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
       final status = _mustahabStatuses[practice.id];
       final isDone = status?.isDone == true;
       final isSkipped = status?.isSkipped == true;
+      final visual = _getMustahabVisuals(practice.title, colors);
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: colors.surfaceElevated.withValues(alpha: 0.5),
+            color: isDone
+                ? colors.primary.withValues(alpha: 0.08)
+                : colors.surfaceElevated.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colors.textPrimary.withValues(alpha: 0.06)),
+            border: Border.all(
+              color: isDone
+                  ? colors.primary.withValues(alpha: 0.25)
+                  : colors.textPrimary.withValues(alpha: 0.06),
+              width: isDone ? 1.2 : 1.0,
+            ),
           ),
-          child: PrayerAgendaCard(
-            title: practice.title,
-            timeStr: practice.notes ?? 'مستحب',
-            isDone: isDone,
-            isSkipped: isSkipped,
-            isSnoozed: false,
-            deferCount: 0,
-            hasReminder: practice.reminderEnabled,
-            disableControls: isFuture,
-            onToggle: (_) async {
-              final sm = ScaffoldMessenger.of(context);
-              if (isDone) {
-                await WorshipEngine.instance.clearLog(practiceId: practice.id, date: date);
-              } else {
-                final res = await WorshipEngine.instance.logDone(practiceId: practice.id, date: date);
-                if (res is WorshipLogBlocked) {
-                  sm.showSnackBar(SnackBar(content: Text(res.userMessage, style: const TextStyle())));
-                }
-              }
-              if (!mounted) return;
-              WorshipEngine.instance.invalidate();
-              await _loadDayData();
-              widget.onChanged?.call();
-            },
-            onSkip: practice.allowQada
-                ? () async {
-                    final sm = ScaffoldMessenger.of(context);
-                    final title = practice.title;
-                    final res = await WorshipEngine.instance.logSkip(practiceId: practice.id, date: date, addToQada: true);
-                    if (res is WorshipLogBlocked) {
-                      sm.showSnackBar(SnackBar(content: Text(res.userMessage, style: const TextStyle())));
-                    } else {
-                      sm.showSnackBar(SnackBar(content: Text('قضای $title به بدهی‌های شما اضافه شد ✨', style: const TextStyle())));
-                    }
-                    if (!mounted) return;
-                    WorshipEngine.instance.invalidate();
-                    await _loadDayData();
-                    widget.onChanged?.call();
-                  }
-                : null,
+          child: Row(
+            children: [
+              // Icon container with spiritual visual
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDone
+                      ? colors.primary.withValues(alpha: 0.18)
+                      : visual.bg,
+                ),
+                child: Center(
+                  child: Icon(
+                    visual.icon,
+                    size: 18,
+                    color: isDone ? colors.primary : visual.color,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Title and details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      practice.title,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: isDone
+                            ? colors.textSecondary.withValues(alpha: 0.7)
+                            : (isSkipped
+                                ? colors.textSecondary.withValues(alpha: 0.5)
+                                : colors.textPrimary),
+                        decoration: isDone ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                    if (practice.notes != null && practice.notes!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        practice.notes!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              if (practice.reminderEnabled) ...[
+                Icon(Icons.alarm_rounded, size: 16, color: colors.textTertiary),
+                const SizedBox(width: 8),
+              ],
+
+              // Checkbox button with accessible touch target
+              InkWell(
+                onTap: isFuture
+                    ? null
+                    : () async {
+                        unawaited(HapticFeedback.selectionClick());
+                        final sm = ScaffoldMessenger.of(context);
+                        if (isDone) {
+                          await WorshipEngine.instance.clearLog(practiceId: practice.id, date: date);
+                        } else {
+                          final res = await WorshipEngine.instance.logDone(practiceId: practice.id, date: date);
+                          if (res is WorshipLogBlocked) {
+                            sm.showSnackBar(SnackBar(content: Text(res.userMessage, style: const TextStyle())));
+                          }
+                        }
+                        if (!mounted) return;
+                        WorshipEngine.instance.invalidate();
+                        await _loadDayData();
+                        widget.onChanged?.call();
+                      },
+                borderRadius: BorderRadius.circular(10),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isDone ? colors.primary : Colors.transparent,
+                      border: Border.all(
+                        color: isDone ? colors.primary : colors.textSecondary.withValues(alpha: 0.4),
+                        width: 1.8,
+                      ),
+                    ),
+                    child: isDone
+                        ? Icon(Icons.check_rounded, size: 16, color: colors.onPrimary)
+                        : null,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );

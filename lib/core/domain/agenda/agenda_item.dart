@@ -47,13 +47,16 @@ enum AgendaCompletion {
 /// A lightweight pointer that lets the UI deep-link into the owning section
 /// for a given agenda item.
 class AgendaDeepLink {
-
   const AgendaDeepLink({
     required this.domain,
     required this.targetId,
+    this.slot,
+    this.params,
   });
   final AgendaDomain domain;
   final String targetId;
+  final String? slot;
+  final Map<String, dynamic>? params;
 }
 
 /// The single normalized unit of "something on a day".

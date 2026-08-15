@@ -10,7 +10,6 @@ import 'package:ritmo/core/domain/completion/completion_outcome.dart';
 import 'package:ritmo/core/domain/completion/completion_request.dart';
 import 'package:ritmo/core/domain/completion/snooze_policy.dart';
 import 'package:ritmo/core/domain/models.dart';
-import 'package:ritmo/core/domain/models/completion_result.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/core/services/ritmo_timer_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -144,6 +143,8 @@ class ActionRouter {
         break;
 
       case AgendaDomain.medicine:
+        final doseTime = item.deepLink.slot ?? item.timeOfDay ?? (item.meta['doseTime'] as String?);
+        final logId = item.meta['medicationLogId'] as String?;
         await _showDomainConfirmationSheet(
           context,
           item: item,
@@ -152,8 +153,9 @@ class ActionRouter {
           successMessage: 'مصرف دارو ثبت شد',
           onConfirm: () => CompletionGateway.instance.submit(
             MedicationTake(
-              medicationId: item.sourceId,
+              medicationId: logId ?? item.sourceId,
               dateStr: item.dateStr,
+              doseTime: doseTime,
             ),
           ),
         );
@@ -187,6 +189,8 @@ class ActionRouter {
         break;
 
       case AgendaDomain.event:
+      case AgendaDomain.commitment:
+      case AgendaDomain.appointment:
         if (context.mounted) {
           ActionFeedback.info(context, message: item.title);
         }
@@ -361,6 +365,7 @@ class ActionRouter {
         break;
     }
 
+    if (!context.mounted) return;
     await RoutineNiyyahSheet.show(
       context: context,
       routine: targetRoutine,

@@ -155,6 +155,12 @@ class MedicineAgendaSource implements AgendaSource {
           asNeeded ? const <String>[] : _slotsForDate(schedule, ctx.date);
 
       if (slots.isEmpty) {
+        if (asNeeded && ctx.isToday) {
+          items.add(_buildPrnActionItem(
+            ctx: ctx,
+            routine: routine,
+          ));
+        }
         for (final log in dayLogs) {
           items.add(_buildItem(
             ctx: ctx,
@@ -194,6 +200,43 @@ class MedicineAgendaSource implements AgendaSource {
     return items;
   }
 
+  AgendaItem _buildPrnActionItem({
+    required AgendaDayContext ctx,
+    required Map<String, dynamic> routine,
+  }) {
+    final routineId = routine['id']! as String;
+    final title = routine['title'] as String? ?? 'داروی در صورت نیاز';
+
+    return AgendaItem(
+      id: buildAgendaItemId(
+        AgendaDomain.medicine,
+        '$routineId@prn_action',
+        ctx.dateStr,
+      ),
+      sourceId: routineId,
+      domain: AgendaDomain.medicine,
+      itemType: AgendaItemType.flexible,
+      title: title,
+      subtitle: 'ثبت مصرف در صورت نیاز (الان مصرف کردم)',
+      dateStr: ctx.dateStr,
+      timeOfDay: null,
+      durationMinutes: 5,
+      category: Category.medical,
+      priority: 1.0,
+      isEssential: false,
+      deepLink: AgendaDeepLink(
+        domain: AgendaDomain.medicine,
+        targetId: routineId,
+      ),
+      completion: AgendaCompletion.pending,
+      meta: {
+        'routineId': routineId,
+        'isPrnAction': true,
+        'isPrn': true,
+      },
+    );
+  }
+
   AgendaItem _buildItem({
     required AgendaDayContext ctx,
     required Map<String, dynamic> routine,
@@ -216,7 +259,7 @@ class MedicineAgendaSource implements AgendaSource {
     }
 
     // MED-02: the completion pipeline resolves the medication by `sourceId`, so
-    // it has to be the routine id. The specific dose travels in `meta`.
+    // it has to be the routine id. The specific dose travels in `meta` and `deepLink.slot`.
     return AgendaItem(
       id: buildAgendaItemId(
         AgendaDomain.medicine,
@@ -225,7 +268,7 @@ class MedicineAgendaSource implements AgendaSource {
       ),
       sourceId: routineId,
       domain: AgendaDomain.medicine,
-      itemType: AgendaItemType.fixed,
+      itemType: slot != null ? AgendaItemType.fixed : AgendaItemType.flexible,
       title: title,
       subtitle: log?['note'] as String?,
       dateStr: ctx.dateStr,
@@ -234,13 +277,17 @@ class MedicineAgendaSource implements AgendaSource {
       category: Category.medical,
       priority: 2.0,
       isEssential: !asNeeded,
-      deepLink: AgendaDeepLink(domain: AgendaDomain.medicine, targetId: routineId),
+      deepLink: AgendaDeepLink(
+        domain: AgendaDomain.medicine,
+        targetId: routineId,
+        slot: slot,
+      ),
       completion: completion,
       meta: {
-        if (log != null) 'medicationLog': log,
-        if (logId != null) 'medicationLogId': logId,
+        'medicationLog': ?log,
+        'medicationLogId': ?logId,
         'routineId': routineId,
-        if (slot != null) 'doseTime': slot,
+        'doseTime': ?slot,
         'isPrn': asNeeded,
       },
     );

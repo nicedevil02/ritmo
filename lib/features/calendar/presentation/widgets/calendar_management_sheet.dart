@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
 import 'package:ritmo/features/calendar/presentation/logic/morning_brief.dart';
 
@@ -40,9 +40,11 @@ class CalendarManagementSheet extends StatefulWidget {
     required VoidCallback onOpenAllPlans,
     required VoidCallback onRefresh,
   }) {
-    return RitmoSheetScaffold.present<void>(
+    RitmoHaptics.sheetOpen();
+    return showModalBottomSheet<void>(
       context: context,
-      semanticsLabel: 'مدیریت و تنظیمات تقویم',
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => CalendarManagementSheet(
         selectedDate: selectedDate,
         currentScale: currentScale,
@@ -53,7 +55,10 @@ class CalendarManagementSheet extends StatefulWidget {
         onOpenAllPlans: onOpenAllPlans,
         onRefresh: onRefresh,
       ),
-    );
+    ).then((result) {
+      RitmoHaptics.sheetClose();
+      return result;
+    });
   }
 
   @override
@@ -91,28 +96,35 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
       context: context,
       builder: (ctx) {
         final colors = ctx.colors;
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.wb_sunny_outlined, color: colors.primary),
-              const SizedBox(width: RitmoSpacing.sm),
-              const Text('خلاصه صبحگاهی'),
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: colors.sheetBackground,
+            title: Row(
+              children: [
+                Icon(Icons.wb_sunny_outlined, color: colors.primary, size: 20),
+                const SizedBox(width: RitmoSpacing.sm),
+                const Text(
+                  'خلاصه صبحگاهی',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            content: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13.5,
+                color: colors.textPrimary,
+                height: 1.6,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('متوجه شدم'),
+              ),
             ],
           ),
-          content: Text(
-            text,
-            style: TextStyle(
-              fontSize: 14,
-              color: colors.textPrimary,
-              height: 1.6,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('متوجه شدم'),
-            ),
-          ],
         );
       },
     ));
@@ -121,141 +133,190 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: RitmoSpacing.lg,
-          vertical: RitmoSpacing.md,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle Bar
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colors.borderSubtle,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: RitmoSpacing.md),
-
-            // Title
-            Row(
-              children: [
-                Icon(Icons.tune_rounded, size: 20, color: colors.primary),
-                const SizedBox(width: RitmoSpacing.sm),
-                Text(
-                  'مدیریت تقویم',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
+        decoration: BoxDecoration(
+          color: colors.sheetBackground,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(RitmoRadius.sheet),
+          ),
+          border: Border.all(
+            color: colors.border.withValues(alpha: isDark ? 0.2 : 0.1),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle Bar
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(
+                    top: RitmoSpacing.md,
+                    bottom: RitmoSpacing.sm,
+                  ),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: RitmoSpacing.lg),
+              ),
 
-            // Section 1: Display / نماها
-            _buildSectionHeader('نمایش و نماها', colors),
-            const SizedBox(height: RitmoSpacing.xs),
-            _buildActionTile(
-              icon: Icons.view_week_outlined,
-              title: 'نمای هفته',
-              subtitle: 'بررسی کل هفته در یک نگاه',
-              isSelected: widget.currentScale == JourneyScale.week,
-              colors: colors,
-              onTap: () {
-                Navigator.of(context).pop();
-                widget.onSelectScale(JourneyScale.week);
-              },
-            ),
-            _buildActionTile(
-              icon: Icons.calendar_view_month_outlined,
-              title: 'نمای سال',
-              subtitle: 'بررسی ۱۲ ماه سال و نقشه حرارتی',
-              isSelected: widget.currentScale == JourneyScale.year,
-              colors: colors,
-              onTap: () {
-                Navigator.of(context).pop();
-                widget.onSelectScale(JourneyScale.year);
-              },
-            ),
-            _buildSwitchTile(
-              icon: Icons.unfold_less_rounded,
-              title: 'فشرده‌سازی تکرارها',
-              subtitle: 'تجمیع روتین‌های روزانه تکراری',
-              value: _compressRecurring,
-              colors: colors,
-              onChanged: _toggleCompress,
-            ),
-            _buildSwitchTile(
-              icon: Icons.nightlight_round,
-              title: 'نمایش گاهشمار قمری',
-              subtitle: 'نمایش مناسبت‌ها و روزهای قمری',
-              value: _showHijri,
-              colors: colors,
-              onChanged: _toggleHijri,
-            ),
+              // Title Row
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: RitmoSpacing.lg,
+                  vertical: RitmoSpacing.xs,
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.tune_rounded, size: 20, color: colors.primary),
+                    const SizedBox(width: RitmoSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'مدیریت تقویم',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: colors.textSecondary,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              ),
 
-            const SizedBox(height: RitmoSpacing.lg),
+              const Divider(height: 1, thickness: 0.5),
 
-            // Section 2: Day Actions / روز
-            _buildSectionHeader('روز', colors),
-            const SizedBox(height: RitmoSpacing.xs),
-            _buildActionTile(
-              icon: Icons.auto_stories_outlined,
-              title: 'روز من (مرور و خلاصه)',
-              subtitle: 'بررسی عملکرد، امتیازها و کارهای انجام‌شده',
-              colors: colors,
-              onTap: () {
-                Navigator.of(context).pop();
-                widget.onOpenDayReview();
-              },
-            ),
-            _buildActionTile(
-              icon: Icons.flag_outlined,
-              title: 'نشان روز',
-              subtitle: 'تعیین وضعیت روز (استراحت 🌴 / سفر ✈️ / خاص ⭐)',
-              colors: colors,
-              onTap: () {
-                Navigator.of(context).pop();
-                widget.onOpenDayMarkPicker();
-              },
-            ),
+              // Scrollable Content
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(
+                    RitmoSpacing.lg,
+                    RitmoSpacing.md,
+                    RitmoSpacing.lg,
+                    RitmoSpacing.lg,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Section 1: Display / نماها
+                      _buildSectionHeader('نمایش و نماها', colors),
+                      const SizedBox(height: RitmoSpacing.xs),
+                      _buildActionTile(
+                        icon: Icons.view_week_outlined,
+                        title: 'نمای هفته',
+                        subtitle: 'بررسی کل هفته در یک نگاه',
+                        isSelected: widget.currentScale == JourneyScale.week,
+                        colors: colors,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          widget.onSelectScale(JourneyScale.week);
+                        },
+                      ),
+                      _buildActionTile(
+                        icon: Icons.calendar_view_month_outlined,
+                        title: 'نمای سال',
+                        subtitle: 'بررسی ۱۲ ماه سال و نقشه حرارتی',
+                        isSelected: widget.currentScale == JourneyScale.year,
+                        colors: colors,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          widget.onSelectScale(JourneyScale.year);
+                        },
+                      ),
+                      _buildSwitchTile(
+                        icon: Icons.unfold_less_rounded,
+                        title: 'فشرده‌سازی تکرارها',
+                        subtitle: 'تجمیع روتین‌های روزانه تکراری',
+                        value: _compressRecurring,
+                        colors: colors,
+                        onChanged: _toggleCompress,
+                      ),
+                      _buildSwitchTile(
+                        icon: Icons.nightlight_round,
+                        title: 'نمایش گاهشمار قمری',
+                        subtitle: 'نمایش مناسبت‌ها و روزهای قمری',
+                        value: _showHijri,
+                        colors: colors,
+                        onChanged: _toggleHijri,
+                      ),
 
-            const SizedBox(height: RitmoSpacing.lg),
+                      const SizedBox(height: RitmoSpacing.lg),
 
-            // Section 3: Tools / ابزارها
-            _buildSectionHeader('ابزارها', colors),
-            const SizedBox(height: RitmoSpacing.xs),
-            _buildActionTile(
-              icon: Icons.list_alt_rounded,
-              title: 'همهٔ برنامه‌ها',
-              subtitle: 'فهرست کامل دامنه‌ها و رجیستری',
-              badgeCount: widget.healthIssueCount,
-              colors: colors,
-              onTap: () {
-                Navigator.of(context).pop();
-                widget.onOpenAllPlans();
-              },
-            ),
-            _buildActionTile(
-              icon: Icons.wb_sunny_outlined,
-              title: 'خلاصهٔ صبحگاهی',
-              subtitle: 'متن خلاصه رویدادها و اولویت‌های امروز',
-              colors: colors,
-              onTap: _showMorningBrief,
-            ),
+                      // Section 2: Day Actions / روز
+                      _buildSectionHeader('روز', colors),
+                      const SizedBox(height: RitmoSpacing.xs),
+                      _buildActionTile(
+                        icon: Icons.auto_stories_outlined,
+                        title: 'روز من (مرور و خلاصه)',
+                        subtitle: 'بررسی عملکرد، امتیازها و کارهای انجام‌شده',
+                        colors: colors,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          widget.onOpenDayReview();
+                        },
+                      ),
+                      _buildActionTile(
+                        icon: Icons.flag_outlined,
+                        title: 'نشان روز',
+                        subtitle: 'تعیین وضعیت روز (استراحت 🌴 / سفر ✈️ / خاص ⭐)',
+                        colors: colors,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          widget.onOpenDayMarkPicker();
+                        },
+                      ),
 
-            const SizedBox(height: RitmoSpacing.xl),
-          ],
+                      const SizedBox(height: RitmoSpacing.lg),
+
+                      // Section 3: Tools / ابزارها
+                      _buildSectionHeader('ابزارها', colors),
+                      const SizedBox(height: RitmoSpacing.xs),
+                      _buildActionTile(
+                        icon: Icons.list_alt_rounded,
+                        title: 'همهٔ برنامه‌ها',
+                        subtitle: 'فهرست کامل دامنه‌ها و رجیستری',
+                        badgeCount: widget.healthIssueCount,
+                        colors: colors,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          widget.onOpenAllPlans();
+                        },
+                      ),
+                      _buildActionTile(
+                        icon: Icons.wb_sunny_outlined,
+                        title: 'خلاصهٔ صبحگاهی',
+                        subtitle: 'متن خلاصه رویدادها و اولویت‌های امروز',
+                        colors: colors,
+                        onTap: _showMorningBrief,
+                      ),
+
+                      const SizedBox(height: RitmoSpacing.md),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -263,13 +324,13 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
 
   Widget _buildSectionHeader(String title, RitmoColors colors) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Text(
         title,
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: colors.textSecondary,
+          color: colors.textSecondary.withValues(alpha: 0.85),
         ),
       ),
     );
@@ -284,68 +345,94 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
     bool isSelected = false,
     int badgeCount = 0,
   }) {
-    return InkWell(
-      onTap: () {
-        RitmoHapticsPolicy.selection();
-        onTap();
-      },
-      borderRadius: BorderRadius.circular(RitmoRadius.card),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 3),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? colors.primary.withValues(alpha: 0.10) : colors.surfaceElevated,
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
-          border: Border.all(
-            color: isSelected ? colors.primary : colors.borderSubtle,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: RitmoSpacing.xs),
+      child: InkWell(
+        onTap: () {
+          RitmoHaptics.selection();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(RitmoRadius.card),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? colors.primary.withValues(alpha: 0.12)
+                : colors.card.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(RitmoRadius.card),
+            border: Border.all(
+              color: isSelected
+                  ? colors.primary
+                  : colors.border.withValues(alpha: 0.25),
+              width: isSelected ? 1.5 : 1.0,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: isSelected ? colors.primary : colors.textPrimary),
-            const SizedBox(width: RitmoSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      color: isSelected ? colors.primary : colors.textPrimary,
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected
+                      ? colors.primary.withValues(alpha: 0.2)
+                      : colors.surface,
+                ),
+                child: Icon(
+                  icon,
+                  size: 19,
+                  color: isSelected ? colors.primary : colors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: RitmoSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                        color: isSelected ? colors.primary : colors.textPrimary,
+                      ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (badgeCount > 0) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(RitmoRadius.pill),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
+                  child: Text(
+                    toPersianDigits(badgeCount.toString()),
                     style: TextStyle(
                       fontSize: 11,
-                      color: colors.textTertiary,
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
                     ),
                   ),
-                ],
-              ),
-            ),
-            if (badgeCount > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: colors.error,
-                  borderRadius: BorderRadius.circular(RitmoRadius.badge),
                 ),
-                child: Text(
-                  toPersianDigits(badgeCount),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: colors.onPrimary,
-                  ),
-                ),
+                const SizedBox(width: 6),
+              ],
+              Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 14,
+                color: colors.textTertiary,
               ),
-            const SizedBox(width: 4),
-            Icon(Icons.chevron_left_rounded, size: 18, color: colors.textTertiary),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -359,50 +446,65 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
     required RitmoColors colors,
     required ValueChanged<bool> onChanged,
   }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 3),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: colors.textPrimary),
-          const SizedBox(width: RitmoSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colors.textTertiary,
-                  ),
-                ),
-              ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: RitmoSpacing.xs),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: colors.card.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
+          border: Border.all(
+            color: colors.border.withValues(alpha: 0.25),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colors.surface,
+              ),
+              child: Icon(
+                icon,
+                size: 19,
+                color: colors.textPrimary,
+              ),
             ),
-          ),
-          Switch.adaptive(
-            value: value,
-            activeTrackColor: colors.primary,
-            onChanged: (val) {
-              RitmoHapticsPolicy.tap();
-              onChanged(val);
-            },
-          ),
-        ],
+            const SizedBox(width: RitmoSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: value,
+              activeTrackColor: colors.primary,
+              onChanged: (val) {
+                RitmoHaptics.selection();
+                onChanged(val);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

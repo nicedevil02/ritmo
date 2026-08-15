@@ -16,6 +16,7 @@ import 'package:ritmo/core/domain/agenda/sources/course_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/konkur_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/cycle_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/occurrence_override_repository.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
@@ -412,6 +413,14 @@ class DayAgendaService {
       RitmoLog.error('DayAgendaService', 'day_marks load failed', e);
     }
 
+    Map<String, List<OccurrenceOverride>> overridesByDate = {};
+    try {
+      const overrideRepo = SqliteOccurrenceOverrideRepository();
+      overridesByDate = await overrideRepo.forRange(startStr, endStr);
+    } catch (e) {
+      RitmoLog.error('DayAgendaService', 'Failed to load occurrence overrides', e);
+    }
+
     return _AgendaContext(
       settingsMap: settingsMap,
       routinesEnabled: routinesEnabled,
@@ -437,12 +446,13 @@ class DayAgendaService {
       cycleSource: cycleSource,
       allSources: sources,
       dayMarksByDate: dayMarksByDate,
+      overridesByDate: overridesByDate,
       latitude: latitude,
       longitude: longitude,
       ihtiyatMinutes: ihtiyatMinutes,
       calcMethodStr: calcMethodStr,
     );
-}
+  }
 
   /// Type-safe registry lookup: returns null instead of throwing when a key is
   /// missing or holds an unexpected source type.
@@ -476,7 +486,7 @@ class DayAgendaService {
     final todayStr = _dateStr(DateTime.now());
     final isToday = dateStr == todayStr;
     final prayerTimes = await ctx.prayerTimesFor(date);
-    final items = <AgendaItem>[];
+    var items = <AgendaItem>[];
 
 
 
@@ -606,6 +616,39 @@ class DayAgendaService {
       }
     }
 
+    // Apply occurrence overrides (single-day moves, resizes, skips)
+    final dayOverrides = ctx.overridesByDate[dateStr] ?? const <OccurrenceOverride>[];
+    if (dayOverrides.isNotEmpty) {
+      final overrideMap = <String, OccurrenceOverride>{};
+      for (final ovr in dayOverrides) {
+        overrideMap['${ovr.sourceType.toLowerCase()}:${ovr.sourceId}'] = ovr;
+        overrideMap[ovr.sourceId] = ovr;
+      }
+
+      items = items.map((item) {
+        final ovr = overrideMap['${item.domain.name.toLowerCase()}:${item.sourceId}'] ??
+            overrideMap[item.sourceId];
+        if (ovr == null) return item;
+
+        var updated = item.copyWith(hasOverride: true);
+        if (ovr.status == 'SKIPPED') {
+          updated = updated.copyWith(completion: AgendaCompletion.skipped);
+        }
+        if (ovr.timeOfDay != null && ovr.timeOfDay!.isNotEmpty) {
+          updated = updated.copyWith(
+            timeOfDay: ovr.timeOfDay,
+            itemType: AgendaItemType.fixed,
+          );
+        }
+        if (ovr.durationMinutes != null && ovr.durationMinutes! > 0) {
+          updated = updated.copyWith(
+            durationMinutes: ovr.durationMinutes,
+          );
+        }
+        return updated;
+      }).toList();
+    }
+
     // K43: Apply REST/TRAVEL day effect — mark non-essential items as skipped.
     final dayMark = ctx.dayMarksByDate[dateStr];
     List<AgendaItem> finalItems = items;
@@ -702,6 +745,7 @@ class _AgendaContext {
     required this.cycleSource,
     required this.allSources,
     required this.dayMarksByDate,
+    required this.overridesByDate,
     required this.latitude,
     required this.longitude,
     required this.ihtiyatMinutes,
@@ -731,6 +775,7 @@ class _AgendaContext {
   final CycleAgendaSource cycleSource;
   final Map<String, AgendaSource> allSources;
   final Map<String, String> dayMarksByDate;
+  final Map<String, List<OccurrenceOverride>> overridesByDate;
 
   final double latitude;
   final double longitude;

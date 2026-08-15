@@ -91,7 +91,26 @@ class GenericStrategy implements PlannerCategoryStrategy {
       'reminderOffsetMinutes': c.reminderOffsetMinutes,
     };
 
-    final effectiveDate = (isEvent && c.eventDate != null) ? c.eventDate! : c.selectedDate;
+    // B-FIX-EVENT-3 — روزِ رویداد باید از `selectedDate` بیاید، نه `eventDate`.
+    //
+    // `PlannerController.eventDate` با `DateTime.now()` مقداردهی اولیه می‌شود و
+    // هیچ‌جای برنامه آن را بازنویسی نمی‌کند. جست‌وجوی سراسری روی مخزن نشان
+    // می‌دهد `eventDate` تنها در چهار فایل دیده می‌شود: همین استراتژی،
+    // `planner_save_context.dart`، خودِ کنترلر، و یک تست — هیچ فرمی میانشان نیست.
+    //
+    // در مقابل، فرمِ رویداد همان `GenericStep2Form` است
+    // (`universal_planner_sheet.dart` → `setEventSheetOpener`)، و آن فرم
+    // `PlannerTimelinePicker` را نشان می‌دهد که تاریخِ انتخابی کاربر را با
+    // `controller.setDate(...)` در `selectedDate` می‌نویسد.
+    //
+    // پس شرطِ پیشین — `(isEvent && c.eventDate != null)` — همیشه برقرار بود و
+    // تاریخِ انتخابی کاربر را دور می‌ریخت: هر رویداد روی «روزِ باز شدنِ شیت»
+    // ثبت می‌شد. کاربر رویداد را برای پنجشنبه می‌ساخت و رویداد روی امروز
+    // می‌نشست — و روی پنجشنبه هرگز دیده نمی‌شد.
+    //
+    // تا زمانی که یک فرمِ اختصاصیِ رویداد واقعاً `eventDate` را پر کند،
+    // `selectedDate` تنها منبعِ معتبرِ روز است.
+    final effectiveDate = c.selectedDate;
     RoutineRecurrence recurrence;
     // B-FIX-EVENT-1 — یک «رویداد» ذاتاً یک‌بار مصرف است.
     //

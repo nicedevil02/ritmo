@@ -19,6 +19,7 @@ enum AgendaDomain {
   event,
   task,
   commitment,
+  appointment,
 }
 
 /// Explicit classification of an agenda item's scheduling constraints.

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/appointment_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/commitment_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/course_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/cycle_agenda_source.dart';
@@ -293,6 +294,34 @@ class AgendaSourceRegistry {
           'commitment',
           () => CommitmentAgendaSource.load(ctx.db, ctx.start, ctx.end),
           () => CommitmentAgendaSource.disabled(),
+        );
+      },
+    ));
+
+    // 12. Appointment Agenda Source (Doctor Visits, Vaccinations, Pregnancy Checkups)
+    _entries.add(AgendaSourceEntry(
+      id: 'appointment',
+      domains: {AgendaDomain.appointment},
+      loader: (ctx) async {
+        final medicineEnabled =
+            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_medicine_enabled');
+        final appointmentsEnabled =
+            medicineEnabled && ctx.settingsMap['calendar_show_appointments'] != 'false';
+        final pregnancyEnabled =
+            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_pregnancy_enabled');
+
+        if (!appointmentsEnabled || !ctx.options.wants(AgendaDomain.appointment)) {
+          return AppointmentAgendaSource.disabled();
+        }
+        return ctx.guardSource<AgendaSource>(
+          'appointment',
+          () => AppointmentAgendaSource.load(
+            db: ctx.db,
+            start: ctx.start,
+            end: ctx.end,
+            pregnancyEnabled: pregnancyEnabled,
+          ),
+          () => AppointmentAgendaSource.disabled(),
         );
       },
     ));

@@ -270,6 +270,7 @@ class DayAgendaService {
         settingsMap['konkur_show_in_dashboard'] != 'false';
     final sportsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_supplementary_sports_enabled');
     final medicineEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_medicine_enabled');
+    final appointmentsEnabled = medicineEnabled && settingsMap['calendar_show_appointments'] != 'false';
 
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
     final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
@@ -369,6 +370,7 @@ class DayAgendaService {
       cycleAllowed: cycleAllowed,
       sportsEnabled: sportsEnabled,
       medicineEnabled: medicineEnabled,
+      appointmentsEnabled: appointmentsEnabled,
       taskSource: taskSource,
       routineSource: routineSource,
       worshipSource: worshipSource,
@@ -436,6 +438,7 @@ class DayAgendaService {
       AgendaDomain.cycle: ctx.cycleAllowed,
       AgendaDomain.sport: ctx.sportsEnabled,
       AgendaDomain.medicine: ctx.medicineEnabled,
+      AgendaDomain.appointment: ctx.appointmentsEnabled,
       AgendaDomain.task: ctx.tasksEnabled,
     };
 
@@ -632,6 +635,7 @@ class _AgendaContext {
     required this.cycleAllowed,
     required this.sportsEnabled,
     required this.medicineEnabled,
+    required this.appointmentsEnabled,
     required this.taskSource,
     required this.routineSource,
     required this.worshipSource,
@@ -660,6 +664,7 @@ class _AgendaContext {
   final bool cycleAllowed;
   final bool sportsEnabled;
   final bool medicineEnabled;
+  final bool appointmentsEnabled;
   final TaskAgendaSource? taskSource;
   final RoutineAgendaSource routineSource;
   final WorshipAgendaSource worshipSource;

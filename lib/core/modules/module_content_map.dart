@@ -36,9 +36,9 @@ class ModuleContentMap {
     ),
     ModuleContent(
       moduleKey: 'module_medicine_enabled',
-      agendaDomains: {AgendaDomain.medicine},
+      agendaDomains: {AgendaDomain.medicine, AgendaDomain.appointment},
       routineCategories: {'medical', 'health'},
-      dataTables: {'medicines', 'doctor_visits', 'health_metrics'},
+      dataTables: {'medicines', 'doctor_visits', 'vaccinations', 'health_metrics'},
     ),
     ModuleContent(
       moduleKey: 'module_courses_enabled',

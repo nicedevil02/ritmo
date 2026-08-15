@@ -118,6 +118,14 @@ class ModuleRegistry {
       canBeSuggested: false, // Never auto-suggested (§2.2)
     ),
     ModuleDescriptor(
+      key: 'module_pregnancy_enabled',
+      titleFa: 'بارداری',
+      oneLineFa: 'پیگیری حریم‌دار دوران بارداری و مراقبت‌های آن',
+      icon: Icons.pregnant_woman_rounded,
+      defaultEnabled: false,
+      canBeSuggested: false, // Sensitive health domain, never auto-suggested (§2.2)
+    ),
+    ModuleDescriptor(
       key: 'module_energy_enabled',
       titleFa: 'تحلیل انرژی',
       oneLineFa: 'ارزیابی و تحلیل پنجره‌های اوج و فرود انرژی',

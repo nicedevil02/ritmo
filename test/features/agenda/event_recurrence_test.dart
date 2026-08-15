@@ -125,14 +125,28 @@ class MockBatch implements Batch {
 }
 
 /// Builds the exact payload the planner hands to [GenericStrategy] for an
-/// event, with [recurrenceType] left injectable so a test can reproduce the
-/// real `PlannerController` default instead of an idealised value.
-PlannerSaveContext buildEventContext({required String recurrenceType}) {
+/// event.
+///
+/// [recurrenceType] is injectable so a test can reproduce the real
+/// `PlannerController` default instead of an idealised value.
+///
+/// [selectedDate] and [eventDate] are injectable *separately* on purpose. The
+/// original fixture set both to the same day, which made them
+/// indistinguishable — and that is precisely why the date-override defect
+/// stayed green for so long. In the real app `selectedDate` carries the day the
+/// user picked in `PlannerTimelinePicker`, while `eventDate` keeps its
+/// untouched `DateTime.now()` default from the controller.
+PlannerSaveContext buildEventContext({
+  required String recurrenceType,
+  DateTime? selectedDate,
+  DateTime? eventDate,
+}) {
+  final pickedDate = selectedDate ?? DateTime(2026, 8, 20);
   return PlannerSaveContext(
     title: 'جلسه کاری مهم',
     description: 'توضیحات جلسه',
     notes: '',
-    selectedDate: DateTime(2026, 8, 20),
+    selectedDate: pickedDate,
     selectedTime: const TimeOfDay(hour: 14, minute: 0),
     isEditing: false,
     routineToEdit: null,
@@ -180,7 +194,7 @@ PlannerSaveContext buildEventContext({required String recurrenceType}) {
     reflectionGratitude: '',
     reflectionLearnings: '',
     reflectionIsPrivate: false,
-    eventDate: DateTime(2026, 8, 20),
+    eventDate: eventDate ?? pickedDate,
     eventStartTime: const TimeOfDay(hour: 14, minute: 0),
     eventEndTime: const TimeOfDay(hour: 15, minute: 30),
     eventLocation: 'اتاق کنفرانس',
@@ -266,6 +280,45 @@ void main() {
       expect(rule.endDate!.day, equals(20));
       expect(rule.endDate!.month, equals(8));
       expect(rule.endDate!.year, equals(2026));
+    });
+
+    // REGRESSION GUARD — روزِ رویداد باید همانی باشد که کاربر انتخاب کرده.
+    //
+    // فیکسچر قدیمی `selectedDate` و `eventDate` را هردو روی یک روز می‌گذاشت،
+    // پس فرقی نمی‌کرد کدام برنده شود و باگ دیده نمی‌شد. اینجا وضعیت
+    // واقعی بازسازی می‌شود:
+    //   • کاربر در PlannerTimelinePicker روز ۲۰ را انتخاب می‌کند ← selectedDate
+    //   • PlannerController.eventDate دست‌نخورده روی «روزِ باز شدنِ شیت»
+    //     (۱۴) باقی می‌ماند
+    testWidgets('EVENT lands on the picked date, not on the day the sheet was opened', (tester) async {
+      final mockDb = MockDatabase();
+      DatabaseHelper.instance.overrideDatabaseForTesting(mockDb);
+
+      await saveThroughStrategy(
+        tester,
+        buildEventContext(
+          recurrenceType: 'EVERY_DAY',
+          selectedDate: DateTime(2026, 8, 20), // روزی که کاربر انتخاب کرد
+          eventDate: DateTime(2026, 8, 14), // روزی که شیت باز شد
+        ),
+      );
+
+      final schedules = await mockDb.query('routine_schedules');
+      expect(schedules.length, equals(1));
+
+      final rule = RecurrenceRule.fromMap(
+        jsonDecode(schedules.first['recurrenceRule'] as String),
+      );
+
+      // پیش از اصلاح، این‌ها ۱۴ می‌شدند: رویداد روی روزِ باز شدنِ شیت
+      // می‌نشست و در تقویم، روی روزی که کاربر انتخاب کرده بود، دیده نمی‌شد.
+      expect(rule.startDate, isNotNull);
+      expect(rule.startDate!.year, equals(2026));
+      expect(rule.startDate!.month, equals(8));
+      expect(rule.startDate!.day, equals(20));
+
+      expect(rule.endDate, isNotNull);
+      expect(rule.endDate!.day, equals(20));
     });
   });
 }

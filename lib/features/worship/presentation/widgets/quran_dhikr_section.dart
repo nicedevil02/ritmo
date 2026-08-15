@@ -9,6 +9,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/presentation/widgets/fullscreen_tasbih_sheet.dart';
+import 'package:ritmo/features/routines/presentation/widgets/confetti_widget.dart';
 
 class QuranDhikrSection extends StatefulWidget {
 
@@ -29,6 +30,8 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
   // Quran practice
   WorshipPractice? _quranPractice;
   Map<String, int> _weeklyQuranCounts = {};
+  bool _showQuranCelebration = false;
+  Timer? _celebrationTimer;
 
   // Dhikrs list & selected Dhikr
   List<WorshipPractice> _dhikrs = [];
@@ -47,6 +50,12 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     super.initState();
     _todayStr = DateTime.now().toIso8601String().substring(0, 10);
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _celebrationTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -231,7 +240,9 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     unawaited(HapticFeedback.lightImpact());
 
     final currentDone = _quranPractice!.dailyDone;
+    final target = _quranPractice!.dailyTarget;
     final newDone = (currentDone + delta).clamp(0, 999);
+    final justCompleted = currentDone < target && newDone >= target && target > 0;
 
     try {
       final db = await DatabaseHelper.instance.database;
@@ -268,6 +279,52 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
+      if (justCompleted) {
+        unawaited(HapticFeedback.heavyImpact());
+        Future.delayed(const Duration(milliseconds: 160), () {
+          unawaited(HapticFeedback.mediumImpact());
+        });
+        _celebrationTimer?.cancel();
+        _showQuranCelebration = true;
+        _celebrationTimer = Timer(const Duration(milliseconds: 2800), () {
+          if (mounted) {
+            setState(() {
+              _showQuranCelebration = false;
+            });
+          }
+        });
+
+        if (mounted) {
+          final colors = context.colors;
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: colors.primary,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              content: const Row(
+                children: [
+                  Icon(CupertinoIcons.checkmark_seal_fill, color: Colors.amber, size: 24),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'قبول حق! هدف تلاوت قرآن امروز با موفقیت تکمیل شد 🌟',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+
       setState(() {
         _quranPractice = updated;
         _weeklyQuranCounts[todayStr] = newDone;
@@ -278,33 +335,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     }
   }
 
-  Future<void> _toggleQuranActive(bool isActive) async {
-    if (_quranPractice == null) return;
-    unawaited(HapticFeedback.lightImpact());
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
-
-      final updated = _quranPractice!.copyWith(
-        isActive: isActive,
-        updatedAt: nowMs,
-      );
-
-      await db.update(
-        'worship_practices',
-        updated.toMap(),
-        where: 'id = ?',
-        whereArgs: [updated.id],
-      );
-
-      setState(() {
-        _quranPractice = updated;
-      });
-      widget.onChanged();
-    } catch (e) {
-      debugPrint('Error toggling Quran active: $e');
-    }
-  }
 
   void _showQuranSettingsSheet() {
     if (_quranPractice == null) return;
@@ -519,24 +549,6 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     }
   }
 
-  Future<void> _deleteCustomDhikr(WorshipPractice practice) async {
-    unawaited(HapticFeedback.vibrate());
-    try {
-      final db = await DatabaseHelper.instance.database;
-      await db.delete(
-        'worship_practices',
-        where: 'id = ?',
-        whereArgs: [practice.id],
-      );
-      if (_selectedDhikrId == practice.id) {
-        _selectedDhikrId = 'wp_dhikr_zahra';
-      }
-      await _loadData();
-      widget.onChanged();
-    } catch (e) {
-      debugPrint('Error deleting custom dhikr: $e');
-    }
-  }
 
   Future<void> _manuallySetDhikrCount(WorshipPractice practice) async {
     final colors = context.colors;
@@ -561,7 +573,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                   'تعداد انجام شده امروز را وارد کنید:',
                   style: TextStyle(color: colors.textSecondary, fontSize: 13.5),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextField(
                   controller: controller,
                   keyboardType: TextInputType.number,
@@ -733,6 +745,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     final done = _quranPractice!.dailyDone;
     final target = _quranPractice!.dailyTarget;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGoalMet = target > 0 && done >= target;
 
     // Persian days: شنبه (ش), یکشنبه (ی), دوشنبه (د), سه‌شنبه (س), چهارشنبه (چ), پنج‌شنبه (پ), جمعه (ج)
     final days = <String>['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
@@ -778,369 +791,501 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     final maxCount = weeklyValues.fold<int>(1, (prev, elem) => elem > prev ? elem : prev);
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
-        color: isDark
-            ? colors.surface
-            : colors.surface,
+        color: isDark ? colors.surface : colors.surface,
         border: Border.all(
-          color: isDark
-              ? colors.border
-              : colors.border,
-          width: 1,
+          color: isGoalMet
+              ? colors.success.withValues(alpha: isDark ? 0.5 : 0.6)
+              : (isDark ? colors.border : colors.border),
+          width: isGoalMet ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.28)
-                : colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 35,
-            spreadRadius: 0,
+            color: isGoalMet
+                ? colors.success.withValues(alpha: isDark ? 0.22 : 0.15)
+                : (isDark
+                    ? Colors.black.withValues(alpha: 0.28)
+                    : colors.shadow.withValues(alpha: 0.08)),
+            blurRadius: isGoalMet ? 38 : 35,
+            spreadRadius: isGoalMet ? 1 : 0,
             offset: const Offset(0, 12),
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(32),
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. TOP HEADER: Title + Subtitle + Settings Target Pill
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Stack(
+          children: [
+            // Ambient celebratory background halo when goal is met
+            if (isGoalMet)
+              Positioned(
+                right: -25,
+                top: 40,
+                child: IgnorePointer(
+                  child: Container(
+                    width: 190,
+                    height: 190,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          colors.success.withValues(alpha: isDark ? 0.12 : 0.08),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Right: Book Icon + Quran Title
+                  // 1. TOP HEADER: Title + Subtitle + Settings Target Pill
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      GestureDetector(
-                        onTap: _showQuranSettingsSheet,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [colors.primary, colors.primaryPressed],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                      // Right: Book Icon + Quran Title
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: _showQuranSettingsSheet,
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: isGoalMet
+                                      ? [colors.success, colors.primary]
+                                      : [colors.primary, colors.primaryPressed],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: (isGoalMet ? colors.success : colors.primary)
+                                        .withValues(alpha: 0.35),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  isGoalMet
+                                      ? CupertinoIcons.checkmark_seal_fill
+                                      : CupertinoIcons.book_fill,
+                                  color: colors.accent,
+                                  size: 22,
+                                ),
+                              ),
                             ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: colors.primary.withValues(alpha: 0.3),
-                                blurRadius: 10,
-                                offset: Offset(0, 3),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'قرآن کریم',
+                                style: TextStyle(
+                                  color: colors.textPrimary,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'تلاوت و انس روزانه با کلام الله',
+                                style: TextStyle(
+                                  color: colors.textSecondary.withValues(alpha: 0.75),
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
-                          child: Center(
-                            child: Icon(
-                              CupertinoIcons.book_fill,
-                              color: colors.accent,
-                              size: 22,
+                        ],
+                      ),
+
+                      // Left: Settings & Target Badge Pill (linked to settings)
+                      InkWell(
+                        onTap: () {
+                          unawaited(HapticFeedback.selectionClick());
+                          _showQuranSettingsSheet();
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isGoalMet
+                                ? colors.success.withValues(alpha: isDark ? 0.18 : 0.12)
+                                : colors.surfaceSunken,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isGoalMet
+                                  ? colors.success.withValues(alpha: 0.45)
+                                  : colors.border,
+                              width: isGoalMet ? 1.2 : 1,
                             ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isGoalMet
+                                    ? CupertinoIcons.checkmark_seal_fill
+                                    : CupertinoIcons.slider_horizontal_3,
+                                size: isGoalMet ? 14 : 13,
+                                color: isGoalMet
+                                    ? colors.success
+                                    : (isDark ? colors.primary : colors.primary),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                isGoalMet
+                                    ? 'هدف محقق شد 🎉'
+                                    : 'هدف: ${toPersianDigits('$target')} صفحه',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: isGoalMet ? FontWeight.w900 : FontWeight.bold,
+                                  color: isGoalMet
+                                      ? colors.success
+                                      : (isDark ? colors.primary : colors.primary),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'قرآن کریم',
-                            style: TextStyle(
-                              color: colors.textPrimary,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'تلاوت و انس روزانه با کلام الله',
-                            style: TextStyle(
-                              color: colors.textSecondary.withValues(alpha: 0.75),
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
+                  const SizedBox(height: 18),
 
-                  // Left: Settings & Target Badge Pill (linked to settings)
-                  InkWell(
-                    onTap: () {
-                      unawaited(HapticFeedback.selectionClick());
-                      _showQuranSettingsSheet();
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: colors.surfaceSunken,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: colors.border,
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            CupertinoIcons.slider_horizontal_3,
-                            size: 13,
-                            color: isDark ? colors.primary : colors.primary,
-                          ),
-                          SizedBox(width: 5),
-                          Text(
-                            'هدف: ${toPersianDigits('$target')} صفحه',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? colors.primary : colors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 18),
-
-              // 2. MIDDLE HERO SECTION: 3D Art (Right) + Big Count (Left)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Right Side: Artwork of Holy Quran (Transparent PNG with full fidelity)
-                  GestureDetector(
-                    onTap: _showQuranSettingsSheet,
-                    child: SizedBox(
-                      width: 145,
-                      height: 135,
-                      child: Image.asset(
-                        'assets/images/quran_icon.png',
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          decoration: BoxDecoration(
-                            color: colors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              CupertinoIcons.book_fill,
-                              color: colors.primary,
-                              size: 48,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10),
-
-                  // Left Side: Big Number + Title + Today Tag + +/- Controls
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              toPersianDigits('$done'),
-                              style: TextStyle(
-                                fontSize: 50,
-                                fontWeight: FontWeight.w900,
-                                color: isDark ? colors.primary : colors.primary,
-                                height: 1.0,
-                              ),
-                            ),
-                            SizedBox(width: 10),
-                            Column(
-                              children: [
-                                InkWell(
-                                  onTap: () => _updateQuranPages(1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    padding: EdgeInsets.all(5),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? colors.surfaceSunken
-                                          : colors.primary.withValues(alpha: 0.12),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      CupertinoIcons.plus,
-                                      size: 14,
-                                      color: isDark ? colors.primary : colors.primary,
+                  // 2. MIDDLE HERO SECTION: 3D Art (Right) + Big Count (Left)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Right Side: Artwork of Holy Quran (Transparent PNG with full fidelity, larger display + halo)
+                      GestureDetector(
+                        onTap: _showQuranSettingsSheet,
+                        child: SizedBox(
+                          width: 195,
+                          height: 180,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Divine aura behind Quran when completed
+                              if (isGoalMet)
+                                Container(
+                                  width: 160,
+                                  height: 160,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        colors.success.withValues(alpha: isDark ? 0.35 : 0.25),
+                                        Colors.amber.withValues(alpha: isDark ? 0.20 : 0.12),
+                                        Colors.transparent,
+                                      ],
                                     ),
                                   ),
                                 ),
-                                SizedBox(height: 6),
-                                InkWell(
-                                  onTap: () => _updateQuranPages(-1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    padding: EdgeInsets.all(5),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? colors.surfaceSunken
-                                          : colors.border.withValues(alpha: 0.3),
-                                      shape: BoxShape.circle,
-                                    ),
+
+                              Image.asset(
+                                'assets/images/quran_icon.png',
+                                width: 195,
+                                height: 180,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  width: 160,
+                                  height: 160,
+                                  decoration: BoxDecoration(
+                                    color: (isGoalMet ? colors.success : colors.primary)
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Center(
                                     child: Icon(
-                                      CupertinoIcons.minus,
-                                      size: 14,
-                                      color: colors.textSecondary,
+                                      CupertinoIcons.book_fill,
+                                      color: isGoalMet ? colors.success : colors.primary,
+                                      size: 64,
                                     ),
+                                  ),
+                                ),
+                              ),
+
+                              if (isGoalMet)
+                                Positioned(
+                                  top: 6,
+                                  left: 6,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: colors.success,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: colors.success.withValues(alpha: 0.45),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      CupertinoIcons.check_mark,
+                                      size: 13,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Left Side: Big Number + Title + Today Tag + +/- Controls
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                AnimatedDefaultTextStyle(
+                                  duration: const Duration(milliseconds: 250),
+                                  style: TextStyle(
+                                    fontSize: 52,
+                                    fontWeight: FontWeight.w900,
+                                    fontFamily: 'Dana',
+                                    color: isGoalMet
+                                        ? colors.success
+                                        : (isDark ? colors.primary : colors.primary),
+                                    height: 1.0,
+                                  ),
+                                  child: Text(
+                                    toPersianDigits('$done'),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Column(
+                                  children: [
+                                    InkWell(
+                                      onTap: () => _updateQuranPages(1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                          color: isGoalMet
+                                              ? colors.success.withValues(alpha: isDark ? 0.2 : 0.15)
+                                              : (isDark
+                                                  ? colors.surfaceSunken
+                                                  : colors.primary.withValues(alpha: 0.12)),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          CupertinoIcons.plus,
+                                          size: 14,
+                                          color: isGoalMet
+                                              ? colors.success
+                                              : (isDark ? colors.primary : colors.primary),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    InkWell(
+                                      onTap: () => _updateQuranPages(-1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                          color: isDark
+                                              ? colors.surfaceSunken
+                                              : colors.border.withValues(alpha: 0.3),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          CupertinoIcons.minus,
+                                          size: 14,
+                                          color: colors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              isGoalMet ? 'صفحه خوانده شده (تکمیل)' : 'صفحه خوانده شده',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.bold,
+                                color: isGoalMet ? colors.success : colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: colors.success,
+                                    boxShadow: isGoalMet
+                                        ? [
+                                            BoxShadow(
+                                              color: colors.success.withValues(alpha: 0.6),
+                                              blurRadius: 6,
+                                            ),
+                                          ]
+                                        : null,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  isGoalMet ? 'امروز ✓' : 'امروز',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isGoalMet
+                                        ? colors.success
+                                        : colors.textSecondary.withValues(alpha: 0.75),
                                   ),
                                 ),
                               ],
                             ),
                           ],
                         ),
-                        SizedBox(height: 6),
-                        Text(
-                          'صفحه خوانده شده',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                            ),
-                        ),
-                        SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: colors.success,
-                              ),
-                            ),
-                            SizedBox(width: 5),
-                            Text(
-                              'امروز',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: colors.textSecondary.withValues(alpha: 0.75),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+
+                  // 3. WEEKLY BAR CHART (Real historical data from SQLite)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Top Numbers & Bars
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: List.generate(7, (idx) {
+                          final isToday = idx == todayIndex;
+                          final countVal = weeklyValues[idx];
+                          final ratio = (countVal / maxCount).clamp(0.12, 1.0);
+                          final barHeight = 38.0 * ratio;
+                          final isBarCompleted = countVal >= target && target > 0;
+
+                          return Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  toPersianDigits('$countVal'),
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: isToday ? FontWeight.w900 : FontWeight.w600,
+                                    color: isToday
+                                        ? (isBarCompleted
+                                            ? colors.success
+                                            : (isDark ? colors.primary : colors.primary))
+                                        : (countVal > 0 ? colors.textSecondary : colors.textTertiary),
+                                  ),
                                 ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  width: 12,
+                                  height: countVal > 0 ? barHeight : 6,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(7),
+                                    gradient: isToday
+                                        ? LinearGradient(
+                                            colors: isBarCompleted
+                                                ? [colors.success, Colors.amber]
+                                                : [colors.primary, colors.success],
+                                            begin: Alignment.bottomCenter,
+                                            end: Alignment.topCenter,
+                                          )
+                                        : null,
+                                    color: isToday
+                                        ? null
+                                        : (countVal > 0
+                                            ? (isDark ? colors.primaryContainer : colors.primaryContainer)
+                                            : (isDark ? colors.surfaceSunken : colors.surfaceSunken)),
+                                    boxShadow: isToday
+                                        ? [
+                                            BoxShadow(
+                                              color: (isBarCompleted ? colors.success : colors.success)
+                                                  .withValues(alpha: 0.55),
+                                              blurRadius: 10,
+                                              spreadRadius: 1,
+                                              offset: const Offset(0, 0),
+                                            ),
+                                          ]
+                                        : null,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Divider Line
+                      Container(
+                        height: 1,
+                        color: colors.border.withValues(alpha: isDark ? 0.3 : 0.4),
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Day of Week Labels (ش, ی, د, ...)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(7, (idx) {
+                          final isToday = idx == todayIndex;
+                          return Expanded(
+                            child: Center(
+                              child: Text(
+                                days[idx],
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isToday ? FontWeight.w900 : FontWeight.w600,
+                                  color: isToday
+                                      ? (isGoalMet
+                                          ? colors.success
+                                          : (isDark ? colors.primary : colors.primary))
+                                      : colors.textSecondary.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 22),
+            ),
 
-              // 3. WEEKLY BAR CHART (Real historical data from SQLite)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Top Numbers & Bars
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: List.generate(7, (idx) {
-                      final isToday = idx == todayIndex;
-                      final countVal = weeklyValues[idx];
-                      final ratio = (countVal / maxCount).clamp(0.12, 1.0);
-                      final barHeight = 38.0 * ratio;
-
-                      return Expanded(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              toPersianDigits('$countVal'),
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: isToday ? FontWeight.w900 : FontWeight.w600,
-                                color: isToday
-                                    ? (isDark ? colors.primary : colors.primary)
-                                    : (countVal > 0 ? colors.textSecondary : colors.textTertiary),
-                              ),
-                            ),
-                            SizedBox(height: 6),
-                            Container(
-                              width: 12,
-                              height: countVal > 0 ? barHeight : 6,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(7),
-                                gradient: isToday
-                                    ? LinearGradient(
-                                        colors: [colors.primary, colors.success],
-                                        begin: Alignment.bottomCenter,
-                                        end: Alignment.topCenter,
-                                      )
-                                    : null,
-                                color: isToday
-                                    ? null
-                                    : (countVal > 0
-                                        ? (isDark ? colors.primaryContainer : colors.primaryContainer)
-                                        : (isDark ? colors.surfaceSunken : colors.surfaceSunken)),
-                                boxShadow: isToday
-                                    ? [
-                                        BoxShadow(
-                                          color: colors.success.withValues(alpha: 0.55),
-                                          blurRadius: 10,
-                                          spreadRadius: 1,
-                                          offset: Offset(0, 0),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Divider Line
-                  Container(
-                    height: 1,
-                    color: colors.border.withValues(alpha: isDark ? 0.3 : 0.4),
-                  ),
-                  SizedBox(height: 6),
-
-                  // Day of Week Labels (ش, ی, د, ...)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(7, (idx) {
-                      final isToday = idx == todayIndex;
-                      return Expanded(
-                        child: Center(
-                          child: Text(
-                            days[idx],
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isToday ? FontWeight.w900 : FontWeight.w600,
-                              color: isToday
-                                  ? (isDark ? colors.primary : colors.primary)
-                                  : colors.textSecondary.withValues(alpha: 0.7),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
+            // Confetti Particle Explosion overlay upon goal completion
+            if (_showQuranCelebration)
+              const Positioned.fill(
+                child: IgnorePointer(
+                  child: ConfettiWidget(),
+                ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -1170,7 +1315,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
         isZahra ? _zahraPhrases[_zahraStep] : activePractice.title;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
         color: isDark
@@ -1189,7 +1334,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                 : colors.shadow.withValues(alpha: 0.08),
             blurRadius: 35,
             spreadRadius: 0,
-            offset: Offset(0, 12),
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -1263,7 +1408,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
             // ============================================================
 
             Padding(
-              padding: EdgeInsets.fromLTRB(18, 18, 18, 16),
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
               child: Column(
                 children: [
                   // --------------------------------------------------------
@@ -1308,7 +1453,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                     : colors.accent,
                               ),
                             ),
-                            SizedBox(width: 11),
+                            const SizedBox(width: 11),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1319,7 +1464,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                       dropdownColor: colors.surfaceElevated,
                                       borderRadius: BorderRadius.circular(20),
                                       icon: Padding(
-                                        padding: EdgeInsets.only(right: 6),
+                                        padding: const EdgeInsets.only(right: 6),
                                         child: Icon(
                                           CupertinoIcons.chevron_down,
                                           color: isDark ? colors.accent : colors.accent,
@@ -1359,7 +1504,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                       },
                                     ),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
                                     isZahra
                                         ? 'ذکر کوتاه و آرام برای امروز'
@@ -1378,7 +1523,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                         ),
                       ),
 
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
 
                       // Settings button for active dhikr
                       InkWell(
@@ -1443,7 +1588,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                     ],
                   ),
 
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
                   // --------------------------------------------------------
                   // TASBIH INTERACTION AREA (With generous spacing)
@@ -1534,13 +1679,13 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                       height: 1.15,
                                     ),
                                   ),
-                                  SizedBox(height: 6),
+                                  const SizedBox(height: 6),
                                   TweenAnimationBuilder<double>(
                                     tween: Tween<double>(
                                       begin: 0,
                                       end: currentCount.toDouble(),
                                     ),
-                                    duration: Duration(milliseconds: 220),
+                                    duration: const Duration(milliseconds: 220),
                                     curve: Curves.easeOutCubic,
                                     builder: (context, value, _) {
                                       return Text(
@@ -1556,7 +1701,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                       );
                                     },
                                   ),
-                                  SizedBox(height: 4),
+                                  const SizedBox(height: 4),
                                   Text(
                                     'از ${toPersianDigits(currentTarget.toString())}',
                                     style: TextStyle(
@@ -1576,7 +1721,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                             top: 22,
                             left: 24,
                             child: Container(
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                 horizontal: 9,
                                 vertical: 5,
                               ),
@@ -1649,7 +1794,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                         color: colors.onPrimary,
                                         size: 19,
                                       ),
-                                      SizedBox(width: 7),
+                                      const SizedBox(width: 7),
                                       Text(
                                         'یک ذکر',
                                         style: TextStyle(
@@ -1674,7 +1819,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                   // --------------------------------------------------------
 
                   if (isZahra) ...[
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
                     Row(
                       children: List.generate(3, (index) {
@@ -1683,7 +1828,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
 
                         return Expanded(
                           child: AnimatedContainer(
-                            duration: Duration(milliseconds: 300),
+                            duration: const Duration(milliseconds: 300),
                             curve: Curves.easeOutCubic,
                             height: active ? 5 : 4,
                             margin: EdgeInsets.only(
@@ -1755,10 +1900,10 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                   // --------------------------------------------------------
 
                   if (isZahra && done > 0) ...[
-                    SizedBox(height: 14),
+                    const SizedBox(height: 14),
                     AnimatedContainer(
-                      duration: Duration(milliseconds: 250),
-                      padding: EdgeInsets.symmetric(
+                      duration: const Duration(milliseconds: 250),
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 9,
                       ),
@@ -1780,7 +1925,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                             size: 16,
                             color: colors.accent,
                           ),
-                          SizedBox(width: 7),
+                          const SizedBox(width: 7),
                           Text(
                             'امروز ${toPersianDigits(done.toString())} دور کامل',
                             style: TextStyle(
@@ -1800,11 +1945,11 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                 // ACTION BAR
                 // --------------------------------------------------------
 
-                SizedBox(height: 18),
+                const SizedBox(height: 18),
 
                 Container(
                   height: 72,
-                  padding: EdgeInsets.symmetric(horizontal: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
                   decoration: BoxDecoration(
                     color: isDark
                         ? colors.surfaceSunken
@@ -1988,7 +2133,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
       child: Container(
         decoration: BoxDecoration(
           color: colors.surfaceElevated,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           border: Border.all(
             color: colors.border.withValues(alpha: isDark ? 0.3 : 0.4),
             width: 1,
@@ -2010,7 +2155,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Header Row
             Row(
@@ -2019,14 +2164,14 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: colors.primary.withValues(alpha: isDark ? 0.2 : 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(CupertinoIcons.book_fill, color: colors.primary, size: 18),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Text(
                       'تنظیمات قرائت قرآن',
                       style: TextStyle(
@@ -2043,11 +2188,11 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                 ),
               ],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Target Stepper Pod
             Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: colors.surfaceSunken.withValues(alpha: isDark ? 0.4 : 0.6),
                 borderRadius: BorderRadius.circular(20),
@@ -2078,7 +2223,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -2091,7 +2236,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                         },
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
-                          padding: EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: colors.surface,
                             shape: BoxShape.circle,
@@ -2101,7 +2246,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Text(
                           toPersianDigits('$_targetPages'),
                           style: TextStyle(
@@ -2120,7 +2265,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                         },
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
-                          padding: EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: colors.primary,
                             shape: BoxShape.circle,
@@ -2130,7 +2275,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                   // Quick Presets Chips
                   Wrap(
@@ -2145,8 +2290,8 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                           setState(() => _targetPages = p);
                         },
                         child: AnimatedContainer(
-                          duration: Duration(milliseconds: 200),
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: isSelected ? colors.primary : colors.surface,
                             borderRadius: BorderRadius.circular(12),
@@ -2169,11 +2314,11 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                 ],
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Calendar Toggle Switch
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: colors.surfaceSunken.withValues(alpha: isDark ? 0.4 : 0.6),
                 borderRadius: BorderRadius.circular(18),
@@ -2196,7 +2341,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                             color: colors.textPrimary,
                             ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           'قرائت قرآن به عنوان تسک روزانه در تقویم ظاهر شود',
                           style: TextStyle(
@@ -2219,7 +2364,7 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
                 ],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             // Save Button
             ElevatedButton(
@@ -2330,7 +2475,7 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
                   ),
                 ],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Title
               TextField(
@@ -2351,7 +2496,7 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
                   ),
                 ),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
 
               // Target count
               TextField(
@@ -2373,11 +2518,11 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
                   ),
                 ),
               ),
-              SizedBox(height: 14),
+              const SizedBox(height: 14),
 
               // Calendar Toggle Switch
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: colors.inputBackground,
                   borderRadius: BorderRadius.circular(16),
@@ -2394,7 +2539,7 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
                             'نمایش در تقویم و برنامه روزانه',
                             style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
                             'این ذکر در لیست کارهای روزانه تقویم ظاهر شود',
                             style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.8)),
@@ -2414,7 +2559,7 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -2541,7 +2686,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
       child: Container(
         decoration: BoxDecoration(
           color: colors.surfaceElevated,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           border: Border.all(
             color: colors.border.withValues(alpha: isDark ? 0.3 : 0.4),
             width: 1,
@@ -2562,7 +2707,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Header Row
             Row(
@@ -2571,14 +2716,14 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: colors.accent.withValues(alpha: isDark ? 0.2 : 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(CupertinoIcons.slider_horizontal_3, color: isDark ? colors.accent : colors.accent, size: 18),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Text(
                       'تنظیمات ${isZahra ? 'تسبیحات حضرت زهرا (س)' : widget.practice.title}',
                       style: TextStyle(
@@ -2595,7 +2740,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Target Count Field (if not Zahra)
             if (!isZahra) ...[
@@ -2607,7 +2752,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                   color: colors.textSecondary,
                   ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               TextField(
                 controller: _targetController,
                 keyboardType: TextInputType.number,
@@ -2625,12 +2770,12 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
             ],
 
             // Calendar Toggle Switch
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: colors.surfaceSunken.withValues(alpha: isDark ? 0.4 : 0.6),
                 borderRadius: BorderRadius.circular(18),
@@ -2653,7 +2798,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                             color: colors.textPrimary,
                             ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           'این ذکر در تسک‌های تقویم نمایش داده شود',
                           style: TextStyle(
@@ -2676,7 +2821,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                 ],
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Save and Delete Buttons
             Row(
@@ -2687,7 +2832,7 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
                     icon: Icon(CupertinoIcons.trash, color: colors.error),
                     tooltip: 'حذف ذکر',
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                 ],
                 Expanded(
                   child: ElevatedButton(
@@ -2844,7 +2989,7 @@ class _TasbihProgressPainter extends CustomPainter {
 
       final glowPaint = Paint()
         ..color = colors.accent.withValues(alpha: 0.20)
-        ..maskFilter = MaskFilter.blur(
+        ..maskFilter = const MaskFilter.blur(
           BlurStyle.normal,
           10,
         );

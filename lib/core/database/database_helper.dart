@@ -150,6 +150,17 @@ class DatabaseHelper {
 
   Future<void> _createDB(Database db, int version) async {
     await SchemaManager.createAll(db);
+
+    // A brand-new database goes straight to [version] through onCreate, so
+    // onUpgrade (and therefore the migration chain) never runs for it. Anything
+    // that lives only inside a migration - the `day_marks` table and the default
+    // calendar settings from v83, later added columns, seeded settings rows -
+    // used to be present on every upgraded install but missing on a fresh one,
+    // surfacing as `no such table` / `no such column` errors at runtime.
+    // Replaying the chain best-effort here makes a new database equivalent to a
+    // migrated one; seeds then land in the completed schema.
+    await MigrationRunner.runForFreshInstall(db, version);
+
     await SeedService.seedAll(db);
   }
 

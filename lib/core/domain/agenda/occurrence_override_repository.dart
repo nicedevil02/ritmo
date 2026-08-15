@@ -92,14 +92,54 @@ abstract class OccurrenceOverrideRepository {
 class SqliteOccurrenceOverrideRepository implements OccurrenceOverrideRepository {
   const SqliteOccurrenceOverrideRepository();
 
+  /// Ensures the occurrence_overrides table and indexes exist.
+  static Future<void> ensureTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS occurrence_overrides (
+        id TEXT PRIMARY KEY,
+        sourceType TEXT NOT NULL,
+        sourceId TEXT NOT NULL,
+        dateStr TEXT NOT NULL,
+        timeOfDay TEXT,
+        durationMinutes INTEGER,
+        status TEXT,
+        note TEXT,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      );
+    ''');
+    await db.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_occ_override_unique
+        ON occurrence_overrides (sourceType, sourceId, dateStr);
+    ''');
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_occ_override_date
+        ON occurrence_overrides (dateStr);
+    ''');
+  }
+
   @override
   Future<Map<String, OccurrenceOverride>> forDate(String dateStr) async {
     final db = await DatabaseHelper.instance.database;
-    final rows = await db.query(
-      'occurrence_overrides',
-      where: 'dateStr = ?',
-      whereArgs: [dateStr],
-    );
+    List<Map<String, dynamic>> rows;
+    try {
+      rows = await db.query(
+        'occurrence_overrides',
+        where: 'dateStr = ?',
+        whereArgs: [dateStr],
+      );
+    } catch (e) {
+      if (e is DatabaseException && e.toString().contains('no such table')) {
+        await ensureTable(db);
+        rows = await db.query(
+          'occurrence_overrides',
+          where: 'dateStr = ?',
+          whereArgs: [dateStr],
+        );
+      } else {
+        rethrow;
+      }
+    }
 
     final map = <String, OccurrenceOverride>{};
     for (final row in rows) {
@@ -113,11 +153,25 @@ class SqliteOccurrenceOverrideRepository implements OccurrenceOverrideRepository
   Future<Map<String, List<OccurrenceOverride>>> forRange(
       String startDateStr, String endDateStr) async {
     final db = await DatabaseHelper.instance.database;
-    final rows = await db.query(
-      'occurrence_overrides',
-      where: 'dateStr BETWEEN ? AND ?',
-      whereArgs: [startDateStr, endDateStr],
-    );
+    List<Map<String, dynamic>> rows;
+    try {
+      rows = await db.query(
+        'occurrence_overrides',
+        where: 'dateStr BETWEEN ? AND ?',
+        whereArgs: [startDateStr, endDateStr],
+      );
+    } catch (e) {
+      if (e is DatabaseException && e.toString().contains('no such table')) {
+        await ensureTable(db);
+        rows = await db.query(
+          'occurrence_overrides',
+          where: 'dateStr BETWEEN ? AND ?',
+          whereArgs: [startDateStr, endDateStr],
+        );
+      } else {
+        rethrow;
+      }
+    }
 
     final result = <String, List<OccurrenceOverride>>{};
     for (final row in rows) {
@@ -130,30 +184,59 @@ class SqliteOccurrenceOverrideRepository implements OccurrenceOverrideRepository
   @override
   Future<void> upsert(OccurrenceOverride override) async {
     final db = await DatabaseHelper.instance.database;
-    await db.insert(
-      'occurrence_overrides',
-      override.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    try {
+      await db.insert(
+        'occurrence_overrides',
+        override.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e) {
+      if (e is DatabaseException && e.toString().contains('no such table')) {
+        await ensureTable(db);
+        await db.insert(
+          'occurrence_overrides',
+          override.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      } else {
+        rethrow;
+      }
+    }
   }
 
   @override
   Future<void> remove(String sourceType, String sourceId, String dateStr) async {
     final db = await DatabaseHelper.instance.database;
-    await db.delete(
-      'occurrence_overrides',
-      where: 'sourceType = ? AND sourceId = ? AND dateStr = ?',
-      whereArgs: [sourceType, sourceId, dateStr],
-    );
+    try {
+      await db.delete(
+        'occurrence_overrides',
+        where: 'sourceType = ? AND sourceId = ? AND dateStr = ?',
+        whereArgs: [sourceType, sourceId, dateStr],
+      );
+    } catch (e) {
+      if (e is DatabaseException && e.toString().contains('no such table')) {
+        await ensureTable(db);
+      } else {
+        rethrow;
+      }
+    }
   }
 
   @override
   Future<void> removeAllFuture(String sourceType, String sourceId, String dateStr) async {
     final db = await DatabaseHelper.instance.database;
-    await db.delete(
-      'occurrence_overrides',
-      where: 'sourceType = ? AND sourceId = ? AND dateStr >= ?',
-      whereArgs: [sourceType, sourceId, dateStr],
-    );
+    try {
+      await db.delete(
+        'occurrence_overrides',
+        where: 'sourceType = ? AND sourceId = ? AND dateStr >= ?',
+        whereArgs: [sourceType, sourceId, dateStr],
+      );
+    } catch (e) {
+      if (e is DatabaseException && e.toString().contains('no such table')) {
+        await ensureTable(db);
+      } else {
+        rethrow;
+      }
+    }
   }
 }

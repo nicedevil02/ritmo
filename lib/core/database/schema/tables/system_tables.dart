@@ -343,7 +343,7 @@ class SystemTables {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_order ON simple_tasks(orderIndex);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_important ON simple_tasks(isImportant);');
 
-  await db.execute('''
+    await db.execute('''
       CREATE TABLE IF NOT EXISTS task_steps (
           id TEXT PRIMARY KEY,
           taskId TEXT NOT NULL,
@@ -353,10 +353,9 @@ class SystemTables {
           createdAt INTEGER NOT NULL,
           completedAt INTEGER
       );
+    ''');
 
-  ''');
-
-  await db.execute('''
+    await db.execute('''
       CREATE TABLE IF NOT EXISTS task_attachments (
           id TEXT PRIMARY KEY,
           taskId TEXT NOT NULL,
@@ -366,8 +365,137 @@ class SystemTables {
           localPath TEXT NOT NULL,
           createdAt INTEGER NOT NULL
       );
+    ''');
 
-  ''');
+    // occurrence_overrides table (V69 / V104)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS occurrence_overrides (
+        id TEXT PRIMARY KEY,
+        sourceType TEXT NOT NULL,
+        sourceId TEXT NOT NULL,
+        dateStr TEXT NOT NULL,
+        timeOfDay TEXT,
+        durationMinutes INTEGER,
+        status TEXT,
+        note TEXT,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      );
+    ''');
+    await db.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_occ_override_unique
+        ON occurrence_overrides (sourceType, sourceId, dateStr);
+    ''');
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_occ_override_date
+        ON occurrence_overrides (dateStr);
+    ''');
 
+    // day_marks table (V83)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS day_marks (
+          date TEXT PRIMARY KEY,
+          kind TEXT NOT NULL DEFAULT 'NORMAL',
+          note TEXT,
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_day_marks_kind ON day_marks(kind);',
+    );
+
+    // alarm_delivery_log table (V75)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS alarm_delivery_log (
+        id TEXT PRIMARY KEY,
+        reminderId TEXT NOT NULL,
+        routineId TEXT,
+        expectedAt INTEGER NOT NULL,
+        firedAt INTEGER,
+        outcome TEXT NOT NULL,
+        createdAt INTEGER NOT NULL
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_alarm_delivery_expected ON alarm_delivery_log(expectedAt);',
+    );
+
+    // notification_channel_prefs table (V101)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS notification_channel_prefs (
+        channel_id TEXT PRIMARY KEY,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        sound_mode TEXT NOT NULL DEFAULT 'default',
+        vibration_enabled INTEGER NOT NULL DEFAULT 1,
+        bypass_dnd INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER NOT NULL
+      );
+    ''');
+  }
+
+  /// Self-healing schema validation to ensure all critical system tables exist.
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS occurrence_overrides (
+        id TEXT PRIMARY KEY,
+        sourceType TEXT NOT NULL,
+        sourceId TEXT NOT NULL,
+        dateStr TEXT NOT NULL,
+        timeOfDay TEXT,
+        durationMinutes INTEGER,
+        status TEXT,
+        note TEXT,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      );
+    ''');
+    await db.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_occ_override_unique
+        ON occurrence_overrides (sourceType, sourceId, dateStr);
+    ''');
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_occ_override_date
+        ON occurrence_overrides (dateStr);
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS day_marks (
+          date TEXT PRIMARY KEY,
+          kind TEXT NOT NULL DEFAULT 'NORMAL',
+          note TEXT,
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_day_marks_kind ON day_marks(kind);',
+    );
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS alarm_delivery_log (
+        id TEXT PRIMARY KEY,
+        reminderId TEXT NOT NULL,
+        routineId TEXT,
+        expectedAt INTEGER NOT NULL,
+        firedAt INTEGER,
+        outcome TEXT NOT NULL,
+        createdAt INTEGER NOT NULL
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_alarm_delivery_expected ON alarm_delivery_log(expectedAt);',
+    );
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS notification_channel_prefs (
+        channel_id TEXT PRIMARY KEY,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        sound_mode TEXT NOT NULL DEFAULT 'default',
+        vibration_enabled INTEGER NOT NULL DEFAULT 1,
+        bypass_dnd INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER NOT NULL
+      );
+    ''');
   }
 }

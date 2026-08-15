@@ -20,7 +20,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 104;
+  static const int _dbVersion = 105;
   static int get dbVersionForTest => _dbVersion;
 
   @visibleForTesting
@@ -69,8 +69,8 @@ class DatabaseHelper {
   /// Explicitly warms up background database tasks and seed verification (BOOT-07).
   static Future<void> warmUp(Database db) async {
     try {
+      await SchemaManager.ensureAllSchemas(db);
       await SchemaManager.safeAddColumn(db, 'worship_practices', 'showInCalendar', 'INTEGER DEFAULT 0');
-      await RoutineTables.ensureSchema(db);
       try {
         await db.execute("UPDATE routines SET energyRule = 'NONE' WHERE energyRule = 'none';");
       } catch (_) {}

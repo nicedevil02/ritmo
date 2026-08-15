@@ -90,5 +90,37 @@ class CourseTables {
           FOREIGN KEY(courseSessionId) REFERENCES course_sessions(id) ON DELETE CASCADE
       );
     ''');
+
+    // 12. study_active_session table (V73)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS study_active_session (
+        id TEXT PRIMARY KEY CHECK (id = 'singleton'),
+        subjectId TEXT,
+        topicId TEXT,
+        mode TEXT NOT NULL DEFAULT 'LEARN',
+        startedAtMs INTEGER NOT NULL,
+        accumulatedSeconds INTEGER NOT NULL DEFAULT 0,
+        isPaused INTEGER NOT NULL DEFAULT 0,
+        plannedMinutes INTEGER,
+        createdAt INTEGER NOT NULL
+      );
+    ''');
+  }
+
+  /// Self-healing schema validation to ensure course/study session tables exist.
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS study_active_session (
+        id TEXT PRIMARY KEY CHECK (id = 'singleton'),
+        subjectId TEXT,
+        topicId TEXT,
+        mode TEXT NOT NULL DEFAULT 'LEARN',
+        startedAtMs INTEGER NOT NULL,
+        accumulatedSeconds INTEGER NOT NULL DEFAULT 0,
+        isPaused INTEGER NOT NULL DEFAULT 0,
+        plannedMinutes INTEGER,
+        createdAt INTEGER NOT NULL
+      );
+    ''');
   }
 }

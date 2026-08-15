@@ -129,6 +129,44 @@ class WorshipTables {
       );
     ''');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_worship_day_context_date ON worship_day_context(date);');
+
+    // 25. worship_day_exceptions (V104 table)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS worship_day_exceptions (
+        id TEXT PRIMARY KEY,
+        dateStr TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        suppressObligatory INTEGER NOT NULL DEFAULT 1,
+        suppressMustahab INTEGER NOT NULL DEFAULT 0,
+        note TEXT,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL
+      );
+    ''');
+    await db.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_worship_day_exceptions_date
+        ON worship_day_exceptions(dateStr);
+    ''');
+  }
+
+  /// Self-healing schema validation to ensure worship tables exist.
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS worship_day_exceptions (
+        id TEXT PRIMARY KEY,
+        dateStr TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        suppressObligatory INTEGER NOT NULL DEFAULT 1,
+        suppressMustahab INTEGER NOT NULL DEFAULT 0,
+        note TEXT,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL
+      );
+    ''');
+    await db.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_worship_day_exceptions_date
+        ON worship_day_exceptions(dateStr);
+    ''');
   }
 }
 

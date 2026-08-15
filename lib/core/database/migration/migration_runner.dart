@@ -43,6 +43,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v101_notifica
 import 'package:ritmo/core/database/migration/migrations/migration_v102_unify_one_off_tasks.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v103_unify_day_plan_columns.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v104_worship_day_exceptions.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v105_canonical_schema_parity.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -149,6 +150,7 @@ class MigrationRunner {
     MigrationV102UnifyOneOffTasks(), // Unify one-off tasks from routines into simple_tasks
     MigrationV103UnifyDayPlanColumns(), // Unify day_plan_templates & day_plan_commits columns to canonical camelCase
     MigrationV104WorshipDayExceptions(), // Worship day exceptions and occurrence overrides
+    MigrationV105CanonicalSchemaParity(), // Backfill missing tables to ensure full canonical parity
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

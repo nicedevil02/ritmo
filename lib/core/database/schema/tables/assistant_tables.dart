@@ -33,5 +33,37 @@ class AssistantTables {
       'CREATE INDEX IF NOT EXISTS idx_chat_session_time '
       'ON chat_messages(session_id, timestamp);',
     );
+
+    // assistant_plans table (V81)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS assistant_plans (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        schedule_json TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_assistant_plans_status ON assistant_plans(status);',
+    );
+  }
+
+  /// Self-healing schema validation to ensure assistant tables exist.
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS assistant_plans (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        schedule_json TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_assistant_plans_status ON assistant_plans(status);',
+    );
   }
 }

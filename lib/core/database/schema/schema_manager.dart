@@ -39,6 +39,25 @@ class SchemaManager {
     await SleepTables.create(db);
   }
 
+  /// Self-healing schema validation to ensure all critical tables, columns, and indexes
+  /// exist across all versions and edge-case databases.
+  static Future<void> ensureAllSchemas(DatabaseExecutor db) async {
+    try {
+      await RoutineTables.ensureSchema(db);
+      await SystemTables.ensureSchema(db);
+      await WorshipTables.ensureSchema(db);
+      await CourseTables.ensureSchema(db);
+      await KonkurTables.ensureSchema(db);
+      await AssistantTables.ensureSchema(db);
+      await DayPlanTables.ensureSchema(db);
+      await NoteTables.ensureSchema(db);
+      await SleepTables.ensureSchema(db);
+      await AiTables.ensureSchema(db);
+      await SupplementarySportsTables.ensureSlotOverrideTable(db);
+      await SupplementarySportsTables.ensureMovementMuscleFocus(db);
+    } catch (_) {}
+  }
+
   /// Safely checks if a column exists in a given SQLite table without throwing exceptions.
   static Future<bool> columnExists(DatabaseExecutor db, String table, String column) async {
     try {

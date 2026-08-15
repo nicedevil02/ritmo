@@ -130,5 +130,47 @@ class KonkurTables {
     ''');
     await db.execute('CREATE INDEX index_konkur_plan_dateIso ON konkur_plan_items(dateIso);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_konkur_plan_date_status ON konkur_plan_items(dateIso, status);');
+
+    // V81 konkur_plans table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS konkur_plans (
+        id TEXT PRIMARY KEY,
+        plan_code TEXT NOT NULL,
+        title TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        start_date TEXT,
+        end_date TEXT,
+        weekly_hours REAL,
+        schedule_json TEXT,
+        review_strategy TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_konkur_plans_status ON konkur_plans(status);',
+    );
+  }
+
+  /// Self-healing schema validation to ensure konkur plan tables exist.
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS konkur_plans (
+        id TEXT PRIMARY KEY,
+        plan_code TEXT NOT NULL,
+        title TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        start_date TEXT,
+        end_date TEXT,
+        weekly_hours REAL,
+        schedule_json TEXT,
+        review_strategy TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_konkur_plans_status ON konkur_plans(status);',
+    );
   }
 }

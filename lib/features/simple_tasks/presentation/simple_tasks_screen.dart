@@ -22,13 +22,19 @@ import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_bucket.dart';
 import 'package:ritmo/features/simple_tasks/logic/task_bucketing.dart';
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_bucket_section.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
 
 class SimpleTasksScreen extends StatefulWidget {
-  const SimpleTasksScreen({super.key, this.focusAddField = false});
+  const SimpleTasksScreen({
+    super.key,
+    this.focusAddField = false,
+    this.focusTrigger,
+  });
 
   final bool focusAddField;
+  final ValueListenable<int>? focusTrigger;
 
   @override
   State<SimpleTasksScreen> createState() => _SimpleTasksScreenState();
@@ -51,6 +57,7 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
   void initState() {
     super.initState();
     _loadPreferencesAndTasks();
+    widget.focusTrigger?.addListener(_onFocusTrigger);
     if (widget.focusAddField) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _addFocusNode.requestFocus();
@@ -58,8 +65,15 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
     }
   }
 
+  void _onFocusTrigger() {
+    if (mounted) {
+      _addFocusNode.requestFocus();
+    }
+  }
+
   @override
   void dispose() {
+    widget.focusTrigger?.removeListener(_onFocusTrigger);
     _addController.dispose();
     _addFocusNode.dispose();
     super.dispose();
@@ -398,7 +412,7 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
                       : CustomScrollView(
                           slivers: [
                             SliverPadding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                               sliver: SliverMainAxisGroup(
                                 slivers: TaskBucket.values.map((bucket) {
                                   final tasks = _buckets[bucket] ?? [];

@@ -367,10 +367,27 @@ class RoutineAgendaSource implements AgendaSource {
       final routineId = r['id']?.toString() ?? '';
       if (routineId.isEmpty) continue;
 
+      // B-FIX-EVENT-2 — رویدادهایی که ریشه‌شان روتین است نباید از دامنهٔ
+      // `routine` خارج شوند.
+      //
+      // پلنر («کار جدید ← رویداد») رویداد را به‌صورت یک ردیف در جدول
+      // `routines` با برچسب itemType='EVENT' ذخیره می‌کند. پیش‌تر اینجا دامنهٔ
+      // آیتم به AgendaDomain.event تغییر می‌کرد و همین باعث می‌شد آیتم در
+      // تمام سطوح تقویم نامرئی شود، چون همهٔ مصرف‌کننده‌ها روی
+      // AgendaDomain.routine کلید می‌خورند:
+      //   • AgendaRendererRegistry فقط prayer و routine را ثبت کرده
+      //   • مسیر تکمیل در JourneyController و TodayCalendarConvergenceHelper
+      //   • DirectManipulationEligibility
+      //   • domainColor / domainIcon / domainLabelFa مقدار `kind` را تنها وقتی
+      //     اعمال می‌کنند که domain == AgendaDomain.routine باشد
+      //
+      // محور مستقل kind (AgendaItemKind.event) از پیش معنای «این یک رویداد
+      // است» را حمل می‌کند؛ پس دامنه باید `routine` بماند.
       final isEvent = (r['itemType'] as String?) == 'EVENT';
-      final itemDomain = isEvent ? AgendaDomain.event : AgendaDomain.routine;
+      const itemDomain = AgendaDomain.routine;
 
-      if (!ctx.options.wants(itemDomain)) {
+      // درخواست‌های فقط‌رویداد یا فقط‌روتین بدون تغییر دامنه محترم شمرده می‌شوند.
+      if (!(isEvent ? (wantsRoutine || wantsEvent) : wantsRoutine)) {
         continue;
       }
 

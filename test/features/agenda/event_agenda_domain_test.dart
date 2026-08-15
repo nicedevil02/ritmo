@@ -6,26 +6,11 @@ import 'package:ritmo/core/domain/agenda/sources/routine_agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
 
 void main() {
-  group('B0-2: RoutineAgendaSource AgendaDomain.event emission', () {
-    test('RoutineAgendaSource declares both routine and event domains', () {
-      const source = RoutineAgendaSource(
-        routines: [],
-        schedules: [],
-        occurrences: [],
-        avgDurations: {},
-        categoryAvgDurations: {},
-        completionsByDate: {},
-        activeModules: {'religion': true, 'medicine': true, 'courses': true},
-      );
+  group('B0-2: RoutineAgendaSource EVENT itemType emission', () {
+    final date = DateTime(2026, 8, 14);
+    const dateStr = '2026-08-14';
 
-      expect(source.domains, contains(AgendaDomain.routine));
-      expect(source.domains, contains(AgendaDomain.event));
-    });
-
-    test('RoutineAgendaSource yields AgendaDomain.event for EVENT itemType', () {
-      final date = DateTime(2026, 8, 14);
-      const dateStr = '2026-08-14';
-
+    RoutineAgendaSource buildSource() {
       final rule = RecurrenceRule(
         weekdays: const [],
         startDate: date,
@@ -77,7 +62,7 @@ void main() {
         },
       ];
 
-      final source = RoutineAgendaSource(
+      return RoutineAgendaSource(
         routines: routines,
         schedules: schedules,
         occurrences: [],
@@ -86,27 +71,81 @@ void main() {
         completionsByDate: {},
         activeModules: {'religion': true, 'medicine': true, 'courses': true},
       );
+    }
 
-      final ctx = AgendaDayContext(
-        date: date,
-        dateStr: dateStr,
-        isToday: true,
-        prayerTimes: {},
-        options: const AgendaQueryOptions(
-          domains: {AgendaDomain.routine, AgendaDomain.event},
-        ),
+    AgendaDayContext ctxWith(AgendaQueryOptions options) => AgendaDayContext(
+          date: date,
+          dateStr: dateStr,
+          isToday: true,
+          prayerTimes: const {},
+          options: options,
+        );
+
+    test('RoutineAgendaSource declares both routine and event domains', () {
+      const source = RoutineAgendaSource(
+        routines: [],
+        schedules: [],
+        occurrences: [],
+        avgDurations: {},
+        categoryAvgDurations: {},
+        completionsByDate: {},
+        activeModules: {'religion': true, 'medicine': true, 'courses': true},
       );
 
-      final items = source.itemsForDate(ctx);
+      expect(source.domains, contains(AgendaDomain.routine));
+      expect(source.domains, contains(AgendaDomain.event));
+    });
+
+    // REGRESSION GUARD — این تست پیش‌تر دقیقاً همان باگ را تثبیت کرده بود.
+    //
+    // اگر یک ردیف `routines` با itemType='EVENT' به AgendaDomain.event
+    // تغییر دامنه بدهد، آیتم در تقویم نامرئی می‌شود؛ چون رجیستری رندرر،
+    // مسیرهای تکمیل، DirectManipulationEligibility و توابع رنگ/آیکن/برچسب
+    // همگی روی AgendaDomain.routine کلید می‌خورند. تمایز «رویداد بودن»
+    // باید فقط از محور kind بیاید.
+    test('EVENT itemType stays in AgendaDomain.routine but carries AgendaItemKind.event', () {
+      final items = buildSource().itemsForDate(
+        ctxWith(const AgendaQueryOptions(
+          domains: {AgendaDomain.routine, AgendaDomain.event},
+        )),
+      );
       expect(items.length, equals(2));
 
       final normalItem = items.firstWhere((i) => i.sourceId == 'routine_normal');
       expect(normalItem.domain, equals(AgendaDomain.routine));
+      expect(normalItem.kind, equals(AgendaItemKind.routine));
 
       final eventItem = items.firstWhere((i) => i.sourceId == 'routine_event');
-      expect(eventItem.domain, equals(AgendaDomain.event));
+      expect(eventItem.domain, equals(AgendaDomain.routine));
+      expect(eventItem.kind, equals(AgendaItemKind.event));
+      expect(eventItem.deepLink?.domain, equals(AgendaDomain.routine));
       expect(eventItem.title, equals('رویداد جشن تولد'));
       expect(eventItem.durationMinutes, equals(120));
+    });
+
+    test('A default (unfiltered) query surfaces the routine-backed event', () {
+      final items = buildSource().itemsForDate(
+        ctxWith(const AgendaQueryOptions()),
+      );
+      expect(items.map((i) => i.sourceId), containsAll(<String>['routine_normal', 'routine_event']));
+    });
+
+    test('An events-only query still surfaces the routine-backed event', () {
+      final items = buildSource().itemsForDate(
+        ctxWith(const AgendaQueryOptions(domains: {AgendaDomain.event})),
+      );
+
+      expect(items, hasLength(1));
+      expect(items.first.sourceId, equals('routine_event'));
+      expect(items.first.kind, equals(AgendaItemKind.event));
+    });
+
+    test('A routines-only query excludes nothing and keeps the event visible', () {
+      final items = buildSource().itemsForDate(
+        ctxWith(const AgendaQueryOptions(domains: {AgendaDomain.routine})),
+      );
+
+      expect(items.map((i) => i.sourceId), containsAll(<String>['routine_normal', 'routine_event']));
     });
   });
 }

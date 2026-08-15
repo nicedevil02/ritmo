@@ -15,6 +15,7 @@ import 'package:ritmo/core/services/ritmo_timer_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/ritmo_date.dart';
+import 'package:ritmo/features/goals/presentation/goals_screen.dart';
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
 import 'package:ritmo/features/konkur/models/konkur_models.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_study_sheet.dart';
@@ -126,6 +127,15 @@ class ActionRouter {
         break;
 
       case AgendaDomain.goalStep:
+        if (item.sourceId == 'goal_weekly_review' || item.meta['isWeeklyReview'] == true) {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (ctx) => const GoalsScreen(),
+            ),
+          );
+          onChanged?.call();
+          break;
+        }
         await _showDomainConfirmationSheet(
           context,
           item: item,

@@ -45,7 +45,6 @@ class PlannerCategoryGrid extends StatelessWidget {
       {'cat': Category.learning, 'title': 'دوره', 'icon': Icons.school_rounded, 'color': const Color(0xff6366F1)},
       {'cat': Category.custom, 'title': 'هدف', 'icon': Icons.track_changes_rounded, 'color': const Color(0xffF97316)},
       {'cat': Category.personal, 'title': 'رویداد', 'icon': Icons.event_note_rounded, 'color': const Color(0xffEF4444), 'type': 'EVENT'},
-      {'cat': Category.personal, 'title': 'یادآور ساده', 'icon': Icons.notifications_active_rounded, 'color': const Color(0xff6366F1), 'type': 'REMINDER'},
     ];
 
     return Directionality(

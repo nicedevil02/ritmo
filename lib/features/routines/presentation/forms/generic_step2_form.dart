@@ -248,8 +248,13 @@ class GenericStep2Form extends StatelessWidget {
               // 1. Routine Type Selector (مدل اجرای روتین)
               RoutineTypePicker(
                 selectedType: controller.routineType,
+                itemType: controller.itemType,
                 onTypeSelected: (type) {
                   controller.setRoutineType(type);
+                },
+                onItemTypeSelected: (type) {
+                  controller.itemType = type;
+                  controller.notifyListeners();
                 },
               ),
               const SizedBox(height: 24),
@@ -269,6 +274,16 @@ class GenericStep2Form extends StatelessWidget {
   }
 
   List<Widget> _buildTypeSpecificSections(BuildContext context, RitmoColors colors, bool isDark) {
+    if (controller.itemType == 'REMINDER') {
+      return [
+        PlannerTimelinePicker(controller: controller),
+        const SizedBox(height: 12),
+        _buildRecurrenceCard(context, colors, isDark),
+        const SizedBox(height: 12),
+        _buildReminderCard(context, colors, isDark),
+      ];
+    }
+
     switch (controller.routineType) {
       case RoutineType.timeBased:
         return [
@@ -503,8 +518,6 @@ class GenericStep2Form extends StatelessWidget {
   }
 
   Widget _buildCountBasedSection(BuildContext context, RitmoColors colors, bool isDark) {
-    final units = ['لیوان', 'صفحه', 'رکعت', 'بار', 'کیلومتر', 'دقیقه'];
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -512,11 +525,11 @@ class GenericStep2Form extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: colors.border.withValues(alpha: 0.1)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'هدف عددی روزانه',
@@ -526,75 +539,54 @@ class GenericStep2Form extends StatelessWidget {
                   color: colors.textPrimary,
                 ),
               ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.remove_circle_outline, size: 22),
-                    onPressed: () {
-                      if (controller.countTarget > 1) {
-                        RitmoHaptics.selection();
-                        controller.countTarget--;
-                        controller.notifyListeners();
-                      }
-                    },
-                    color: colors.primary,
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${toPersianDigits(controller.countTarget.toString())} ${controller.countUnit}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle_outline, size: 22),
-                    onPressed: () {
-                      RitmoHaptics.selection();
-                      controller.countTarget++;
-                      controller.notifyListeners();
-                    },
-                    color: colors.primary,
-                  ),
-                ],
+              const SizedBox(height: 4),
+              Text(
+                'تعداد دفعات تکرار در هر روز',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: colors.textSecondary,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            'واحد شمارش:',
-            style: TextStyle(fontSize: 12, color: colors.textSecondary),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: units.map((u) {
-              final isSel = controller.countUnit == u;
-              return ChoiceChip(
-                label: Text(u),
-                selected: isSel,
-                selectedColor: colors.primary.withValues(alpha: 0.2),
-                labelStyle: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                  color: isSel ? colors.primary : colors.textSecondary,
-                ),
-                onSelected: (val) {
-                  if (val) {
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline, size: 22),
+                onPressed: () {
+                  if (controller.countTarget > 1) {
                     RitmoHaptics.selection();
-                    controller.countUnit = u;
+                    controller.countTarget--;
                     controller.notifyListeners();
                   }
                 },
-              );
-            }).toList(),
+                color: colors.primary,
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${toPersianDigits(controller.countTarget.toString())} بار',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: colors.primary,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline, size: 22),
+                onPressed: () {
+                  RitmoHaptics.selection();
+                  controller.countTarget++;
+                  controller.notifyListeners();
+                },
+                color: colors.primary,
+              ),
+            ],
           ),
         ],
       ),
@@ -793,7 +785,7 @@ class GenericStep2Form extends StatelessWidget {
             )
           else
             DropdownButtonFormField<String>(
-              value: controller.dependsOnRoutineId,
+              initialValue: controller.dependsOnRoutineId,
               hint: const Text('انتخاب روتین پیش‌نیاز...'),
               decoration: InputDecoration(
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),

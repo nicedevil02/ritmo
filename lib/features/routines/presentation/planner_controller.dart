@@ -136,8 +136,8 @@ class PlannerController extends ChangeNotifier {
   TimeOfDay eventEndTime = const TimeOfDay(hour: 10, minute: 0);
   String eventLocation = '';
 
-  // Routine Type Behavioral Model
-  RoutineType routineType = RoutineType.timeBased;
+  // Routine Type Behavioral Model (Default: asNeeded / آزاد و شناور)
+  RoutineType routineType = RoutineType.asNeeded;
   int countTarget = 8;
   String countUnit = 'بار';
   int progressionStart = 5;
@@ -149,8 +149,13 @@ class PlannerController extends ChangeNotifier {
   DependencyType dependencyType = DependencyType.afterCompletion;
   int dependencyOffsetMinutes = 0;
 
-  void setRoutineType(RoutineType type) {
+  void setRoutineType(RoutineType type, {String? newItemType}) {
     routineType = type;
+    if (newItemType != null) {
+      itemType = newItemType;
+    } else if (itemType == 'REMINDER') {
+      itemType = 'ROUTINE';
+    }
     notifyListeners();
   }
 

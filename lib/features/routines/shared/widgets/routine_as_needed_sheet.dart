@@ -173,7 +173,7 @@ class _RoutineAsNeededSheetState extends State<RoutineAsNeededSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'فعالیت آزاد و برحسب نیاز (PRN)',
+              'فعالیت آزاد و شناور (PRN)',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: colors.textSecondary),
             ),

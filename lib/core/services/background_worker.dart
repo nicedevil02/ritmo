@@ -13,6 +13,9 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:workmanager/workmanager.dart';
 
+/// Timezone the background isolate schedules against.
+const String _backgroundTimeZone = 'Asia/Tehran';
+
 /// Top-level callback dispatcher entry-point for background tasks (Workmanager).
 @pragma('vm:entry-point')
 void ritmoCallbackDispatcher() {
@@ -22,10 +25,22 @@ void ritmoCallbackDispatcher() {
     DartPluginRegistrant.ensureInitialized();
 
     // 2. Timezone Initialization
+    // This used to be wrapped in a bare `catch (_) {}`. On failure the isolate
+    // silently stays on UTC, so every alarm scheduled by this run fires hours
+    // off with nothing in the logs to explain it. Scheduling nothing and
+    // letting Workmanager retry is strictly better than scheduling wrong times.
     try {
       tz.initializeTimeZones();
-      tz.setLocalLocation(tz.getLocation('Asia/Tehran'));
-    } catch (_) {}
+      tz.setLocalLocation(tz.getLocation(_backgroundTimeZone));
+    } catch (e, st) {
+      RitmoLog.error(
+        'BgWorker',
+        'Timezone init failed - aborting task "$taskName" instead of scheduling alarms in the wrong zone',
+        e,
+        st,
+      );
+      return false;
+    }
 
     // 3. DI Bootstrapping & Services Registration in Background Isolate (P0-05)
     try {

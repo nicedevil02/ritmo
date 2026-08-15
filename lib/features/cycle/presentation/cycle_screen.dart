@@ -7,6 +7,7 @@ import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'dart:convert';
 import 'dart:ui';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
+import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:flutter/material.dart';
@@ -876,31 +877,19 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
     var overlapDays = 0;
     if (endIso != null && worshipConsent) {
-      // Find ws_ramadan dates
-      final seasons = await db.query(
-        'worship_seasons',
-        where: "id = 'ws_ramadan'",
-        limit: 1,
-      );
-      if (seasons.isNotEmpty) {
-        final rStartStr = seasons.first['startDate']! as String;
-        final rEndStr = seasons.first['endDate']! as String;
-        try {
-          final rStart = DateTime.parse(rStartStr);
-          final rEnd = DateTime.parse(rEndStr);
-          
-          final start = DateTime.parse(startIso);
-          final end = DateTime.parse(endIso);
-          
-          // Calculate overlap
-          final latestStart = start.isAfter(rStart) ? start : rStart;
-          final earliestEnd = end.isBefore(rEnd) ? end : rEnd;
-          
-          if (!latestStart.isAfter(earliestEnd)) {
-            overlapDays = earliestEnd.difference(latestStart).inDays + 1;
-          }
-        } catch (e) {
-          debugPrint('Error parsing Ramadan dates in cycle screen: $e');
+      // رمضان از تقویم هجری محاسبه میشود؛ جدول worship_seasons حذف شده است.
+      final offsetRows = await db.query('app_settings',
+          where: 'key = ?', whereArgs: ['hijri_offset'], limit: 1);
+      final hijriOffset =
+          int.tryParse(offsetRows.isEmpty ? '' : '${offsetRows.first['value']}') ?? 0;
+
+      final pStart = DateTime.parse(startIso.substring(0, 10));
+      final pEnd = DateTime.parse(endIso.substring(0, 10));
+      for (var i = 0; i < 60; i++) {
+        final day = DateTime(pStart.year, pStart.month, pStart.day + i);
+        if (day.isAfter(pEnd)) break;
+        if (HijriCalendarCalculator.hijriFromGregorian(day, offsetDays: hijriOffset).month == 9) {
+          overlapDays++;
         }
       }
     }

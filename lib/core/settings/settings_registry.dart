@@ -870,6 +870,16 @@ class SettingsRegistry {
       searchTerms: ['خواب', 'باند خواب', 'سایه شب', 'استراحت'],
     ),
     SettingDescriptor(
+      key: 'show_cycle_in_calendar',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: false,
+      labelFa: 'نمایش فاز چرخه در تقویم',
+      group: SettingsGroup.calendar,
+      descriptionFa: 'نمایش روزهای پیش‌بینی‌شده و فاز چرخه در تقویم (نیازمند رضایت صریح)',
+      searchTerms: ['چرخه', 'پریود', 'بانوان', 'فاز چرخه'],
+    ),
+    SettingDescriptor(
       key: 'calendar_compress_recurring',
       type: SettingType.boolean,
       scope: SettingScope.db,

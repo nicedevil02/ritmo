@@ -7,49 +7,82 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/today/presentation/widgets/ritmo_nav_bar.dart';
 
 void main() {
-  group('NAV0-5 & NAV2: RitmoNavBar Contract & Destination Tests', () {
-    Widget buildTestHarness(AppMode mode, {int? currentIndex, ValueChanged<int>? onSelectTab, VoidCallback? onCenterTap}) {
-      return MaterialApp(
-        theme: RitmoTheme.dark(),
-        home: Scaffold(
-          body: Center(
-            child: RitmoNavBar(
-              mode: mode,
-              currentIndex: currentIndex ?? RitmoShellMetrics.defaultTabFor(mode),
-              onSelectTab: onSelectTab ?? (_) {},
-              onCenterTap: onCenterTap ?? () {},
+  Widget harness(
+    AppMode mode, {
+    int? currentIndex,
+    ValueChanged<int>? onSelectTab,
+    VoidCallback? onCenterTap,
+    double width = 380,
+    double textScale = 1.0,
+  }) {
+    return MaterialApp(
+      theme: RitmoTheme.build(
+        palette: RitmoPalette.jadeNoir,
+        brightness: Brightness.dark,
+      ),
+      home: Builder(
+        builder: (context) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: TextScaler.linear(textScale),
             ),
-          ),
-        ),
+            child: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: width,
+                  child: RitmoNavBar(
+                    mode: mode,
+                    currentIndex: currentIndex ?? RitmoShellMetrics.defaultTabFor(mode),
+                    onSelectTab: onSelectTab ?? (_) {},
+                    onCenterTap: onCenterTap ?? () {},
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  group('NAV0-5 — قرارداد ارتفاع نوار ناوبری', () {
+    testWidgets('در حالت ساده ارتفاع دقیقاً برابر navBarHeight است', (tester) async {
+      await tester.pumpWidget(harness(AppMode.simple));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSize(find.byType(RitmoNavBar)).height,
+        equals(RitmoShellMetrics.navBarHeight),
       );
-    }
-
-    testWidgets('RitmoNavBar in AppMode.simple has exact height equal to RitmoShellMetrics.navBarHeight', (tester) async {
-      await tester.pumpWidget(buildTestHarness(AppMode.simple));
-      await tester.pumpAndSettle();
-
-      final navBarFinder = find.byType(RitmoNavBar);
-      expect(navBarFinder, findsOneWidget);
-
-      final size = tester.getSize(navBarFinder);
-      expect(size.height, equals(RitmoShellMetrics.navBarHeight));
     });
 
-    testWidgets('RitmoNavBar in AppMode.full has exact height equal to RitmoShellMetrics.navBarHeight', (tester) async {
-      await tester.pumpWidget(buildTestHarness(AppMode.full));
+    testWidgets('در حالت کامل ارتفاع دقیقاً برابر navBarHeight است', (tester) async {
+      await tester.pumpWidget(harness(AppMode.full));
       await tester.pumpAndSettle();
 
-      final navBarFinder = find.byType(RitmoNavBar);
-      expect(navBarFinder, findsOneWidget);
-
-      final size = tester.getSize(navBarFinder);
-      expect(size.height, equals(RitmoShellMetrics.navBarHeight));
+      expect(
+        tester.getSize(find.byType(RitmoNavBar)).height,
+        equals(RitmoShellMetrics.navBarHeight),
+      );
     });
 
-    testWidgets('Only active tab displays text label in full mode', (tester) async {
-      // In full mode, tab 3 is assistant, tab 4 is calendar, tab 0 is systems, tab 1 is insights
-      // Center tab is 2 (NowDashboard)
-      await tester.pumpWidget(buildTestHarness(AppMode.full, currentIndex: 3));
+    testWidgets('در عرض ۳۲۰ و متن بزرگ، نه سرریز نه تغییر ارتفاع', (tester) async {
+      await tester.pumpWidget(
+        harness(AppMode.full, currentIndex: 0, width: 320, textScale: 1.3),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.getSize(find.byType(RitmoNavBar)).height,
+        equals(RitmoShellMetrics.navBarHeight),
+      );
+    });
+  });
+
+  group('NAV2 — برچسب فقط برای مقصد فعال', () {
+    testWidgets('در حالت کامل فقط برچسب تب فعال دیده می‌شود', (tester) async {
+      await tester.pumpWidget(harness(AppMode.full, currentIndex: 3));
       await tester.pumpAndSettle();
 
       expect(find.text('دستیار'), findsOneWidget);
@@ -58,20 +91,59 @@ void main() {
       expect(find.text('بینش‌ها'), findsNothing);
     });
 
-    testWidgets('Tapping tab invokes onSelectTab callback', (tester) async {
-      int? selectedIndex;
-      await tester.pumpWidget(buildTestHarness(AppMode.full, currentIndex: 2, onSelectTab: (idx) {
-        selectedIndex = idx;
-      }));
+    testWidgets('وقتی خانه فعال است هیچ برچسبی روی نوار نیست', (tester) async {
+      await tester.pumpWidget(
+        harness(
+          AppMode.full,
+          currentIndex: RitmoShellMetrics.homeTabIndexFor(AppMode.full),
+        ),
+      );
       await tester.pumpAndSettle();
 
-      // Tap Assistant tab (find by sparkles icon)
-      final assistantIconFinder = find.byIcon(CupertinoIcons.sparkles);
-      expect(assistantIconFinder, findsOneWidget);
-      await tester.tap(assistantIconFinder);
+      expect(find.text('تقویم'), findsNothing);
+      expect(find.text('دستیار'), findsNothing);
+      expect(find.text('سیستم‌ها'), findsNothing);
+      expect(find.text('بینش‌ها'), findsNothing);
+    });
+  });
+
+  group('NAV1 — تعامل', () {
+    testWidgets('لمس یک مقصد، اندیس درست را برمی‌گرداند', (tester) async {
+      int? selectedIndex;
+      await tester.pumpWidget(
+        harness(
+          AppMode.full,
+          currentIndex: 2,
+          onSelectTab: (index) => selectedIndex = index,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final assistant = find.byIcon(CupertinoIcons.sparkles);
+      expect(assistant, findsOneWidget);
+      await tester.tap(assistant);
       await tester.pumpAndSettle();
 
       expect(selectedIndex, equals(3));
+    });
+
+    testWidgets('لمس دکمهٔ مرکزی، کال‌بک مرکزی را صدا می‌زند', (tester) async {
+      var centerTaps = 0;
+      await tester.pumpWidget(
+        harness(
+          AppMode.full,
+          currentIndex: 4,
+          onCenterTap: () => centerTaps++,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final home = find.byIcon(CupertinoIcons.house_fill);
+      expect(home, findsOneWidget);
+      await tester.tap(home);
+      await tester.pumpAndSettle();
+
+      expect(centerTaps, equals(1));
     });
   });
 }

@@ -6,6 +6,11 @@ import 'package:ritmo/features/routines/domain/routine_recurrence.dart';
 
 void main() {
   group('Unified Event-Routine Recurrence & Calendar Resolution Tests', () {
+    // NOTE: routine-backed events (a `routines` row tagged itemType='EVENT')
+    // stay inside AgendaDomain.routine. Only AgendaItemKind.event marks them as
+    // events. Re-tagging the domain used to hide them from the whole calendar,
+    // because renderers, completion paths and palette helpers all key on
+    // AgendaDomain.routine.
     test('Event-Routine with EVERY_DAY recurrence appears on today, tomorrow, and future days', () {
       const recurrence = DailyRecurrence();
       final (schedType, daysOfWeek) = deriveScheduleParams(recurrence);
@@ -58,7 +63,7 @@ void main() {
       final itemsToday = source.itemsForDate(ctxToday);
       expect(itemsToday, hasLength(1));
       expect(itemsToday.first.title, equals('جلسه هماهنگی روزانه'));
-      expect(itemsToday.first.domain, equals(AgendaDomain.event));
+      expect(itemsToday.first.domain, equals(AgendaDomain.routine));
       expect(itemsToday.first.kind, equals(AgendaItemKind.event));
       expect(itemsToday.first.timeOfDay, equals('10:00'));
       expect(itemsToday.first.durationMinutes, equals(45));
@@ -212,7 +217,7 @@ void main() {
       final itemsTarget = source.itemsForDate(ctxTarget);
       expect(itemsTarget, hasLength(1));
       expect(itemsTarget.first.title, equals('جشن تولد دوست'));
-      expect(itemsTarget.first.domain, equals(AgendaDomain.event));
+      expect(itemsTarget.first.domain, equals(AgendaDomain.routine));
       expect(itemsTarget.first.kind, equals(AgendaItemKind.event));
 
       // 2026-08-18 -> Should NOT appear

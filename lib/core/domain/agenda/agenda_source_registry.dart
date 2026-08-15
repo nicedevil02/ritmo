@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/commitment_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/course_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/cycle_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/event_agenda_source.dart';
@@ -163,12 +164,12 @@ class AgendaSourceRegistry {
         final goalsEnabled =
             ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_goals_enabled');
         if (!goalsEnabled) {
-          return GoalStepsAgendaSource.empty();
+          return GoalStepsAgendaSource.disabled();
         }
         return ctx.guardSource<AgendaSource>(
           'goalSteps',
           () => GoalStepsAgendaSource.load(ctx.db, ctx.start, ctx.end),
-          () => GoalStepsAgendaSource.empty(),
+          () => GoalStepsAgendaSource.disabled(),
         );
       },
     ));
@@ -272,6 +273,26 @@ class AgendaSourceRegistry {
           'event',
           () => EventAgendaSource.load(ctx.db, ctx.startStr, ctx.endStr),
           () => EventAgendaSource.disabled(),
+        );
+      },
+    ));
+
+    // 11. Commitment Agenda Source (Planning Commitments & Allocations)
+    _entries.add(AgendaSourceEntry(
+      id: 'commitment',
+      domains: {AgendaDomain.commitment},
+      loader: (ctx) async {
+        final goalsEnabled =
+            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_goals_enabled');
+        final commitmentsEnabled =
+            goalsEnabled && ctx.settingsMap['calendar_show_commitments'] != 'false';
+        if (!commitmentsEnabled || !ctx.options.wants(AgendaDomain.commitment)) {
+          return CommitmentAgendaSource.disabled();
+        }
+        return ctx.guardSource<AgendaSource>(
+          'commitment',
+          () => CommitmentAgendaSource.load(ctx.db, ctx.start, ctx.end),
+          () => CommitmentAgendaSource.disabled(),
         );
       },
     ));

@@ -54,8 +54,8 @@ class ModuleContentMap {
     ),
     ModuleContent(
       moduleKey: 'module_goals_enabled',
-      agendaDomains: {AgendaDomain.goalStep},
-      dataTables: {'goals', 'goal_steps'},
+      agendaDomains: {AgendaDomain.goalStep, AgendaDomain.commitment},
+      dataTables: {'goals', 'goal_steps', 'planning_cycles', 'planning_commitments', 'planning_allocations'},
     ),
     ModuleContent(
       moduleKey: 'module_sports_enabled',

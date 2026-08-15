@@ -261,6 +261,7 @@ class DayAgendaService {
 
     final routinesEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_today_routines');
     final goalsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_goals_enabled');
+    final commitmentsEnabled = goalsEnabled && settingsMap['calendar_show_commitments'] != 'false';
     final tasksEnabled = routinesEnabled && settingsMap['calendar_show_tasks'] != 'false';
     final eventsEnabled = routinesEnabled && settingsMap['calendar_show_events'] != 'false';
     final religionEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled');
@@ -359,6 +360,7 @@ class DayAgendaService {
       settingsMap: settingsMap,
       routinesEnabled: routinesEnabled,
       goalsEnabled: goalsEnabled,
+      commitmentsEnabled: commitmentsEnabled,
       tasksEnabled: tasksEnabled,
       eventsEnabled: eventsEnabled,
       religionEnabled: religionEnabled,
@@ -429,6 +431,7 @@ class DayAgendaService {
       AgendaDomain.worshipDebt: ctx.religionEnabled && opts.includeWorshipDebt,
       AgendaDomain.course: ctx.coursesEnabled,
       AgendaDomain.goalStep: ctx.goalsEnabled,
+      AgendaDomain.commitment: ctx.commitmentsEnabled,
       AgendaDomain.konkur: ctx.konkurEnabled,
       AgendaDomain.cycle: ctx.cycleAllowed,
       AgendaDomain.sport: ctx.sportsEnabled,
@@ -620,6 +623,7 @@ class _AgendaContext {
     required this.settingsMap,
     required this.routinesEnabled,
     required this.goalsEnabled,
+    required this.commitmentsEnabled,
     required this.tasksEnabled,
     required this.eventsEnabled,
     required this.religionEnabled,
@@ -647,6 +651,7 @@ class _AgendaContext {
   final Map<String, String> settingsMap;
   final bool routinesEnabled;
   final bool goalsEnabled;
+  final bool commitmentsEnabled;
   final bool tasksEnabled;
   final bool eventsEnabled;
   final bool religionEnabled;

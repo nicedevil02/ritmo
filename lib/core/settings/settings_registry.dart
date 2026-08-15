@@ -840,6 +840,16 @@ class SettingsRegistry {
       searchTerms: ['نمایش رویدادها', 'رویداد', 'ایونت', 'جلسه'],
     ),
     SettingDescriptor(
+      key: 'calendar_show_commitments',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: true,
+      labelFa: 'نمایش تعهدها و برنامه‌ریزی در تقویم',
+      group: SettingsGroup.calendar,
+      descriptionFa: 'نمایش تعهدها و تخصیص‌های چرخهٔ برنامه‌ریزی در خط زمان و نمای برنامه',
+      searchTerms: ['تعهد', 'برنامه‌ریزی', 'تخصیص', 'اهداف'],
+    ),
+    SettingDescriptor(
       key: 'calendar_compress_recurring',
       type: SettingType.boolean,
       scope: SettingScope.db,

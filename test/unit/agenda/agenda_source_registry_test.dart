@@ -38,9 +38,9 @@ void main() {
       AgendaSourceRegistry.instance.reset();
     });
 
-    test('default registry contains 10 built-in source entries in order', () {
+    test('default registry contains 11 built-in source entries in order', () {
       final entries = AgendaSourceRegistry.instance.entries;
-      expect(entries.length, equals(10));
+      expect(entries.length, equals(11));
       expect(entries.map((e) => e.id).toList(), equals([
         'routine',
         'worship',
@@ -52,6 +52,7 @@ void main() {
         'konkur',
         'cycle',
         'event',
+        'commitment',
       ]));
     });
 

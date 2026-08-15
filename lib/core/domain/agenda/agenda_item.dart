@@ -18,6 +18,7 @@ enum AgendaDomain {
   medicine,
   event,
   task,
+  commitment,
 }
 
 /// Explicit classification of an agenda item's scheduling constraints.

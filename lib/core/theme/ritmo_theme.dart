@@ -9,11 +9,14 @@ import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_module_colors.dart';
 import 'package:ritmo/core/theme/ritmo_palette.dart';
 import 'package:ritmo/core/theme/palettes/jade_noir.dart';
+import 'package:ritmo/core/theme/tokens/ritmo_material.dart';
 
 export 'package:ritmo/core/theme/ritmo_behavior.dart';
 export 'package:ritmo/core/theme/ritmo_colors.dart';
 export 'package:ritmo/core/theme/ritmo_module_colors.dart';
 export 'package:ritmo/core/theme/ritmo_palette.dart';
+export 'package:ritmo/core/theme/tokens/ritmo_material.dart';
+export 'package:ritmo/core/theme/tokens/ritmo_springs.dart';
 
 /// توکن‌های فاصله‌گذاری — فقط ۷ مقدار مجاز (سند طراحی §۳.۲)
 abstract final class RitmoSpacing {
@@ -322,6 +325,7 @@ class RitmoTheme {
       extensions: <ThemeExtension<dynamic>>[
         colors,
         RitmoBehavior(reduceTransparency: reduceTransparency),
+        RitmoMaterials.fromColors(colors),
       ],
       appBarTheme: AppBarTheme(
         backgroundColor: colors.background,
@@ -664,7 +668,9 @@ class RitmoTheme {
     );
   }
 
-  /// گرادیان پس‌زمینه زمان‌محور: از توکن پالت فعال تغذیه می‌کند
+  /// گرادیان پس‌زمینه زمان‌محور — در حال حاضر هگز هاردکد و مستقل از پالت است.
+  /// TODO(Aurora P1): به توکن گرادیان مشتق از پالت منتقل شود (RFC §۵.۷)؛
+  /// ساعت روز فقط زاویه و روشنایی را جابه‌جا می‌کند، نه هویت رنگ را.
   static List<Color> timeAwareGradient(Brightness brightness, {DateTime? now}) {
     final hour = (now ?? DateTime.now()).hour;
     final isDark = brightness == Brightness.dark;

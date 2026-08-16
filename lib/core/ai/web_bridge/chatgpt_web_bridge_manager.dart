@@ -27,6 +27,14 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   static const String targetUrl = 'https://chatgpt.com/';
   static const Duration inactivityTimeout = Duration(minutes: 5);
 
+  /// Hard ceiling for a single generation.
+  ///
+  /// Without this nothing on the Dart side is able to end a stream: the JS
+  /// watcher only reported completion when it had already seen some text, so a
+  /// page that stayed silent (login wall, selector drift, rate limit) left the
+  /// chat screen waiting on a stream that never closed.
+  static const Duration generationTimeout = Duration(seconds: 120);
+
   WebViewController? _controller;
   WebViewController? get controller => _controller;
 
@@ -36,12 +44,22 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   final ValueNotifier<bool> _cloudflareNotifier = ValueNotifier<bool>(false);
   ValueListenable<bool> get cloudflareNotifier => _cloudflareNotifier;
 
-  final ValueNotifier<ChatGptBridgeStatus> _statusNotifier = ValueNotifier<ChatGptBridgeStatus>(ChatGptBridgeStatus.idle);
+  final ValueNotifier<ChatGptBridgeStatus> _statusNotifier =
+      ValueNotifier<ChatGptBridgeStatus>(ChatGptBridgeStatus.idle);
   ValueListenable<ChatGptBridgeStatus> get statusNotifier => _statusNotifier;
 
   Timer? _inactivityTimer;
+  Timer? _generationTimer;
   StreamController<String>? _currentStreamController;
   Completer<bool>? _bootCompleter;
+
+  /// Text already forwarded downstream for the CURRENT generation.
+  ///
+  /// The web page is authoritative: every `chunk` and the final `done` carry the
+  /// complete visible answer, and we only push the part the chat screen has not
+  /// rendered yet. Reconciling here rather than in JS means a missed delta can
+  /// still be recovered at the end instead of silently disappearing.
+  String _emittedText = '';
 
   void _setStatus(ChatGptBridgeStatus newStatus) {
     _status = newStatus;
@@ -50,7 +68,6 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   }
 
   /// Ensures the WebView is booted and ready to receive prompts.
-  /// If it was disposed due to 5-minute inactivity, re-boots lazily.
   Future<bool> ensureBooted() async {
     _resetInactivityTimer();
 
@@ -62,10 +79,17 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       return _bootCompleter!.future;
     }
 
-    _bootCompleter = Completer<bool>();
+    final bootCompleter = Completer<bool>();
+    _bootCompleter = bootCompleter;
     _setStatus(ChatGptBridgeStatus.booting);
 
     try {
+      // webview_flutter 4.x exposes no WebViewController.dispose(); the platform
+      // view is released by GC once nothing references it. Dropping the previous
+      // reference BEFORE allocating a new one keeps failed boots from stacking
+      // native WebViews, which is a fast route back to the OOM we already fought.
+      _controller = null;
+
       final controller = WebViewController();
       _controller = controller;
 
@@ -74,7 +98,6 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
         'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36',
       );
 
-      // JavaScript Channel for two-way communication
       await controller.addJavaScriptChannel(
         'RitmoChatBridge',
         onMessageReceived: _handleJsMessage,
@@ -87,7 +110,6 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
           },
           onPageFinished: (url) async {
             debugPrint('[ChatGptWebBridge] Page loading finished: $url');
-            // Inject bridge watcher and listeners
             await controller.runJavaScript(ChatGptJsInjector.setupBridgeScript);
           },
           onWebResourceError: (error) {
@@ -98,17 +120,16 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
 
       await controller.loadRequest(Uri.parse(targetUrl));
 
-      // Wait up to 20 seconds for page & bridge readiness
       final isReady = await _waitForReady(timeout: const Duration(seconds: 20));
-      if (!_bootCompleter!.isCompleted) {
-        _bootCompleter!.complete(isReady);
+      if (!bootCompleter.isCompleted) {
+        bootCompleter.complete(isReady);
       }
       return isReady;
     } catch (e, st) {
       debugPrint('[ChatGptWebBridge] Boot error: $e\n$st');
       _setStatus(ChatGptBridgeStatus.error);
-      if (!_bootCompleter!.isCompleted) {
-        _bootCompleter!.complete(false);
+      if (!bootCompleter.isCompleted) {
+        bootCompleter.complete(false);
       }
       return false;
     }
@@ -128,11 +149,28 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     try {
       final data = jsonDecode(message.message) as Map<String, dynamic>;
       final type = data['type'] as String?;
-      final payload = (data['payload'] is Map<String, dynamic>)
-          ? data['payload'] as Map<String, dynamic>
-          : <String, dynamic>{};
 
-      debugPrint('[ChatGptWebBridge] JS event received: type=$type, payload=$payload');
+      // The injector spreads the payload into the envelope -- it posts
+      // `{ type, ...payload }` -- so every field lives at the TOP level.
+      // data['payload'] was therefore always absent and the nested reads below
+      // were dead code kept alive only by their fallbacks. Top level wins now;
+      // the nested lookup survives only for a stale script in a warm WebView.
+      final nested = (data['payload'] is Map<String, dynamic>)
+          ? data['payload'] as Map<String, dynamic>
+          : const <String, dynamic>{};
+      String? readString(String key) {
+        final top = data[key];
+        if (top is String) return top;
+        final inner = nested[key];
+        if (inner is String) return inner;
+        return null;
+      }
+
+      // Chunks arrive several times per second while streaming; logging each one
+      // is the kind of log volume this app has been burned by before.
+      if (type != 'chunk') {
+        debugPrint('[ChatGptWebBridge] JS event received: type=$type');
+      }
 
       switch (type) {
         case 'ready':
@@ -148,7 +186,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
           if (_status != ChatGptBridgeStatus.cloudflareChallenge) {
             _setStatus(ChatGptBridgeStatus.cloudflareChallenge);
             _cloudflareNotifier.value = true;
-            debugPrint('[ChatGptWebBridge] ⚠️ Cloudflare Challenge Detected!');
+            debugPrint('[ChatGptWebBridge] Cloudflare challenge detected.');
           }
           break;
 
@@ -156,32 +194,30 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
           if (_status == ChatGptBridgeStatus.cloudflareChallenge) {
             _setStatus(ChatGptBridgeStatus.ready);
             _cloudflareNotifier.value = false;
-            debugPrint('[ChatGptWebBridge] ✅ Cloudflare Challenge Resolved!');
+            debugPrint('[ChatGptWebBridge] Cloudflare challenge resolved.');
           }
           break;
 
         case 'chunk':
-          final delta = payload['delta'] as String? ?? data['delta'] as String? ?? '';
-          if (delta.isNotEmpty) {
-            _currentStreamController?.add(delta);
+          final full = readString('fullText');
+          if (full != null && full.isNotEmpty) {
+            _emitFrom(full);
+          } else {
+            final delta = readString('delta') ?? '';
+            if (delta.isNotEmpty) {
+              _emittedText += delta;
+              _currentStreamController?.add(delta);
+            }
           }
           _resetInactivityTimer();
           break;
 
         case 'done':
-          _setStatus(ChatGptBridgeStatus.ready);
-          _currentStreamController?.close();
-          _currentStreamController = null;
-          _resetInactivityTimer();
+          _finishGeneration(readString('fullText'));
           break;
 
         case 'error':
-          final msg = payload['message'] as String? ?? data['message'] as String? ?? 'Unknown error';
-          _setStatus(ChatGptBridgeStatus.ready);
-          _currentStreamController?.addError(Exception(msg));
-          _currentStreamController?.close();
-          _currentStreamController = null;
-          _resetInactivityTimer();
+          _failGeneration(readString('message') ?? 'Unknown error');
           break;
 
         default:
@@ -192,7 +228,72 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     }
   }
 
-  /// Sends a prompt and streams the assistant response tokens back.
+  /// Forwards the not-yet-seen tail of [full] to the listener.
+  ///
+  /// ChatGPT re-renders markdown while streaming (lists, closing code fences,
+  /// LaTeX), so the visible text is not strictly append-only. We only forward a
+  /// snapshot that genuinely extends what was already sent; anything else waits
+  /// for a later snapshot or for [_finishGeneration] to reconcile it.
+  void _emitFrom(String full) {
+    if (full.isEmpty || full == _emittedText) return;
+    if (full.length > _emittedText.length && full.startsWith(_emittedText)) {
+      final delta = full.substring(_emittedText.length);
+      _emittedText = full;
+      _currentStreamController?.add(delta);
+    }
+  }
+
+  /// Flushes whatever the page ended up showing, then closes the stream.
+  ///
+  /// This is the fix for replies vanishing entirely: `done` used to close the
+  /// stream without ever reading the fullText that came with it.
+  void _finishGeneration(String? fullText) {
+    _generationTimer?.cancel();
+    _generationTimer = null;
+
+    final controller = _currentStreamController;
+
+    if (fullText != null && fullText.isNotEmpty && controller != null) {
+      if (_emittedText.isEmpty) {
+        // Nothing streamed through -- deliver the whole answer at once.
+        _emittedText = fullText;
+        controller.add(fullText);
+      } else if (fullText.length > _emittedText.length &&
+          fullText.startsWith(_emittedText)) {
+        controller.add(fullText.substring(_emittedText.length));
+        _emittedText = fullText;
+      } else if (fullText != _emittedText) {
+        // A mid-stream rewrite we could not follow. The chat already shows the
+        // streamed copy and the downstream sink is append-only, so re-sending
+        // would duplicate text. Keep what was shown and record the divergence.
+        debugPrint('[ChatGptWebBridge] Final text diverged from streamed text; keeping streamed copy.');
+      }
+    }
+
+    _setStatus(ChatGptBridgeStatus.ready);
+    _currentStreamController = null;
+    _emittedText = '';
+    controller?.close();
+    _resetInactivityTimer();
+  }
+
+  void _failGeneration(String messageFa) {
+    _generationTimer?.cancel();
+    _generationTimer = null;
+
+    final controller = _currentStreamController;
+    _currentStreamController = null;
+    _emittedText = '';
+
+    _setStatus(ChatGptBridgeStatus.ready);
+    if (controller != null && !controller.isClosed) {
+      controller.addError(Exception(messageFa));
+      controller.close();
+    }
+    _resetInactivityTimer();
+  }
+
+  /// Sends a prompt and streams the assistant response back.
   Stream<String> sendPrompt({
     required String prompt,
     String? personaTitle,
@@ -202,7 +303,10 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
 
     final booted = await ensureBooted();
     if (!booted && _status == ChatGptBridgeStatus.cloudflareChallenge) {
-      yield '⚠️ برای ادامه گفتگو، لطفاً تایید امنیتی کلودفلر را در پنجره باز شده تایید نمایید...';
+      // Emitted as an error so StreamingChatService treats it as a failure and
+      // can fall back to the API slot. Without the prefix this warning was
+      // stored in ChatRepository as if ChatGPT had actually said it.
+      yield 'error:برای ادامه گفتگو، لطفاً تایید امنیتی کلودفلر را در پنجره باز شده کامل کنید.';
       return;
     }
 
@@ -211,7 +315,6 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       return;
     }
 
-    // Retrieve user name from database if available
     String? userName;
     try {
       final db = await DatabaseHelper.instance.database;
@@ -228,10 +331,19 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       debugPrint('[ChatGptWebBridge] Error fetching user_name: $e');
     }
 
+    // A second send must never orphan the first stream: its listener would wait
+    // forever and the incoming chunks would be routed to the wrong conversation.
+    final previous = _currentStreamController;
+    _currentStreamController = null;
+    if (previous != null && !previous.isClosed) {
+      await previous.close();
+    }
+
     _setStatus(ChatGptBridgeStatus.generating);
 
     final streamController = StreamController<String>();
     _currentStreamController = streamController;
+    _emittedText = '';
 
     final formattedPrompt = ChatGptJsInjector.formatPromptWithSystemDirective(
       userPrompt: prompt,
@@ -243,38 +355,65 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     final jsCall = ChatGptJsInjector.buildSendPromptScript(formattedPrompt);
     await _controller!.runJavaScript(jsCall);
 
+    _generationTimer?.cancel();
+    _generationTimer = Timer(generationTimeout, () {
+      if (!identical(_currentStreamController, streamController)) return;
+      debugPrint('[ChatGptWebBridge] Generation timed out after ${generationTimeout.inSeconds}s.');
+      if (_emittedText.isEmpty) {
+        _failGeneration('پاسخی از صفحهٔ ChatGPT دریافت نشد. لطفاً پنجرهٔ مرورگر را باز کنید و وضعیت ورود یا تایید امنیتی را بررسی کنید.');
+      } else {
+        _finishGeneration(null);
+      }
+    });
+
     yield* streamController.stream;
   }
 
-  /// Resets the 5-minute inactivity countdown.
-  /// After 5 minutes without any messages, the WebView is completely disposed to free RAM.
+  /// Resets the inactivity countdown.
   void _resetInactivityTimer() {
     _inactivityTimer?.cancel();
     _inactivityTimer = Timer(inactivityTimeout, () {
-      debugPrint('[ChatGptWebBridge] Inactivity timeout (5 min) reached. Disposing WebView to save RAM.');
+      // Never tear down a live generation. This used to close the stream
+      // mid-answer, which ended the await-for with an empty string and no error
+      // -- persisting a blank assistant message to the chat history.
+      if (_status == ChatGptBridgeStatus.generating ||
+          _currentStreamController != null) {
+        _resetInactivityTimer();
+        return;
+      }
+      debugPrint('[ChatGptWebBridge] Inactivity timeout reached. Releasing WebView reference.');
       disposeWebView();
     });
   }
 
-  /// Completely closes and disposes the WebViewController to reclaim memory.
+  /// Drops this side's references to the WebView.
+  ///
+  /// NOTE: webview_flutter 4.x has no WebViewController.dispose(). The native
+  /// WebView is only reclaimed by GC once no WebViewWidget references it either,
+  /// so this is a hint, not a guaranteed free. Do not rely on it for memory.
   void disposeWebView() {
     _inactivityTimer?.cancel();
     _inactivityTimer = null;
-    _currentStreamController?.close();
+    _generationTimer?.cancel();
+    _generationTimer = null;
+
+    final controller = _currentStreamController;
     _currentStreamController = null;
+    _emittedText = '';
+    controller?.close();
+
     _bootCompleter = null;
     _controller = null;
     _cloudflareNotifier.value = false;
     _setStatus(ChatGptBridgeStatus.idle);
-    debugPrint('[ChatGptWebBridge] Headless WebView disposed.');
+    debugPrint('[ChatGptWebBridge] WebView reference released.');
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
-      // In background, dispose immediately to prevent OS killing the app for memory consumption
       if (_status != ChatGptBridgeStatus.generating) {
-        debugPrint('[ChatGptWebBridge] App paused/detached, freeing WebView.');
+        debugPrint('[ChatGptWebBridge] App paused/detached, releasing WebView.');
         disposeWebView();
       }
     }

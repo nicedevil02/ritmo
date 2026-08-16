@@ -563,48 +563,18 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   ),
                 ),
               ],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(80),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [7, 14, 30, 90].map((d) {
-                          final isSelected = _selectedHorizonDays == d;
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: ChoiceChip(
-                              label: Text('${RitmoNumber.faInt(d)} روزه'),
-                              selected: isSelected,
-                              onSelected: (_) => _setHorizonDays(d),
-                              selectedColor: colors.primary.withValues(alpha: 0.2),
-                              labelStyle: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                color: isSelected ? colors.primary : colors.textSecondary,
-                                ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    TabBar(
-                      controller: _tabController,
-                      indicatorColor: colors.primary,
-                      labelColor: colors.primary,
-                      unselectedLabelColor: colors.textSecondary,
-                      labelStyle: RitmoTextStyles.label(colors.primary),
-                      unselectedLabelStyle: RitmoTextStyles.caption(colors.textSecondary),
-                      tabs: const [
-                        Tab(text: 'امروزِ من'),
-                        Tab(text: 'روند من'),
-                        Tab(text: 'آینه'),
-                      ],
-                    ),
-                  ],
-                ),
+              bottom: TabBar(
+                controller: _tabController,
+                indicatorColor: colors.primary,
+                labelColor: colors.primary,
+                unselectedLabelColor: colors.textSecondary,
+                labelStyle: RitmoTextStyles.label(colors.primary),
+                unselectedLabelStyle: RitmoTextStyles.caption(colors.textSecondary),
+                tabs: const [
+                  Tab(text: 'امروزِ من'),
+                  Tab(text: 'روند من'),
+                  Tab(text: 'آینه'),
+                ],
               ),
             ),
           ];
@@ -662,6 +632,42 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     );
   }
 
+  Widget _buildHorizonFilterRow(BuildContext context) {
+    final colors = context.colors;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [7, 14, 30, 90].map((d) {
+          final isSelected = _selectedHorizonDays == d;
+          return Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: ChoiceChip(
+              label: Text('${RitmoNumber.faInt(d)} روزه'),
+              selected: isSelected,
+              onSelected: (_) => _setHorizonDays(d),
+              selectedColor: colors.primary.withValues(alpha: 0.18),
+              backgroundColor: colors.surface,
+              side: BorderSide(
+                color: isSelected ? colors.primary : colors.border.withValues(alpha: 0.5),
+                width: isSelected ? 1.2 : 0.8,
+              ),
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? colors.primary : colors.textSecondary,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildTrendTab(BuildContext context) {
     return CustomScrollView(
       slivers: [
@@ -669,6 +675,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           padding: const EdgeInsets.all(RitmoSpacing.lg),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
+              _buildHorizonFilterRow(context),
+              const SizedBox(height: RitmoSpacing.md),
               WellbeingPulseChart(
                 days: _pulseDays,
                 onDayTap: (day) => _openDayDetailSheet(context, day),

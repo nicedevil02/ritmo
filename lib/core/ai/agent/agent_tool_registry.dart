@@ -58,16 +58,16 @@ class AgentToolRegistry {
     }
   }
 
-  /// تولید بلوک راهنمای ابزارها برای تزریق به پرامپت مدل
+  /// Generates the tools specification block injected into the AI system prompt
   String generateSystemToolsPrompt() {
     final buffer = StringBuffer();
-    buffer.writeln('=== [ابزارهای عملیاتی در دسترس دستیار ریتمو] ===');
-    buffer.writeln('شما به عنوان یک ایجنت خودمختار می‌توانید برای پاسخ‌گویی دقیق یا انجام درخواست‌های کاربر از ابزارهای زیر استفاده کنید.');
-    buffer.writeln('برای فراخوانی هر ابزار، از فرمت زیر در یک بلوک مشخص استفاده کنید:');
+    buffer.writeln('=== [AVAILABLE RITMO AUTONOMOUS AGENT TOOLS] ===');
+    buffer.writeln('As an autonomous agent, you can call the following tools to query the database, retrieve user logs, plan routines, or modify schedules.');
+    buffer.writeln('To execute a tool, output a single XML block matching the exact format:');
     buffer.writeln('<tool_call>');
-    buffer.writeln('{"tool": "نام_ابزار", "parameters": {"پارامتر۱": "مقدار"}}');
+    buffer.writeln('{"tool": "tool_name", "parameters": {"param1": "value"}}');
     buffer.writeln('</tool_call>');
-    buffer.writeln('\nلیست ابزارهای موجود:');
+    buffer.writeln('\nAvailable tools by category:');
 
     // Group by category
     final grouped = <String, List<AgentTool>>{};
@@ -76,7 +76,7 @@ class AgentToolRegistry {
     }
 
     grouped.forEach((category, list) {
-      buffer.writeln('\n📂 دسته: $category');
+      buffer.writeln('\n📂 Category: $category');
       for (final tool in list) {
         buffer.writeln(tool.toPromptDescription());
       }

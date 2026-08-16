@@ -51,10 +51,12 @@ class AgentToolCallParser {
 
   static final RegExp _blockRe = RegExp(r'<tool_call>([\s\S]*?)<\/tool_call>');
   static final RegExp _danglingToolRe = RegExp(r'<tool_call>[\s\S]*$');
-  static final RegExp _actionsRe = RegExp(r'<actions>[\s\S]*?<\/actions>');
-  static final RegExp _memOpsRe = RegExp(r'<memory_ops>[\s\S]*?<\/memory_ops>');
+  static final RegExp _actionsRe = RegExp(r'<actions>[\s\S]*?<\/actions>', caseSensitive: false);
+  static final RegExp _memOpsRe = RegExp(r'<memory_ops>[\s\S]*?<\/memory_ops>', caseSensitive: false);
   static final RegExp _danglingTagRe =
-      RegExp(r'<(actions|memory_ops|memory)>[\s\S]*$');
+      RegExp(r'<(actions|memory_ops|memory|tool_call)[^>]*>[\s\S]*$', caseSensitive: false);
+  static final RegExp _partialTagRe =
+      RegExp(r'<\/?(action|tool|memory|actions|tool_call|memory_ops)[^>]*$', caseSensitive: false);
   static final RegExp _fenceOpenRe = RegExp(r'^\s*```[a-zA-Z0-9_-]*\s*');
   static final RegExp _fenceCloseRe = RegExp(r'\s*```\s*$');
 
@@ -123,6 +125,7 @@ class AgentToolCallParser {
     text = text.replaceAll(_actionsRe, '');
     text = text.replaceAll(_memOpsRe, '');
     text = text.replaceAll(_danglingTagRe, '');
+    text = text.replaceAll(_partialTagRe, '');
     return text.trim();
   }
 

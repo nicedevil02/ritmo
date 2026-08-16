@@ -24,9 +24,10 @@ class AiMemoryService {
 
   static String memoryInstruction() {
     return '\n---'
-        '\n[قانون حافظه صریح]'
-        '\nاگر کاربر صریحاً خواست چیزی به خاطر سپرده شود (مثلاً با عباراتی مثل «یادت باشه...» یا «فراموش نکن...»)، شما باید فکت مربوطه را استخراج کرده و در انتهای پاسخ خود خارج از متن اصلی، دقیقاً با فرمت تگ زیر بفرستید. در متن اصلی پاسخ نیز خیلی کوتاه و صمیمانه ذخیره شدن آن را تأیید کنید:'
-        '\n<memory_ops>[{"op":"ADD","content":"فکت استخراج‌شده به صورت جمله سوم‌شخص کوتاه فارسی","type":"preference","importance":10,"sensitive":false}]</memory_ops>'
+        '\n[EXPLICIT MEMORY INSTRUCTION]'
+        '\nIf the user explicitly asks you to remember something (e.g. "یادت باشه...", "فراموش نکن...", "remember that..."), extract the core fact and append a `<memory_ops>` tag at the very end of your response in the exact format:'
+        '\n<memory_ops>[{"op":"ADD","content":"Extracted fact as a concise third-person statement in Persian","type":"preference","importance":10,"sensitive":false}]</memory_ops>'
+        '\nIn your Persian response text, warmly acknowledge that it has been noted.'
         '\n---';
   }
 

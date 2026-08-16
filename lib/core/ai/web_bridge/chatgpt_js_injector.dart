@@ -13,24 +13,24 @@ class ChatGptJsInjector {
   }) {
     final systemDirective = personaSystemPrompt?.trim().isNotEmpty == true
         ? personaSystemPrompt!.trim()
-        : 'شما دستیار هوشمند و اختصاصی اپلیکیشن «ریتمو» (Ritmo AI) هستید. وظیفه شما راهنمایی دقیق، دلسوزانه، مختصر و کاربردی به زبان فارسی در زمینه مدیریت روتین‌ها، اهداف، سبک زندگی و برنامه‌ریزی روزانه کاربر است. قوانین: ۱. همیشه به زبان فارسی روان و شمرده پاسخ دهید. ۲. از تعارفات زائد پرهیز کنید و مستقیماً به اصل موضوع بپردازید. ۳. پاسخ‌ها را ساختاریافته و با بولت‌پوینت‌های کوتاه ارائه دهید.';
+        : 'You are the intelligent, empathetic assistant of the Ritmo app. Your mission is to provide helpful, structured, and insightful guidance in fluent, natural Persian (Farsi) regarding routines, goals, lifestyle, and day planning. Rules: 1. Always respond in natural, polite Persian (Farsi). 2. Avoid unnecessary fluff and address the user\'s needs directly. 3. Format responses clearly with structured paragraphs or bullet points.';
 
     final userContext = (userName != null && userName.trim().isNotEmpty)
-        ? 'نام کاربر مخاطب شما: «${userName.trim()}» است. در مکالمات در صورت لزوم کاربر را با همین نام محترمانه خطاب قرار دهید.\n'
+        ? 'User Name: "${userName.trim()}". Address the user respectfully by this name in Farsi when appropriate.\n'
         : '';
 
     final contextBlock = (contextSummary != null && contextSummary.trim().isNotEmpty)
-        ? '\n[اطلاعات پرونده و وضعیت جاری کاربر]:\n${contextSummary.trim()}\n'
+        ? '\n[USER CONTEXT & RECENT LOGS]:\n${contextSummary.trim()}\n'
         : '';
 
     final historyBlock = (recentHistory != null && recentHistory.isNotEmpty)
-        ? '\n[تاریخچه آخرین پیام‌های مکالمه]:\n${recentHistory.join('\n')}\n'
+        ? '\n[RECENT CONVERSATION HISTORY]:\n${recentHistory.join('\n')}\n'
         : '';
 
     return '''
-[دستورالعمل سیستم ریتمو]:
+[RITMO SYSTEM DIRECTIVE]:
 $userContext$systemDirective$contextBlock$historyBlock
-[درخواست جدید کاربر]:
+[USER QUERY]:
 $userPrompt
 '''.trim();
   }
@@ -229,20 +229,78 @@ $userPrompt
     }
   }
 
-  // --- 4. Robust Live Assistant Text Extractor ---
+  // --- 4. Robust Live Assistant Text Extractor with Linebreaks ---
+  function domToStructuredText(node) {
+    if (!node) return '';
+    var noisyTags = {
+      'STYLE': true, 'SCRIPT': true, 'NOSCRIPT': true, 'TEMPLATE': true,
+      'LINK': true, 'META': true, 'BUTTON': true, 'SVG': true, 'NAV': true,
+      'H5': true, 'H6': true
+    };
+
+    function walk(n) {
+      if (!n) return '';
+      if (n.nodeType === 3) {
+        return n.nodeValue || '';
+      }
+      if (n.nodeType !== 1) return '';
+
+      var tag = n.tagName.toUpperCase();
+      if (noisyTags[tag]) return '';
+      if (n.classList && (n.classList.contains('sr-only') || n.classList.contains('hidden'))) return '';
+      if (n.getAttribute && (n.getAttribute('aria-hidden') === 'true' || (n.getAttribute('data-testid') && n.getAttribute('data-testid').indexOf('screen-reader') !== -1))) return '';
+
+      var textVal = (n.innerText || n.textContent || '').trim();
+      if ((textVal === 'ChatGPT said:' || textVal === 'ChatGPT said' || textVal === 'You said:' || textVal === 'You said') && (tag === 'H5' || tag === 'H6' || tag === 'SPAN' || tag === 'DIV' || tag === 'P')) {
+        return '';
+      }
+
+      var childText = '';
+      for (var i = 0; i < n.childNodes.length; i++) {
+        childText += walk(n.childNodes[i]);
+      }
+
+      if (tag === 'BR') {
+        return '\n';
+      }
+      if (tag === 'P' || tag === 'DIV' || tag === 'SECTION' || tag === 'ARTICLE' || tag === 'BLOCKQUOTE') {
+        return '\n' + childText + '\n';
+      }
+      if (tag === 'LI') {
+        return '\n• ' + childText;
+      }
+      if (tag === 'H1' || tag === 'H2' || tag === 'H3' || tag === 'H4') {
+        return '\n\n' + childText + '\n';
+      }
+      if (tag === 'TR') {
+        return childText + '\n';
+      }
+      if (tag === 'TD' || tag === 'TH') {
+        return childText + '\t';
+      }
+      return childText;
+    }
+
+    var result = walk(node);
+    result = result.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    result = result.split('\n').map(function(l) { return l.trim(); }).join('\n');
+    result = result.replace(/\n{3,}/g, '\n\n');
+    result = result.replace(/^(\s*[\u2022\u2023\u25E6\u2043\u2219\*\-\.\:]\s*)*(:?\s*ChatGPT\s*said:?|:?\s*ChatGPT:?|:?\s*You\s*said:?|:?\s*Assistant\s*said:?)\s*/gi, '');
+    result = result.replace(/^(:?ChatGPT\s*said:?|:?ChatGPT:?|:?You\s*said:?)\s*/gi, '');
+    return result.trim();
+  }
+
   function extractCleanText(el) {
     if (!el) return '';
-    // Prefer the actual content body if this is a rich writing/canvas component
     var textContainer = el.querySelector('[data-conversation-part="body"], [data-assistant-writing-block-body], .markdown, .prose, div[class*="markdown"], div[class*="prose"], div.whitespace-pre-wrap') || el;
-    var clone = textContainer.cloneNode(true);
-    // Unconditionally purge style, script, SVG, buttons, and screen-reader elements
-    var noisy = clone.querySelectorAll('style, script, noscript, template, link, meta, button, svg, nav, [aria-label*="Copy"], [aria-label*="کپی"], [aria-label*="Share"], [aria-label*="اشتراک"], .sr-only, [data-testid*="screen-reader"], h5, h6, [data-conversation-part="header"], [data-conversation-part="metadata"]');
-    for (var i = 0; i < noisy.length; i++) {
-      noisy[i].remove();
+    
+    var rawText = domToStructuredText(textContainer);
+    if (!rawText && textContainer.innerText) {
+      rawText = textContainer.innerText.trim();
     }
-    var rawText = (clone.innerText || clone.textContent || '').trim();
-    rawText = rawText.replace(/^(ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|Assistant\s*said:?)\s*/i, '');
-    // Strip any lingering CSS definitions if a style tag was unparsed
+
+    rawText = rawText.replace(/^(\s*[\u2022\u2023\u25E6\u2043\u2219\*\-\.\:]\s*)*(:?\s*ChatGPT\s*said:?|:?\s*ChatGPT:?|:?\s*You\s*said:?|:?\s*Assistant\s*said:?)\s*/gi, '');
+    rawText = rawText.replace(/^(:?ChatGPT\s*said:?|:?ChatGPT:?|:?You\s*said:?)\s*/gi, '');
     if (rawText.indexOf('[data-conversation-') !== -1 || rawText.indexOf('--component-') !== -1) {
       rawText = rawText.replace(/\[data-[^\]]+\]\s*\{[^}]*\}/g, '');
       rawText = rawText.replace(/--[a-zA-Z0-9_-]+:[^;]+;?/g, '');
@@ -250,54 +308,52 @@ $userPrompt
     return rawText.trim();
   }
 
+  function isValidAssistantText(text) {
+    if (!text || text.length === 0) return false;
+    if (text.indexOf('[RITMO SYSTEM DIRECTIVE]') !== -1 ||
+        text.indexOf('[USER QUERY]') !== -1 ||
+        text.indexOf('[دستورالعمل سیستم ریتمو]') !== -1 ||
+        text.indexOf('[درخواست جدید کاربر]') !== -1 ||
+        text.indexOf('[RITMO AUTONOMOUS AGENT TOOLS]') !== -1 ||
+        text.indexOf('[AVAILABLE RITMO AUTONOMOUS AGENT TOOLS]') !== -1 ||
+        text.indexOf('[LIVE DATABASE DATA RETRIEVED') !== -1) {
+      return false;
+    }
+    return true;
+  }
+
   function findLatestAssistantText() {
     try {
       // 1. Explicit assistant role
       var assistants = document.querySelectorAll('[data-message-author-role="assistant"]');
-      if (assistants && assistants.length > 0) {
-        var t = extractCleanText(assistants[assistants.length - 1]);
-        if (t) return t;
+      for (var i = assistants.length - 1; i >= 0; i--) {
+        var t = extractCleanText(assistants[i]);
+        if (isValidAssistantText(t)) return t;
       }
 
-      // 2. Assistant action bar (Copy / Share buttons)
-      var copyBtns = document.querySelectorAll('button[aria-label*="Copy"], button[aria-label*="کپی"], button[data-testid*="copy"]');
-      if (copyBtns && copyBtns.length > 0) {
-        for (var c = copyBtns.length - 1; c >= 0; c--) {
-          var btn = copyBtns[c];
-          var parentTurn = btn.closest('article, [data-testid*="conversation-turn"], div[class*="agent-turn"], div[class*="text-base"]');
-          if (parentTurn) {
-            var t = extractCleanText(parentTurn);
-            if (t) return t;
-          }
-          var parentDiv = btn.parentElement ? (btn.parentElement.parentElement || btn.parentElement) : null;
-          if (parentDiv) {
-            var t2 = extractCleanText(parentDiv);
-            if (t2) return t2;
-          }
-        }
+      // 2. Active streaming container
+      var streaming = document.querySelectorAll('.result-streaming');
+      for (var s = streaming.length - 1; s >= 0; s--) {
+        var tS = extractCleanText(streaming[s]);
+        if (isValidAssistantText(tS)) return tS;
       }
 
-      // 3. Articles from bottom up excluding user
-      var articles = document.querySelectorAll('article, [data-testid*="conversation-turn-"]');
-      for (var i = articles.length - 1; i >= 0; i--) {
-        var art = articles[i];
-        var isUser = !!art.querySelector('[data-message-author-role="user"]') ||
-                     (art.getAttribute('data-testid') || '').indexOf('user') !== -1;
-        if (!isUser) {
-          var t = extractCleanText(art);
-          if (t) return t;
-        }
+      // 3. Elements with class agent-turn or assistant
+      var agentTurns = document.querySelectorAll('div[class*="agent-turn"], div[class*="assistant-message"]');
+      for (var a = agentTurns.length - 1; a >= 0; a--) {
+        var tA = extractCleanText(agentTurns[a]);
+        if (isValidAssistantText(tA)) return tA;
       }
 
-      // 4. Markdown/prose blocks from bottom up
+      // 4. Markdown/prose blocks from bottom up (excluding any inside user turns)
       var markdowns = document.querySelectorAll('div.markdown, div.prose, [class*="markdown"], [class*="prose"]');
       for (var j = markdowns.length - 1; j >= 0; j--) {
         var md = markdowns[j];
-        var isUser = !!md.closest('[data-message-author-role="user"], [data-testid*="user"], div.font-user-message');
-        if (!isUser) {
-          var t = extractCleanText(md);
-          if (t) return t;
+        if (md.closest('[data-message-author-role="user"], [data-testid*="user"], div.font-user-message, div[data-is-user="true"]')) {
+          continue;
         }
+        var tMd = extractCleanText(md);
+        if (isValidAssistantText(tMd)) return tMd;
       }
     } catch (e) {
       console.warn('[Ritmo] findLatestAssistantText error:', e);

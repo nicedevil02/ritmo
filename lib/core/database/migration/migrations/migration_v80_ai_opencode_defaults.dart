@@ -32,8 +32,8 @@ class MigrationV80AiOpencodeDefaults extends Migration {
 
     // Save default OpenCode API key encrypted in SecureKeyStore
     const apiKey = 'sk-jFjvHozwSit6S3YthLrr9UiFLYMSTBABkXnxACu5pFSiTpHv2YG8gGj4pWNgQKWn';
-    await SecureKeyStore.setKey('ai_api_key', apiKey);
-    await SecureKeyStore.setKey('ai_features_api_key', apiKey);
+    await SecureKeyStore.setKey('ai_api_key', apiKey, db);
+    await SecureKeyStore.setKey('ai_features_api_key', apiKey, db);
   }
 
   @override

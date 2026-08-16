@@ -58,17 +58,15 @@ class GetStudyProgressSummaryTool extends AgentTool {
   }
 }
 
-/// ۲. ابزار دریافت روتین‌های معنوی و عبادات
-///
-/// همان اصلاح: وجود جدول بررسی می‌شود و خطا بلعیده نمی‌شود.
-class GetWorshipRoutinesTool extends AgentTool {
-  const GetWorshipRoutinesTool()
+/// ۲. ابزار دریافت برنامه‌های عبادی، تلاوت قرآن و اعمال مستحبی
+class GetWorshipPracticesTool extends AgentTool {
+  const GetWorshipPracticesTool()
       : super(
-          name: 'get_worship_routines',
+          name: 'get_worship_practices',
           categoryFa: 'عبادات و معنویت',
-          titleFa: 'اعمال و روتین‌های معنوی',
+          titleFa: 'برنامه‌های عبادی و قرآنی',
           descriptionFa:
-              'لیست آیتم‌های عبادی ثبت‌شده را بازمی‌گرداند. اگر این بخش در دسترس نباشد، صریحاً خطا می‌دهد.',
+              'لیست برنامه‌های عبادی، ختم و تلاوت روزانه قرآن، اذکار و مستحبات فعال کاربر را بازمی‌گرداند.',
           policy: ToolPolicy.readOnly,
         );
 
@@ -77,35 +75,142 @@ class GetWorshipRoutinesTool extends AgentTool {
     final db = await DatabaseHelper.instance.database;
 
     try {
-      final tables = await db.rawQuery(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
-        ['worship_items'],
+      final rows = await db.query(
+        'worship_practices',
+        where: 'isActive = 1',
+        orderBy: 'sortOrder ASC, updatedAt DESC',
       );
-      if (tables.isEmpty) {
-        return AgentToolResult.failure(
-          toolName: name,
-          errorMessage:
-              'جدول آیتم‌های عبادی در این نسخهٔ برنامه وجود ندارد، پس وضعیت عبادات را از این مسیر نمی‌توان خواند. به جایش از ابزار برنامهٔ روز یا مرور روتین‌ها استفاده کن.',
-        );
-      }
 
-      final rows = await db.rawQuery(
-        'SELECT * FROM worship_items ORDER BY rowid DESC LIMIT 20',
+      final formatted = rows.map((r) => {
+        'id': r['id'],
+        'title': r['title'],
+        'type': r['practiceType'], // PRAYER, MUSTAHAB, QURAN, DHIKR
+        'dailyTarget': r['dailyTarget'] ?? 1,
+        'dailyDone': r['dailyDone'] ?? 0,
+        'reminderTime': r['reminderTime'] ?? 'نامشخص',
+        'reminderEnabled': r['reminderEnabled'] == 1,
+      }).toList();
+
+      return AgentToolResult.success(
+        toolName: name,
+        data: {'practices': formatted, 'count': formatted.length},
+        summaryFa: formatted.isEmpty
+            ? 'هیچ برنامه عبادی یا قرآنی فعالی در سیستم ثبت نشده است.'
+            : '${formatted.length} برنامه عبادی/قرآنی فعال یافت شد.',
+      );
+    } catch (e, st) {
+      RitmoLog.error('GetWorshipPracticesTool', 'worship_practices query failed', e, st);
+      return AgentToolResult.failure(
+        toolName: name,
+        errorMessage: 'خواندن برنامه‌های عبادی با خطا مواجه شد: $e',
+      );
+    }
+  }
+}
+
+/// ۳. ابزار ایجاد برنامه تلاوت قرآن، ذکر یا اعمال مستحبی در بخش عبادات
+class CreateWorshipPracticeTool extends AgentTool {
+  const CreateWorshipPracticeTool()
+      : super(
+          name: 'create_worship_practice',
+          categoryFa: 'عبادات و معنویت',
+          titleFa: 'ایجاد برنامه عبادی یا تلاوت قرآن',
+          descriptionFa:
+              'یک برنامه اختصاصی تلاوت قرآن (با هدف روزانه مثلاً ۴ صفحه)، اعمال مستحبی یا ذکر در بخش عبادات ریتمو ثبت می‌کند.',
+          policy: ToolPolicy.actionDirect,
+          parameters: const [
+            ToolParameter(
+              name: 'title',
+              descriptionFa: 'عنوان برنامه (مثلاً خواندن قرآن، زیارت عاشورا، دعای عهد)',
+              type: 'string',
+              isRequired: true,
+            ),
+            ToolParameter(
+              name: 'practiceType',
+              descriptionFa: 'نوع برنامه: QURAN (قرآن)، MUSTAHAB (مستحبات)، DHIKR (اذکار)، PRAYER (نماز)',
+              type: 'string',
+              defaultValue: 'QURAN',
+              allowedValues: ['QURAN', 'MUSTAHAB', 'DHIKR', 'PRAYER'],
+            ),
+            ToolParameter(
+              name: 'dailyTarget',
+              descriptionFa: 'تعداد هدف در هر روز (مثلاً ۴ برای ۴ صفحه قرآن، یا ۱ برای یک بار)',
+              type: 'int',
+              defaultValue: 4,
+            ),
+            ToolParameter(
+              name: 'reminderTime',
+              descriptionFa: 'ساعت یادآوری به فرمت HH:MM (مثلاً 05:00)',
+              type: 'string',
+              defaultValue: '05:00',
+            ),
+          ],
+        );
+
+  @override
+  Future<AgentToolResult> execute(Map<String, dynamic> args) async {
+    final title = args['title']?.toString() ?? 'تلاوت قرآن کریم';
+    final practiceType = args['practiceType']?.toString().toUpperCase() ??
+        (title.contains('قرآن') ? 'QURAN' : 'MUSTAHAB');
+    final dailyTarget = (args['dailyTarget'] is int)
+        ? args['dailyTarget'] as int
+        : (int.tryParse(args['dailyTarget']?.toString() ?? '4') ?? 4);
+
+    var reminderTime = args['reminderTime']?.toString() ?? '05:00';
+    // Normalize Persian digits
+    const pDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    const eDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    for (var i = 0; i < pDigits.length; i++) {
+      reminderTime = reminderTime.replaceAll(pDigits[i], eDigits[i]);
+    }
+
+    final db = await DatabaseHelper.instance.database;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    final id = 'wp_${practiceType.toLowerCase()}_$nowMs';
+
+    try {
+      await db.insert(
+        'worship_practices',
+        {
+          'id': id,
+          'practiceType': practiceType,
+          'subType': 'CUSTOM',
+          'title': title,
+          'dailyTarget': dailyTarget,
+          'dailyDone': 0,
+          'reminderEnabled': 1,
+          'reminderTime': reminderTime,
+          'reminderFrequency': 'DAILY',
+          'reminderAnchor': 'NONE',
+          'reminderOffsetMinutes': 0,
+          'reminderDaysOfWeek': null,
+          'reminderTimes': '["$reminderTime"]',
+          'isActive': 1,
+          'showInCalendar': 1,
+          'notes': 'تنظیم‌شده توسط دستیار هوشمند',
+          'dailyDoneDate': todayStr,
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        },
       );
 
       return AgentToolResult.success(
         toolName: name,
-        data: {'items': rows, 'count': rows.length},
-        summaryFa: rows.isEmpty
-            ? 'جدول آیتم‌های عبادی خوانده شد و واقعاً خالی بود.'
-            : '${rows.length} آیتم عبادی ثبت شده است.',
+        data: {
+          'id': id,
+          'title': title,
+          'practiceType': practiceType,
+          'dailyTarget': dailyTarget,
+          'reminderTime': reminderTime,
+        },
+        summaryFa: 'برنامه «$title» با هدف روزانه $dailyTarget و یادآوری ساعت $reminderTime در بخش عبادات ثبت شد.',
       );
     } catch (e, st) {
-      RitmoLog.error('GetWorshipRoutinesTool', 'worship_items query failed', e, st);
+      RitmoLog.error('CreateWorshipPracticeTool', 'insert worship_practice failed', e, st);
       return AgentToolResult.failure(
         toolName: name,
-        errorMessage:
-            'خواندن آیتم‌های عبادی با خطا متوقف شد: $e',
+        errorMessage: 'خطا در ثبت برنامه عبادی: $e',
       );
     }
   }

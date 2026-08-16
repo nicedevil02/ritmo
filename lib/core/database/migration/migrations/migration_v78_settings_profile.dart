@@ -49,10 +49,10 @@ class MigrationV78SettingsProfile extends Migration {
     }
 
     // ۲. تفکیک رمز بخش چرخه از قفل برنامه
-    final appPin = await SecureKeyStore.getKey('app_lock_password');
-    final cyclePin = await SecureKeyStore.getKey('cycle_lock_password');
+    final appPin = await SecureKeyStore.getKey('app_lock_password', db);
+    final cyclePin = await SecureKeyStore.getKey('cycle_lock_password', db);
     if ((cyclePin == null || cyclePin.isEmpty) && appPin != null && appPin.isNotEmpty) {
-      await SecureKeyStore.setKey('cycle_lock_password', appPin);
+      await SecureKeyStore.setKey('cycle_lock_password', appPin, db);
     }
 
     // ۳. پاک‌سازی کلیدهای مرده

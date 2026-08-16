@@ -365,7 +365,18 @@ class PlannerController extends ChangeNotifier {
     dependencyOffsetMinutes = data['dependencyOffsetMinutes'] as int? ?? 0;
     
     // Load Time and Recurrence
-    final timeStr = data['timeOfDay'] as String? ?? '08:00';
+    var timeStr = data['timeOfDay'] as String? ??
+        data['time'] as String? ??
+        data['scheduledTime'] as String? ??
+        '08:00';
+    
+    // Normalize Persian digits
+    const pDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    const eDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    for (var i = 0; i < pDigits.length; i++) {
+      timeStr = timeStr.replaceAll(pDigits[i], eDigits[i]);
+    }
+
     final parts = timeStr.split(':');
     if (parts.length == 2) {
       selectedTime = TimeOfDay(

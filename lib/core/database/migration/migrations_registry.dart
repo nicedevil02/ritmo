@@ -2965,13 +2965,9 @@ class MigrationV60 extends Migration {
       await db.execute('''
         DELETE FROM routine_completions
         WHERE id NOT IN (
-          SELECT id FROM (
-            SELECT id, ROW_NUMBER() OVER (
-              PARTITION BY routineId, completionDate, resultType
-              ORDER BY createdAt DESC, id DESC
-            ) as row_num
-            FROM routine_completions
-          ) WHERE row_num = 1
+          SELECT id FROM routine_completions
+          GROUP BY routineId, completionDate, resultType
+          HAVING createdAt = max(createdAt)
         );
       ''');
 

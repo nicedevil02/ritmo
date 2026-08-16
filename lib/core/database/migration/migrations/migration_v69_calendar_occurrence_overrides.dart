@@ -43,8 +43,8 @@ class MigrationV69 extends Migration {
     try {
       await db.execute('''
         UPDATE routines
-        SET defaultDurationMinutes = durationMinutes
-        WHERE durationMinutes IS NOT NULL AND durationMinutes > 0 AND defaultDurationMinutes IS NULL;
+        SET defaultDurationMinutes = targetDurationMinutes
+        WHERE targetDurationMinutes IS NOT NULL AND targetDurationMinutes > 0 AND defaultDurationMinutes IS NULL;
       ''');
     } catch (_) {}
   }

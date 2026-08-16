@@ -99,7 +99,38 @@ class AssistantActionRegistry {
 
     switch (action.type) {
       case AssistantActionType.createRoutine:
-        // Map payload to edit structure
+        // Helper to normalize digits and format HH:MM
+        String normalizeTimeStr(dynamic raw) {
+          if (raw == null) return '09:00';
+          var s = raw.toString().trim();
+          const pDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+          const eDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+          for (var i = 0; i < pDigits.length; i++) {
+            s = s.replaceAll(pDigits[i], eDigits[i]);
+          }
+          if (RegExp(r'^\d{1,2}:\d{2}$').hasMatch(s)) {
+            final parts = s.split(':');
+            return '${parts[0].padLeft(2, '0')}:${parts[1]}';
+          }
+          return s.isNotEmpty ? s : '09:00';
+        }
+
+        final titleStr = action.payload['title']?.toString() ?? '';
+        final rawTime = action.payload['time'] ??
+            action.payload['timeOfDay'] ??
+            action.payload['scheduledTime'] ??
+            action.payload['time_of_day'];
+        final resolvedTimeStr = normalizeTimeStr(rawTime);
+        final timeParts = resolvedTimeStr.split(':');
+        final prefilledHour = timeParts.isNotEmpty ? (int.tryParse(timeParts[0]) ?? 9) : 9;
+        final prefilledMin = timeParts.length > 1 ? (int.tryParse(timeParts[1]) ?? 0) : 0;
+
+        final isWorshipItem = titleStr.contains('قرآن') ||
+            titleStr.contains('نماز') ||
+            titleStr.contains('زیارت') ||
+            titleStr.contains('دعا') ||
+            action.payload['category']?.toString().toLowerCase() == 'worship';
+
         final categoryMap = {
           'work': 'work',
           'fitness': 'fitness',
@@ -108,20 +139,28 @@ class AssistantActionRegistry {
           'personal': 'personal',
           'worship': 'worship'
         };
-        final categoryStr = categoryMap[action.payload['category']?.toString().toLowerCase()] ?? 'personal';
+        final categoryStr = isWorshipItem
+            ? 'worship'
+            : (categoryMap[action.payload['category']?.toString().toLowerCase()] ?? 'personal');
         
         final tempRoutine = {
           'id': '',
-          'title': action.payload['title']?.toString() ?? '',
+          'title': titleStr,
           'description': action.payload['description']?.toString() ?? '',
           'category': categoryStr,
-          'routineType': action.payload['routineType']?.toString() ?? 'ROUTINE',
-          'timeOfDay': action.payload['timeOfDay']?.toString() ?? '09:00',
-          'recurrenceType': action.payload['recurrenceType']?.toString(),
+          'routineType': isWorshipItem ? 'timeBased' : (action.payload['routineType']?.toString() ?? 'ROUTINE'),
+          'timeOfDay': resolvedTimeStr,
+          'scheduledTime': resolvedTimeStr,
+          'time': resolvedTimeStr,
+          'recurrenceType': action.payload['recurrenceType']?.toString() ?? 'EVERY_DAY',
           'intervalDays': action.payload['intervalDays'],
           'intervalHours': action.payload['intervalHours'],
           'weekdays': action.payload['weekdays'],
-          'targetDurationMinutes': action.payload['durationMinutes'],
+          'targetDurationMinutes': action.payload['durationMinutes'] ?? 15,
+          if (isWorshipItem) ...{
+            'worshipType': titleStr.contains('قرآن') ? 'QURAN' : 'MUSTAHAB',
+            'worshipDailyTarget': action.payload['dailyTarget'] ?? (titleStr.contains('قرآن') ? 4 : 1),
+          },
         };
 
         if (context.mounted) {
@@ -132,6 +171,8 @@ class AssistantActionRegistry {
               barrierDismissible: true,
               pageBuilder: (context, _, _) => UniversalPlannerSheet(
                 routineToEdit: tempRoutine,
+                prefilledTime: TimeOfDay(hour: prefilledHour, minute: prefilledMin),
+                prefilledTitle: titleStr.isNotEmpty ? titleStr : null,
                 onSaved: () {
                   onComplete();
                 },

@@ -61,7 +61,8 @@ void initializeAllAgentTools() {
 
     // ۷. یادگیری و عبادات
     const GetStudyProgressSummaryTool(),
-    const GetWorshipRoutinesTool(),
+    const GetWorshipPracticesTool(),
+    const CreateWorshipPracticeTool(),
 
     // ۸. سیستم و ناوبری
     const NavigateToAppScreenTool(),

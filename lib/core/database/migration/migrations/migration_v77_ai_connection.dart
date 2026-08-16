@@ -37,7 +37,7 @@ class MigrationV77AiConnection extends Migration {
       'app_settings',
       where: "key IN ('ai_api_key','ai_features_api_key','ai_base_url') AND value != ''",
     );
-    final legacyKey = await SecureKeyStore.getKey('ai_api_key');
+    final legacyKey = await SecureKeyStore.getKey('ai_api_key', db);
     final hasAnything = existing.isNotEmpty || (legacyKey != null && legacyKey.isNotEmpty);
     await put('ai_mode', hasAnything ? 'personal_key' : 'ritmo_server');
 

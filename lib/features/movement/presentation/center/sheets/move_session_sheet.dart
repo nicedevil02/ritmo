@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/movement/application/movement_analytics_service.dart';
 import 'package:ritmo/features/movement/domain/models/movement_change_scope.dart';
 import 'package:ritmo/features/movement/domain/models/movement_occurrence.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
@@ -114,6 +115,12 @@ class _MoveSessionSheetState extends State<MoveSessionSheet> {
     setState(() => _isSaving = true);
     try {
       await widget.onMoveConfirm(_selectedDateIso, _selectedTime, _scope);
+      final dayOffset = DateTime.tryParse(_selectedDateIso)?.difference(DateTime.tryParse(widget.occurrence.dateIso) ?? DateTime.now()).inDays ?? 0;
+      MovementAnalyticsService.instance.logOccurrenceMoved(
+        scope: _scope.name,
+        dayOffset: dayOffset,
+        actionSource: 'move_session_sheet',
+      );
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

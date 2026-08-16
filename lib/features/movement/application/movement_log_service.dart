@@ -267,4 +267,17 @@ class MovementLogService {
       return MovementWorkoutLog.fromMap(r, activityKind: kind);
     }).toList();
   }
+
+  /// دریافت لاگ‌های تمرینی یک گونهٔ فعالیت مشخص
+  Future<List<MovementWorkoutLog>> getLogsForActivityKind(String activityKindId) async {
+    final db = await _database;
+    final rows = await db.query(
+      MovementTables.tableWorkoutLogs,
+      where: 'activityKindId = ?',
+      whereArgs: [activityKindId],
+      orderBy: 'createdAt DESC',
+    );
+
+    return rows.map((r) => MovementWorkoutLog.fromMap(r)).toList();
+  }
 }

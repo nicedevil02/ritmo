@@ -10,9 +10,9 @@ import 'package:ritmo/core/domain/agenda/sources/goal_steps_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/konkur_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/medicine_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/routine_agenda_source.dart';
-import 'package:ritmo/core/domain/agenda/sources/sports_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/task_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/worship_agenda_source.dart';
+import 'package:ritmo/features/movement/application/movement_agenda_source.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
@@ -120,21 +120,22 @@ class AgendaSourceRegistry {
       },
     ));
 
-    // 3. Sports Agenda Source
+    // 3. Sports & Movement Agenda Source
     _entries.add(AgendaSourceEntry(
-      id: 'sports',
+      id: 'movement',
       domains: {AgendaDomain.sport},
       loader: (ctx) async {
-        final sportsEnabled =
-            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_supplementary_sports_enabled') ||
-            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_sports_enabled');
-        if (!sportsEnabled) {
-          return SportsAgendaSource.disabled(ctx.db);
+        final movementEnabled =
+            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_movement_enabled') ||
+            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_sports_enabled') ||
+            ModuleGate.instance.isEnabledFrom(ctx.settingsMap, 'module_supplementary_sports_enabled');
+        if (!movementEnabled) {
+          return MovementAgendaSource.disabled();
         }
         return ctx.guardSource<AgendaSource>(
-          'sports',
-          () => SportsAgendaSource.load(ctx.db, ctx.settingsMap),
-          () => SportsAgendaSource.disabled(ctx.db),
+          'movement',
+          () => MovementAgendaSource.load(ctx.db, ctx.settingsMap, start: ctx.start, end: ctx.end),
+          () => MovementAgendaSource.disabled(),
         );
       },
     ));

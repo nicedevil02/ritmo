@@ -8,7 +8,6 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/systems_hub_logic.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 
-import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
@@ -20,13 +19,11 @@ import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
 import 'package:ritmo/features/goals/presentation/goals_screen.dart';
 import 'package:ritmo/features/health/presentation/health_screen.dart';
 import 'package:ritmo/features/study/study_module_entry.dart';
-import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
-import 'package:ritmo/features/profile/presentation/profile_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/modules_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/settings_screen.dart';
-import 'package:ritmo/features/simple_tasks/presentation/simple_tasks_screen.dart';
 import 'package:ritmo/features/notes/presentation/screens/notebook_screen.dart';
 
+import 'package:ritmo/features/movement/presentation/center/movement_center_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_intro_screen.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
@@ -84,9 +81,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
   bool _assistantEnabled = false;
   bool _sportsEnabled = false;
   bool _supplementarySportsEnabled = false;
-  bool _energyEnabled = false;
-  bool _sleepEnabled = false;
-  bool _progressiveHabitsEnabled = false;
   bool _notesEnabled = false;
 
   // Status flags resolved from db state
@@ -174,9 +168,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       _assistantEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_assistant_enabled');
       _sportsEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_sports_enabled');
       _supplementarySportsEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_supplementary_sports_enabled');
-      _energyEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_energy_enabled');
-      _sleepEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_sleep_enabled');
-      _progressiveHabitsEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_progressive_habits_enabled');
       _notesEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_notes_enabled');
 
 
@@ -619,18 +610,36 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       );
     }
 
-    // 4.5. Supplementary Sports Module (unified Sports System)
+    // 4.5. Supplementary Sports Module (سیستم ورزش قبلی)
     if (_matchesSearch('ورزش تکمیلی', 'برنامه تمرین هوشمند فیتنس') || _matchesSearch('ورزش', 'قدرت امروز، سلامتی فردا')) {
       healthCards.add(
         _buildGridItem(
           index: cardIndex++,
           icon: Icons.fitness_center,
           iconColor: const Color(0xff10B981),
-          title: 'حرکت',
+          title: 'ورزش تکمیلی',
           description: 'برنامه تمرین هوشمند و بودجهٔ حرکت هفتگی',
           status: (_sportsEnabled || _supplementarySportsEnabled) ? ModuleStatus.active : ModuleStatus.inactive,
           illustrationAsset: 'assets/images/sports_card_top.png',
           onTap: () => _handleSupplementarySportsTap(colors),
+          colors: colors,
+          isDarkMode: isDarkMode,
+        ),
+      );
+    }
+
+    // 4.6. Movement Greenfield Module (مرکز حرکت جدید)
+    if (_matchesSearch('مرکز حرکت', 'برنامه‌ریزی حرکت، قدرت در خانه') || _matchesSearch('حرکت', 'برنامه‌ریزی حرکت')) {
+      healthCards.add(
+        _buildGridItem(
+          index: cardIndex++,
+          icon: Icons.directions_run_rounded,
+          iconColor: const Color(0xff10B981),
+          title: 'مرکز حرکت',
+          description: 'برنامه‌ریزی حرکت، قدرت در خانه، تحلیل پیشرفت و کتابخانه',
+          status: ModuleStatus.active,
+          illustrationAsset: 'assets/images/sports_card_top.png',
+          onTap: () => _handleMovementTap(colors),
           colors: colors,
           isDarkMode: isDarkMode,
         ),
@@ -1145,7 +1154,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       }
     } else {
       _showActivationSheet(
-        title: 'فعال‌سازی سیستم حرکت',
+        title: 'فعال‌سازی سیستم ورزش تکمیلی',
         description: 'با فعال‌سازی این سیستم، می‌توانید برنامه تمرین هوشمند بر اساس سطح و اهداف خود دریافت کنید، حرکات را با بازخورد کیفی ثبت کنید و روند تداوم خود را دنبال کنید.',
         icon: Icons.fitness_center,
         iconColor: const Color(0xff10B981),
@@ -1172,6 +1181,19 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           }
         },
         colors: colors,
+      );
+    }
+  }
+
+  Future<void> _handleMovementTap(RitmoColors colors) async {
+    if (mounted) {
+      unawaited(
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MovementCenterScreen(),
+          ),
+        ).then((_) => _loadAllData()),
       );
     }
   }
@@ -1334,93 +1356,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
         );
       },
     );
-  }
-
-  Future<void> _toggleModule(String key, bool value) async {
-    if (!mounted) return;
-
-    if (key == 'module_medicine_enabled' && !value) {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (context) => Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: const Color(0xff1A1D29),
-            title: const Text('⚠️ هشدار مهم پزشکی', style: TextStyle()),
-            content: const Text(
-              'توجه: غیرفعال‌سازی این ماژول تمام یادآوری‌های دارویی شما را لغو می‌کند و ممکن است بر سلامتتان اثر بگذارد. مطمئنید؟',
-              style: TextStyle(height: 1.6),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('خیر، لغو نشود', style: TextStyle(color: Color(0xff9AA0AE))),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('بله، خاموش کن', style: TextStyle(color: Color(0xffE5736B), fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      if (confirm != true) return;
-    }
-
-    if (key == 'module_sports_enabled' || key == 'module_supplementary_sports_enabled') {
-      await ModuleManagementService.instance.setModuleEnabled('module_sports_enabled', value);
-      await ModuleManagementService.instance.setModuleEnabled('module_supplementary_sports_enabled', value);
-    } else {
-      await ModuleManagementService.instance.setModuleEnabled(key, value);
-    }
-    await _loadAllData();
-  }
-
-  Future<void> _confirmAndResetModule(String key, String moduleTitle) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: const Color(0xff1A1D29),
-          title: Text('⚠️ بازنشانی سیستم $moduleTitle', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          content: Text(
-            'آیا از بازنشانی داده‌های سیستم «$moduleTitle» اطمینان دارید؟ تمام ثبت‌ها، تاریخچه و اطلاعات این سیستم پاک خواهد شد و قابل بازگردانی نیست.',
-            style: const TextStyle(height: 1.6, fontSize: 13),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('انصراف', style: TextStyle(color: Color(0xff9AA0AE))),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('بله، بازنشانی کن', style: TextStyle(color: Color(0xffE5736B), fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (confirm == true) {
-      if (key == 'module_sports_enabled' || key == 'module_supplementary_sports_enabled') {
-        await ModuleManagementService.instance.resetModuleData('module_sports_enabled');
-        await ModuleManagementService.instance.resetModuleData('module_supplementary_sports_enabled');
-      } else {
-        await ModuleManagementService.instance.resetModuleData(key);
-      }
-      await _loadAllData();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('داده‌های سیستم «$moduleTitle» با موفقیت بازنشانی گردید.', style: const TextStyle()),
-            backgroundColor: const Color(0xff10B981),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
   }
 
   void _showModulesManagementSheet() {

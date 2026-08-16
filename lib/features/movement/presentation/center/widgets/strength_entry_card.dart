@@ -27,10 +27,12 @@ class StrengthEntryCard extends StatelessWidget {
     final colors = context.colors;
     final sportsColor = context.modules.sports;
 
-    final isInactive = program == null || program!.isInactive;
-    final isActive = program != null && program!.isActive;
+    final isInactive = program == null || program!.status == MovementStrengthProgramStatus.none;
+    final isDraft = program != null && program!.status == MovementStrengthProgramStatus.draft;
+    final isPaused = program != null && program!.status == MovementStrengthProgramStatus.paused;
+    final isActive = program != null && (program!.status == MovementStrengthProgramStatus.active && !program!.isDeload);
     final isDeload = program != null && program!.isDeload;
-    final isFinished = program != null && program!.isFinished;
+    final isFinished = program != null && program!.status == MovementStrengthProgramStatus.finished;
 
     return Container(
       margin: const EdgeInsets.symmetric(
@@ -128,6 +130,82 @@ class StrengthEntryCard extends StatelessWidget {
                 ),
               ),
             ),
+          ] else if (isDraft) ...[
+            Text(
+              'پیش‌نویس برنامهٔ قدرتی شما در انتظار تکمیل است.',
+              style: RitmoTextStyles.body(colors.textSecondary),
+            ),
+            const SizedBox(height: RitmoSpacing.lg),
+            SizedBox(
+              height: MovementLayout.kPrimaryButtonHeight,
+              child: FilledButton(
+                onPressed: () {
+                  RitmoHapticsPolicy.selection();
+                  onBuildProgram();
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: sportsColor,
+                  foregroundColor: colors.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                  ),
+                ),
+                child: Text(
+                  'ادامهٔ آنبوردینگ قدرت',
+                  style: RitmoTextStyles.label(colors.onPrimary),
+                ),
+              ),
+            ),
+          ] else if (isPaused) ...[
+            Text(
+              MovementStrings.strengthHubPaused,
+              style: RitmoTextStyles.body(colors.warning),
+            ),
+            const SizedBox(height: RitmoSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () {
+                      RitmoHapticsPolicy.selection();
+                      onResumeSession();
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: sportsColor,
+                      foregroundColor: colors.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(RitmoRadius.field),
+                      ),
+                    ),
+                    child: Text(
+                      MovementStrings.strengthHubResume,
+                      style: RitmoTextStyles.label(colors.onPrimary),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: RitmoSpacing.sm),
+                OutlinedButton(
+                  onPressed: () {
+                    RitmoHapticsPolicy.tap();
+                    onViewProgram();
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.textPrimary,
+                    side: BorderSide(
+                      color: colors.border,
+                      width: RitmoElevation.borderWidthDark,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(RitmoRadius.field),
+                    ),
+                  ),
+                  child: Text(
+                    MovementStrings.strengthViewProgram,
+                    style: RitmoTextStyles.label(colors.textPrimary),
+                  ),
+                ),
+              ],
+            ),
           ] else if (isActive || isDeload) ...[
             if (isDeload) ...[
               Text(
@@ -141,8 +219,8 @@ class StrengthEntryCard extends StatelessWidget {
               children: [
                 Text(
                   MovementStrings.strengthWeekProgress(
-                    program!.currentWeek ?? 1,
-                    program!.totalWeeks ?? 8,
+                    program!.currentWeek,
+                    program!.totalWeeks,
                   ),
                   style: RitmoTextStyles.label(colors.textPrimary),
                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/movement/application/movement_analytics_service.dart';
 import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
 import 'package:ritmo/features/movement/domain/models/movement_plan_schedule.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
@@ -53,6 +54,12 @@ class PlanPreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    MovementAnalyticsService.instance.logPlanPreviewed(
+      family: activityKind.family,
+      daysCount: schedules.length,
+      hasConflict: disabledReason != null,
+    );
+
     final colors = context.colors;
     final sportsColor = context.modules.sports;
 

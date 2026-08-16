@@ -348,12 +348,128 @@ abstract final class MovementStrings {
   static const diffReason = 'دلیل';
   static const diffLocked = 'غیرقابل تغییر';
 
+  // Strength Onboarding, Preview, Hub & Session (Gate 4)
+  static const strengthOnboardingTitle = 'قدرت در خانه';
+  static const strengthMedicalDisclaimer = 'این بخش جایگزین مشاورهٔ پزشکی نیست';
+  static const strengthGoalTitle = 'هدف اصلی شما از تمرینات قدرتی چیست؟';
+  static const strengthLevelTitle = 'سطح تجربه و سلامت مفاصل';
+  static const strengthEquipmentTitle = 'تجهیزات در دسترس در خانه';
+  static const strengthScheduleTitle = 'روزها و زمان‌بندی جلسات';
+  static const strengthPreferencesTitle = 'سایر ترجیحات محیطی و تمرینی';
+  static const strengthPreviewTitle = 'پیش‌نمایش برنامهٔ قدرتی';
+  static const strengthPreviewActivate = 'فعال‌سازی برنامه';
+  static const strengthPreviewChangeAnswers = 'تغییر پاسخ‌ها';
+  static const strengthWhyThisProgram = 'چرا این برنامه برای شما مناسب است؟';
+  static const strengthProgressionTitle = 'منطق پیشرفت دوره به زبان ساده';
+  static const strengthHubTitle = 'مرکز قدرت در خانه';
+  static const strengthHubCreatePlan = 'ساخت برنامهٔ من';
+  static const strengthHubDeloadWeek = 'هفتهٔ دِلود';
+  static const strengthHubPaused = 'برنامه موقتاً متوقف شده است';
+  static const strengthHubResume = 'ادامهٔ برنامه';
+  static const strengthHubCompleted = 'دورهٔ تمرینی به پایان رسید';
+  static const strengthHubNewCycle = 'شروع دورهٔ جدید';
+  static const strengthRecordSet = 'ثبت ست';
+  static const strengthNextExercise = 'حرکت بعدی';
+  static const strengthFinishSession = 'پایان جلسه';
+  static const strengthAddSet = '+ ست';
+  static const strengthRestTimer = 'استراحت بین ست‌ها';
+  static const strengthRestSkip = 'رد کردن';
+  static const strengthRirLabel = 'تکرار در ذخیره (RIR)';
+  static const strengthSwapExercise = 'جایگزینی حرکت';
+  static const strengthSwapOnlyToday = 'فقط برای امروز';
+  static const strengthSwapWholeProgram = 'در کل برنامه';
+  static const strengthManageTitle = 'مدیریت برنامهٔ قدرتی';
+  static const strengthManageNoDeleteNotice = 'سوابق انجام‌شده حذف نمی‌شوند.';
+  static const strengthManagePause = 'مکث برنامه';
+  static const strengthManageFinish = 'پایان برنامه';
+
+  // ---------------------------------------------------------------------------
+  // Readiness & Coach (Gate 5)
+  // ---------------------------------------------------------------------------
+  static const readinessCheckinTitle = 'ارزیابی آمادگی روزانه';
+  static const readinessSubtitle = 'پاسخ به این سؤالات کاملاً اختیاری است و به تنظیم هوشمند فشار تمرین کمک می‌کند.';
+  static const readinessSleepLabel = 'کیفیت خواب';
+  static const readinessEnergyLabel = 'سطح انرژی';
+  static const readinessSorenessLabel = 'کوفتگی و درد عضلانی';
+  static const readinessStressLabel = 'میزان استرس';
+  static const readinessAvailableMinutesLabel = 'زمان در دسترس';
+  static const readinessSkip = 'رد کردن';
+  static const readinessSubmit = 'ثبت وضعیت';
+  static const coachSuggestionTitle = 'پیشنهاد مربی';
+
+  // ---------------------------------------------------------------------------
+  // Progress & KPIs (Gate 5)
+  // ---------------------------------------------------------------------------
+  static const progressScreenTitle = 'پیشرفت و تحلیل حرکت';
+  static const rangeWeek = 'هفته';
+  static const rangeMonth = 'ماه';
+  static const rangeThreeMonths = '۳ ماه';
+  static const rangeAll = 'کل دوره';
+  static const kpiSessions = 'جلسات';
+  static const kpiActiveMinutes = 'دقیقه فعالیت';
+  static const kpiActiveDays = 'روزهای فعال';
+  static const kpiAdherence = 'پایبندی';
+  static const kpiStrengthVolume = 'حجم قدرتی';
+  static const kpiDistance = 'مسافت';
+  static const trendChartTitle = 'روند فعالیت هفتگی';
+  static const trendNeedMoreData = 'برای نمایش روند به دادهٔ بیشتری نیاز است';
+  static const trendTableView = 'نمایش به‌صورت جدول';
+  static const distributionTitle = 'توزیع خانواده‌های ورزشی';
+  static const strengthProgressTitle = 'پیشرفت تمرینات قدرتی';
+  static const bodyMapTitle = 'توزیع کار گروه‌های عضلانی';
+  static const prListTitle = 'رکوردهای شخصی';
+  static const prNoRecords = 'هنوز رکوردی ثبت نشده است.';
+  static const statusBreakdownTitle = 'تفکیک وضعیت جلسات';
+  static const noProgressData = 'هنوز داده‌ای برای نمایش پیشرفت ثبت نشده است';
+
+  // ---------------------------------------------------------------------------
+  // Library (Gate 5)
+  // ---------------------------------------------------------------------------
+  static const libraryScreenTitle = 'کتابخانهٔ فعالیت‌ها';
+  static const librarySearchPlaceholder = 'جست‌وجوی فعالیت...';
+  static const libraryFilterAll = 'همه';
+  static const libraryClearFilters = 'پاک‌کردن فیلترها';
+  static const libraryCustomActivities = 'فعالیت‌های سفارشی من';
+  static const libraryCreateCustom = 'ساخت فعالیت جدید';
+  static const libraryNoResult = 'فعالیتی با این مشخصات یافت نشد';
+  static const libraryAddToPlan = 'افزودن به برنامه';
+  static const libraryStartNow = 'شروع همین حالا';
+
+  // ---------------------------------------------------------------------------
+  // Settings (Gate 5)
+  // ---------------------------------------------------------------------------
+  static const settingsScreenTitle = 'تنظیمات حرکت';
+  static const settingsUnitsGroup = 'واحدها';
+  static const settingsRemindersGroup = 'یادآوری‌ها';
+  static const settingsExperienceGroup = 'تجربهٔ جلسه';
+  static const settingsSuggestionsGroup = 'پیشنهادهای هوشمند';
+  static const settingsPrivacyGroup = 'حریم خصوصی و داده‌ها';
+  static const settingsAboutGroup = 'درباره و سلب مسئولیت';
+  static const settingsMedicalDisclaimer = 'این بخش جایگزین مربی یا پزشک نیست.';
+  static const settingsDeleteAllData = 'حذف کامل داده‌های حرکت';
+  static const settingsDeleteConfirmTitle = 'آیا از حذف داده‌ها مطمئن هستید؟';
+  static const settingsDeleteImpactText = 'با این کار تمام جلسات، سوابق، برنامه‌ها و رکوردهای ثبت‌شده در بخش حرکت پاکسازی خواهند شد و این عملیات غیرقابل بازگشت است.';
+  // ---------------------------------------------------------------------------
+  // Agenda & Notifications (Gate 6)
+  // ---------------------------------------------------------------------------
+  static const notificationNeutralTitle = 'یادآوری ریتمو';
+  static const notificationNeutralBody = 'یک برنامهٔ ورزشی در زمان‌بندی امروز شما ثبت شده است.';
+  static const notificationSessionPreReminder = 'یادآوری شروع جلسهٔ ورزشی';
+  static const notificationMorningTitle = 'برنامهٔ ورزشی امروز';
+  static const notificationPartialTitle = 'یادآوری جلسهٔ نیمه‌تمام';
+  static const notificationPartialBody = 'جلسهٔ ورزشی شما نیمه‌کاره باقی مانده است. برای ادامه کلیک کنید.';
+  static const agendaSportActionComplete = 'تکمیل تمرین';
+  static const agendaSportActionDetails = 'مشاهدهٔ جلسه';
+
   // Dynamic parameterized string functions
   static String strengthStepOf(int step) =>
       'گام ${toPersianDigits(step)} از ${toPersianDigits(5)}';
 
   static String strengthWeekProgress(int current, int total) =>
       'هفتهٔ ${toPersianDigits(current)} از ${toPersianDigits(total)}';
+
+  static String strengthExerciseProgress(int current, int total) =>
+      'حرکت ${toPersianDigits(current)} از ${toPersianDigits(total)}';
 
   static String heroSessionProgress(int current, int total) =>
       'جلسهٔ ${toPersianDigits(current)} از ${toPersianDigits(total)}';

@@ -15,6 +15,7 @@ import 'package:ritmo/core/ai/ai_response_processor.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -1052,6 +1053,23 @@ class AIGateway {
       return;
     }
 
+    final primary = await _loadConfig(slot: slot);
+    if (primary.baseUrl.contains('chatgpt.com')) {
+      final userMessage = messages.lastWhere(
+        (m) => m['role'] == 'user',
+        orElse: () => {'content': ''},
+      )['content'] ?? '';
+      final systemMessage = messages.firstWhere(
+        (m) => m['role'] == 'system',
+        orElse: () => {'content': ''},
+      )['content'];
+      yield* ChatGptWebBridgeManager.instance.sendPrompt(
+        prompt: userMessage,
+        personaSystemPrompt: systemMessage,
+      );
+      return;
+    }
+
     final open = await _openStream(
       messages: messages,
       slot: slot,
@@ -1125,6 +1143,24 @@ class AIGateway {
       yield 'error:rate_limited';
       return;
     }
+
+    final primary = await _loadConfig(slot: slot);
+    if (primary.baseUrl.contains('chatgpt.com')) {
+      final userMessage = messages.lastWhere(
+        (m) => m['role'] == 'user',
+        orElse: () => {'content': ''},
+      )['content'] ?? '';
+      final systemMessage = messages.firstWhere(
+        (m) => m['role'] == 'system',
+        orElse: () => {'content': ''},
+      )['content'];
+      yield* ChatGptWebBridgeManager.instance.sendPrompt(
+        prompt: userMessage,
+        personaSystemPrompt: systemMessage,
+      );
+      return;
+    }
+
     final open = await _openStream(
       messages: messages,
       temperature: temperature,

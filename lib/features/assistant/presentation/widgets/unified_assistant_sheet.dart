@@ -32,6 +32,9 @@ import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
 import 'package:ritmo/features/assistant/models/assistant_models.dart';
+import 'package:ritmo/core/ai/agent/agent_event.dart';
+import 'package:ritmo/core/ai/agent/agent_loop_runner.dart';
+import 'package:ritmo/features/chat/presentation/widgets/agent_timeline_visualizer.dart';
 import 'package:ritmo/features/chat/presentation/widgets/streaming_message_bubble.dart';
 
 /// Unified Assistant Sheet with iOS26 Glassmorphic Window, Speech-to-Text,
@@ -75,6 +78,10 @@ class _AssistantSheetState extends State<AssistantSheet> {
   bool _isTyping = false;
   bool _isStreaming = false;
   StreamSubscription<String>? _streamSubscription;
+  StreamSubscription<AgentEvent>? _agentSubscription;
+  final List<AgentStep> _agentSteps = [];
+  String _agentStatusText = '';
+  bool _isAgentWorking = false;
 
   bool _canUndoLast = false;
   String? _lastPlanId;
@@ -306,30 +313,26 @@ class _AssistantSheetState extends State<AssistantSheet> {
             })
       ];
 
-      final config = await AiConnectionRepository.instance.load(slot: AiSlot.assistant);
-      final isChatGptWeb = config.providerPresetId == 'chatgpt_web' || config.baseUrl.contains('chatgpt.com');
+      final recentHistory = _messages
+          .where((m) => m.content.isNotEmpty)
+          .take(4)
+          .map((m) => '${m.role == ChatRole.user ? "کاربر" : "دستیار"}: ${m.content}')
+          .toList();
 
-      final Stream<String> stream;
-      if (isChatGptWeb) {
-        final recentHistory = _messages
-            .where((m) => m.content.isNotEmpty)
-            .take(4)
-            .map((m) => '${m.role == ChatRole.user ? "کاربر" : "دستیار"}: ${m.content}')
-            .toList();
+      setState(() {
+        _agentSteps.clear();
+        _agentStatusText = 'در حال تحلیل هوشمند و بررسی ابزارها...';
+        _isAgentWorking = true;
+      });
 
-        stream = ChatGptWebBridgeManager.instance.sendPrompt(
-          prompt: query,
-          personaTitle: widget.persona.displayName,
-          personaSystemPrompt: systemPrompt,
-          contextSummary: briefJson,
-          recentHistory: recentHistory.isNotEmpty ? recentHistory : null,
-        );
-      } else {
-        stream = AIGateway.instance.sendCustomChatStream(
-          messages: messagesToSend,
-          slot: AiSlot.assistant,
-        );
-      }
+      final agentStream = AgentLoopRunner.instance.runAgent(
+        prompt: query,
+        personaTitle: widget.persona.displayName,
+        personaSystemPrompt: systemPrompt,
+        contextSummary: briefJson,
+        recentHistory: recentHistory.isNotEmpty ? recentHistory : null,
+        slot: AiSlot.assistant,
+      );
 
       final assistantMsgId = 'msg_${DateTime.now().millisecondsSinceEpoch}_a';
       final assistantMsg = ChatMessage(
@@ -348,75 +351,93 @@ class _AssistantSheetState extends State<AssistantSheet> {
       });
 
       var fullResponse = '';
-      _streamSubscription = stream.listen(
-        (chunk) {
-          if (chunk.startsWith('error:')) {
-            final errorMsg = chunk.substring(6);
+      _agentSubscription?.cancel();
+      _agentSubscription = agentStream.listen(
+        (event) {
+          if (event is AgentStatusChangedEvent) {
             if (mounted) {
               setState(() {
-                _isStreaming = false;
-                String errText;
-                if (fullResponse.isEmpty) {
-                  if (errorMsg == 'quota_exceeded') {
-                    errText =
-                        'سهمیه رایگان روزانه ۱۰,۰۰۰ نورون هوش مصنوعی کلادفلر شما برای امروز به پایان رسیده است ⚠️\n\nمی‌توانید فردا مجدداً تلاش کنید یا در تنظیمات پروفایل ارائه‌دهنده را روی OpenRouter یا Zhipu AI تنظیم نمایید 🔌';
-                  } else {
-                    errText =
-                        'متأسفانه در حال حاضر خطایی در برقراری ارتباط با سرور هوش مصنوعی رخ داده است. لطفاً اتصال فیلترشکن یا اینترنت خود را بررسی کنید 🔌';
-                  }
+                _agentStatusText = event.statusTextFa;
+                _isAgentWorking = event.isWorking;
+              });
+            }
+          } else if (event is AgentStepStartedEvent || event is AgentStepCompletedEvent) {
+            if (mounted) {
+              final step = (event is AgentStepStartedEvent) ? event.step : (event as AgentStepCompletedEvent).step;
+              setState(() {
+                final idx = _agentSteps.indexWhere((s) => s.id == step.id);
+                if (idx != -1) {
+                  _agentSteps[idx] = step;
                 } else {
-                  errText = '$fullResponse\n\n⚠️ [اتصال به هوش مصنوعی قطع شد]';
+                  _agentSteps.add(step);
                 }
+              });
+            }
+          } else if (event is AgentTokenStreamEvent) {
+            fullResponse = event.accumulated;
+            if (mounted) {
+              setState(() {
                 _messages[_messages.length - 1] = ChatMessage(
                   id: assistantMsgId,
                   sessionId: widget.persona.id,
                   role: ChatRole.assistant,
-                  content: errText,
+                  content: fullResponse,
+                  timestamp: DateTime.now(),
+                  isStreaming: true,
+                );
+              });
+              _scrollToBottom();
+            }
+          } else if (event is AgentCompletedEvent) {
+            if (mounted) {
+              setState(() {
+                _messages[_messages.length - 1] = ChatMessage(
+                  id: assistantMsgId,
+                  sessionId: widget.persona.id,
+                  role: ChatRole.assistant,
+                  content: event.finalAnswer.isNotEmpty ? event.finalAnswer : fullResponse,
+                  timestamp: DateTime.now(),
+                  isStreaming: false,
+                );
+                _isStreaming = false;
+                _isAgentWorking = false;
+              });
+            }
+            if (fullResponse.isNotEmpty && !fullResponse.startsWith('error:')) {
+              _validateAndExecute(fullResponse);
+            }
+          } else if (event is AgentErrorEvent) {
+            if (mounted) {
+              setState(() {
+                _isStreaming = false;
+                _isAgentWorking = false;
+                _messages[_messages.length - 1] = ChatMessage(
+                  id: assistantMsgId,
+                  sessionId: widget.persona.id,
+                  role: ChatRole.assistant,
+                  content: fullResponse.isNotEmpty
+                      ? '$fullResponse\n\n⚠️ [خطا]: ${event.errorMessageFa}'
+                      : 'متأسفانه در حال حاضر خطایی در پردازش رخ داده است: ${event.errorMessageFa}',
                   timestamp: DateTime.now(),
                   isStreaming: false,
                 );
               });
             }
-            return;
-          }
-
-          fullResponse += chunk;
-          if (mounted) {
-            setState(() {
-              _messages[_messages.length - 1] = ChatMessage(
-                id: assistantMsgId,
-                sessionId: widget.persona.id,
-                role: ChatRole.assistant,
-                content: fullResponse,
-                timestamp: DateTime.now(),
-                isStreaming: true,
-              );
-            });
-            _scrollToBottom();
           }
         },
         onDone: () {
           if (mounted) {
             setState(() {
-              _messages[_messages.length - 1] = ChatMessage(
-                id: assistantMsgId,
-                sessionId: widget.persona.id,
-                role: ChatRole.assistant,
-                content: fullResponse,
-                timestamp: DateTime.now(),
-                isStreaming: false,
-              );
               _isStreaming = false;
+              _isAgentWorking = false;
             });
-          }
-          if (fullResponse.isNotEmpty && !fullResponse.startsWith('error:')) {
-            _validateAndExecute(fullResponse);
           }
         },
         onError: (err) {
           if (mounted) {
             setState(() {
               _isStreaming = false;
+              _isAgentWorking = false;
               if (fullResponse.isEmpty) {
                 _messages[_messages.length - 1] = ChatMessage(
                   id: assistantMsgId,
@@ -1002,6 +1023,13 @@ class _AssistantSheetState extends State<AssistantSheet> {
                   padding: EdgeInsets.all(8.0),
                   child: CupertinoActivityIndicator(),
                 ),
+
+              // Live Agent Activity Timeline Visualizer
+              AgentTimelineVisualizer(
+                steps: _agentSteps,
+                statusText: _agentStatusText,
+                isWorking: _isAgentWorking,
+              ),
 
               // Live Mini ChatGPT Preview Window
               const ChatGptMiniPreview(),

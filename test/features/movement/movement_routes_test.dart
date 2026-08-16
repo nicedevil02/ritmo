@@ -21,21 +21,20 @@ void main() {
       expect(MovementRoutes.settings, equals('movement.settings'));
     });
 
-    test('In standard build without MOVEMENT_GREENFIELD_INTERNAL flag, movement routes resolve to null', () {
-      // In default environment without --dart-define=MOVEMENT_GREENFIELD_INTERNAL=true,
-      // the router must safely return null without throwing or registering unreleased screens.
-      expect(RitmoRouter.resolve(MovementRoutes.center), isNull);
-      expect(RitmoRouter.resolve(MovementRoutes.picker), isNull);
-      expect(RitmoRouter.resolve(MovementRoutes.planEditor), isNull);
-      expect(RitmoRouter.resolve(MovementRoutes.occurrence), isNull);
-      expect(RitmoRouter.resolve(MovementRoutes.liveSession), isNull);
-      expect(RitmoRouter.resolve(MovementRoutes.summary), isNull);
-      expect(RitmoRouter.resolve(MovementRoutes.strengthHub), isNull);
-      expect(RitmoRouter.resolve(MovementRoutes.strengthOnboarding), isNull);
-      expect(RitmoRouter.resolve(MovementRoutes.strengthPreview), isNull);
-      expect(RitmoRouter.resolve(MovementRoutes.progress), isNull);
-      expect(RitmoRouter.resolve(MovementRoutes.library), isNull);
-      expect(RitmoRouter.resolve(MovementRoutes.settings), isNull);
+    test('Movement routes resolve to valid screen targets in RitmoRouter', () {
+      expect(RitmoRouter.resolve(MovementRoutes.center), isNotNull);
+      expect(RitmoRouter.resolve(MovementRoutes.picker), isNotNull);
+      expect(RitmoRouter.resolve(MovementRoutes.planEditor), isNotNull);
+      expect(RitmoRouter.resolve(MovementRoutes.occurrence), isNotNull);
+      expect(RitmoRouter.resolve(MovementRoutes.liveSession), isNotNull);
+      expect(RitmoRouter.resolve(MovementRoutes.summary), isNotNull);
+      expect(RitmoRouter.resolve(MovementRoutes.strengthHub), isNotNull);
+      expect(RitmoRouter.resolve(MovementRoutes.strengthOnboarding), isNotNull);
+      expect(RitmoRouter.resolve(MovementRoutes.strengthPreview), isNotNull);
+      expect(RitmoRouter.resolve(MovementRoutes.progress), isNotNull);
+      expect(RitmoRouter.resolve(MovementRoutes.library), isNotNull);
+      expect(RitmoRouter.resolve(MovementRoutes.settings), isNotNull);
+      expect(RitmoRouter.resolve('/movement'), isNotNull);
     });
   });
 }

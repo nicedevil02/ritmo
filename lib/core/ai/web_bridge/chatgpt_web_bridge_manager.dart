@@ -200,15 +200,8 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
 
         case 'chunk':
           final full = readString('fullText');
-          if (full != null && full.isNotEmpty) {
-            _emitFrom(full);
-          } else {
-            final delta = readString('delta') ?? '';
-            if (delta.isNotEmpty) {
-              _emittedText += delta;
-              _currentStreamController?.add(delta);
-            }
-          }
+          final delta = readString('delta');
+          _emitChunk(full, delta);
           _resetInactivityTimer();
           break;
 
@@ -228,45 +221,68 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     }
   }
 
-  /// Forwards the not-yet-seen tail of [full] to the listener.
-  ///
-  /// ChatGPT re-renders markdown while streaming (lists, closing code fences,
-  /// LaTeX), so the visible text is not strictly append-only. We only forward a
-  /// snapshot that genuinely extends what was already sent; anything else waits
-  /// for a later snapshot or for [_finishGeneration] to reconcile it.
-  void _emitFrom(String full) {
-    if (full.isEmpty || full == _emittedText) return;
-    if (full.length > _emittedText.length && full.startsWith(_emittedText)) {
-      final delta = full.substring(_emittedText.length);
-      _emittedText = full;
-      _currentStreamController?.add(delta);
+  static final _noisePrefixRegex = RegExp(
+    r'^(ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|Assistant\s*said:?)\s*',
+    caseSensitive: false,
+  );
+
+  static final _cssBlockRegex = RegExp(
+    r'(\[data-[^\]]+\]\s*\{[^}]*\}|--[a-zA-Z0-9_-]+:[^;]+;?)',
+    multiLine: true,
+  );
+
+  static String _sanitizeResponseText(String text) {
+    var cleaned = text.replaceFirst(_noisePrefixRegex, '').trimLeft();
+    if (cleaned.contains('[data-conversation-') || cleaned.contains('--component-')) {
+      cleaned = cleaned.replaceAll(_cssBlockRegex, '').trim();
+    }
+    return cleaned;
+  }
+
+  void _emitChunk(String? full, String? delta) {
+    final controller = _currentStreamController;
+    if (controller == null || controller.isClosed) return;
+
+    if (full != null && full.isNotEmpty) {
+      final cleanFull = _sanitizeResponseText(full);
+      if (cleanFull != _emittedText) {
+        if (cleanFull.length > _emittedText.length) {
+          final d = cleanFull.substring(_emittedText.length);
+          _emittedText = cleanFull;
+          controller.add(d);
+        } else if (_emittedText.isEmpty) {
+          _emittedText = cleanFull;
+          controller.add(cleanFull);
+        }
+      }
+      return;
+    }
+
+    if (delta != null && delta.isNotEmpty) {
+      final cleanDelta = _emittedText.isEmpty ? _sanitizeResponseText(delta) : delta;
+      if (cleanDelta.isNotEmpty) {
+        _emittedText += cleanDelta;
+        controller.add(cleanDelta);
+      }
     }
   }
 
   /// Flushes whatever the page ended up showing, then closes the stream.
-  ///
-  /// This is the fix for replies vanishing entirely: `done` used to close the
-  /// stream without ever reading the fullText that came with it.
   void _finishGeneration(String? fullText) {
     _generationTimer?.cancel();
     _generationTimer = null;
 
     final controller = _currentStreamController;
 
-    if (fullText != null && fullText.isNotEmpty && controller != null) {
+    if (fullText != null && fullText.isNotEmpty && controller != null && !controller.isClosed) {
+      final cleanFull = _sanitizeResponseText(fullText);
       if (_emittedText.isEmpty) {
-        // Nothing streamed through -- deliver the whole answer at once.
-        _emittedText = fullText;
-        controller.add(fullText);
-      } else if (fullText.length > _emittedText.length &&
-          fullText.startsWith(_emittedText)) {
-        controller.add(fullText.substring(_emittedText.length));
-        _emittedText = fullText;
-      } else if (fullText != _emittedText) {
-        // A mid-stream rewrite we could not follow. The chat already shows the
-        // streamed copy and the downstream sink is append-only, so re-sending
-        // would duplicate text. Keep what was shown and record the divergence.
-        debugPrint('[ChatGptWebBridge] Final text diverged from streamed text; keeping streamed copy.');
+        _emittedText = cleanFull;
+        controller.add(cleanFull);
+      } else if (cleanFull.length > _emittedText.length) {
+        final remaining = cleanFull.substring(_emittedText.length);
+        _emittedText = cleanFull;
+        controller.add(remaining);
       }
     }
 
@@ -293,11 +309,25 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _resetInactivityTimer();
   }
 
+  /// Cancels the current stream if active
+  void cancelCurrentStream() {
+    _generationTimer?.cancel();
+    _generationTimer = null;
+    final controller = _currentStreamController;
+    _currentStreamController = null;
+    _emittedText = '';
+    _setStatus(ChatGptBridgeStatus.ready);
+    controller?.close();
+    _resetInactivityTimer();
+  }
+
   /// Sends a prompt and streams the assistant response back.
   Stream<String> sendPrompt({
     required String prompt,
     String? personaTitle,
     String? personaSystemPrompt,
+    String? contextSummary,
+    List<String>? recentHistory,
   }) async* {
     _resetInactivityTimer();
 
@@ -350,6 +380,8 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       personaTitle: personaTitle,
       personaSystemPrompt: personaSystemPrompt,
       userName: userName,
+      contextSummary: contextSummary,
+      recentHistory: recentHistory,
     );
 
     final jsCall = ChatGptJsInjector.buildSendPromptScript(formattedPrompt);

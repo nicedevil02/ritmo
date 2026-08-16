@@ -2,12 +2,14 @@ import 'dart:convert';
 
 /// Utilities and JavaScript scripts for injecting into ChatGPT Web (chatgpt.com)
 class ChatGptJsInjector {
-  /// Wraps user query with Ritmo's Persona and System Directives
+  /// Wraps user query with Ritmo's Persona, Context (RAG/Goals/Routines) and System Directives
   static String formatPromptWithSystemDirective({
     required String userPrompt,
     String? personaTitle,
     String? personaSystemPrompt,
     String? userName,
+    String? contextSummary,
+    List<String>? recentHistory,
   }) {
     final systemDirective = personaSystemPrompt?.trim().isNotEmpty == true
         ? personaSystemPrompt!.trim()
@@ -17,11 +19,18 @@ class ChatGptJsInjector {
         ? 'نام کاربر مخاطب شما: «${userName.trim()}» است. در مکالمات در صورت لزوم کاربر را با همین نام محترمانه خطاب قرار دهید.\n'
         : '';
 
+    final contextBlock = (contextSummary != null && contextSummary.trim().isNotEmpty)
+        ? '\n[اطلاعات پرونده و وضعیت جاری کاربر]:\n${contextSummary.trim()}\n'
+        : '';
+
+    final historyBlock = (recentHistory != null && recentHistory.isNotEmpty)
+        ? '\n[تاریخچه آخرین پیام‌های مکالمه]:\n${recentHistory.join('\n')}\n'
+        : '';
+
     return '''
 [دستورالعمل سیستم ریتمو]:
-$userContext$systemDirective
-
-[درخواست کاربر]:
+$userContext$systemDirective$contextBlock$historyBlock
+[درخواست جدید کاربر]:
 $userPrompt
 '''.trim();
   }
@@ -220,110 +229,119 @@ $userPrompt
     }
   }
 
-  // --- 4. Live Assistant Message Streamer ---
-  //
-  // The selector MUST be assistant-only and MUST yield one node per turn.
-  // The previous union broke both rules: div[data-testid*="conversation-turn-"]
-  // also matched the USER's turn (testids are conversation-turn-2, -3, ... so
-  // the :not([data-testid*="user"]) guard never fired) and div.markdown /
-  // div.prose added that same turn's descendants. The watcher therefore locked
-  // onto the user's own prompt and the real answer never grew past it.
-  //
-  // Families are tried in priority order; the first non-empty one wins. The
-  // baseline count is only meaningful inside one family, so the family index
-  // travels with it.
-  var ASSISTANT_SELECTORS = [
-    '[data-message-author-role="assistant"]',
-    '.agent-turn',
-    'div.markdown',
-    'div.prose'
-  ];
-
-  function getAssistantTurns() {
-    for (var i = 0; i < ASSISTANT_SELECTORS.length; i++) {
-      var nodes = queryAllSafe(ASSISTANT_SELECTORS[i]);
-      if (nodes.length) return { nodes: nodes, family: i };
-    }
-    return { nodes: [], family: -1 };
-  }
-
+  // --- 4. Robust Live Assistant Text Extractor ---
   function extractCleanText(el) {
     if (!el) return '';
-    var textContainer = el.querySelector('.markdown, .prose, div[class*="markdown"], div[class*="prose"], div.whitespace-pre-wrap') || el;
+    // Prefer the actual content body if this is a rich writing/canvas component
+    var textContainer = el.querySelector('[data-conversation-part="body"], [data-assistant-writing-block-body], .markdown, .prose, div[class*="markdown"], div[class*="prose"], div.whitespace-pre-wrap') || el;
     var clone = textContainer.cloneNode(true);
-    var noisy = clone.querySelectorAll('button, svg, nav, [aria-label*="Copy"], [aria-label*="کپی"], .sr-only');
+    // Unconditionally purge style, script, SVG, buttons, and screen-reader elements
+    var noisy = clone.querySelectorAll('style, script, noscript, template, link, meta, button, svg, nav, [aria-label*="Copy"], [aria-label*="کپی"], [aria-label*="Share"], [aria-label*="اشتراک"], .sr-only, [data-testid*="screen-reader"], h5, h6, [data-conversation-part="header"], [data-conversation-part="metadata"]');
     for (var i = 0; i < noisy.length; i++) {
       noisy[i].remove();
     }
-    return (clone.innerText || clone.textContent || '').trim();
+    var rawText = (clone.innerText || clone.textContent || '').trim();
+    rawText = rawText.replace(/^(ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|Assistant\s*said:?)\s*/i, '');
+    // Strip any lingering CSS definitions if a style tag was unparsed
+    if (rawText.indexOf('[data-conversation-') !== -1 || rawText.indexOf('--component-') !== -1) {
+      rawText = rawText.replace(/\[data-[^\]]+\]\s*\{[^}]*\}/g, '');
+      rawText = rawText.replace(/--[a-zA-Z0-9_-]+:[^;]+;?/g, '');
+    }
+    return rawText.trim();
+  }
+
+  function findLatestAssistantText() {
+    try {
+      // 1. Explicit assistant role
+      var assistants = document.querySelectorAll('[data-message-author-role="assistant"]');
+      if (assistants && assistants.length > 0) {
+        var t = extractCleanText(assistants[assistants.length - 1]);
+        if (t) return t;
+      }
+
+      // 2. Assistant action bar (Copy / Share buttons)
+      var copyBtns = document.querySelectorAll('button[aria-label*="Copy"], button[aria-label*="کپی"], button[data-testid*="copy"]');
+      if (copyBtns && copyBtns.length > 0) {
+        for (var c = copyBtns.length - 1; c >= 0; c--) {
+          var btn = copyBtns[c];
+          var parentTurn = btn.closest('article, [data-testid*="conversation-turn"], div[class*="agent-turn"], div[class*="text-base"]');
+          if (parentTurn) {
+            var t = extractCleanText(parentTurn);
+            if (t) return t;
+          }
+          var parentDiv = btn.parentElement ? (btn.parentElement.parentElement || btn.parentElement) : null;
+          if (parentDiv) {
+            var t2 = extractCleanText(parentDiv);
+            if (t2) return t2;
+          }
+        }
+      }
+
+      // 3. Articles from bottom up excluding user
+      var articles = document.querySelectorAll('article, [data-testid*="conversation-turn-"]');
+      for (var i = articles.length - 1; i >= 0; i--) {
+        var art = articles[i];
+        var isUser = !!art.querySelector('[data-message-author-role="user"]') ||
+                     (art.getAttribute('data-testid') || '').indexOf('user') !== -1;
+        if (!isUser) {
+          var t = extractCleanText(art);
+          if (t) return t;
+        }
+      }
+
+      // 4. Markdown/prose blocks from bottom up
+      var markdowns = document.querySelectorAll('div.markdown, div.prose, [class*="markdown"], [class*="prose"]');
+      for (var j = markdowns.length - 1; j >= 0; j--) {
+        var md = markdowns[j];
+        var isUser = !!md.closest('[data-message-author-role="user"], [data-testid*="user"], div.font-user-message');
+        if (!isUser) {
+          var t = extractCleanText(md);
+          if (t) return t;
+        }
+      }
+    } catch (e) {
+      console.warn('[Ritmo] findLatestAssistantText error:', e);
+    }
+    return '';
   }
 
   var streamCheckTimer = null;
   var lastLength = 0;
   var lastText = '';
-  var currentTargetEl = null;
   var lastChangeTimestamp = Date.now();
   var streamStartTime = 0;
 
-  // No assistant turn within this window means the send never landed (login
-  // wall, challenge, disabled composer). Report it instead of spinning.
-  var NO_REPLY_TIMEOUT_MS = 40000;
-  // Absolute ceiling for one generation.
-  var HARD_TIMEOUT_MS = 90000;
-
-  function stopWatcher() {
-    if (streamCheckTimer) clearInterval(streamCheckTimer);
-    streamCheckTimer = null;
-  }
-
-  window.__ritmo_startStreamingWatcher = function(initialAssistantCount, initialFamily) {
+  window.__ritmo_startStreamingWatcher = function(previousBaselineText) {
     lastLength = 0;
     lastText = '';
-    currentTargetEl = null;
     lastChangeTimestamp = Date.now();
     streamStartTime = Date.now();
-    initialAssistantCount = initialAssistantCount || 0;
-    if (typeof initialFamily !== 'number') initialFamily = -1;
+    previousBaselineText = (previousBaselineText || '').trim();
 
-    stopWatcher();
+    if (streamCheckTimer) clearInterval(streamCheckTimer);
 
     streamCheckTimer = setInterval(function() {
       var totalDuration = Date.now() - streamStartTime;
-      var snap = getAssistantTurns();
+      var currentText = findLatestAssistantText();
 
-      // Comparing counts across two different families is meaningless: a
-      // div.prose matched on the welcome screen would otherwise set a baseline
-      // that the first real assistant turn can never beat.
-      var baseline = (snap.family === initialFamily) ? initialAssistantCount : 0;
-
-      if (snap.nodes.length <= baseline) {
-        if (totalDuration > NO_REPLY_TIMEOUT_MS) {
-          stopWatcher();
-          notifyFlutter('error', { message: 'پاسخی از ChatGPT دریافت نشد. ممکن است نیاز به ورود به حساب یا تایید امنیتی باشد.' });
+      // If no new text yet, check for timeout
+      if (!currentText || currentText === previousBaselineText) {
+        if (totalDuration > 30000) {
+          clearInterval(streamCheckTimer);
+          streamCheckTimer = null;
+          notifyFlutter('error', { message: 'پاسخی از ChatGPT دریافت نشد.' });
         }
         return;
       }
 
-      var targetEl = snap.nodes[snap.nodes.length - 1];
-
-      // React can swap the node mid-stream, and the first pass may still be
-      // looking at a carry-over from the previous turn. Restart the bookkeeping
-      // on identity change -- otherwise a shorter new answer never emits,
-      // because lastLength still holds the previous element's length.
-      if (targetEl !== currentTargetEl) {
-        currentTargetEl = targetEl;
-        lastLength = 0;
-        lastText = '';
-      }
-
-      var currentText = extractCleanText(targetEl);
-
-      if (currentText !== lastText) {
-        // ChatGPT re-renders markdown while streaming, so growth is not always a
-        // clean append. Only claim a delta on a real prefix extension; fullText
-        // rides along every time so Flutter can reconcile either way.
-        var isExtension = currentText.length > lastLength && currentText.indexOf(lastText) === 0;
-        var delta = isExtension ? currentText.substring(lastLength) : '';
+      // New/growing assistant text detected!
+      if (currentText !== lastText && currentText.length > 0) {
+        var delta = '';
+        if (currentText.length > lastLength) {
+          delta = currentText.substring(lastLength);
+        } else {
+          delta = currentText;
+        }
         lastText = currentText;
         lastLength = currentText.length;
         lastChangeTimestamp = Date.now();
@@ -331,30 +349,28 @@ $userPrompt
       }
 
       var stopButton = document.querySelector(
-        'button[data-testid="stop-button"], ' +
-        'button[aria-label="Stop generating"], ' +
-        'button[aria-label="توقف تولید"], ' +
-        'button[data-testid="fruitjuice-stop-button"]'
+        'button[data-testid="stop-button"], button[aria-label="Stop generating"], button[aria-label="توقف تولید"], button[data-testid="fruitjuice-stop-button"]'
       );
       var isStreamingClass = document.querySelector('.result-streaming');
       var timeSinceLastChange = Date.now() - lastChangeTimestamp;
 
-      if (!stopButton && !isStreamingClass && lastLength > 0 && timeSinceLastChange > 1200) {
-        stopWatcher();
-        notifyFlutter('done', { fullText: currentText });
-        console.log('[Ritmo] Stream completed with ' + lastLength + ' characters');
-      } else if (totalDuration > HARD_TIMEOUT_MS) {
-        // Deliberately NOT gated on lastLength > 0. The old escape hatch was,
-        // so a page that produced nothing kept this interval alive forever and
-        // the chat waited on a stream that could never close.
-        stopWatcher();
-        if (lastLength > 0) {
-          notifyFlutter('done', { fullText: currentText });
+      if (!stopButton && !isStreamingClass && lastLength > 0 && timeSinceLastChange > 800) {
+        var finalFullText = findLatestAssistantText() || currentText;
+        clearInterval(streamCheckTimer);
+        streamCheckTimer = null;
+        notifyFlutter('done', { fullText: finalFullText });
+        console.log('[Ritmo] Stream completed with ' + finalFullText.length + ' characters');
+      } else if (totalDuration > 70000) {
+        var finalFullText = findLatestAssistantText() || currentText;
+        clearInterval(streamCheckTimer);
+        streamCheckTimer = null;
+        if (finalFullText.length > 0) {
+          notifyFlutter('done', { fullText: finalFullText });
         } else {
-          notifyFlutter('error', { message: 'زمان انتظار برای پاسخ ChatGPT به پایان رسید.' });
+          notifyFlutter('error', { message: 'زمان انتظار برای پاسخ به پایان رسید.' });
         }
       }
-    }, 150);
+    }, 100);
   };
 
   // --- 5. Prompt Sender Implementation ---
@@ -398,11 +414,8 @@ $userPrompt
         autoCloseSidebar();
         autoDismissCookiesAndModals();
 
-        // Snapshot BEFORE sending, so the watcher can tell the new answer apart
-        // from everything already on the page. Family travels with the count.
-        var before = getAssistantTurns();
-        var initialAssistantCount = before.nodes.length;
-        var initialFamily = before.family;
+        // Snapshot assistant text BEFORE sending
+        var previousBaselineText = findLatestAssistantText();
 
         editor.focus();
 
@@ -444,12 +457,9 @@ $userPrompt
             sendBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
             sendBtn.click();
             console.log('[Ritmo] Send button clicked successfully!');
-            window.__ritmo_startStreamingWatcher(initialAssistantCount, initialFamily);
+            window.__ritmo_startStreamingWatcher(previousBaselineText);
           } else if (sendCheckAttempts >= 8) {
             clearInterval(sendInterval);
-            // The composer never enabled the send button. Enter is the last
-            // resort; if it does not land either, the watcher's 40s no-reply
-            // branch reports it rather than hanging.
             editor.focus();
             var enterDown = new KeyboardEvent('keydown', {
               bubbles: true,
@@ -461,7 +471,7 @@ $userPrompt
             });
             editor.dispatchEvent(enterDown);
             console.log('[Ritmo] Fallback Enter key dispatched');
-            window.__ritmo_startStreamingWatcher(initialAssistantCount, initialFamily);
+            window.__ritmo_startStreamingWatcher(previousBaselineText);
           }
         }, 250);
       }

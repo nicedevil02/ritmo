@@ -6,10 +6,16 @@ abstract final class MovementTables {
   static const String tableOccurrences = 'movement_occurrences';
   static const String tableLiveSessions = 'movement_live_sessions';
   static const String tableStrengthPrograms = 'movement_strength_programs';
+  static const String tableStrengthDays = 'movement_strength_days';
+  static const String tableStrengthExercises = 'movement_strength_exercises';
+  static const String tableSetLogs = 'movement_set_logs';
   static const String tablePlanTemplates = 'movement_plan_templates';
   static const String tablePlanSchedules = 'movement_plan_schedules';
   static const String tableWorkoutLogs = 'movement_workout_logs';
   static const String tableSessionEvents = 'movement_session_events';
+  static const String tableReadinessCheckins = 'movement_readiness_checkins';
+  static const String tablePreferences = 'movement_preferences';
+  static const String tablePersonalRecords = 'movement_personal_records';
 
   static Future<void> create(DatabaseExecutor db) async {
     // ۱. جدول گونه‌های فعالیت حرکتی
@@ -91,18 +97,102 @@ abstract final class MovementTables {
         ON $tableLiveSessions (status);
     ''');
 
-    // ۴. جدول برنامه‌های تمرین قدرتی
+    // ۴. جدول برنامه‌های تمرین قدرتی (کامل)
     await db.execute('''
       CREATE TABLE IF NOT EXISTS $tableStrengthPrograms (
         id TEXT PRIMARY KEY,
         name TEXT,
-        status TEXT NOT NULL,
-        currentWeek INTEGER,
-        totalWeeks INTEGER,
+        goal TEXT,
+        level TEXT,
+        sensitiveAreasJson TEXT,
+        equipmentJson TEXT,
         daysPerWeek INTEGER,
+        sessionMinutes INTEGER,
+        preferredDaysJson TEXT,
+        preferredTime TEXT,
+        totalWeeks INTEGER,
+        currentWeek INTEGER,
+        deloadWeekIndex INTEGER,
+        status TEXT NOT NULL,
+        draftStep INTEGER,
+        draftDataJson TEXT,
         createdAt TEXT NOT NULL,
         updatedAt TEXT NOT NULL
       );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_strength_programs_status
+        ON $tableStrengthPrograms (status);
+    ''');
+
+    // ۵. جدول روزهای برنامهٔ قدرتی
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableStrengthDays (
+        id TEXT PRIMARY KEY,
+        programId TEXT NOT NULL,
+        weekIndex INTEGER NOT NULL,
+        weekday INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        targetMusclesJson TEXT,
+        estimatedMinutes INTEGER NOT NULL,
+        orderIndex INTEGER NOT NULL
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_strength_days_program
+        ON $tableStrengthDays (programId);
+    ''');
+
+    // ۶. جدول حرکات روزهای تمرین قدرتی
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableStrengthExercises (
+        id TEXT PRIMARY KEY,
+        dayId TEXT NOT NULL,
+        orderIndex INTEGER NOT NULL,
+        nameFa TEXT NOT NULL,
+        muscleGroup TEXT NOT NULL,
+        sets INTEGER NOT NULL,
+        repsMin INTEGER NOT NULL,
+        repsMax INTEGER NOT NULL,
+        restSec INTEGER NOT NULL,
+        formTipsJson TEXT,
+        alternativesJson TEXT,
+        mediaRef TEXT
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_strength_exercises_day
+        ON $tableStrengthExercises (dayId);
+    ''');
+
+    // ۷. جدول لاگ ست‌های تمرین قدرتی
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableSetLogs (
+        id TEXT PRIMARY KEY,
+        sessionId TEXT,
+        occurrenceId TEXT,
+        exerciseId TEXT NOT NULL,
+        setIndex INTEGER NOT NULL,
+        weightKg REAL,
+        reps INTEGER,
+        rir REAL,
+        completed INTEGER NOT NULL DEFAULT 0,
+        skipped INTEGER NOT NULL DEFAULT 0,
+        at TEXT NOT NULL
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_set_logs_session
+        ON $tableSetLogs (sessionId);
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_set_logs_exercise
+        ON $tableSetLogs (exerciseId);
     ''');
 
     // ۵. جدول قالب‌های برنامهٔ حرکت
@@ -191,6 +281,57 @@ abstract final class MovementTables {
     await db.execute('''
       CREATE INDEX IF NOT EXISTS idx_movement_session_events_at
         ON $tableSessionEvents (at);
+    ''');
+
+    // ۹. جدول چک‌این و وضعیت آمادگی روزانه
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableReadinessCheckins (
+        id TEXT PRIMARY KEY,
+        dateIso TEXT NOT NULL,
+        sleep INTEGER,
+        energy INTEGER,
+        soreness INTEGER,
+        stress INTEGER,
+        availableMinutes INTEGER,
+        createdAt TEXT NOT NULL
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_readiness_date
+        ON $tableReadinessCheckins (dateIso);
+    ''');
+
+    // ۱۰. جدول تنظیمات و ترجیحات ماژول حرکت
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tablePreferences (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+    ''');
+
+    // ۱۱. جدول رکوردهای شخصی واقعی (Personal Records)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tablePersonalRecords (
+        id TEXT PRIMARY KEY,
+        activityKindId TEXT,
+        exerciseId TEXT,
+        recordType TEXT NOT NULL,
+        value REAL NOT NULL,
+        unit TEXT NOT NULL,
+        achievedAt TEXT NOT NULL,
+        sourceId TEXT
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_pr_kind
+        ON $tablePersonalRecords (activityKindId);
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_pr_exercise
+        ON $tablePersonalRecords (exerciseId);
     ''');
   }
 

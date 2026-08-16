@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/features/movement/application/movement_analytics_service.dart';
 import 'package:ritmo/features/movement/application/movement_session_service.dart';
 import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
 import 'package:ritmo/features/movement/domain/models/movement_live_session.dart';
@@ -31,6 +32,7 @@ class MovementLiveSessionController extends ChangeNotifier {
 
   MovementLiveSession? _session;
   MovementLiveSession? get session => _session;
+  String get sessionId => _session?.id ?? '';
 
   late String _mode;
   String get mode => _mode;
@@ -80,6 +82,25 @@ class MovementLiveSessionController extends ChangeNotifier {
   MovementWorkoutLog? _completedLog;
   MovementWorkoutLog? get completedLog => _completedLog;
 
+  double get progressRatio {
+    if (_targetSnapshot == null) return 1.0;
+    final targetValue = (_targetSnapshot!['value'] as num?)?.toDouble() ?? 0.0;
+    if (targetValue <= 0) return 1.0;
+
+    switch (_mode) {
+      case 'time':
+        return (_elapsedSeconds / (targetValue * 60)).clamp(0.0, 1.0);
+      case 'distance':
+        return (_distanceKm / targetValue).clamp(0.0, 1.0);
+      case 'count':
+        return (_currentCount / targetValue).clamp(0.0, 1.0);
+      case 'lap':
+        return (_laps.length / targetValue).clamp(0.0, 1.0);
+      default:
+        return 1.0;
+    }
+  }
+
   static String _deriveDefaultMode(MovementActivityKind kind) {
     switch (kind.primaryMetric) {
       case 'distance':
@@ -87,11 +108,16 @@ class MovementLiveSessionController extends ChangeNotifier {
       case 'count':
       case 'reps':
         return 'count';
+      case 'strength':
+        return 'strength';
       case 'lap':
         return 'lap';
       case 'free':
         return 'free';
       default:
+        if (kind.id == 'kind_strength' || kind.family == 'strength') {
+          return 'strength';
+        }
         return 'time';
     }
   }
@@ -117,6 +143,12 @@ class MovementLiveSessionController extends ChangeNotifier {
         );
         _status = MovementLiveSessionStatus.active;
         _startTicker();
+
+        MovementAnalyticsService.instance.logSessionStarted(
+          mode: _mode,
+          startSource: occurrenceId != null ? 'occurrence' : 'quick_start',
+          hasOccurrence: occurrenceId != null,
+        );
       } catch (e) {
         _status = MovementLiveSessionStatus.errorRecoverable;
       }
@@ -200,6 +232,10 @@ class MovementLiveSessionController extends ChangeNotifier {
       _startTicker();
       notifyListeners();
       await _safeRecordEvent(MovementSessionEventType.resume);
+      MovementAnalyticsService.instance.logSessionResumed(
+        mode: _mode,
+        pauseDurationSec: 0,
+      );
       try {
         await sessionService.resumeSession(_session!.id);
         _session = await sessionService.getSessionById(_session!.id);
@@ -340,6 +376,14 @@ class MovementLiveSessionController extends ChangeNotifier {
 
       _completedLog = log;
       _status = MovementLiveSessionStatus.completed;
+
+      final goalAchieved = _targetSnapshot != null ? progressRatio >= 1.0 : true;
+      MovementAnalyticsService.instance.logSessionCompleted(
+        mode: _mode,
+        durationSec: _elapsedSeconds,
+        goalAchieved: goalAchieved,
+      );
+
       notifyListeners();
       return log;
     } catch (e) {
@@ -347,6 +391,19 @@ class MovementLiveSessionController extends ChangeNotifier {
       notifyListeners();
       return null;
     }
+  }
+
+  /// ثبت جلسهٔ نیمه‌تمام (Partial Session)
+  Future<MovementWorkoutLog?> finishPartial({String? reason, String? feeling}) async {
+    final log = await finish(feeling: feeling);
+    if (log != null) {
+      MovementAnalyticsService.instance.logSessionPartial(
+        mode: _mode,
+        progressPct: (progressRatio * 100).clamp(0.0, 100.0),
+        reason: reason,
+      );
+    }
+    return log;
   }
 
   /// رهاسازی جلسه

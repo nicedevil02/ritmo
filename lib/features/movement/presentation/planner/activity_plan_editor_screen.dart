@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/movement/application/movement_analytics_service.dart';
 import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
 import 'package:ritmo/features/movement/domain/models/movement_change_scope.dart';
 import 'package:ritmo/features/movement/presentation/activity_picker/activity_picker_screen.dart';
@@ -134,6 +135,11 @@ class _ActivityPlanEditorScreenState extends State<ActivityPlanEditorScreen> {
     if (!mounted) return;
 
     if (createdCount > 0) {
+      MovementAnalyticsService.instance.logPlanSaved(
+        occurrencesCount: createdCount,
+        recurrenceType: _controller.sessionType,
+      );
+
       MovementUndoToast.show(
         context,
         message: MovementStrings.planSavedToast(createdCount),

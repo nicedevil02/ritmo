@@ -20,7 +20,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 108;
+  static const int _dbVersion = 110;
   static int get dbVersionForTest => _dbVersion;
 
   /// Hijri month number of Ramadan - the only month qada fasting is owed for.

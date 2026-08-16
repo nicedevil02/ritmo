@@ -26,4 +26,6 @@ abstract final class MovementLayout {
   static const double kIconContainerSize = 44.0;
   static const double kChipMinHeight = 36.0;
   static const double kMinTouchTarget = 48.0;
+  static const double kScreenPadding = 16.0;
+  static const double kCardSpacing = 12.0;
 }

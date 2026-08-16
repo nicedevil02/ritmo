@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/movement/application/movement_analytics_service.dart';
 import 'package:ritmo/features/movement/application/movement_occurrence_service.dart';
 import 'package:ritmo/features/movement/application/movement_session_service.dart';
 import 'package:ritmo/features/movement/application/strength_program_service.dart';
@@ -38,6 +39,7 @@ class MovementCenterController extends ChangeNotifier {
     _selectedDate = DateTime(now.year, now.month, now.day);
     _weekStartDate = _getSaturdayOfWeek(_selectedDate);
     _weekEndDate = _weekStartDate.add(const Duration(days: 6));
+    _weekDays = _buildDaysForWeek(_weekStartDate, _selectedDate, const {});
   }
 
   final MovementOccurrenceService occurrenceService;
@@ -119,6 +121,66 @@ class MovementCenterController extends ChangeNotifier {
     return '$y-$m-$d';
   }
 
+  static List<MovementDayData> _buildDaysForWeek(
+    DateTime weekStartDate,
+    DateTime selectedDate,
+    Map<String, List<MovementOccurrence>> occurrencesMap,
+  ) {
+    final List<MovementDayData> days = [];
+    final now = DateTime.now();
+    final todayDate = DateTime(now.year, now.month, now.day);
+    const dayShortNames = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
+
+    for (int i = 0; i < 7; i++) {
+      final d = weekStartDate.add(Duration(days: i));
+      final dateIso = _formatDateIso(d);
+
+      final jDate = Jalali.fromDateTime(d);
+      final isToday = d.year == todayDate.year &&
+          d.month == todayDate.month &&
+          d.day == todayDate.day;
+      final isSelected = d.year == selectedDate.year &&
+          d.month == selectedDate.month &&
+          d.day == selectedDate.day;
+
+      MovementDaySlotState state;
+      if (isToday && isSelected) {
+        state = MovementDaySlotState.todayAndSelected;
+      } else if (isSelected) {
+        state = MovementDaySlotState.selected;
+      } else if (isToday) {
+        state = MovementDaySlotState.today;
+      } else {
+        state = MovementDaySlotState.normal;
+      }
+
+      final occurrencesForDay = occurrencesMap[dateIso] ?? const [];
+      final statuses = occurrencesForDay.map<MovementDayStatus>((occ) {
+        return switch (occ.status) {
+          MovementOccurrenceStatus.completed => MovementDayStatus.completed,
+          MovementOccurrenceStatus.partial => MovementDayStatus.partial,
+          MovementOccurrenceStatus.moved => MovementDayStatus.moved,
+          _ => MovementDayStatus.planned,
+        };
+      }).toList();
+
+      final completedCount =
+          occurrencesForDay.where((o) => o.isCompleted).length;
+
+      days.add(MovementDayData(
+        date: d,
+        dayName: dayShortNames[i],
+        dayNumber: jDate.day,
+        monthName: jDate.formatter.mN,
+        state: state,
+        statuses: statuses,
+        sessionCount: occurrencesForDay.length,
+        completedCount: completedCount,
+      ));
+    }
+    return days;
+  }
+
   void dismissCutoverCallout() {
     isFirstLaunchAfterCutover = false;
     notifyListeners();
@@ -147,62 +209,11 @@ class MovementCenterController extends ChangeNotifier {
       _strengthProgram = await strengthProgramService.getCurrentProgram();
 
       // ۴. ساخت اسلات‌های ۷ روز
-      final List<MovementDayData> days = [];
-      final List<String> allSevenDaysIso = [];
-      final now = DateTime.now();
-      final todayDate = DateTime(now.year, now.month, now.day);
-
-      const dayShortNames = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
-
-      for (int i = 0; i < 7; i++) {
-        final d = _weekStartDate.add(Duration(days: i));
-        final dateIso = _formatDateIso(d);
-        allSevenDaysIso.add(dateIso);
-
-        final jDate = Jalali.fromDateTime(d);
-        final isToday = d.year == todayDate.year &&
-            d.month == todayDate.month &&
-            d.day == todayDate.day;
-        final isSelected = d.year == _selectedDate.year &&
-            d.month == _selectedDate.month &&
-            d.day == _selectedDate.day;
-
-        MovementDaySlotState state;
-        if (isToday && isSelected) {
-          state = MovementDaySlotState.todayAndSelected;
-        } else if (isSelected) {
-          state = MovementDaySlotState.selected;
-        } else if (isToday) {
-          state = MovementDaySlotState.today;
-        } else {
-          state = MovementDaySlotState.normal;
-        }
-
-        final occurrencesForDay = _weekOccurrencesMap[dateIso] ?? const [];
-        final statuses = occurrencesForDay.map<MovementDayStatus>((occ) {
-          return switch (occ.status) {
-            MovementOccurrenceStatus.completed => MovementDayStatus.completed,
-            MovementOccurrenceStatus.partial => MovementDayStatus.partial,
-            MovementOccurrenceStatus.moved => MovementDayStatus.moved,
-            _ => MovementDayStatus.planned,
-          };
-        }).toList();
-
-        final completedCount =
-            occurrencesForDay.where((o) => o.isCompleted).length;
-
-        days.add(MovementDayData(
-          date: d,
-          dayName: dayShortNames[i],
-          dayNumber: jDate.day,
-          monthName: jDate.formatter.mN,
-          state: state,
-          statuses: statuses,
-          sessionCount: occurrencesForDay.length,
-          completedCount: completedCount,
-        ));
-      }
-      _weekDays = days;
+      final allSevenDaysIso = List.generate(
+        7,
+        (i) => _formatDateIso(_weekStartDate.add(Duration(days: i))),
+      );
+      _weekDays = _buildDaysForWeek(_weekStartDate, _selectedDate, _weekOccurrencesMap);
 
       // ۵. محاسبه خلاصه هفته
       _weekSummary = await occurrenceService.getWeekSummary(
@@ -213,6 +224,12 @@ class MovementCenterController extends ChangeNotifier {
 
       // ۶. محاسبه حالت هیرو و Entry State
       _computeEntryStateAndHero();
+
+      MovementAnalyticsService.instance.logCenterOpened(
+        source: 'movement_center',
+        hasPlan: _entryState != MovementCenterEntryState.brandNewUser,
+        heroState: _heroVariant.name,
+      );
 
       _hasCachedData = true;
       _errorMessage = null;

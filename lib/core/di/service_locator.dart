@@ -18,6 +18,7 @@ import 'package:ritmo/core/analytics/notes_engine.dart';
 import 'package:ritmo/core/analytics/reflection_engine.dart';
 import 'package:ritmo/core/analytics/sleep_engine.dart';
 import 'package:ritmo/core/backend/auth_service.dart';
+import 'package:ritmo/core/ai/agent/catalog/agent_tools_initializer.dart';
 import 'package:ritmo/core/behavior/behavioral_intelligence_orchestrator.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
@@ -38,6 +39,7 @@ import 'package:ritmo/core/platform/backup_platform.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/services/device_service.dart';
 import 'package:ritmo/core/services/google_drive_backup_service.dart';
+import 'package:ritmo/features/movement/presentation/agenda/sport_agenda_renderer.dart';
 import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
@@ -69,8 +71,9 @@ class AppBootstrapper {
       // 0. Register Time Abstraction (BOOT-12)
       sl.registerSingleton<RitmoClock>(const SystemClock());
 
-      // 1. Initialize Event Bus and Commands
+      // 1. Initialize Event Bus, Commands and Agent Tools
       registerAllRitmoCommands();
+      initializeAllAgentTools();
       if (RitmoCommandBus.instance.registeredCommandIds.isEmpty) {
         throw StateError('Bootstrap invariant violated: Commands must be registered before personas (BOOT-03).');
       }
@@ -83,6 +86,7 @@ class AppBootstrapper {
 
       // Agenda Renderers (BOOT-09)
       AgendaRendererRegistry.register(AgendaDomain.prayer, const PrayerAgendaRenderer());
+      AgendaRendererRegistry.register(AgendaDomain.sport, const SportAgendaRenderer());
 
       final eventBus = RitmoEventBus();
       sl.registerSingleton<RitmoEventBus>(eventBus);

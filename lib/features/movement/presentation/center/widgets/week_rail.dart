@@ -34,7 +34,7 @@ class WeekRail extends StatelessWidget {
     required this.days,
     required this.onDaySelected,
     this.onDayReselected,
-  }) : assert(days.length == 7, 'WeekRail requires exactly 7 days from Saturday to Friday.');
+  });
 
   final List<MovementDayData> days;
   final ValueChanged<DateTime> onDaySelected;
@@ -42,6 +42,9 @@ class WeekRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (days.length != 7) {
+      return const SizedBox(height: MovementLayout.kWeekRailHeight);
+    }
     final colors = context.colors;
 
     return Container(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/movement/application/movement_analytics_service.dart';
 import 'package:ritmo/features/movement/domain/models/movement_occurrence.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
@@ -101,6 +102,10 @@ class _PlanBSheetState extends State<PlanBSheet> {
     setState(() => _isSaving = true);
     try {
       await widget.onApplyPlanB(_selectedOption, _newDurationMinutes);
+      MovementAnalyticsService.instance.logPlanBSelected(
+        versionType: _selectedOption.name,
+        trigger: 'plan_b_sheet',
+      );
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

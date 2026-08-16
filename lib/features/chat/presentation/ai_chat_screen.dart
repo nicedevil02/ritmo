@@ -33,6 +33,8 @@ import 'package:ritmo/features/assistant/presentation/widgets/ai_day_planner_pre
 import 'package:ritmo/features/assistant/presentation/widgets/ai_weekly_planner_preview_sheet.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/assistant_briefing_section.dart';
 import 'package:ritmo/features/chat/presentation/chat_session_list_screen.dart';
+import 'package:ritmo/core/ai/agent/agent_event.dart';
+import 'package:ritmo/features/chat/presentation/widgets/agent_timeline_visualizer.dart';
 import 'package:ritmo/features/chat/presentation/widgets/streaming_message_bubble.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:sqflite/sqflite.dart';
@@ -57,6 +59,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
   
   StreamSubscription<StreamingChatEvent>? _sub;
   String? _streamingId;
+  final List<AgentStep> _agentSteps = [];
+  String _agentStatusText = '';
+  bool _isAgentWorking = false;
   final Map<String, Timer> _pendingDeleteTimers = {};
   final Map<String, ChatMessage> _pendingDeletedMsgs = {};
 
@@ -1420,6 +1425,13 @@ $friendlySummary
                     },
                   ),
                 ),
+
+              // Live Agent Activity Timeline Visualizer
+              AgentTimelineVisualizer(
+                steps: _agentSteps,
+                statusText: _agentStatusText,
+                isWorking: _isAgentWorking,
+              ),
 
               // Live Mini ChatGPT Preview Window
               const ChatGptMiniPreview(),

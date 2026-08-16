@@ -47,6 +47,8 @@ import 'package:ritmo/core/database/migration/migrations/migration_v105_canonica
 import 'package:ritmo/core/database/migration/migrations/migration_v106_movement_greenfield.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v107_movement_planning.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v108_movement_live_events.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v109_movement_strength_tables.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v110_movement_readiness_preferences_pr_tables.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -157,6 +159,8 @@ class MigrationRunner {
     MigrationV106MovementGreenfield(), // Movement Greenfield: 4 tables & base activity kinds seeds
     MigrationV107MovementPlanning(), // Movement Planning: templates, schedules, workout logs
     MigrationV108MovementLiveEvents(), // Movement Live Events: movement_session_events & finishedAt
+    MigrationV109MovementStrengthTables(), // Movement Strength: programs, days, exercises, set logs
+    MigrationV110MovementReadinessPreferencesPrTables(), // Movement Readiness, Preferences & Personal Records (Gate 5)
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

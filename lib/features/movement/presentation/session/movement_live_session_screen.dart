@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/movement/application/movement_session_service.dart';
 import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
 import 'package:ritmo/features/movement/domain/models/movement_live_session.dart';
+import 'package:ritmo/features/movement/domain/models/movement_strength_day.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_screen_shell.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 import 'package:ritmo/features/movement/presentation/movement_routes.dart';
@@ -10,6 +11,7 @@ import 'package:ritmo/features/movement/presentation/session/modes/count_session
 import 'package:ritmo/features/movement/presentation/session/modes/distance_session_view.dart';
 import 'package:ritmo/features/movement/presentation/session/modes/free_session_view.dart';
 import 'package:ritmo/features/movement/presentation/session/modes/lap_session_view.dart';
+import 'package:ritmo/features/movement/presentation/session/modes/strength_session_view.dart';
 import 'package:ritmo/features/movement/presentation/session/modes/time_session_view.dart';
 import 'package:ritmo/features/movement/presentation/session/movement_live_session_controller.dart';
 import 'package:ritmo/features/movement/presentation/session/session_shell.dart';
@@ -192,6 +194,25 @@ class _MovementLiveSessionScreenState extends State<MovementLiveSessionScreen> {
           selectedIntensity: _controller.selectedIntensity,
           onIntensityChanged: _controller.updateIntensity,
           noteController: _freeNoteController,
+        );
+
+      case 'strength':
+        final day = widget.targetSnapshot?['strengthDay'] as MovementStrengthDay? ??
+            MovementStrengthDay(
+              id: widget.targetSnapshot?['strengthDayId'] as String? ?? 'default_day',
+              programId: 'sp_default',
+              weekIndex: 1,
+              weekday: 1,
+              name: 'جلسهٔ قدرت در خانه',
+              targetMuscles: const ['سینه', 'پاها', 'میان‌تنه'],
+              estimatedMinutes: 30,
+              orderIndex: 0,
+              exercises: const [],
+            );
+        return StrengthSessionView(
+          day: day,
+          sessionId: _controller.sessionId,
+          onFinishSession: () => _controller.finish(),
         );
 
       case 'time':

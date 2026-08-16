@@ -15,6 +15,10 @@ class AiEndpointNormalizer {
       trimmed = 'https://$trimmed';
     }
 
+    if (trimmed.contains('chatgpt.com')) {
+      return 'https://chatgpt.com/';
+    }
+
     final uri = Uri.tryParse(trimmed);
     if (uri == null) return trimmed;
 

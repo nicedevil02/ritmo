@@ -17,6 +17,8 @@ import 'package:ritmo/core/ai/chat/conversation_rag.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/ai/memory/memory_consolidator.dart';
 import 'package:ritmo/core/ai/memory/memory_models.dart';
+import 'package:ritmo/core/ai/agent/agent_event.dart';
+import 'package:ritmo/core/ai/agent/agent_loop_runner.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 
 class StreamingChatService {
@@ -105,25 +107,29 @@ class StreamingChatService {
         }
 
         final systemPrompt = AIPromptEngine.buildChatSystemPrompt() + AiMemoryService.memoryInstruction();
-        await for (final chunk in ChatGptWebBridgeManager.instance.sendPrompt(
+        final agentStream = AgentLoopRunner.instance.runAgent(
           prompt: userText,
           personaSystemPrompt: systemPrompt,
           contextSummary: contextLines.isNotEmpty ? contextLines.join('\n') : null,
           recentHistory: recentHistory.isNotEmpty ? recentHistory : null,
-        )) {
-          if (chunk.startsWith('error:')) {
+          slot: AiSlot.assistant,
+        );
+
+        await for (final event in agentStream) {
+          if (event is AgentTokenStreamEvent) {
+            accumulated = event.accumulated;
+            if (accumulated.length > cap) {
+              accumulated = accumulated.substring(0, cap);
+              ChatGptWebBridgeManager.instance.cancelCurrentStream();
+              yield ChatChunk('', accumulated);
+              break;
+            }
+            yield ChatChunk(event.delta, accumulated);
+          } else if (event is AgentErrorEvent) {
             hasError = true;
-            errorCode = chunk.substring(6);
+            errorCode = event.errorMessageFa;
             break;
           }
-          accumulated += chunk;
-          if (accumulated.length > cap) {
-            accumulated = accumulated.substring(0, cap);
-            ChatGptWebBridgeManager.instance.cancelCurrentStream();
-            yield ChatChunk('', accumulated);
-            break;
-          }
-          yield ChatChunk(chunk, accumulated);
         }
       } catch (e) {
         hasError = true;

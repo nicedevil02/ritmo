@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/movement/application/movement_analytics_service.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 
@@ -46,31 +47,37 @@ class AddCommandSheet extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (ctx) => AddCommandSheet(
         onStartNow: () {
+          MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'start_now');
           Navigator.of(ctx).pop();
           onStartNow();
         },
         onAddToPlan: () {
+          MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'add_to_plan');
           Navigator.of(ctx).pop();
           onAddToPlan();
         },
         onRetroLog: () {
+          MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'retro_log');
           Navigator.of(ctx).pop();
           onRetroLog();
         },
         onResumeLiveSession: onResumeLiveSession != null
             ? () {
+                MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'resume_live_session');
                 Navigator.of(ctx).pop();
                 onResumeLiveSession();
               }
             : null,
         onUseTemplate: onUseTemplate != null
             ? () {
+                MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'use_template');
                 Navigator.of(ctx).pop();
                 onUseTemplate();
               }
             : null,
         onStrengthHome: onStrengthHome != null
             ? () {
+                MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'strength_home');
                 Navigator.of(ctx).pop();
                 onStrengthHome();
               }

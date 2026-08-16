@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_screen.dart';
 
-/// تنها ریشهٔ مجاز صفحه‌های ماژول حرکت — بر پایهٔ [RitmoScreen]
+/// شل اختصاصی و استاندارد تمام صفحه‌های ماژول حرکت
 class MovementScreenShell extends StatelessWidget {
   const MovementScreenShell({
     super.key,
@@ -46,44 +45,58 @@ class MovementScreenShell extends StatelessWidget {
       );
     }
 
-    final fullBody = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (banner != null) ...[
-          banner!,
-          const SizedBox(height: RitmoSpacing.sm),
-        ],
-        if (subtitle != null && subtitle!.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: RitmoSpacing.lg,
-              vertical: RitmoSpacing.xs,
+    return Scaffold(
+      backgroundColor: colors.background,
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: RitmoTextStyles.pageTitle(colors.textPrimary),
             ),
-            child: Text(
-              subtitle!,
-              style: RitmoTextStyles.caption(colors.textSecondary),
-            ),
-          ),
-        ],
-        Expanded(
-          child: content,
+            if (subtitle != null && subtitle!.isNotEmpty)
+              Text(
+                subtitle!,
+                style: RitmoTextStyles.caption(colors.textSecondary),
+              ),
+          ],
         ),
-      ],
-    );
-
-    return RitmoScreen(
-      title: title,
-      actions: actions,
-      collapsingHeader: collapsingHeader,
-      padding: padding,
-      bottomInsetPadding: 0,
+        actions: actions,
+        backgroundColor: colors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
       bottomNavigationBar: bottomDock != null
           ? SafeArea(
               top: false,
               child: bottomDock!,
             )
           : null,
-      body: fullBody,
+      body: RitmoTheme.buildBackgroundContainer(
+        context: context,
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (banner != null) ...[
+                banner!,
+                const SizedBox(height: RitmoSpacing.sm),
+              ],
+              Expanded(
+                child: Padding(
+                  padding: padding,
+                  child: content,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

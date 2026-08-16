@@ -534,8 +534,11 @@ class _CenterHeroButtonState extends State<_CenterHeroButton> {
   }
 
   void _handleLongPress() {
+    if (mounted) {
+      setState(() => _isPressed = false);
+    }
     RitmoHapticsPolicy.selection();
-    widget.onLongPress!();
+    widget.onLongPress?.call();
   }
 
   @override

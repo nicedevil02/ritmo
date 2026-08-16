@@ -793,15 +793,11 @@ class AssistantActionRegistry {
 
       case AssistantActionType.logReflection:
         if (context.mounted) {
-          unawaited(showModalBottomSheet(
+          unawaited(DailyReflectionSheet.show(
             context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            builder: (context) => DailyReflectionSheet(
-              onSaved: () {
-                onComplete();
-              },
-            ),
+            onSaved: () {
+              onComplete();
+            },
           ));
         }
 

@@ -189,13 +189,19 @@ class HomePulseStrip extends StatelessWidget {
               ),
           ),
         ),
-        Text(
-          toPersianDigits(metric.value),
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w800,
-            color: colors.textPrimary,
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              toPersianDigits(metric.value),
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+                color: colors.textPrimary,
+              ),
             ),
+          ),
         ),
         if (metric.onTap != null) ...[
           const SizedBox(width: 2),

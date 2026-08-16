@@ -50,15 +50,11 @@ class InboxNavigator {
             ),
           ));
         } else if (item.linkAction == 'open_reflection') {
-          unawaited(showModalBottomSheet(
+          unawaited(DailyReflectionSheet.show(
             context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            builder: (context) => DailyReflectionSheet(
-              onSaved: () {
-                unawaited(CentralInboxService.markActioned(item.id));
-              },
-            ),
+            onSaved: () {
+              unawaited(CentralInboxService.markActioned(item.id));
+            },
           ));
         } else {
           // Fallback: pop current screen or show toast

@@ -21,6 +21,9 @@ void main() {
         ('شام ۸ شب فردا', 'شام', 1, const TimeOfDay(hour: 20, minute: 0)),
         ('خرید', 'خرید', 0, null),
         ('۱۰ دقیقه مدیتیشن', 'مدیتیشن', 0, null),
+        ('ساعت ۸:۳۰ صبح ورزش', 'ورزش', 0, const TimeOfDay(hour: 8, minute: 30)),
+        ('عصر ساعت ۵:۴۵ جلسه', 'جلسه', 0, const TimeOfDay(hour: 17, minute: 45)),
+        ('ساعت ۱۰:۳۰ شب فیلم', 'فیلم', 0, const TimeOfDay(hour: 22, minute: 30)),
       ];
 
       for (final c in cases) {

@@ -889,16 +889,22 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                               value: _peakPerformanceWindow!,
                               icon: CupertinoIcons.arrow_up_right_circle_fill,
                               color: colors.primary,
-                              onTap: () => widget.onNavigateToTab?.call(1),
+                              onTap: () => widget.onNavigateToTab?.call(
+                                RitmoShellMetrics.calendarTabIndexFor(
+                                  AppModeService.instance.current,
+                                ),
+                              ),
                             )
                           else
                             HomePulseMetric(
                               label: 'انرژی فعلی',
                               value: _currentEnergyPercent == null
-                                  ? 'ثبت نشده'
+                                  ? 'ثبت انرژی +'
                                   : '${_currentEnergyPercent!.round()}٪',
                               icon: CupertinoIcons.bolt_fill,
-                              color: colors.energyAccent,
+                              color: _currentEnergyPercent == null
+                                  ? colors.primary
+                                  : colors.energyAccent,
                               onTap: () =>
                                   _showEnergyManagementSheet(isDarkMode),
                             ),
@@ -944,7 +950,11 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                         onOpenDetails: _showDetailsSheet,
                         onStartTask: _showNiyyahSheet,
                         onReshuffleApplied: _loadDashboardData,
-                        onViewAll: () => widget.onNavigateToTab?.call(4),
+                        onViewAll: () => widget.onNavigateToTab?.call(
+                          RitmoShellMetrics.calendarTabIndexFor(
+                            AppModeService.instance.current,
+                          ),
+                        ),
                       ),
                     ),
 
@@ -1548,19 +1558,14 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   }
 
   void _openReflectionSheet() {
-    HapticFeedback.mediumImpact();
-    showModalBottomSheet(
+    DailyReflectionSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => DailyReflectionSheet(
-        onSaved: () {
-          final now = DateTime.now();
-          final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-          CentralInboxService.markActionedForEntity('system', 'reflection_$dateStr');
-          _loadDashboardData();
-        },
-      ),
+      onSaved: () {
+        final now = DateTime.now();
+        final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        CentralInboxService.markActionedForEntity('system', 'reflection_$dateStr');
+        _loadDashboardData();
+      },
     );
   }
 

@@ -1630,10 +1630,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 trailing: TextButton(
                   onPressed: () {
                     Navigator.pop(ctx);
-                    RitmoSheetScaffold.present(
+                    DailyReflectionSheet.show(
                       context: context,
-                      title: 'ثبت بازتاب روز',
-                      builder: (_) => DailyReflectionSheet(onSaved: _requestReload, date: day.dateStr),
+                      date: day.dateStr,
+                      onSaved: _requestReload,
                     );
                   },
                   child: const Text('ثبت بازتاب', style: TextStyle()),
@@ -1682,10 +1682,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   ElevatedButton.icon(
                     onPressed: () {
                       Navigator.pop(ctx);
-                      RitmoSheetScaffold.present(
+                      DailyReflectionSheet.show(
                         context: context,
-                        title: 'ویرایش بازتاب',
-                        builder: (_) => DailyReflectionSheet(onSaved: _requestReload, date: reflection.date),
+                        date: reflection.date,
+                        onSaved: _requestReload,
                       );
                     },
                     icon: const Icon(Icons.edit, size: 16),

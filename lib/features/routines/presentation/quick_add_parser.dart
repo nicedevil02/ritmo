@@ -126,7 +126,7 @@ class QuickAddParser {
     }
 
     // 4. Parse Time (anchored!)
-    const modRegexStr = r'(?:صبح|بامداد|ظهر|عصر|شب|بعد\s*از\s*ظهر|بعدازظهر)';
+    const modCore = r'صبح|بامداد|ظهر|عصر|شب|بعد\s*از\s*ظهر|بعدازظهر';
     
     // Check Format 1: HH:MM or HH٪MM
     final timeColonRegex = RegExp(r'(?:ساعت\s+)?(\d{1,2})\s*[:٪]\s*(\d{2})');
@@ -136,11 +136,14 @@ class QuickAddParser {
       final h = int.parse(mColon.group(1)!);
       final m = int.parse(mColon.group(2)!);
       
-      final modRegexAfter = RegExp('^\\s*$modRegexStr');
-      final modRegexBefore = RegExp('$modRegexStr\\s*(?:ساعت\\s*)?\$');
+      final modRegexAfter = RegExp(r'^\s*(' + modCore + r')');
+      final modRegexBefore = RegExp(r'(' + modCore + r')\s*(?:ساعت\s*)?$');
       
-      final modMatchAfter = modRegexAfter.firstMatch(text.substring(mColon.end));
-      final modMatchBefore = modRegexBefore.firstMatch(text.substring(0, mColon.start));
+      final afterSubstring = text.substring(mColon.end);
+      final beforeSubstring = text.substring(0, mColon.start);
+      
+      final modMatchAfter = modRegexAfter.firstMatch(afterSubstring);
+      final modMatchBefore = modRegexBefore.firstMatch(beforeSubstring);
       
       String? modifier;
       var start = mColon.start;
@@ -159,7 +162,7 @@ class QuickAddParser {
     } else {
       // Check Format 2: Text time (e.g. ساعت 5, 5 عصر, عصر 5)
       // Matches an optional modifier, optional ساعت, the hour, optional نیم, and optional modifier
-      final timeTextRegex = RegExp('(?:($modRegexStr)\\s+)?(?:ساعت\\s+)?(\\d{1,2})(?:\\s*(?:و\\s*)?نیم)?(?:\\s+($modRegexStr))?');
+      final timeTextRegex = RegExp(r'(?:(' + modCore + r')\s+)?(?:ساعت\s+)?(\d{1,2})(?:\s*(?:و\s*)?نیم)?(?:\s+(' + modCore + r'))?');
       final mText = timeTextRegex.firstMatch(text);
       if (mText != null) {
         // BUT we need to make sure we don't just match a random digit as time if it doesn't have 'ساعت' or a modifier!

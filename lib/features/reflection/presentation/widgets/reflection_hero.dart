@@ -160,13 +160,9 @@ class ReflectionHero extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                showModalBottomSheet(
+                DailyReflectionSheet.show(
                   context: context,
-                  backgroundColor: Colors.transparent,
-                  isScrollControlled: true,
-                  builder: (context) => DailyReflectionSheet(
-                    onSaved: onRefresh,
-                  ),
+                  onSaved: onRefresh,
                 );
               },
               icon: const Icon(CupertinoIcons.pen, size: 16),

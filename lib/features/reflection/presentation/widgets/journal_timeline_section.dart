@@ -139,14 +139,10 @@ class JournalTimelineSection extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 16),
           child: InkWell(
             onTap: () {
-              showModalBottomSheet(
+              DailyReflectionSheet.show(
                 context: context,
-                backgroundColor: Colors.transparent,
-                isScrollControlled: true,
-                builder: (context) => DailyReflectionSheet(
-                  date: day.dateIso,
-                  onSaved: onRefresh,
-                ),
+                date: day.dateIso,
+                onSaved: onRefresh,
               );
             },
             borderRadius: BorderRadius.circular(20),

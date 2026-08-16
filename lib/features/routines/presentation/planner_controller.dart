@@ -1513,12 +1513,12 @@ class PlannerController extends ChangeNotifier {
     }
   }
 
-  /// تعداد روتین‌های فعال (archived=0)
+  /// تعداد روتین‌های فعال (isArchived=0)
   Future<int> _countActiveRoutines() async {
     try {
       final db = await DatabaseHelper.instance.database;
       final result = await db.rawQuery(
-        "SELECT COUNT(*) as count FROM routines WHERE COALESCE(archived, 0) = 0",
+        "SELECT COUNT(*) as count FROM routines WHERE COALESCE(isArchived, 0) = 0",
       );
       return (result.first['count'] as int?) ?? 0;
     } catch (_) {

@@ -1,3 +1,5 @@
+import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
+
 /// وضعیت مرحله در تایم‌لاین ایجنت
 enum AgentStepStatus {
   pending,
@@ -71,6 +73,14 @@ class AgentStatusChangedEvent extends AgentEvent {
   });
 }
 
+/// نوبت جدید حلقه ReAct شروع شد (برای تایم‌لاین فاز ۶)
+class AgentTurnStartedEvent extends AgentEvent {
+  final int turn;
+  final int maxTurns;
+
+  const AgentTurnStartedEvent({required this.turn, required this.maxTurns});
+}
+
 /// یک گام جدید شروع شد
 class AgentStepStartedEvent extends AgentEvent {
   final AgentStep step;
@@ -81,6 +91,31 @@ class AgentStepStartedEvent extends AgentEvent {
 class AgentStepCompletedEvent extends AgentEvent {
   final AgentStep step;
   const AgentStepCompletedEvent(this.step);
+}
+
+/// حلقه متوقف شده و منتظر تایید کاربر است (فاز ۳ · P3-2)
+///
+/// مصرف‌کننده باید کارت تایید را نشان دهد و پاسخ کاربر را با
+/// AgentConfirmationBroker.instance.approve/reject برگرداند؛ وگرنه حلقه تا
+/// تایم‌اوت معلق می‌ماند و عملیات انجام نمی‌شود.
+class AgentAwaitingConfirmationEvent extends AgentEvent {
+  final AgentConfirmationRequest request;
+  const AgentAwaitingConfirmationEvent(this.request);
+}
+
+/// کاربر تایید یا رد کرد و حلقه ادامه یافت
+class AgentConfirmationResolvedEvent extends AgentEvent {
+  final String requestId;
+  final String toolName;
+  final bool approved;
+  final String? reasonFa;
+
+  const AgentConfirmationResolvedEvent({
+    required this.requestId,
+    required this.toolName,
+    required this.approved,
+    this.reasonFa,
+  });
 }
 
 /// یک چانک متنی استریم شد
@@ -103,11 +138,15 @@ class AgentCompletedEvent extends AgentEvent {
   final List<AgentStep> steps;
   final Map<String, dynamic>? interactiveAction;
 
+  /// شناسه این اجرا در ژورنال (برای پیدا کردن عملیات قابل بازگشت همین پیام)
+  final String sessionId;
+
   const AgentCompletedEvent({
     required this.finalAnswer,
     this.rawAnswer = '',
     required this.steps,
     this.interactiveAction,
+    this.sessionId = '',
   });
 }
 

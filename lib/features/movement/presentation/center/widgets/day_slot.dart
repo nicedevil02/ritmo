@@ -15,6 +15,11 @@ enum MovementDaySlotState {
   outOfRange,
 }
 
+// ثابت‌های میکرو-چیدمان داخلی اسلات (اندازهٔ بصری، نه فاصله‌بندی)
+const double _kSlotInnerPadding = 2.0;
+const double _kTodayDotSize = 4.0;
+const double _kTodayDotAreaHeight = 8.0;
+
 /// خانهٔ یک روز در ریل هفته با رعایت کامل دسترس‌پذیری، انیمیشن و تمایز امروز از انتخاب‌شده
 class DaySlot extends StatelessWidget {
   const DaySlot({
@@ -78,7 +83,8 @@ class DaySlot extends StatelessWidget {
       subtitleColor = colors.textTertiary;
     }
 
-    // پس‌زمینه و حاشیه انتخاب
+    // پس‌زمینه و حاشیه انتخاب — «امروز» با نقطهٔ زیر شماره و Border ملایم
+    // از انتخاب‌شده (حلقهٔ Accent) متمایز می‌شود.
     BoxDecoration decoration;
     if (isSelected) {
       decoration = BoxDecoration(
@@ -127,14 +133,11 @@ class DaySlot extends StatelessWidget {
           child: AnimatedContainer(
             duration: RitmoMotion.effective(context, RitmoMotion.state),
             curve: Curves.easeInOut,
-            constraints: BoxConstraints(
+            constraints: const BoxConstraints(
               minWidth: MovementLayout.kDaySlotMinSize.width,
               minHeight: MovementLayout.kDaySlotMinSize.height,
             ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 2.0,
-              vertical: 2.0,
-            ),
+            padding: const EdgeInsets.all(_kSlotInnerPadding),
             decoration: decoration,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -144,35 +147,38 @@ class DaySlot extends StatelessWidget {
                 Text(
                   dayName,
                   style: RitmoTextStyles.caption(subtitleColor).copyWith(
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.w700 : null,
                     height: 1.05,
                   ),
                   maxLines: 1,
                 ),
 
-                // شماره روز جلالی
+                // شمارهٔ روز جلالی
                 Text(
                   toPersianDigits(dayNumber),
                   style: RitmoTextStyles.titleMedium(textColor).copyWith(
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    fontWeight: isSelected ? FontWeight.w700 : null,
                     height: 1.05,
                   ),
                   maxLines: 1,
                 ),
 
-                // نشانگر «امروز»
-                if (isToday)
-                  Container(
-                    margin: const EdgeInsets.symmetric(vertical: 1.0),
-                    width: 3.5,
-                    height: 3.5,
-                    decoration: BoxDecoration(
-                      color: colors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                  )
-                else
-                  const SizedBox(height: 5.5),
+                // نشانگر «امروز» — ناحیهٔ ثابت الارتفاع تا چیدمان نپرد
+                SizedBox(
+                  height: _kTodayDotAreaHeight,
+                  child: isToday
+                      ? Center(
+                          child: Container(
+                            width: _kTodayDotSize,
+                            height: _kTodayDotSize,
+                            decoration: BoxDecoration(
+                              color: colors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
 
                 // نشانگرهای وضعیت
                 DayStatusIndicators(statuses: statuses),

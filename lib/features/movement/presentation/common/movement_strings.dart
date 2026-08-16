@@ -24,6 +24,7 @@ abstract final class MovementStrings {
   static const statusSkipped = 'ردشده';
   static const statusMoved = 'جابه‌جاشده';
   static const statusLate = 'زمان پیشنهادی گذشته';
+  static const statusRestDay = 'استراحت';
 
   // Reasons
   static const reasonInterest = 'بر اساس علاقه';
@@ -42,9 +43,20 @@ abstract final class MovementStrings {
   static const heroActionReviewWeek = 'مرور هفته';
   static const heroActionLightMovement = 'حرکت سبک ۱۰ دقیقه‌ای';
 
+  // Hero body texts
+  static const heroEmptyPlanDesc =
+      'برنامه‌ای برای این هفته تنظیم نشده است. می‌توانید فعالیت دلخواهتان را اضافه کنید یا از پیشنهاد هوشمند استفاده کنید.';
+  static const heroRestDayDesc =
+      'به بدنت فرصت استراحت و بازسازی بده. استراحت کافی بخش ضروری پیشرفت و جلوگیری از آسیب است.';
+  static const defaultTodaySessionName = 'تمرین امروز';
+  static const defaultSessionTitle = 'جلسهٔ حرکتی';
+  static const goalStandard = 'هدف استاندارد';
+  static const todayLabel = 'امروز';
+
   // Banner Actions
   static const bannerFinishAndSave = 'پایان و ثبت';
   static const bannerDiscardSession = 'حذف جلسهٔ ناتمام';
+  static const bannerDefaultTitle = 'جلسهٔ زنده';
 
   // Recovery Day Card
   static const recoveryDayTitle = 'روز ریکاوری';
@@ -52,14 +64,29 @@ abstract final class MovementStrings {
   static const recoveryDayAddLight = 'افزودن حرکت سبک';
 
   // Week Summary Card
+  static const weekSummaryTitle = 'خلاصهٔ هفته';
   static const summaryCompletedPlanned = 'انجام‌شده از برنامه‌ریزی‌شده';
   static const summaryActiveMinutes = 'دقیقهٔ فعال';
   static const summaryRecoveryDays = 'روز ریکاوری';
+  static const unitMinute = 'دقیقه';
+  static const unitDay = 'روز';
+
+  // Dock
+  static const dockCompactLabel = 'افزودن';
+
+  // Center screen toasts & errors
+  static const centerLoadErrorTitle = 'خطا در بارگذاری برنامهٔ حرکت';
+  static const centerSyncErrorTitle = 'خطا در به‌روزرسانی زنده';
+  static const retroLoggedToast = 'فعالیت انجام‌شده ثبت شد';
+  static const smartFillAppliedToast = 'برنامهٔ هوشمند با موفقیت اعمال شد';
+  static const planBAppliedToast = 'نسخهٔ Plan B اعمال شد';
+  static const completeErrorToast = 'خطا در ثبت تکمیل جلسه';
 
   // Strength Card
   static const strengthTitle = 'قدرت در خانه';
   static const strengthBuildProgram = 'ساخت برنامهٔ من';
-  static const strengthCardDesc = 'تمرینات ساختاریافته برای افزایش قدرت بدنی و سلامت مفاصل';
+  static const strengthCardDesc =
+      'تمرینات ساختاریافته برای افزایش قدرت بدنی و سلامت مفاصل';
   static const strengthBenefit1 = 'بدون نیاز به باشگاه';
   static const strengthBenefit2 = 'تنظیم خودکار با پیشرفت';
   static const strengthBenefit3 = 'جلوگیری از آسیب';
@@ -67,15 +94,21 @@ abstract final class MovementStrings {
   static const strengthViewProgram = 'مشاهدهٔ برنامه';
   static const strengthResumeSession = 'ادامهٔ جلسه';
   static const strengthDeload = 'هفتهٔ Deload';
-  static const strengthDeloadDesc = 'هفتهٔ کاهش بار جهت بازیابی عضلانی و جلوگیری از تمرین‌زدگی';
+  static const strengthDeloadDesc =
+      'هفتهٔ کاهش بار جهت بازیابی عضلانی و جلوگیری از تمرین‌زدگی';
   static const strengthCycleFinished = 'دوره تمام شد';
   static const strengthStartNextCycle = 'شروع دورهٔ بعد';
   static const strengthNotMedical = 'این بخش جایگزین مشاورهٔ پزشکی نیست';
   static const strengthActivate = 'فعالسازی برنامه';
+  static const strengthDraftDesc = 'پیش‌نویس برنامهٔ قدرتی شما در انتظار تکمیل است.';
+  static const strengthResumeOnboarding = 'ادامهٔ آنبوردینگ قدرت';
+  static const strengthFinishedDesc =
+      'دورهٔ تمرینی با موفقیت به پایان رسید. اکنون می‌توانید دورهٔ بعدی را با حجم و شدت جدید آغاز کنید.';
 
   // Cutover Callout
   static const cutoverCalloutTitle = 'بخش حرکت بازسازی شده است';
-  static const cutoverCalloutDesc = 'بخش حرکت بازسازی شده و برنامه از صفر ساخته می‌شود';
+  static const cutoverCalloutDesc =
+      'بخش حرکت بازسازی شده و برنامه از صفر ساخته می‌شود';
   static const cutoverCalloutDismiss = 'متوجه شدم';
 
   // Card Menu Actions
@@ -134,7 +167,8 @@ abstract final class MovementStrings {
   static const customActivityEnvironment = 'محیط انجام (اختیاری)';
   static const customActivityEquipment = 'تجهیزات (اختیاری)';
   static const customActivitySave = 'ذخیرهٔ فعالیت';
-  static const customActivityDuplicateWarning = 'فعالیتی با نام مشابه وجود دارد. آیا مایل به ذخیره هستید؟';
+  static const customActivityDuplicateWarning =
+      'فعالیتی با نام مشابه وجود دارد. آیا مایل به ذخیره هستید؟';
 
   // Planner 8 Steps
   static const plannerTitle = 'برنامه‌ریزی فعالیت';
@@ -146,9 +180,11 @@ abstract final class MovementStrings {
   static const plannerStepConstraints = 'محدودیت‌ها و تداخل';
   static const plannerStepPreview = 'پیش‌نمایش برنامه';
   static const plannerStepConfirm = 'تأیید و ذخیره';
-  static const plannerSaveDisabledReason = 'برای ذخیره، انتخاب روز و هدف معتبر الزامی است';
+  static const plannerSaveDisabledReason =
+      'برای ذخیره، انتخاب روز و هدف معتبر الزامی است';
   static const plannerDiscardTitle = 'خروج از ویرایشگر';
-  static const plannerDiscardMessage = 'تغییرات ذخیره‌نشده دارید. مایل به ذخیره هستید یا تغییرات لغو شوند؟';
+  static const plannerDiscardMessage =
+      'تغییرات ذخیره‌نشده دارید. مایل به ذخیره هستید یا تغییرات لغو شوند؟';
   static const plannerActionSaveAndExit = 'ذخیره و خروج';
   static const plannerActionDiscard = 'دور ریختن';
   static const plannerActionContinue = 'ادامهٔ ویرایش';
@@ -192,7 +228,8 @@ abstract final class MovementStrings {
   static const occurrenceHistory = 'تاریخچهٔ ثبت تمرین';
   static const occurrenceNoHistory = 'هنوز لاگی برای این جلسه ثبت نشده است.';
   static const occurrenceDeleteConfirmTitle = 'حذف جلسهٔ ورزشی';
-  static const occurrenceDeleteConfirmDesc = 'با حذف این جلسه، تمام سوابق و لاگ‌های تاریخی شما دست‌نخورده باقی می‌مانند.';
+  static const occurrenceDeleteConfirmDesc =
+      'با حذف این جلسه، تمام سوابق و لاگ‌های تاریخی شما دست‌نخورده باقی می‌مانند.';
 
   // Retro Log
   static const retroLogTitle = 'ثبت فعالیت انجام‌شده';
@@ -203,7 +240,8 @@ abstract final class MovementStrings {
   static const retroLogFeeling = 'حس بعد از تمرین';
   static const retroLogNote = 'یادداشت (اختیاری)';
   static const retroLogSubmit = 'ثبت و ذخیره';
-  static const retroLogMatchPrompt = 'یک جلسهٔ برنامه‌ریزی‌شده در همین روز یافت شد. مایلید همین جلسه به عنوان انجام‌شده ثبت شود؟';
+  static const retroLogMatchPrompt =
+      'یک جلسهٔ برنامه‌ریزی‌شده در همین روز یافت شد. مایلید همین جلسه به عنوان انجام‌شده ثبت شود؟';
 
   // Move / Skip / QuickComplete / PlanB / SmartFill / WeekReshuffle Sheets
   static const moveSessionTitle = 'جابه‌جایی جلسه';
@@ -228,7 +266,8 @@ abstract final class MovementStrings {
   static const planBDropped = 'موارد حذف‌شده';
   static const planBNewDuration = 'مدت زمان جدید';
   static const smartFillTitle = 'پیشنهاد هوشمند برنامه';
-  static const smartFillNoSuggestion = 'با این محدودیت‌ها پیشنهاد مطمئنی پیدا نشد';
+  static const smartFillNoSuggestion =
+      'با این محدودیت‌ها پیشنهاد مطمئنی پیدا نشد';
   static const smartFillFixConstraints = 'اصلاح محدودیت‌ها';
   static const smartFillApplySelected = 'اعمال موارد انتخاب‌شده';
   static const weekReshuffleTitle = 'بازآرایی برنامهٔ هفتگی';
@@ -298,14 +337,17 @@ abstract final class MovementStrings {
   static const pauseExitContinue = 'ادامه';
   static const painReportSeverity = 'شدت درد';
   static const painReportLocation = 'محل تقریبی درد';
-  static const painReportFinishAdvice = 'توصیه می‌شود تمرین را همین‌جا به پایان برسانی.';
-  static const painReportLowAdvice = 'می‌توانی بخش پرفشار را رد کنی یا شدت را کم کنی.';
+  static const painReportFinishAdvice =
+      'توصیه می‌شود تمرین را همین‌جا به پایان برسانی.';
+  static const painReportLowAdvice =
+      'می‌توانی بخش پرفشار را رد کنی یا شدت را کم کنی.';
   static const painReportSubmit = 'ثبت گزارش درد';
   static const summaryTitle = 'خلاصهٔ جلسه';
   static const summarySubtitleCompleted = 'تمرین با موفقیت انجام و ثبت شد.';
   static const summarySubtitlePartial = 'خلاصهٔ بخش انجام‌شدهٔ تمرین.';
   static const summaryPrCelebration = 'رکورد جدید ثبت شد!';
-  static const summaryAddToPlanPrompt = 'مایلید این ورزش به برنامهٔ هفتگی شما اضافه شود؟';
+  static const summaryAddToPlanPrompt =
+      'مایلید این ورزش به برنامهٔ هفتگی شما اضافه شود؟';
   static const summaryAddToPlanButton = 'افزودن به برنامهٔ هفتگی';
   static const intensityVeryLight = 'بسیار سبک';
   static const intensityLight = 'سبک';
@@ -387,7 +429,8 @@ abstract final class MovementStrings {
   // Readiness & Coach (Gate 5)
   // ---------------------------------------------------------------------------
   static const readinessCheckinTitle = 'ارزیابی آمادگی روزانه';
-  static const readinessSubtitle = 'پاسخ به این سؤالات کاملاً اختیاری است و به تنظیم هوشمند فشار تمرین کمک می‌کند.';
+  static const readinessSubtitle =
+      'پاسخ به این سؤالات کاملاً اختیاری است و به تنظیم هوشمند فشار تمرین کمک می‌کند.';
   static const readinessSleepLabel = 'کیفیت خواب';
   static const readinessEnergyLabel = 'سطح انرژی';
   static const readinessSorenessLabel = 'کوفتگی و درد عضلانی';
@@ -448,16 +491,19 @@ abstract final class MovementStrings {
   static const settingsMedicalDisclaimer = 'این بخش جایگزین مربی یا پزشک نیست.';
   static const settingsDeleteAllData = 'حذف کامل داده‌های حرکت';
   static const settingsDeleteConfirmTitle = 'آیا از حذف داده‌ها مطمئن هستید؟';
-  static const settingsDeleteImpactText = 'با این کار تمام جلسات، سوابق، برنامه‌ها و رکوردهای ثبت‌شده در بخش حرکت پاکسازی خواهند شد و این عملیات غیرقابل بازگشت است.';
+  static const settingsDeleteImpactText =
+      'با این کار تمام جلسات، سوابق، برنامه‌ها و رکوردهای ثبت‌شده در بخش حرکت پاکسازی خواهند شد و این عملیات غیرقابل بازگشت است.';
   // ---------------------------------------------------------------------------
   // Agenda & Notifications (Gate 6)
   // ---------------------------------------------------------------------------
   static const notificationNeutralTitle = 'یادآوری ریتمو';
-  static const notificationNeutralBody = 'یک برنامهٔ ورزشی در زمان‌بندی امروز شما ثبت شده است.';
+  static const notificationNeutralBody =
+      'یک برنامهٔ ورزشی در زمان‌بندی امروز شما ثبت شده است.';
   static const notificationSessionPreReminder = 'یادآوری شروع جلسهٔ ورزشی';
   static const notificationMorningTitle = 'برنامهٔ ورزشی امروز';
   static const notificationPartialTitle = 'یادآوری جلسهٔ نیمه‌تمام';
-  static const notificationPartialBody = 'جلسهٔ ورزشی شما نیمه‌کاره باقی مانده است. برای ادامه کلیک کنید.';
+  static const notificationPartialBody =
+      'جلسهٔ ورزشی شما نیمه‌کاره باقی مانده است. برای ادامه کلیک کنید.';
   static const agendaSportActionComplete = 'تکمیل تمرین';
   static const agendaSportActionDetails = 'مشاهدهٔ جلسه';
 
@@ -474,15 +520,25 @@ abstract final class MovementStrings {
   static String heroSessionProgress(int current, int total) =>
       'جلسهٔ ${toPersianDigits(current)} از ${toPersianDigits(total)}';
 
-  static String sessionsCount(int count) =>
-      '${toPersianDigits(count)} جلسه';
+  static String sessionsCount(int count) => '${toPersianDigits(count)} جلسه';
 
   static String completedSessionsCount(int count) =>
       '${toPersianDigits(count)} انجام شده';
 
-  static String plusMoreSessions(int count) =>
-      '+${toPersianDigits(count)}';
+  static String plusMoreSessions(int count) => '+${toPersianDigits(count)}';
 
   static String planSavedToast(int createdSessionsCount) =>
       'برنامه با ${toPersianDigits(createdSessionsCount)} جلسه ذخیره شد';
+
+  static String atTime(String time) => 'ساعت ${toPersianDigits(time)}';
+
+  static String heroAllDoneDesc(String activityName) =>
+      'جلسهٔ $activityName با موفقیت به پایان رسید.';
+
+  static String bannerActiveLabel(String time) => 'در حال ضبط · $time';
+
+  static String bannerPausedLabel(String time) => 'مکث شده · $time';
+
+  static String bannerSemanticsLabel(String activityName, String time) =>
+      'جلسهٔ زنده $activityName، مدت سپری‌شده: $time';
 }

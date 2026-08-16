@@ -1,4 +1,6 @@
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/movement/domain/models/movement_occurrence.dart';
+import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 
 abstract final class MovementSemantics {
   /// برچسب Semantics برای اسلات روز در ریل هفته
@@ -35,6 +37,20 @@ abstract final class MovementSemantics {
     }
 
     return buffer.toString();
+  }
+
+  /// برچسب فارسی وضعیت رخداد — Semantics هرگز نام انگلیسی enum نمی‌گیرد
+  static String occurrenceStatusLabel(MovementOccurrenceStatus status) {
+    return switch (status) {
+      MovementOccurrenceStatus.planned => MovementStrings.statusPlanned,
+      MovementOccurrenceStatus.inProgress => MovementStrings.statusInProgress,
+      MovementOccurrenceStatus.completed => MovementStrings.statusCompleted,
+      MovementOccurrenceStatus.partial => MovementStrings.statusPartial,
+      MovementOccurrenceStatus.skipped => MovementStrings.statusSkipped,
+      MovementOccurrenceStatus.moved => MovementStrings.statusMoved,
+      MovementOccurrenceStatus.late => MovementStrings.statusLate,
+      MovementOccurrenceStatus.restDay => MovementStrings.statusRestDay,
+    };
   }
 
   /// برچسب Semantics برای کارت جلسه

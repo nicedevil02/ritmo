@@ -158,7 +158,7 @@ class SessionCard extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
-              ,
+                              ),
                             ),
 
                             const SizedBox(width: RitmoSpacing.xs),

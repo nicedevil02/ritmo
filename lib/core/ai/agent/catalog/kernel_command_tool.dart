@@ -154,10 +154,14 @@ abstract class KernelCommandTool extends AgentTool {
       );
     }
 
+    // outputData نال‌پذیر است (Map<String, dynamic>?)، پس بدون بررسی null
+    // کامپایل نمی‌شود.
     final output = <String, dynamic>{};
     for (final r in result.results) {
       final data = r.outputData;
-      if (data.isNotEmpty) output.addAll(data);
+      if (data != null && data.isNotEmpty) {
+        output.addAll(data);
+      }
     }
 
     _refreshAffectedSurfaces(steps.map((s) => s.commandId));

@@ -5,20 +5,15 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
 import 'package:ritmo/features/goals/presentation/goals_screen.dart';
 import 'package:ritmo/features/health/presentation/health_screen.dart';
-import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
-import 'package:ritmo/features/movement/domain/models/movement_workout_log.dart';
 import 'package:ritmo/features/movement/presentation/activity_picker/activity_picker_screen.dart';
 import 'package:ritmo/features/movement/presentation/center/movement_center_screen.dart';
 import 'package:ritmo/features/movement/presentation/library/movement_library_screen.dart';
 import 'package:ritmo/features/movement/presentation/movement_routes.dart';
-import 'package:ritmo/features/movement/presentation/occurrence/occurrence_details_screen.dart';
 import 'package:ritmo/features/movement/presentation/planner/activity_plan_editor_screen.dart';
 import 'package:ritmo/features/movement/presentation/progress/movement_progress_screen.dart';
-import 'package:ritmo/features/movement/presentation/session/movement_live_session_screen.dart';
 import 'package:ritmo/features/movement/presentation/settings/movement_settings_screen.dart';
 import 'package:ritmo/features/movement/presentation/strength/strength_hub_screen.dart';
 import 'package:ritmo/features/movement/presentation/strength/strength_onboarding_flow.dart';
-import 'package:ritmo/features/movement/presentation/summary/session_summary_screen.dart';
 import 'package:ritmo/features/study/study_module_entry.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
@@ -62,6 +57,14 @@ class RitmoRouteTarget {
 /// همین یک نگاشت سوارند: دستیار، payload نوتیف، و میانبرهای داخل اپ.
 class RitmoRouter {
   RitmoRouter._();
+
+  /// مسیرهای نسل جدید حرکت فقط در بیلد داخلی فعال‌اند. در بیلد کاربر نهایی
+  /// هیچ مسیر حرکتی resolve نمی‌شود تا ورودی اشتباه به صفحه‌های در حال ساخت
+  /// باز نشود.
+  static const bool _movementGreenfieldInternal = bool.fromEnvironment(
+    'MOVEMENT_GREENFIELD_INTERNAL',
+    defaultValue: false,
+  );
 
   /// روی MaterialApp نصب می‌شود تا مسیرها از بیرون درخت (مثل تپ روی نوتیف)
   /// هم قابل باز شدن باشند.
@@ -129,43 +132,16 @@ class RitmoRouter {
       });
     }
 
-    // مسیرهای ماژول حرکت (Movement Module)
-    if (r == MovementRoutes.center || r == '/movement') {
-      return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
-    }
+    // مسیرهای ماژول حرکت (Movement Module) — فقط در بیلد داخلی
+    if (_movementGreenfieldInternal) {
+      if (r == MovementRoutes.center || r == '/movement') {
+        return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
+      }
       if (r == MovementRoutes.picker) {
         return RitmoRouteTarget.screen((_) => const ActivityPickerScreen());
       }
       if (r == MovementRoutes.planEditor) {
         return RitmoRouteTarget.screen((_) => const ActivityPlanEditorScreen());
-      }
-      if (r == MovementRoutes.occurrence) {
-        return RitmoRouteTarget.screen((_) => const ActivityOccurrenceDetailsScreen(occurrenceId: ''));
-      }
-      if (r == MovementRoutes.liveSession) {
-        return RitmoRouteTarget.screen((_) => MovementLiveSessionScreen(
-          activityKind: MovementActivityKind(
-            id: 'kind_walking',
-            nameFa: 'پیاده‌روی',
-            family: 'walking',
-            icon: 'directions_walk',
-            primaryMetric: 'duration',
-            createdAt: DateTime.now(),
-          ),
-        ));
-      }
-      if (r == MovementRoutes.summary) {
-        return RitmoRouteTarget.screen((_) => SessionSummaryScreen(
-          workoutLog: MovementWorkoutLog(
-            id: 'sample_log',
-            activityKindId: 'kind_walking',
-            dateIso: '2026-08-16',
-            durationSec: 1800,
-            source: 'live',
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
-        ));
       }
       if (r == MovementRoutes.strengthHub) {
         return RitmoRouteTarget.screen((_) => const StrengthHubScreen());
@@ -182,9 +158,17 @@ class RitmoRouter {
       if (r == MovementRoutes.settings) {
         return RitmoRouteTarget.screen((_) => const MovementSettingsScreen());
       }
-      if (r == MovementRoutes.strengthPreview) {
-        return RitmoRouteTarget.screen((_) => const SizedBox.shrink());
+
+      // مسیرهای نیازمند آرگومان (occurrenceId / sessionId / ...):
+      // روتر رشته‌ای کانال آرگومان ندارد؛ طبق قرارداد، هر لینک ناقص یا
+      // شکست‌خورده به مرکز حرکت بازمی‌گردد و هرگز صفحهٔ بن‌بست نشان نمی‌دهد.
+      if (r == MovementRoutes.occurrence ||
+          r == MovementRoutes.liveSession ||
+          r == MovementRoutes.summary ||
+          r == MovementRoutes.strengthPreview) {
+        return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
       }
+    }
 
     return null;
   }

@@ -1,183 +1,229 @@
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
-import 'package:ritmo/core/database/database_helper.dart';
-import 'package:shamsi_date/shamsi_date.dart';
+import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
+import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/domain/commands/command_plan.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 
-/// ۱. ابزار دریافت برنامه و زمان‌بندی روزانه
+/// نام فارسی هر دامنهٔ اجندا برای گزارش به مدل.
+const Map<AgendaDomain, String> _domainFa = <AgendaDomain, String>{
+  AgendaDomain.routine: 'روتین',
+  AgendaDomain.prayer: 'نماز',
+  AgendaDomain.mustahab: 'مستحبات',
+  AgendaDomain.course: 'دروس',
+  AgendaDomain.goalStep: 'گام هدف',
+  AgendaDomain.konkur: 'کنکور',
+  AgendaDomain.cycle: 'چرخه',
+  AgendaDomain.worshipDebt: 'قضای عبادات',
+  AgendaDomain.sport: 'ورزش',
+  AgendaDomain.medicine: 'دارو',
+  AgendaDomain.event: 'رویداد',
+  AgendaDomain.task: 'کار',
+  AgendaDomain.commitment: 'تعهد',
+  AgendaDomain.appointment: 'نوبت',
+};
+
+/// نام فارسی وضعیت انجام.
+const Map<AgendaCompletion, String> _completionFa = <AgendaCompletion, String>{
+  AgendaCompletion.none: 'بدون وضعیت ثبت‌شده',
+  AgendaCompletion.pending: 'انجام‌نشده',
+  AgendaCompletion.done: 'انجام‌شده',
+  AgendaCompletion.partial: 'نیمه‌انجام',
+  AgendaCompletion.skipped: 'ردشده',
+  AgendaCompletion.overdue: 'عقب‌افتاده',
+  AgendaCompletion.missed: 'ازدست‌رفته',
+};
+
+/// ۱. ابزار دریافت برنامهٔ یک روز — فاز ۲ (P2-3)
 ///
-/// منبع داده جدول routine_occurrences است که بر کلید تاریخ ایندکس شده و همان
-/// منبعی است که تقویم برنامه از آن می‌خواند. نسخه قبلی تمام روتین‌ها را
-/// بدون توجه به تاریخ می‌خواند و همان لیست را برای «فردا» هم تحویل می‌داد.
+/// منبع داده دیگر یک کوئری خام روی routine_occurrences نیست، بلکه دقیقاً
+/// همان [DayAgendaService] است که خانه و تقویم از آن می‌خوانند. چرا مهم است:
 ///
-/// محدودیت فعلی: فقط روتین‌ها و ایونت‌های موجود در routine_occurrences را می‌بیند.
-/// پوشش کامل (نماز، ورزش، گیت‌های مادول) در فاز ۲ با عبور از DayAgendaService.
+///  - مدل دیگر نماز، جلسات ورزشی، دارو، دروس، کنکور، کارها و رویدادها را
+///    از قلم نمی‌اندازد (قبلاً فقط روتین‌ها را می‌دید).
+///  - گیت‌های ماژول، رضایت چرخه، اووررایدهای روز و روزهای استراحت/سفر
+///    در همان جایی اعمال می‌شوند که UI اعمال می‌کند، پس جواب دستیار با آنچه
+///    کاربر می‌بیند تفاوت ندارد.
+///  - منطق تاریخ، مرتب‌سازی و وضعیت انجام دو جا تکرار نمی‌شود (D15).
 class GetDayAgendaTool extends AgentTool {
   const GetDayAgendaTool()
       : super(
           name: 'get_day_agenda',
           categoryFa: 'برنامه‌ریزی روز',
-          titleFa: 'دریافت برنامه روزانه',
+          titleFa: 'دریافت برنامهٔ یک روز',
           descriptionFa:
-              'لیست روتین‌ها و کارهای زمان‌بندی‌شده کاربر برای یک روز مشخص را با وضعیت انجام بازمی‌گرداند.',
+              'برنامهٔ کامل یک روز را عیناً مطابق آنچه در خانه و تقویم برنامه دیده می‌شود بازمی‌گرداند: روتین‌ها، رویدادها، کارها، نماز، ورزش، دارو، دروس و گام‌های اهداف با ساعت و وضعیت انجام. برای هر پرسش دربارهٔ برنامهٔ امروز/فردا همین را صدا بزن.',
           policy: ToolPolicy.readOnly,
           parameters: const [
             ToolParameter(
               name: 'targetDate',
               descriptionFa:
-                  'تاریخ مورد نطر: یکی از today یا tomorrow یا yesterday، یا تاریخ جلالی مانند 1403/05/20، یا تاریخ میلادی مانند 2026-08-16',
+                  'تاریخ مورد نظر: امروز، فردا، دیروز، پس‌فردا، یا تاریخ شمسی مانند 1405/05/26 یا میلادی مانند 2026-08-16',
               type: 'string',
-              defaultValue: 'today',
+              defaultValue: 'امروز',
+            ),
+            ToolParameter(
+              name: 'onlyPending',
+              descriptionFa:
+                  'اگر true باشد فقط موارد انجام‌نشده برگردانده می‌شوند (مناسب برای «چه مانده؟»)',
+              type: 'bool',
+              defaultValue: false,
             ),
           ],
         );
 
+  /// سقف تعداد آیتم در خروجی؛ برای محافظت از بودجهٔ پرامپت لازم است.
+  static const int _maxItems = 40;
+
   @override
   Future<AgentToolResult> execute(Map<String, dynamic> args) async {
-    final rawTarget = args['targetDate']?.toString() ?? 'today';
-    final resolved = _resolveDate(rawTarget);
-    final isoDate = _iso(resolved);
-    final jalaliLabel = _jalaliLabel(resolved);
+    final rawTarget = args['targetDate']?.toString() ?? 'امروز';
+    final resolved = AgentDateResolver.resolve(rawTarget);
+    final iso = AgentDateResolver.iso(resolved);
+    final label = AgentDateResolver.label(resolved);
+    final onlyPending = KernelCommandTool.optionalBool(args['onlyPending']) ?? false;
 
-    final db = await DatabaseHelper.instance.database;
+    DayAgenda agenda;
+    try {
+      agenda = await DayAgendaService.instance.agendaForDate(
+        resolved,
+        options: AgendaQueryOptions(includeCompleted: !onlyPending),
+      );
+    } catch (e, st) {
+      RitmoLog.error('GetDayAgendaTool', 'agendaForDate failed for $iso', e, st);
+      return AgentToolResult.failure(
+        toolName: name,
+        errorMessage:
+            'خواندن برنامهٔ $label با خطا متوقف شد، پس هیچ لیستی در دست نیست. حدس نزن که روز خالی است: $e',
+      );
+    }
 
-    final rows = await db.rawQuery('''
-      SELECT
-        o.routine_id AS routineId,
-        o.date AS occurrenceDate,
-        o.scheduled_time AS scheduledTime,
-        o.status AS status,
-        o.ownerModule AS ownerModule,
-        r.title AS title,
-        r.category AS category,
-        r.itemType AS itemType,
-        COALESCE(r.targetDurationMinutes, r.defaultDurationMinutes) AS durationMinutes
-      FROM routine_occurrences o
-      JOIN routines r ON r.id = o.routine_id
-      WHERE o.date = ? AND (r.isArchived = 0 OR r.isArchived IS NULL)
-      ORDER BY (o.scheduled_time IS NULL) ASC, o.scheduled_time ASC
-    ''', [isoDate]);
+    final all = agenda.items;
+    final capped = all.length > _maxItems ? all.sublist(0, _maxItems) : all;
 
-    final items = rows.map((r) {
-      final time = (r['scheduledTime'] as String?)?.trim() ?? '';
-      return {
-        'routineId': r['routineId'],
-        'title': r['title'],
-        'time': time.isEmpty ? 'ساعت مشخص ندارد' : time,
-        'status': r['status'] ?? 'pending',
-        'itemType': r['itemType'] ?? 'ROUTINE',
-        'category': r['category'],
-        'durationMinutes': r['durationMinutes'],
-        'ownerModule': r['ownerModule'],
-      };
-    }).toList();
+    final items = capped
+        .map((i) => <String, dynamic>{
+              'title': i.title,
+              if (i.subtitle != null && i.subtitle!.trim().isNotEmpty)
+                'subtitle': i.subtitle,
+              'time': i.timeOfDay ?? 'ساعت مشخص ندارد',
+              'durationMinutes': i.durationMinutes,
+              'status': _completionFa[i.completion] ?? i.completion.name,
+              'statusCode': i.completion.name,
+              'section': _domainFa[i.domain] ?? i.domain.name,
+              'kind': i.kind.name,
+              'isEssential': i.isEssential,
+              'sourceId': i.sourceId,
+            })
+        .toList();
 
-    final doneCount =
-        items.where((i) => (i['status']?.toString() ?? '') != 'pending').length;
+    final doneCount = all.where((i) => i.isCompleted).length;
+    final skippedCount =
+        all.where((i) => i.completion == AgendaCompletion.skipped).length;
+    final pendingCount = all.length - doneCount - skippedCount;
+
+    final disabledSections = <String>[];
+    agenda.enabledDomains.forEach((domain, isEnabled) {
+      if (!isEnabled) {
+        disabledSections.add(_domainFa[domain] ?? domain.name);
+      }
+    });
+
+    final degradedSections = agenda.degradedSources
+        .map((domain) => _domainFa[domain] ?? domain.name)
+        .toList();
+
+    final summary = StringBuffer();
+    if (all.isEmpty) {
+      summary.write('برای $label هیچ موردی در برنامه نیست');
+      if (disabledSections.isNotEmpty) {
+        summary.write(' (بخش‌های خاموش: ${disabledSections.join('، ')})');
+      }
+      summary.write('.');
+    } else {
+      summary.write(
+        'برنامهٔ $label: ${all.length} مورد؛ $doneCount انجام‌شده، $pendingCount باقی‌مانده',
+      );
+      if (skippedCount > 0) summary.write('، $skippedCount ردشده');
+      summary.write('.');
+    }
+    if (degradedSections.isNotEmpty) {
+      summary.write(
+        ' هشدار: منابع ${degradedSections.join('، ')} امروز درست بار نشدند، پس لیست ممکن است ناقص باشد.',
+      );
+    }
 
     return AgentToolResult.success(
       toolName: name,
       data: {
         'requestedTarget': rawTarget,
-        'resolvedDateGregorian': isoDate,
-        'resolvedDateJalali': jalaliLabel,
-        'itemCount': items.length,
+        'date': iso,
+        'dateLabelFa': label,
+        'itemCount': all.length,
         'doneCount': doneCount,
+        'pendingCount': pendingCount,
+        'skippedCount': skippedCount,
+        'truncated': all.length > capped.length,
         'items': items,
-        'coverageNote':
-            'این لیست فقط روتین‌ها و کارهای ثبت‌شده در جدول اکیورنس را شامل می‌شود و ممکن است نماز یا جلسات ورزشی را دربرنگیرد.',
+        'disabledSections': disabledSections,
+        'degradedSections': degradedSections,
+        'source': 'DayAgendaService',
       },
-      summaryFa: items.isEmpty
-          ? 'برای تاریخ $jalaliLabel (میلادی $isoDate) هیچ مورد زمان‌بندی‌شده‌ای در برنامه ثبت نشده است.'
-          : 'برنامه تاریخ $jalaliLabel (میلادی $isoDate) شامل ${items.length} مورد است که $doneCount مورد انجام شده.',
+      summaryFa: summary.toString(),
     );
-  }
-
-  /// تبدیل ورودی کاربر/مدل به یک تاریخ میلادی معتبر
-  static DateTime _resolveDate(String input) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final v = _toEnglishDigits(input.trim().toLowerCase());
-
-    if (v.isEmpty || v == 'today' || v == 'امروز') return today;
-    if (v == 'tomorrow' || v == 'فردا') {
-      return today.add(const Duration(days: 1));
-    }
-    if (v == 'yesterday' || v == 'دیروز') {
-      return today.subtract(const Duration(days: 1));
-    }
-
-    final parts = v
-        .split(RegExp(r'[\/\-\.]'))
-        .where((p) => p.trim().isNotEmpty)
-        .toList();
-    if (parts.length == 3) {
-      final a = int.tryParse(parts[0].trim());
-      final b = int.tryParse(parts[1].trim());
-      final c = int.tryParse(parts[2].trim());
-      if (a != null && b != null && c != null && b >= 1 && b <= 12 && c >= 1 && c <= 31) {
-        if (a >= 1700) {
-          return DateTime(a, b, c);
-        }
-        if (a >= 1200 && a < 1700) {
-          final g = Jalali(a, b, c).toGregorian();
-          return DateTime(g.year, g.month, g.day);
-        }
-      }
-    }
-
-    return today;
-  }
-
-  static String _toEnglishDigits(String s) {
-    const fa = '۰۱۲۳۴۵۶۷۸۹';
-    const ar = '٠١٢٣٤٥٦٧٨٩';
-    var out = s;
-    for (var i = 0; i < fa.length; i++) {
-      out = out.replaceAll(fa[i], i.toString());
-      out = out.replaceAll(ar[i], i.toString());
-    }
-    return out;
-  }
-
-  static String _iso(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
-  static String _jalaliLabel(DateTime d) {
-    final j = Jalali.fromDateTime(d);
-    return '${j.year}/${j.month.toString().padLeft(2, '0')}/${j.day.toString().padLeft(2, '0')}';
   }
 }
 
-/// ۲. ابزار چیدمان هوشمند برنامه روز — غیرفعال تا فاز ۲
+/// ۲. ابزار مادی‌سازی تخصیص‌های برنامه‌ریزی یک روز — جایگزین ApplySmartDayPlanTool
 ///
-/// نسخه قبلی در جدول assistant_plans می‌نوشت که وجود ندارد، خطا را در catch (_) {}
-/// می‌بلعید و بعد بی‌قیدوشرط به کاربر می‌گفت برنامه آماده شد. یعنی ابزار به
-/// کاربر دروغ می‌گفت. تا وقتی کارت تایید و ژورنال بازگشت (فاز ۳) وجود ندارد،
-/// این ابزار نباید وعده بدهد.
-class ApplySmartDayPlanTool extends AgentTool {
-  const ApplySmartDayPlanTool()
+/// نسخهٔ قدیمی (`apply_smart_day_plan`) در جدولی می‌نوشت که در دسترسش نبود،
+/// خطا را در `catch (_) {}` می‌بلعید و بعد به کاربر می‌گفت برنامه ذخیره شد.
+/// این نسخه روی فرمان واقعی `planning.materializeDay` سوار است: تخصیص‌های
+/// PLANNED همان روز را به کار واقعی تبدیل می‌کند — هیچ برنامه‌ای از خود
+/// اختراع نمی‌کند.
+///
+/// عمداً در رجیستری ثبت نمی‌شود: این فرمان به دامنهٔ goals دست می‌زند و
+/// تا وقتی ماژول اهداف و چرخهٔ برنامه‌ریزی در عمل استفاده نشوند، افزودنش فقط
+/// به پرامپت نویز اضافه می‌کند (انضباط تعداد ابزار — D3).
+class MaterializeDayPlanTool extends KernelCommandTool {
+  const MaterializeDayPlanTool()
       : super(
-          name: 'apply_smart_day_plan',
+          name: 'materialize_day_plan',
           categoryFa: 'برنامه‌ریزی روز',
-          titleFa: 'چیدمان هوشمند برنامه روز',
+          titleFa: 'تبدیل تخصیص‌های برنامه به کار روز',
           descriptionFa:
-              'فعلاً غیرفعال است. پیشنهاد چیدمان را در متن پاسخ به کاربر بگو و ادعای ذخیره‌سازی نکن.',
-          policy: ToolPolicy.actionInteractive,
+              'تخصیص‌های برنامه‌ریزی‌شدهٔ یک روز را به کارهای واقعی همان روز تبدیل می‌کند. هیچ برنامهٔ جدیدی نمی‌سازد.',
+          commandId: 'planning.materializeDay',
+          policy: ToolPolicy.actionDirect,
           parameters: const [
             ToolParameter(
-              name: 'planSummary',
-              descriptionFa: 'خلاصه چینش برنامه',
+              name: 'date',
+              descriptionFa: 'تاریخ روز مقصد (پیش‌فرض امروز)',
               type: 'string',
-              isRequired: true,
+              defaultValue: 'امروز',
             ),
           ],
         );
 
   @override
-  Future<AgentToolResult> execute(Map<String, dynamic> args) async {
-    return AgentToolResult.failure(
-      toolName: name,
-      errorMessage:
-          'این ابزار فعلاً غیرفعال است و هیچ برنامه‌ای ذخیره نشد. ادعا نکن که برنامه اعمال یا ذخیره شد؛ فقط پیشنهاد را در متن بنویس تا کاربر خودش در برنامه ثبت کند.',
-    );
+  Future<List<PlanStep>> buildSteps(Map<String, dynamic> args) async {
+    final date = AgentDateResolver.resolve(args['date'] ?? args['dayKey']);
+    return <PlanStep>[
+      PlanStep(
+        commandId: commandId,
+        payload: <String, dynamic>{'dayKey': AgentDateResolver.iso(date)},
+        note: 'اجراشده توسط دستیار ریتمو',
+      ),
+    ];
+  }
+
+  @override
+  String buildSummaryFa(Map<String, dynamic> args, Map<String, dynamic> output) {
+    final date = AgentDateResolver.resolve(args['date'] ?? args['dayKey']);
+    final count = KernelCommandTool.optionalInt(output['count']) ?? 0;
+    if (count == 0) {
+      return 'برای ${AgentDateResolver.label(date)} هیچ تخصیص برنامه‌ریزی‌شده‌ای وجود نداشت، پس چیزی به کارهای روز اضافه نشد.';
+    }
+    return '$count تخصیص برنامه‌ریزی‌شدهٔ ${AgentDateResolver.label(date)} به کار واقعی تبدیل شد.';
   }
 }

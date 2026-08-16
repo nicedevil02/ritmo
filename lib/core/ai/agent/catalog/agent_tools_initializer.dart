@@ -8,6 +8,7 @@ import 'package:ritmo/core/ai/agent/catalog/notes_agent_tools.dart';
 import 'package:ritmo/core/ai/agent/catalog/study_worship_agent_tools.dart';
 import 'package:ritmo/core/ai/agent/catalog/system_agent_tools.dart';
 import 'package:ritmo/core/ai/agent/catalog/meta_agent_tools.dart';
+import 'package:ritmo/core/ai/agent/catalog/memory_agent_tools.dart';
 
 /// مقداردهی اولیه و ثبت تمامی ابزارهای سراسری برنامه در رجیستری ایجنت
 ///
@@ -20,7 +21,11 @@ import 'package:ritmo/core/ai/agent/catalog/meta_agent_tools.dart';
 ///  - `complete_routine` هم اضافه شد تا ایجنت بتواند چرخهٔ کامل روتین
 ///    (ساخت ← دیدن ← ثبت انجام) را پوشش دهد.
 ///
-/// عمداً ثبت نمی‌شود: `MaterializeDayPlanTool`. فرمانش به دامنهٔ اهداف دست
+/// افزودهٔ فاز ۵:
+///  - `remember_fact` و `recall_facts` جایگزین تگ متنی `<memory_ops>` شدند؛ ایجنت
+///    حالا نوشتن در حافطه را مستقیم و قابل تأیید انجام می‌دهد.
+///
+/// عمدا ثبت نمی‌شود: `MaterializeDayPlanTool`. فرمانش به دامنهٔ اهداف دست
 /// می‌زند و تا وقتی ماژول اهداف و چرخهٔ برنامه‌ریزی در عمل استفاده نشوند،
 /// افزودنش فقط طول پرامپت را زیاد می‌کند (انضباط تعداد ابزار).
 void initializeAllAgentTools() {
@@ -65,5 +70,9 @@ void initializeAllAgentTools() {
     // ۹. بازرسی و دقت (فاز ۲)
     const VerifyStateTool(),
     const AskUserTool(),
+
+    // ۱۰. حافطه دستیار (فاز ۵)
+    const RememberFactTool(),
+    const RecallFactsTool(),
   ]);
 }

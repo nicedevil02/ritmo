@@ -77,6 +77,13 @@ class ConversationContext {
 
     final userContentParts = [userText];
     if (retrievedData.isNotEmpty) {
+      // فاز ۴ · P4-3: بازهٔ داده را صریح به مدل می‌گوییم تا عدد تجمیعی را به
+      // بازهٔ اشتباه (مثلا «این هفته») نسبت ندهد.
+      final window = retrievedData['window'];
+      if (window is Map && window['labelFa'] is String) {
+        userContentParts.add(
+            '\n\n[توجه: اعداد بلوک <retrieved> فقط برای بازهٔ «${window['labelFa']}» محاسبه شده‌اند؛ دربارهٔ بازه‌های دیگر عدد نساز.]');
+      }
       final encodedData = jsonEncode(retrievedData);
       userContentParts.add('\n\n<retrieved>$encodedData</retrieved>');
     }
@@ -93,10 +100,14 @@ class ConversationContext {
 /// Builder class for creating [ConversationContext] instances.
 class ConversationContextBuilder {
   /// Builds a [ConversationContext] for a given [sessionId] and [userText].
+  ///
+  /// [memoryDomain] دامنهٔ حافطهٔ مورد استفاده است؛ پیش‌فرض `core`. دستیارهای
+  /// تخصصی می‌توانند دامنهٔ خودشان را پاس بدهند (مانند `sports` یا `goals`).
   Future<ConversationContext> build({
     required String sessionId,
     required String userText,
     required Map<String, dynamic> retrievedData,
+    String memoryDomain = 'core',
   }) async {
     // 1) Fetch recent turns (limit: 10)
     final recentTurns =
@@ -132,7 +143,7 @@ class ConversationContextBuilder {
 
     // 4) Retrieve relevant memories from AiMemoryService
     final retrievedMemories = await AiMemoryService.instance.retrieve(
-      domain: 'core',
+      domain: memoryDomain,
       query: userText,
     );
 

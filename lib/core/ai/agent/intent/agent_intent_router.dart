@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_registry.dart';
+import 'package:ritmo/core/ai/agent/agent_tool_scope.dart';
 import 'package:ritmo/core/ai/agent/intent/ritmo_date_parser.dart';
 
 /// نتیجه مسیریابی نیت و پیش‌واکشی داده
@@ -36,6 +37,9 @@ class PrefetchResult {
 ///     مود/انرژی را فعال نمی‌کند و «دربی» به «بی» تبدیل نمی‌شود.
 ///  ۲. تاریخ با RitmoDateParser حل می‌شود، پس «برنامه شنبه آینده» و
 ///     «۲۰ مرداد» هم درست به تاریخ واقعی ترجمه می‌شوند.
+///
+/// فاز ۵ · P5-1: پیش‌واکشی هم از محدوده اختیارات پرسونا پیروی می‌کند؛
+/// دستیار خواب دیگر بی‌صدا دادهٔ ورزشی نمی‌خواند.
 class AgentIntentRouter {
   AgentIntentRouter._();
 
@@ -109,7 +113,13 @@ class AgentIntentRouter {
   }
 
   /// تشخیص نیت و اجرای موازی ابزارهای خواندنی مرتبط
-  Future<PrefetchResult> route(String userQuery, {DateTime? now}) async {
+  ///
+  /// [personaId] اگر داده نشود، از پرسونای فعال AgentToolScope خوانده می‌شود.
+  Future<PrefetchResult> route(
+    String userQuery, {
+    DateTime? now,
+    String? personaId,
+  }) async {
     final tokens = tokenize(userQuery);
     if (tokens.isEmpty) return PrefetchResult.empty;
     final joined = ' ${tokens.join(' ')} ';
@@ -237,6 +247,18 @@ class AgentIntentRouter {
 
     if (toolsToRun.isEmpty) return PrefetchResult.empty;
 
+    // محدوده پرسونا (فاز ۵ · P5-1): ابزار خارج از اختیارات نقش پیش‌واکشی
+    // نمی‌شود. پرسونای ثبت‌نشده معنایش fail-open است (همه باز).
+    final activePersona = personaId ?? AgentToolScope.instance.activePersonaId;
+    final allowed = AgentToolScope.instance.allowedToolNames(activePersona);
+    final dropped = toolsToRun.keys.where((k) => !allowed.contains(k)).toList();
+    if (dropped.isNotEmpty) {
+      toolsToRun.removeWhere((key, _) => !allowed.contains(key));
+      debugPrint(
+          '[AgentIntent] scope dropped ${dropped.join(', ')} | persona=$activePersona');
+    }
+    if (toolsToRun.isEmpty) return PrefetchResult.empty;
+
     final entries = toolsToRun.entries.take(maxToolsPerTurn).toList();
     final steps = <AgentStep>[];
     final results = <AgentToolResult>[];
@@ -300,7 +322,7 @@ class AgentIntentRouter {
     }
 
     debugPrint(
-        '[AgentIntent] tokens=${tokens.length} | tools=${executed.join(', ')} | date=${dateRange.matched ? dateRange.startIso : 'none'}');
+        '[AgentIntent] tokens=${tokens.length} | persona=$activePersona | tools=${executed.join(', ')} | date=${dateRange.matched ? dateRange.startIso : 'none'}');
 
     return PrefetchResult(
       initialSteps: steps,

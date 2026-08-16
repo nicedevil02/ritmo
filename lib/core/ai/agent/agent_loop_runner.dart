@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/ai/agent/agent_budget.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_intent_prefetcher.dart';
+import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_call_parser.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_protocol.dart';
@@ -16,13 +17,10 @@ import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/ai_prompt_engine.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 
-/// حلقهٔ واقعی ReAct ایجنت ریتمو (فاز ۱)
+/// حلقه واقعی ReAct ایجنت ریتمو (فاز ۱) + دروازه سیاست و تایید (فاز ۳)
 ///
-/// جریان: پیش‌واکشی → نوبت مدل → پارس tool_call → اجرای ابزار → بازگرداندن
-/// نتیجه به مدل → تکرار تا پاسخ نهایی یا پایان بودجه.
-///
-/// در نسخهٔ قبلی فراخوانی‌های مدل فقط از متن حذف می‌شدند (یک رفت و تمام)،
-/// پس ایجنت در عمل فقط یک چت بود.
+/// جریان: پیش‌واکشی → نوبت مدل → پارس tool_call → داوری گیت → (تایید کاربر)
+/// → اجرای ابزار + ثبت ژورنال → بازگرداندن نتیجه به مدل → تکرار تا پاسخ نهایی.
 class AgentLoopRunner {
   AgentLoopRunner._();
 
@@ -32,7 +30,7 @@ class AgentLoopRunner {
   static const int _maxRawCharsPerTurn = 20000;
 
   /// اگر مدل پس از بستن tool_call بیش از این مقدار نوشت، استریم قطع می‌شود
-  /// تا نتیجهٔ خیالی ابزار را نسازد.
+  /// تا نتیجه خیالی ابزار را نسازد.
   static const int _tailCutoffAfterToolCall = 220;
 
   Stream<AgentEvent> runAgent({
@@ -47,12 +45,22 @@ class AgentLoopRunner {
     final steps = <AgentStep>[];
     final allResults = <AgentToolResult>[];
 
+    /// شناسه این اجرا: کلید پیدا کردن عملیات قابل بازگشت در ژورنال
+    final sessionId = 'agent_${DateTime.now().microsecondsSinceEpoch}';
+
+    /// کش نتیجه ابزارهای فقط‌خواندنی در همین اجرا (فاز ۴ · P4-4):
+    /// یک ابزار با پارامترهای یکسان دوبار به دیتابیس نمی‌زند.
+    final toolCache = <String, AgentToolResult>{};
+
+    /// تعداد تغییرات واقعی انجام‌شده در این پیام (سقف در گیت)
+    var writesUsed = 0;
+
     yield AgentStatusChangedEvent(
       statusTextFa: 'در حال تحلیل نیت و بررسی ابزارهای موردنیاز...',
       isWorking: true,
     );
 
-    // ۱. پیش‌واکشی قطعی (مستقل از تصمیم مدل) تا مدل با دادهٔ واقعی شروع کند
+    // ۱. پیش‌واکشی قطعی (مستقل از تصمیم مدل) تا مدل با داده واقعی شروع کند
     final prefetch = await AgentIntentPrefetcher.prefetchForQuery(prompt);
     for (final step in prefetch.initialSteps) {
       steps.add(step);
@@ -60,8 +68,13 @@ class AgentLoopRunner {
       yield AgentStepCompletedEvent(step);
     }
     allResults.addAll(prefetch.toolResults);
+    for (final r in prefetch.toolResults) {
+      if (r.isSuccess) {
+        toolCache['${r.toolName}|prefetch'] = r;
+      }
+    }
 
-    // ۲. پرامپت سیستمی: پرسونا + فهرست ابزار + قواعد حلقه + دادهٔ زنده
+    // ۲. پرامپت سیستمی: پرسونا + فهرست ابزار + قواعد حلقه + داده زنده
     final system = StringBuffer();
     if (personaSystemPrompt != null && personaSystemPrompt.trim().isNotEmpty) {
       system.writeln(personaSystemPrompt);
@@ -93,7 +106,7 @@ class AgentLoopRunner {
     final wireFormat =
         AgentToolProtocol.formatFor(supportsNativeTools: false);
     debugPrint(
-        '[Agent] loop start | web=$isChatGptWeb | wire=${wireFormat.name} | tools=${AgentToolRegistry.instance.count}');
+        '[Agent] loop start | web=$isChatGptWeb | wire=${wireFormat.name} | tools=${AgentToolRegistry.instance.count} | session=$sessionId');
 
     final transcript = AgentTranscript(systemPrompt: systemPrompt);
     if (recentHistory != null && recentHistory.isNotEmpty) {
@@ -117,10 +130,11 @@ class AgentLoopRunner {
       final followUp = pendingFollowUp ?? '';
       if (turn > 1 && followUp.trim().isEmpty) break;
 
+      yield AgentTurnStartedEvent(turn: turn, maxTurns: budget.maxTurns);
       yield AgentStatusChangedEvent(
         statusTextFa: turn == 1
             ? 'در حال نگارش و تحلیل پاسخ نهایی...'
-            : 'در حال تحلیل نتیجهٔ ابزارها و ادامهٔ پاسخ...',
+            : 'در حال تحلیل نتیجه ابزارها و ادامه پاسخ...',
         isWorking: true,
       );
 
@@ -128,8 +142,8 @@ class AgentLoopRunner {
 
       final Stream<String> stream;
       if (isChatGptWeb) {
-        // پل وب آرایهٔ پیام نمی‌گیرد؛ نوبت اول پرامپت کامل و نوبت‌های بعد
-        // نتیجهٔ ابزار را درون همان ترد می‌فرستند.
+        // پل وب آرایه پیام نمی‌گیرد؛ نوبت اول پرامپت کامل و نوبت‌های بعد
+        // نتیجه ابزار را درون همان ترد می‌فرستند.
         stream = turn == 1
             ? ChatGptWebBridgeManager.instance.sendPrompt(
                 prompt: prompt,
@@ -215,7 +229,7 @@ class AgentLoopRunner {
             yield AgentErrorEvent(streamErrorFa);
             return;
           }
-          stopNoteFa = '⚠️ ارتباط با مدل در میانهٔ پاسخ قطع شد.';
+          stopNoteFa = '⚠️ ارتباط با مدل در میانه پاسخ قطع شد.';
         }
         break;
       }
@@ -223,7 +237,7 @@ class AgentLoopRunner {
       // نوبت آخر: دیگر ابزاری اجرا نمی‌شود
       if (noMoreTools) {
         stopNoteFa = budget.isTimedOut
-            ? '⚠️ زمان پردازش طولانی شد و ادامهٔ فراخوانی ابزار متوقف شد.'
+            ? '⚠️ زمان پردازش طولانی شد و ادامه فراخوانی ابزار متوقف شد.'
             : '⚠️ سقف فراخوانی ابزار در این پیام پر شد؛ اگر پاسخ کامل نیست دوباره بپرس.';
         debugPrint(
             '[Agent] ignoring ${scan.calls.length} tool call(s) on final turn $turn');
@@ -255,21 +269,33 @@ class AgentLoopRunner {
           continue;
         }
 
-        // دروازهٔ سیاست (نسخهٔ حداقلی فاز ۱): ابزارهای نیازمند تایید، خودکار
-        // اجرا نمی‌شوند. دروازهٔ کامل + ژورنال + undo در فاز ۳.
-        if (tool.policy == ToolPolicy.actionInteractive) {
-          interactiveAction = <String, dynamic>{
-            'type': 'tool_confirmation',
-            'tool': tool.name,
-            'titleFa': tool.titleFa,
-            'parameters': call.parameters,
-          };
-          turnResults.add(AgentToolResult.failure(
-            toolName: tool.name,
-            errorMessage:
-                'این ابزار بدون تایید صریح کاربر اجرا نمی‌شود. خلاصهٔ کاری که می‌خواهی انجام دهی را بگو و اجازه بگیر.',
-          ));
-          debugPrint('[Agent] interactive tool held for consent: ${tool.name}');
+        // کش همین اجرا: خواندن تکراری با پارامتر یکسان دوباره اجرا نمی‌شود
+        final cacheKey = _cacheKey(tool.name, call.parameters);
+        if (tool.policy == ToolPolicy.readOnly) {
+          final cached = toolCache[cacheKey];
+          if (cached != null) {
+            turnResults.add(AgentToolResult.success(
+              toolName: cached.toolName,
+              data: cached.data,
+              summaryFa:
+                  '${cached.summaryFa} (همین داده پیش‌تر در این پیام خوانده شده بود)',
+            ));
+            debugPrint('[Agent] cache hit | ${tool.name}');
+            continue;
+          }
+        }
+
+        // دروازه سیاست (فاز ۳ · P3-1)
+        final decision = AgentPolicyGate.instance.evaluate(
+          tool: tool,
+          args: call.parameters,
+          writesUsedThisRun: writesUsed,
+        );
+        if (decision.isDenied) {
+          final reason = decision.reasonFa ?? 'اجرای این ابزار مجاز نبود.';
+          turnResults
+              .add(AgentPolicyGate.instance.refusalResult(tool, reason));
+          debugPrint('[Agent] gate denied | ${tool.name} | $reason');
           continue;
         }
 
@@ -281,6 +307,61 @@ class AgentLoopRunner {
           ));
           debugPrint('[Agent] tool denied (${tool.name}): ${admission.reasonFa}');
           continue;
+        }
+
+        var effectiveArgs = call.parameters;
+
+        // کارت تایید (فاز ۳ · P3-2): حلقه واقعا متوقف می‌شود تا کاربر پاسخ دهد
+        if (decision.needsUserConfirmation) {
+          final request = AgentConfirmationRequest(
+            id: 'confirm_${DateTime.now().microsecondsSinceEpoch}',
+            toolName: tool.name,
+            titleFa: tool.titleFa,
+            previewFa: decision.previewFa ?? tool.titleFa,
+            parameters: call.parameters,
+          );
+          interactiveAction = <String, dynamic>{
+            'type': 'tool_confirmation',
+            'requestId': request.id,
+            'tool': tool.name,
+            'titleFa': tool.titleFa,
+            'previewFa': request.previewFa,
+            'parameters': call.parameters,
+          };
+
+          yield AgentStatusChangedEvent(
+            statusTextFa: 'منتطر تایید شما برای «${tool.titleFa}»...',
+            isWorking: true,
+            currentToolName: tool.name,
+          );
+          yield AgentAwaitingConfirmationEvent(request);
+
+          final response = await AgentConfirmationBroker.instance.ask(request);
+          yield AgentConfirmationResolvedEvent(
+            requestId: request.id,
+            toolName: tool.name,
+            approved: response.approved,
+            reasonFa: response.reasonFa,
+          );
+
+          if (!response.approved) {
+            final reason = response.reasonFa;
+            final suffix =
+                (reason != null && reason.isNotEmpty) ? ' ($reason)' : '';
+            final why = response.timedOut
+                ? 'کارت تایید بی‌پاسخ ماند، پس این تغییر انجام نشد و هیچ داده‌ای ذخیره نشد.'
+                : 'کاربر این تغییر را تایید نکرد$suffix. هیچ داده‌ای ذخیره نشد.';
+            turnResults
+                .add(AgentPolicyGate.instance.refusalResult(tool, why));
+            debugPrint('[Agent] confirmation rejected | ${tool.name}');
+            continue;
+          }
+
+          final edited = response.editedArgs;
+          if (edited != null && edited.isNotEmpty) {
+            effectiveArgs = edited;
+          }
+          interactiveAction = null;
         }
 
         final stepIndex = steps.length;
@@ -302,9 +383,18 @@ class AgentLoopRunner {
         );
         yield AgentStepStartedEvent(runningStep);
 
-        final result = await AgentToolRegistry.instance
-            .executeTool(tool.name, call.parameters);
+        // اجرا از مسیر گیت: ابزارهای تغییردهنده در ژورنال ثبت می‌شوند
+        final result = await AgentPolicyGate.instance.execute(
+          tool: tool,
+          args: effectiveArgs,
+          sessionId: sessionId,
+        );
         executedThisTurn++;
+        if (tool.policy != ToolPolicy.readOnly) {
+          writesUsed++;
+        } else if (result.isSuccess) {
+          toolCache[cacheKey] = result;
+        }
         turnResults.add(result);
         allResults.add(result);
 
@@ -361,24 +451,41 @@ class AgentLoopRunner {
       isWorking: false,
     );
     debugPrint(
-        '[Agent] loop done | turns=${budget.turnsUsed} | tools=${budget.toolCallsUsed} | steps=${steps.length} | ${budget.elapsed.inMilliseconds}ms');
+        '[Agent] loop done | turns=${budget.turnsUsed} | tools=${budget.toolCallsUsed} | writes=$writesUsed | steps=${steps.length} | ${budget.elapsed.inMilliseconds}ms');
 
     yield AgentCompletedEvent(
       finalAnswer: finalAnswer,
       rawAnswer: finalRaw,
       steps: steps,
       interactiveAction: interactiveAction,
+      sessionId: sessionId,
     );
   }
 
-  /// اتصال متن دو نوبت با فاصلهٔ پاراگراف
+  /// کلید کش نتیجه ابزار: نام ابزار + پارامترهای مرتب‌شده
+  String _cacheKey(String toolName, Map<String, dynamic> args) {
+    final keys = args.keys.toList()..sort();
+    final normalized = <String, dynamic>{};
+    for (final key in keys) {
+      normalized[key] = args[key];
+    }
+    String encoded;
+    try {
+      encoded = jsonEncode(normalized);
+    } catch (_) {
+      encoded = normalized.toString();
+    }
+    return '$toolName|$encoded';
+  }
+
+  /// اتصال متن دو نوبت با فاصله پاراگراف
   String _join(String left, String right) {
     if (left.trim().isEmpty) return right;
     if (right.trim().isEmpty) return left;
     return '${left.trimRight()}\n\n${right.trimLeft()}';
   }
 
-  /// تبدیل تاریخچهٔ متنی به پیام‌های نقش‌دار (پ۰-۵)
+  /// تبدیل تاریخچه متنی به پیام‌های نقش‌دار (پ۰-۵)
   List<Map<String, String>> _historyToMessages(List<String> history) {
     const assistantPrefixes = ['دستیار:', 'assistant:', 'Assistant:'];
     const userPrefixes = ['کاربر:', 'user:', 'User:'];

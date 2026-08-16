@@ -134,8 +134,8 @@ class DaySlot extends StatelessWidget {
             duration: RitmoMotion.effective(context, RitmoMotion.state),
             curve: Curves.easeInOut,
             constraints: const BoxConstraints(
-              minWidth: MovementLayout.kDaySlotMinSize.width,
-              minHeight: MovementLayout.kDaySlotMinSize.height,
+              minWidth: MovementLayout.kDaySlotMinWidth,
+              minHeight: MovementLayout.kDaySlotMinHeight,
             ),
             padding: const EdgeInsets.all(_kSlotInnerPadding),
             decoration: decoration,

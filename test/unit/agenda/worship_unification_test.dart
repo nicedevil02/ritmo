@@ -3,6 +3,7 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/worship_agenda_source.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
+import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
 import 'package:sqflite/sqflite.dart';
 
 class _FakeDatabase implements Database {
@@ -164,6 +165,64 @@ void main() {
       );
       expect(qada.group, equals(SettingsGroup.calendar));
       expect(qada.defaultValue, isFalse);
+    });
+
+    test('Mustahab completion on date D does NOT leak to date D+1 (future dates remain pending)', () {
+      final source = WorshipAgendaSource(
+        prayerPractices: [],
+        mustahabPractices: [
+          {
+            'id': 'preset_night_prayer',
+            'subType': 'NIGHT_PRAYER',
+            'title': 'نماز شب',
+            'dailyTarget': 1,
+            'dailyDone': 1, // simulates dailyDone cached on table for today
+            'reminderFrequency': 'DAILY',
+          },
+        ],
+        worshipDebts: [],
+        settingsMap: const {'module_religion_enabled': 'true'},
+        religionEnabled: true,
+        cachedHijriDates: const {},
+        statusesByDate: {
+          '2026-08-16': {
+            'preset_night_prayer': const WorshipDayStatus(
+              recordId: 'wc_preset_night_prayer_2026-08-16',
+              resultType: 'DONE',
+              countDone: 1,
+              countTarget: 1,
+            ),
+          },
+          // 2026-08-17 has no completion status
+        },
+        contextsByDate: const {},
+        hasLunarMonthly: false,
+        db: fakeDb,
+      );
+
+      // On 2026-08-16: Night prayer is done
+      final todayCtx = AgendaDayContext(
+        date: DateTime(2026, 8, 16),
+        dateStr: '2026-08-16',
+        isToday: true,
+        prayerTimes: const {},
+        options: const AgendaQueryOptions(),
+      );
+      final todayItems = source.itemsForDate(todayCtx);
+      expect(todayItems, hasLength(1));
+      expect(todayItems.first.completion, equals(AgendaCompletion.done));
+
+      // On 2026-08-17: Night prayer MUST be pending (not done)
+      final tomorrowCtx = AgendaDayContext(
+        date: DateTime(2026, 8, 17),
+        dateStr: '2026-08-17',
+        isToday: false,
+        prayerTimes: const {},
+        options: const AgendaQueryOptions(),
+      );
+      final tomorrowItems = source.itemsForDate(tomorrowCtx);
+      expect(tomorrowItems, hasLength(1));
+      expect(tomorrowItems.first.completion, equals(AgendaCompletion.pending));
     });
   });
 }

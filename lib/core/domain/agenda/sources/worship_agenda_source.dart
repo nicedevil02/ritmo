@@ -568,9 +568,14 @@ class WorshipAgendaSource implements AgendaSource {
         }
 
         final status = statuses[id];
-        final dailyDone = p['dailyDone'] as int? ?? 0;
         final dailyTarget = p['dailyTarget'] as int? ?? 1;
-        final isCompleted = status?.isDone == true || (dailyTarget > 0 && dailyDone >= dailyTarget);
+        final dailyDone = p['dailyDone'] as int? ?? 0;
+        final dailyDoneDate = p['dailyDoneDate'] as String?;
+        final isTodayMatch = isToday && (dailyDoneDate == null || dailyDoneDate == dateStr);
+
+        final isCompleted = status != null
+            ? status.isDone
+            : (isTodayMatch && dailyTarget > 0 && dailyDone >= dailyTarget);
         final completion = isCompleted ? AgendaCompletion.done : AgendaCompletion.pending;
 
         final anchor = p['reminderAnchor'] as String? ?? 'NONE';
@@ -618,7 +623,7 @@ class WorshipAgendaSource implements AgendaSource {
           resolvedTimes.add(null); // fallback (no fixed time)
         }
 
-        final countDone = status?.countDone ?? (dailyDone > 0 ? dailyDone : 0);
+        final countDone = status?.countDone ?? (isTodayMatch && dailyDone > 0 ? dailyDone : 0);
         
         String? subtitle;
         if (dailyTarget > 1) {

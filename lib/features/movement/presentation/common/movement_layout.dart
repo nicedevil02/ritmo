@@ -5,7 +5,9 @@ abstract final class MovementLayout {
   static const double kAppBarHeight = 56.0;
   static const double kWeekNavigatorHeight = 48.0;
   static const double kWeekRailHeight = 76.0;
-  static const Size kDaySlotMinSize = Size(48.0, 64.0);
+  static const double kDaySlotMinWidth = 48.0;
+  static const double kDaySlotMinHeight = 64.0;
+  static const Size kDaySlotMinSize = Size(kDaySlotMinWidth, kDaySlotMinHeight);
   static const double kHeroMinHeight = 152.0;
   static const double kHeroMaxHeight = 240.0;
   static const double kSessionCardMinHeight = 72.0;

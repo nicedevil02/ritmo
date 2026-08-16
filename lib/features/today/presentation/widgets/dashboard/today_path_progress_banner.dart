@@ -621,13 +621,13 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
             child: Padding(
               padding: EdgeInsets.only(bottom: hasConnector ? 10 : 0),
               child: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: (isDark ? Colors.black : Colors.white)
                       .withValues(alpha: isDark ? 0.35 : 0.65),
-                  borderRadius: BorderRadius.circular(RitmoRadius.chip),
+                  borderRadius: BorderRadius.circular(RitmoRadius.card),
                   border: Border.all(
-                    color: colors.accent.withValues(alpha: isDark ? 0.30 : 0.22),
+                    color: colors.accent.withValues(alpha: isDark ? 0.28 : 0.18),
                     width: 0.9,
                   ),
                 ),
@@ -677,112 +677,372 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
                         color: colors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
 
-                    // دکمه‌های اقدام عملیاتی: شروع زودهنگام و جبران کارهای جامانده
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        // ۱. دکمه شروع زودهنگام کار بعدی
-                        Material(
-                          color: colors.primary.withValues(alpha: 0.12),
-                          borderRadius:
-                              BorderRadius.circular(RitmoRadius.pill),
-                          child: InkWell(
-                            borderRadius:
-                                BorderRadius.circular(RitmoRadius.pill),
-                            onTap: () => _handleItemTap(next),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 9,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius:
-                                    BorderRadius.circular(RitmoRadius.pill),
-                                border: Border.all(
-                                  color: colors.primary.withValues(alpha: 0.32),
-                                  width: 0.8,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.play_arrow_solid,
-                                    size: 10.5,
-                                    color: colors.primary,
-                                  ),
-                                  const SizedBox(width: 4.5),
-                                  Text(
-                                    'شروع زودهنگام: ${toPersianDigits(next.title)}',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: colors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // ۲. دکمه جبران کارهای گذشته که تیک نخورده‌اند
-                        if (overdueItems.isNotEmpty)
-                          Material(
-                            color: colors.warning.withValues(alpha: 0.12),
-                            borderRadius:
-                                BorderRadius.circular(RitmoRadius.pill),
-                            child: InkWell(
-                              borderRadius:
-                                  BorderRadius.circular(RitmoRadius.pill),
-                              onTap: () => _handleItemTap(overdueItems.first),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 9,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius:
-                                      BorderRadius.circular(RitmoRadius.pill),
-                                  border: Border.all(
-                                    color:
-                                        colors.warning.withValues(alpha: 0.32),
-                                    width: 0.8,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      CupertinoIcons.arrow_counterclockwise,
-                                      size: 10.5,
-                                      color: colors.warning,
-                                    ),
-                                    const SizedBox(width: 4.5),
-                                    Text(
-                                      'جبران: ${toPersianDigits(overdueItems.first.title)}${overdueItems.length > 1 ? ' (+${toPersianDigits((overdueItems.length - 1).toString())})' : ''}',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: colors.warning,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
+                    // ۱. کارت شروع زودهنگام کار بعدی
+                    _buildEarlyStartCard(
+                      context,
+                      colors,
+                      next: next,
+                      isDark: isDark,
                     ),
+
+                    // ۲. کارت جبران کارهای گذشته که تیک نخورده‌اند
+                    if (overdueItems.isNotEmpty) ...[
+                      const SizedBox(height: 7),
+                      _buildCatchUpCard(
+                        context,
+                        colors,
+                        overdueItems: overdueItems,
+                        isDark: isDark,
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// کارت اکشن تعاملی و پرمیوم «شروع زودهنگام»
+  Widget _buildEarlyStartCard(
+    BuildContext context,
+    RitmoColors colors, {
+    required AgendaItem next,
+    required bool isDark,
+  }) {
+    final startColor = colors.primary;
+    return Semantics(
+      button: true,
+      label: 'شروع زودهنگام: ${next.title}',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(RitmoRadius.chip),
+          onTap: () => _handleItemTap(next),
+          splashColor: startColor.withValues(alpha: 0.15),
+          highlightColor: startColor.withValues(alpha: 0.08),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7.5),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: isDark
+                    ? [
+                        startColor.withValues(alpha: 0.16),
+                        startColor.withValues(alpha: 0.06),
+                      ]
+                    : [
+                        startColor.withValues(alpha: 0.10),
+                        startColor.withValues(alpha: 0.03),
+                      ],
+              ),
+              borderRadius: BorderRadius.circular(RitmoRadius.chip),
+              border: Border.all(
+                color: startColor.withValues(alpha: isDark ? 0.32 : 0.22),
+                width: 0.9,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: startColor.withValues(alpha: isDark ? 0.08 : 0.04),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // آیکون بج با پس‌زمینهٔ هماهنگ و آیکون توپر
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: startColor.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(
+                      color: startColor.withValues(alpha: 0.25),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      CupertinoIcons.play_arrow_solid,
+                      size: 12.5,
+                      color: startColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 9),
+
+                // متن ۲ ردیفه: کیکر «شروع زودهنگام» + عنوان کار
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'شروع زودهنگام',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: startColor,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          if (next.timeOfDay != null &&
+                              next.timeOfDay!.isNotEmpty) ...[
+                            const SizedBox(width: 5),
+                            Text(
+                              '• موعد: ${toPersianDigits(next.timeOfDay)}',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w500,
+                                color: colors.textTertiary,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        toPersianDigits(next.title),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                // دکمه اقدام سریع پرمیوم
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8.5, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: startColor,
+                    borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                    boxShadow: [
+                      BoxShadow(
+                        color: startColor.withValues(alpha: 0.35),
+                        blurRadius: 5,
+                        offset: const Offset(0, 1.5),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'شروع',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      SizedBox(width: 3),
+                      Icon(
+                        CupertinoIcons.chevron_left,
+                        size: 9.5,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// کارت اکشن تعاملی و پرمیوم «جبران کارهای جامانده»
+  Widget _buildCatchUpCard(
+    BuildContext context,
+    RitmoColors colors, {
+    required List<AgendaItem> overdueItems,
+    required bool isDark,
+  }) {
+    if (overdueItems.isEmpty) return const SizedBox.shrink();
+    final firstItem = overdueItems.first;
+    final warningColor = colors.warning;
+    final otherCount = overdueItems.length - 1;
+
+    return Semantics(
+      button: true,
+      label: 'جبران کار جامانده: ${firstItem.title}',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(RitmoRadius.chip),
+          onTap: () => _handleItemTap(firstItem),
+          splashColor: warningColor.withValues(alpha: 0.15),
+          highlightColor: warningColor.withValues(alpha: 0.08),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7.5),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: isDark
+                    ? [
+                        warningColor.withValues(alpha: 0.16),
+                        warningColor.withValues(alpha: 0.06),
+                      ]
+                    : [
+                        warningColor.withValues(alpha: 0.10),
+                        warningColor.withValues(alpha: 0.03),
+                      ],
+              ),
+              borderRadius: BorderRadius.circular(RitmoRadius.chip),
+              border: Border.all(
+                color: warningColor.withValues(alpha: isDark ? 0.32 : 0.22),
+                width: 0.9,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: warningColor.withValues(alpha: isDark ? 0.08 : 0.04),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // آیکون بج با پس‌زمینهٔ هماهنگ و آیکون بازگشت
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: warningColor.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(
+                      color: warningColor.withValues(alpha: 0.25),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      CupertinoIcons.arrow_counterclockwise,
+                      size: 13,
+                      color: warningColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 9),
+
+                // متن ۲ ردیفه: کیکر «جبران برنامهٔ جامانده» + عنوان کار
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'جبران کار جامانده',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: warningColor,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          if (otherCount > 0) ...[
+                            const SizedBox(width: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: warningColor.withValues(alpha: 0.2),
+                                borderRadius:
+                                    BorderRadius.circular(RitmoRadius.pill),
+                              ),
+                              child: Text(
+                                '+${toPersianDigits(otherCount.toString())}',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  color: warningColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        toPersianDigits(firstItem.title),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                // دکمه اقدام سریع پرمیوم
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8.5, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: warningColor,
+                    borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                    boxShadow: [
+                      BoxShadow(
+                        color: warningColor.withValues(alpha: 0.35),
+                        blurRadius: 5,
+                        offset: const Offset(0, 1.5),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'جبران',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      SizedBox(width: 3),
+                      Icon(
+                        CupertinoIcons.chevron_left,
+                        size: 9.5,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

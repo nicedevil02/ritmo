@@ -1,5 +1,7 @@
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
+import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/commands/command_plan.dart';
 
 /// ۱. ابزار دریافت لیست و وضعیت روتین‌های روزانه
 ///
@@ -171,49 +173,201 @@ class GetRoutineStreakStatsTool extends AgentTool {
   }
 }
 
-/// ۳. ابزار ایجاد روتین جدید — غیرفعال تا فاز ۲
+/// ۳. ابزار ایجاد روتین روزانه — فاز ۲: آداپتور روی RitmoCommandBus
 ///
-/// نسخه قبلی مستقیم در جدول routines می‌نوشت و سه مشکل مرگ‌آور داشت:
-/// ۱) ستون‌های scheduledTime و estimatedDurationMinutes وجود ندارند.
-/// ۲) ستون‌های NOT NULL مانند routineType، notificationLevel، displayOrder و updatedAt
-///    مقدار نمی‌گرفتند.
-/// ۳) هیچ رکوردی در routine_schedules و routine_occurrences ساخته نمی‌شد، پس
-///    روتین در تقویم نامرئی می‌ماند (همان کلاس باگ C-FIX-5 و B-FIX-EVENT-6).
+/// نسخهٔ فاز ۰ عمداً غیرفعال بود چون مستقیم در جدول routines می‌نوشت و سه اشکال
+/// مرگ‌آور داشت (ستون ناموجود، NOT NULL خالی، و نساختن schedule/occurrences که
+/// روتین را در تقویم نامرئی می‌کرد).
 ///
-/// در فاز ۲ این ابزار به آداپتوری روی RitmoCommandBus / RitmoExecutionKernel
-/// (CreateRoutineCommand) بازنویسی می‌شود که روتین و زمان‌بندی و اکیورنس‌ها را
-/// با هم و درست می‌سازد.
-class CreateNewRoutineTool extends AgentTool {
+/// اکنون هیچ SQL ای اینجا نیست: فرمان `routine.create` روی باس اجرا می‌شود و آن
+/// فرمان خودش `CreateRoutineCommand` کرنل را صدا می‌زند که در یک تراکنش،
+/// routines + routine_schedules + سی روز routine_occurrences را می‌سازد. پس هر
+/// روتینی که ایجنت بسازد، دقیقاً مثل روتینِ ساخته‌شده از UI رفتار می‌کند.
+///
+/// محدودیت آگاهانه: فقط تکرار «روزانه». نوع weekly/custom_days بدون daysOfWeek
+/// درست، آیتم را در منابع اجندا نامرئی می‌کند؛ تا وقتی آن مسیر تست نشده، مدل
+/// اجازهٔ ساختنش را ندارد و باید کاربر را به بخش «کار جدید» راهنمایی کند.
+class CreateNewRoutineTool extends KernelCommandTool {
   const CreateNewRoutineTool()
       : super(
           name: 'create_new_routine',
           categoryFa: 'روتین‌ها و عادات',
-          titleFa: 'ایجاد روتین جدید',
+          titleFa: 'ایجاد روتین روزانه',
           descriptionFa:
-              'فعلاً غیرفعال است. برای ساخت روتین، کاربر را به بخش «کار جدید» در برنامه راهنمایی کن.',
+              'یک روتین روزانهٔ تکرارشونده با ساعت مشخص می‌سازد و بلافاصله در برنامهٔ روز و تقویم ظاهر می‌شود. فقط برای تکرار «هر روز» است؛ برای روتین چندروز-در-هفته کاربر را به بخش «کار جدید» راهنمایی کن. بعد از ساخت، می‌توانی با verify_state درستی آن را بررسی کنی.',
+          commandId: 'routine.create',
           policy: ToolPolicy.actionDirect,
           parameters: const [
             ToolParameter(
               name: 'title',
-              descriptionFa: 'عنوان روتین',
+              descriptionFa: 'عنوان روتین (کوتاه و روشن، حداکثر ۸۰ نویسه)',
               type: 'string',
               isRequired: true,
             ),
             ToolParameter(
               name: 'time',
-              descriptionFa: 'ساعت انجام به فرمت HH:MM',
+              descriptionFa: 'ساعت انجام با فرمت ۲۴ساعتی HH:MM (مثال: 07:30)',
               type: 'string',
               isRequired: true,
+            ),
+            ToolParameter(
+              name: 'durationMinutes',
+              descriptionFa: 'مدت زمان هدف به دقیقه (پیش‌فرض ۳۰، بین ۵ تا ۴۸۰)',
+              type: 'int',
+              defaultValue: 30,
             ),
           ],
         );
 
   @override
-  Future<AgentToolResult> execute(Map<String, dynamic> args) async {
-    return AgentToolResult.failure(
-      toolName: name,
-      errorMessage:
-          'این ابزار فعلاً غیرفعال است و هیچ داده‌ای ثبت نکرد. ادعا نکن که روتین ساخته شد؛ از کاربر بخواه از بخش «کار جدید» در برنامه روتین را اضافه کند.',
+  Future<List<PlanStep>> buildSteps(Map<String, dynamic> args) async {
+    final title = KernelCommandTool.requiredString(args['title'], 'عنوان روتین');
+    if (title.length > 80) {
+      throw const ToolArgumentError(
+        'عنوان روتین بیش از حد بلند است؛ آن را به کمتر از ۸۰ نویسه خلاصه کن.',
+      );
+    }
+
+    final time = KernelCommandTool.requiredTimeOfDay(
+      args['time'] ?? args['scheduledTime'] ?? args['timeOfDay'],
+      'ساعت روتین',
     );
+
+    final duration = KernelCommandTool.clampedInt(
+      args['durationMinutes'] ?? args['targetDurationMinutes'],
+      30,
+      5,
+      480,
+    );
+
+    return <PlanStep>[
+      PlanStep(
+        commandId: commandId,
+        payload: <String, dynamic>{
+          'title': title,
+          // دستهٔ 'personal' عمدی است: دستهٔ 'medical' معنای دارویی دارد و
+          // فیلترهای مخصوص خودش را فعال می‌کند، پس مدل اجازهٔ تعیین دسته ندارد.
+          'category': 'personal',
+          'scheduleType': 'daily',
+          'scheduledTime': time,
+          'targetDurationMinutes': duration,
+        },
+        note: 'ساخته‌شده توسط دستیار ریتمو',
+      ),
+    ];
+  }
+
+  @override
+  String buildSummaryFa(Map<String, dynamic> args, Map<String, dynamic> output) {
+    final title = KernelCommandTool.optionalString(args['title']) ?? 'روتین جدید';
+    final time = KernelCommandTool.normalizeTimeOfDay(
+          args['time'] ?? args['scheduledTime'] ?? args['timeOfDay'],
+        ) ??
+        '';
+    final id = output['routineId']?.toString() ?? '';
+    final timePart = time.isEmpty ? '' : ' برای هر روز ساعت $time';
+    return 'روتین «$title»$timePart ساخته شد و از امروز در برنامهٔ روز و تقویم دیده می‌شود'
+        '${id.isEmpty ? '' : ' (شناسه: $id)'}.';
+  }
+}
+
+/// ۴. ابزار ثبت انجام روتین (فاز ۲)
+///
+/// روی فرمان `routine.complete` سوار است که خودش `CompleteOccurrenceCommand`
+/// کرنل را اجرا می‌کند: هم routine_completions ثبت می‌شود، هم وضعیت اکیورنس آن
+/// روز به‌روز می‌شود، هم استریک‌ها و اسنپ‌شات‌ها هماهنگ می‌مانند.
+class CompleteRoutineTool extends KernelCommandTool {
+  const CompleteRoutineTool()
+      : super(
+          name: 'complete_routine',
+          categoryFa: 'روتین‌ها و عادات',
+          titleFa: 'ثبت انجام روتین',
+          descriptionFa:
+              'یک روتین را برای امروز (یا تاریخ مشخص) «انجام‌شده» ثبت می‌کند. اگر شناسهٔ روتین را نداری، ابتدا get_routines_overview را صدا بزن؛ عنوان تکراری یا مبهم را با ask_user روشن کن.',
+          commandId: 'routine.complete',
+          policy: ToolPolicy.actionDirect,
+          parameters: const [
+            ToolParameter(
+              name: 'routineId',
+              descriptionFa: 'شناسهٔ دقیق روتین (از get_routines_overview)',
+              type: 'string',
+            ),
+            ToolParameter(
+              name: 'title',
+              descriptionFa:
+                  'عنوان روتین؛ فقط وقتی شناسه را نداری. باید تک‌معنا باشد.',
+              type: 'string',
+            ),
+            ToolParameter(
+              name: 'date',
+              descriptionFa:
+                  'تاریخ انجام: امروز، دیروز، یا YYYY-MM-DD (شمسی هم پذیرفته می‌شود). پیش‌فرض امروز.',
+              type: 'string',
+              defaultValue: 'امروز',
+            ),
+          ],
+        );
+
+  @override
+  Future<List<PlanStep>> buildSteps(Map<String, dynamic> args) async {
+    final explicitId = KernelCommandTool.optionalString(args['routineId']);
+    final title =
+        KernelCommandTool.optionalString(args['title'] ?? args['routineTitle']);
+
+    final routineId = explicitId ?? await _resolveRoutineIdByTitle(title);
+    final dateStr =
+        AgentDateResolver.iso(AgentDateResolver.resolve(args['date'] ?? args['dateStr']));
+
+    return <PlanStep>[
+      PlanStep(
+        commandId: commandId,
+        payload: <String, dynamic>{
+          'routineId': routineId,
+          'dateStr': dateStr,
+        },
+        note: 'ثبت‌شده توسط دستیار ریتمو',
+      ),
+    ];
+  }
+
+  /// تبدیل عنوان به شناسه. این یک «خواندن» است، نه نوشتن؛ خودِ ثبت کاملاً از
+  /// مسیر فرمان انجام می‌شود. ابهام هرگز حدس زده نمی‌شود.
+  Future<String> _resolveRoutineIdByTitle(String? title) async {
+    if (title == null) {
+      throw const ToolArgumentError(
+        'برای ثبت انجام، یا routineId را بفرست یا عنوان روتین را. اگر شناسه را نداری اول get_routines_overview را صدا بزن.',
+      );
+    }
+
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.rawQuery('''
+      SELECT r.id AS id, r.title AS title
+      FROM routines r
+      WHERE (r.isArchived = 0 OR r.isArchived IS NULL) AND r.title LIKE ?
+      LIMIT 6
+    ''', ['%$title%']);
+
+    if (rows.isEmpty) {
+      throw ToolArgumentError(
+        'روتینی با عنوان «$title» پیدا نشد. با get_routines_overview فهرست واقعی روتین‌ها را ببین و دوباره تلاش کن.',
+      );
+    }
+    if (rows.length > 1) {
+      final titles = rows.map((r) => r['title']?.toString() ?? '').join('، ');
+      throw ToolArgumentError(
+        'عنوان «$title» به چند روتین می‌خورد: $titles. با ask_user بپرس کدام‌یک را ثبت کند؛ حدس نزن.',
+      );
+    }
+
+    return rows.first['id']?.toString() ?? '';
+  }
+
+  @override
+  String buildSummaryFa(Map<String, dynamic> args, Map<String, dynamic> output) {
+    final label = KernelCommandTool.optionalString(args['title']) ??
+        KernelCommandTool.optionalString(args['routineId']) ??
+        'روتین';
+    final date = AgentDateResolver.resolve(args['date'] ?? args['dateStr']);
+    return 'انجام «$label» برای ${AgentDateResolver.label(date)} ثبت شد.';
   }
 }

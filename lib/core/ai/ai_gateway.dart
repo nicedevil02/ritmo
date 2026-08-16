@@ -106,10 +106,11 @@ class AIGateway {
   static const String defaultFeaturesBaseUrl = String.fromEnvironment('AI_FEATURES_BASE_URL', defaultValue: 'https://opencode.ai/zen/v1/chat/completions');
   static const String defaultFeaturesModel = String.fromEnvironment('AI_FEATURES_MODEL', defaultValue: 'deepseek-v4-flash-free');
 
-  Future<AIGatewayConfig> loadConfig({bool isFeaturesConfig = false}) => _loadConfig(isFeaturesConfig: isFeaturesConfig);
+  Future<AIGatewayConfig> loadConfig({AiSlot slot = AiSlot.assistant}) => _loadConfig(slot: slot);
 
-  Future<AIGatewayConfig> _loadConfig({bool isFeaturesConfig = false}) async {
+  Future<AIGatewayConfig> _loadConfig({AiSlot slot = AiSlot.assistant}) async {
     try {
+      final isFeaturesConfig = slot == AiSlot.features;
       final db = await DatabaseHelper.instance.database;
       final settings = await db.query('app_settings');
       final settingsMap = {for (final s in settings) s['key']! as String: s['value']! as String};
@@ -148,7 +149,7 @@ class AIGateway {
       final timeoutStr = settingsMap['ai_timeout'];
       final timeoutMs = int.tryParse(timeoutStr ?? '') ?? defaultTimeoutMs;
 
-      debugPrint('AIGateway DB loadConfig SUCCESS: isFeatures=$isFeaturesConfig, model=$resolvedModel, hasKey=${resolvedApiKey.isNotEmpty}, baseUrl=$baseUrl');
+      debugPrint('AIGateway DB loadConfig SUCCESS: slot=$slot, model=$resolvedModel, hasKey=${resolvedApiKey.isNotEmpty}, baseUrl=$baseUrl');
 
       return AIGatewayConfig(
         baseUrl: baseUrl,
@@ -157,7 +158,7 @@ class AIGateway {
         timeoutMs: timeoutMs,
       );
     } catch (e) {
-      debugPrint('AIGateway DB loadConfig EXCEPTION (isFeatures=$isFeaturesConfig): $e');
+      debugPrint('AIGateway DB loadConfig EXCEPTION (slot=$slot): $e');
       // Fallback in case of database exception
       return const AIGatewayConfig(
         baseUrl: defaultBaseUrl,
@@ -174,9 +175,9 @@ class AIGateway {
   ///   - Priority 2: Cloudflare Workers AI (@cf/zai-org/glm-4.7-flash, timeout: 15s - if account ID is set)
   ///   - Priority 3: OpenCode fallback (deepseek-v4-flash-free, timeout: 30s)
   /// When in [AiMode.personalKey]:
-  ///   - Uses ONLY user-configured primary, backup, and separate features credentials.
+  ///   - Uses credentials corresponding to [slot].
   ///   - All server defaults (Zhipu, Cloudflare & OpenCode) are IGNORED.
-  Future<List<AIGatewayConfig>> _configChain({bool isFeaturesConfig = false}) async {
+  Future<List<AIGatewayConfig>> _configChain({AiSlot slot = AiSlot.assistant}) async {
     final mode = await AiConnectionRepository.instance.loadMode();
 
     if (mode == AiMode.ritmoServer) {
@@ -228,7 +229,25 @@ class AIGateway {
     }
 
     // mode == AiMode.personalKey
-    final primary = await _loadConfig(isFeaturesConfig: isFeaturesConfig);
+    if (slot == AiSlot.features) {
+      final featuresConfig = await _loadConfig(slot: AiSlot.features);
+      final chain = <AIGatewayConfig>[];
+      if (featuresConfig.apiKey.isNotEmpty) {
+        chain.add(featuresConfig);
+      }
+      // If features config is empty or needs fallback, also append assistant/backup credentials
+      final assistantConfig = await _loadConfig(slot: AiSlot.assistant);
+      if (assistantConfig.apiKey.isNotEmpty && !chain.any((c) => c.apiKey == assistantConfig.apiKey && c.baseUrl == assistantConfig.baseUrl)) {
+        chain.add(assistantConfig);
+      }
+      if (chain.isEmpty) {
+        chain.add(featuresConfig);
+      }
+      return chain;
+    }
+
+    // slot == AiSlot.assistant
+    final primary = await _loadConfig(slot: AiSlot.assistant);
 
     var secKey = secondaryApiKey;
     var secUrl = secondaryBaseUrl;
@@ -275,17 +294,6 @@ class AIGateway {
           model: secModel,
           timeoutMs: primary.timeoutMs,
         ));
-      }
-    }
-
-    // Append Zhipu AI / BigModel (from features config) as fallback for personal key mode if configured
-    if (!isFeaturesConfig) {
-      final featuresConfig = await _loadConfig(isFeaturesConfig: true);
-      if (featuresConfig.apiKey.isNotEmpty) {
-        final isDuplicate = chain.any((c) => c.apiKey == featuresConfig.apiKey && c.baseUrl == featuresConfig.baseUrl);
-        if (!isDuplicate) {
-          chain.add(featuresConfig);
-        }
       }
     }
 
@@ -429,7 +437,7 @@ class AIGateway {
     double temperature = 0.3,
     int extraTimeoutMs = 0,
     bool preferLightCloudflareModel = false,
-    bool isFeaturesConfig = false,
+    AiSlot slot = AiSlot.features,
     bool responseFormatJson = false,
   }) async {
     // Local daily AI quota check for free users
@@ -453,7 +461,7 @@ class AIGateway {
       }
     }
 
-    final chain = await _configChain(isFeaturesConfig: isFeaturesConfig);
+    final chain = await _configChain(slot: slot);
     var last = const _ChatOutcome.failure();
     var tryJson = responseFormatJson;
 
@@ -610,13 +618,13 @@ class AIGateway {
       _openStream({
     required List<Map<String, dynamic>> messages,
     double temperature = 0.3,
-    bool isFeaturesConfig = false,
+    AiSlot slot = AiSlot.assistant,
   }) async {
-    final chain = await _configChain(isFeaturesConfig: isFeaturesConfig);
+    final chain = await _configChain(slot: slot);
     var errorTag = 'HTTP Error unknown';
 
     debugPrint('\n=================== [🤖 RITMO AI STREAM REQUEST] ===================');
-    debugPrint('📍 Total configs in failover chain: ${chain.length}');
+    debugPrint('📍 Total configs in failover chain: ${chain.length} (slot: $slot)');
 
     for (var i = 0; i < chain.length; i++) {
       final config = chain[i];
@@ -728,6 +736,7 @@ class AIGateway {
     required String query,
     required ConsentProfile consent,
     PromptType promptType = PromptType.assistant,
+    AiSlot slot = AiSlot.features,
   }) async {
     // 1. Rate Limiting Check
     if (AIRateLimiter.instance.isRateLimited()) {
@@ -761,7 +770,7 @@ class AIGateway {
         {'role': 'system', 'content': systemPrompt},
         {'role': 'user', 'content': userPrompt},
       ],
-      isFeaturesConfig: true,
+      slot: slot,
     );
 
     Map<String, dynamic>? finalResponseMap;
@@ -785,6 +794,7 @@ class AIGateway {
     required String query,
     required ConsentProfile consent,
     Map<String, dynamic>? extraContext,
+    AiSlot slot = AiSlot.features,
   }) async {
     // 1. Rate Limiting Check
     if (AIRateLimiter.instance.isRateLimited()) {
@@ -822,7 +832,7 @@ class AIGateway {
         {'role': 'system', 'content': systemPrompt},
         {'role': 'user', 'content': userPrompt},
       ],
-      isFeaturesConfig: true,
+      slot: slot,
     );
 
     if (outcome.ok) {
@@ -847,13 +857,14 @@ class AIGateway {
     required String systemPrompt,
     required String userPrompt,
     bool responseFormatJson = false,
+    AiSlot slot = AiSlot.features,
   }) async {
     final outcome = await _postChat(
       messages: [
         {'role': 'system', 'content': systemPrompt},
         {'role': 'user', 'content': userPrompt},
       ],
-      isFeaturesConfig: true,
+      slot: slot,
       responseFormatJson: responseFormatJson,
     );
 
@@ -868,6 +879,7 @@ class AIGateway {
     required String query,
     required ConsentProfile consent,
     Map<String, dynamic>? extraContext,
+    AiSlot slot = AiSlot.features,
   }) async* {
     if (AIRateLimiter.instance.isRateLimited()) {
       yield 'error:سرعت ارسال درخواست‌ها بیش از حد مجاز است. لطفاً کمی صبر کنید.';
@@ -896,7 +908,7 @@ class AIGateway {
         {'role': 'system', 'content': systemPrompt},
         {'role': 'user', 'content': userPrompt},
       ],
-      isFeaturesConfig: true,
+      slot: slot,
     );
 
     if (!open.ok) {
@@ -949,6 +961,7 @@ class AIGateway {
     required String goalDescription,
     required String goalType,
     List<String>? userRoutines,
+    AiSlot slot = AiSlot.features,
   }) async {
     final prompt = AIPromptEngine.buildGoalBreakdownPrompt(
       goalTitle: goalTitle,
@@ -963,7 +976,7 @@ class AIGateway {
       ],
       temperature: 0.4,
       extraTimeoutMs: 8000,
-      isFeaturesConfig: true,
+      slot: slot,
     );
 
     if (outcome.ok) {
@@ -1032,6 +1045,7 @@ class AIGateway {
 
   Stream<String> sendCustomChatStream({
     required List<Map<String, String>> messages,
+    AiSlot slot = AiSlot.assistant,
   }) async* {
     if (AIRateLimiter.instance.isRateLimited()) {
       yield 'error:سرعت ارسال درخواست‌ها بیش از حد مجاز است. لطفاً کمی صبر کنید.';
@@ -1040,7 +1054,7 @@ class AIGateway {
 
     final open = await _openStream(
       messages: messages,
-      isFeaturesConfig: true,
+      slot: slot,
     );
 
     if (!open.ok) {
@@ -1105,6 +1119,7 @@ class AIGateway {
   Stream<String> sendStreamingCompletion({
     required List<Map<String, String>> messages,
     double temperature = 0.4,
+    AiSlot slot = AiSlot.assistant,
   }) async* {
     if (AIRateLimiter.instance.isRateLimited()) {
       yield 'error:rate_limited';
@@ -1113,7 +1128,7 @@ class AIGateway {
     final open = await _openStream(
       messages: messages,
       temperature: temperature,
-      isFeaturesConfig: true,
+      slot: slot,
     );
     if (!open.ok) { yield 'error:${open.errorTag}'; return; }
     final client = open.client!;
@@ -1147,6 +1162,7 @@ class AIGateway {
   Future<String> sendCustomChat({
     required List<Map<String, String>> messages,
     bool responseFormatJson = false,
+    AiSlot slot = AiSlot.assistant,
   }) async {
     if (AIRateLimiter.instance.isRateLimited()) {
       return 'سرعت ارسال درخواست‌ها بیش از حد مجاز است. لطفاً کمی صبر کنید.';
@@ -1154,7 +1170,7 @@ class AIGateway {
 
     final outcome = await _postChat(
       messages: messages,
-      isFeaturesConfig: true,
+      slot: slot,
       responseFormatJson: responseFormatJson,
     );
 
@@ -1167,7 +1183,7 @@ class AIGateway {
     throw Exception(outcome.errorDetails);
   }
 
-  Future<Map<String, dynamic>?> parseQuickAdd(String inputText) async {
+  Future<Map<String, dynamic>?> parseQuickAdd(String inputText, {AiSlot slot = AiSlot.features}) async {
     final cycleKeywords = [
       'menstrual', 'period', 'pregnancy', 'contraceptive', 'hormonal',
       'چرخه قاعدگی', 'سیکل قاعدگی', 'قاعدگی', 'پریود', 'عادت ماهیانه', 'پریودی'
@@ -1186,7 +1202,7 @@ class AIGateway {
       ],
       temperature: 0.2,
       preferLightCloudflareModel: true,
-      isFeaturesConfig: true,
+      slot: slot,
       responseFormatJson: true,
     );
 

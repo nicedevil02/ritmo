@@ -15,6 +15,7 @@ class DayAgendaSnapshot {
     this.previousActivity,
     this.currentActivity,
     this.nextActivity,
+    this.afterNextActivity,
     required this.suggestions,
     this.sleepWindow,
     this.enabledDomains = const {},
@@ -29,6 +30,7 @@ class DayAgendaSnapshot {
   final AgendaItem? previousActivity;
   final AgendaItem? currentActivity;
   final AgendaItem? nextActivity;
+  final AgendaItem? afterNextActivity;
   final List<AgendaSuggestion> suggestions;
   final SleepWindowBlock? sleepWindow;
   final Map<AgendaDomain, bool> enabledDomains;

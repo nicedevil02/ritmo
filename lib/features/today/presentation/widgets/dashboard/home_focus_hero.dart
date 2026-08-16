@@ -8,23 +8,15 @@ import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_
 /// کارت هیروی «تمرکز اکنون» — بازطراحی مدرن NextActionHero.
 ///
 /// مدل داده ([NextActionHeroData]) و رتبه‌بند اولویت (HomeFocusRanker) دست‌نخورده‌اند؛
-/// این ویجت فقط لایهٔ نمایش تازه است: تُن رنگی اختصاصی هر اولویت، هالهٔ نور،
-/// نوار پیشرفت مسیر روز و دکمهٔ اقدام با هدف لمسی ۵۴ پیکسل.
+/// این ویجت بخش نمایش تمرکز کنونی است: تُن رنگی اختصاصی هر اولویت، هالهٔ نور،
+/// دکمهٔ اقدام با هدف لمسی ۵۴ پیکسل و نوار تایم‌لاین کارهای قبل و بعد در زیر دکمه.
 class HomeFocusHero extends StatefulWidget {
   const HomeFocusHero({
     super.key,
     required this.data,
-    this.dayProgress,
-    this.progressCaption,
   });
 
   final NextActionHeroData data;
-
-  /// نسبت پیشرفت مسیر امروز (۰ تا ۱). null یعنی نوار پیشرفت نمایش داده نشود.
-  final double? dayProgress;
-
-  /// توضیح کوتاه کنار نوار پیشرفت (مثلاً «۳ کار باقی‌مانده»).
-  final String? progressCaption;
 
   @override
   State<HomeFocusHero> createState() => _HomeFocusHeroState();
@@ -122,7 +114,9 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
 
     final semantic = Semantics(
       container: true,
-      label: data.isCurrentActive ? 'کار جاری: ${data.title}' : 'اقدام بعدی: ${data.title}',
+      label: data.isCurrentActive
+          ? 'کار جاری: ${data.title}'
+          : 'اقدام بعدی: ${data.title}',
       child: card,
     );
 
@@ -205,7 +199,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
                       color: tone,
-                      ),
+                    ),
                   ),
                 ],
               ),
@@ -234,7 +228,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
             height: 1.35,
             fontWeight: FontWeight.w800,
             color: colors.textPrimary,
-            ),
+          ),
         ),
         const SizedBox(height: 4),
         Text(
@@ -245,17 +239,8 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
             fontSize: 12.5,
             height: 1.5,
             color: colors.textSecondary,
-            ),
+          ),
         ),
-        if (data.isCurrentActive &&
-            (data.previousTaskTitle != null || data.nextTaskTitle != null)) ...[
-          const SizedBox(height: RitmoSpacing.md),
-          _buildTemporalContextStrip(context, colors, tone, isDark, data),
-        ],
-        if (widget.dayProgress != null) ...[
-          const SizedBox(height: RitmoSpacing.md),
-          _progress(context, colors, tone, widget.dayProgress!),
-        ],
         const SizedBox(height: RitmoSpacing.lg),
         Row(
           children: [
@@ -293,7 +278,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                             style: const TextStyle(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w800,
-                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -321,7 +306,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
                         color: colors.textSecondary,
-                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -329,6 +314,12 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
             ],
           ],
         ),
+        // نوار قبل و بعد: قرارگیری در زیر دکمهٔ ثبت با چیدمان اختصاصی و بدون باگ
+        if (data.isCurrentActive &&
+            (data.previousTaskTitle != null || data.nextTaskTitle != null)) ...[
+          const SizedBox(height: RitmoSpacing.md),
+          _buildTemporalContextStrip(context, colors, tone, isDark, data),
+        ],
       ],
     );
   }
@@ -342,137 +333,159 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
   ) {
     final prevTitle = data.previousTaskTitle;
     final nextTitle = data.nextTaskTitle;
-    final hasPrev = prevTitle != null;
-    final hasNext = nextTitle != null;
+    final hasPrev = prevTitle != null && prevTitle.isNotEmpty;
+    final hasNext = nextTitle != null && nextTitle.isNotEmpty;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: (isDark ? Colors.black : Colors.white)
-            .withValues(alpha: isDark ? 0.26 : 0.55),
-        borderRadius: BorderRadius.circular(RitmoRadius.card - 4),
-        border: Border.all(
-          color: tone.withValues(alpha: isDark ? 0.22 : 0.16),
-          width: 0.9,
-        ),
-      ),
-      child: Row(
-        children: [
-          // 1. Previous Task (Right in RTL)
-          if (hasPrev) ...[
-            Icon(
-              data.isPreviousTaskCompleted == true
-                  ? Icons.check_circle_rounded
-                  : Icons.radio_button_unchecked_rounded,
-              size: 13.5,
-              color: data.isPreviousTaskCompleted == true
-                  ? colors.success
-                  : colors.textSecondary.withValues(alpha: 0.65),
-            ),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
-                'قبل: ${toPersianDigits(prevTitle)}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textSecondary,
-                  decoration: data.isPreviousTaskCompleted == true
-                      ? TextDecoration.lineThrough
-                      : null,
-                ),
-              ),
-            ),
-          ],
-
-          // Flow Separator
-          if (hasPrev && hasNext) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Icon(
-                Icons.arrow_back_rounded,
-                size: 13,
-                color: tone.withValues(alpha: 0.75),
-              ),
-            ),
-          ],
-
-          // 2. Next Task (Left in RTL)
-          if (hasNext) ...[
-            Flexible(
-              child: Text(
-                'بعد: ${toPersianDigits(nextTitle)}${data.nextTaskTime != null ? ' (${data.nextTaskTime!})' : ''}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: hasPrev ? TextAlign.left : TextAlign.right,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: tone,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.schedule_rounded,
-              size: 12,
-              color: tone.withValues(alpha: 0.85),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _progress(
-    BuildContext context,
-    RitmoColors colors,
-    Color tone,
-    double value,
-  ) {
-    final clamped = value.clamp(0.0, 1.0).toDouble();
-    final percent = (clamped * 100).round();
-    final caption = widget.progressCaption;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              toPersianDigits('$percent٪ از مسیر امروز'),
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w700,
-                color: colors.textSecondary,
-                ),
-            ),
-            const Spacer(),
-            if (caption != null)
-              Text(
-                toPersianDigits(caption),
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textSecondary,
-                  ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(RitmoRadius.pill),
-          child: LinearProgressIndicator(
-            value: clamped,
-            minHeight: 7,
-            backgroundColor: tone.withValues(alpha: 0.16),
-            valueColor: AlwaysStoppedAnimation<Color>(tone),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7.5),
+        decoration: BoxDecoration(
+          color: (isDark ? Colors.black : Colors.white)
+              .withValues(alpha: isDark ? 0.32 : 0.60),
+          borderRadius: BorderRadius.circular(RitmoRadius.card - 2),
+          border: Border.all(
+            color: tone.withValues(alpha: isDark ? 0.25 : 0.18),
+            width: 0.9,
           ),
         ),
-      ],
+        child: Row(
+          children: [
+            // ۱. کار قبلی (در RTL سمت راست)
+            if (hasPrev) ...[
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      data.isPreviousTaskCompleted == true
+                          ? CupertinoIcons.checkmark_circle_fill
+                          : CupertinoIcons.circle,
+                      size: 13.5,
+                      color: data.isPreviousTaskCompleted == true
+                          ? colors.success
+                          : colors.textTertiary,
+                    ),
+                    const SizedBox(width: 4.5),
+                    Text(
+                      'قبل:',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        color: colors.textTertiary,
+                      ),
+                    ),
+                    const SizedBox(width: 3.5),
+                    Flexible(
+                      child: Text(
+                        toPersianDigits(prevTitle),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textSecondary,
+                          decoration: data.isPreviousTaskCompleted == true
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // جداکننده جریان زمانی (از راست به چپ در زبان فارسی)
+            if (hasPrev && hasNext) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Container(
+                  padding: const EdgeInsets.all(2.5),
+                  decoration: BoxDecoration(
+                    color: tone.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.west_rounded,
+                    size: 10,
+                    color: tone,
+                  ),
+                ),
+              ),
+            ],
+
+            // ۲. کار بعدی (در RTL سمت چپ)
+            if (hasNext) ...[
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'بعد:',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        color: tone,
+                      ),
+                    ),
+                    const SizedBox(width: 3.5),
+                    Flexible(
+                      child: Text(
+                        toPersianDigits(nextTitle),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    if (data.nextTaskTime != null &&
+                        data.nextTaskTime!.isNotEmpty) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: tone.withValues(alpha: 0.14),
+                          borderRadius:
+                              BorderRadius.circular(RitmoRadius.pill),
+                          border: Border.all(
+                            color: tone.withValues(alpha: 0.22),
+                            width: 0.6,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              CupertinoIcons.clock,
+                              size: 9.5,
+                              color: tone,
+                            ),
+                            const SizedBox(width: 2.5),
+                            Text(
+                              toPersianDigits(data.nextTaskTime ?? ''),
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                color: tone,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 

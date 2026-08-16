@@ -11,6 +11,9 @@ import 'package:ritmo/core/ai/chat/chat_repository.dart';
 import 'package:ritmo/core/ai/chat/streaming_chat_service.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/ai/memory/memory_models.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
+import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
 import 'package:ritmo/core/analytics/assistant_engine.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
@@ -82,6 +85,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _loadBriefingData();
     _checkLastCommit();
     _initSpeech();
+    ChatGptWebBridgeManager.instance.cloudflareNotifier.addListener(_handleCloudflarePrompt);
+  }
+
+  void _handleCloudflarePrompt() {
+    if (ChatGptWebBridgeManager.instance.cloudflareNotifier.value && mounted) {
+      CloudflareChallengeModal.show(context);
+    }
   }
 
   Future<void> _initSpeech() async {
@@ -551,6 +561,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _pendingDeleteTimers.clear();
     _pendingDeletedMsgs.clear();
     _cancelStreamSilent();
+    ChatGptWebBridgeManager.instance.cloudflareNotifier.removeListener(_handleCloudflarePrompt);
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -1410,6 +1421,9 @@ $friendlySummary
                   ),
                 ),
 
+              // Live Mini ChatGPT Preview Window
+              const ChatGptMiniPreview(),
+
               // Chat Input row
               Builder(
                 builder: (context) {
@@ -1477,6 +1491,14 @@ $friendlySummary
                                 color: colors.textSecondary.withValues(alpha: 0.6),
                               ),
                             ),
+                            onTap: () {
+                              unawaited(ChatGptWebBridgeManager.instance.ensureBooted());
+                            },
+                            onChanged: (val) {
+                              if (val.isNotEmpty) {
+                                unawaited(ChatGptWebBridgeManager.instance.ensureBooted());
+                              }
+                            },
                           ),
                         ),
                       ),

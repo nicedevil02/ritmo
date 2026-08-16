@@ -53,14 +53,18 @@ class SsWeekResolver {
   /// Helper to resolve totalWeeks from DB
   static Future<int> resolveTotalWeeks(Database db) async {
     try {
-      final res = await db.rawQuery(
-        'SELECT COUNT(DISTINCT week) as weekCount FROM ss_workout_plan WHERE week IS NOT NULL AND week > 0',
-      );
-      if (res.isNotEmpty && res.first['weekCount'] != null) {
-        final count = res.first['weekCount'] as int;
-        if (count > 0) return count;
+      final info = await db.rawQuery("PRAGMA table_info('ss_workout_plan')");
+      final hasWeek = info.any((c) => c['name'] == 'week');
+      if (hasWeek) {
+        final res = await db.rawQuery(
+          'SELECT COUNT(DISTINCT week) as weekCount FROM ss_workout_plan WHERE week IS NOT NULL AND week > 0',
+        );
+        if (res.isNotEmpty && res.first['weekCount'] != null) {
+          final count = res.first['weekCount'] as int;
+          if (count > 0) return count;
+        }
       }
-    } catch (e) { debugPrint('[ss] ss_week_resolver.dart: $e'); }
+    } catch (_) {}
 
     try {
       final plans = await db.query('ss_workout_plan', columns: ['id']);

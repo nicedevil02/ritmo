@@ -1,4 +1,4 @@
-enum AiSlot { assistant, features }
+import 'package:ritmo/core/ai/ai_connection_models.dart';
 
 class PersonaInferenceProfile {
   const PersonaInferenceProfile({

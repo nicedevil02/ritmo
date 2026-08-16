@@ -6,6 +6,7 @@ import 'package:ritmo/core/database/schema/tables/day_plan_tables.dart';
 import 'package:ritmo/core/database/schema/tables/goal_tables.dart';
 import 'package:ritmo/core/database/schema/tables/health_tables.dart';
 import 'package:ritmo/core/database/schema/tables/konkur_tables.dart';
+import 'package:ritmo/core/database/schema/tables/movement_tables.dart';
 import 'package:ritmo/core/database/schema/tables/note_tables.dart';
 import 'package:ritmo/core/database/schema/tables/routine_tables.dart';
 import 'package:ritmo/core/database/schema/tables/sleep_tables.dart';
@@ -37,6 +38,7 @@ class SchemaManager {
     await DayPlanTables.create(db);
     await NoteTables.create(db);
     await SleepTables.create(db);
+    await MovementTables.create(db);
   }
 
   /// Self-healing schema validation to ensure all critical tables, columns, and indexes
@@ -55,6 +57,7 @@ class SchemaManager {
       await AiTables.ensureSchema(db);
       await SupplementarySportsTables.ensureSlotOverrideTable(db);
       await SupplementarySportsTables.ensureMovementMuscleFocus(db);
+      await MovementTables.ensureSchema(db);
     } catch (_) {}
   }
 

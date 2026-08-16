@@ -136,7 +136,7 @@ class MigrationV82SportsPrescription extends Migration {
       }
 
       // 5.2 Initialize trainingDays
-      String? trDays = p['trainingDays'] as String?;
+      final trDays = p['trainingDays'] as String?;
       if (trDays == null || trDays.isEmpty) {
         final daysCount = (p['daysPerWeek'] as int?) ?? 3;
         final list = <int>[];
@@ -164,7 +164,6 @@ class MigrationV82SportsPrescription extends Migration {
         final id = plan['id'] as String;
         final week = (plan['week'] as int?) ?? 1;
         final dayOfWeek = (plan['dayOfWeek'] as int?) ?? 1; // 1 = شنبه (ss mapping)
-        final category = 'STRENGTH';
         final estimatedMins = (plan['estimatedMinutes'] as int?) ?? 45;
 
         // Convert ss dayOfWeek to Ritmo dayOfWeek
@@ -199,8 +198,8 @@ class MigrationV82SportsPrescription extends Migration {
         final dateIso = planDate.toIso8601String().substring(0, 10);
 
         // Map category and title
-        final String slotType = (category == 'REST' || category == 'ACTIVE_REST') ? category : 'STRENGTH';
-        final String headline = slotType == 'REST' ? 'روز استراحت' : '$estimatedMins دقیقه تمرین قدرتی';
+        const String slotType = 'STRENGTH';
+        final String headline = '$estimatedMins دقیقه تمرین قدرتی';
 
         // Check if there is already a prescription for this date
         final exist = await db.query('ss_session_prescription', where: 'dateIso = ?', whereArgs: [dateIso]);

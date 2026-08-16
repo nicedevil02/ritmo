@@ -1,0 +1,305 @@
+import 'package:sqflite/sqflite.dart';
+
+/// اسکیما و تعریف جداول اختصاصی ماژول حرکت (Movement Greenfield)
+abstract final class MovementTables {
+  static const String tableActivityKinds = 'movement_activity_kinds';
+  static const String tableOccurrences = 'movement_occurrences';
+  static const String tableLiveSessions = 'movement_live_sessions';
+  static const String tableStrengthPrograms = 'movement_strength_programs';
+  static const String tablePlanTemplates = 'movement_plan_templates';
+  static const String tablePlanSchedules = 'movement_plan_schedules';
+  static const String tableWorkoutLogs = 'movement_workout_logs';
+
+  static Future<void> create(DatabaseExecutor db) async {
+    // ۱. جدول گونه‌های فعالیت حرکتی
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableActivityKinds (
+        id TEXT PRIMARY KEY,
+        nameFa TEXT NOT NULL,
+        nameEn TEXT,
+        aliasesJson TEXT,
+        family TEXT NOT NULL,
+        icon TEXT NOT NULL,
+        primaryMetric TEXT NOT NULL,
+        defaultUnitsJson TEXT,
+        isCustom INTEGER NOT NULL DEFAULT 0,
+        isFavorite INTEGER NOT NULL DEFAULT 0,
+        archivedAt TEXT,
+        createdAt TEXT NOT NULL
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_activity_kinds_family
+        ON $tableActivityKinds (family);
+    ''');
+
+    // ۲. جدول رخدادها و جلسات برنامه
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableOccurrences (
+        id TEXT PRIMARY KEY,
+        activityKindId TEXT NOT NULL,
+        templateId TEXT,
+        scheduleId TEXT,
+        dateIso TEXT NOT NULL,
+        startTime TEXT,
+        status TEXT NOT NULL,
+        goalType TEXT,
+        goalValue REAL,
+        goalUnit TEXT,
+        movedToDateIso TEXT,
+        origin TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_occurrences_date
+        ON $tableOccurrences (dateIso);
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_occurrences_status
+        ON $tableOccurrences (status);
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_occurrences_template
+        ON $tableOccurrences (templateId);
+    ''');
+
+    // ۳. جدول جلسات زنده
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableLiveSessions (
+        id TEXT PRIMARY KEY,
+        occurrenceId TEXT,
+        activityKindId TEXT NOT NULL,
+        mode TEXT NOT NULL,
+        status TEXT NOT NULL,
+        startedAt TEXT,
+        accumulatedPauseMs INTEGER NOT NULL DEFAULT 0,
+        targetSnapshotJson TEXT,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_live_sessions_status
+        ON $tableLiveSessions (status);
+    ''');
+
+    // ۴. جدول برنامه‌های تمرین قدرتی
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableStrengthPrograms (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        status TEXT NOT NULL,
+        currentWeek INTEGER,
+        totalWeeks INTEGER,
+        daysPerWeek INTEGER,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      );
+    ''');
+
+    // ۵. جدول قالب‌های برنامهٔ حرکت
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tablePlanTemplates (
+        id TEXT PRIMARY KEY,
+        activityKindId TEXT NOT NULL,
+        sessionType TEXT NOT NULL,
+        goalJson TEXT,
+        reminderType TEXT NOT NULL,
+        reminderOffsetMin INTEGER,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL,
+        archivedAt TEXT
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_plan_templates_kind
+        ON $tablePlanTemplates (activityKindId);
+    ''');
+
+    // ۶. جدول زمان‌بندی‌های قالب برنامه
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tablePlanSchedules (
+        id TEXT PRIMARY KEY,
+        templateId TEXT NOT NULL,
+        weekday INTEGER NOT NULL,
+        timeOfDay TEXT NOT NULL,
+        recurrence TEXT NOT NULL,
+        startDateIso TEXT NOT NULL,
+        weeksCount INTEGER,
+        createdAt TEXT NOT NULL
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_plan_schedules_template
+        ON $tablePlanSchedules (templateId);
+    ''');
+
+    // ۷. جدول تاریخچهٔ ثبت تمرین (Log)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableWorkoutLogs (
+        id TEXT PRIMARY KEY,
+        occurrenceId TEXT,
+        activityKindId TEXT NOT NULL,
+        dateIso TEXT NOT NULL,
+        startTime TEXT,
+        durationSec INTEGER NOT NULL,
+        metricJson TEXT,
+        feeling TEXT,
+        note TEXT,
+        source TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_workout_logs_date
+        ON $tableWorkoutLogs (dateIso);
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_workout_logs_occurrence
+        ON $tableWorkoutLogs (occurrenceId);
+    ''');
+  }
+
+  static Future<void> seedInitialData(DatabaseExecutor db) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    final seeds = [
+      {
+        'id': 'kind_walking',
+        'nameFa': 'پیاده‌روی',
+        'nameEn': 'Walking',
+        'aliasesJson': '["قدم زدن","پیاده روی"]',
+        'family': 'walking',
+        'icon': 'directions_walk',
+        'primaryMetric': 'duration',
+        'defaultUnitsJson': '["min","km","step"]',
+        'isCustom': 0,
+        'isFavorite': 1,
+        'archivedAt': null,
+        'createdAt': now,
+      },
+      {
+        'id': 'kind_running',
+        'nameFa': 'دویدن',
+        'nameEn': 'Running',
+        'aliasesJson': '["دو","دویدن استقامتی"]',
+        'family': 'running',
+        'icon': 'directions_run',
+        'primaryMetric': 'distance',
+        'defaultUnitsJson': '["km","min"]',
+        'isCustom': 0,
+        'isFavorite': 1,
+        'archivedAt': null,
+        'createdAt': now,
+      },
+      {
+        'id': 'kind_cycling',
+        'nameFa': 'دوچرخه‌سواری',
+        'nameEn': 'Cycling',
+        'aliasesJson': '["دوچرخه"]',
+        'family': 'cycling',
+        'icon': 'directions_bike',
+        'primaryMetric': 'distance',
+        'defaultUnitsJson': '["km","min"]',
+        'isCustom': 0,
+        'isFavorite': 0,
+        'archivedAt': null,
+        'createdAt': now,
+      },
+      {
+        'id': 'kind_swimming',
+        'nameFa': 'شنا',
+        'nameEn': 'Swimming',
+        'aliasesJson': '["استخر","شنا کرال"]',
+        'family': 'swimming',
+        'icon': 'pool',
+        'primaryMetric': 'distance',
+        'defaultUnitsJson': '["m","lap","min"]',
+        'isCustom': 0,
+        'isFavorite': 0,
+        'archivedAt': null,
+        'createdAt': now,
+      },
+      {
+        'id': 'kind_team_sports',
+        'nameFa': 'ورزش تیمی',
+        'nameEn': 'Team Sports',
+        'aliasesJson': '["فوتبال","والیبال","بسکتبال"]',
+        'family': 'team_sports',
+        'icon': 'sports_soccer',
+        'primaryMetric': 'duration',
+        'defaultUnitsJson': '["min"]',
+        'isCustom': 0,
+        'isFavorite': 0,
+        'archivedAt': null,
+        'createdAt': now,
+      },
+      {
+        'id': 'kind_hiking',
+        'nameFa': 'کوهنوردی',
+        'nameEn': 'Hiking',
+        'aliasesJson': '["کوه پیمایی","طبیعت گردی"]',
+        'family': 'hiking',
+        'icon': 'hiking',
+        'primaryMetric': 'elevation',
+        'defaultUnitsJson': '["m","km","min"]',
+        'isCustom': 0,
+        'isFavorite': 0,
+        'archivedAt': null,
+        'createdAt': now,
+      },
+      {
+        'id': 'kind_yoga_mobility',
+        'nameFa': 'یوگا و کشش',
+        'nameEn': 'Yoga & Mobility',
+        'aliasesJson': '["کشش","انعطاف پذیری","یوگا"]',
+        'family': 'yoga_mobility',
+        'icon': 'self_improvement',
+        'primaryMetric': 'duration',
+        'defaultUnitsJson': '["min"]',
+        'isCustom': 0,
+        'isFavorite': 1,
+        'archivedAt': null,
+        'createdAt': now,
+      },
+      {
+        'id': 'kind_strength',
+        'nameFa': 'تمرین قدرتی ساده',
+        'nameEn': 'Strength Training',
+        'aliasesJson': '["بدنسازی","تمرین با وزن بدن","قدرتی"]',
+        'family': 'strength',
+        'icon': 'fitness_center',
+        'primaryMetric': 'volume',
+        'defaultUnitsJson': '["reps","kg","sets"]',
+        'isCustom': 0,
+        'isFavorite': 1,
+        'archivedAt': null,
+        'createdAt': now,
+      },
+    ];
+
+    for (final seed in seeds) {
+      await db.insert(
+        tableActivityKinds,
+        seed,
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
+  }
+
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
+    await create(db);
+    await seedInitialData(db);
+  }
+}

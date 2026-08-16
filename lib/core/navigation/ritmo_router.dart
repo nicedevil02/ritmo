@@ -5,6 +5,11 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
 import 'package:ritmo/features/goals/presentation/goals_screen.dart';
 import 'package:ritmo/features/health/presentation/health_screen.dart';
+import 'package:ritmo/features/movement/presentation/activity_picker/activity_picker_screen.dart';
+import 'package:ritmo/features/movement/presentation/center/movement_center_screen.dart';
+import 'package:ritmo/features/movement/presentation/movement_routes.dart';
+import 'package:ritmo/features/movement/presentation/occurrence/occurrence_details_screen.dart';
+import 'package:ritmo/features/movement/presentation/planner/activity_plan_editor_screen.dart';
 import 'package:ritmo/features/study/study_module_entry.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
@@ -113,6 +118,34 @@ class RitmoRouter {
       return RitmoRouteTarget.module((context) async {
         await StudyModuleEntry.open(context);
       });
+    }
+
+    // مسیرهای ماژول حرکت (فقط پشت فلگ ساخت داخلی)
+    const bool isMovementInternal =
+        bool.fromEnvironment('MOVEMENT_GREENFIELD_INTERNAL', defaultValue: false);
+    if (isMovementInternal) {
+      if (r == MovementRoutes.center) {
+        return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
+      }
+      if (r == MovementRoutes.picker) {
+        return RitmoRouteTarget.screen((_) => const ActivityPickerScreen());
+      }
+      if (r == MovementRoutes.planEditor) {
+        return RitmoRouteTarget.screen((_) => const ActivityPlanEditorScreen());
+      }
+      if (r == MovementRoutes.occurrence) {
+        return RitmoRouteTarget.screen((_) => const ActivityOccurrenceDetailsScreen(occurrenceId: ''));
+      }
+      if (r == MovementRoutes.liveSession ||
+          r == MovementRoutes.summary ||
+          r == MovementRoutes.strengthHub ||
+          r == MovementRoutes.strengthOnboarding ||
+          r == MovementRoutes.strengthPreview ||
+          r == MovementRoutes.progress ||
+          r == MovementRoutes.library ||
+          r == MovementRoutes.settings) {
+        return RitmoRouteTarget.screen((_) => const SizedBox.shrink());
+      }
     }
 
     return null;

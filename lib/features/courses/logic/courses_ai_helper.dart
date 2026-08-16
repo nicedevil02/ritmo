@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/ai_response_processor.dart';
 import 'package:ritmo/core/ai/ai_shared_rules.dart';
@@ -83,7 +84,10 @@ Please adapt your suggested total sessions, weekly target sessions, and preferre
         {'role': 'user', 'content': userPrompt}
       ];
 
-      final aiContent = await AIGateway.instance.sendCustomChat(messages: messagesToSent);
+      final aiContent = await AIGateway.instance.sendCustomChat(
+        messages: messagesToSent,
+        slot: AiSlot.features,
+      );
 
       await AssistantMemoryBinding.processResponse(
         sessionId: 'courses_session',

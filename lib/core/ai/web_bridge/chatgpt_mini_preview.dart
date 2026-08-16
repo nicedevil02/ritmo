@@ -1,0 +1,180 @@
+import 'package:flutter/material.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+
+class ChatGptMiniPreview extends StatefulWidget {
+  const ChatGptMiniPreview({
+    super.key,
+    this.onClose,
+  });
+
+  final VoidCallback? onClose;
+
+  @override
+  State<ChatGptMiniPreview> createState() => _ChatGptMiniPreviewState();
+}
+
+class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
+  bool _isMinimized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ChatGptWebBridgeManager.instance.ensureBooted();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final controller = ChatGptWebBridgeManager.instance.controller;
+
+    return ValueListenableBuilder<ChatGptBridgeStatus>(
+      valueListenable: ChatGptWebBridgeManager.instance.statusNotifier as ValueNotifier<ChatGptBridgeStatus>,
+      builder: (context, status, _) {
+        return Material(
+          type: MaterialType.transparency,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.xs),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(RitmoRadius.card),
+              border: Border.all(
+                color: colors.primary.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.shadow.withValues(alpha: 0.15),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(RitmoRadius.card - 1),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    color: colors.surfaceSunken,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: switch (status) {
+                              ChatGptBridgeStatus.ready => colors.success,
+                              ChatGptBridgeStatus.generating => colors.warning,
+                              ChatGptBridgeStatus.cloudflareChallenge => colors.error,
+                              _ => colors.textTertiary,
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'مرورگر زنده چت‌جی‌پی‌تی (${_getStatusLabel(status)})',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        // Refresh Button
+                        InkWell(
+                          onTap: () => controller?.reload(),
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(Icons.refresh_rounded, size: 16, color: colors.textSecondary),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        // Minimize / Expand
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _isMinimized = !_isMinimized;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              _isMinimized ? Icons.expand_more_rounded : Icons.expand_less_rounded,
+                              size: 16,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        if (widget.onClose != null) ...[
+                          const SizedBox(width: 4),
+                          InkWell(
+                            onTap: widget.onClose,
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(Icons.close_rounded, size: 16, color: colors.textTertiary),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  // WebView Body
+                  if (!_isMinimized)
+                    SizedBox(
+                      height: 280,
+                      width: double.infinity,
+                      child: controller != null
+                          ? WebViewWidget(
+                              key: const ValueKey('chatgpt_mini_preview_webview'),
+                              controller: controller,
+                            )
+                          : Center(
+                              child: InkWell(
+                                onTap: () => ChatGptWebBridgeManager.instance.ensureBooted(),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const CircularProgressIndicator.adaptive(strokeWidth: 2.5),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        'در حال اتصال به مرورگر چت‌جی‌پی‌تی...',
+                                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _getStatusLabel(ChatGptBridgeStatus status) {
+    return switch (status) {
+      ChatGptBridgeStatus.ready => 'آماده',
+      ChatGptBridgeStatus.booting => 'در حال راه‌اندازی...',
+      ChatGptBridgeStatus.generating => 'در حال تولید پاسخ...',
+      ChatGptBridgeStatus.cloudflareChallenge => 'چالش کلودفلر',
+      ChatGptBridgeStatus.error => 'خطا',
+      _ => 'غیرفعال',
+    };
+  }
+}

@@ -70,7 +70,7 @@ import 'package:ritmo/features/today/presentation/widgets/dashboard/home_section
 import 'package:ritmo/features/today/presentation/widgets/dashboard/module_summary_grid.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_hero.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/today_details_section.dart';
-import 'package:ritmo/features/today/presentation/widgets/dashboard/today_schedule_preview_card.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/today_path_progress_banner.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/todays_tasks_section.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/zone_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/morning_checkin_sheet.dart';
@@ -837,22 +837,37 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                       onOpen: () => _openModuleScreen('sleep'),
                     ),
 
-                    // ۱. تمرکز اکنون — تنها اقدام مهم این لحظه
+                    // ۱. بنر اختصاصی و پریمیوم مسیر امروز — تفکیک‌شده و در بالای پنجره هیرو (با قابلیت گسترش کشویی)
                     _enter(
                       1,
-                      HomeFocusHero(
-                        data: heroData,
-                        dayProgress: progress.total > 0 ? progress.ratio : null,
-                        progressCaption: progress.total > 0
-                            ? '${PersianDigits.convert(progress.remaining.toString())} مورد باقی‌مانده'
-                            : null,
+                      TodayPathProgressBanner(
+                        progress: progress.total > 0 ? progress.ratio : 0.0,
+                        doneCount: progress.done,
+                        totalCount: progress.total,
+                        remainingCount: progress.remaining,
+                        snapshot: _todaySnapshot,
+                        onOpenAgendaItem: _openAgendaItem,
+                        onTap: () => widget.onNavigateToTab?.call(
+                          RitmoShellMetrics.calendarTabIndexFor(
+                            AppModeService.instance.current,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: RitmoSpacing.md),
 
-                    // ۲. نبض امروز — وضعیت روز در یک نگاه
+                    // ۲. تمرکز اکنون — تنها اقدام مهم این لحظه
                     _enter(
                       2,
+                      HomeFocusHero(
+                        data: heroData,
+                      ),
+                    ),
+                    const SizedBox(height: RitmoSpacing.md),
+
+                    // ۳. نبض امروز — وضعیت روز در یک نگاه
+                    _enter(
+                      3,
                       HomePulseStrip(
                         progress: progress.ratio,
                         doneCount: progress.done,
@@ -915,33 +930,14 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     ),
                     const SizedBox(height: RitmoSpacing.md),
 
-                    // ۳. میانبرهای سریع
+                    // ۴. میانبرهای سریع
                     _enter(
-                      3,
+                      4,
                       HomeQuickActions(
                         actions: _quickActions(colors, isDarkMode),
                       ),
                     ),
                     const SizedBox(height: RitmoSpacing.xl),
-
-                    // ۴. مسیر امروز — اسنپشات یکپارچهٔ خانه/تقویم (P1-1)
-                    if (_todaySnapshot != null) ...[
-                      _enter(
-                        4,
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const HomeSectionHeader(
-                              title: 'مسیر امروز',
-                              subtitle: 'اکنون، بعدی و شکاف‌های آزاد',
-                              icon: CupertinoIcons.map_fill,
-                            ),
-                            TodaySchedulePreviewCard(snapshot: _todaySnapshot!),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: RitmoSpacing.xl),
-                    ],
 
                     // ۵. کارهای امروز (تیتر و اکشنها داخل خودش)
                     _enter(

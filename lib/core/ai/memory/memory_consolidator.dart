@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/ai/chat/chat_repository.dart';
@@ -91,6 +92,7 @@ $existingMemoriesStr
           {'role': 'user', 'content': userPrompt},
         ],
         responseFormatJson: true,
+        slot: AiSlot.features,
       );
 
       // Parse JSON operations
@@ -175,6 +177,7 @@ $episodesStr
           {'role': 'user', 'content': 'لطفاً رویدادهای فوق را یکپارچه‌سازی کنید.'},
         ],
         responseFormatJson: true,
+        slot: AiSlot.features,
       );
 
       final cleanedResponse = _cleanJsonResponse(llmResponse);

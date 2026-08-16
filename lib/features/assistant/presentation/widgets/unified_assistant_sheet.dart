@@ -6,9 +6,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:ritmo/core/ai/ai_connection_models.dart';
+import 'package:ritmo/core/ai/ai_connection_repository.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
+import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
 import 'package:ritmo/core/ai/memory/assistant_memory_binding.dart';
 import 'package:ritmo/core/ai/personas/persona_prompt_builder.dart';
 import 'package:ritmo/core/ai/personas/persona_inference_profile.dart';
@@ -89,6 +94,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
     _loadOpeningMove();
     _checkLastPlan();
     _initSpeech();
+    ChatGptWebBridgeManager.instance.cloudflareNotifier.addListener(_handleCloudflarePrompt);
     if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _sendMessage(widget.initialQuery);
@@ -96,9 +102,16 @@ class _AssistantSheetState extends State<AssistantSheet> {
     }
   }
 
+  void _handleCloudflarePrompt() {
+    if (ChatGptWebBridgeManager.instance.cloudflareNotifier.value && mounted) {
+      CloudflareChallengeModal.show(context);
+    }
+  }
+
   @override
   void dispose() {
     _streamSubscription?.cancel();
+    ChatGptWebBridgeManager.instance.cloudflareNotifier.removeListener(_handleCloudflarePrompt);
     for (final timer in _pendingDeleteTimers.values) {
       timer.cancel();
     }
@@ -293,9 +306,22 @@ class _AssistantSheetState extends State<AssistantSheet> {
             })
       ];
 
-      final stream = AIGateway.instance.sendCustomChatStream(
-        messages: messagesToSend,
-      );
+      final config = await AiConnectionRepository.instance.load(slot: AiSlot.assistant);
+      final isChatGptWeb = config.providerPresetId == 'chatgpt_web' || config.baseUrl.contains('chatgpt.com');
+
+      final Stream<String> stream;
+      if (isChatGptWeb) {
+        stream = ChatGptWebBridgeManager.instance.sendPrompt(
+          prompt: query,
+          personaTitle: widget.persona.displayName,
+          personaSystemPrompt: systemPrompt,
+        );
+      } else {
+        stream = AIGateway.instance.sendCustomChatStream(
+          messages: messagesToSend,
+          slot: AiSlot.assistant,
+        );
+      }
 
       final assistantMsgId = 'msg_${DateTime.now().millisecondsSinceEpoch}_a';
       final assistantMsg = ChatMessage(
@@ -969,6 +995,9 @@ class _AssistantSheetState extends State<AssistantSheet> {
                   child: CupertinoActivityIndicator(),
                 ),
 
+              // Live Mini ChatGPT Preview Window
+              const ChatGptMiniPreview(),
+
               // Chat Input Bar matching Main Assistant (Speech-to-Text mic + Glass Input + Circular Accent Send Button)
               SafeArea(
                 child: Padding(
@@ -1027,6 +1056,14 @@ class _AssistantSheetState extends State<AssistantSheet> {
                                 color: colors.textSecondary.withValues(alpha: 0.6),
                               ),
                             ),
+                            onTap: () {
+                              unawaited(ChatGptWebBridgeManager.instance.ensureBooted());
+                            },
+                            onChanged: (val) {
+                              if (val.isNotEmpty) {
+                                unawaited(ChatGptWebBridgeManager.instance.ensureBooted());
+                              }
+                            },
                             onSubmitted: (val) {
                               if (!_isStreaming) unawaited(_sendMessage());
                             },

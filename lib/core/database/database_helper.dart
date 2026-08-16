@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/legacy_database_recovery.dart';
 import 'package:ritmo/core/database/migration/migration_runner.dart';
 import 'package:ritmo/core/database/schema/schema_manager.dart';
-import 'package:ritmo/core/database/schema/tables/routine_tables.dart';
 import 'package:ritmo/core/database/seed/seed_service.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
@@ -21,7 +20,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 105;
+  static const int _dbVersion = 107;
   static int get dbVersionForTest => _dbVersion;
 
   /// Hijri month number of Ramadan - the only month qada fasting is owed for.

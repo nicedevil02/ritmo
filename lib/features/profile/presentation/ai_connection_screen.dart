@@ -5,6 +5,8 @@ import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_connection_repository.dart';
 import 'package:ritmo/core/ai/ai_endpoint_normalizer.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
+import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
@@ -54,6 +56,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
 
   bool _isTesting = false;
   bool _isTestingBackup = false;
+  bool _isTestingFeatures = false;
 
   AiTestResult? _lastTestResult;
   List<AiChainEntry> _chainEntries = [];
@@ -310,6 +313,34 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
       return;
     }
 
+    if (_selectedPresetId == 'chatgpt_web') {
+      final booted = await ChatGptWebBridgeManager.instance.ensureBooted();
+      if (mounted) {
+        setState(() {
+          _isTesting = false;
+        });
+        if (booted) {
+          RitmoHaptics.tap();
+          RitmoToast.show(
+            context,
+            'پل وب چت‌جی‌پی‌تی با موفقیت آماده به کار شد ✨',
+            icon: Icons.check_circle_rounded,
+            iconColor: context.colors.success,
+          );
+        } else if (ChatGptWebBridgeManager.instance.cloudflareNotifier.value) {
+          CloudflareChallengeModal.show(context);
+        } else {
+          RitmoToast.show(
+            context,
+            'خطا در برقراری ارتباط با وب‌سایت ChatGPT. لطفاً اتصال اینترنت خود را بررسی کنید.',
+            icon: Icons.error_outline_rounded,
+            iconColor: context.colors.warning,
+          );
+        }
+      }
+      return;
+    }
+
     var targetUrl = AiEndpointNormalizer.normalize(_urlController.text);
     if (_selectedPresetId == 'cloudflare' && _cloudflareAccountIdController.text.isNotEmpty) {
       targetUrl = targetUrl.replaceAll('{ACCOUNT_ID}', _cloudflareAccountIdController.text.trim());
@@ -370,6 +401,45 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
         RitmoToast.show(
           context,
           'کلید پشتیبان با موفقیت متصل شد',
+          icon: Icons.check_circle_rounded,
+          iconColor: context.colors.success,
+        );
+      } else {
+        RitmoToast.show(
+          context,
+          result.messageFa,
+          icon: Icons.error_outline_rounded,
+          iconColor: context.colors.warning,
+        );
+      }
+    }
+  }
+
+  Future<void> _testFeaturesConnection() async {
+    setState(() {
+      _isTestingFeatures = true;
+    });
+
+    await _saveConfig();
+
+    final targetUrl = AiEndpointNormalizer.normalize(_featuresUrlController.text);
+    final result = await AIGateway.instance.testConnection(
+      baseUrl: targetUrl,
+      apiKey: _featuresKeyController.text.trim(),
+      model: _featuresModelController.text.trim(),
+      timeoutMs: _timeoutMs,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isTestingFeatures = false;
+      });
+
+      if (result.ok) {
+        RitmoHaptics.tap();
+        RitmoToast.show(
+          context,
+          'اتصال سرویس‌دهندهٔ تحلیل‌ها با موفقیت برقرار شد',
           icon: Icons.check_circle_rounded,
           iconColor: context.colors.success,
         );
@@ -653,22 +723,45 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                     ),
                     const SizedBox(height: RitmoSpacing.md),
 
-                    AiSecretField(
-                      label: 'کلید دسترسی (API Key)',
-                      controller: _keyController,
-                      hint: 'sk-... یا کلید سرویس‌دهنده',
-                      hasStoredKey: _keyController.text.isNotEmpty,
-                      onChanged: (_) => _saveConfig(),
-                      onDelete: () async {
-                        await AiConnectionRepository.instance.deleteKey(AiSlot.assistant);
-                        setState(() {
-                          _keyController.clear();
-                          _lastTestResult = null;
-                        });
-                        if (mounted && context.mounted) RitmoToast.show(context, 'کلید با موفقیت حذف شد');
-                      },
-                    ),
-                    const SizedBox(height: RitmoSpacing.md),
+                    if (_selectedPresetId == 'chatgpt_web') ...[
+                      RitmoCard(
+                        padding: const EdgeInsets.all(RitmoSpacing.md),
+                        child: Row(
+                          children: [
+                            Icon(Icons.public_rounded, color: colors.primary, size: 24),
+                            const SizedBox(width: RitmoSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                'اتصال از طریق مرورگر مخفی با وب‌سایت chatgpt.com برقرار می‌شود و نیازی به کلید API نیست. در صورت درخواست تایید امنیتی کلودفلر، پنجره تایید به صورت خودکار برای شما باز خواهد شد.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colors.textSecondary,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: RitmoSpacing.md),
+                    ] else ...[
+                      AiSecretField(
+                        label: 'کلید دسترسی (API Key)',
+                        controller: _keyController,
+                        hint: 'sk-... یا کلید سرویس‌دهنده',
+                        hasStoredKey: _keyController.text.isNotEmpty,
+                        onChanged: (_) => _saveConfig(),
+                        onDelete: () async {
+                          await AiConnectionRepository.instance.deleteKey(AiSlot.assistant);
+                          setState(() {
+                            _keyController.clear();
+                            _lastTestResult = null;
+                          });
+                          if (mounted && context.mounted) RitmoToast.show(context, 'کلید با موفقیت حذف شد');
+                        },
+                      ),
+                      const SizedBox(height: RitmoSpacing.md),
+                    ],
 
                     // Model Selection
                     DropdownButtonFormField<String>(
@@ -901,6 +994,13 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                     label: 'مدل تحلیل‌ها (Features Model)',
                                     controller: _featuresModelController,
                                     onChanged: (_) => _saveConfig(),
+                                  ),
+                                  const SizedBox(height: RitmoSpacing.sm),
+                                  RitmoPrimaryButton(
+                                    label: 'آزمایش سرویس‌دهنده تحلیل‌ها',
+                                    icon: Icons.bolt_rounded,
+                                    isLoading: _isTestingFeatures,
+                                    onPressed: _testFeaturesConnection,
                                   ),
                                 ],
                               ],

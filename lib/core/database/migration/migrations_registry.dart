@@ -5,8 +5,6 @@ import 'package:ritmo/core/database/schema/tables/ai_tables.dart';
 import 'package:ritmo/core/database/schema/tables/day_plan_tables.dart';
 import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/core/database/seed/seed_service.dart';
-import 'package:ritmo/core/domain/models/duration_bounds.dart';
-import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:sqflite/sqflite.dart';
 
 class MigrationV2 extends Migration {

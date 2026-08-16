@@ -107,6 +107,16 @@ const List<AiProviderPreset> kAiProviderPresets = [
     allowsHttp: true,
   ),
   AiProviderPreset(
+    id: 'chatgpt_web',
+    nameFa: 'وب چت‌جی‌پی‌تی (ChatGPT Web)',
+    taglineFa: 'مستقیماً از طریق وب‌سایت رسمی chatgpt.com — بدون نیاز به کلید API',
+    endpoint: 'https://chatgpt.com/',
+    models: ['ChatGPT Auto Web (GPT-4o mini)'],
+    keyUrl: 'https://chatgpt.com/',
+    brandColor: Color(0xff10A37F),
+    worksInIranWithoutVpn: false,
+  ),
+  AiProviderPreset(
     id: 'custom',
     nameFa: 'سرویس دلخواه',
     taglineFa: 'هر سرویس سازگار با OpenAI',

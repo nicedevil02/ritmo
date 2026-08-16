@@ -44,6 +44,8 @@ import 'package:ritmo/core/database/migration/migrations/migration_v102_unify_on
 import 'package:ritmo/core/database/migration/migrations/migration_v103_unify_day_plan_columns.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v104_worship_day_exceptions.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v105_canonical_schema_parity.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v106_movement_greenfield.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v107_movement_planning.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -151,6 +153,8 @@ class MigrationRunner {
     MigrationV103UnifyDayPlanColumns(), // Unify day_plan_templates & day_plan_commits columns to canonical camelCase
     MigrationV104WorshipDayExceptions(), // Worship day exceptions and occurrence overrides
     MigrationV105CanonicalSchemaParity(), // Backfill missing tables to ensure full canonical parity
+    MigrationV106MovementGreenfield(), // Movement Greenfield: 4 tables & base activity kinds seeds
+    MigrationV107MovementPlanning(), // Movement Planning: templates, schedules, workout logs
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

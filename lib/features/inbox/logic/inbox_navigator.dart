@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/app_mode/app_mode_service.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
+import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/services/central_inbox_service.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/assistant/presentation/assistant_screen.dart';
-import 'package:ritmo/features/calendar/presentation/calendar_screen.dart';
 import 'package:ritmo/features/today/presentation/insights_screen.dart';
 import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet.dart';
 import 'package:ritmo/features/today/presentation/widgets/morning_checkin_sheet.dart';
@@ -20,22 +22,49 @@ class InboxNavigator {
     switch (item.linkModule) {
       case 'routines':
       case 'calendar':
-        await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const CalendarScreen()),
-        );
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+        final calIndex = RitmoShellMetrics.calendarTabIndexFor(AppModeService.instance.current);
+        RitmoEventBus().fire(RitmoEvent(
+          type: 'navigate_tab',
+          timestamp: DateTime.now(),
+          payload: {'index': calIndex},
+        ));
 
       case 'assistant':
-        await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AssistantScreen()),
-        );
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+        if (AppModeService.instance.current == AppMode.full) {
+          RitmoEventBus().fire(RitmoEvent(
+            type: 'navigate_tab',
+            timestamp: DateTime.now(),
+            payload: {'index': 3},
+          ));
+        } else {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AssistantScreen()),
+          );
+        }
 
       case 'insights':
-        await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const InsightsScreen()),
-        );
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+        if (AppModeService.instance.current == AppMode.full) {
+          RitmoEventBus().fire(RitmoEvent(
+            type: 'navigate_tab',
+            timestamp: DateTime.now(),
+            payload: {'index': 1},
+          ));
+        } else {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const InsightsScreen()),
+          );
+        }
 
       case 'today':
         if (item.linkAction == 'open_morning') {
@@ -57,8 +86,15 @@ class InboxNavigator {
             },
           ));
         } else {
-          // Fallback: pop current screen or show toast
-          RitmoToast.show(context, 'بازگشت به نبض زندگی');
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+          final homeIndex = RitmoShellMetrics.homeTabIndexFor(AppModeService.instance.current);
+          RitmoEventBus().fire(RitmoEvent(
+            type: 'navigate_tab',
+            timestamp: DateTime.now(),
+            payload: {'index': homeIndex},
+          ));
         }
 
       default:

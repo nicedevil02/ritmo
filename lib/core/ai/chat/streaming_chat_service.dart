@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/ai/ai_connection_models.dart';
+import 'package:ritmo/core/ai/ai_connection_repository.dart';
 import 'package:ritmo/core/ai/ai_context_builder.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/ai_prompt_engine.dart';
@@ -15,6 +17,7 @@ import 'package:ritmo/core/ai/chat/conversation_rag.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/ai/memory/memory_consolidator.dart';
 import 'package:ritmo/core/ai/memory/memory_models.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 
 class StreamingChatService {
   Stream<StreamingChatEvent> send({
@@ -25,7 +28,7 @@ class StreamingChatService {
     // 1) Retrieve RAG & Privacy check
     final rag = await ConversationRAG().retrieve(query: userText, consent: consent);
 
-    // 2) Save and yield user message
+    // 2) Save user message
     final userMsg = ChatMessage(
       id: 'msg_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(99999)}',
       sessionId: sessionId,
@@ -81,24 +84,61 @@ class StreamingChatService {
     var hasError = false;
     var errorCode = '';
 
-    try {
-      await for (final chunk in AIGateway.instance.sendStreamingCompletion(messages: messages)) {
-        if (chunk.startsWith('error:')) {
-          hasError = true;
-          errorCode = chunk.substring(6);
-          break;
+    final config = await AiConnectionRepository.instance.load(slot: AiSlot.assistant);
+    final isChatGptWeb = config.providerPresetId == 'chatgpt_web' || config.baseUrl.contains('chatgpt.com');
+
+    if (isChatGptWeb) {
+      try {
+        final systemPrompt = AIPromptEngine.buildChatSystemPrompt() + AiMemoryService.memoryInstruction();
+        await for (final chunk in ChatGptWebBridgeManager.instance.sendPrompt(
+          prompt: userText,
+          personaSystemPrompt: systemPrompt,
+        )) {
+          if (chunk.startsWith('error:')) {
+            hasError = true;
+            errorCode = chunk.substring(6);
+            break;
+          }
+          accumulated += chunk;
+          if (accumulated.length > cap) {
+            accumulated = accumulated.substring(0, cap);
+            yield ChatChunk('', accumulated);
+            break;
+          }
+          yield ChatChunk(chunk, accumulated);
         }
-        accumulated += chunk;
-        if (accumulated.length > cap) {
-          accumulated = accumulated.substring(0, cap);
-          yield ChatChunk('', accumulated);
-          break;
-        }
-        yield ChatChunk(chunk, accumulated);
+      } catch (e) {
+        hasError = true;
+        errorCode = e.toString();
       }
-    } catch (e) {
-      hasError = true;
-      errorCode = e.toString();
+    }
+
+    // Fallback or Standard API Gateway Stream
+    if (!isChatGptWeb || (hasError && accumulated.isEmpty)) {
+      hasError = false;
+      errorCode = '';
+      try {
+        await for (final chunk in AIGateway.instance.sendStreamingCompletion(
+          messages: messages,
+          slot: AiSlot.assistant,
+        )) {
+          if (chunk.startsWith('error:')) {
+            hasError = true;
+            errorCode = chunk.substring(6);
+            break;
+          }
+          accumulated += chunk;
+          if (accumulated.length > cap) {
+            accumulated = accumulated.substring(0, cap);
+            yield ChatChunk('', accumulated);
+            break;
+          }
+          yield ChatChunk(chunk, accumulated);
+        }
+      } catch (e) {
+        hasError = true;
+        errorCode = e.toString();
+      }
     }
 
     if (hasError) {

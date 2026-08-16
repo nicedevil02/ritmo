@@ -45,7 +45,7 @@ class GoalStepsAgendaSource implements AgendaSource {
         FROM goal_steps gs
         JOIN goals g ON gs.goalId = g.id
         WHERE gs.scheduledDate >= ? AND gs.scheduledDate <= ? AND g.status = 'ACTIVE'
-        ORDER BY gs.scheduledDate ASC, gs.orderIndex ASC
+        ORDER BY gs.scheduledDate ASC, gs.displayOrder ASC
       ''', [startStr, endStr]);
 
       for (final row in res) {

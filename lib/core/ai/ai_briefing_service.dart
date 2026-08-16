@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/ai/ai_briefing_prompt.dart';
+import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/ai_rate_limiter.dart';
 import 'package:ritmo/core/ai/ai_response_processor.dart';
@@ -153,6 +154,7 @@ class AiBriefingService {
         systemPrompt: systemPrompt,
         userPrompt: userPrompt,
         responseFormatJson: true,
+        slot: AiSlot.features,
       );
 
       if (rawResponse.isEmpty) {

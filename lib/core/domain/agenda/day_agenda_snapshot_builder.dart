@@ -91,6 +91,7 @@ class DayAgendaSnapshotBuilder {
     AgendaItem? previous;
     AgendaItem? current;
     AgendaItem? next;
+    AgendaItem? afterNext;
 
     try {
       final timedItems = items.where((i) => i.isTimed).toList();
@@ -109,18 +110,39 @@ class DayAgendaSnapshotBuilder {
         if (duration <= 0) duration = 30;
         final endMinutes = startMinutes + duration;
 
-        if (endMinutes <= currentMinutes) {
+        if (endMinutes <= currentMinutes ||
+            (startMinutes <= currentMinutes && item.isCompleted)) {
           previous = item;
-        } else if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
-          if (current == null) {
+        }
+
+        if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+          if (!item.isCompleted && current == null) {
             current = item;
             if (i > 0) {
               previous = timedItems[i - 1];
             }
           }
         } else if (startMinutes > currentMinutes) {
-          if (!item.isCompleted && next == null) {
-            next = item;
+          if (!item.isCompleted) {
+            if (next == null) {
+              next = item;
+            } else if (afterNext == null && item.id != next.id) {
+              afterNext = item;
+            }
+          }
+        }
+      }
+
+      // اگر به دلیل اتمام زودهنگام کار، current خالی شد اما کارهای آینده وجود دارند
+      if (next == null) {
+        for (final item in timedItems) {
+          if (!item.isCompleted && _parseMinutes(item.timeOfDay) > currentMinutes) {
+            if (next == null) {
+              next = item;
+            } else if (afterNext == null && item.id != next.id) {
+              afterNext = item;
+              break;
+            }
           }
         }
       }
@@ -138,6 +160,7 @@ class DayAgendaSnapshotBuilder {
       previousActivity: previous,
       currentActivity: current,
       nextActivity: next,
+      afterNextActivity: afterNext,
       suggestions: suggestions,
       sleepWindow: sleepWindow,
       enabledDomains: dayAgenda.enabledDomains,

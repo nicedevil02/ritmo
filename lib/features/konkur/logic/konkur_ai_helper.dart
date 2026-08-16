@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/memory/assistant_memory_binding.dart';
 
@@ -27,7 +28,10 @@ class KonkurAiHelper {
         {'role': 'user', 'content': userMessage},
       ];
 
-      final res = await AIGateway.instance.sendCustomChat(messages: messagesToSend);
+      final res = await AIGateway.instance.sendCustomChat(
+        messages: messagesToSend,
+        slot: AiSlot.features,
+      );
 
       if (res.isNotEmpty && sessionId != null) {
         await AssistantMemoryBinding.processResponse(

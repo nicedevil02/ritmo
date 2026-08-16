@@ -19,6 +19,28 @@
 /// the Calendar rendered an empty day while the routine list stayed full.
 /// Absence is encoded as 0 in this schema, so only a positive value is
 /// evidence of a medication.
+///
+/// B-FIX-EVENT-6 — چرا itemType صریح بر حدسِ ستونی مقدم است:
+///
+/// C-FIX-5 نیمی از مشکل را حل کرد و سمت نویسنده را دست‌نخورده گذاشت. مسیر
+/// عمومی پلنر («کار جدید ← رویداد / وظیفه / یادآور / بازتاب») از
+/// `GenericStrategy` رد می‌شود، و آن‌جا `minIntervalHours` و `maxDosesPerDay`
+/// از `PlannerSaveContext` با مقدار پیش‌فرض ۴ نوشته می‌شوند — نه صفر. پس هر
+/// رویدادی که کاربر می‌ساخت شرط «مثبت‌بودن» این ستون‌ها را داشت، دارو تشخیص
+/// داده می‌شد، و این خط در `RoutineAgendaSource.itemsForDate` حذفش می‌کرد:
+///
+///     if (medicineOwnsDoses && MedicationIdentity.isMedicationRoutine(r))
+///
+/// منبع دارو هم آن را رندر نمی‌کرد، چون واقعاً دارو نبود. نتیجه دقیقاً همان
+/// چیزی بود که کاربر گزارش کرد: رویداد در «مخزن روتین‌ها» دیده می‌شد — چون آن
+/// نما مستقیم از جدول `routines` می‌خواند و این محمول را اصلاً ارزیابی
+/// نمی‌کند — ولی در هیچ سطحی از تقویم ظاهر نمی‌شد.
+///
+/// وقتی کاربر صراحتاً نوع آیتم را رویداد/وظیفه/یادآور/بازتاب انتخاب کرده،
+/// آن نیت قطعی است و حدسِ مبتنی بر ستون نباید نقضش کند. حدسِ ستونی فقط برای
+/// ردیف‌های قدیمیِ `MedicationSaveHelper` (که itemType آن‌ها 'ROUTINE' است)
+/// وجود دارد، پس خاموش‌کردنش برای این چهار نوع نمی‌تواند داروی واقعی را پنهان
+/// کند. نشانگر canonical و پیشوند شناسه همچنان اول بررسی می‌شوند و برنده‌اند.
 class MedicationIdentity {
   const MedicationIdentity._();
 
@@ -32,6 +54,16 @@ class MedicationIdentity {
   /// has no scheduled slot, so it can never be "due" or "missed".
   static const String asNeededRoutineType = 'asNeeded';
 
+  /// Item types the planner writes when the user explicitly chose something
+  /// that is not a medication. The column heuristic is suppressed for these
+  /// rows — see B-FIX-EVENT-6 in the class doc.
+  static const List<String> nonMedicationItemTypes = <String>[
+    'EVENT',
+    'TASK',
+    'REMINDER',
+    'REFLECT',
+  ];
+
   /// Columns only a medication fills in. Each defaults to 0 for plain routines.
   static const List<String> medicationColumns = <String>[
     'medStockCount',
@@ -42,14 +74,17 @@ class MedicationIdentity {
 
   /// SQL fragment for a `WHERE` clause on the `routines` table.
   ///
-  /// Must stay the exact twin of [isMedicationRoutine].
+  /// Must stay the exact twin of [isMedicationRoutine]. `COALESCE` wraps the
+  /// `NOT IN` test because a NULL `itemType` would otherwise evaluate the whole
+  /// conjunction to NULL and silently drop legacy medication rows.
   static const String sqlPredicate =
       "(itemType = '$itemType'"
       " OR id LIKE '$routineIdPrefix%'"
-      " OR COALESCE(medStockCount, 0) > 0"
+      " OR (COALESCE(itemType, '') NOT IN ('EVENT', 'TASK', 'REMINDER', 'REFLECT')"
+      " AND (COALESCE(medStockCount, 0) > 0"
       " OR COALESCE(medRefillThreshold, 0) > 0"
       " OR COALESCE(minIntervalHours, 0) > 0"
-      " OR COALESCE(maxDosesPerDay, 0) > 0)";
+      " OR COALESCE(maxDosesPerDay, 0) > 0)))";
 
   /// In-memory twin of [sqlPredicate] for rows that are already loaded.
   static bool isMedicationRoutine(Map<String, dynamic> routine) {
@@ -57,6 +92,12 @@ class MedicationIdentity {
 
     final id = routine['id'];
     if (id is String && id.startsWith(routineIdPrefix)) return true;
+
+    // نیت صریح کاربر بر حدسِ ستونی مقدم است (B-FIX-EVENT-6).
+    final rawItemType = routine['itemType']?.toString().trim().toUpperCase();
+    if (rawItemType != null && nonMedicationItemTypes.contains(rawItemType)) {
+      return false;
+    }
 
     for (final column in medicationColumns) {
       if (_isPositive(routine[column])) return true;

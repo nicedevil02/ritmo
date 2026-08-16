@@ -130,30 +130,38 @@ class MockBatch implements Batch {
 /// [recurrenceType] is injectable so a test can reproduce the real
 /// `PlannerController` default instead of an idealised value.
 ///
-/// [selectedDate] and [eventDate] are injectable *separately* on purpose. The
-/// original fixture set both to the same day, which made them
-/// indistinguishable — and that is precisely why the date-override defect
-/// stayed green for so long. In the real app `selectedDate` carries the day the
-/// user picked in `PlannerTimelinePicker`, while `eventDate` keeps its
-/// untouched `DateTime.now()` default from the controller.
+/// [selectedDate]/[eventDate] and [selectedTime]/[targetDuration] are
+/// injectable *separately* on purpose. The original fixture set the picked
+/// values and the event-specific values to the very same day and hour, which
+/// made them indistinguishable — and that is precisely why two override
+/// defects stayed green for so long.
+///
+/// The `event*` fields below are deliberately pinned to the untouched
+/// `PlannerController` defaults (`DateTime.now()`, 09:00, 10:00) because no
+/// form in the app ever writes them. What the user actually picks lands in
+/// `selectedDate` (`PlannerTimelinePicker` day strip), `selectedTime` (the
+/// hour/minute wheel) and `targetDuration` (the 'مدت زمان' card).
 PlannerSaveContext buildEventContext({
   required String recurrenceType,
   DateTime? selectedDate,
   DateTime? eventDate,
+  TimeOfDay? selectedTime,
+  int targetDuration = 60,
 }) {
   final pickedDate = selectedDate ?? DateTime(2026, 8, 20);
+  final pickedTime = selectedTime ?? const TimeOfDay(hour: 14, minute: 0);
   return PlannerSaveContext(
     title: 'جلسه کاری مهم',
     description: 'توضیحات جلسه',
     notes: '',
     selectedDate: pickedDate,
-    selectedTime: const TimeOfDay(hour: 14, minute: 0),
+    selectedTime: pickedTime,
     isEditing: false,
     routineToEdit: null,
     selectedCategory: Category.work,
     itemType: 'EVENT',
     recurrenceType: recurrenceType,
-    targetDuration: 60,
+    targetDuration: targetDuration,
     reminderOffsetMinutes: 15,
     priority: 2.0,
     energyRule: 'NONE',
@@ -194,9 +202,10 @@ PlannerSaveContext buildEventContext({
     reflectionGratitude: '',
     reflectionLearnings: '',
     reflectionIsPrivate: false,
+    // پیش‌فرض‌های دست‌نخوردهٔ کنترلر — هیچ فرمی این چهار فیلد را نمی‌نویسد.
     eventDate: eventDate ?? pickedDate,
-    eventStartTime: const TimeOfDay(hour: 14, minute: 0),
-    eventEndTime: const TimeOfDay(hour: 15, minute: 30),
+    eventStartTime: const TimeOfDay(hour: 9, minute: 0),
+    eventEndTime: const TimeOfDay(hour: 10, minute: 0),
     eventLocation: 'اتاق کنفرانس',
   );
 }
@@ -234,12 +243,15 @@ void main() {
       expect(routines.length, equals(1));
       final r = routines.first;
       expect(r['title'], equals('جلسه کاری مهم'));
-      expect(r['targetDurationMinutes'], equals(90)); // 14:00 to 15:30 = 90 min
+      // مدت از targetDuration می‌آید (کارت «مدت زمان»)، نه از بازهٔ مردهٔ
+      // eventStartTime..eventEndTime که همیشه ۶۰ دقیقه بود.
+      expect(r['targetDurationMinutes'], equals(60));
       expect(r['description'], contains('مکان: اتاق کنفرانس'));
 
       final schedules = await mockDb.query('routine_schedules');
       expect(schedules.length, equals(1));
       final s = schedules.first;
+      // پیش از اصلاح این ۰۹:۰۰ می‌شد: مقدار پیش‌فرض eventStartTime.
       expect(s['timeOfDay'], equals('14:00'));
       expect(s['scheduleType'], equals('ONCE'));
 
@@ -319,6 +331,40 @@ void main() {
 
       expect(rule.endDate, isNotNull);
       expect(rule.endDate!.day, equals(20));
+    });
+
+    // REGRESSION GUARD — ساعت و مدت هم باید از انتخاب کاربر بیاید.
+    //
+    // همان تله، یک پله پایین‌تر: `eventStartTime`/`eventEndTime` با ۰۹:۰۰ و
+    // ۱۰:۰۰ ساخته می‌شوند، non-nullable‌اند و هیچ فرمی آن‌ها را نمی‌نویسد.
+    // پس هر رویداد ساعت ۰۹:۰۰ و مدت ۶۰ دقیقه می‌گرفت، حتی وقتی کاربر
+    // چرخ ساعت را روی ۱۸:۴۵ و مدت را روی ۴۵ دقیقه گذاشته بود.
+    testWidgets('EVENT uses the picked time and duration, not the dead event window', (tester) async {
+      final mockDb = MockDatabase();
+      DatabaseHelper.instance.overrideDatabaseForTesting(mockDb);
+
+      await saveThroughStrategy(
+        tester,
+        buildEventContext(
+          recurrenceType: 'EVERY_DAY',
+          selectedTime: const TimeOfDay(hour: 18, minute: 45), // چرخ ساعت
+          targetDuration: 45, // کارت «مدت زمان»
+        ),
+      );
+
+      final routines = await mockDb.query('routines', where: "itemType = 'EVENT'");
+      expect(routines.length, equals(1));
+      // پیش از اصلاح: ۶۰ (یعنی ۱۰:۰۰ منهای ۰۹:۰۰).
+      expect(routines.first['targetDurationMinutes'], equals(45));
+
+      final schedules = await mockDb.query('routine_schedules');
+      expect(schedules.length, equals(1));
+      final s = schedules.first;
+      // پیش از اصلاح: '09:00'.
+      expect(s['timeOfDay'], equals('18:45'));
+
+      final rule = RecurrenceRule.fromMap(jsonDecode(s['recurrenceRule'] as String));
+      expect(rule.reminderTimes, contains('18:45'));
     });
   });
 }

@@ -5,6 +5,9 @@ import 'package:ritmo/features/movement/domain/models/movement_week_summary.dart
 import 'package:ritmo/features/movement/presentation/common/metric_stat.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 
+// ثابت میکرو-چیدمان جداکننده (اندازهٔ بصری، نه فاصله‌بندی)
+const double _kDividerHeight = 36.0;
+
 /// کارت خلاصهٔ ۳ متریکی هفته با قابلیت لمس و بازکردن پیشرفت
 class WeekSummaryCard extends StatelessWidget {
   const WeekSummaryCard({
@@ -61,13 +64,14 @@ class WeekSummaryCard extends StatelessWidget {
                     ),
                     const SizedBox(width: RitmoSpacing.sm),
                     Text(
-                      'خلاصهٔ هفته',
+                      MovementStrings.weekSummaryTitle,
                       style: RitmoTextStyles.cardTitle(colors.textPrimary),
                     ),
                     const Spacer(),
+                    // در RTL فلش «برو جلو» به چپ است
                     Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 14.0,
+                      Icons.chevron_left_rounded,
+                      size: 18.0,
                       color: colors.textSecondary,
                     ),
                   ],
@@ -85,27 +89,27 @@ class WeekSummaryCard extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      width: 1.0,
-                      height: 36.0,
+                      width: RitmoElevation.borderWidthDark,
+                      height: _kDividerHeight,
                       color: colors.border,
                     ),
                     Expanded(
                       child: MetricStat(
                         label: MovementStrings.summaryActiveMinutes,
                         value: activeMinutesStr,
-                        unit: 'دقیقه',
+                        unit: MovementStrings.unitMinute,
                       ),
                     ),
                     Container(
-                      width: 1.0,
-                      height: 36.0,
+                      width: RitmoElevation.borderWidthDark,
+                      height: _kDividerHeight,
                       color: colors.border,
                     ),
                     Expanded(
                       child: MetricStat(
                         label: MovementStrings.summaryRecoveryDays,
                         value: recoveryDaysStr,
-                        unit: 'روز',
+                        unit: MovementStrings.unitDay,
                       ),
                     ),
                   ],

@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/movement/domain/models/movement_live_session.dart';
+import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 
-/// بنر زندهٔ جلسهٔ در حال انجام یا مکث‌شده
+/// بنر زندهٔ جلسهٔ در حال انجام یا مکث‌شده.
+/// زمان سپری‌شده هر ثانیه به‌روز می‌شود، اما اعلام Screen Reader
+/// حداکثر هر ۳۰ ثانیه (کوانتایز) انجام می‌گیرد.
 class LiveSessionBanner extends StatefulWidget {
   const LiveSessionBanner({
     super.key,
@@ -79,13 +82,22 @@ class _LiveSessionBannerState extends State<LiveSessionBanner> {
     final colors = context.colors;
     final sportsColor = context.modules.sports;
 
-    final activityName = widget.session.activityKind?.nameFa ?? 'جلسهٔ زنده';
+    final activityName =
+        widget.session.activityKind?.nameFa ?? MovementStrings.bannerDefaultTitle;
     final timeStr = _formatDuration(_elapsedSeconds);
     final isPaused = widget.session.status == MovementLiveSessionStatus.paused;
 
+    // اعلام Semantics حداکثر هر ۳۰ ثانیه: مقدار به مضرب ۳۰ کوانتا می‌شود
+    final quantizedSeconds = _elapsedSeconds - (_elapsedSeconds % 30);
+    final semanticsLabel = MovementStrings.bannerSemanticsLabel(
+      activityName,
+      _formatDuration(quantizedSeconds),
+    );
+
     return Semantics(
       container: true,
-      label: 'جلسهٔ زنده $activityName، مدت سپری‌شده: $timeStr',
+      label: semanticsLabel,
+      excludeSemantics: true,
       child: Container(
         margin: const EdgeInsets.symmetric(
           horizontal: RitmoSpacing.lg,
@@ -105,7 +117,7 @@ class _LiveSessionBannerState extends State<LiveSessionBanner> {
         ),
         child: Row(
           children: [
-            // آیکون ضربان‌دار یا مکث
+            // آیکون وضعیت (تزئینی — هدف لمس نیست)
             Container(
               width: 36,
               height: 36,
@@ -136,7 +148,9 @@ class _LiveSessionBannerState extends State<LiveSessionBanner> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    isPaused ? 'مکث شده · $timeStr' : 'در حال ضبط · $timeStr',
+                    isPaused
+                        ? MovementStrings.bannerPausedLabel(timeStr)
+                        : MovementStrings.bannerActiveLabel(timeStr),
                     style: RitmoTextStyles.caption(colors.textSecondary),
                   ),
                 ],
@@ -145,9 +159,9 @@ class _LiveSessionBannerState extends State<LiveSessionBanner> {
 
             const SizedBox(width: RitmoSpacing.sm),
 
-            // دکمهٔ ادامه جلسه
+            // دکمهٔ ادامهٔ جلسه — حداقل هدف لمس ۴۸
             SizedBox(
-              height: 36,
+              height: MovementLayout.kSecondaryButtonHeight,
               child: FilledButton(
                 onPressed: () {
                   RitmoHapticsPolicy.selection();
@@ -165,15 +179,14 @@ class _LiveSessionBannerState extends State<LiveSessionBanner> {
                 ),
                 child: Text(
                   MovementStrings.bannerResumeSession,
-                  style: RitmoTextStyles.caption(colors.onPrimary).copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: RitmoTextStyles.label(colors.onPrimary),
                 ),
               ),
             ),
 
             // منوی بیشتر
             PopupMenuButton<String>(
+              tooltip: MovementStrings.sessionActionsTitle,
               icon: Icon(Icons.more_vert_rounded, color: colors.textSecondary),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(RitmoRadius.card),

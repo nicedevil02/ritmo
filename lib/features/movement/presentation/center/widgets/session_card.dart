@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/movement/domain/models/movement_occurrence.dart';
+import 'package:ritmo/features/movement/presentation/common/movement_icons.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_semantics.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
@@ -34,19 +35,6 @@ class SessionCard extends StatelessWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onQuickComplete;
 
-  IconData _getActivityIcon(String? iconName) {
-    return switch (iconName) {
-      'directions_run' => Icons.directions_run_rounded,
-      'directions_bike' => Icons.directions_bike_rounded,
-      'pool' => Icons.pool_rounded,
-      'sports_soccer' => Icons.sports_soccer_rounded,
-      'hiking' => Icons.hiking_rounded,
-      'self_improvement' => Icons.self_improvement_rounded,
-      'fitness_center' => Icons.fitness_center_rounded,
-      _ => Icons.directions_walk_rounded,
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -54,19 +42,21 @@ class SessionCard extends StatelessWidget {
 
     final isCompleted = occurrence.isCompleted;
     final isSkipped = occurrence.status == MovementOccurrenceStatus.skipped;
-    final activityName = occurrence.activityKind?.nameFa ?? 'جلسهٔ حرکتی';
+    final activityName =
+        occurrence.activityKind?.nameFa ?? MovementStrings.defaultSessionTitle;
     final timeStr = occurrence.startTime != null
-        ? 'ساعت ${toPersianDigits(occurrence.startTime)}'
-        : 'امروز';
+        ? MovementStrings.atTime(occurrence.startTime!)
+        : MovementStrings.todayLabel;
     final goalStr = (occurrence.goalValue != null && occurrence.goalUnit != null)
-        ? '${occurrence.goalValue!.round()} ${occurrence.goalUnit}'
-        : 'هدف استاندارد';
+        ? '${toPersianDigits(occurrence.goalValue!.round())} ${occurrence.goalUnit}'
+        : MovementStrings.goalStandard;
 
+    // وضعیت در Semantics همیشه فارسی است — نام انگلیسی enum هرگز اعلام نمی‌شود
     final semanticsLabel = MovementSemantics.sessionCardLabel(
       title: activityName,
       timeOrDuration: timeStr,
       targetOrType: goalStr,
-      status: occurrence.status.name,
+      status: MovementSemantics.occurrenceStatusLabel(occurrence.status),
     );
 
     // رنگ نوار Accent
@@ -126,7 +116,7 @@ class SessionCard extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            // آیکون فعالیت
+                            // آیکون فعالیت — منبع یگانه: MovementIcons
                             Container(
                               width: MovementLayout.kActivityIconSize + 12,
                               height: MovementLayout.kActivityIconSize + 12,
@@ -137,7 +127,9 @@ class SessionCard extends StatelessWidget {
                               child: Icon(
                                 isCompleted
                                     ? Icons.check_rounded
-                                    : _getActivityIcon(occurrence.activityKind?.icon),
+                                    : MovementIcons.fromKey(
+                                        occurrence.activityKind?.icon,
+                                      ),
                                 color: accentColor,
                                 size: MovementLayout.kActivityIconSize,
                               ),
@@ -154,12 +146,11 @@ class SessionCard extends StatelessWidget {
                                     activityName,
                                     style: RitmoTextStyles.label(colors.textPrimary).copyWith(
                                       fontWeight: FontWeight.w700,
-                                      decoration: isCompleted ? TextDecoration.none : null,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 2.0),
+                                  const SizedBox(height: RitmoSpacing.xs),
                                   Text(
                                     '$timeStr · $goalStr',
                                     style: RitmoTextStyles.caption(colors.textSecondary),
@@ -167,7 +158,7 @@ class SessionCard extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
-                              ),
+              ,
                             ),
 
                             const SizedBox(width: RitmoSpacing.xs),
@@ -180,6 +171,7 @@ class SessionCard extends StatelessWidget {
 
                             // منوی بیشتر یا اکشن سریع
                             PopupMenuButton<String>(
+                              tooltip: MovementStrings.sessionActionsTitle,
                               icon: Icon(
                                 Icons.more_vert_rounded,
                                 color: colors.textSecondary,
@@ -324,7 +316,7 @@ class SessionCard extends StatelessWidget {
             color: colors.primary.withValues(alpha: 0.20),
             borderRadius: BorderRadius.circular(RitmoRadius.card),
           ),
-          alignment: Alignment.centerRight,
+          alignment: AlignmentDirectional.centerStart,
           child: Row(
             children: [
               Icon(Icons.check_circle_rounded, color: colors.primary),

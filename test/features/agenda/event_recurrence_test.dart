@@ -124,87 +124,111 @@ class MockBatch implements Batch {
   dynamic noSuchMethod(Invocation invocation) => null;
 }
 
+/// Builds the exact payload the planner hands to [GenericStrategy] for an
+/// event.
+///
+/// [recurrenceType] is injectable so a test can reproduce the real
+/// `PlannerController` default instead of an idealised value.
+///
+/// [selectedDate] and [eventDate] are injectable *separately* on purpose. The
+/// original fixture set both to the same day, which made them
+/// indistinguishable — and that is precisely why the date-override defect
+/// stayed green for so long. In the real app `selectedDate` carries the day the
+/// user picked in `PlannerTimelinePicker`, while `eventDate` keeps its
+/// untouched `DateTime.now()` default from the controller.
+PlannerSaveContext buildEventContext({
+  required String recurrenceType,
+  DateTime? selectedDate,
+  DateTime? eventDate,
+}) {
+  final pickedDate = selectedDate ?? DateTime(2026, 8, 20);
+  return PlannerSaveContext(
+    title: 'جلسه کاری مهم',
+    description: 'توضیحات جلسه',
+    notes: '',
+    selectedDate: pickedDate,
+    selectedTime: const TimeOfDay(hour: 14, minute: 0),
+    isEditing: false,
+    routineToEdit: null,
+    selectedCategory: Category.work,
+    itemType: 'EVENT',
+    recurrenceType: recurrenceType,
+    targetDuration: 60,
+    reminderOffsetMinutes: 15,
+    priority: 2.0,
+    energyRule: 'NONE',
+    dependsOnRoutineId: null,
+    selectedZoneId: null,
+    worshipType: 'MUSTAHAB',
+    worshipDebtType: 'PRAYER',
+    worshipTotalCount: 0,
+    worshipDailyTarget: 0,
+    worshipReminderAnchor: 'NONE',
+    worshipOffsetMinutes: 0,
+    // پیش‌فرض واقعی PlannerController: هر هفت روز هفته انتخاب شده است.
+    worshipSelectedDays: const [6, 7, 1, 2, 3, 4, 5],
+    worshipRepeatType: 'RECURRING',
+    sportsOpType: 'ROUTINE',
+    sportsType: 'RUNNING',
+    sportsDuration: 30,
+    sportsIntensity: 'MEDIUM',
+    sportsLocation: 'HOME',
+    sportsFeeling: 'GOOD',
+    medicalMode: 'FIXED',
+    medicalTimes: const [],
+    medicalStockCount: 0,
+    medicalRefillWarning: 0,
+    medicalMinIntervalHours: 0,
+    medicalMaxDosesPerDay: 0,
+    courseType: 'VIDEO',
+    courseTotalSessions: 0,
+    courseWeeklyTarget: 0,
+    courseSessionDuration: 0,
+    coursePreferredDays: const [],
+    coursePreferredTime: const TimeOfDay(hour: 8, minute: 0),
+    goalType: 'DAILY',
+    goalTargetDate: DateTime.now(),
+    goalSteps: const [],
+    reflectionMood: 3,
+    reflectionWins: '',
+    reflectionGratitude: '',
+    reflectionLearnings: '',
+    reflectionIsPrivate: false,
+    eventDate: eventDate ?? pickedDate,
+    eventStartTime: const TimeOfDay(hour: 14, minute: 0),
+    eventEndTime: const TimeOfDay(hour: 15, minute: 30),
+    eventLocation: 'اتاق کنفرانس',
+  );
+}
+
+Future<void> saveThroughStrategy(WidgetTester tester, PlannerSaveContext ctx) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Builder(
+        builder: (context) {
+          return ElevatedButton(
+            onPressed: () async {
+              const strategy = GenericStrategy();
+              await strategy.save(ctx, context);
+            },
+            child: const Text('Save Event'),
+          );
+        },
+      ),
+    ),
+  );
+
+  await tester.tap(find.text('Save Event'));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   group('B0-2: Event Recurrence & Duration Bounds', () {
     testWidgets('GenericStrategy persists EVENT with OnceRecurrence and location', (tester) async {
       final mockDb = MockDatabase();
       DatabaseHelper.instance.overrideDatabaseForTesting(mockDb);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) {
-              return ElevatedButton(
-                onPressed: () async {
-                  const strategy = GenericStrategy();
-                  final ctx = PlannerSaveContext(
-                    title: 'جلسه کاری مهم',
-                    description: 'توضیحات جلسه',
-                    notes: '',
-                    selectedDate: DateTime(2026, 8, 20),
-                    selectedTime: const TimeOfDay(hour: 14, minute: 0),
-                    isEditing: false,
-                    routineToEdit: null,
-                    selectedCategory: Category.work,
-                    itemType: 'EVENT',
-                    recurrenceType: 'ONCE',
-                    targetDuration: 60,
-                    reminderOffsetMinutes: 15,
-                    priority: 2.0,
-                    energyRule: 'NONE',
-                    dependsOnRoutineId: null,
-                    selectedZoneId: null,
-                    worshipType: 'MUSTAHAB',
-                    worshipDebtType: 'PRAYER',
-                    worshipTotalCount: 0,
-                    worshipDailyTarget: 0,
-                    worshipReminderAnchor: 'NONE',
-                    worshipOffsetMinutes: 0,
-                    worshipSelectedDays: const [],
-                    worshipRepeatType: 'ONCE',
-                    sportsOpType: 'ROUTINE',
-                    sportsType: 'RUNNING',
-                    sportsDuration: 30,
-                    sportsIntensity: 'MEDIUM',
-                    sportsLocation: 'HOME',
-                    sportsFeeling: 'GOOD',
-                    medicalMode: 'FIXED',
-                    medicalTimes: const [],
-                    medicalStockCount: 0,
-                    medicalRefillWarning: 0,
-                    medicalMinIntervalHours: 0,
-                    medicalMaxDosesPerDay: 0,
-                    courseType: 'VIDEO',
-                    courseTotalSessions: 0,
-                    courseWeeklyTarget: 0,
-                    courseSessionDuration: 0,
-                    coursePreferredDays: const [],
-                    coursePreferredTime: const TimeOfDay(hour: 8, minute: 0),
-                    goalType: 'DAILY',
-                    goalTargetDate: DateTime.now(),
-                    goalSteps: const [],
-                    reflectionMood: 3,
-                    reflectionWins: '',
-                    reflectionGratitude: '',
-                    reflectionLearnings: '',
-                    reflectionIsPrivate: false,
-                    eventDate: DateTime(2026, 8, 20),
-                    eventStartTime: const TimeOfDay(hour: 14, minute: 0),
-                    eventEndTime: const TimeOfDay(hour: 15, minute: 30),
-                    eventLocation: 'اتاق کنفرانس',
-                  );
-
-                  await strategy.save(ctx, context);
-                },
-                child: const Text('Save Event'),
-              );
-            },
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('Save Event'));
-      await tester.pumpAndSettle();
+      await saveThroughStrategy(tester, buildEventContext(recurrenceType: 'ONCE'));
 
       final routines = await mockDb.query('routines', where: "itemType = 'EVENT'");
       expect(routines.length, equals(1));
@@ -224,6 +248,77 @@ void main() {
       expect(rule.startDate!.year, equals(2026));
       expect(rule.startDate!.month, equals(8));
       expect(rule.startDate!.day, equals(20));
+    });
+
+    // REGRESSION GUARD — مسیر واقعی نوشتن رویداد.
+    //
+    // تست بالا مقدار 'ONCE' را دستی می‌داد — حالتی که UI واقعی هرگز
+    // تولید نمی‌کند: `PlannerController.recurrenceType` با 'EVERY_DAY' شروع
+    // می‌شود و تنها `generic_step2_form.dart` می‌تواند آن را عوض کند، و
+    // مسیر «کار جدید ← رویداد» هرگز به آن فرم نمی‌رسد. به همین دلیل
+    // تست سبز بود در حالی که محصول رویداد را به‌صورت روتین روزانهٔ
+    // بی‌پایان ذخیره می‌کرد.
+    testWidgets('EVENT stays one-shot even with the real EVERY_DAY controller default', (tester) async {
+      final mockDb = MockDatabase();
+      DatabaseHelper.instance.overrideDatabaseForTesting(mockDb);
+
+      await saveThroughStrategy(tester, buildEventContext(recurrenceType: 'EVERY_DAY'));
+
+      final schedules = await mockDb.query('routine_schedules');
+      expect(schedules.length, equals(1));
+      final s = schedules.first;
+
+      // اگر این سه ادعا بشکند، رویداد دوباره به روتین روزانه تبدیل شده است.
+      expect(s['scheduleType'], equals('ONCE'));
+      expect(s['daysOfWeek'], equals(''));
+
+      final rule = RecurrenceRule.fromMap(jsonDecode(s['recurrenceRule'] as String));
+      expect(rule.weekdays, isEmpty);
+      expect(rule.startDate, isNotNull);
+      expect(rule.endDate, isNotNull);
+      expect(rule.startDate!.day, equals(20));
+      expect(rule.endDate!.day, equals(20));
+      expect(rule.endDate!.month, equals(8));
+      expect(rule.endDate!.year, equals(2026));
+    });
+
+    // REGRESSION GUARD — روزِ رویداد باید همانی باشد که کاربر انتخاب کرده.
+    //
+    // فیکسچر قدیمی `selectedDate` و `eventDate` را هردو روی یک روز می‌گذاشت،
+    // پس فرقی نمی‌کرد کدام برنده شود و باگ دیده نمی‌شد. اینجا وضعیت
+    // واقعی بازسازی می‌شود:
+    //   • کاربر در PlannerTimelinePicker روز ۲۰ را انتخاب می‌کند ← selectedDate
+    //   • PlannerController.eventDate دست‌نخورده روی «روزِ باز شدنِ شیت»
+    //     (۱۴) باقی می‌ماند
+    testWidgets('EVENT lands on the picked date, not on the day the sheet was opened', (tester) async {
+      final mockDb = MockDatabase();
+      DatabaseHelper.instance.overrideDatabaseForTesting(mockDb);
+
+      await saveThroughStrategy(
+        tester,
+        buildEventContext(
+          recurrenceType: 'EVERY_DAY',
+          selectedDate: DateTime(2026, 8, 20), // روزی که کاربر انتخاب کرد
+          eventDate: DateTime(2026, 8, 14), // روزی که شیت باز شد
+        ),
+      );
+
+      final schedules = await mockDb.query('routine_schedules');
+      expect(schedules.length, equals(1));
+
+      final rule = RecurrenceRule.fromMap(
+        jsonDecode(schedules.first['recurrenceRule'] as String),
+      );
+
+      // پیش از اصلاح، این‌ها ۱۴ می‌شدند: رویداد روی روزِ باز شدنِ شیت
+      // می‌نشست و در تقویم، روی روزی که کاربر انتخاب کرده بود، دیده نمی‌شد.
+      expect(rule.startDate, isNotNull);
+      expect(rule.startDate!.year, equals(2026));
+      expect(rule.startDate!.month, equals(8));
+      expect(rule.startDate!.day, equals(20));
+
+      expect(rule.endDate, isNotNull);
+      expect(rule.endDate!.day, equals(20));
     });
   });
 }

@@ -91,9 +91,38 @@ class GenericStrategy implements PlannerCategoryStrategy {
       'reminderOffsetMinutes': c.reminderOffsetMinutes,
     };
 
-    final effectiveDate = (isEvent && c.eventDate != null) ? c.eventDate! : c.selectedDate;
+    // B-FIX-EVENT-3 — روزِ رویداد باید از `selectedDate` بیاید، نه `eventDate`.
+    //
+    // `PlannerController.eventDate` با `DateTime.now()` مقداردهی اولیه می‌شود و
+    // هیچ‌جای برنامه آن را بازنویسی نمی‌کند. جست‌وجوی سراسری روی مخزن نشان
+    // می‌دهد `eventDate` تنها در چهار فایل دیده می‌شود: همین استراتژی،
+    // `planner_save_context.dart`، خودِ کنترلر، و یک تست — هیچ فرمی میانشان نیست.
+    //
+    // در مقابل، فرمِ رویداد همان `GenericStep2Form` است
+    // (`universal_planner_sheet.dart` → `setEventSheetOpener`)، و آن فرم
+    // `PlannerTimelinePicker` را نشان می‌دهد که تاریخِ انتخابی کاربر را با
+    // `controller.setDate(...)` در `selectedDate` می‌نویسد.
+    //
+    // پس شرطِ پیشین — `(isEvent && c.eventDate != null)` — همیشه برقرار بود و
+    // تاریخِ انتخابی کاربر را دور می‌ریخت: هر رویداد روی «روزِ باز شدنِ شیت»
+    // ثبت می‌شد. کاربر رویداد را برای پنجشنبه می‌ساخت و رویداد روی امروز
+    // می‌نشست — و روی پنجشنبه هرگز دیده نمی‌شد.
+    //
+    // تا زمانی که یک فرمِ اختصاصیِ رویداد واقعاً `eventDate` را پر کند،
+    // `selectedDate` تنها منبعِ معتبرِ روز است.
+    final effectiveDate = c.selectedDate;
     RoutineRecurrence recurrence;
-    if (c.recurrenceType == 'ONCE' || c.itemType == 'TASK') {
+    // B-FIX-EVENT-1 — یک «رویداد» ذاتاً یک‌بار مصرف است.
+    //
+    // `PlannerController.recurrenceType` با مقدار 'EVERY_DAY' شروع می‌شود و
+    // مسیر ساخت رویداد هرگز به انتخابگر تکرار نمی‌رسد (تنها
+    // `generic_step2_form.dart` می‌تواند آن را 'ONCE' کند). در نتیجه رویداد به
+    // شاخهٔ else می‌افتاد و با DailyRecurrence ذخیره می‌شد، یعنی
+    // scheduleType='EVERY_DAY' و daysOfWeek='6,7,1,2,3,4,5' — یک روتین روزانهٔ
+    // بی‌پایان به جای یک رویداد تک‌نوبتی.
+    //
+    // EVENT دقیقاً مثل TASK باید یک‌بار مصرف باشد.
+    if (c.recurrenceType == 'ONCE' || c.itemType == 'TASK' || isEvent) {
       recurrence = OnceRecurrence(date: effectiveDate);
     } else if ((c.recurrenceType == 'CUSTOM_DAYS' || c.recurrenceType == 'WEEKLY') &&
         c.worshipSelectedDays.isNotEmpty) {

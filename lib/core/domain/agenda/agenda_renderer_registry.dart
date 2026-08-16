@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_action_handler.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/agenda/event_agenda_renderer.dart';
 import 'package:ritmo/core/domain/agenda/quran_dhikr_agenda_renderer.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -29,6 +30,7 @@ class AgendaRendererRegistry {
   static final Map<AgendaDomain, AgendaTileRenderer> _registry = {
     AgendaDomain.prayer: const PrayerAgendaRenderer(),
     AgendaDomain.routine: const RoutineAgendaRenderer(),
+    AgendaDomain.event: const EventAgendaRenderer(),
   };
 
   static void register(AgendaDomain domain, AgendaTileRenderer renderer) {

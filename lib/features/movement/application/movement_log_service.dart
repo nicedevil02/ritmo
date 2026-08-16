@@ -165,6 +165,16 @@ class MovementLogService {
     );
   }
 
+  /// ذخیره یا به‌روزرسانی یکپارچهٔ لاگ تمرین
+  Future<void> saveWorkoutLog(MovementWorkoutLog log) async {
+    final db = await _database;
+    await db.insert(
+      MovementTables.tableWorkoutLogs,
+      log.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   /// دریافت لاگ‌های یک Occurrence
   Future<List<MovementWorkoutLog>> getLogsForOccurrence(String occurrenceId) async {
     final db = await _database;

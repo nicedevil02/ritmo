@@ -111,7 +111,7 @@ const List<AiProviderPreset> kAiProviderPresets = [
     nameFa: 'وب چت‌جی‌پی‌تی (ChatGPT Web)',
     taglineFa: 'مستقیماً از طریق وب‌سایت رسمی chatgpt.com — بدون نیاز به کلید API',
     endpoint: 'https://chatgpt.com/',
-    models: ['ChatGPT Auto Web (GPT-4o mini)'],
+    models: ['ChatGPT Web Session (Auto)'],
     keyUrl: 'https://chatgpt.com/',
     brandColor: Color(0xff10A37F),
     worksInIranWithoutVpn: false,

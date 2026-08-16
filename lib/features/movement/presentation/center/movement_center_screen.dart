@@ -20,6 +20,7 @@ import 'package:ritmo/features/movement/presentation/center/sheets/quick_complet
 import 'package:ritmo/features/movement/presentation/center/sheets/skip_session_sheet.dart';
 import 'package:ritmo/features/movement/presentation/center/sheets/smart_fill_sheet.dart';
 import 'package:ritmo/features/movement/presentation/center/widgets/add_activity_dock.dart';
+import 'package:ritmo/features/movement/presentation/session/movement_live_session_screen.dart';
 import 'package:ritmo/features/movement/presentation/center/widgets/hero_session_card.dart';
 import 'package:ritmo/features/movement/presentation/center/widgets/live_session_banner.dart';
 import 'package:ritmo/features/movement/presentation/center/widgets/recovery_day_card.dart';
@@ -546,10 +547,29 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                           _controller.heroVariant == HeroCardVariant.noPlanToday) {
                         _openAddCommandSheet();
                       } else if (selectedOccurrences.isNotEmpty) {
-                        _navigateTo(
-                          MovementRoutes.liveSession,
-                          arguments: {'occurrenceId': selectedOccurrences.first.id},
-                        );
+                        final occ = selectedOccurrences.first;
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => MovementLiveSessionScreen(
+                              activityKind: occ.activityKind ?? MovementActivityKind(
+                                id: occ.activityKindId,
+                                nameFa: occ.displayName,
+                                family: 'general',
+                                icon: 'directions_run',
+                                primaryMetric: 'duration',
+                                createdAt: DateTime.now(),
+                              ),
+                              occurrenceId: occ.id,
+                              targetSnapshot: occ.goalValue != null
+                                  ? {
+                                      'type': occ.goalType ?? 'duration',
+                                      'value': occ.goalValue,
+                                      'unit': occ.goalUnit ?? 'دقیقه',
+                                    }
+                                  : null,
+                            ),
+                          ),
+                        ).then((_) => _controller.loadData());
                       }
                     },
                     onSecondaryAction: () {
@@ -623,10 +643,30 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                         return SessionCard(
                           occurrence: occ,
                           onTap: () => _handleOccurrenceTap(occ),
-                          onStart: () => _navigateTo(
-                            MovementRoutes.liveSession,
-                            arguments: {'occurrenceId': occ.id},
-                          ),
+                          onStart: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => MovementLiveSessionScreen(
+                                  activityKind: occ.activityKind ?? MovementActivityKind(
+                                    id: occ.activityKindId,
+                                    nameFa: occ.displayName,
+                                    family: 'general',
+                                    icon: 'directions_run',
+                                    primaryMetric: 'duration',
+                                    createdAt: DateTime.now(),
+                                  ),
+                                  occurrenceId: occ.id,
+                                  targetSnapshot: occ.goalValue != null
+                                      ? {
+                                          'type': occ.goalType ?? 'duration',
+                                          'value': occ.goalValue,
+                                          'unit': occ.goalUnit ?? 'دقیقه',
+                                        }
+                                      : null,
+                                ),
+                              ),
+                            ).then((_) => _controller.loadData());
+                          },
                           onManualLog: () {
                             QuickCompleteSheet.show(
                               context,

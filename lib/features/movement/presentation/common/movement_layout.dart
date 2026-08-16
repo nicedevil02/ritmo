@@ -12,6 +12,7 @@ abstract final class MovementLayout {
   static const double kAccentBarWidth = 4.0;
   static const double kActivityIconSize = 40.0;
   static const double kPrimaryButtonHeight = 56.0;
+  static const double kPrimaryButtonHeightLarge = 64.0;
   static const double kSecondaryButtonHeight = 48.0;
   static const double kFieldMinHeight = 48.0;
   static const double kDockHeight = 72.0;

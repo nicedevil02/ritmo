@@ -9,6 +9,7 @@ abstract final class MovementTables {
   static const String tablePlanTemplates = 'movement_plan_templates';
   static const String tablePlanSchedules = 'movement_plan_schedules';
   static const String tableWorkoutLogs = 'movement_workout_logs';
+  static const String tableSessionEvents = 'movement_session_events';
 
   static Future<void> create(DatabaseExecutor db) async {
     // ۱. جدول گونه‌های فعالیت حرکتی
@@ -169,6 +170,27 @@ abstract final class MovementTables {
     await db.execute('''
       CREATE INDEX IF NOT EXISTS idx_movement_workout_logs_occurrence
         ON $tableWorkoutLogs (occurrenceId);
+    ''');
+
+    // ۸. جدول رویدادهای زندهٔ جلسه
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableSessionEvents (
+        id TEXT PRIMARY KEY,
+        sessionId TEXT NOT NULL,
+        type TEXT NOT NULL,
+        payloadJson TEXT,
+        at TEXT NOT NULL
+      );
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_session_events_session
+        ON $tableSessionEvents (sessionId);
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_movement_session_events_at
+        ON $tableSessionEvents (at);
     ''');
   }
 

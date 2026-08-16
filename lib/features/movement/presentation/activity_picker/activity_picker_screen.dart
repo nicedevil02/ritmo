@@ -12,6 +12,8 @@ import 'package:ritmo/features/movement/presentation/common/movement_screen_shel
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 import 'package:ritmo/features/movement/presentation/common/skeletons.dart';
 import 'package:ritmo/features/movement/presentation/common/undo_toast.dart';
+import 'package:ritmo/features/movement/presentation/planner/activity_plan_editor_screen.dart';
+import 'package:ritmo/features/movement/presentation/session/movement_live_session_screen.dart';
 
 enum ActivityPickerIntent {
   startNow,
@@ -105,6 +107,22 @@ class _ActivityPickerScreenState extends State<ActivityPickerScreen> {
   void _onActivitySelected(MovementActivityKind kind) {
     if (widget.onSelected != null) {
       widget.onSelected!(kind);
+    } else if (widget.intent == ActivityPickerIntent.startNow) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => MovementLiveSessionScreen(
+            activityKind: kind,
+          ),
+        ),
+      );
+    } else if (widget.intent == ActivityPickerIntent.addToPlan) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ActivityPlanEditorScreen(
+            activityKindId: kind.id,
+          ),
+        ),
+      );
     } else {
       Navigator.of(context).pop(kind);
     }

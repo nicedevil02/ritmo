@@ -5,11 +5,15 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
 import 'package:ritmo/features/goals/presentation/goals_screen.dart';
 import 'package:ritmo/features/health/presentation/health_screen.dart';
+import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
+import 'package:ritmo/features/movement/domain/models/movement_workout_log.dart';
 import 'package:ritmo/features/movement/presentation/activity_picker/activity_picker_screen.dart';
 import 'package:ritmo/features/movement/presentation/center/movement_center_screen.dart';
 import 'package:ritmo/features/movement/presentation/movement_routes.dart';
 import 'package:ritmo/features/movement/presentation/occurrence/occurrence_details_screen.dart';
 import 'package:ritmo/features/movement/presentation/planner/activity_plan_editor_screen.dart';
+import 'package:ritmo/features/movement/presentation/session/movement_live_session_screen.dart';
+import 'package:ritmo/features/movement/presentation/summary/session_summary_screen.dart';
 import 'package:ritmo/features/study/study_module_entry.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
@@ -136,9 +140,32 @@ class RitmoRouter {
       if (r == MovementRoutes.occurrence) {
         return RitmoRouteTarget.screen((_) => const ActivityOccurrenceDetailsScreen(occurrenceId: ''));
       }
-      if (r == MovementRoutes.liveSession ||
-          r == MovementRoutes.summary ||
-          r == MovementRoutes.strengthHub ||
+      if (r == MovementRoutes.liveSession) {
+        return RitmoRouteTarget.screen((_) => MovementLiveSessionScreen(
+          activityKind: MovementActivityKind(
+            id: 'kind_walking',
+            nameFa: 'پیاده‌روی',
+            family: 'walking',
+            icon: 'directions_walk',
+            primaryMetric: 'duration',
+            createdAt: DateTime.now(),
+          ),
+        ));
+      }
+      if (r == MovementRoutes.summary) {
+        return RitmoRouteTarget.screen((_) => SessionSummaryScreen(
+          workoutLog: MovementWorkoutLog(
+            id: 'sample_log',
+            activityKindId: 'kind_walking',
+            dateIso: '2026-08-16',
+            durationSec: 1800,
+            source: 'live',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        ));
+      }
+      if (r == MovementRoutes.strengthHub ||
           r == MovementRoutes.strengthOnboarding ||
           r == MovementRoutes.strengthPreview ||
           r == MovementRoutes.progress ||

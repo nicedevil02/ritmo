@@ -49,6 +49,7 @@ void main() {
       expect(tableNames.contains(MovementTables.tablePlanTemplates), isTrue);
       expect(tableNames.contains(MovementTables.tablePlanSchedules), isTrue);
       expect(tableNames.contains(MovementTables.tableWorkoutLogs), isTrue);
+      expect(tableNames.contains(MovementTables.tableSessionEvents), isTrue);
 
       // 2. Verify 8 seeded activity kinds
       final kinds = await db!.query(MovementTables.tableActivityKinds);

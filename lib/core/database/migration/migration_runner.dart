@@ -46,6 +46,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v104_worship_
 import 'package:ritmo/core/database/migration/migrations/migration_v105_canonical_schema_parity.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v106_movement_greenfield.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v107_movement_planning.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v108_movement_live_events.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -155,6 +156,7 @@ class MigrationRunner {
     MigrationV105CanonicalSchemaParity(), // Backfill missing tables to ensure full canonical parity
     MigrationV106MovementGreenfield(), // Movement Greenfield: 4 tables & base activity kinds seeds
     MigrationV107MovementPlanning(), // Movement Planning: templates, schedules, workout logs
+    MigrationV108MovementLiveEvents(), // Movement Live Events: movement_session_events & finishedAt
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

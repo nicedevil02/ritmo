@@ -31,6 +31,7 @@ class MovementLiveSession {
     this.startedAt,
     this.accumulatedPauseMs = 0,
     this.targetSnapshotJson,
+    this.finishedAt,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -39,11 +40,12 @@ class MovementLiveSession {
   final String? occurrenceId;
   final String activityKindId;
   final MovementActivityKind? activityKind;
-  final String mode; // standard, interval, strength, quick
+  final String mode; // standard, interval, strength, quick, time, distance, lap, count, free
   final MovementLiveSessionStatus status;
   final DateTime? startedAt;
   final int accumulatedPauseMs;
   final String? targetSnapshotJson;
+  final DateTime? finishedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -53,7 +55,7 @@ class MovementLiveSession {
 
   int get elapsedSeconds {
     if (startedAt == null) return 0;
-    final now = DateTime.now();
+    final now = finishedAt ?? DateTime.now();
     final totalMs = now.difference(startedAt!).inMilliseconds - accumulatedPauseMs;
     return totalMs > 0 ? (totalMs / 1000).floor() : 0;
   }
@@ -68,6 +70,7 @@ class MovementLiveSession {
     DateTime? startedAt,
     int? accumulatedPauseMs,
     String? targetSnapshotJson,
+    DateTime? finishedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -81,6 +84,7 @@ class MovementLiveSession {
       startedAt: startedAt ?? this.startedAt,
       accumulatedPauseMs: accumulatedPauseMs ?? this.accumulatedPauseMs,
       targetSnapshotJson: targetSnapshotJson ?? this.targetSnapshotJson,
+      finishedAt: finishedAt ?? this.finishedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -95,13 +99,16 @@ class MovementLiveSession {
       occurrenceId: map['occurrenceId'] as String?,
       activityKindId: map['activityKindId'] as String,
       activityKind: activityKind,
-      mode: map['mode'] as String? ?? 'standard',
+      mode: map['mode'] as String? ?? 'time',
       status: MovementLiveSessionStatus.fromString(map['status'] as String? ?? 'active'),
       startedAt: map['startedAt'] != null
           ? DateTime.tryParse(map['startedAt'].toString())
           : null,
       accumulatedPauseMs: map['accumulatedPauseMs'] as int? ?? 0,
       targetSnapshotJson: map['targetSnapshotJson'] as String?,
+      finishedAt: map['finishedAt'] != null
+          ? DateTime.tryParse(map['finishedAt'].toString())
+          : null,
       createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(map['updatedAt']?.toString() ?? '') ?? DateTime.now(),
     );
@@ -117,6 +124,7 @@ class MovementLiveSession {
       'startedAt': startedAt?.toIso8601String(),
       'accumulatedPauseMs': accumulatedPauseMs,
       'targetSnapshotJson': targetSnapshotJson,
+      'finishedAt': finishedAt?.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };

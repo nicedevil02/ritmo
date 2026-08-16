@@ -89,10 +89,27 @@ class StreamingChatService {
 
     if (isChatGptWeb) {
       try {
+        final contextLines = <String>[];
+        if (rag.data.isNotEmpty) {
+          rag.data.forEach((key, value) {
+            contextLines.add('- $key: $value');
+          });
+        }
+        final recentHistory = <String>[];
+        final chatHistoryList = messages.where((msg) => msg['role'] != 'system').toList();
+        for (final m in chatHistoryList.reversed.take(4).toList().reversed) {
+          final role = m['role'];
+          final content = m['content'] ?? '';
+          final roleLabel = role == 'user' ? 'کاربر' : 'دستیار';
+          recentHistory.add('$roleLabel: $content');
+        }
+
         final systemPrompt = AIPromptEngine.buildChatSystemPrompt() + AiMemoryService.memoryInstruction();
         await for (final chunk in ChatGptWebBridgeManager.instance.sendPrompt(
           prompt: userText,
           personaSystemPrompt: systemPrompt,
+          contextSummary: contextLines.isNotEmpty ? contextLines.join('\n') : null,
+          recentHistory: recentHistory.isNotEmpty ? recentHistory : null,
         )) {
           if (chunk.startsWith('error:')) {
             hasError = true;
@@ -102,6 +119,7 @@ class StreamingChatService {
           accumulated += chunk;
           if (accumulated.length > cap) {
             accumulated = accumulated.substring(0, cap);
+            ChatGptWebBridgeManager.instance.cancelCurrentStream();
             yield ChatChunk('', accumulated);
             break;
           }
@@ -143,6 +161,11 @@ class StreamingChatService {
 
     if (hasError) {
       yield ChatErrorEvent(errorCode, accumulated);
+      return;
+    }
+
+    if (accumulated.trim().isEmpty) {
+      yield ChatErrorEvent('هیچ پاسخی از هوش مصنوعی دریافت نشد.', '');
       return;
     }
 

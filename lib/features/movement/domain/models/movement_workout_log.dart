@@ -51,6 +51,8 @@ class MovementWorkoutLog {
     }
   }
 
+  Map<String, dynamic>? get metricMap => parsedMetrics;
+
   factory MovementWorkoutLog.fromMap(
     Map<String, dynamic> map, {
     MovementActivityKind? activityKind,

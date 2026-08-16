@@ -311,10 +311,18 @@ class _AssistantSheetState extends State<AssistantSheet> {
 
       final Stream<String> stream;
       if (isChatGptWeb) {
+        final recentHistory = _messages
+            .where((m) => m.content.isNotEmpty)
+            .take(4)
+            .map((m) => '${m.role == ChatRole.user ? "کاربر" : "دستیار"}: ${m.content}')
+            .toList();
+
         stream = ChatGptWebBridgeManager.instance.sendPrompt(
           prompt: query,
           personaTitle: widget.persona.displayName,
           personaSystemPrompt: systemPrompt,
+          contextSummary: briefJson,
+          recentHistory: recentHistory.isNotEmpty ? recentHistory : null,
         );
       } else {
         stream = AIGateway.instance.sendCustomChatStream(

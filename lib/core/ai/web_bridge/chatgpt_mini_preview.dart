@@ -30,8 +30,10 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
     final controller = ChatGptWebBridgeManager.instance.controller;
 
     return ValueListenableBuilder<ChatGptBridgeStatus>(
-      valueListenable: ChatGptWebBridgeManager.instance.statusNotifier as ValueNotifier<ChatGptBridgeStatus>,
+      valueListenable: ChatGptWebBridgeManager.instance.statusNotifier,
       builder: (context, status, _) {
+        final isChallenge = status == ChatGptBridgeStatus.cloudflareChallenge;
+        final isError = status == ChatGptBridgeStatus.error;
         return Material(
           type: MaterialType.transparency,
           child: Container(
@@ -146,12 +148,22 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const CircularProgressIndicator.adaptive(strokeWidth: 2.5),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        'در حال اتصال به مرورگر چت‌جی‌پی‌تی...',
-                                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                                      ),
+                                      if (isError) ...[
+                                        Icon(Icons.error_outline_rounded, color: colors.error, size: 28),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'خطا در برقراری ارتباط با وب‌سایت. لمس برای تلاش مجدد',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(fontSize: 12, color: colors.error),
+                                        ),
+                                      ] else ...[
+                                        const CircularProgressIndicator.adaptive(strokeWidth: 2.5),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          'در حال اتصال به مرورگر چت‌جی‌پی‌تی...',
+                                          style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),

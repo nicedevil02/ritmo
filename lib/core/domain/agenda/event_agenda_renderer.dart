@@ -42,10 +42,14 @@ class EventAgendaRenderer extends AgendaTileRenderer {
     final colors = context.colors;
     final isFixed = item.itemType == AgendaItemType.fixed;
 
+    final timeRange = _timeRangeLabel(item);
+    final duration = _durationLabel(item);
+    final subtitle = item.subtitle;
+
     final details = <String>[
-      ?_timeRangeLabel(item),
-      ?_durationLabel(item),
-      if (item.subtitle != null && item.subtitle!.isNotEmpty) item.subtitle!,
+      if (timeRange != null) timeRange,
+      if (duration != null) duration,
+      if (subtitle != null && subtitle.isNotEmpty) subtitle,
     ];
 
     return Container(

@@ -7,16 +7,22 @@ import 'package:ritmo/core/ai/agent/catalog/goal_agent_tools.dart';
 import 'package:ritmo/core/ai/agent/catalog/notes_agent_tools.dart';
 import 'package:ritmo/core/ai/agent/catalog/study_worship_agent_tools.dart';
 import 'package:ritmo/core/ai/agent/catalog/system_agent_tools.dart';
+import 'package:ritmo/core/ai/agent/catalog/meta_agent_tools.dart';
 
 /// مقداردهی اولیه و ثبت تمامی ابزارهای سراسری برنامه در رجیستری ایجنت
 ///
-/// فاز ۰: سه ابزار نوشتنی زیر عمداً ثبت نمی‌شوند چون داده را خراب می‌کردند یا
-/// موفقیت جعلی گزارش می‌دادند. مدل چیزی را که نبیند نمی‌تواند فراخوانی کند،
-/// پس حذف از رجیستری مطمئن‌ترین قفل است:
-///   - CreateNewRoutineTool  : ستون‌های ناموجود + عدم ساخت schedule/occurrences
-///   - ApplySmartDayPlanTool : جدول assistant_plans وجود ندارد و خطا بلعیده می‌شد
-///   - UpdateAppPreferenceTool: بدون allowlist و دور زدن SettingsService (خطر تغییر module_*)
-/// فاز ۲ هر سه را به شکل آداپتور روی RitmoCommandBus بازمی‌گرداند.
+/// وضعیت فاز ۲:
+///  - سه ابزار نوشتنی‌ای که در فاز ۰ قفل شده بودند بازگشتند، این بار بدون SQL
+///    مستقیم: `create_new_routine` روی فرمان routine.create و `update_app_preference`
+///    روی SettingsService با allowlist. (`apply_smart_day_plan` حذف شد.)
+///  - دو ابزار جدید انضباطی اضافه شد: `verify_state` (خودبازرسی بعد از نوشتن)
+///    و `ask_user` (توقف و پرسیدن جای حدس زدن).
+///  - `complete_routine` هم اضافه شد تا ایجنت بتواند چرخهٔ کامل روتین
+///    (ساخت ← دیدن ← ثبت انجام) را پوشش دهد.
+///
+/// عمداً ثبت نمی‌شود: `MaterializeDayPlanTool`. فرمانش به دامنهٔ اهداف دست
+/// می‌زند و تا وقتی ماژول اهداف و چرخهٔ برنامه‌ریزی در عمل استفاده نشوند،
+/// افزودنش فقط طول پرامپت را زیاد می‌کند (انضباط تعداد ابزار).
 void initializeAllAgentTools() {
   final registry = AgentToolRegistry.instance;
 
@@ -29,6 +35,8 @@ void initializeAllAgentTools() {
     // ۲. روتین‌ها و عادات
     const GetRoutinesOverviewTool(),
     const GetRoutineStreakStatsTool(),
+    const CreateNewRoutineTool(),
+    const CompleteRoutineTool(),
 
     // ۳. برنامه‌ریزی روز
     const GetDayAgendaTool(),
@@ -52,5 +60,10 @@ void initializeAllAgentTools() {
 
     // ۸. سیستم و ناوبری
     const NavigateToAppScreenTool(),
+    const UpdateAppPreferenceTool(),
+
+    // ۹. بازرسی و دقت (فاز ۲)
+    const VerifyStateTool(),
+    const AskUserTool(),
   ]);
 }

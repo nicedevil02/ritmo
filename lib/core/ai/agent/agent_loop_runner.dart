@@ -10,6 +10,7 @@ import 'package:ritmo/core/ai/agent/agent_tool.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_call_parser.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_protocol.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_registry.dart';
+import 'package:ritmo/core/ai/agent/agent_tool_scope.dart';
 import 'package:ritmo/core/ai/agent/agent_transcript.dart';
 import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_connection_repository.dart';
@@ -18,9 +19,10 @@ import 'package:ritmo/core/ai/ai_prompt_engine.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 
 /// حلقه واقعی ReAct ایجنت ریتمو (فاز ۱) + دروازه سیاست و تایید (فاز ۳)
+/// + محدوده اختیارات پرسونا (فاز ۵ · P5-1)
 ///
-/// جریان: پیش‌واکشی → نوبت مدل → پارس tool_call → داوری گیت → (تایید کاربر)
-/// → اجرای ابزار + ثبت ژورنال → بازگرداندن نتیجه به مدل → تکرار تا پاسخ نهایی.
+/// جریان: پیش‌واکشی → نوبت مدل → پارس tool_call → محدوده پرسونا → داوری گیت
+/// → (تایید کاربر) → اجرای ابزار + ثبت ژورنال → بازگرداندن نتیجه به مدل → تکرار.
 class AgentLoopRunner {
   AgentLoopRunner._();
 
@@ -40,6 +42,7 @@ class AgentLoopRunner {
     String? contextSummary,
     List<String>? recentHistory,
     AiSlot slot = AiSlot.assistant,
+    String personaId = 'global',
   }) async* {
     final budget = AgentBudget();
     final steps = <AgentStep>[];
@@ -47,6 +50,11 @@ class AgentLoopRunner {
 
     /// شناسه این اجرا: کلید پیدا کردن عملیات قابل بازگشت در ژورنال
     final sessionId = 'agent_${DateTime.now().microsecondsSinceEpoch}';
+
+    /// محدوده اختیارات این نقش (فاز ۵ · P5-1). لایه‌های دیگر مثل پیش‌واکشی
+    /// همین پرسونای فعال را می‌خوانند.
+    AgentToolScope.instance.setActivePersona(personaId);
+    final allowedTools = AgentToolScope.instance.allowedToolNames(personaId);
 
     /// کش نتیجه ابزارهای فقط‌خواندنی در همین اجرا (فاز ۴ · P4-4):
     /// یک ابزار با پارامترهای یکسان دوبار به دیتابیس نمی‌زند.
@@ -74,15 +82,14 @@ class AgentLoopRunner {
       }
     }
 
-    // ۲. پرامپت سیستمی: پرسونا + فهرست ابزار + قواعد حلقه + داده زنده
+    // ۲. پرامپت سیستمی: پرسونا + فهرست ابزار مجاز + قواعد حلقه + داده زنده
     final system = StringBuffer();
     if (personaSystemPrompt != null && personaSystemPrompt.trim().isNotEmpty) {
       system.writeln(personaSystemPrompt);
     } else {
       system.writeln(AIPromptEngine.buildChatSystemPrompt());
     }
-    system.writeln(
-        '\n${AgentToolRegistry.instance.generateSystemToolsPrompt()}');
+    system.writeln('\n${AgentToolScope.instance.promptFor(personaId)}');
     system.writeln(AgentToolProtocol.loopInstructions(
       maxTurns: budget.maxTurns,
       maxToolCallsPerTurn: budget.maxToolCallsPerTurn,
@@ -106,7 +113,7 @@ class AgentLoopRunner {
     final wireFormat =
         AgentToolProtocol.formatFor(supportsNativeTools: false);
     debugPrint(
-        '[Agent] loop start | web=$isChatGptWeb | wire=${wireFormat.name} | tools=${AgentToolRegistry.instance.count} | session=$sessionId');
+        '[Agent] loop start | web=$isChatGptWeb | wire=${wireFormat.name} | persona=$personaId | tools=${allowedTools.length}/${AgentToolRegistry.instance.count} | session=$sessionId');
 
     final transcript = AgentTranscript(systemPrompt: systemPrompt);
     if (recentHistory != null && recentHistory.isNotEmpty) {
@@ -269,6 +276,17 @@ class AgentLoopRunner {
           continue;
         }
 
+        // محدوده اختیارات نقش (فاز ۵ · P5-1): پیش از هر کار دیگر
+        if (!allowedTools.contains(tool.name)) {
+          final reason =
+              AgentToolScope.instance.refusalReasonFa(personaId, tool);
+          turnResults
+              .add(AgentPolicyGate.instance.refusalResult(tool, reason));
+          debugPrint(
+              '[Agent] scope denied | ${tool.name} | persona=$personaId');
+          continue;
+        }
+
         // کش همین اجرا: خواندن تکراری با پارامتر یکسان دوباره اجرا نمی‌شود
         final cacheKey = _cacheKey(tool.name, call.parameters);
         if (tool.policy == ToolPolicy.readOnly) {
@@ -330,7 +348,7 @@ class AgentLoopRunner {
           };
 
           yield AgentStatusChangedEvent(
-            statusTextFa: 'منتطر تایید شما برای «${tool.titleFa}»...',
+            statusTextFa: 'منتظر تایید شما برای «${tool.titleFa}»...',
             isWorking: true,
             currentToolName: tool.name,
           );

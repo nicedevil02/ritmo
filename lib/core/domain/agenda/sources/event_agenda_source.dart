@@ -73,7 +73,10 @@ class EventAgendaSource implements AgendaSource {
         itemType: isLocked ? AgendaItemType.fixed : AgendaItemType.flexible,
         isEssential: false,
         completion: AgendaCompletion.none,
-        deepLink: const AgendaDeepLink(domain: AgendaDomain.event, targetId: ''),
+        // The target used to be an empty string, which made the deep link
+        // unroutable: nothing could navigate back to the row this item came
+        // from. `sourceId` and the deep-link target are the same thing here.
+        deepLink: AgendaDeepLink(domain: AgendaDomain.event, targetId: id),
       ));
     }
     return result;

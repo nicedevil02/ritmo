@@ -82,63 +82,94 @@ class StreamingChatService {
     yield AssistantStarted(assistantId);
 
     var accumulated = '';
-    const cap = 2000;
+    // متن خام مدل برای استخراج actions و memory_ops (P0-3)
+    var rawAnswer = '';
+    // P0-7: سقف قبلی ۲۰۰۰ بود که حدود ۷۰۰ توکن فارسی است و پاسخ‌های بلند
+    // (مانند برنامه هفتگی) را وسط جمله قطع می‌کرد.
+    const cap = 8000;
     var hasError = false;
     var errorCode = '';
 
     final config = await AiConnectionRepository.instance.load(slot: AiSlot.assistant);
     final isChatGptWeb = config.providerPresetId == 'chatgpt_web' || config.baseUrl.contains('chatgpt.com');
 
-    if (isChatGptWeb) {
-      try {
-        final contextLines = <String>[];
-        if (rag.data.isNotEmpty) {
-          rag.data.forEach((key, value) {
-            contextLines.add('- $key: $value');
-          });
-        }
-        final recentHistory = <String>[];
-        final chatHistoryList = messages.where((msg) => msg['role'] != 'system').toList();
-        for (final m in chatHistoryList.reversed.take(4).toList().reversed) {
-          final role = m['role'];
-          final content = m['content'] ?? '';
-          final roleLabel = role == 'user' ? 'کاربر' : 'دستیار';
-          recentHistory.add('$roleLabel: $content');
-        }
+    // P0-4: مسیر ایجنت برای تمام ارائه‌دهنده‌ها فعال است. پیش‌از این فقط داخل
+    // شرط isChatGptWeb صدا زده می‌شد و کاربران کلید API هیچ ابزاری نداشتند.
+    try {
+      final contextLines = <String>[];
+      if (rag.data.isNotEmpty) {
+        rag.data.forEach((key, value) {
+          contextLines.add('- $key: $value');
+        });
+      }
 
-        final systemPrompt = AIPromptEngine.buildChatSystemPrompt() + AiMemoryService.memoryInstruction();
-        final agentStream = AgentLoopRunner.instance.runAgent(
-          prompt: userText,
-          personaSystemPrompt: systemPrompt,
-          contextSummary: contextLines.isNotEmpty ? contextLines.join('\n') : null,
-          recentHistory: recentHistory.isNotEmpty ? recentHistory : null,
-          slot: AiSlot.assistant,
-        );
+      final nonSystem = messages.where((msg) => msg['role'] != 'system').toList();
+      // آخرین پیام کاربر همان userText جاری است و جداگانه به عنوان prompt ارسال
+      // می‌شود؛ اگر در تاریخچه هم بماند دوبار به مدل می‌رسد.
+      if (nonSystem.isNotEmpty &&
+          nonSystem.last['role'] == 'user' &&
+          (nonSystem.last['content'] ?? '') == userText) {
+        nonSystem.removeLast();
+      }
 
-        await for (final event in agentStream) {
-          if (event is AgentTokenStreamEvent) {
-            accumulated = event.accumulated;
-            if (accumulated.length > cap) {
-              accumulated = accumulated.substring(0, cap);
+      final recentHistory = <String>[];
+      for (final m in nonSystem.reversed.take(4).toList().reversed) {
+        final role = m['role'];
+        final content = m['content'] ?? '';
+        final roleLabel = role == 'user' ? 'کاربر' : 'دستیار';
+        recentHistory.add('$roleLabel: $content');
+      }
+
+      final systemPrompt = AIPromptEngine.buildChatSystemPrompt() + AiMemoryService.memoryInstruction();
+      final agentStream = AgentLoopRunner.instance.runAgent(
+        prompt: userText,
+        personaSystemPrompt: systemPrompt,
+        contextSummary: contextLines.isNotEmpty ? contextLines.join('\n') : null,
+        recentHistory: recentHistory.isNotEmpty ? recentHistory : null,
+        slot: AiSlot.assistant,
+      );
+
+      await for (final event in agentStream) {
+        if (event is AgentTokenStreamEvent) {
+          accumulated = event.accumulated;
+          if (accumulated.length > cap) {
+            accumulated = accumulated.substring(0, cap);
+            if (isChatGptWeb) {
               ChatGptWebBridgeManager.instance.cancelCurrentStream();
-              yield ChatChunk('', accumulated);
-              break;
             }
-            yield ChatChunk(event.delta, accumulated);
-          } else if (event is AgentErrorEvent) {
-            hasError = true;
-            errorCode = event.errorMessageFa;
+            yield ChatChunk('', accumulated);
             break;
           }
+          yield ChatChunk(event.delta, accumulated);
+        } else if (event is AgentStepCompletedEvent) {
+          debugPrint(
+              '[Agent] tool ${event.step.toolName ?? event.step.titleFa} -> ${event.step.status.name}');
+        } else if (event is AgentCompletedEvent) {
+          // P0-3: متن خام را نگه می‌داریم تا تگ‌های actions و memory_ops از دست نروند.
+          rawAnswer = event.rawAnswer;
+          final finalText = event.finalAnswer;
+          if (finalText.isNotEmpty) {
+            final capped =
+                finalText.length > cap ? finalText.substring(0, cap) : finalText;
+            if (capped != accumulated) {
+              accumulated = capped;
+              yield ChatChunk('', accumulated);
+            }
+          }
+        } else if (event is AgentErrorEvent) {
+          hasError = true;
+          errorCode = event.errorMessageFa;
+          break;
         }
-      } catch (e) {
-        hasError = true;
-        errorCode = e.toString();
       }
+    } catch (e) {
+      hasError = true;
+      errorCode = e.toString();
     }
 
-    // Fallback or Standard API Gateway Stream
-    if (!isChatGptWeb || (hasError && accumulated.isEmpty)) {
+    // Fallback: فقط وقتی ایجنت خطا داد و هیچ متنی تولید نشد، مسیر مستقیم گیت‌وی.
+    if (hasError && accumulated.isEmpty) {
+      debugPrint('[Agent] Falling back to plain gateway stream. Reason: $errorCode');
       hasError = false;
       errorCode = '';
       try {
@@ -176,7 +207,9 @@ class StreamingChatService {
     }
 
     // 6) Parse Actions & Save assistant message
-    final parsed = ChatActionParser.parse(accumulated);
+    // P0-3: پارس از متن خام انجام می‌شود، نه متنی که تگ‌هایش قبلاً حذف شده.
+    final parseSource = rawAnswer.trim().isNotEmpty ? rawAnswer : accumulated;
+    final parsed = ChatActionParser.parse(parseSource);
 
     // Process memory operations from AI response
     if (parsed.memoryOps != null && parsed.memoryOps!.isNotEmpty) {
@@ -198,10 +231,16 @@ class StreamingChatService {
       }
     }
 
+    var finalText =
+        parsed.cleanText.trim().isNotEmpty ? parsed.cleanText : accumulated;
+    if (finalText.length > cap) {
+      finalText = finalText.substring(0, cap);
+    }
+
     // Run explicit remember safety net
     await AiMemoryService.instance.processExplicitSafetyNet(
       userText: userText,
-      assistantResponse: accumulated,
+      assistantResponse: finalText,
       domain: 'core',
       sessionId: sessionId,
     );
@@ -210,7 +249,7 @@ class StreamingChatService {
       id: assistantId,
       sessionId: sessionId,
       role: ChatRole.assistant,
-      content: parsed.cleanText,
+      content: finalText,
       timestamp: DateTime.now(),
       actions: parsed.actions,
     );
@@ -229,6 +268,6 @@ class StreamingChatService {
     // Trigger memory consolidation for this session (fire-and-forget)
     unawaited(MemoryConsolidator.consolidateSession(sessionId, 'core'));
 
-    yield ChatComplete(assistantId, parsed.cleanText, parsed.actions);
+    yield ChatComplete(assistantId, finalText, parsed.actions);
   }
 }

@@ -406,7 +406,7 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(RitmoRadius.button),
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
                   ),
                 ),
                 onPressed: _isSaving ? null : _saveReflection,

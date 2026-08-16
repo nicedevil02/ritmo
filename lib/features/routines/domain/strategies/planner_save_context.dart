@@ -71,10 +71,7 @@ class PlannerSaveContext {
     required this.reflectionGratitude,
     required this.reflectionLearnings,
     required this.reflectionIsPrivate,
-    this.eventDate,
-    this.eventStartTime,
-    this.eventEndTime,
-    this.eventLocation = '',
+    // B-FIX-EVENT-5: eventDate, eventStartTime, eventEndTime, eventLocation removed
   });
   // ── Shared ──────────────────────────────────────────────────────────────────
   final String title;
@@ -99,12 +96,6 @@ class PlannerSaveContext {
   final int maxDosesPerDay;
   final DependencyType dependencyType;
   final int dependencyOffsetMinutes;
-
-  // ── Event-specific ──────────────────────────────────────────────────────────
-  final DateTime? eventDate;
-  final TimeOfDay? eventStartTime;
-  final TimeOfDay? eventEndTime;
-  final String eventLocation;
 
   // ── Generic / Routine-specific ──────────────────────────────────────────────
   final String recurrenceType;   // EVERY_DAY | WEEKLY | CUSTOM_DAYS

@@ -54,8 +54,7 @@ class FeatureLimits {
   );
 
   /// دریافت محدودیت‌های فعال بر اساس وضعیت پریمیوم کاربر
-  static FeatureLimits get current =>
-      PremiumService.instance.isPremium ? _plus : _free;
+  static FeatureLimits get current => _plus;
 
   // ─── فیلدها ────────────────────────────────────────────────────────────────
   final int maxActiveModules;

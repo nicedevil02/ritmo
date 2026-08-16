@@ -130,11 +130,8 @@ class PlannerController extends ChangeNotifier {
   String reflectionLearnings = '';
   bool reflectionIsPrivate = false;
 
-  // Event specific fields
-  DateTime eventDate = DateTime.now();
-  TimeOfDay eventStartTime = const TimeOfDay(hour: 9, minute: 0);
-  TimeOfDay eventEndTime = const TimeOfDay(hour: 10, minute: 0);
-  String eventLocation = '';
+  // B-FIX-EVENT-5: Event fields (eventDate, eventStartTime, eventEndTime, eventLocation)
+  // removed in favor of canonical selectedDate, selectedTime, targetDuration.
 
   // Routine Type Behavioral Model (Default: asNeeded / آزاد و شناور)
   RoutineType routineType = RoutineType.asNeeded;
@@ -488,6 +485,9 @@ class PlannerController extends ChangeNotifier {
           selectedCategory = cat;
           if (type != null) {
             itemType = type;
+            if (type == 'EVENT') {
+              routineType = RoutineType.timeBased; // B-FIX-EVENT-5
+            }
           } else {
             itemType = cat == Category.medical ? 'REMINDER' : 'ROUTINE';
           }
@@ -504,6 +504,9 @@ class PlannerController extends ChangeNotifier {
     selectedCategory = cat;
     if (type != null) {
       itemType = type;
+      if (type == 'EVENT') {
+        routineType = RoutineType.timeBased; // B-FIX-EVENT-5
+      }
     } else {
       if (cat == Category.medical) {
         itemType = 'REMINDER';
@@ -1432,11 +1435,7 @@ class PlannerController extends ChangeNotifier {
       reflectionGratitude: reflectionGratitude,
       reflectionLearnings: reflectionLearnings,
       reflectionIsPrivate: reflectionIsPrivate,
-      // Event
-      eventDate: eventDate,
-      eventStartTime: eventStartTime,
-      eventEndTime: eventEndTime,
-      eventLocation: eventLocation,
+      // B-FIX-EVENT-5: eventDate, eventStartTime, eventEndTime, eventLocation removed
     );
   }
 

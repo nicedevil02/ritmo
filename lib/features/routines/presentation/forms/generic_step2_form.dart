@@ -284,6 +284,18 @@ class GenericStep2Form extends StatelessWidget {
       ];
     }
 
+    if (controller.itemType == 'EVENT') {
+      return [
+        PlannerTimelinePicker(controller: controller),
+        const SizedBox(height: 20),
+        _buildDurationCard(context, colors, isDark),
+        const SizedBox(height: 12),
+        _buildRecurrenceCard(context, colors, isDark),
+        const SizedBox(height: 12),
+        _buildReminderCard(context, colors, isDark),
+      ];
+    }
+
     switch (controller.routineType) {
       case RoutineType.timeBased:
         return [

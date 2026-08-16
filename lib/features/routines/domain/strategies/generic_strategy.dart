@@ -35,22 +35,12 @@ class GenericStrategy implements PlannerCategoryStrategy {
         : 'routine_$now';
 
     final isEvent = c.itemType == 'EVENT';
-    final eventTime = (isEvent && c.eventStartTime != null) ? c.eventStartTime! : c.selectedTime;
+    // B-FIX-EVENT-5: eventStartTime, eventEndTime, and eventLocation removed;
+    // selectedTime, targetDuration, and description are the canonical sources.
+    final eventTime = c.selectedTime;
     final timeStr = c.formatTime(eventTime);
-
-    int durationMinutes = c.targetDuration;
-    if (isEvent && c.eventStartTime != null && c.eventEndTime != null) {
-      final startMin = c.eventStartTime!.hour * 60 + c.eventStartTime!.minute;
-      final endMin = c.eventEndTime!.hour * 60 + c.eventEndTime!.minute;
-      final diff = endMin - startMin;
-      durationMinutes = diff > 0 ? diff : 60;
-    }
-
-    String? desc = c.description.isNotEmpty ? c.description : null;
-    if (isEvent && c.eventLocation.trim().isNotEmpty) {
-      final locText = 'مکان: ${c.eventLocation.trim()}';
-      desc = desc != null ? '$desc\n$locText' : locText;
-    }
+    final durationMinutes = c.targetDuration;
+    final String? desc = c.description.isNotEmpty ? c.description : null;
 
     final routineData = {
       'id': routineId,

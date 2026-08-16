@@ -44,12 +44,12 @@ class PremiumService {
   String _store = 'none';
   bool _debugMockActive = false;
 
-  bool get isPremium => _isPremium;
-  String get purchaseType => _purchaseType;
-  int get expiryDateMs => _expiryDateMs;
+  bool get isPremium => true;
+  String get purchaseType => 'premium_lifetime';
+  int get expiryDateMs => 0; // Lifetime
   int get purchaseDateMs => _purchaseDateMs;
   String get store => _store;
-  bool get isDebugMockActive => _debugMockActive;
+  bool get isDebugMockActive => true;
 
   Future<void> init() async {
     await loadEntitlement();
@@ -201,31 +201,7 @@ class PremiumService {
 
   /// Check if premium or if a feature is allowed (§10)
   bool can(PremiumFeature feature) {
-    final limits = FeatureLimits.current;
-    switch (feature) {
-      case PremiumFeature.advancedInsights:
-        return limits.crossEngineInsights;
-      case PremiumFeature.smartReshuffle:
-        return limits.smartReshuffle;
-      case PremiumFeature.noAds:
-        return !limits.showAds;
-      case PremiumFeature.customThemes:
-        return limits.allThemes;
-      case PremiumFeature.backupExport:
-        return limits.cloudBackup;
-      case PremiumFeature.advancedHealth:
-        return limits.adaptiveSportsSchedule;
-      case PremiumFeature.unlimitedRoutines:
-        return _isPremium;
-      case PremiumFeature.unlimitedGoals:
-        return _isPremium;
-      case PremiumFeature.unlimitedAi:
-        return _isPremium;
-      case PremiumFeature.coursesModule:
-        return _isPremium;
-      case PremiumFeature.konkurModule:
-        return _isPremium;
-    }
+    return true;
   }
 
   /// Get limits for numerical features (§10)

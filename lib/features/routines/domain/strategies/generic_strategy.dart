@@ -35,16 +35,28 @@ class GenericStrategy implements PlannerCategoryStrategy {
         : 'routine_$now';
 
     final isEvent = c.itemType == 'EVENT';
-    final eventTime = (isEvent && c.eventStartTime != null) ? c.eventStartTime! : c.selectedTime;
-    final timeStr = c.formatTime(eventTime);
 
-    int durationMinutes = c.targetDuration;
-    if (isEvent && c.eventStartTime != null && c.eventEndTime != null) {
-      final startMin = c.eventStartTime!.hour * 60 + c.eventStartTime!.minute;
-      final endMin = c.eventEndTime!.hour * 60 + c.eventEndTime!.minute;
-      final diff = endMin - startMin;
-      durationMinutes = diff > 0 ? diff : 60;
-    }
+    // B-FIX-EVENT-4 — ساعت و مدتِ رویداد هم باید از انتخاب واقعی کاربر بیاید.
+    //
+    // این همان تلهٔ B-FIX-EVENT-3 است، یک پله پایین‌تر روی ساعت:
+    //   • `PlannerController.eventStartTime = const TimeOfDay(hour: 9, minute: 0)`
+    //   • `PlannerController.eventEndTime   = const TimeOfDay(hour: 10, minute: 0)`
+    // هر دو non-nullable هستند و هیچ فرمی آن‌ها را نمی‌نویسد — جست‌وجوی سراسری
+    // `eventStartTime` روی مخزن همان چهار فایلِ آشنا را برمی‌گرداند و هیچ
+    // ویجتی میانشان نیست. پس شرط‌های `!= null` همیشه برقرار بودند و نتیجه:
+    //   • هر رویداد روی ساعت ۰۹:۰۰ ذخیره می‌شد؛
+    //   • مدت هر رویداد ۶۰ دقیقه (۱۰:۰۰ − ۰۹:۰۰) می‌شد.
+    //
+    // در حالی که کاربر هر دو را واقعاً انتخاب کرده بود:
+    // `PlannerTimelinePicker` با چرخِ ساعت/دقیقه — و میان‌برهای طلوع/غروب و
+    // چیپ‌های «وقت آزاد» — مقدار را با `controller.setTime(...)` در
+    // `selectedTime` می‌نشاند، و کارتِ «مدت زمان» در `generic_step2_form.dart`
+    // مقدار را در `targetDuration` می‌نویسد.
+    //
+    // تا وقتی یک فرمِ اختصاصیِ رویداد این دو فیلد را واقعاً پر نکند،
+    // `selectedTime` و `targetDuration` تنها منبعِ معتبرِ ساعت و مدت‌اند.
+    final timeStr = c.formatTime(c.selectedTime);
+    final durationMinutes = c.targetDuration;
 
     String? desc = c.description.isNotEmpty ? c.description : null;
     if (isEvent && c.eventLocation.trim().isNotEmpty) {

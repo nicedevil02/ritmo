@@ -9,6 +9,14 @@ import 'package:ritmo/core/ai/agent/catalog/study_worship_agent_tools.dart';
 import 'package:ritmo/core/ai/agent/catalog/system_agent_tools.dart';
 
 /// مقداردهی اولیه و ثبت تمامی ابزارهای سراسری برنامه در رجیستری ایجنت
+///
+/// فاز ۰: سه ابزار نوشتنی زیر عمداً ثبت نمی‌شوند چون داده را خراب می‌کردند یا
+/// موفقیت جعلی گزارش می‌دادند. مدل چیزی را که نبیند نمی‌تواند فراخوانی کند،
+/// پس حذف از رجیستری مطمئن‌ترین قفل است:
+///   - CreateNewRoutineTool  : ستون‌های ناموجود + عدم ساخت schedule/occurrences
+///   - ApplySmartDayPlanTool : جدول assistant_plans وجود ندارد و خطا بلعیده می‌شد
+///   - UpdateAppPreferenceTool: بدون allowlist و دور زدن SettingsService (خطر تغییر module_*)
+/// فاز ۲ هر سه را به شکل آداپتور روی RitmoCommandBus بازمی‌گرداند.
 void initializeAllAgentTools() {
   final registry = AgentToolRegistry.instance;
 
@@ -21,11 +29,9 @@ void initializeAllAgentTools() {
     // ۲. روتین‌ها و عادات
     const GetRoutinesOverviewTool(),
     const GetRoutineStreakStatsTool(),
-    const CreateNewRoutineTool(),
 
     // ۳. برنامه‌ریزی روز
     const GetDayAgendaTool(),
-    const ApplySmartDayPlanTool(),
 
     // ۴. خواب و انرژی
     const GetSleepDiagnosticsTool(),
@@ -46,6 +52,5 @@ void initializeAllAgentTools() {
 
     // ۸. سیستم و ناوبری
     const NavigateToAppScreenTool(),
-    const UpdateAppPreferenceTool(),
   ]);
 }

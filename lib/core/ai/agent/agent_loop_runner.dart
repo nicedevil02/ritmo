@@ -11,6 +11,12 @@ import 'package:ritmo/core/ai/ai_prompt_engine.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 
 /// موتور اجرای چرخه چندمرحله‌ای و تعاملی ایجنت (Agent Loop Runner)
+///
+/// وضعیت فعلی: تک‌گذر (پیش‌واکشی داده → یک بار استریم پاسخ).
+/// حلقه واقعی ReAct (پارس <tool_call> مدل، اجرای ابزار، بازگشت نتیجه به مدل و
+/// تکرار تا حداکثر N نوبت) در فاز ۱ نقشه docs/ai-agent-upgrade-plan.md اضافه
+/// می‌شود. تا آن زمان تگ‌های <tool_call> که مدل تولید کند اجرا نمی‌شوند و فقط
+/// از متن نمایشی حذف می‌گردند.
 class AgentLoopRunner {
   AgentLoopRunner._();
   static final AgentLoopRunner instance = AgentLoopRunner._();
@@ -39,6 +45,8 @@ class AgentLoopRunner {
         yield AgentStepStartedEvent(step);
         yield AgentStepCompletedEvent(step);
       }
+      debugPrint(
+          '[Agent] Prefetched ${prefetch.initialSteps.length} tool step(s) for this turn');
     }
 
     // ۲. آماده‌سازی پرامپت ابزارها و داده‌های زنده
@@ -64,7 +72,8 @@ class AgentLoopRunner {
     );
 
     final config = await AiConnectionRepository.instance.load(slot: slot);
-    final isChatGptWeb = config.providerPresetId == 'chatgpt_web' || config.baseUrl.contains('chatgpt.com');
+    final isChatGptWeb = config.providerPresetId == 'chatgpt_web' ||
+        config.baseUrl.contains('chatgpt.com');
 
     final Stream<String> rawStream;
     if (isChatGptWeb) {
@@ -76,10 +85,18 @@ class AgentLoopRunner {
         recentHistory: recentHistory,
       );
     } else {
+      // در مسیر API، contextSummary قبلاً کاملاً نادیده گرفته می‌شد و فقط به
+      // پل وب می‌رسید؛ اینجا به پرامپت سیستمی تزریق می‌شود.
+      final systemForApi = StringBuffer(combinedSystemPrompt.toString());
+      if (contextSummary != null && contextSummary.trim().isNotEmpty) {
+        systemForApi.writeln(
+            '\n[خلاصه داده‌های بازیابی‌شده از پروفایل و تاریخچه کاربر]:');
+        systemForApi.writeln(contextSummary.trim());
+      }
+
       final messages = <Map<String, String>>[
-        {'role': 'system', 'content': combinedSystemPrompt.toString()},
-        if (recentHistory != null)
-          ...recentHistory.map((h) => {'role': 'user', 'content': h}),
+        {'role': 'system', 'content': systemForApi.toString()},
+        if (recentHistory != null) ..._historyToMessages(recentHistory),
         {'role': 'user', 'content': prompt},
       ];
       rawStream = AIGateway.instance.sendCustomChatStream(
@@ -108,7 +125,8 @@ class AgentLoopRunner {
     }
 
     // ۴. بررسی وجود اکشن‌های تعاملی یا تگ‌های actions در انتهای متن
-    final actionMatch = RegExp(r'<actions>([\s\S]*?)<\/actions>').firstMatch(accumulatedText);
+    final actionMatch =
+        RegExp(r'<actions>([\s\S]*?)<\/actions>').firstMatch(accumulatedText);
     if (actionMatch != null) {
       try {
         final actionJson = jsonDecode(actionMatch.group(1)!.trim());
@@ -116,6 +134,12 @@ class AgentLoopRunner {
           interactiveAction = actionJson.first as Map<String, dynamic>;
         }
       } catch (_) {}
+    }
+
+    // هشدار تشخیصی: اگر مدل ابزار خواسته ولی حلقه اجرا هنوز فاز ۱ است.
+    if (accumulatedText.contains('<tool_call>')) {
+      debugPrint(
+          '[Agent] WARNING: model emitted <tool_call> but the execution loop is not implemented yet (phase 1). Call was stripped, not executed.');
     }
 
     final finalCleanAnswer = _cleanDisplayText(accumulatedText);
@@ -127,9 +151,48 @@ class AgentLoopRunner {
 
     yield AgentCompletedEvent(
       finalAnswer: finalCleanAnswer,
+      rawAnswer: accumulatedText,
       steps: steps,
       interactiveAction: interactiveAction,
     );
+  }
+
+  /// تبدیل تاریخچه متنی («کاربر: …» / «دستیار: …») به پیام‌های نقش‌دار.
+  /// قبلاً همه خطوط با role=user فرستاده می‌شدند و مدل فکر می‌کرد کاربر با
+  /// خودش حرف می‌زند.
+  List<Map<String, String>> _historyToMessages(List<String> history) {
+    const assistantPrefixes = ['دستیار:', 'assistant:', 'Assistant:'];
+    const userPrefixes = ['کاربر:', 'user:', 'User:'];
+
+    final out = <Map<String, String>>[];
+    for (final raw in history) {
+      final line = raw.trim();
+      if (line.isEmpty) continue;
+
+      String? role;
+      var content = line;
+
+      for (final p in assistantPrefixes) {
+        if (line.startsWith(p)) {
+          role = 'assistant';
+          content = line.substring(p.length).trim();
+          break;
+        }
+      }
+      if (role == null) {
+        for (final p in userPrefixes) {
+          if (line.startsWith(p)) {
+            role = 'user';
+            content = line.substring(p.length).trim();
+            break;
+          }
+        }
+      }
+
+      if (content.isEmpty) continue;
+      out.add({'role': role ?? 'user', 'content': content});
+    }
+    return out;
   }
 
   String _cleanDisplayText(String raw) {

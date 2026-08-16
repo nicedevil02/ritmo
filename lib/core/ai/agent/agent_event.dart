@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// وضعیت مرحله در تایم‌لاین ایجنت
 enum AgentStepStatus {
   pending,
@@ -94,12 +92,20 @@ class AgentTokenStreamEvent extends AgentEvent {
 
 /// اتمام کامل فرآیند ایجنت
 class AgentCompletedEvent extends AgentEvent {
+  /// متن نمایشی و پاک‌سازی‌شده برای کاربر
   final String finalAnswer;
+
+  /// متن خام و فیلترنشده مدل، شامل تگ‌های <tool_call> و <actions> و <memory_ops>.
+  /// مصرف‌کننده‌های پایین‌دستی (مانند ChatActionParser و AiMemoryService) باید از
+  /// این متن استفاده کنند، نه از finalAnswer که تگ‌ها از آن حذف شده است.
+  final String rawAnswer;
+
   final List<AgentStep> steps;
   final Map<String, dynamic>? interactiveAction;
 
   const AgentCompletedEvent({
     required this.finalAnswer,
+    this.rawAnswer = '',
     required this.steps,
     this.interactiveAction,
   });

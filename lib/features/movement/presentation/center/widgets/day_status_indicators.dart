@@ -11,6 +11,11 @@ enum MovementDayStatus {
   recovery,
 }
 
+// ثابت‌های میکرو-چیدمان نشانگرها (اندازهٔ بصری، نه فاصله‌بندی)
+const double _kGlyphSize = 7.0;
+const double _kEmptyHeight = 12.0;
+const double _kOverflowPadding = 2.0;
+
 /// نشانگر وضعیت جلسات روز — حداکثر ۳ نشانگر با تمایز شکلی و نمادین (نه فقط رنگ)
 class DayStatusIndicators extends StatelessWidget {
   const DayStatusIndicators({
@@ -23,7 +28,7 @@ class DayStatusIndicators extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (statuses.isEmpty) {
-      return const SizedBox(height: 12.0);
+      return const SizedBox(height: _kEmptyHeight);
     }
 
     final colors = context.colors;
@@ -38,27 +43,24 @@ class DayStatusIndicators extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         for (var i = 0; i < displayCount; i++) ...[
-          if (i > 0) const SizedBox(width: 3.0),
+          if (i > 0) const SizedBox(width: RitmoSpacing.xs),
           _StatusGlyph(status: statuses[i], sportsColor: sportsColor),
         ],
         if (overflowCount > 0) ...[
-          const SizedBox(width: 3.0),
+          const SizedBox(width: RitmoSpacing.xs),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 2.0),
+            padding: const EdgeInsets.symmetric(horizontal: _kOverflowPadding),
             decoration: BoxDecoration(
               color: colors.surfaceSunken,
               borderRadius: BorderRadius.circular(RitmoRadius.badge),
               border: Border.all(
                 color: colors.border,
-                width: 0.5,
+                width: RitmoElevation.borderWidthDark,
               ),
             ),
             child: Text(
               '+${toPersianDigits(overflowCount)}',
-              style: RitmoTextStyles.badge(colors.textSecondary).copyWith(
-                fontSize: 8.5,
-                height: 1.1,
-              ),
+              style: RitmoTextStyles.badge(colors.textSecondary),
             ),
           ),
         ],
@@ -84,8 +86,8 @@ class _StatusGlyph extends StatelessWidget {
       case MovementDayStatus.planned:
         // دایرهٔ توخالی / رینگ
         return Container(
-          width: 7.0,
-          height: 7.0,
+          width: _kGlyphSize,
+          height: _kGlyphSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
@@ -96,10 +98,10 @@ class _StatusGlyph extends StatelessWidget {
         );
 
       case MovementDayStatus.completed:
-        // دایرهٔ پر با رنگ موفقیت / انجام‌شده
+        // دایرهٔ پر با تیک
         return Container(
-          width: 7.0,
-          height: 7.0,
+          width: _kGlyphSize,
+          height: _kGlyphSize,
           decoration: BoxDecoration(
             color: colors.success,
             shape: BoxShape.circle,
@@ -114,10 +116,10 @@ class _StatusGlyph extends StatelessWidget {
         );
 
       case MovementDayStatus.partial:
-        // نیم‌دایره یا نشانگر نیمه‌تمام
+        // رینگ با نقطهٔ مرکزی — نیمه‌تمام
         return Container(
-          width: 7.0,
-          height: 7.0,
+          width: _kGlyphSize,
+          height: _kGlyphSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
@@ -138,7 +140,7 @@ class _StatusGlyph extends StatelessWidget {
         );
 
       case MovementDayStatus.moved:
-        // فلش یا آیکون جابه‌جایی
+        // آیکون جابه‌جایی
         return Icon(
           Icons.swap_horiz_rounded,
           size: 9.0,
@@ -146,7 +148,7 @@ class _StatusGlyph extends StatelessWidget {
         );
 
       case MovementDayStatus.recovery:
-        // نماد ریکاوری / برگ / درخشش
+        // نماد ریکاوری
         return Icon(
           Icons.spa_rounded,
           size: 8.0,

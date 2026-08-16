@@ -66,14 +66,13 @@ class _WeekNavigatorBarState extends State<WeekNavigatorBar> {
                 child: InkWell(
                   onTap: widget.onPreviousWeek,
                   borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
-                  child: SizedBox(
+                  child: const SizedBox(
                     width: MovementLayout.kMinTouchTarget,
                     height: MovementLayout.kMinTouchTarget,
                     child: Center(
                       child: Icon(
                         Icons.chevron_right_rounded,
                         size: 24.0,
-                        color: colors.textPrimary,
                       ),
                     ),
                   ),
@@ -120,11 +119,11 @@ class _WeekNavigatorBarState extends State<WeekNavigatorBar> {
                             borderRadius: BorderRadius.circular(RitmoRadius.pill),
                             child: Container(
                               constraints: const BoxConstraints(
-                                minHeight: 32.0,
-                                minWidth: 48.0,
+                                minHeight: MovementLayout.kMinTouchTarget,
+                                minWidth: MovementLayout.kMinTouchTarget,
                               ),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: RitmoSpacing.sm,
+                                horizontal: RitmoSpacing.md,
                                 vertical: RitmoSpacing.xs,
                               ),
                               decoration: BoxDecoration(
@@ -161,14 +160,13 @@ class _WeekNavigatorBarState extends State<WeekNavigatorBar> {
                 child: InkWell(
                   onTap: widget.onNextWeek,
                   borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
-                  child: SizedBox(
+                  child: const SizedBox(
                     width: MovementLayout.kMinTouchTarget,
                     height: MovementLayout.kMinTouchTarget,
                     child: Center(
                       child: Icon(
                         Icons.chevron_left_rounded,
                         size: 24.0,
-                        color: colors.textPrimary,
                       ),
                     ),
                   ),

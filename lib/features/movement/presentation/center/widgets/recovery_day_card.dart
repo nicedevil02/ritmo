@@ -57,7 +57,7 @@ class RecoveryDayCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2.0),
+                const SizedBox(height: RitmoSpacing.xs),
                 Text(
                   MovementStrings.recoveryDayDesc,
                   style: RitmoTextStyles.caption(colors.textSecondary),

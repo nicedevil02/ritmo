@@ -101,7 +101,7 @@ class HeroSessionCard extends StatelessWidget {
             ),
             const SizedBox(height: RitmoSpacing.sm),
             Text(
-              'برنامه‌ای برای این هفته تنظیم نشده است. می‌توانید فعالیت دلخواهتان را اضافه کنید یا از پیشنهاد هوشمند استفاده کنید.',
+              MovementStrings.heroEmptyPlanDesc,
               style: RitmoTextStyles.body(colors.textSecondary),
             ),
             const SizedBox(height: RitmoSpacing.lg),
@@ -178,12 +178,12 @@ class HeroSessionCard extends StatelessWidget {
             ),
             const SizedBox(height: RitmoSpacing.sm),
             Text(
-              'به بدنت فرصت استراحت و بازسازی بده. استراحت کافی بخش ضروری پیشرفت و جلوگیری از آسیب است.',
+              MovementStrings.heroRestDayDesc,
               style: RitmoTextStyles.body(colors.textSecondary),
             ),
             const SizedBox(height: RitmoSpacing.lg),
             Align(
-              alignment: Alignment.centerRight,
+              alignment: AlignmentDirectional.centerEnd,
               child: OutlinedButton.icon(
                 onPressed: () {
                   RitmoHapticsPolicy.tap();
@@ -210,8 +210,8 @@ class HeroSessionCard extends StatelessWidget {
         );
 
       case HeroCardVariant.allDone:
-        final activityName =
-            primaryOccurrence?.activityKind?.nameFa ?? 'تمرین امروز';
+        final activityName = primaryOccurrence?.activityKind?.nameFa ??
+            MovementStrings.defaultTodaySessionName;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -234,7 +234,7 @@ class HeroSessionCard extends StatelessWidget {
             ),
             const SizedBox(height: RitmoSpacing.sm),
             Text(
-              'جلسهٔ $activityName با موفقیت به پایان رسید.',
+              MovementStrings.heroAllDoneDesc(activityName),
               style: RitmoTextStyles.body(colors.textSecondary),
             ),
             const SizedBox(height: RitmoSpacing.lg),
@@ -321,11 +321,14 @@ class HeroSessionCard extends StatelessWidget {
       case HeroCardVariant.late:
       case HeroCardVariant.multiToday:
         final occ = primaryOccurrence;
-        final activityName = occ?.activityKind?.nameFa ?? 'جلسهٔ حرکتی';
+        final activityName =
+            occ?.activityKind?.nameFa ?? MovementStrings.defaultSessionTitle;
         final isLate = variant == HeroCardVariant.late;
         final isMulti = variant == HeroCardVariant.multiToday;
 
-        String timeStatus = occ?.startTime != null ? 'ساعت ${occ!.startTime}' : 'امروز';
+        String timeStatus = occ?.startTime != null
+            ? MovementStrings.atTime(occ!.startTime!)
+            : MovementStrings.todayLabel;
         if (isLate) {
           timeStatus = MovementStrings.heroLate;
         } else if (isMulti) {
@@ -337,7 +340,7 @@ class HeroSessionCard extends StatelessWidget {
 
         final goalStr = (occ?.goalValue != null && occ?.goalUnit != null)
             ? '${occ!.goalValue!.round()} ${occ.goalUnit}'
-            : 'هدف استاندارد';
+            : MovementStrings.goalStandard;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -349,7 +352,7 @@ class HeroSessionCard extends StatelessWidget {
               style: RitmoTextStyles.caption(
                 isLate ? colors.warning : colors.textSecondary,
               ).copyWith(
-                fontWeight: isLate ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: isLate ? FontWeight.w700 : null,
               ),
             ),
             const SizedBox(height: RitmoSpacing.xs),
@@ -357,9 +360,7 @@ class HeroSessionCard extends StatelessWidget {
             // ۲. نام فعالیت
             Text(
               activityName,
-              style: RitmoTextStyles.cardTitle(colors.textPrimary).copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: RitmoTextStyles.cardTitle(colors.textPrimary),
             ),
             const SizedBox(height: RitmoSpacing.xs),
 
@@ -371,7 +372,7 @@ class HeroSessionCard extends StatelessWidget {
 
             const SizedBox(height: RitmoSpacing.lg),
 
-            // ۴. CTA اصلی
+            // ۴. CTA اصلی — همیشه با Accent ماژول؛ هشدار فقط در متن وضعیت
             SizedBox(
               height: MovementLayout.kPrimaryButtonHeight,
               child: FilledButton.icon(
@@ -387,8 +388,8 @@ class HeroSessionCard extends StatelessWidget {
                   style: RitmoTextStyles.label(colors.onPrimary),
                 ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: isLate ? colors.warning : sportsColor,
-                  foregroundColor: isLate ? colors.background : colors.onPrimary,
+                  backgroundColor: sportsColor,
+                  foregroundColor: colors.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(RitmoRadius.field),
                   ),

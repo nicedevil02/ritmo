@@ -5,6 +5,10 @@ import 'package:ritmo/features/movement/domain/models/movement_strength_program.
 import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 
+// ثابت‌های میکرو-چیدمان (اندازهٔ بصری، نه فاصله‌بندی)
+const double _kProgressBarHeight = 6.0;
+const double _kBadgeVerticalPadding = 2.0;
+
 /// کارت ورودی بخش تمرین قدرتی در مرکز حرکت با ۴ وریانت
 class StrengthEntryCard extends StatelessWidget {
   const StrengthEntryCard({
@@ -79,7 +83,7 @@ class StrengthEntryCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: RitmoSpacing.sm,
-                    vertical: 2.0,
+                    vertical: _kBadgeVerticalPadding,
                   ),
                   decoration: BoxDecoration(
                     color: colors.warning.withValues(alpha: 0.15),
@@ -132,7 +136,7 @@ class StrengthEntryCard extends StatelessWidget {
             ),
           ] else if (isDraft) ...[
             Text(
-              'پیش‌نویس برنامهٔ قدرتی شما در انتظار تکمیل است.',
+              MovementStrings.strengthDraftDesc,
               style: RitmoTextStyles.body(colors.textSecondary),
             ),
             const SizedBox(height: RitmoSpacing.lg),
@@ -151,7 +155,7 @@ class StrengthEntryCard extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'ادامهٔ آنبوردینگ قدرت',
+                  MovementStrings.strengthResumeOnboarding,
                   style: RitmoTextStyles.label(colors.onPrimary),
                 ),
               ),
@@ -237,7 +241,7 @@ class StrengthEntryCard extends StatelessWidget {
                 value: program!.progressFraction,
                 backgroundColor: colors.surfaceSunken,
                 valueColor: AlwaysStoppedAnimation<Color>(sportsColor),
-                minHeight: 6.0,
+                minHeight: _kProgressBarHeight,
               ),
             ),
             const SizedBox(height: RitmoSpacing.lg),
@@ -287,7 +291,7 @@ class StrengthEntryCard extends StatelessWidget {
             ),
           ] else if (isFinished) ...[
             Text(
-              'دورهٔ تمرینی با موفقیت به پایان رسید. اکنون می‌توانید دورهٔ بعدی را با حجم و شدت جدید آغاز کنید.',
+              MovementStrings.strengthFinishedDesc,
               style: RitmoTextStyles.body(colors.textSecondary),
             ),
             const SizedBox(height: RitmoSpacing.lg),

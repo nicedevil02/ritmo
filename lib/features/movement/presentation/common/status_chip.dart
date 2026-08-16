@@ -56,7 +56,7 @@ class StatusChip extends StatelessWidget {
           colors.warning,
         ),
       MovementOccurrenceStatus.restDay => (
-          'استراحت',
+          MovementStrings.statusRestDay,
           Icons.nightlight_round,
           colors.textSecondary,
         ),

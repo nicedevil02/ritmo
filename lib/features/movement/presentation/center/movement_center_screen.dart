@@ -29,6 +29,7 @@ import 'package:ritmo/features/movement/presentation/center/widgets/strength_ent
 import 'package:ritmo/features/movement/presentation/center/widgets/week_navigator_bar.dart';
 import 'package:ritmo/features/movement/presentation/center/widgets/week_rail.dart';
 import 'package:ritmo/features/movement/presentation/center/widgets/week_summary_card.dart';
+import 'package:ritmo/features/movement/presentation/common/confirm_dialog.dart';
 import 'package:ritmo/features/movement/presentation/common/empty_state_block.dart';
 import 'package:ritmo/features/movement/presentation/common/error_block.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
@@ -154,7 +155,7 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
             },
           );
           if (log != null && mounted) {
-            MovementUndoToast.show(context, message: 'فعالیت انجام‌شده ثبت شد');
+            MovementUndoToast.show(context, message: MovementStrings.retroLoggedToast);
             await _controller.loadData();
           }
         }
@@ -194,7 +195,7 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
     );
 
     if (applied == true && mounted) {
-      MovementUndoToast.show(context, message: 'برنامهٔ هوشمند با موفقیت اعمال شد');
+      MovementUndoToast.show(context, message: MovementStrings.smartFillAppliedToast);
       await _controller.loadData();
     }
   }
@@ -250,7 +251,7 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
     );
 
     if (done == true && mounted) {
-      MovementUndoToast.show(context, message: 'نسخهٔ Plan B اعمال شد');
+      MovementUndoToast.show(context, message: MovementStrings.planBAppliedToast);
       await _controller.loadData();
     }
   }
@@ -310,39 +311,18 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
   }
 
   Future<void> _handleDelete(MovementOccurrence occ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        final colors = ctx.colors;
-        return AlertDialog(
-          backgroundColor: colors.surfaceElevated,
-          title: Text(
-            MovementStrings.occurrenceDeleteConfirmTitle,
-            style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
-          ),
-          content: Text(
-            MovementStrings.occurrenceDeleteConfirmDesc,
-            style: RitmoTextStyles.body(colors.textSecondary),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text(MovementStrings.commonCancel),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              style: ElevatedButton.styleFrom(backgroundColor: colors.error),
-              child: const Text(
-                MovementStrings.commonDelete,
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        );
-      },
+    // عملیات مخرب فقط با دیالوگ استاندارد ماژول و فهرست اثرات شفاف
+    final confirmed = await showMovementConfirmDialog(
+      context,
+      title: MovementStrings.occurrenceDeleteConfirmTitle,
+      message: MovementStrings.occurrenceDeleteConfirmDesc,
+      impactList: const [MovementStrings.occurrenceDeleteConfirmDesc],
+      confirmLabel: MovementStrings.commonDelete,
+      cancelLabel: MovementStrings.commonCancel,
+      destructive: true,
     );
 
-    if (confirmed == true && mounted) {
+    if (confirmed && mounted) {
       await _planningService.deleteWithScope(
         occurrenceId: occ.id,
         focalDateIso: occ.dateIso,
@@ -389,7 +369,6 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
         if (_controller.isLoading && !_controller.hasCachedData) {
           return MovementScreenShell(
             title: MovementStrings.centerTitle,
-            subtitle: MovementStrings.centerDayPlan,
             actions: actions,
             body: const SingleChildScrollView(
               physics: NeverScrollableScrollPhysics(),
@@ -411,10 +390,9 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
         if (_controller.errorMessage != null && !_controller.hasCachedData) {
           return MovementScreenShell(
             title: MovementStrings.centerTitle,
-            subtitle: MovementStrings.centerDayPlan,
             actions: actions,
             body: ErrorBlock(
-              title: 'خطا در بارگذاری برنامهٔ حرکت',
+              title: MovementStrings.centerLoadErrorTitle,
               message: _controller.errorMessage!,
               isBannerMode: false,
               onRetry: () => _controller.loadData(),
@@ -428,7 +406,6 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
 
         return MovementScreenShell(
           title: MovementStrings.centerTitle,
-          subtitle: _controller.weekRangeLabel,
           actions: actions,
           bottomDock: AddActivityDock(
             onAddActivity: () {
@@ -448,7 +425,7 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                 if (_controller.isBannerError && _controller.errorMessage != null)
                   SliverToBoxAdapter(
                     child: ErrorBlock(
-                      title: 'خطا در به‌روزرسانی زنده',
+                      title: MovementStrings.centerSyncErrorTitle,
                       message: _controller.errorMessage!,
                       isBannerMode: true,
                       onRetry: () => _controller.loadData(),
@@ -564,7 +541,7 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                                   ? {
                                       'type': occ.goalType ?? 'duration',
                                       'value': occ.goalValue,
-                                      'unit': occ.goalUnit ?? 'دقیقه',
+                                      'unit': occ.goalUnit ?? MovementStrings.unitMinute,
                                     }
                                   : null,
                             ),
@@ -660,7 +637,7 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                                       ? {
                                           'type': occ.goalType ?? 'duration',
                                           'value': occ.goalValue,
-                                          'unit': occ.goalUnit ?? 'دقیقه',
+                                          'unit': occ.goalUnit ?? MovementStrings.unitMinute,
                                         }
                                       : null,
                                 ),
@@ -692,7 +669,7 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                             if (!ok && context.mounted) {
                               MovementUndoToast.show(
                                 context,
-                                message: 'خطا در ثبت تکمیل جلسه',
+                                message: MovementStrings.completeErrorToast,
                               );
                             }
                           },

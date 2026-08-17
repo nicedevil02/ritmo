@@ -6,6 +6,7 @@ import 'package:ritmo/core/ai/agent/agent_budget.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
+import 'package:ritmo/core/ai/agent/agent_tool_argument_validator.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_call_parser.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_protocol.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_registry.dart';
@@ -300,8 +301,23 @@ class AgentLoopRunner {
           continue;
         }
 
+        // اعتبارسنجی مرکزی آرگومان‌ها (فاز ۴ · T18)
+        final validation =
+            AgentToolArgumentValidator.validate(tool, call.parameters);
+        if (!validation.isValid) {
+          final err =
+              validation.errorMessageFa ?? 'پارامترهای ارسالی نامعتبر است.';
+          turnResults.add(AgentToolResult.failure(
+            toolName: tool.name,
+            errorMessage: err,
+          ));
+          debugPrint('[Agent] validation failed | ${tool.name} | $err');
+          continue;
+        }
+        final validatedArgs = validation.sanitizedArgs;
+
         // کش همین اجرا: خواندن تکراری با پارامتر یکسان دوباره اجرا نمی‌شود
-        final cacheKey = _cacheKey(tool.name, call.parameters);
+        final cacheKey = _cacheKey(tool.name, validatedArgs);
         if (tool.policy == ToolPolicy.readOnly) {
           final cached = toolCache[cacheKey];
           if (cached != null) {
@@ -319,7 +335,7 @@ class AgentLoopRunner {
         // دروازه سیاست (فاز ۳ · P3-1)
         final decision = AgentPolicyGate.instance.evaluate(
           tool: tool,
-          args: call.parameters,
+          args: validatedArgs,
           writesUsedThisRun: writesUsed,
         );
         if (decision.isDenied) {
@@ -330,7 +346,7 @@ class AgentLoopRunner {
           continue;
         }
 
-        final admission = budget.admit(tool.name, call.parameters);
+        final admission = budget.admit(tool.name, validatedArgs);
         if (!admission.allowed) {
           turnResults.add(AgentToolResult.failure(
             toolName: tool.name,
@@ -340,7 +356,7 @@ class AgentLoopRunner {
           continue;
         }
 
-        var effectiveArgs = call.parameters;
+        var effectiveArgs = validatedArgs;
 
         // کارت تایید (فاز ۳ · P3-2): حلقه واقعا متوقف می‌شود تا کاربر پاسخ دهد
         if (decision.needsUserConfirmation) {

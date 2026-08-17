@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// سیاست و سطح حساسیت اجرای ابزار
 enum ToolPolicy {
   /// ابزار فقط خواندنی و کاملاً امن (اجرای آنی و خودکار در پس‌زمینه)
@@ -34,9 +32,8 @@ class ToolParameter {
     return {
       'type': type,
       'description': descriptionFa,
-      'required': isRequired,
       if (defaultValue != null) 'default': defaultValue,
-      if (allowedValues != null) 'enum': allowedValues,
+      if (allowedValues != null && allowedValues!.isNotEmpty) 'enum': allowedValues,
     };
   }
 }
@@ -164,6 +161,32 @@ abstract class AgentTool {
       'policy': policy.name,
       'parameters': paramsMap,
       'required': requiredList,
+    };
+  }
+
+  /// تولید ساختار استاندارد JSON Schema سازگار با Function Calling مدل‌های هوش مصنوعی
+  Map<String, dynamic> toJsonSchema() {
+    final properties = <String, dynamic>{};
+    final requiredFields = <String>[];
+
+    for (final param in parameters) {
+      properties[param.name] = param.toSchema();
+      if (param.isRequired) {
+        requiredFields.add(param.name);
+      }
+    }
+
+    return {
+      'type': 'function',
+      'function': {
+        'name': name,
+        'description': descriptionFa,
+        'parameters': {
+          'type': 'object',
+          'properties': properties,
+          if (requiredFields.isNotEmpty) 'required': requiredFields,
+        },
+      },
     };
   }
 

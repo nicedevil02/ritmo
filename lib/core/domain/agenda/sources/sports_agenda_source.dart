@@ -1,11 +1,11 @@
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_program_calendar.dart';
 import 'package:ritmo/features/supplementary_sports/domain/ss_week_resolver.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 
 /// AgendaSource for the unified Sports & Movement domain.
 class SportsAgendaSource implements AgendaSource {
@@ -83,7 +83,7 @@ class SportsAgendaSource implements AgendaSource {
         }
       }
     } catch (e, st) {
-      debugPrint('[SportsAgendaSource] prescription load error: $e\n$st');
+      RitmoLog.error('SportsAgendaSource', 'prescription load failed', e, st);
     }
 
     bool hasWeekCol = false;
@@ -94,7 +94,7 @@ class SportsAgendaSource implements AgendaSource {
       final tableInfo = await db.rawQuery("PRAGMA table_info(ss_workout_plan)");
       hasWeekCol = tableInfo.any((col) => col['name'] == 'week');
     } catch (e, st) {
-      debugPrint('[SportsAgendaSource] schema load error: $e\n$st');
+      RitmoLog.error('SportsAgendaSource', 'schema load failed', e, st);
     }
 
     final legacyPlans = <Map<String, dynamic>>[];
@@ -104,8 +104,11 @@ class SportsAgendaSource implements AgendaSource {
         legacyPlans.add(Map<String, dynamic>.from(r));
       }
     } catch (e, st) {
-      debugPrint(
-        '[SportsAgendaSource] schema load ss_workout_plan error: $e\n$st',
+      RitmoLog.error(
+        'SportsAgendaSource',
+        'schema load ss_workout_plan failed',
+        e,
+        st,
       );
     }
 

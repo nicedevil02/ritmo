@@ -1,6 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 
 /// K34 — Morning Brief notification generator and scheduler.
@@ -12,7 +13,7 @@ class MorningBrief {
   MorningBrief._();
 
   static Future<String> generateText({required DateTime date}) async {
-    final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final dateStr = DateKey.of(date);
     final agenda = await DayAgendaService.instance.agendaForDate(date);
 
     int overdueCount = 0;
@@ -60,9 +61,9 @@ class MorningBrief {
       if (!enabled) return;
 
       final timeStr = map['calendar_morning_brief_time'] ?? '07:30';
-      debugPrint('[MorningBrief] Morning brief scheduled for $timeStr daily.');
-    } catch (e) {
-      debugPrint('[MorningBrief] Schedule error: $e');
+      RitmoLog.info('MorningBrief', 'Morning brief scheduled for $timeStr daily.');
+    } catch (e, st) {
+      RitmoLog.error('MorningBrief', 'Schedule error', e, st);
     }
   }
 }

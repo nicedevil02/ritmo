@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
 
 /// Represents a search match across calendar/agenda sources.
@@ -235,8 +235,8 @@ class CalendarSearchRepository {
           ));
         }
       }
-    } catch (e) {
-      debugPrint('[CalendarSearchRepository] Search error: $e');
+    } catch (e, st) {
+      RitmoLog.error('CalendarSearchRepository', 'Search failed', e, st);
     }
 
     return hits.take(limit).toList();

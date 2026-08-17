@@ -4,6 +4,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/action_feedback.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/completion/completion_gateway.dart';
 import 'package:ritmo/core/domain/completion/completion_outcome.dart';
@@ -189,7 +190,7 @@ class ActionRouter {
             canShow = CyclePrivacyGuard.isVisible({'user_gender': val ?? ''});
           }
         } catch (e, st) {
-          debugPrint('[ActionRouter] Error checking cycle privacy: $e\n$st');
+          RitmoLog.error('ActionRouter', 'Error checking cycle privacy', e, st);
         }
 
         if (!canShow) {
@@ -229,8 +230,8 @@ class ActionRouter {
     SimpleTask? task;
     try {
       task = await SimpleTaskRepository.instance.getById(item.sourceId);
-    } catch (e) {
-      debugPrint('[ActionRouter] Task lookup error: $e');
+    } catch (e, st) {
+      RitmoLog.error('ActionRouter', 'Task lookup failed for ${item.sourceId}', e, st);
     }
 
     if (task == null) {
@@ -286,7 +287,7 @@ class ActionRouter {
     try {
       await run();
     } catch (e, st) {
-      debugPrint('[ActionRouter][$tag] $e\n$st');
+      RitmoLog.error('ActionRouter', '$tag failed', e, st);
       if (context.mounted) {
         ActionFeedback.failure(context, message: failureMessage);
       }
@@ -315,9 +316,12 @@ class ActionRouter {
         if (rows.isNotEmpty) {
           routine = Routine.fromMap(rows.first);
         }
-      } catch (e) {
-        debugPrint(
-          '[ActionRouter] Failed DB lookup for routine ${item.sourceId}: $e',
+      } catch (e, st) {
+        RitmoLog.error(
+          'ActionRouter',
+          'Failed DB lookup for routine ${item.sourceId}',
+          e,
+          st,
         );
       }
     }
@@ -329,8 +333,9 @@ class ActionRouter {
           message: 'اطلاعات این برنامه در دسترس نیست',
         );
       }
-      debugPrint(
-        '[ActionRouter] routine meta and DB fallback missing for item ${item.id}',
+      RitmoLog.warning(
+        'ActionRouter',
+        'routine meta and DB fallback missing for item ${item.id}',
       );
       return;
     }
@@ -708,7 +713,7 @@ class ActionRouter {
         if (val != null && val > 0) return val;
       }
     } catch (e, st) {
-      debugPrint('Error in action_router.dart: $e\n$st');
+      RitmoLog.error('ActionRouter', 'getSnoozeMinutes failed', e, st);
     }
     return 10;
   }
@@ -743,7 +748,7 @@ class ActionRouter {
         return (reminders.first['deferCount'] as int?) ?? 0;
       }
     } catch (e, st) {
-      debugPrint('Error in action_router.dart: $e\n$st');
+      RitmoLog.error('ActionRouter', 'getCurrentDeferCount failed', e, st);
     }
     return 0;
   }
@@ -1069,7 +1074,7 @@ class ActionRouter {
         if (parsed != null && parsed > 0) return parsed;
       }
     } catch (e, st) {
-      debugPrint('Error in action_router.dart: $e\n$st');
+      RitmoLog.error('ActionRouter', 'configuredMaxDefer failed', e, st);
     }
     return 3;
   }
@@ -1090,7 +1095,7 @@ class ActionRouter {
         return rows.first['scheduleType']?.toString();
       }
     } catch (e, st) {
-      debugPrint('Error in action_router.dart: $e\n$st');
+      RitmoLog.error('ActionRouter', 'getRecurrenceRuleType failed for $routineId', e, st);
     }
     return null;
   }

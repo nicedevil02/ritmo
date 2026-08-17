@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/modules/routine_visibility.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
@@ -8,6 +7,7 @@ import 'package:ritmo/core/domain/engines/routine_occurrence_generator.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/medication/medication_identity.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:sqflite/sqflite.dart';
@@ -106,7 +106,7 @@ class RoutineAgendaSource implements AgendaSource {
         }
       }
     } catch (e, st) {
-      debugPrint('[RoutineAgendaSource] avgDurations failed: $e\n$st');
+      RitmoLog.error('RoutineAgendaSource', 'avgDurations failed', e, st);
     }
 
     final categoryAvgDurations = <String, double>{};
@@ -127,7 +127,7 @@ class RoutineAgendaSource implements AgendaSource {
         }
       }
     } catch (e, st) {
-      debugPrint('[RoutineAgendaSource] categoryAvgDurations failed: $e\n$st');
+      RitmoLog.error('RoutineAgendaSource', 'categoryAvgDurations failed', e, st);
     }
 
     return RoutineAgendaSource(
@@ -303,8 +303,11 @@ class RoutineAgendaSource implements AgendaSource {
             rule = RecurrenceRule.fromMap(Map<String, dynamic>.from(decoded));
           }
         } catch (e, st) {
-          debugPrint(
-            '[RoutineAgendaSource] bad recurrenceRule for $routineId: $e\n$st',
+          RitmoLog.error(
+            'RoutineAgendaSource',
+            'bad recurrenceRule for $routineId',
+            e,
+            st,
           );
         }
       }
@@ -314,8 +317,11 @@ class RoutineAgendaSource implements AgendaSource {
       try {
         occursToday = RoutineOccurrenceGenerator.shouldOccurOnDate(date, rule);
       } catch (e, st) {
-        debugPrint(
-          '[RoutineAgendaSource] shouldOccurOnDate failed for $routineId: $e\n$st',
+        RitmoLog.error(
+          'RoutineAgendaSource',
+          'shouldOccurOnDate failed for $routineId',
+          e,
+          st,
         );
       }
 

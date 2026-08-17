@@ -5,6 +5,7 @@ import 'package:ritmo/core/domain/agenda/agenda_action_handler.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/event_agenda_renderer.dart';
 import 'package:ritmo/core/domain/agenda/quran_dhikr_agenda_renderer.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/date_key.dart';
@@ -307,8 +308,11 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
                       }
                     }
                   } catch (e, st) {
-                    debugPrint(
-                      'Error in agenda_renderer_registry.dart: $e\n$st',
+                    RitmoLog.error(
+                      'AgendaRendererRegistry',
+                      'snoozePrayer failed',
+                      e,
+                      st,
                     );
                   }
                 },

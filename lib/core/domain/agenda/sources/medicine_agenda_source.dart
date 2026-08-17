@@ -1,12 +1,12 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/engines/routine_occurrence_generator.dart';
 import 'package:ritmo/core/domain/medication/medication_identity.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -140,7 +140,7 @@ class MedicineAgendaSource implements AgendaSource {
         }
       }
     } catch (e, st) {
-      debugPrint('[MedicineAgendaSource] Load error: $e\n$st');
+      RitmoLog.error('MedicineAgendaSource', 'Load failed', e, st);
     }
 
     return MedicineAgendaSource(
@@ -347,7 +347,7 @@ class MedicineAgendaSource implements AgendaSource {
           jsonDecode(ruleStr) as Map<String, dynamic>,
         );
       } catch (e, st) {
-        debugPrint('[MedicineAgendaSource] Invalid recurrenceRule: $e\n$st');
+        RitmoLog.error('MedicineAgendaSource', 'Invalid recurrenceRule', e, st);
       }
     }
 

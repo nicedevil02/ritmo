@@ -1,11 +1,11 @@
-import 'package:flutter/foundation.dart' hide Category;
-import 'package:shamsi_date/shamsi_date.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
+import 'package:shamsi_date/shamsi_date.dart';
+import 'package:sqflite/sqflite.dart';
 
 class TaskAgendaSource implements AgendaSource {
   TaskAgendaSource({
@@ -145,7 +145,7 @@ class TaskAgendaSource implements AgendaSource {
         stepCounts: stepCounts,
       );
     } catch (e, st) {
-      debugPrint('[TaskAgendaSource] Load error: $e\n$st');
+      RitmoLog.error('TaskAgendaSource', 'Load failed', e, st);
       return TaskAgendaSource(
         tasksByDate: const {},
         overdueTasks: const [],
@@ -270,19 +270,14 @@ class TaskAgendaSource implements AgendaSource {
 
         String jalaliSubtitle = 'معوقه از $origDateStr';
         try {
-          final parts = origDateStr.split('-');
-          if (parts.length == 3) {
-            final dt = DateTime(
-              int.parse(parts[0]),
-              int.parse(parts[1]),
-              int.parse(parts[2]),
-            );
+          final dt = DateKey.parse(origDateStr);
+          if (dt != null) {
             final j = Jalali.fromDateTime(dt);
             jalaliSubtitle =
                 'معوقه از ${toPersianDigits(j.day)} ${j.formatter.mN}';
           }
         } catch (e, st) {
-          debugPrint('Error in task_agenda_source.dart: $e\n$st');
+          RitmoLog.error('TaskAgendaSource', 'overdue date parse failed', e, st);
         }
 
         result.add(

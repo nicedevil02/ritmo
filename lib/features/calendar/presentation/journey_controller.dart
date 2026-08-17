@@ -12,6 +12,7 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/commands/command_stack.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/core/domain/agenda/occurrence_override_repository.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -206,7 +207,7 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = 'Failed to load schedule: $e';
-      debugPrint('loadForActiveScale error: $e\n$stackTrace');
+      RitmoLog.error('JourneyController', 'loadForActiveScale failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
         _isLoading = false;
@@ -235,7 +236,7 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = 'Failed to complete task: $e';
-      debugPrint('completeItem error: $e\n$stackTrace');
+      RitmoLog.error('JourneyController', 'completeItem failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -263,7 +264,7 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = 'Failed to postpone task: $e';
-      debugPrint('postponeItem error: $e\n$stackTrace');
+      RitmoLog.error('JourneyController', 'postponeItem failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -291,7 +292,7 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = 'Failed to skip task: $e';
-      debugPrint('skipItem error: $e\n$stackTrace');
+      RitmoLog.error('JourneyController', 'skipItem failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -340,7 +341,7 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = 'Failed to move task: $e';
-      debugPrint('commitItemDrag error: $e\n$stackTrace');
+      RitmoLog.error('JourneyController', 'commitItemDrag failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -373,7 +374,7 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = 'Failed to resize task: $e';
-      debugPrint('commitItemResize error: $e\n$stackTrace');
+      RitmoLog.error('JourneyController', 'commitItemResize failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -427,8 +428,8 @@ class JourneyController extends ChangeNotifier {
           notifyListeners();
         }
       }
-    } catch (e) {
-      debugPrint('[JourneyController] loadDefaultScale error: $e');
+    } catch (e, st) {
+      RitmoLog.error('JourneyController', 'loadDefaultScale failed', e, st);
     }
   }
 
@@ -479,12 +480,12 @@ class JourneyController extends ChangeNotifier {
       _snapshot = _rangeSnapshots[selectedKey] ??
           _snapshotBuilder.buildSnapshot(DayAgenda(dateStr: selectedKey, items: const []));
       sw.stop();
-      debugPrint('[JourneyController] loadAgendaRange: ${sw.elapsedMilliseconds}ms');
+      RitmoLog.debug('JourneyController', 'loadAgendaRange: ${sw.elapsedMilliseconds}ms');
       _errorMessage = null; // clear stale error on successful load
     } catch (e, st) {
       if (_isDisposed) return;
       _errorMessage = 'خطا در بارگذاری برنامه‌ها: $e';
-      debugPrint('[JourneyController] loadAgendaRange error: $e\n$st');
+      RitmoLog.error('JourneyController', 'loadAgendaRange failed', e, st);
     } finally {
       if (!_isDisposed) {
         _isLoading = false;
@@ -584,7 +585,7 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = 'Failed to schedule task: $e';
-      debugPrint('scheduleItem error: $e\n$stackTrace');
+      RitmoLog.error('JourneyController', 'scheduleItem failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -612,7 +613,7 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = 'Failed to unschedule task: $e';
-      debugPrint('unscheduleItem error: $e\n$stackTrace');
+      RitmoLog.error('JourneyController', 'unscheduleItem failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;

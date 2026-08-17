@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:sqflite/sqflite.dart';
@@ -64,10 +64,9 @@ class GoalStepsAgendaSource implements AgendaSource {
         }
       }
 
-      // Load active goals for Friday review (M2-14)
       activeGoalsList = await db.query('goals', where: "status = 'ACTIVE'");
     } catch (e, st) {
-      debugPrint('[GoalStepsAgendaSource] Load goals error: $e\n$st');
+      RitmoLog.error('GoalStepsAgendaSource', 'Load goals failed', e, st);
     }
 
     return GoalStepsAgendaSource(

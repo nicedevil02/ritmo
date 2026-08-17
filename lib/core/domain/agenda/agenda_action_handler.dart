@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/action_feedback.dart';
-import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/completion/snooze_policy.dart';
@@ -85,8 +85,9 @@ class AgendaActionHandler {
     final ids = await _practiceIdsForGroup(db, group);
 
     if (ids.isEmpty) {
-      debugPrint(
-        '[AgendaActionHandler] Unknown or unconfigured prayer group: $group',
+      RitmoLog.warning(
+        'AgendaActionHandler',
+        'Unknown or unconfigured prayer group: $group',
       );
       return;
     }
@@ -99,8 +100,9 @@ class AgendaActionHandler {
           date: date,
         );
         if (result is WorshipLogFailed) {
-          debugPrint(
-            '[AgendaActionHandler] togglePrayer logDone error: ${result.error}',
+          RitmoLog.error(
+            'AgendaActionHandler',
+            'togglePrayer logDone failed: ${result.error}',
           );
         }
       } else {

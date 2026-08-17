@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_occasions_data.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -49,8 +49,8 @@ class OccasionsCalendarSource {
       }
 
       return result;
-    } catch (e) {
-      debugPrint('[OccasionsCalendarSource] Error: $e');
+    } catch (e, st) {
+      RitmoLog.error('OccasionsCalendarSource', 'getOccasions failed for $date', e, st);
       return const [];
     }
   }

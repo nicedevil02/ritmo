@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
-import 'package:ritmo/features/konkur/models/konkur_models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
+import 'package:ritmo/features/konkur/models/konkur_models.dart';
 
 class KonkurAgendaSource implements AgendaSource {
   final Map<String, List<KonkurPlanItem>> konkurByDate;
@@ -47,7 +47,7 @@ class KonkurAgendaSource implements AgendaSource {
           }
         }
       } catch (e, st) {
-        debugPrint('Error in konkur_agenda_source.dart: $e\n$st');
+        RitmoLog.error('KonkurAgendaSource', 'Load konkur plans failed', e, st);
       }
     }
 

@@ -1,7 +1,9 @@
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/utils/date_key.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Agenda source for health appointments (`doctor_visits`, `vaccinations`, `pregnancy_checkups`).
@@ -85,7 +87,7 @@ class AppointmentAgendaSource implements AgendaSource {
         }
       }
     } catch (e, st) {
-      debugPrint('[AppointmentAgendaSource] doctor_visits load error: $e\n$st');
+      RitmoLog.error('AppointmentAgendaSource', 'doctor_visits load failed', e, st);
     }
 
     // 2. Vaccinations
@@ -108,8 +110,7 @@ class AppointmentAgendaSource implements AgendaSource {
         final targetTs = nextDue ?? administered;
         if (targetTs != null) {
           final dt = DateTime.fromMillisecondsSinceEpoch(targetTs);
-          final dateStr =
-              '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+          final dateStr = DateKey.of(dt);
           final doseNum = row['doseNumber'] as int?;
           final vacName = row['vaccineName']?.toString() ?? 'واکسن';
           final title = doseNum != null && doseNum > 0
@@ -130,7 +131,7 @@ class AppointmentAgendaSource implements AgendaSource {
         }
       }
     } catch (e, st) {
-      debugPrint('[AppointmentAgendaSource] vaccinations load error: $e\n$st');
+      RitmoLog.error('AppointmentAgendaSource', 'vaccinations load failed', e, st);
     }
 
     // 3. Pregnancy Checkups (if enabled)
@@ -153,10 +154,9 @@ class AppointmentAgendaSource implements AgendaSource {
           final targetTs = sched ?? actual;
           if (targetTs != null) {
             final dt = DateTime.fromMillisecondsSinceEpoch(targetTs);
-            final dateStr =
-                '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-            final timeStr =
-                '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+            final dateStr = DateKey.of(dt);
+            final timeMinutes = (dt.hour * 60) + dt.minute;
+            final timeStr = TimeOfDayMinutes.format(timeMinutes);
 
             appointmentsByDate.putIfAbsent(dateStr, () => []).add({
               'id': row['id'],
@@ -170,8 +170,11 @@ class AppointmentAgendaSource implements AgendaSource {
           }
         }
       } catch (e, st) {
-        debugPrint(
-          '[AppointmentAgendaSource] pregnancy_checkups load error: $e\n$st',
+        RitmoLog.error(
+          'AppointmentAgendaSource',
+          'pregnancy_checkups load failed',
+          e,
+          st,
         );
       }
     }

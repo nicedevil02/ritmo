@@ -18,6 +18,10 @@ abstract final class RitmoLog {
     RitmoLogger.warning('[$scope] $message', error: error, stack: st);
   }
 
+  static void warn(String scope, String message, [Object? error, StackTrace? st]) {
+    RitmoLogger.warning('[$scope] $message', error: error, stack: st);
+  }
+
   static void error(String scope, String message, [Object? error, StackTrace? st]) {
     RitmoLogger.error('[$scope] $message', error: error, stack: st);
   }

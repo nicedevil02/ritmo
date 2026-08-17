@@ -299,7 +299,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
 
                       if (isEdit && log['id'] != null) {
                         final duration = endDate != null
-                            ? CycleDateContract.daysBetween(startDate, endDate) + 1
+                            ? CycleDateContract.daysBetween(startDate, endDate!) + 1
                             : null;
                         await db.update(
                           'cycle_periods',
@@ -320,7 +320,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                         if (endDate != null) {
                           final active = await CyclePeriodRepository.instance.getActivePeriod(db);
                           if (active != null) {
-                            await CyclePeriodRepository.instance.endPeriod(active.id!, endDate, dbExecutor: db);
+                            await CyclePeriodRepository.instance.endPeriod(active.id!, endDate!, dbExecutor: db);
                           }
                         }
                       }

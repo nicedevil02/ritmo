@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 enum DayMarkKind { normal, rest, travel, special }
@@ -52,7 +52,7 @@ class DayMarkRepository {
         note: row['note']?.toString(),
       );
     } catch (e, st) {
-      debugPrint('[DayMarkRepository] getMark error: $e\n$st');
+      RitmoLog.error('DayMarkRepository', 'getMark failed for $dateStr', e, st);
       return null;
     }
   }
@@ -88,7 +88,7 @@ class DayMarkRepository {
       );
       return true;
     } catch (e, st) {
-      debugPrint('[DayMarkRepository] setMark error: $e\n$st');
+      RitmoLog.error('DayMarkRepository', 'setMark failed for $dateStr', e, st);
       return false;
     }
   }

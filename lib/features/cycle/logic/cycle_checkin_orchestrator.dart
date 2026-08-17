@@ -1,4 +1,5 @@
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 
 class CycleCheckinOrchestrator {
@@ -17,7 +18,9 @@ class CycleCheckinOrchestrator {
     }
 
     if (pmsWindowStart != null) {
-      final daysToPms = pmsWindowStart.difference(now).inDays;
+      final cleanNow = CycleDateContract.cleanDate(now);
+      final cleanPms = CycleDateContract.cleanDate(pmsWindowStart);
+      final daysToPms = CycleDateContract.daysBetween(cleanNow, cleanPms);
       if (daysToPms >= 0 && daysToPms <= 3 && !dataQuality.hasRecentDailyLogs) {
         return 'نزدیک به پنجره قبل از دوره هستید. ثبت وضعیت بدنی امروز پیشنهادی است.';
       }
@@ -30,3 +33,4 @@ class CycleCheckinOrchestrator {
     return null;
   }
 }
+

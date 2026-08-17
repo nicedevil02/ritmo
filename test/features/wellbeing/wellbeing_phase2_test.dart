@@ -54,13 +54,11 @@ void main() {
         await d.execute('''
           CREATE TABLE wellbeing_entry (
             id TEXT PRIMARY KEY,
-            date TEXT,
-            dimension TEXT,
-            value REAL,
+            dateIso TEXT NOT NULL,
+            dimension TEXT NOT NULL,
+            value REAL NOT NULL,
             note TEXT,
-            source TEXT,
-            createdAt INTEGER,
-            updatedAt INTEGER
+            loggedAt INTEGER NOT NULL
           );
         ''');
       },

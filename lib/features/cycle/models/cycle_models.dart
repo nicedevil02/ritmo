@@ -22,14 +22,65 @@ class CycleTrendPoint {
   final bool isInProgress;
 }
 
+enum CycleFlowLevel {
+  none,
+  light,
+  medium,
+  heavy;
+
+  static CycleFlowLevel fromDb(String? value) {
+    if (value == null) return CycleFlowLevel.none;
+    final normalized = value.trim().toUpperCase();
+    switch (normalized) {
+      case 'LIGHT':
+      case 'SPOTTING':
+        return CycleFlowLevel.light;
+      case 'MEDIUM':
+        return CycleFlowLevel.medium;
+      case 'HEAVY':
+        return CycleFlowLevel.heavy;
+      case 'NONE':
+      default:
+        return CycleFlowLevel.none;
+    }
+  }
+
+  String toDb() => switch (this) {
+        CycleFlowLevel.none => 'NONE',
+        CycleFlowLevel.light => 'LIGHT',
+        CycleFlowLevel.medium => 'MEDIUM',
+        CycleFlowLevel.heavy => 'HEAVY',
+      };
+
+  double get score => switch (this) {
+        CycleFlowLevel.none => 0.0,
+        CycleFlowLevel.light => 1.0,
+        CycleFlowLevel.medium => 2.0,
+        CycleFlowLevel.heavy => 3.0,
+      };
+
+  String get labelFa => switch (this) {
+        CycleFlowLevel.none => 'بدون خونریزی',
+        CycleFlowLevel.light => 'خفیف',
+        CycleFlowLevel.medium => 'متوسط',
+        CycleFlowLevel.heavy => 'شدید',
+      };
+}
+
 class CycleCorrelation {
   CycleCorrelation({
     required this.metric,
     this.coefficient,
+    this.pValue,
+    this.sampleSize = 0,
+    this.isSignificant = false,
     required this.insight,
   });
   final String metric;
   final double? coefficient;
+  final double? pValue;
+  final int sampleSize;
+  final bool isSignificant;
   final String insight;
 }
 

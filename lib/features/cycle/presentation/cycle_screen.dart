@@ -302,7 +302,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           sleepHours: null,
         );
 
-        _adaptiveAdvice = CycleLoadBalancer.generateAdvice(_burdenScore!);
+        _adaptiveAdvice = CycleLoadBalancer.generateAdvice(
+          _burdenScore!,
+          phase: _engineOutput!.currentPhase,
+        );
 
         _checkinPromptFa = CycleCheckinOrchestrator.checkinPromptFa(
           phase: _engineOutput!.currentPhase,
@@ -314,6 +317,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         _anomalies = CycleAnomalyDetector.detectAnomalies(
           periodRows: _periods,
           avgCycleLength: _engineOutput!.stats.avgCycleLength,
+          engineOutput: _engineOutput,
+          now: DateTime.now(),
         );
       }
 

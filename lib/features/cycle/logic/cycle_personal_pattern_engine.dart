@@ -1,67 +1,90 @@
 import 'dart:convert';
 
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CyclePersonalPatternEngine {
+  /// Minimum completed cycles required before releasing statistical forecasts
+  static const int minCompletedCycles = 3;
+
+  /// Minimum occurrences of a symptom on a given cycle day
+  static const int minSymptomOccurrences = 3;
+
+  /// Minimum confidence ratio
+  static const double minConfidenceThreshold = 0.5;
+
   static Future<List<SymptomForecast>> computePersonalForecasts({
     required Database db,
     required List<Map<String, dynamic>> periodRows,
     required double avgCycleLength,
+    DateTime? now,
   }) async {
-    if (periodRows.length < 2) return [];
+    // Need at least 3 periods to have completed cycles
+    if (periodRows.length < minCompletedCycles) return [];
 
     try {
       final dayLogs = await db.query('cycle_day_logs');
       if (dayLogs.isEmpty) return [];
 
-      // Normalize period starts (ascending) for cycle-day attribution.
+      // Sort period starts chronologically ascending
       final periodStarts = <DateTime>[];
       for (final p in periodRows) {
-        final pStart = DateTime.tryParse(p['startDate'] as String? ?? '');
+        final rawStart = p['startDate']?.toString();
+        final pStart = CycleDateContract.parseDayKey(rawStart);
         if (pStart != null) {
-          periodStarts.add(DateTime(pStart.year, pStart.month, pStart.day));
+          periodStarts.add(pStart);
         }
       }
-      if (periodStarts.isEmpty) return [];
+      if (periodStarts.length < minCompletedCycles) return [];
       periodStarts.sort();
 
-      // Group symptoms by cycle day
+      final completedCycles = periodStarts.length - 1;
+      if (completedCycles < minCompletedCycles) return [];
+
+      // Map of cycle index to (start, length)
+      final cycleMeta = <int, ({DateTime start, int length})>{};
+      for (var i = 0; i < periodStarts.length; i++) {
+        final start = periodStarts[i];
+        final length = (i + 1 < periodStarts.length)
+            ? CycleDateContract.daysBetween(start, periodStarts[i + 1])
+            : avgCycleLength.round();
+        cycleMeta[i] = (start: start, length: length);
+      }
+
+      // Group symptoms by symptomKey -> cycleDay -> count
       final symptomDayCounts = <String, Map<int, int>>{};
 
       for (final log in dayLogs) {
-        // NOTE: the column is `logDate` (not `date`), and symptoms live in
-        // `symptomsJson` as a JSON-encoded array (not a CSV string).
-        final dateStr = log['logDate'] as String?;
-        if (dateStr == null) continue;
-        final logDateRaw = DateTime.tryParse(dateStr);
-        if (logDateRaw == null) continue;
-        final logDate = DateTime(
-          logDateRaw.year,
-          logDateRaw.month,
-          logDateRaw.day,
-        );
+        final dateStr = log['logDate']?.toString();
+        final logDate = CycleDateContract.parseDayKey(dateStr);
+        if (logDate == null) continue;
 
-        // Attribute the log to the LATEST period start <= logDate, exactly once.
-        DateTime? activeStart;
-        for (final pStart in periodStarts) {
-          if (pStart.isAfter(logDate)) break;
-          activeStart = pStart;
+        // Find which cycle this log belongs to
+        int? activeCycleIndex;
+        for (var i = periodStarts.length - 1; i >= 0; i--) {
+          if (CycleDateContract.isSameOrBefore(periodStarts[i], logDate)) {
+            activeCycleIndex = i;
+            break;
+          }
         }
-        if (activeStart == null) continue;
+        if (activeCycleIndex == null) continue;
 
-        final cycleDay = logDate.difference(activeStart).inDays + 1;
-        if (cycleDay < 1 || cycleDay > avgCycleLength + 5) continue;
+        final meta = cycleMeta[activeCycleIndex]!;
+        final cycleDay = CycleDateContract.daysBetween(meta.start, logDate) + 1;
+
+        // C-34: Attribution distance cap (L + 10)
+        if (cycleDay < 1 || cycleDay > meta.length + 10) continue;
 
         final symptomsRaw = log['symptomsJson'] as String? ?? '';
         if (symptomsRaw.isEmpty) continue;
 
-        List<String> symptoms;
+        List<dynamic> symptoms;
         try {
           final decoded = jsonDecode(symptomsRaw);
           if (decoded is! List) continue;
-          symptoms = decoded.map((e) => e.toString()).toList();
+          symptoms = decoded;
         } catch (e, st) {
           RitmoLogger.error(
             '[CyclePersonalPatternEngine] error decoding symptomsJson',
@@ -72,7 +95,7 @@ class CyclePersonalPatternEngine {
         }
 
         for (final sym in symptoms) {
-          final key = sym.trim();
+          final key = sym.toString().trim();
           if (key.isEmpty) continue;
           symptomDayCounts.putIfAbsent(key, () => {});
           symptomDayCounts[key]![cycleDay] =
@@ -93,18 +116,21 @@ class CyclePersonalPatternEngine {
           }
         });
 
-        if (maxCount >= 2) {
-          final confidence = (maxCount / periodRows.length).clamp(0.4, 0.95);
-          final labelFa = _getSymptomFarsiLabel(symptomKey);
-          forecasts.add(
-            SymptomForecast(
-              symptomKey: symptomKey,
-              likelyCycleDay: maxDay,
-              confidence: confidence,
-              insightFa:
-                  'در داده‌های ثبت‌شده شما، $labelFa معمولاً حوالی روز $maxDay چرخه تکرار شده است.',
-            ),
-          );
+        // C-34: Thresholds: confidence >= 0.5 && maxCount >= 3 && completedCycles >= 3
+        if (maxCount >= minSymptomOccurrences) {
+          final confidence = maxCount / completedCycles;
+          if (confidence >= minConfidenceThreshold) {
+            final labelFa = _getSymptomFarsiLabel(symptomKey);
+            forecasts.add(
+              SymptomForecast(
+                symptomKey: symptomKey,
+                likelyCycleDay: maxDay,
+                confidence: confidence.clamp(0.0, 1.0),
+                insightFa:
+                    'در داده‌های ثبت‌شده شما، $labelFa معمولاً حوالی روز $maxDay چرخه تکرار شده است.',
+              ),
+            );
+          }
         }
       });
 
@@ -133,3 +159,4 @@ class CyclePersonalPatternEngine {
     };
   }
 }
+

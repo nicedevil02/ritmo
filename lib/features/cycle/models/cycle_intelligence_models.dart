@@ -26,15 +26,33 @@ class SymptomForecast {
   final String insightFa;
 }
 
+enum BurdenConfidence { low, medium, high }
+
+class BurdenFactor {
+  const BurdenFactor({
+    required this.code,
+    required this.weight,
+    required this.labelFa,
+  });
+
+  final String code;
+  final double weight;
+  final String labelFa;
+}
+
 class BodyBurdenScore {
   const BodyBurdenScore({
     required this.score,
     required this.level,
+    this.confidence = 'MEDIUM',
+    this.factors = const [],
     required this.reasonsFa,
   });
 
   final double score; // 0..100
   final String level; // LOW / MODERATE / HIGH
+  final String confidence; // LOW / MEDIUM / HIGH
+  final List<BurdenFactor> factors;
   final List<String> reasonsFa;
 }
 
@@ -58,9 +76,24 @@ class DataQualityReport {
   final List<String> warningsFa;
 }
 
+enum CycleLoadMode {
+  rest,
+  lighter,
+  balanced,
+  higherFocus;
+
+  String get code => switch (this) {
+        CycleLoadMode.rest => 'rest',
+        CycleLoadMode.lighter => 'lighter',
+        CycleLoadMode.balanced => 'balanced',
+        CycleLoadMode.higherFocus => 'higher-focus',
+      };
+}
+
 class CycleAdaptiveAdvice {
   const CycleAdaptiveAdvice({
     required this.loadMode,
+    this.mode = CycleLoadMode.balanced,
     required this.energyDelta,
     required this.sessionLengthMultiplier,
     required this.extraBreakMinutesEveryHour,
@@ -68,6 +101,7 @@ class CycleAdaptiveAdvice {
   });
 
   final String loadMode; // lighter / balanced / higher-focus
+  final CycleLoadMode mode;
   final int energyDelta;
   final double sessionLengthMultiplier;
   final int extraBreakMinutesEveryHour;

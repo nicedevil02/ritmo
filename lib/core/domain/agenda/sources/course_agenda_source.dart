@@ -117,7 +117,7 @@ class CourseAgendaSource implements AgendaSource {
           id: buildAgendaItemId(AgendaDomain.course, s.id, ctx.dateStr),
           domain: AgendaDomain.course,
           sourceId: s.id,
-          title: s.sessionTitle ?? 'جلسه ${s.sessionNumber}',
+          title: s.sessionTitle ?? '${course?.unitLabel ?? "Session"} ${s.sessionNumber}',
           subtitle: course?.title,
           dateStr: ctx.dateStr,
           timeOfDay: resolvedTime,

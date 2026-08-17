@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/features/assistant/models/assistant_models.dart';
 
@@ -157,3 +158,4 @@ class ChatComplete extends StreamingChatEvent {
 }
 class ChatCancelled extends StreamingChatEvent { ChatCancelled(this.messageId, this.content); final String messageId; final String content; }
 class ChatErrorEvent extends StreamingChatEvent { ChatErrorEvent(this.code, this.message); final String code; final String message; }
+class AgentStreamEvent extends StreamingChatEvent { AgentStreamEvent(this.agentEvent); final AgentEvent agentEvent; }

@@ -7,8 +7,8 @@
 | T01 | پاس دادن personaId به حلقه | DONE | 3b65554 | personaId اجباری شد و به PersonaGate و AgentLoop منتقل شد |
 | T02 | نصب AgentConfirmationHost | DONE | 00b01e0 | نصب در شیت دستیار، تایم‌اوت ۹۰ ثانیه و رویداد AgentConfirmationTimedOutEvent |
 | T03 | نشتی اشتراک و broker در dispose | DONE | 79701aa | لغو اشتراک ایجنت و پاکسازی تمام تاییدهای معلق در dispose |
-| T04 | استفاده از rawAnswer به‌جای متن تمیزشده | DOING | | |
-| T05 | هندل کردن همه‌ی رویدادها در چت اصلی | TODO | | |
+| T04 | استفاده از rawAnswer به‌جای متن تمیزشده | DONE | a692322 | پارس اکشن‌ها و اعمال memory_ops از روی rawAnswer در شیت دستیار |
+| T05 | هندل کردن همه‌ی رویدادها در چت اصلی | DOING | | |
 | T06 | اصلاح «تاریخچه اخیر» معکوس | TODO | | |
 | T07 | اعمال یا حذف PersonaInferenceProfile | TODO | | |
 | T08 | بودجه‌ی نوشتن نباید با شکست مصرف شود | TODO | | |

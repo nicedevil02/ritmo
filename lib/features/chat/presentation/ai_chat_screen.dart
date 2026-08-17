@@ -34,6 +34,8 @@ import 'package:ritmo/features/assistant/presentation/widgets/ai_weekly_planner_
 import 'package:ritmo/features/assistant/presentation/widgets/assistant_briefing_section.dart';
 import 'package:ritmo/features/chat/presentation/chat_session_list_screen.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
+import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
+import 'package:ritmo/core/ai/agent/ui/agent_confirmation_card.dart';
 import 'package:ritmo/features/chat/presentation/widgets/agent_timeline_visualizer.dart';
 import 'package:ritmo/features/chat/presentation/widgets/streaming_message_bubble.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -566,6 +568,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _pendingDeleteTimers.clear();
     _pendingDeletedMsgs.clear();
     _cancelStreamSilent();
+    AgentConfirmationBroker.instance.cancelAll();
     ChatGptWebBridgeManager.instance.cloudflareNotifier.removeListener(_handleCloudflarePrompt);
     _textController.dispose();
     _scrollController.dispose();
@@ -937,6 +940,12 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _textController.clear();
     final consent = await ConsentProfile.loadFromDb();
 
+    setState(() {
+      _agentSteps.clear();
+      _agentStatusText = 'در حال تحلیل هوشمند و بررسی ابزارها...';
+      _isAgentWorking = true;
+    });
+
     _sub = StreamingChatService().send(
       sessionId: _sessionId!,
       userText: text,
@@ -947,6 +956,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       setState(() {
         _sub = null;
         _streamingId = null;
+        _isAgentWorking = false;
       });
     });
 
@@ -980,6 +990,39 @@ class _AiChatScreenState extends State<AiChatScreen> {
         });
       }
       _scrollToBottom();
+    } else if (e is AgentStreamEvent) {
+      final event = e.agentEvent;
+      if (event is AgentStatusChangedEvent) {
+        setState(() {
+          _agentStatusText = event.statusTextFa;
+          _isAgentWorking = event.isWorking;
+        });
+      } else if (event is AgentStepStartedEvent || event is AgentStepCompletedEvent) {
+        final step = (event is AgentStepStartedEvent)
+            ? event.step
+            : (event as AgentStepCompletedEvent).step;
+        setState(() {
+          final idx = _agentSteps.indexWhere((s) => s.id == step.id);
+          if (idx != -1) {
+            _agentSteps[idx] = step;
+          } else {
+            _agentSteps.add(step);
+          }
+        });
+      } else if (event is AgentConfirmationTimedOutEvent) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                event.messageFa,
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.orange.shade800,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
     } else if (e is ChatComplete) {
       final idx = _messages.indexWhere((m) => m.id == e.messageId);
       if (idx != -1) {
@@ -994,11 +1037,18 @@ class _AiChatScreenState extends State<AiChatScreen> {
       setState(() {
         _sub = null;
         _streamingId = null;
+        _isAgentWorking = false;
       });
       _scrollToBottom();
     } else if (e is ChatErrorEvent) {
+      setState(() {
+        _isAgentWorking = false;
+      });
       _onError(e.message.isEmpty ? 'خطایی در ارتباط با دستیار رخ داد.' : e.message);
     } else if (e is ChatCancelled) {
+      setState(() {
+        _isAgentWorking = false;
+      });
       _cancelStream();
     }
   }
@@ -1432,6 +1482,9 @@ $friendlySummary
                 statusText: _agentStatusText,
                 isWorking: _isAgentWorking,
               ),
+
+              // Agent Confirmation Card Host
+              const AgentConfirmationHost(),
 
               // Live Mini ChatGPT Preview Window
               const ChatGptMiniPreview(),

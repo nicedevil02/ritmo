@@ -142,9 +142,14 @@ class StreamingChatService {
             break;
           }
           yield ChatChunk(event.delta, accumulated);
-        } else if (event is AgentStepCompletedEvent) {
-          debugPrint(
-              '[Agent] tool ${event.step.toolName ?? event.step.titleFa} -> ${event.step.status.name}');
+        } else if (event is AgentStatusChangedEvent ||
+            event is AgentStepStartedEvent ||
+            event is AgentStepCompletedEvent ||
+            event is AgentTurnStartedEvent ||
+            event is AgentAwaitingConfirmationEvent ||
+            event is AgentConfirmationResolvedEvent ||
+            event is AgentConfirmationTimedOutEvent) {
+          yield AgentStreamEvent(event);
         } else if (event is AgentCompletedEvent) {
           // P0-3: متن خام را نگه می‌داریم تا تگ‌های actions و memory_ops از دست نروند.
           rawAnswer = event.rawAnswer;
@@ -157,9 +162,11 @@ class StreamingChatService {
               yield ChatChunk('', accumulated);
             }
           }
+          yield AgentStreamEvent(event);
         } else if (event is AgentErrorEvent) {
           hasError = true;
           errorCode = event.errorMessageFa;
+          yield AgentStreamEvent(event);
           break;
         }
       }

@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
-import 'package:ritmo/core/ai/personas/assistant_charters.dart';
 import 'package:ritmo/core/ai/personas/persona_prompt_builder.dart';
 import 'package:ritmo/core/ai/personas/persona_response_validator.dart';
 import 'package:ritmo/core/ai/personas/persona_inference_profile.dart';
@@ -94,7 +93,7 @@ void main() {
 
       test('validates clean valid response', () {
         final persona = PersonaRegistry.instance.getPersona('sleep')!;
-        final res = ParsedAssistantResponse(
+        const res = ParsedAssistantResponse(
           reply: 'بر اساس اطلاعات خواب شما، الگوی خواب منظم است.',
           confidence: BriefConfidence.medium,
           usedFields: ['sleep.consistencyScore'],
@@ -112,7 +111,7 @@ void main() {
 
       test('rejects causal language', () {
         final persona = PersonaRegistry.instance.getPersona('sleep')!;
-        final res = ParsedAssistantResponse(
+        const res = ParsedAssistantResponse(
           reply: 'کمبود خواب باعث شد انرژی شما افت کند.',
           confidence: BriefConfidence.medium,
         );
@@ -130,7 +129,7 @@ void main() {
 
       test('rejects Gregorian dates', () {
         final persona = PersonaRegistry.instance.getPersona('sleep')!;
-        final res = ParsedAssistantResponse(
+        const res = ParsedAssistantResponse(
           reply: 'در تاریخ 2026-08-10 خواب خوبی داشتید.',
           confidence: BriefConfidence.medium,
         );
@@ -148,7 +147,7 @@ void main() {
 
       test('enforces privacy fence for cycle terms in non-cycle personas', () {
         final globalPersona = PersonaRegistry.instance.getPersona('global')!;
-        final res = ParsedAssistantResponse(
+        const res = ParsedAssistantResponse(
           reply: 'امروز وضعیت علائم قاعدگی شما چطور است؟',
           confidence: BriefConfidence.medium,
         );

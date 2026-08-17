@@ -4,7 +4,7 @@ import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/ai/memory/memory_models.dart';
 
-/// دامنه‌های مجاز حافطه (همان لیستی که pruneMemories مدیریت می‌کند).
+/// دامنه‌های مجاز حافظه (همان لیستی که pruneMemories مدیریت می‌کند).
 /// دامنه خارج از این لیست به core تبدیل می‌شود؛ وگرنه رکورد در هیچ سقفی
 /// شمرده نمی‌شود و برای همیشه می‌ماند.
 const List<String> kMemoryDomains = <String>[
@@ -41,10 +41,10 @@ class RememberFactTool extends AgentTool {
   const RememberFactTool()
       : super(
           name: 'remember_fact',
-          categoryFa: 'حافطه دستیار',
+          categoryFa: 'حافظه دستیار',
           titleFa: 'به خاطر سپردن یک واقعیت',
           descriptionFa:
-              'یک واقعیت پایدار درباره کاربر را در حافطه بلندمدت ثبت می‌کند. '
+              'یک واقعیت پایدار درباره کاربر را در حافظه بلندمدت ثبت می‌کند. '
               'فقط وقتی استفاده کن که کاربر صریحا خواسته چیزی را یادت بماند یا '
               'واقعیتی را گفته که در گفتگوهای بعدی هم معنا دارد (مثل محدودیت، '
               'علاقه، ساعت کاری ثابت). برای داده یک‌بارمصرف یا محتوای گفتگو '
@@ -122,7 +122,7 @@ class RememberFactTool extends AgentTool {
       return AgentToolResult.failure(
         toolName: name,
         errorMessage:
-            'حافطه دستیار در تنطیمات خاموش است، پس چیزی ذخیره نشد. به کاربر بگو اول از تنطیمات حافطه را روشن کند.',
+            'حافظه دستیار در تنظیمات خاموش است، پس چیزی ذخیره نشد. به کاربر بگو اول از تنظیمات حافظه را روشن کند.',
       );
     }
 
@@ -151,7 +151,7 @@ class RememberFactTool extends AgentTool {
     } catch (e) {
       return AgentToolResult.failure(
         toolName: name,
-        errorMessage: 'ذخیره در حافطه با خطا متوقف شد: $e',
+        errorMessage: 'ذخیره در حافظه با خطا متوقف شد: $e',
       );
     }
 
@@ -170,7 +170,7 @@ class RememberFactTool extends AgentTool {
       return AgentToolResult.failure(
         toolName: name,
         errorMessage:
-            'رکورد حافطه نوشته شد ولی در بازخوانی تأییدی دیده نشد؛ به کاربر نگو که ذخیره شد.',
+            'رکورد حافظه نوشته شد ولی در بازخوانی تأییدی دیده نشد؛ به کاربر نگو که ذخیره شد.',
       );
     }
 
@@ -190,7 +190,7 @@ class RememberFactTool extends AgentTool {
         'isUndoable': false,
       },
       summaryFa:
-          'در حافطه ثبت شد$pinnedNote: «$content» — حوزه: $domain. کاربر می‌تواند از تنطیمات حافطه آن را حذف کند.',
+          'در حافظه ثبت شد$pinnedNote: «$content» — حوزه: $domain. کاربر می‌تواند از تنظیمات حافظه آن را حذف کند.',
     );
   }
 }
@@ -200,12 +200,12 @@ class RecallFactsTool extends AgentTool {
   const RecallFactsTool()
       : super(
           name: 'recall_facts',
-          categoryFa: 'حافطه دستیار',
-          titleFa: 'بازخوانی حافطه',
+          categoryFa: 'حافظه دستیار',
+          titleFa: 'بازخوانی حافظه',
           descriptionFa:
               'واقعیت‌های ذخیره‌شده درباره کاربر را براساس یک عبارت جستجو برمی‌گرداند. '
               'وقتی استفاده کن که مطمئن نیستی قبلا درباره موضوعی چه می‌دانی یا '
-              'کاربر پرسید «چی از من یادت هست؟». هرگز حافطه را حدس نزن.',
+              'کاربر پرسید «چی از من یادت هست؟». هرگز حافظه را حدس نزن.',
           policy: ToolPolicy.readOnly,
           parameters: const <ToolParameter>[
             ToolParameter(
@@ -218,7 +218,7 @@ class RecallFactsTool extends AgentTool {
             ToolParameter(
               name: 'domain',
               descriptionFa:
-                  'حوزه جستجو. پیش‌فرض core است که همه حوزه‌ها را می‌بیند.',
+                  'حوزه جستجو. پیش‌فرض core است که همه حوزه‌ها را می‌بینید.',
               type: 'string',
               defaultValue: 'core',
               allowedValues: kMemoryDomains,
@@ -247,7 +247,7 @@ class RecallFactsTool extends AgentTool {
       return AgentToolResult.failure(
         toolName: name,
         errorMessage:
-            'حافطه دستیار خاموش است، پس هیچ حافطه‌ای در دسترس نیست. چیزی از حافطه نقل نکن.',
+            'حافظه دستیار خاموش است، پس هیچ حافظه‌ای در دسترس نیست. چیزی از حافظه نقل نکن.',
       );
     }
 
@@ -260,7 +260,7 @@ class RecallFactsTool extends AgentTool {
     } catch (e) {
       return AgentToolResult.failure(
         toolName: name,
-        errorMessage: 'خواندن حافطه با خطا مواجه شد: $e',
+        errorMessage: 'خواندن حافظه با خطا مواجه شد: $e',
       );
     }
 
@@ -274,7 +274,7 @@ class RecallFactsTool extends AgentTool {
         toolName: name,
         data: <String, dynamic>{'facts': <Map<String, dynamic>>[], 'total': 0},
         summaryFa:
-            'درباره «$query» هیچ واقعیتی در حافطه نیست. چیزی از خودت نساز؛ اگر لازم است از کاربر بپرس.',
+            'درباره «$query» هیچ واقعیتی در حافظه نیست. چیزی از خودت نساز؛ اگر لازم است از کاربر بپرس.',
       );
     }
 

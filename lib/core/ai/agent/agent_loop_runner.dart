@@ -526,6 +526,12 @@ class AgentLoopRunner {
         } else if (result.isSuccess) {
           toolCache[cacheKey] = result;
         }
+        if (result.isSuccess &&
+            result.data != null &&
+            result.data!['interactiveAction'] is Map) {
+          interactiveAction =
+              (result.data!['interactiveAction'] as Map).cast<String, dynamic>();
+        }
         turnResults.add(result);
         allResults.add(result);
 

@@ -34,8 +34,8 @@
 | T28 | Undo یکپارچه روی AgentJournal | DONE | 5ef410c | افزودن undoLastPlan به AgentJournal و ایجاد ابزار اختصاصی undo_last_action |
 | T29 | یک broker برای تایید و پرسش | DONE | 20c3e1e | پیاده‌سازی AgentQuestionBroker و یکپارچه‌سازی چرخه حیات با AgentConfirmationBroker و پاکسازی در dispose |
 | T30 | AskUserTool که واقعاً حلقه را متوقف می‌کند | DONE | 1fd4fec | اتصال AskUserTool به AgentQuestionBroker و ارسال رویداد تعاملی جهت توقف حلقه و دریافت پاسخ کاربر |
-| T31 | تأیید خودکار و اجباری حالت پس از نوشتن | DOING | | |
-| T32 | NavigateToAppScreenTool که واقعاً جابه‌جا می‌کند | TODO | | |
+| T31 | تأیید خودکار و اجباری حالت پس از نوشتن | DONE | 7a0280e | تقویت پروتکل بازخورد اجرای ابزارها با هشدار اصالت‌سنجی و اعلام وضعیت دقیق پایگاه داده |
+| T32 | NavigateToAppScreenTool که واقعاً جابه‌جا می‌کند | DOING | | |
 | T33 | ابزار simulate_plan (حالت «فقط نشانم بده») | TODO | | |
 | T34 | برنامه‌ی چندمرحله‌ای با یک تایید | TODO | | |
 | T35 | مرور شبانه‌ی فعال | TODO | | |

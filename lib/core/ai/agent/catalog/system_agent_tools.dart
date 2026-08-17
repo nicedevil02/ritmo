@@ -123,12 +123,14 @@ class NavigateToAppScreenTool extends AgentTool {
       data: {
         'targetRoute': route,
         'sectionFa': sectionFa,
-        'autoNavigated': false,
-        'note':
-            'ناوبری خودکار انجام نشد؛ فقط مسیر و نام بخش مشخص شد.',
+        'interactiveAction': {
+          'type': 'navigation',
+          'route': route,
+          'labelFa': sectionFa,
+        },
       },
       summaryFa:
-          'بخش مورد نظر «$sectionFa» است (مسیر $route). به کاربر بگو از کجا وارد شود؛ خودت او را جابجا نکرده‌ای.',
+          'بخش مورد نظر «$sectionFa» است (مسیر: $route). کارت انتقال برای هدایت به این بخش در اختیار کاربر قرار گرفت.',
     );
   }
 }

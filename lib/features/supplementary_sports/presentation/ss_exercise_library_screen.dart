@@ -5,29 +5,54 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/ss_lottie_player.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SSExerciseLibraryScreen extends StatefulWidget {
-  const SSExerciseLibraryScreen({super.key, this.initialCategory});
+  const SSExerciseLibraryScreen({
+    super.key,
+    this.initialCategory,
+    this.embedded = false,
+    this.onExerciseAdded,
+  });
+
   final String? initialCategory;
+
+  /// وقتی داخل تب «کتابخانه» جاسازی می‌شود: بدون Scaffold و AppBar.
+  final bool embedded;
+
+  /// پس از افزوده‌شدن یک حرکت به برنامهٔ امروز صدا زده می‌شود.
+  final VoidCallback? onExerciseAdded;
 
   @override
   State<SSExerciseLibraryScreen> createState() => _SSExerciseLibraryScreenState();
 }
 
 class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
   List<Map<String, dynamic>> _allExercises = [];
   List<Map<String, dynamic>> _filteredExercises = [];
   List<String> _categories = ['all'];
   String _selectedCategory = 'all';
   String _searchQuery = '';
   bool _isLoading = true;
+  String? _loadError;
+
+  bool get _hasActiveFilter =>
+      _searchQuery.trim().isNotEmpty || _selectedCategory != 'all';
 
   @override
   void initState() {
     super.initState();
     _loadExercises();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   String _normalizeCategoryKey(String? rawCategory) {
@@ -94,11 +119,13 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
   Future<void> _loadExercises() async {
     setState(() {
       _isLoading = true;
+      _loadError = null;
     });
 
     try {
       final db = await DatabaseHelper.instance.database;
-      final List<Map<String, dynamic>> results = await db.query('ss_exercise', orderBy: 'name ASC');
+      final List<Map<String, dynamic>> results =
+          await db.query('ss_exercise', orderBy: 'name ASC');
 
       final catKeys = <String>{'all'};
       for (final row in results) {
@@ -109,24 +136,29 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
       const orderedKeys = ['all', 'chest', 'back', 'legs', 'abs', 'cardio', 'stretch', 'other'];
       final categoriesList = orderedKeys.where(catKeys.contains).toList();
 
+      if (!mounted) return;
       setState(() {
         _allExercises = results;
         _categories = categoriesList;
-        _selectedCategory = (widget.initialCategory != null && categoriesList.contains(widget.initialCategory))
+        _selectedCategory = (widget.initialCategory != null &&
+                categoriesList.contains(widget.initialCategory))
             ? widget.initialCategory!
             : 'all';
-        _filterExercises();
+        _filteredExercises = _applyFilters();
         _isLoading = false;
       });
     } catch (e) {
       debugPrint('Error loading library exercises: $e');
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
+        _loadError = e.toString();
       });
     }
   }
 
-  void _filterExercises() {
+  /// خالص — بدون setState تودرتو. نتیجه را برمی‌گرداند.
+  List<Map<String, dynamic>> _applyFilters() {
     var temp = _allExercises;
 
     if (_selectedCategory != 'all') {
@@ -136,18 +168,30 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
       }).toList();
     }
 
-    if (_searchQuery.isNotEmpty) {
+    final q = _searchQuery.trim().toLowerCase();
+    if (q.isNotEmpty) {
       temp = temp.where((ex) {
         final name = ex['name']?.toString().toLowerCase() ?? '';
         final nameEn = ex['nameEn']?.toString().toLowerCase() ?? '';
         final equipment = ex['equipment']?.toString().toLowerCase() ?? '';
-        final q = _searchQuery.toLowerCase();
         return name.contains(q) || nameEn.contains(q) || equipment.contains(q);
       }).toList();
     }
 
+    return temp;
+  }
+
+  void _refilter() {
+    setState(() => _filteredExercises = _applyFilters());
+  }
+
+  void _clearFilters() {
+    HapticFeedback.selectionClick();
+    _searchController.clear();
     setState(() {
-      _filteredExercises = temp;
+      _searchQuery = '';
+      _selectedCategory = 'all';
+      _filteredExercises = _applyFilters();
     });
   }
 
@@ -163,8 +207,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
     }
     return 1;
   }
-
-
 
   String _translateEquipment(String? equipment) {
     if (equipment == null || equipment.isEmpty) return 'وزن بدن';
@@ -182,11 +224,11 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
   }
 
   Future<void> _addExerciseToTodayPlan(Map<String, dynamic> exercise) async {
+    final colors = context.colors;
     try {
       final db = await DatabaseHelper.instance.database;
       final todayFarsiDay = _getFarsiDayOfWeek(DateTime.now());
 
-      // Query today's plans
       final plans = await db.query(
         'ss_workout_plan',
         where: 'dayOfWeek = ?',
@@ -195,7 +237,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
 
       String planId;
       if (plans.isEmpty) {
-        // Create new plan for today
         planId = 'plan_today_${DateTime.now().millisecondsSinceEpoch}';
         await db.insert('ss_workout_plan', {
           'id': planId,
@@ -209,7 +250,6 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
         planId = plans.first['id'].toString();
       }
 
-      // Query existing crossrefs to get max order index
       final crossRefs = await db.query(
         'ss_workout_exercise_crossref',
         where: 'planId = ?',
@@ -235,204 +275,216 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
       });
 
       if (!mounted) return;
+      HapticFeedback.mediumImpact();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'حرکت "${exercise['name']}" با موفقیت به برنامه امروز شما اضافه شد.',
-            style: const TextStyle(),
-            textDirection: TextDirection.rtl,
+            'حرکت «${exercise['name']}» به برنامهٔ امروز اضافه شد.',
+            style: const TextStyle(fontFamily: 'Vazirmatn'),
           ),
-          backgroundColor: const Color(0xFF10B981),
+          backgroundColor: colors.success,
         ),
       );
+      widget.onExerciseAdded?.call();
     } catch (e) {
       debugPrint('Error adding exercise to plan: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
+        SnackBar(
+          content: const Text(
             'خطا در اضافه کردن حرکت به برنامه.',
-            style: TextStyle(),
-            textDirection: TextDirection.rtl,
+            style: TextStyle(fontFamily: 'Vazirmatn'),
           ),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: colors.error,
         ),
       );
     }
   }
 
   void _showExerciseDetailSheet(Map<String, dynamic> exercise) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.colors;
+    final accent = context.modules.sports;
+    final videoUrl = exercise['videoUrl']?.toString() ?? '';
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) {
+      builder: (sheetContext) {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF161616) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border.all(color: isDark ? Colors.white10 : Colors.black12, width: 1.5),
+              color: colors.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+              border: Border.all(color: colors.border, width: 1),
             ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 48,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  exercise['name']?.toString() ?? '',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+            // قبلاً ثابت بود؛ با محتوای بلند سرریز می‌کرد.
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 16,
+                bottom: 24 + MediaQuery.of(sheetContext).viewInsets.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
                     child: Container(
-                      height: 140,
-                      width: double.infinity,
-                      color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02),
-                      child: SSExerciseAnimationCard(
-                        category: exercise['category']?.toString() ?? 'core',
-                        exerciseId: exercise['id']?.toString(),
-                        height: 140,
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colors.divider,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-                ),
-                if (exercise['nameEn'] != null && exercise['nameEn'].toString().isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 20),
                   Text(
-                    exercise['nameEn'].toString(),
+                    exercise['name']?.toString() ?? '',
                     style: TextStyle(
-                      fontSize: 14,
-                      color: isDark ? Colors.white38 : Colors.black38,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2E7D5B).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        _translateCategory(exercise['category']?.toString() ?? ''),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF2E7D5B),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        _translateEquipment(exercise['equipment']?.toString()),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? Colors.white60 : Colors.black54,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'راهنمای اجرا:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  exercise['instructions']?.toString() ?? 'راهنمایی برای این حرکت ثبت نشده است.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.6,
-                    color: isDark ? Colors.white70 : Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                if (exercise['videoUrl'] != null && exercise['videoUrl'].toString().isNotEmpty) ...[
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: isDark ? Colors.redAccent.withValues(alpha: 0.8) : Colors.red.withValues(alpha: 0.8), width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      icon: Icon(CupertinoIcons.play_circle_fill, color: isDark ? Colors.redAccent : Colors.red),
-                      label: Text(
-                        'مشاهده ویدیو آموزش حرکت 🎥',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.redAccent : Colors.red,
-                        ),
-                      ),
-                      onPressed: () async {
-                        final urlStr = exercise['videoUrl'].toString();
-                        final uri = Uri.parse(urlStr);
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
-                        }
-                      },
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
-                ],
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E7D5B),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                    icon: const Icon(CupertinoIcons.add, color: Colors.white),
-                    label: const Text(
-                      'اضافه کردن به برنامه امروز',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                  Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(RitmoRadius.card),
+                      child: Container(
+                        height: 140,
+                        width: double.infinity,
+                        color: colors.surfaceSunken,
+                        child: SSExerciseAnimationCard(
+                          category: exercise['category']?.toString() ?? 'core',
+                          exerciseId: exercise['id']?.toString(),
+                          height: 140,
+                        ),
                       ),
                     ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _addExerciseToTodayPlan(exercise);
-                    },
                   ),
-                ),
-                const SizedBox(height: 12),
-              ],
+                  if (exercise['nameEn'] != null &&
+                      exercise['nameEn'].toString().isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      exercise['nameEn'].toString(),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textTertiary,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      _Tag(
+                        label: _translateCategory(exercise['category']?.toString() ?? ''),
+                        color: accent,
+                      ),
+                      const SizedBox(width: 8),
+                      _Tag(
+                        label: _translateEquipment(exercise['equipment']?.toString()),
+                        color: colors.textSecondary,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'راهنمای اجرا:',
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    exercise['instructions']?.toString() ??
+                        'راهنمایی برای این حرکت ثبت نشده است.',
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 13.5,
+                      height: 1.7,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  if (videoUrl.isNotEmpty) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: colors.error, width: 1.2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(RitmoRadius.card),
+                          ),
+                        ),
+                        icon: Icon(CupertinoIcons.play_circle_fill, color: colors.error),
+                        label: Text(
+                          'مشاهدهٔ ویدیوی آموزش حرکت',
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: colors.error,
+                          ),
+                        ),
+                        onPressed: () async {
+                          final uri = Uri.tryParse(videoUrl);
+                          final messenger = ScaffoldMessenger.of(context);
+                          if (uri != null && await canLaunchUrl(uri)) {
+                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          } else {
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'امکان باز کردن لینک ویدیو نیست.',
+                                  style: TextStyle(fontFamily: 'Vazirmatn'),
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(RitmoRadius.card),
+                        ),
+                      ),
+                      icon: const Icon(CupertinoIcons.add, color: Colors.white),
+                      label: const Text(
+                        'اضافه کردن به برنامهٔ امروز',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        _addExerciseToTodayPlan(exercise);
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -440,10 +492,25 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
     );
   }
 
+  // ─── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = context.isDark;
+
+    final body = Directionality(
+      textDirection: TextDirection.rtl,
+      child: Column(
+        children: [
+          _buildHeader(context),
+          Expanded(child: _buildBody(context)),
+        ],
+      ),
+    );
+
+    if (widget.embedded) {
+      return Container(color: colors.background, child: body);
+    }
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -455,173 +522,380 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'کتابخانه حرکات ورزشی 📚',
+          'کتابخانهٔ حرکات ورزشی',
           style: TextStyle(
-            fontSize: 18,
+            fontFamily: 'Vazirmatn',
+            fontSize: 17,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
           ),
         ),
         centerTitle: true,
       ),
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Column(
-          children: [
-            // Search Bar Card
-            Container(
-              color: colors.surface,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colors.surfaceElevated,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: TextField(
-                      style: const TextStyle(),
-                      decoration: InputDecoration(
-                        icon: const Icon(CupertinoIcons.search, color: Colors.grey),
-                        hintText: 'جستجوی نام حرکت یا تجهیزات...',
-                        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
-                        border: InputBorder.none,
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                tooltip: 'پاک کردن',
-                                icon: const Icon(Icons.clear, color: Colors.grey, size: 18),
-                                onPressed: () {
-                                  setState(() {
-                                    _searchQuery = '';
-                                    _filterExercises();
-                                  });
-                                },
-                              )
-                            : null,
-                      ),
-                      onChanged: (val) {
-                        _searchQuery = val;
-                        _filterExercises();
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Categories chips
-                  SizedBox(
-                    height: 38,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _categories.length,
-                      itemBuilder: (context, idx) {
-                        final cat = _categories[idx];
-                        final isSelected = cat == _selectedCategory;
-                        return GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() {
-                              _selectedCategory = cat;
-                              _filterExercises();
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              gradient: isSelected
-                                  ? const LinearGradient(colors: [Color(0xFF2E7D5B), Color(0xFF1B5E20)])
-                                  : null,
-                              color: isSelected ? null : (isDark ? Colors.white10 : Colors.white),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isSelected
-                                    ? Colors.transparent
-                                    : (isDark ? Colors.white10 : Colors.black12),
-                              ),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              _translateCategory(cat),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+      body: body,
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    final colors = context.colors;
+    final accent = context.modules.sports;
+
+    return Container(
+      color: colors.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        children: [
+          // جست‌وجو — با کنترلر واقعی تا «پاک کردن» متن را هم پاک کند
+          Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: BorderRadius.circular(RitmoRadius.card),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: TextField(
+              controller: _searchController,
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 14,
+                color: colors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                icon: Icon(CupertinoIcons.search, color: colors.textTertiary, size: 20),
+                hintText: 'جست‌وجوی نام حرکت یا تجهیزات...',
+                hintStyle: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 13,
+                  color: colors.textTertiary,
+                ),
+                border: InputBorder.none,
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        tooltip: 'پاک کردن',
+                        icon: Icon(CupertinoIcons.xmark_circle_fill,
+                            color: colors.textTertiary, size: 18),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                            _filteredExercises = _applyFilters();
+                          });
+                        },
+                      )
+                    : null,
+              ),
+              onChanged: (val) {
+                _searchQuery = val;
+                _refilter();
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          // چیپ‌های دسته‌بندی — ۴۴px و RTL-safe
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _categories.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, idx) {
+                final cat = _categories[idx];
+                return _CategoryChip(
+                  label: _translateCategory(cat),
+                  isSelected: cat == _selectedCategory,
+                  accent: accent,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _selectedCategory = cat;
+                      _filteredExercises = _applyFilters();
+                    });
+                  },
+                );
+              },
+            ),
+          ),
+          if (_hasActiveFilter && !_isLoading && _loadError == null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                '${_filteredExercises.length.toPersianDigits()} حرکت پیدا شد',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 11.5,
+                  color: colors.textTertiary,
+                ),
               ),
             ),
+          ],
+        ],
+      ),
+    );
+  }
 
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _filteredExercises.isEmpty
-                      ? Center(
-                          child: Text(
-                            'هیچ حرکتی یافت نشد.',
+  Widget _buildBody(BuildContext context) {
+    final colors = context.colors;
+
+    if (_isLoading) {
+      return const Center(child: CupertinoActivityIndicator());
+    }
+
+    // خطای واقعی — قبلاً catch خاموش لیست خالی جعلی نشان می‌داد
+    if (_loadError != null) {
+      return _EmptyState(
+        icon: CupertinoIcons.exclamationmark_triangle,
+        title: 'کتابخانه بارگذاری نشد',
+        subtitle: 'یک خطای موقت رخ داد. دوباره تلاش کن.',
+        actionLabel: 'تلاش دوباره',
+        onAction: _loadExercises,
+      );
+    }
+
+    if (_allExercises.isEmpty) {
+      return const _EmptyState(
+        icon: CupertinoIcons.square_stack_3d_up_slash,
+        title: 'کتابخانه خالی است',
+        subtitle: 'هنوز هیچ حرکتی در پایگاه‌داده ثبت نشده است.',
+      );
+    }
+
+    if (_filteredExercises.isEmpty) {
+      return _EmptyState(
+        icon: CupertinoIcons.search,
+        title: 'نتیجه‌ای پیدا نشد',
+        subtitle: 'عبارت دیگری را امتحان کن یا فیلترها را حذف کن.',
+        actionLabel: 'حذف فیلترها',
+        onAction: _clearFilters,
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _filteredExercises.length,
+      itemBuilder: (context, idx) {
+        final ex = _filteredExercises[idx];
+        final accent = context.modules.sports;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Material(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(RitmoRadius.card),
+            child: InkWell(
+              onTap: () => _showExerciseDetailSheet(ex),
+              borderRadius: BorderRadius.circular(RitmoRadius.card),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 64),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(RitmoRadius.card),
+                  border: Border.all(color: colors.border),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            ex['name']?.toString() ?? '',
                             style: TextStyle(
-                              fontSize: 14,
-                              color: isDark ? Colors.white38 : Colors.black38,
+                              fontFamily: 'Vazirmatn',
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
                             ),
                           ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _filteredExercises.length,
-                          itemBuilder: (context, idx) {
-                            final ex = _filteredExercises[idx];
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              elevation: 0.5,
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                title: Text(
-                                  ex['name']?.toString() ?? '',
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                _translateCategory(ex['category']?.toString() ?? ''),
+                                style: TextStyle(
+                                  fontFamily: 'Vazirmatn',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: accent,
                                 ),
-                                subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        _translateCategory(ex['category']?.toString() ?? ''),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF2E7D5B),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        '• ${_translateEquipment(ex['equipment']?.toString())}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: isDark ? Colors.white38 : Colors.black38,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                trailing: const Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 14,
-                                  color: Colors.grey,
-                                ),
-                                onTap: () => _showExerciseDetailSheet(ex),
                               ),
-                            );
-                          },
-                        ),
+                              Text(
+                                ' · ${_translateEquipment(ex['equipment']?.toString())}',
+                                style: TextStyle(
+                                  fontFamily: 'Vazirmatn',
+                                  fontSize: 12,
+                                  color: colors.textTertiary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      CupertinoIcons.chevron_back,
+                      size: 16,
+                      color: colors.textTertiary,
+                    ),
+                  ],
+                ),
+              ),
             ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── ویجت‌های کوچک ─────────────────────────────────────────────────────────
+
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({
+    required this.label,
+    required this.isSelected,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(RitmoRadius.pill),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: isSelected ? accent : colors.surfaceElevated,
+            borderRadius: BorderRadius.circular(RitmoRadius.pill),
+            border: Border.all(
+              color: isSelected ? accent : colors.border,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontSize: 12.5,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? Colors.white : colors.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  const _Tag({required this.label, required this.color});
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(RitmoRadius.badge),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Vazirmatn',
+          fontSize: 12,
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 40, color: colors.textTertiary),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 12.5,
+                height: 1.6,
+                color: colors.textSecondary,
+              ),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 44,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.textPrimary,
+                    side: BorderSide(color: colors.border),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(RitmoRadius.field),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                  onPressed: onAction,
+                  child: Text(
+                    actionLabel!,
+                    style: const TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

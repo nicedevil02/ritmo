@@ -1,7 +1,9 @@
-import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 
 class CycleConsentBridge {
@@ -13,44 +15,41 @@ class CycleConsentBridge {
     final settingsList = await db.query('app_settings');
     final settingsMap = {for (final s in settingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
 
-    final pregnancyMode = settingsMap['cycle_pregnancy_mode'] == 'true';
-    if (pregnancyMode) {
+    if (CycleSettings.isPregnancyMode(settingsMap)) {
+      return false;
+    }
+
+    final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
+    final isEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
+    if (!isFemale || !isEnabled) {
       return false;
     }
 
     final target = targetDate ?? DateTime.now();
-    final targetStr = target.toIso8601String().substring(0, 10);
-    final cleanTarget = DateTime(target.year, target.month, target.day);
+    final cleanTarget = CycleDateContract.cleanDate(target);
+    final targetStr = CycleDateContract.toDayKey(cleanTarget);
 
     // 1. Check cycle_periods (current ongoing or past period covering targetDate)
     try {
       final periods = await db.query(
         'cycle_periods',
         where: 'startDate <= ?',
-        whereArgs: ['${targetStr}T23:59:59'],
+        whereArgs: [targetStr],
         orderBy: 'startDate DESC',
       );
 
       for (final period in periods) {
-        final startStr = period['startDate'] as String?;
-        if (startStr == null) continue;
-        final start = DateTime.tryParse(startStr);
+        final start = CycleDateContract.parseDayKey(period['startDate']?.toString());
         if (start == null) continue;
-        final cleanStart = DateTime(start.year, start.month, start.day);
-        final endStr = period['endDate'] as String?;
+        final end = CycleDateContract.parseDayKey(period['endDate']?.toString());
 
-        if (endStr != null && endStr.isNotEmpty) {
-          final end = DateTime.tryParse(endStr);
-          if (end != null) {
-            final cleanEnd = DateTime(end.year, end.month, end.day);
-            if (!cleanTarget.isBefore(cleanStart) && !cleanTarget.isAfter(cleanEnd)) {
-              return true;
-            }
+        if (end != null) {
+          if (CycleDateContract.inWindow(cleanTarget, start, end)) {
+            return true;
           }
         } else {
           // Ongoing active period (no end date recorded yet)
-          final daysDiff = cleanTarget.difference(cleanStart).inDays;
-          // In Sharia fiqh, period continues until ended or up to 10 days maximum
+          final daysDiff = CycleDateContract.daysBetween(start, cleanTarget);
           if (daysDiff >= 0 && daysDiff <= 10) {
             return true;
           }
@@ -99,36 +98,29 @@ class CycleConsentBridge {
   static Future<Map<String, dynamic>?> getActivePeriod({DateTime? targetDate}) async {
     final db = await DatabaseHelper.instance.database;
     final target = targetDate ?? DateTime.now();
-    final targetStr = target.toIso8601String().substring(0, 10);
-    final cleanTarget = DateTime(target.year, target.month, target.day);
+    final cleanTarget = CycleDateContract.cleanDate(target);
+    final targetStr = CycleDateContract.toDayKey(cleanTarget);
 
     try {
       final periods = await db.query(
         'cycle_periods',
         where: 'startDate <= ?',
-        whereArgs: ['${targetStr}T23:59:59'],
+        whereArgs: [targetStr],
         orderBy: 'startDate DESC',
       );
 
       for (final period in periods) {
-        final startStr = period['startDate'] as String?;
-        if (startStr == null) continue;
-        final start = DateTime.tryParse(startStr);
+        final start = CycleDateContract.parseDayKey(period['startDate']?.toString());
         if (start == null) continue;
-        final cleanStart = DateTime(start.year, start.month, start.day);
-        final endStr = period['endDate'] as String?;
+        final end = CycleDateContract.parseDayKey(period['endDate']?.toString());
 
-        if (endStr != null && endStr.isNotEmpty) {
-          final end = DateTime.tryParse(endStr);
-          if (end != null) {
-            final cleanEnd = DateTime(end.year, end.month, end.day);
-            if (!cleanTarget.isBefore(cleanStart) && !cleanTarget.isAfter(cleanEnd)) {
-              return period;
-            }
+        if (end != null) {
+          if (CycleDateContract.inWindow(cleanTarget, start, end)) {
+            return period;
           }
         } else {
           // Ongoing active period (no end date recorded yet)
-          final daysDiff = cleanTarget.difference(cleanStart).inDays;
+          final daysDiff = CycleDateContract.daysBetween(start, cleanTarget);
           if (daysDiff >= 0 && daysDiff <= 10) {
             return period;
           }

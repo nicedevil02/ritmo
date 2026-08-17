@@ -1,7 +1,8 @@
-import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/engines/engine_enums.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:sqflite/sqflite.dart';
 
 class FiqhState {
@@ -100,15 +101,18 @@ class HormonalIntelligenceEngine {
       );
     }
 
-    final state = switch (engineOutput.currentPhase) {
-      CyclePhase.menstrual => HormonalPhase.menstrual,
-      CyclePhase.follicular => HormonalPhase.postCycle,
-      CyclePhase.ovulation => HormonalPhase.normal,
-      CyclePhase.luteal => HormonalPhase.preCycle,
-      CyclePhase.noData => HormonalPhase.noData,
-    };
+    final isPregnancy = CycleSettings.isPregnancyMode(appSettings);
+    final isMenstrual = !isPregnancy && engineOutput.currentPhase == CyclePhase.menstrual;
 
-    final isMenstrual = engineOutput.currentPhase == CyclePhase.menstrual;
+    final state = isPregnancy
+        ? HormonalPhase.normal
+        : switch (engineOutput.currentPhase) {
+            CyclePhase.menstrual => HormonalPhase.menstrual,
+            CyclePhase.follicular => HormonalPhase.postCycle,
+            CyclePhase.ovulation => HormonalPhase.normal,
+            CyclePhase.luteal => HormonalPhase.preCycle,
+            CyclePhase.noData => HormonalPhase.noData,
+          };
 
     return HormonalEngineOutput(
       state: state,

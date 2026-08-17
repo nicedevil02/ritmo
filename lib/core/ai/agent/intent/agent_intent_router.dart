@@ -115,6 +115,16 @@ class AgentIntentRouter {
   /// تشخیص نیت و اجرای موازی ابزارهای خواندنی مرتبط
   ///
   /// [personaId] اگر داده نشود، از پرسونای فعال AgentToolScope خوانده می‌شود.
+  Future<PrefetchResult> routeAndPrefetch(
+    String userQuery, {
+    DateTime? now,
+    String? personaId,
+  }) =>
+      route(userQuery, now: now, personaId: personaId);
+
+  /// تشخیص نیت و اجرای موازی ابزارهای خواندنی مرتبط
+  ///
+  /// [personaId] اگر داده نشود، از پرسونای فعال AgentToolScope خوانده می‌شود.
   Future<PrefetchResult> route(
     String userQuery, {
     DateTime? now,

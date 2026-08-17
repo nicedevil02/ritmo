@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/ai/agent/agent_budget.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
-import 'package:ritmo/core/ai/agent/agent_intent_prefetcher.dart';
 import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_call_parser.dart';
@@ -12,6 +11,7 @@ import 'package:ritmo/core/ai/agent/agent_tool_protocol.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_registry.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_scope.dart';
 import 'package:ritmo/core/ai/agent/agent_transcript.dart';
+import 'package:ritmo/core/ai/agent/intent/agent_intent_router.dart';
 import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_connection_repository.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
@@ -74,7 +74,10 @@ class AgentLoopRunner {
     );
 
     // ۱. پیش‌واکشی قطعی (مستقل از تصمیم مدل) تا مدل با داده واقعی شروع کند
-    final prefetch = await AgentIntentPrefetcher.prefetchForQuery(prompt);
+    final prefetch = await AgentIntentRouter.instance.routeAndPrefetch(
+      prompt,
+      personaId: personaId,
+    );
     for (final step in prefetch.initialSteps) {
       steps.add(step);
       yield AgentStepStartedEvent(step);

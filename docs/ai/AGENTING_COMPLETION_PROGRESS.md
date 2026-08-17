@@ -15,8 +15,8 @@
 | T09 | trimToBudget نباید سؤال کاربر را حذف کند | DONE | 1305448 | تثبیت سیستم پرامپت و سؤال کاربر و برش از نوبت‌های میانی |
 | T10 | بریدن نادرست متن نهایی | DONE | c5588a7 | حفظ پیشوند و پسوند هنگام تمیزسازی tool_call برای پاسخ نهایی و افزودن تست‌های جامع |
 | T11 | تقارن fallback بین چت اصلی و شیت | DONE | dc2d43d | افزودن مسیر fallback گیت‌وی به شیت دستیار در صورت خطای ایجنت با پاسخ خالی |
-| T12 | حذف catch (_) {} و بررسی جدول assistant_plans | DOING | | |
-| T13 | وصل کردن AgentIntentRouter و حذف AgentIntentPrefetcher | TODO | | |
+| T12 | حذف catch (_) {} و بررسی جدول assistant_plans | DONE | 114c012 | حذف catch خالی، لاگ دقیق خطاها و همگام‌سازی ساختار جدول assistant_plans |
+| T13 | وصل کردن AgentIntentRouter و حذف AgentIntentPrefetcher | DOING | | |
 | T14 | اصلاح نام ابزار عبادی در همه‌جا | TODO | | |
 | T15 | یکی کردن کش prefetch و ثبت در بودجه | TODO | | |
 | T16 | تست یکپارچگی نقشه‌ی اسکوپ (نگهبان CI) | TODO | | |

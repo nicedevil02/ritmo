@@ -1,3 +1,4 @@
+import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/features/courses/logic/courses_repository.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
@@ -57,8 +58,7 @@ class CourseCatchupEngine {
       final session = pendingToReschedule[i];
       String? dateStr;
       if (i < newDates.length) {
-        final dt = newDates[i];
-        dateStr = '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+        dateStr = CourseDate.toDayKey(newDates[i]);
       }
       rescheduled.add(session.copyWith(plannedDate: dateStr));
     }

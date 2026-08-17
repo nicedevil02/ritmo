@@ -4,9 +4,11 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
+import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/courses_repository.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 import 'package:ritmo/features/courses/presentation/widgets/course_formatters.dart';
@@ -79,8 +81,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       _resolvedQuestionIds
         ..clear()
         ..addAll(_sessions.where((s) => s.questionResolved).map((s) => s.id));
-    } catch (e) {
-      debugPrint('Error loading course details: $e');
+    } catch (e, st) {
+      RitmoLog.error('COURSES', 'Error loading course details', e, st);
     }
 
     if (mounted) {
@@ -217,13 +219,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
     if (picked != null) {
       final pickedDateTime = picked.toDateTime();
-      final formatted = '${pickedDateTime.year}-${pickedDateTime.month.toString().padLeft(2, '0')}-${pickedDateTime.day.toString().padLeft(2, '0')}';
+      final formatted = CourseDate.toDayKey(pickedDateTime);
       await CoursesRepository.instance.rescheduleSession(session.id, formatted);
       await _loadCourseData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('زمان جلسه به ${toPersianDigits(formatted)} تغییر یافت.'),
+            content: Text('زمان جلسه به ${CourseDate.dayKeyToJalaliDisplay(formatted)} تغییر یافت.'),
             backgroundColor: colors.success,
           ),
         );
@@ -582,7 +584,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                       onTap: isCompleted ? null : () => _rescheduleSessionDate(session),
                                       child: Text(
                                         session.plannedDate != null
-                                            ? 'برنامه‌ریزی: ${toPersianDigits(session.plannedDate)} 📅'
+                                            ? 'برنامه‌ریزی: ${CourseDate.dayKeyToJalaliDisplay(session.plannedDate!)} 📅'
                                             : 'بدون تاریخ زمان‌بندی',
                                         style: TextStyle(
                                           fontSize: 10.5,

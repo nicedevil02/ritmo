@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/logic/sources/registry_source.dart';
 import 'package:ritmo/features/registry/presentation/utils/schedule_summary_formatter.dart';
@@ -34,7 +35,7 @@ class CourseRegistrySource implements RegistrySource {
       offset: offset,
     );
 
-    final todayStr = DateTime.now().toIso8601String().split('T').first;
+    final todayStr = CourseDate.toDayKey(DateTime.now());
 
     final entries = <RegistryEntry>[];
     for (final r in rows) {

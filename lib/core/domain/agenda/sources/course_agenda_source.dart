@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' hide Category;
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
@@ -68,7 +68,7 @@ class CourseAgendaSource implements AgendaSource {
           }
         }
       } catch (e, st) {
-        debugPrint('Error in course_agenda_source.dart: $e\n$st');
+        RitmoLog.error('COURSES', 'Error loading course agenda source', e, st);
       }
     }
 

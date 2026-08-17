@@ -7,6 +7,7 @@ import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
+import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/features/courses/logic/course_validation.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
@@ -166,7 +167,7 @@ class CoursesRepository {
         final sessionId = 'sess_${now.millisecondsSinceEpoch}_${course.id.hashCode}_$i';
         String? plannedDateStr;
         if (i < sessionDates.length) {
-          plannedDateStr = _formatDate(sessionDates[i]);
+          plannedDateStr = CourseDate.toDayKey(sessionDates[i]);
         }
 
         final session = CourseSession(
@@ -220,7 +221,7 @@ class CoursesRepository {
         final draft = draftSessions[i];
         String? plannedDateStr;
         if (i < sessionDates.length) {
-          plannedDateStr = _formatDate(sessionDates[i]);
+          plannedDateStr = CourseDate.toDayKey(sessionDates[i]);
         }
 
         final session = draft.copyWith(
@@ -361,7 +362,7 @@ class CoursesRepository {
             final session = pendingToSchedule[i];
             String? newDateStr;
             if (i < newDates.length) {
-              newDateStr = _formatDate(newDates[i]);
+              newDateStr = CourseDate.toDayKey(newDates[i]);
             }
             await txn.update(
               'course_sessions',
@@ -735,7 +736,7 @@ class CoursesRepository {
           {
             'displayOrder': newNum,
             'sessionNumber': newNum,
-            if (newTitle != null) 'sessionTitle': newTitle,
+            'sessionTitle': ?newTitle,
             'updatedAt': now,
           },
           where: 'id = ? AND courseId = ?',
@@ -858,7 +859,7 @@ class CoursesRepository {
           for (var i = 0; i < pendingSessions.length; i++) {
             String? newDateStr;
             if (i < newDates.length) {
-              newDateStr = _formatDate(newDates[i]);
+              newDateStr = CourseDate.toDayKey(newDates[i]);
             }
             await txn.update(
               'course_sessions',
@@ -1027,13 +1028,6 @@ class CoursesRepository {
       }
     }
     return result;
-  }
-
-  String _formatDate(DateTime dt) {
-    final y = dt.year.toString().padLeft(4, '0');
-    final m = dt.month.toString().padLeft(2, '0');
-    final d = dt.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
   }
 
   Future<void> syncCourseAlarms() async {

@@ -1,3 +1,4 @@
+import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_validation.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 
@@ -9,10 +10,7 @@ class CourseScheduler {
 
   /// Saturday is the start of Farsi week
   static DateTime getSaturdayOfWeek(DateTime dt) {
-    final w = getFarsiWeekday(dt);
-    final daysSinceSaturday = (w == 6) ? 0 : (w + 1);
-    final dateOnly = DateTime(dt.year, dt.month, dt.day);
-    return dateOnly.subtract(Duration(days: daysSinceSaturday));
+    return CourseDate.startOfFarsiWeek(dt);
   }
 
   /// Calculates weekly occupancy map (SaturdayOfWeek -> count) for sessions already scheduled/completed.
@@ -21,18 +19,10 @@ class CourseScheduler {
   }) {
     final map = <DateTime, int>{};
     for (final s in sessions) {
-      if (s.plannedDate != null && s.plannedDate!.trim().isNotEmpty) {
-        final parts = s.plannedDate!.split('-');
-        if (parts.length == 3) {
-          final y = int.tryParse(parts[0]);
-          final m = int.tryParse(parts[1]);
-          final d = int.tryParse(parts[2]);
-          if (y != null && m != null && d != null) {
-            final dt = DateTime(y, m, d);
-            final sat = getSaturdayOfWeek(dt);
-            map[sat] = (map[sat] ?? 0) + 1;
-          }
-        }
+      final dt = CourseDate.parseDayKey(s.plannedDate);
+      if (dt != null) {
+        final sat = CourseDate.startOfFarsiWeek(dt);
+        map[sat] = (map[sat] ?? 0) + 1;
       }
     }
     return map;
@@ -78,7 +68,7 @@ class CourseScheduler {
       final isPreferred = normalizedDays.contains(farsiDay);
 
       if (isPreferred && !isBlocked) {
-        final satOfWeek = getSaturdayOfWeek(currentDate);
+        final satOfWeek = CourseDate.startOfFarsiWeek(currentDate);
         final currentWeekCount = weekCounts[satOfWeek] ?? 0;
 
         if (currentWeekCount < effectiveWeeklyTarget) {
@@ -88,7 +78,7 @@ class CourseScheduler {
         }
       }
 
-      currentDate = currentDate.add(const Duration(days: 1));
+      currentDate = CourseDate.addDays(currentDate, 1);
     }
 
     if (result.length != pendingCount) {
@@ -107,7 +97,7 @@ class CourseScheduler {
     required List<CourseSession> sessions,
     required DateTime today,
   }) {
-    final todayStr = _formatDate(today);
+    final todayStr = CourseDate.toDayKey(today);
     var count = 0;
     for (final session in sessions) {
       if (!session.isCompleted && !session.isSkipped && session.plannedDate != null) {
@@ -143,12 +133,5 @@ class CourseScheduler {
     } catch (_) {
       return null;
     }
-  }
-
-  static String _formatDate(DateTime dt) {
-    final y = dt.year.toString().padLeft(4, '0');
-    final m = dt.month.toString().padLeft(2, '0');
-    final d = dt.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
   }
 }

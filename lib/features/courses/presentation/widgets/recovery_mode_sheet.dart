@@ -1,13 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/ritmo_date.dart';
+import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
+import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/features/courses/logic/courses_repository.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
-import 'package:ritmo/features/courses/presentation/widgets/course_formatters.dart';
-import 'package:shamsi_date/shamsi_date.dart';
 
 class RecoveryModeSheet extends StatefulWidget {
   const RecoveryModeSheet({
@@ -47,11 +47,6 @@ class _RecoveryModeSheetState extends State<RecoveryModeSheet> {
   int _selectedPlanIndex = 0; // 0: Express (+2 target), 1: Extend Date (+14 days), 2: Prune
   bool _isApplying = false;
 
-  String _formatJalali(DateTime dt) {
-    final j = Jalali.fromDateTime(dt);
-    return '${toPersianDigits(j.year)}/${toPersianDigits(j.month.toString().padLeft(2, '0'))}/${toPersianDigits(j.day.toString().padLeft(2, '0'))}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -72,7 +67,7 @@ class _RecoveryModeSheetState extends State<RecoveryModeSheet> {
     final estEnd2 = CourseScheduler.estimatedEndDate(
       remaining: pendingCount,
       weeklyTarget: newWeeklyTarget2,
-      from: now.add(const Duration(days: 14)),
+      from: CourseDate.addDays(now, 14),
       preferredDays: widget.course.preferredDays,
     );
 
@@ -88,18 +83,18 @@ class _RecoveryModeSheetState extends State<RecoveryModeSheet> {
     final plans = [
       {
         'title': '🚀 برنامه فشرده (افزایش سرعت)',
-        'description': 'هدف هفتگی از ${toPersianDigits(widget.course.weeklyTargetSessions)} به ${toPersianDigits(newWeeklyTarget1)} جلسه در هفته افزایش می‌یابد.',
-        'endDate': estEnd1 != null ? _formatJalali(estEnd1) : 'مشخص نیست',
+        'description': 'هدف هفتگی از ${RitmoNumber.toFa(widget.course.weeklyTargetSessions)} به ${RitmoNumber.toFa(newWeeklyTarget1)} جلسه در هفته افزایش می‌یابد.',
+        'endDate': estEnd1 != null ? CourseDate.toJalaliDisplay(estEnd1) : 'مشخص نیست',
       },
       {
         'title': '📅 تمدید زمان‌بندی (کاهش فشار)',
         'description': 'بدون تغییر در فشار هفتگی، پایان دوره به میزان ۲ هفته تمدید می‌شود.',
-        'endDate': estEnd2 != null ? _formatJalali(estEnd2) : 'مشخص نیست',
+        'endDate': estEnd2 != null ? CourseDate.toJalaliDisplay(estEnd2) : 'مشخص نیست',
       },
       {
         'title': '🎯 تمرکز بر جلسات اصلی (غربال)',
-        'description': 'جلسات فرعی و تمرینی حذف یا عبور داده شده و تمرکز روی ${toPersianDigits(corePending)} جلسه اصلی یادگیری قرار می‌گیرد.',
-        'endDate': estEnd3 != null ? _formatJalali(estEnd3) : 'مشخص نیست',
+        'description': 'جلسات فرعی و تمرینی حذف یا عبور داده شده و تمرکز روی ${RitmoNumber.toFa(corePending)} جلسه اصلی یادگیری قرار می‌گیرد.',
+        'endDate': estEnd3 != null ? CourseDate.toJalaliDisplay(estEnd3) : 'مشخص نیست',
       },
     ];
 
@@ -178,7 +173,7 @@ class _RecoveryModeSheetState extends State<RecoveryModeSheet> {
             SizedBox(
               height: 48,
               child: ElevatedButton(
-                onPressed: _isApplying ? null : () => _applyPlan(newWeeklyTarget1, estEnd2),
+                onPressed: _isApplying ? null : () => _applyPlan(newWeeklyTarget1, estEnd2, colors),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colors.primary,
                   foregroundColor: Colors.white,
@@ -195,7 +190,7 @@ class _RecoveryModeSheetState extends State<RecoveryModeSheet> {
     );
   }
 
-  Future<void> _applyPlan(int expressTarget, DateTime? extendEnd) async {
+  Future<void> _applyPlan(int expressTarget, DateTime? extendEnd, RitmoColors colors) async {
     setState(() => _isApplying = true);
     try {
       if (_selectedPlanIndex == 0) {
@@ -204,7 +199,7 @@ class _RecoveryModeSheetState extends State<RecoveryModeSheet> {
         await CoursesRepository.instance.updateCourse(updated);
       } else if (_selectedPlanIndex == 1) {
         // Extend
-        final targetDateStr = extendEnd != null ? RitmoDate(extendEnd).value : null;
+        final targetDateStr = extendEnd != null ? CourseDate.toDayKey(extendEnd) : null;
         final updated = widget.course.copyWith(targetEndDate: targetDateStr);
         await CoursesRepository.instance.updateCourse(updated);
       } else if (_selectedPlanIndex == 2) {
@@ -221,11 +216,12 @@ class _RecoveryModeSheetState extends State<RecoveryModeSheet> {
         Navigator.pop(context);
         widget.onApplied?.call();
       }
-    } catch (e) {
+    } catch (e, st) {
+      RitmoLog.error('COURSES', 'Failed to apply recovery plan', e, st);
       if (mounted) {
         setState(() => _isApplying = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطا در اعمال برنامه جبرانی: $e')),
+          SnackBar(content: Text('خطا در اعمال برنامه جبرانی: $e'), backgroundColor: colors.error),
         );
       }
     }

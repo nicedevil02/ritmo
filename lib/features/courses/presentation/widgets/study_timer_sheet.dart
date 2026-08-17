@@ -103,7 +103,7 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
         _secondsElapsed = 0;
         _isRunning = true;
       });
-      _pulseController.repeat(reverse: true);
+      unawaited(_pulseController.repeat(reverse: true));
     } else {
       Navigator.pop(context);
     }

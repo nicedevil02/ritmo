@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/ritmo_date.dart';
-import 'package:ritmo/features/courses/logic/course_scheduler.dart';
+import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
-import 'package:ritmo/features/courses/presentation/widgets/course_formatters.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class JalaliWeeklyHeatmap extends StatelessWidget {
@@ -19,14 +18,14 @@ class JalaliWeeklyHeatmap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final satOfWeek = CourseScheduler.getSaturdayOfWeek(today);
+    final satOfWeek = CourseDate.startOfFarsiWeek(today);
 
     final dayLabels = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
     final dayMinutes = List<int>.filled(7, 0);
 
     for (var i = 0; i < 7; i++) {
-      final dt = satOfWeek.add(Duration(days: i));
-      final dtStr = RitmoDate(dt).value;
+      final dt = CourseDate.addDays(satOfWeek, i);
+      final dtStr = CourseDate.toDayKey(dt);
 
       for (final s in sessions) {
         if (s.isCompleted && s.plannedDate == dtStr) {
@@ -59,7 +58,7 @@ class JalaliWeeklyHeatmap extends StatelessWidget {
                 ),
               ),
               Text(
-                'مجموع: ${toPersianDigits(dayMinutes.reduce((a, b) => a + b))} دقیقه',
+                'مجموع: ${RitmoNumber.toFa(dayMinutes.reduce((a, b) => a + b))} دقیقه',
                 style: TextStyle(fontSize: 11, color: colors.primary, fontWeight: FontWeight.bold),
               ),
             ],
@@ -70,9 +69,9 @@ class JalaliWeeklyHeatmap extends StatelessWidget {
             children: List.generate(7, (idx) {
               final mins = dayMinutes[idx];
               final intensity = mins > 0 ? (mins / maxMin).clamp(0.2, 1.0) : 0.05;
-              final dt = satOfWeek.add(Duration(days: idx));
+              final dt = CourseDate.addDays(satOfWeek, idx);
               final jDate = Jalali.fromDateTime(dt);
-              final isToday = dt.year == today.year && dt.month == today.month && dt.day == today.day;
+              final isToday = CourseDate.isSameDay(dt, today);
 
               return Column(
                 children: [
@@ -98,7 +97,7 @@ class JalaliWeeklyHeatmap extends StatelessWidget {
                     alignment: Alignment.center,
                     child: mins > 0
                         ? Text(
-                            toPersianDigits(mins),
+                            RitmoNumber.toFa(mins),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -109,7 +108,7 @@ class JalaliWeeklyHeatmap extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    toPersianDigits(jDate.day),
+                    RitmoNumber.toFa(jDate.day),
                     style: TextStyle(fontSize: 9, color: colors.textSecondary),
                   ),
                 ],

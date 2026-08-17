@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -38,8 +39,8 @@ class GoalStepsAgendaSource implements AgendaSource {
     DateTime end,
   ) async {
     final goalStepsByDate = <String, List<Map<String, dynamic>>>{};
-    final startStr = start.toIso8601String().substring(0, 10);
-    final endStr = end.toIso8601String().substring(0, 10);
+    final startStr = DateKey.of(start);
+    final endStr = DateKey.of(end);
     var activeGoalsList = <Map<String, dynamic>>[];
 
     try {

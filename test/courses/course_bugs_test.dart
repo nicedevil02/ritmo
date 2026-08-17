@@ -96,8 +96,8 @@ void main() {
         updatedAt: 1000,
       );
 
-      expect(c1.resolvedColor(const Color(0xff000000)).value, equals(const Color(0xffff5733).value));
-      expect(c2.resolvedColor(const Color(0xff000000)).value, equals(const Color(0xff000000).value));
+      expect(c1.resolvedColor(const Color(0xff000000)).toARGB32(), equals(const Color(0xffff5733).toARGB32()));
+      expect(c2.resolvedColor(const Color(0xff000000)).toARGB32(), equals(const Color(0xff000000).toARGB32()));
     });
 
     test('D-19 & D-20: RitmoNumber Persian Digits Normalization', () {

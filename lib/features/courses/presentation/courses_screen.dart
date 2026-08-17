@@ -3,16 +3,15 @@ import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/analytics/courses_engine.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
-import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/ritmo_date.dart';
 import 'package:ritmo/core/ux/ritmo_empty_state.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
-import 'package:ritmo/core/widgets/premium_gate.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
+import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/courses_repository.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 import 'package:ritmo/features/courses/presentation/course_detail_screen.dart';
@@ -26,7 +25,6 @@ import 'package:ritmo/features/courses/presentation/widgets/floating_timer_bar.d
 import 'package:ritmo/features/courses/presentation/widgets/jalali_weekly_heatmap.dart';
 import 'package:ritmo/features/courses/presentation/widgets/today_sessions_section.dart';
 import 'package:ritmo/features/courses/presentation/widgets/what_to_read_now_card.dart';
-import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 
 class CoursesScreen extends StatefulWidget {
   const CoursesScreen({super.key});
@@ -86,8 +84,8 @@ class _CoursesScreenState extends State<CoursesScreen> {
           today: DateTime.now(),
         ),
       );
-    } catch (e) {
-      debugPrint('Error loading courses data: $e');
+    } catch (e, st) {
+      RitmoLog.error('COURSES', 'Error loading courses data', e, st);
     } finally {
       if (mounted) {
         setState(() {
@@ -116,20 +114,6 @@ class _CoursesScreenState extends State<CoursesScreen> {
         isScrollControlled: true,
         builder: (context) => AssistantSheet(persona: PersonaRegistry.instance.getPersona('courses')!),
       ),
-    );
-  }
-
-  void _openAiSyllabusSheetWithData(Map<String, dynamic> suggestedData) {
-    unawaited(
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        builder: (context) => CreateCourseSheet(
-          initialValues: suggestedData,
-          onCourseCreated: _loadAllData,
-        ),
-      ).then((_) => _loadAllData()),
     );
   }
 
@@ -200,7 +184,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
       );
     }
 
-    final todayStr = RitmoDate(DateTime.now()).value;
+    final todayStr = CourseDate.toDayKey(DateTime.now());
     final allSessions = _courseSessionsMap.values.expand((e) => e).toList();
 
     return Directionality(

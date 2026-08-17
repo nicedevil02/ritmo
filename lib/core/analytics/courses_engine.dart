@@ -1,6 +1,7 @@
 
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 
@@ -61,7 +62,7 @@ class CoursesEngine implements CachedEngine<CoursesEngineInput, CoursesEngineOut
 
   @override
   String fingerprint(CoursesEngineInput input) {
-    final dayStamp = _formatDate(input.today);
+    final dayStamp = CourseDate.toDayKey(input.today);
     var completedCount = 0;
     var skippedCount = 0;
     var maxUpdated = 0;
@@ -86,12 +87,12 @@ class CoursesEngine implements CachedEngine<CoursesEngineInput, CoursesEngineOut
     // 2. achievementSessions = ALL sessions across ALL courses (active, paused, completed)
     final achievementSessions = input.sessions;
 
-    final todayStr = _formatDate(input.today);
+    final todayStr = CourseDate.toDayKey(input.today);
 
     // Calculate Farsi week boundaries for current week
-    final satOfWeek = CourseScheduler.getSaturdayOfWeek(input.today);
+    final satOfWeek = CourseDate.startOfFarsiWeek(input.today);
     final satStartMs = DateTime(satOfWeek.year, satOfWeek.month, satOfWeek.day).millisecondsSinceEpoch;
-    final nextSat = satOfWeek.add(const Duration(days: 7));
+    final nextSat = CourseDate.addDays(satOfWeek, 7);
     final nextSatStartMs = DateTime(nextSat.year, nextSat.month, nextSat.day).millisecondsSinceEpoch;
 
     // A. Calculate weeklyDoneSessions & weeklyStudyMinutes from achievementSessions
@@ -135,25 +136,25 @@ class CoursesEngine implements CachedEngine<CoursesEngineInput, CoursesEngineOut
       if (session.isCompleted) {
         final compMs = (session.completedAt != null && session.completedAt! > 0) ? session.completedAt! : session.updatedAt;
         final compDate = DateTime.fromMillisecondsSinceEpoch(compMs);
-        completedDates.add(_formatDate(compDate));
+        completedDates.add(CourseDate.toDayKey(compDate));
       }
     }
 
     var streak = 0;
     var checkDate = DateTime(input.today.year, input.today.month, input.today.day);
-    final todayFormatted = _formatDate(checkDate);
-    final yesterdayFormatted = _formatDate(checkDate.subtract(const Duration(days: 1)));
+    final todayFormatted = CourseDate.toDayKey(checkDate);
+    final yesterdayFormatted = CourseDate.toDayKey(CourseDate.addDays(checkDate, -1));
 
     final hasStreak = completedDates.contains(todayFormatted) || completedDates.contains(yesterdayFormatted);
 
     if (hasStreak) {
       if (!completedDates.contains(todayFormatted)) {
-        checkDate = checkDate.subtract(const Duration(days: 1));
+        checkDate = CourseDate.addDays(checkDate, -1);
       }
 
-      while (completedDates.contains(_formatDate(checkDate))) {
+      while (completedDates.contains(CourseDate.toDayKey(checkDate))) {
         streak++;
-        checkDate = checkDate.subtract(const Duration(days: 1));
+        checkDate = CourseDate.addDays(checkDate, -1);
       }
     }
 
@@ -198,19 +199,13 @@ class CoursesEngine implements CachedEngine<CoursesEngineInput, CoursesEngineOut
       estEndMap[course.id] = est;
 
       if (course.targetEndDate != null && course.targetEndDate!.trim().isNotEmpty) {
-        final parts = course.targetEndDate!.split('-');
-        if (parts.length == 3) {
-          final y = int.tryParse(parts[0]);
-          final m = int.tryParse(parts[1]);
-          final d = int.tryParse(parts[2]);
-          if (y != null && m != null && d != null) {
-            final targetDt = DateTime(y, m, d);
-            final daysLeft = targetDt.difference(input.today).inDays;
-            if (daysLeft > 0) {
-              final weeksLeft = (daysLeft / 7.0).clamp(0.1, 100.0);
-              final requiredPace = (pendingCount / weeksLeft).ceil();
-              paceMap[course.id] = requiredPace.clamp(1, 21);
-            }
+        final targetDt = CourseDate.parseDayKey(course.targetEndDate);
+        if (targetDt != null) {
+          final daysLeft = CourseDate.daysBetween(input.today, targetDt);
+          if (daysLeft > 0) {
+            final weeksLeft = (daysLeft / 7.0).clamp(0.1, 100.0);
+            final requiredPace = (pendingCount / weeksLeft).ceil();
+            paceMap[course.id] = requiredPace.clamp(1, 21);
           }
         }
       }
@@ -292,11 +287,4 @@ class CoursesEngine implements CachedEngine<CoursesEngineInput, CoursesEngineOut
 
   @override
   List<Type> dependencies() => [];
-
-  static String _formatDate(DateTime dt) {
-    final y = dt.year.toString().padLeft(4, '0');
-    final m = dt.month.toString().padLeft(2, '0');
-    final d = dt.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
-  }
 }

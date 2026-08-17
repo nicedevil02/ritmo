@@ -1,7 +1,6 @@
 // lib/features/supplementary_sports/movement/presentation/widgets/movement_session_recovery.dart
 //
-// دیالوگ بازیابی جلسهٔ ناتمام و شیت انتخاب ورزش.
-// قبلاً هر دو داخل ss_movement_tab_screen.dart بودند.
+// دیالوگ بازیابی جلسهٔ ناتمام + شیت انتخاب نوع ورزش
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,215 +8,226 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/movement_kind_selector.dart';
 
-/// تصمیم کاربر دربارهٔ جلسهٔ زندهٔ ناتمام. `null` یعنی «بعداً».
 enum MovementRecoveryChoice { resume, finish, discard }
 
-/// دیالوگ بازیابی. برخلاف قبل، راه خروج دارد و دکمهٔ مخرب اول نیست.
+// ─── دیالوگ بازیابی ──────────────────────────────────────────────────────────────────────────────────────
+
+/// نسخهٔ قبلی با `barrierDismissible: false` و بدون گزینهٔ بعداً، کاربر را مجبور به
+/// حذف یا پایان می‌کرد. حالا `null` برمی‌گرداند و برنامه ادامه می‌یابد.
 Future<MovementRecoveryChoice?> showMovementSessionRecoveryDialog(
   BuildContext context, {
   String? kindTitle,
 }) {
   return showDialog<MovementRecoveryChoice>(
     context: context,
-    // قبلاً false بود و هیچ گزینهٔ «بعداً» هم وجود نداشت؛ یعنی تله.
     barrierDismissible: true,
-    builder: (ctx) {
-      final colors = ctx.colors;
-      final accent = ctx.modules.sports;
-
-      return Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.surfaceElevated,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(RitmoRadius.hero),
-          ),
-          title: Text(
-            'جلسهٔ ناتمام داری',
-            style: TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: colors.textPrimary,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                kindTitle == null
-                    ? 'یک جلسهٔ ورزشی باز مانده است.'
-                    : 'جلسهٔ «$kindTitle» باز مانده است.',
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 13.5,
-                  height: 1.6,
-                  color: colors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: RitmoSpacing.lg),
-              SizedBox(
-                height: 48,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accent,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(RitmoRadius.field),
-                    ),
-                  ),
-                  onPressed: () => Navigator.of(ctx).pop(MovementRecoveryChoice.resume),
-                  icon: const Icon(CupertinoIcons.play_fill, size: 18),
-                  label: const Text(
-                    'ادامهٔ جلسه',
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.5,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: RitmoSpacing.sm),
-              SizedBox(
-                height: 48,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colors.textPrimary,
-                    side: BorderSide(color: colors.border),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(RitmoRadius.field),
-                    ),
-                  ),
-                  onPressed: () => Navigator.of(ctx).pop(MovementRecoveryChoice.finish),
-                  child: const Text(
-                    'همین قدر را ذخیره کن',
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: RitmoSpacing.xs),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(48, 44),
-                      foregroundColor: colors.textSecondary,
-                    ),
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text(
-                      'بعداً',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
-                    ),
-                  ),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(48, 44),
-                      foregroundColor: colors.error,
-                    ),
-                    onPressed: () async {
-                      // حذف جلسه قابل بازگرداندن نیست، پس تأیید می‌خواهد.
-                      final confirmed = await _confirmDiscard(ctx);
-                      if (!confirmed) return;
-                      if (!ctx.mounted) return;
-                      Navigator.of(ctx).pop(MovementRecoveryChoice.discard);
-                    },
-                    child: const Text(
-                      'دور بریز',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-    },
+    builder: (ctx) => Directionality(
+      textDirection: TextDirection.rtl,
+      child: _RecoveryDialog(kindTitle: kindTitle),
+    ),
   );
 }
 
-Future<bool> _confirmDiscard(BuildContext context) async {
-  final colors = context.colors;
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => Directionality(
-      textDirection: TextDirection.rtl,
-      child: AlertDialog(
-        backgroundColor: colors.surfaceElevated,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.hero),
+class _RecoveryDialog extends StatelessWidget {
+  const _RecoveryDialog({this.kindTitle});
+  final String? kindTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final accent = context.modules.sports;
+
+    final title = kindTitle != null
+        ? 'جلسهٔ «$kindTitle» ناتمام است'
+        : 'جلسهٔ ناتمام پیدا شد';
+
+    return AlertDialog(
+      backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(RitmoRadius.sheet),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontFamily: 'Vazirmatn',
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          color: colors.textPrimary,
         ),
-        title: Text(
-          'جلسه دور ریخته شود؟',
-          style: TextStyle(
-            fontFamily: 'Vazirmatn',
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
-            color: colors.textPrimary,
-          ),
-        ),
-        content: Text(
-          'هیچ چیزی از این جلسه ذخیره نمی‌شود و قابل بازگرداندن نیست.',
-          style: TextStyle(
-            fontFamily: 'Vazirmatn',
-            fontSize: 13,
-            height: 1.6,
-            color: colors.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              minimumSize: const Size(64, 44),
-              foregroundColor: colors.textSecondary,
-            ),
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
-              'انصراف',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13.5),
+      ),
+      // دکمه‌ها در content (نه actions) — برای کنترل کامل ارتفاع و ترتیب
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'می‌خواهی با این جلسه چه کار کنی؟',
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontSize: 14,
+              height: 1.5,
+              color: colors.textSecondary,
             ),
           ),
-          TextButton(
-            style: TextButton.styleFrom(
-              minimumSize: const Size(64, 44),
-              foregroundColor: colors.error,
+          const SizedBox(height: 20),
+
+          // ۱. ادامهٔ جلسه — اول و پرکنتراست
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(RitmoRadius.field),
+                ),
+              ),
+              onPressed: () =>
+                  Navigator.of(context).pop(MovementRecoveryChoice.resume),
+              child: const Text(
+                'ادامهٔ جلسه',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
             ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              'دور بریز',
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 13.5,
-                fontWeight: FontWeight.bold,
+          ),
+          const SizedBox(height: 10),
+
+          // ۲. پایان و ذخیره — خنثی
+          SizedBox(
+            height: 48,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colors.textPrimary,
+                side: BorderSide(color: colors.border),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(RitmoRadius.field),
+                ),
+              ),
+              onPressed: () =>
+                  Navigator.of(context).pop(MovementRecoveryChoice.finish),
+              child: const Text(
+                'پایان و ذخیره',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // ۳. حذف جلسه — آخر، مخرب، با تأیید تودرتو
+          SizedBox(
+            height: 48,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: colors.error,
+              ),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (confirmCtx) => Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: AlertDialog(
+                      backgroundColor: colors.surface,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(RitmoRadius.card),
+                      ),
+                      title: Text(
+                        'حذف جلسه؟',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      content: Text(
+                        'این جلسه برای همیشه حذف می‌شود و قابل بازگشت نیست.',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 13,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(confirmCtx).pop(false),
+                          child: Text(
+                            'انصراف',
+                            style: TextStyle(
+                              fontFamily: 'Vazirmatn',
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(confirmCtx).pop(true),
+                          child: Text(
+                            'بله، حذف شود',
+                            style: TextStyle(
+                              fontFamily: 'Vazirmatn',
+                              fontWeight: FontWeight.bold,
+                              color: colors.error,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+                if ((confirmed ?? false) && context.mounted) {
+                  Navigator.of(context).pop(MovementRecoveryChoice.discard);
+                }
+              },
+              child: const Text(
+                'حذف جلسه',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          // بعداً — برای شفافیت، بازگشت null
+          Center(
+            child: TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(120, 44),
+                foregroundColor: colors.textTertiary,
+              ),
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text(
+                'بعداً تصمیم می‌گیرم',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 12.5,
+                ),
               ),
             ),
           ),
         ],
       ),
-    ),
-  );
-  return result ?? false;
+    );
+  }
 }
 
-/// شیت انتخاب ورزش برای شروع جلسهٔ جدید.
-Future<MovementKind?> showMovementKindPickerSheet(BuildContext context) {
-  final colors = context.colors;
+// ─── شیت انتخاب نوع ورزش ──────────────────────────────────────────────────────────────────────────────
 
-  return showModalBottomSheet<MovementKind>(
+Future<MovementKind?> showMovementKindPickerSheet(BuildContext context) async {
+  MovementKind? result;
+  await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: colors.surfaceElevated,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
-    ),
+    backgroundColor: Colors.transparent,
     builder: (ctx) => Directionality(
       textDirection: TextDirection.rtl,
       child: DraggableScrollableSheet(
@@ -225,54 +235,72 @@ Future<MovementKind?> showMovementKindPickerSheet(BuildContext context) {
         maxChildSize: 0.95,
         minChildSize: 0.5,
         expand: false,
-        builder: (_, scrollController) => Column(
-          children: [
-            const SizedBox(height: RitmoSpacing.md),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colors.textTertiary,
-                borderRadius: BorderRadius.circular(2),
+        builder: (_, scrollController) {
+          final colors = ctx.colors;
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(RitmoRadius.sheet),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: RitmoSpacing.sm,
-                vertical: RitmoSpacing.sm,
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: RitmoSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      'چه ورزشی را شروع می‌کنی؟',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
+            child: Column(
+              children: [
+                const SizedBox(height: RitmoSpacing.sm),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: RitmoSpacing.md),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'شروع جلسهٔ جدید: انتخاب ورزش',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: colors.textPrimary,
+                        ),
                       ),
+                      IconButton(
+                        tooltip: 'بستن',
+                        icon: Icon(
+                          CupertinoIcons.xmark_circle_fill,
+                          color: colors.textSecondary,
+                        ),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: colors.divider),
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(RitmoSpacing.lg),
+                    child: MovementKindSelector(
+                      selectedKind: null,
+                      onKindSelected: (kind) {
+                        result = kind;
+                        Navigator.of(ctx).pop();
+                      },
                     ),
                   ),
-                  // قبلاً راهی برای بستن شیت بدون انتخاب وجود نداشت.
-                  IconButton(
-                    tooltip: 'بستن',
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    icon: Icon(CupertinoIcons.xmark, size: 18, color: colors.textSecondary),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Expanded(
-              child: MovementKindSelector(
-                selectedKind: null,
-                onKindSelected: (kind) => Navigator.of(ctx).pop(kind),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     ),
   );
+  return result;
 }

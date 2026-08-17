@@ -423,7 +423,9 @@ class AgentLoopRunner {
         );
         executedThisTurn++;
         if (tool.policy != ToolPolicy.readOnly) {
-          writesUsed++;
+          if (result.isSuccess) {
+            writesUsed++;
+          }
         } else if (result.isSuccess) {
           toolCache[cacheKey] = result;
         }

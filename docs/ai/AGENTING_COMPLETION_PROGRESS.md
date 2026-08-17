@@ -10,8 +10,8 @@
 | T04 | استفاده از rawAnswer به‌جای متن تمیزشده | DONE | a692322 | پارس اکشن‌ها و اعمال memory_ops از روی rawAnswer در شیت دستیار |
 | T05 | هندل کردن همه‌ی رویدادها در چت اصلی | DONE | 56967fa | ارسال AgentStreamEvent و نصب AgentConfirmationHost در چت اصلی |
 | T06 | اصلاح «تاریخچه اخیر» معکوس | DONE | 344ce6f | ارسال ۴ پیام اخیر با حفظ ترتیب زمانی صحیح و افزودن تست یونیت |
-| T07 | اعمال یا حذف PersonaInferenceProfile | DOING | | |
-| T08 | بودجه‌ی نوشتن نباید با شکست مصرف شود | TODO | | |
+| T07 | اعمال یا حذف PersonaInferenceProfile | DONE | c440ff0 | دریافت و اعمال PersonaInferenceProfile در حلقه ایجنت و گیت‌وی هوش مصنوعی |
+| T08 | بودجه‌ی نوشتن نباید با شکست مصرف شود | DOING | | |
 | T09 | trimToBudget نباید سؤال کاربر را حذف کند | TODO | | |
 | T10 | بریدن نادرست متن نهایی | TODO | | |
 | T11 | تقارن fallback بین چت اصلی و شیت | TODO | | |

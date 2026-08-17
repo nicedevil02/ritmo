@@ -43,11 +43,21 @@ class _CoursesScreenState extends State<CoursesScreen> {
   CoursesEngineOutput? _engineOutput;
 
   bool _coursesEnabled = true;
+  StreamSubscription<dynamic>? _eventSub;
 
   @override
   void initState() {
     super.initState();
     _loadAllData();
+    _eventSub = CoursesRepository.instance.events.listen((_) {
+      _loadAllData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _eventSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadAllData() async {

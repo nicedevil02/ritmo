@@ -123,6 +123,7 @@ class StreamingChatService {
       final systemPrompt = AIPromptEngine.buildChatSystemPrompt() + AiMemoryService.memoryInstruction();
       final agentStream = AgentLoopRunner.instance.runAgent(
         prompt: userText,
+        personaId: 'global',
         personaSystemPrompt: systemPrompt,
         contextSummary: contextLines.isNotEmpty ? contextLines.join('\n') : null,
         recentHistory: recentHistory.isNotEmpty ? recentHistory : null,

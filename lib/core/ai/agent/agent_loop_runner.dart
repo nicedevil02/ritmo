@@ -37,12 +37,12 @@ class AgentLoopRunner {
 
   Stream<AgentEvent> runAgent({
     required String prompt,
+    required String personaId,
     String? personaTitle,
     String? personaSystemPrompt,
     String? contextSummary,
     List<String>? recentHistory,
     AiSlot slot = AiSlot.assistant,
-    String personaId = 'global',
   }) async* {
     final budget = AgentBudget();
     final steps = <AgentStep>[];

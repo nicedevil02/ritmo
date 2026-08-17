@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
+import 'package:ritmo/core/ai/agent/agent_tool_scope.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/commands/command_plan.dart';
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
@@ -129,11 +130,15 @@ abstract class KernelCommandTool extends AgentTool {
       steps: steps,
     );
 
+    final effectivePersonaId = AgentToolScope.instance.activePersonaId.trim().isNotEmpty
+        ? AgentToolScope.instance.activePersonaId.trim()
+        : personaId;
+
     PlanResult result;
     try {
       result = await bus.execute(
         plan,
-        personaId: personaId,
+        personaId: effectivePersonaId,
         source: CommandSource.assistant,
       );
     } catch (e, st) {

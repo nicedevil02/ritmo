@@ -12,6 +12,8 @@ import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/profile/presentation/cycle_reminders_screen.dart';
 
 class CycleHarmonyScreen extends StatefulWidget {
@@ -72,8 +74,18 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
       now: DateTime.now(),
     );
 
-    final logs = await db.query('cycle_logs', orderBy: 'cycleStartDate DESC');
-    _cycleLogs = logs.map(Map<String, dynamic>.from).toList();
+    final periods = await CyclePeriodRepository.instance.getAllPeriods(db);
+    _cycleLogs = periods.map((p) => {
+      'id': p.id,
+      'cycleStartDate': CycleDateContract.toDayKey(p.startDate),
+      'cycleEndDate': p.endDate != null ? CycleDateContract.toDayKey(p.endDate!) : null,
+      'startDate': CycleDateContract.toDayKey(p.startDate),
+      'endDate': p.endDate != null ? CycleDateContract.toDayKey(p.endDate!) : null,
+      'suppressedPrayer': p.suppressedPrayer ? 1 : 0,
+      'fastDebtCreated': p.fastDebtCreated ? 1 : 0,
+      'notes': p.notes,
+      'periodDuration': p.periodDuration,
+    }).toList();
 
     if (mounted) {
       setState(() {
@@ -130,16 +142,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
         },
       );
       if (confirm ?? false) {
-        await db.insert('cycle_logs', {
-          'id': 'cycle_$nowMs',
-          'cycleStartDate': todayStr,
-          'cycleEndDate': null,
-          'isPredicted': 0,
-          'suppressedPrayer': 1,
-          'fastDebtCreated': 0,
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        });
+        await CyclePeriodRepository.instance.startPeriod(DateTime.now(), dbExecutor: db);
       }
     } else {
       final confirm = await showDialog<bool>(
@@ -172,22 +175,9 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
         },
       );
       if (confirm ?? false) {
-        final activeLogs = await db.query(
-          'cycle_logs',
-          where: 'cycleStartDate <= ? AND (cycleEndDate IS NULL OR cycleEndDate >= ?)',
-          whereArgs: [todayStr, todayStr],
-        );
-        if (activeLogs.isNotEmpty) {
-          final activeId = activeLogs.first['id']! as String;
-          await db.update(
-            'cycle_logs',
-            {
-              'cycleEndDate': todayStr,
-              'updatedAt': nowMs,
-            },
-            where: 'id = ?',
-            whereArgs: [activeId],
-          );
+        final activePeriod = await CyclePeriodRepository.instance.getActivePeriod(db);
+        if (activePeriod != null) {
+          await CyclePeriodRepository.instance.endPeriod(activePeriod.id!, DateTime.now(), dbExecutor: db);
           await DatabaseHelper.instance.addFastingDebtIfNeeded(db, todayStr);
         }
       }
@@ -307,28 +297,32 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       final endStr = endDate?.toIso8601String().substring(0, 10);
                       final nowMs = DateTime.now().millisecondsSinceEpoch;
 
-                      if (isEdit) {
+                      if (isEdit && log['id'] != null) {
+                        final duration = endDate != null
+                            ? CycleDateContract.daysBetween(startDate, endDate) + 1
+                            : null;
                         await db.update(
-                          'cycle_logs',
+                          'cycle_periods',
                           {
-                            'cycleStartDate': startStr,
-                            'cycleEndDate': endStr,
+                            'startDate': startStr,
+                            'endDate': endStr,
+                            'periodDuration': duration,
                             'updatedAt': nowMs,
                           },
                           where: 'id = ?',
                           whereArgs: [log['id']],
                         );
                       } else {
-                        await db.insert('cycle_logs', {
-                          'id': 'cycle_$nowMs',
-                          'cycleStartDate': startStr,
-                          'cycleEndDate': endStr,
-                          'isPredicted': 0,
-                          'suppressedPrayer': 1,
-                          'fastDebtCreated': 0,
-                          'createdAt': nowMs,
-                          'updatedAt': nowMs,
-                        });
+                        await CyclePeriodRepository.instance.startPeriod(
+                          startDate,
+                          dbExecutor: db,
+                        );
+                        if (endDate != null) {
+                          final active = await CyclePeriodRepository.instance.getActivePeriod(db);
+                          if (active != null) {
+                            await CyclePeriodRepository.instance.endPeriod(active.id!, endDate, dbExecutor: db);
+                          }
+                        }
                       }
 
                       if (endStr != null) {
@@ -868,16 +862,20 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                           endStr = _onboardingLastStartDate!.add(Duration(days: _onboardingPeriodDuration - 1)).toIso8601String().substring(0, 10);
                         }
 
-                        await db.insert('cycle_logs', {
-                          'id': 'cycle_$nowMs',
-                          'cycleStartDate': startStr,
-                          'cycleEndDate': endStr,
-                          'isPredicted': 0,
-                          'suppressedPrayer': 1,
-                          'fastDebtCreated': 0,
-                          'createdAt': nowMs,
-                          'updatedAt': nowMs,
-                        });
+                        await CyclePeriodRepository.instance.startPeriod(
+                          _onboardingLastStartDate!,
+                          dbExecutor: db,
+                        );
+                        if (endStr != null) {
+                          final active = await CyclePeriodRepository.instance.getActivePeriod(db);
+                          if (active != null) {
+                            await CyclePeriodRepository.instance.endPeriod(
+                              active.id!,
+                              _onboardingLastStartDate!.add(Duration(days: _onboardingPeriodDuration - 1)),
+                              dbExecutor: db,
+                            );
+                          }
+                        }
 
                         if (endStr != null) {
                           await DatabaseHelper.instance.addFastingDebtIfNeeded(db, endStr);
@@ -1263,8 +1261,9 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                                   }
                                 );
                                 if (confirm ?? false) {
-                                  final db = await DatabaseHelper.instance.database;
-                                  await db.delete('cycle_logs', where: 'id = ?', whereArgs: [log['id']]);
+                                  if (log['id'] != null) {
+                                    await CyclePeriodRepository.instance.deletePeriod(log['id'] as int);
+                                  }
                                   RitmoEvents.notifyRoutineChanged();
                                   await _loadData();
                                 }

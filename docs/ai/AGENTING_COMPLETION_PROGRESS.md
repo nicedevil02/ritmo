@@ -4,7 +4,7 @@
 
 | ID | عنوان | وضعیت | کامیت | یادداشت |
 |----|-------|-------|-------|---------|
-| T01 | پاس دادن personaId به حلقه | TODO | | |
+| T01 | پاس دادن personaId به حلقه | DOING | | |
 | T02 | نصب AgentConfirmationHost | TODO | | |
 | T03 | نشتی اشتراک و broker در dispose | TODO | | |
 | T04 | استفاده از rawAnswer به‌جای متن تمیزشده | TODO | | |

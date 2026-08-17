@@ -84,7 +84,7 @@ class ModuleContentMap {
     ModuleContent(
       moduleKey: 'module_cycle_enabled',
       agendaDomains: {AgendaDomain.cycle},
-      dataTables: {'cycle_logs', 'cycle_predictions'},
+      dataTables: {'cycle_periods', 'cycle_day_logs', 'cycle_predictions'},
       settingsPrefixes: {'cycle_'},
     ),
     ModuleContent(

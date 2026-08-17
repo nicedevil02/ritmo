@@ -377,7 +377,18 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getCycleLogs({DatabaseExecutor? executor}) async {
     final exec = executor ?? await database;
-    return exec.query('cycle_logs', orderBy: 'cycleStartDate DESC');
+    try {
+      final rows = await exec.query('cycle_periods', orderBy: 'startDate DESC');
+      return rows.map((r) {
+        return {
+          ...r,
+          'cycleStartDate': r['startDate'],
+          'cycleEndDate': r['endDate'],
+        };
+      }).toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   Future<void> deleteNotificationHistory({DatabaseExecutor? executor}) async {

@@ -1,9 +1,15 @@
+// C-13, C-15: CycleOnboardingController
+// Clean onboarding coordinator using CycleSettings façade, CycleDateContract, and schema-compliant period records.
 import 'package:flutter/foundation.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/services/module_management_service.dart';
-import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/core/services/module_management_service.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
+import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
+import 'package:sqflite/sqflite.dart';
 
 enum CyclePeriodStatusChoice {
   currentlyInPeriod,
@@ -15,8 +21,8 @@ enum CyclePeriodStatusChoice {
 class CycleOnboardingData {
   CycleOnboardingData({
     this.periodStatus = CyclePeriodStatusChoice.endedWithKnownStart,
-    this.cycleLength = 28,
-    this.periodDuration = 6,
+    this.cycleLength = CycleSettings.defaultCycleLength,
+    this.periodDuration = CycleSettings.defaultPeriodDuration,
     DateTime? startDate,
     this.worshipConsent = false,
     this.energyConsent = false,
@@ -83,48 +89,31 @@ class CycleOnboardingController {
           if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''
       };
 
-      final avgLength = int.tryParse(settingsMap['cycle_avg_length'] ?? '') ??
-          int.tryParse(settingsMap['user_cycle_length'] ?? '') ??
-          28;
-      final avgPeriod = int.tryParse(settingsMap['cycle_avg_period'] ?? '') ??
-          int.tryParse(settingsMap['user_period_length'] ?? '') ??
-          6;
+      final avgLength = CycleSettings.getCycleLength(settingsMap);
+      final avgPeriod = CycleSettings.getPeriodDuration(settingsMap);
 
-      final worship = settingsMap['cycle_consent_worship'] == 'true';
-      final energy = settingsMap['cycle_consent_energy'] == 'true';
-      final sleep = settingsMap['cycle_consent_sleep'] == 'true';
-      final reminders = settingsMap['cycle_consent_reminders'] == 'true';
-      final dashboard = settingsMap['cycle_consent_dashboard'] == 'true';
+      final worship = settingsMap[CycleSettings.keyConsentWorship] == 'true';
+      final energy = settingsMap[CycleSettings.keyConsentEnergy] == 'true';
+      final sleep = settingsMap[CycleSettings.keyConsentSleep] == 'true';
+      final reminders = settingsMap[CycleSettings.keyConsentReminders] == 'true';
+      final dashboard = settingsMap[CycleSettings.keyConsentDashboard] == 'true';
       final calendar = settingsMap['show_cycle_in_calendar'] == 'true';
 
-      // Check if user already set a PIN or lock in CycleLockGate / settings
-      final pinInStore = await SecureKeyStore.getKey('cycle_lock_password');
-      final pinInSettings = settingsMap['cycle_lock_password'] ?? settingsMap['app_lock_password'];
-      final hasPin = (pinInStore != null && pinInStore.isNotEmpty) || (pinInSettings != null && pinInSettings.isNotEmpty);
-      final lockSetting = settingsMap['cycle_lock_enabled'];
-      final lockEnabled = lockSetting == 'true' ||
-          (lockSetting != 'false' && hasPin) ||
-          settingsMap['cycle_biometric_enabled'] == 'true';
+      final hasPin = await CycleLockService.instance.hasCyclePin(db);
+      final lockEnabled = CycleSettings.isLockEnabled(settingsMap) && hasPin;
 
       // Query latest period to infer start date if available
-      final periods = await db.query('cycle_periods', orderBy: 'startDate DESC', limit: 1);
+      final periods = await CyclePeriodRepository.instance.getAllPeriods(db);
       DateTime startDate = DateTime.now().subtract(const Duration(days: 10));
       CyclePeriodStatusChoice statusChoice = CyclePeriodStatusChoice.endedWithKnownStart;
 
-      // Accept both key spellings — the screen/pregnancy flow writes
-      // `cycle_pregnancy_mode`, older controller builds wrote `cycle_is_pregnant`.
-      final isPregnant = settingsMap['cycle_pregnancy_mode'] == 'true' ||
-          settingsMap['cycle_is_pregnant'] == 'true';
+      final isPregnant = CycleSettings.isPregnancyMode(settingsMap);
       if (isPregnant) {
         statusChoice = CyclePeriodStatusChoice.currentlyPregnant;
       } else if (periods.isNotEmpty) {
         final p = periods.first;
-        final startStr = p['startDate'] as String?;
-        if (startStr != null) {
-          final dt = DateTime.tryParse(startStr);
-          if (dt != null) startDate = dt;
-        }
-        if (p['endDate'] == null) {
+        startDate = p.startDate;
+        if (p.isOpen) {
           statusChoice = CyclePeriodStatusChoice.currentlyInPeriod;
         } else {
           statusChoice = CyclePeriodStatusChoice.endedWithKnownStart;
@@ -133,8 +122,8 @@ class CycleOnboardingController {
 
       return CycleOnboardingData(
         periodStatus: statusChoice,
-        cycleLength: avgLength.clamp(21, 45),
-        periodDuration: avgPeriod.clamp(3, 10),
+        cycleLength: avgLength,
+        periodDuration: avgPeriod,
         startDate: startDate,
         worshipConsent: worship,
         energyConsent: energy,
@@ -144,14 +133,14 @@ class CycleOnboardingController {
         calendarConsent: calendar,
         enableLock: lockEnabled,
       );
-    } catch (e) {
-      debugPrint('Error loading cycle onboarding initial data: $e');
+    } catch (e, st) {
+      RitmoLogger.error('[CycleOnboardingController] Error loading initial data', error: e, stack: st);
       return CycleOnboardingData();
     }
   }
 
   /// Saves onboarding data idempotently into SQLite.
-  /// Dual-writes to new and old settings keys, guarantees module enablement,
+  /// Dual-writes to canonical settings keys, guarantees module enablement,
   /// and calculates exact period end dates without unended period bugs.
   Future<void> saveOnboarding(CycleOnboardingData data, {bool isEditMode = false}) async {
     final db = await DatabaseHelper.instance.database;
@@ -163,27 +152,26 @@ class CycleOnboardingController {
     final settingsToSave = <String, String>{
       'module_cycle_enabled': 'true',
       'cycle_setup_done': 'true',
+      CycleSettings.keyCycleLength: data.cycleLength.toString(),
+      CycleSettings.keyPeriodDuration: data.periodDuration.toString(),
+      // Mirroring to legacy aliases
       'cycle_avg_length': data.cycleLength.toString(),
       'cycle_avg_period': data.periodDuration.toString(),
-      // Mirroring to legacy engine keys (Bug چ-۵ resolution)
       'user_cycle_length': data.cycleLength.toString(),
       'user_period_length': data.periodDuration.toString(),
-      // Privacy Consents (all 6 connections)
-      'cycle_consent_worship': data.worshipConsent.toString(),
-      'cycle_consent_energy': data.energyConsent.toString(),
-      'cycle_consent_sleep': data.sleepConsent.toString(),
-      'cycle_consent_reminders': data.remindersConsent.toString(),
-      'cycle_consent_dashboard': data.dashboardConsent.toString(),
+      // Privacy Consents
+      CycleSettings.keyConsentWorship: data.worshipConsent.toString(),
+      CycleSettings.keyConsentEnergy: data.energyConsent.toString(),
+      CycleSettings.keyConsentSleep: data.sleepConsent.toString(),
+      CycleSettings.keyConsentReminders: data.remindersConsent.toString(),
+      CycleSettings.keyConsentDashboard: data.dashboardConsent.toString(),
       'show_cycle_in_calendar': data.calendarConsent.toString(),
-      // One-time landing guidance flag (Bug چ-۱۸)
       'cycle_onboarding_just_completed': 'true',
     };
 
-    // Write BOTH pregnancy key spellings so the dashboard view, the consent
-    // bridge, and future edit-mode loads all observe the same state.
     final isPregnant = data.periodStatus == CyclePeriodStatusChoice.currentlyPregnant;
-    settingsToSave['cycle_is_pregnant'] = isPregnant ? 'true' : 'false';
-    settingsToSave['cycle_pregnancy_mode'] = isPregnant ? 'true' : 'false';
+    settingsToSave[CycleSettings.keyPregnancyMode] = isPregnant ? 'true' : 'false';
+    settingsToSave['pregnancy_mode'] = isPregnant ? 'true' : 'false';
 
     for (final entry in settingsToSave.entries) {
       batch.insert(
@@ -193,23 +181,25 @@ class CycleOnboardingController {
       );
     }
 
-    // 2. Handle Lock Preference — only the PIN lock flag. Biometric unlock is
-    // the user's separate choice in the lock settings and must NOT be forced
-    // on/off by this wizard.
+    // 2. Lock Preference
     batch.insert(
       'app_settings',
-      {'key': 'cycle_lock_enabled', 'value': data.enableLock ? 'true' : 'false', 'updatedAt': nowMs},
+      {
+        'key': CycleSettings.keyLockEnabled,
+        'value': data.enableLock ? 'true' : 'false',
+        'updatedAt': nowMs,
+      },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
 
-    // 3. Handle Period Insertion / Update idempotently (Bug چ-۱, چ-۳, چ-۶)
-    final cleanStartStr = data.startDate.toIso8601String().substring(0, 10);
+    // 3. Handle Period Insertion / Update idempotently
+    final cleanStart = CycleDateContract.cleanDate(data.startDate);
+    final cleanStartStr = CycleDateContract.toDayKey(cleanStart);
 
     if (data.periodStatus == CyclePeriodStatusChoice.currentlyInPeriod) {
-      // Check if an initial setup period already exists to update idempotently
       final existing = await db.query(
         'cycle_periods',
-        where: 'note LIKE ? OR startDate = ?',
+        where: 'notes LIKE ? OR startDate = ?',
         whereArgs: ['%ثبت اولیه%', cleanStartStr],
       );
 
@@ -219,6 +209,7 @@ class CycleOnboardingController {
           {
             'startDate': cleanStartStr,
             'endDate': null,
+            'periodDuration': null,
             'updatedAt': nowMs,
           },
           where: 'id = ?',
@@ -226,29 +217,23 @@ class CycleOnboardingController {
         );
       } else if (existing.isEmpty) {
         batch.insert('cycle_periods', {
-          'id': 'period_$nowMs',
           'startDate': cleanStartStr,
           'endDate': null,
-          'flowIntensity': 'MEDIUM',
-          'isPredicted': 0,
-          'note': 'ثبت اولیه در راه‌اندازی',
+          'periodDuration': null,
+          'notes': 'ثبت اولیه در راه‌اندازی',
+          'suppressedPrayer': 1,
+          'fastDebtCreated': 0,
           'createdAt': nowMs,
           'updatedAt': nowMs,
         });
       }
-      // Non-edit mode with an already-matching row: no-op (idempotent).
     } else if (data.periodStatus == CyclePeriodStatusChoice.endedWithKnownStart) {
-      // Calculate end date based on bleeding duration
-      final calcEndDate = data.startDate.add(Duration(days: data.periodDuration - 1));
-
-      // We do NOT clamp the onboarding initial period end date to today
-      // to avoid artificially truncating the user's typical period duration and skewing statistics.
-      final safeEnd = calcEndDate;
-      final cleanEndStr = safeEnd.toIso8601String().substring(0, 10);
+      final calcEndDate = cleanStart.add(Duration(days: data.periodDuration - 1));
+      final cleanEndStr = CycleDateContract.toDayKey(calcEndDate);
 
       final existing = await db.query(
         'cycle_periods',
-        where: 'note LIKE ? OR startDate = ?',
+        where: 'notes LIKE ? OR startDate = ?',
         whereArgs: ['%ثبت اولیه%', cleanStartStr],
       );
 
@@ -258,6 +243,7 @@ class CycleOnboardingController {
           {
             'startDate': cleanStartStr,
             'endDate': cleanEndStr,
+            'periodDuration': data.periodDuration,
             'updatedAt': nowMs,
           },
           where: 'id = ?',
@@ -265,19 +251,17 @@ class CycleOnboardingController {
         );
       } else if (existing.isEmpty) {
         batch.insert('cycle_periods', {
-          'id': 'period_$nowMs',
           'startDate': cleanStartStr,
           'endDate': cleanEndStr,
-          'flowIntensity': 'MEDIUM',
-          'isPredicted': 0,
-          'note': 'ثبت اولیه در راه‌اندازی',
+          'periodDuration': data.periodDuration,
+          'notes': 'ثبت اولیه در راه‌اندازی',
+          'suppressedPrayer': 1,
+          'fastDebtCreated': 0,
           'createdAt': nowMs,
           'updatedAt': nowMs,
         });
       }
-      // Non-edit mode with an already-matching row: no-op (idempotent).
     }
-    // If status == dontKnow or currentlyPregnant, NO period row is added (Bug چ-۱, چ-۶, چ-۱۱).
 
     await batch.commit(noResult: true);
     await ModuleManagementService.instance.setModuleEnabled('module_cycle_enabled', true);

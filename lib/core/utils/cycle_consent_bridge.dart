@@ -78,40 +78,7 @@ class CycleConsentBridge {
       RitmoLogger.error('[CycleConsentBridge] error querying cycle_day_logs', error: e, stack: st);
     }
 
-    // 3. Check legacy cycle_logs
-    try {
-      final oldLogs = await db.query(
-        'cycle_logs',
-        where: 'cycleStartDate <= ?',
-        whereArgs: [targetStr],
-        orderBy: 'cycleStartDate DESC',
-        limit: 1,
-      );
-      if (oldLogs.isNotEmpty) {
-        final startStr = oldLogs.first['cycleStartDate'] as String?;
-        final endStr = oldLogs.first['cycleEndDate'] as String?;
-        if (startStr != null) {
-          final start = DateTime.tryParse(startStr);
-          if (start != null) {
-            final cleanStart = DateTime(start.year, start.month, start.day);
-            if (endStr != null) {
-              final end = DateTime.tryParse(endStr);
-              if (end != null) {
-                final cleanEnd = DateTime(end.year, end.month, end.day);
-                if (!cleanTarget.isBefore(cleanStart) && !cleanTarget.isAfter(cleanEnd)) {
-                  return true;
-                }
-              }
-            } else {
-              final daysDiff = cleanTarget.difference(cleanStart).inDays;
-              if (daysDiff >= 0 && daysDiff <= 10) return true;
-            }
-          }
-        }
-      }
-    } catch (e, st) {
-      RitmoLogger.error('[CycleConsentBridge] error querying cycle_logs', error: e, stack: st);
-    }
+    // Note: legacy cycle_logs have been migrated to cycle_periods by migration_v92
 
     return false;
   }

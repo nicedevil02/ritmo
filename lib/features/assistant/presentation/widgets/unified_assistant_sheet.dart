@@ -7,8 +7,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:ritmo/core/ai/ai_connection_models.dart';
-import 'package:ritmo/core/ai/ai_connection_repository.dart';
-import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
@@ -303,16 +301,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
       final profile = PersonaInferenceProfile.getProfile(widget.persona.id);
       debugPrint('[AssistantSheet] Persona profile maxTokens: ${profile.maxTokens}');
 
-      final messagesToSend = <Map<String, String>>[
-        {'role': 'system', 'content': systemPrompt},
-        ..._messages.map((m) => {
-              'role': m.role == ChatRole.user
-                  ? 'user'
-                  : (m.role == ChatRole.system ? 'system' : 'assistant'),
-              'content': m.content,
-            })
-      ];
-
       final recentHistory = _messages
           .where((m) => m.content.isNotEmpty)
           .take(4)
@@ -327,6 +315,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
 
       final agentStream = AgentLoopRunner.instance.runAgent(
         prompt: query,
+        personaId: widget.persona.id,
         personaTitle: widget.persona.displayName,
         personaSystemPrompt: systemPrompt,
         contextSummary: briefJson,
@@ -351,7 +340,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
       });
 
       var fullResponse = '';
-      _agentSubscription?.cancel();
+      await _agentSubscription?.cancel();
       _agentSubscription = agentStream.listen(
         (event) {
           if (event is AgentStatusChangedEvent) {

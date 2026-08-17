@@ -207,30 +207,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         _settings = {for (final s in updatedSettingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
       }
 
-      // Load cycle periods
+      // Load cycle periods (migration_v92 has already moved legacy cycle_logs into cycle_periods)
       _periods = await db.query('cycle_periods', orderBy: 'startDate DESC');
-
-      // Migrate periods if legacy logs exist but new periods are empty
-      if (_periods.isEmpty) {
-        final legacyLogs = await db.query('cycle_logs', orderBy: 'cycleStartDate DESC');
-        if (legacyLogs.isNotEmpty) {
-          final batch = db.batch();
-          for (final log in legacyLogs) {
-            batch.insert('cycle_periods', {
-              'id': log['id'],
-              'startDate': log['cycleStartDate'],
-              'endDate': log['cycleEndDate'],
-              'flowIntensity': log['flowLevel'] ?? 'MEDIUM',
-              'isPredicted': log['isPredicted'] ?? 0,
-              'note': log['note'] ?? 'انتقال یافته از تاریخچه قدیمی',
-              'createdAt': log['createdAt'],
-              'updatedAt': log['updatedAt'],
-            });
-          }
-          await batch.commit(noResult: true);
-          _periods = await db.query('cycle_periods', orderBy: 'startDate DESC');
-        }
-      }
 
       // Find if there is any forgotten period
       _forgottenPeriod = null;

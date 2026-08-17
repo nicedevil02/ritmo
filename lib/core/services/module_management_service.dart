@@ -266,7 +266,6 @@ class ModuleManagementService {
             break;
 
           case 'module_cycle_enabled':
-            await safeDelete('cycle_logs');
             await safeDelete('cycle_periods');
             await safeDelete('cycle_day_logs');
             await safeDelete('cycle_reminders_config');

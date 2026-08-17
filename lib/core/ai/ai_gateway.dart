@@ -1054,6 +1054,14 @@ class AIGateway {
     };
   }
 
+  @visibleForTesting
+  Stream<String> Function({
+    required List<Map<String, String>> messages,
+    AiSlot slot,
+    double? temperature,
+    int? maxTokens,
+  })? customChatStreamHandlerForTesting;
+
   Stream<String> sendCustomChatStream({
     required List<Map<String, String>> messages,
     AiSlot slot = AiSlot.assistant,
@@ -1062,6 +1070,16 @@ class AIGateway {
     List<Map<String, dynamic>>? tools,
     dynamic toolChoice,
   }) async* {
+    if (customChatStreamHandlerForTesting != null) {
+      yield* customChatStreamHandlerForTesting!(
+        messages: messages,
+        slot: slot,
+        temperature: temperature,
+        maxTokens: maxTokens,
+      );
+      return;
+    }
+
     if (AIRateLimiter.instance.isRateLimited()) {
       yield 'error:سرعت ارسال درخواست‌ها بیش از حد مجاز است. لطفاً کمی صبر کنید.';
       return;

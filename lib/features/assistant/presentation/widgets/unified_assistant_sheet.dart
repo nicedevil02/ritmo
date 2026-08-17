@@ -124,6 +124,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
     _streamSubscription?.cancel();
     _agentSubscription?.cancel();
     AgentConfirmationBroker.instance.cancelAll();
+    AgentQuestionBroker.instance.cancelAll();
     ChatGptWebBridgeManager.instance.cloudflareNotifier.removeListener(_handleCloudflarePrompt);
     for (final timer in _pendingDeleteTimers.values) {
       timer.cancel();

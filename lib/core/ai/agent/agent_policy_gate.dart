@@ -159,6 +159,97 @@ class AgentConfirmationBroker {
   }
 }
 
+/// درخواست پرسش از کاربر توسط ابزار ask_user
+class AgentQuestionRequest {
+  const AgentQuestionRequest({
+    required this.id,
+    required this.sessionId,
+    required this.question,
+    this.options = const [],
+  });
+
+  final String id;
+  final String sessionId;
+  final String question;
+  final List<String> options;
+}
+
+/// پاسخ کاربر به پرسش دستیار
+class AgentQuestionResponse {
+  const AgentQuestionResponse({
+    required this.answered,
+    this.answer,
+    this.reasonFa,
+  });
+
+  final bool answered;
+  final String? answer;
+  final String? reasonFa;
+
+  static const AgentQuestionResponse expired = AgentQuestionResponse(
+    answered: false,
+    reasonFa: 'مهلت پاسخ به پایان رسید',
+  );
+
+  static AgentQuestionResponse answerValue(String answer) =>
+      AgentQuestionResponse(answered: true, answer: answer);
+
+  static AgentQuestionResponse cancel({String? reasonFa}) =>
+      AgentQuestionResponse(answered: false, reasonFa: reasonFa ?? 'لغو شد');
+}
+
+/// کارگزار پرسش تعاملی از کاربر با مدیریت چرخه حیات و جلوگیری از نشت حافظه
+class AgentQuestionBroker {
+  AgentQuestionBroker._();
+
+  static final AgentQuestionBroker instance = AgentQuestionBroker._();
+
+  final Map<String, Completer<AgentQuestionResponse>> _pending = {};
+  final ValueNotifier<AgentQuestionRequest?> pending =
+      ValueNotifier<AgentQuestionRequest?>(null);
+
+  bool get hasPending => pending.value != null;
+
+  Future<AgentQuestionResponse> ask(
+    AgentQuestionRequest request, {
+    Duration timeout = const Duration(seconds: 90),
+  }) async {
+    final completer = Completer<AgentQuestionResponse>();
+    _pending[request.id] = completer;
+    pending.value = request;
+    try {
+      return await completer.future.timeout(
+        timeout,
+        onTimeout: () => AgentQuestionResponse.expired,
+      );
+    } finally {
+      _pending.remove(request.id);
+      if (pending.value?.id == request.id) pending.value = null;
+    }
+  }
+
+  bool respond(String requestId, String answer) {
+    final completer = _pending.remove(requestId);
+    if (pending.value?.id == requestId) pending.value = null;
+    if (completer == null || completer.isCompleted) return false;
+    completer.complete(AgentQuestionResponse.answerValue(answer));
+    return true;
+  }
+
+  void cancelAll({String? reasonFa}) {
+    final entries = _pending.entries.toList();
+    _pending.clear();
+    pending.value = null;
+    for (final entry in entries) {
+      if (!entry.value.isCompleted) {
+        entry.value.complete(AgentQuestionResponse.cancel(
+          reasonFa: reasonFa ?? 'گفت‌وگو بسته شد',
+        ));
+      }
+    }
+  }
+}
+
 /// گیت سیاست ابزار — فاز ۳ (P3-1)
 ///
 /// تا پیش از این، ToolPolicy فقط یک برچسب تزیینی بود (نقص D8): هر ابزاری که مدل

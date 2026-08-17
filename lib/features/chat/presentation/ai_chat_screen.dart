@@ -569,6 +569,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _pendingDeletedMsgs.clear();
     _cancelStreamSilent();
     AgentConfirmationBroker.instance.cancelAll();
+    AgentQuestionBroker.instance.cancelAll();
     ChatGptWebBridgeManager.instance.cloudflareNotifier.removeListener(_handleCloudflarePrompt);
     _textController.dispose();
     _scrollController.dispose();

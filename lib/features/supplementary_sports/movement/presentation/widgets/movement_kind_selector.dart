@@ -16,10 +16,6 @@ class MovementKindSelector extends StatefulWidget {
   });
 
   final MovementKind? selectedKind;
-
-  /// فقط وقتی صدا زده می‌شود که کاربر خودش یک نوع را انتخاب کند.
-  /// (پیش‌از‌این هنگام لود شدن هم خودبه‌خود صدا می‌شد و یک ورزش
-  /// انتخاب‌نشده را جا می‌انداخت.)
   final ValueChanged<MovementKind> onKindSelected;
 
   @override
@@ -36,10 +32,27 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
   MovementFamily _selectedFamilyTab = MovementFamily.endurance;
   bool _isLoadingKinds = true;
 
+  // پس از انتخاب، انتخابگر جمع می‌شود و خلاصه نشان می‌دهد.
+  // دکمهٔ «تغییر» دوباره بازش می‌کند.
+  bool _forceExpand = false;
+
+  bool get _isCollapsed =>
+      widget.selectedKind != null && !_forceExpand;
+
   @override
   void initState() {
     super.initState();
     _loadInitialData();
+  }
+
+  @override
+  void didUpdateWidget(MovementKindSelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // وقتی والد selectedKind را null کرد (یعنی خودش reset کرد)
+    // حالت forceExpand را ریست کن تا انتخابگر دوباره باز شود.
+    if (widget.selectedKind == null && oldWidget.selectedKind != null) {
+      _forceExpand = false;
+    }
   }
 
   @override
@@ -52,18 +65,22 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
   Future<void> _loadInitialData() async {
     final recents = await MovementRepository.instance.recentKinds(limit: 6);
     final kinds = await MovementRepository.instance.getKinds(family: _selectedFamilyTab);
-
-    if (!mounted) return;
-    setState(() {
-      _recentKinds = recents;
-      _displayKinds = kinds;
-      _isLoadingKinds = false;
-    });
+    if (mounted) {
+      setState(() {
+        _recentKinds = recents;
+        _displayKinds = kinds;
+        _isLoadingKinds = false;
+        // ❌ auto-select حذف شد — انتخاب همیشه صریح است.
+      });
+    }
   }
 
   void _onSearchChanged(String query) {
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 300), () => _runSearch(query));
+    _searchDebounce = Timer(
+      const Duration(milliseconds: 300),
+      () => _runSearch(query),
+    );
   }
 
   Future<void> _runSearch(String query) async {
@@ -71,7 +88,6 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
     final results = query.trim().isEmpty
         ? await MovementRepository.instance.getKinds(family: _selectedFamilyTab)
         : await MovementRepository.instance.searchKinds(query);
-
     if (!mounted || requestId != _searchRequestId) return;
     setState(() => _displayKinds = results);
   }
@@ -94,11 +110,14 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
   Future<void> _openCustomKindSheet() async {
     final created = await showMovementCustomKindSheet(context);
     if (created != null && mounted) {
-      setState(() {
-        _recentKinds.insert(0, created);
-      });
+      setState(() => _recentKinds.insert(0, created));
       widget.onKindSelected(created);
     }
+  }
+
+  void _selectKind(MovementKind k) {
+    setState(() => _forceExpand = false);
+    widget.onKindSelected(k);
   }
 
   @override
@@ -106,18 +125,65 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
     final colors = context.colors;
     final accent = context.modules.sports;
 
+    // ── حالت جمع‌شده: خلاصه + دکمهٔ تغییر ────────────────────────────────────
+    if (_isCollapsed) {
+      final k = widget.selectedKind!;
+      return Container(
+        height: 56,
+        padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
+          border: Border.all(color: accent.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          children: [
+            Text(k.emoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(width: RitmoSpacing.sm),
+            Expanded(
+              child: Text(
+                k.titleFa,
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(64, 44),
+                foregroundColor: accent,
+              ),
+              onPressed: () => setState(() => _forceExpand = true),
+              child: const Text(
+                'تغییر',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ── حالت باز: جست‌وجو + تب + شبکه ───────────────────────────────────────
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── پرکاربردها و انتخاب‌های اخیر ──
+        // اخیراً استفاده‌شده
         if (_recentKinds.isNotEmpty) ...[
           Text(
-            'پرکاربرد و اخیر',
+            'انواع اخیر:',
             style: TextStyle(
               fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.bold,
               fontSize: 13,
-              color: colors.textPrimary,
+              color: colors.textSecondary,
             ),
           ),
           const SizedBox(height: RitmoSpacing.sm),
@@ -125,14 +191,14 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: _recentKinds.map((k) {
-                final isSelected = widget.selectedKind?.code == k.code;
                 return Padding(
-                  padding: const EdgeInsets.only(left: RitmoSpacing.sm),
+                  padding: const EdgeInsetsDirectional.only(end: RitmoSpacing.sm),
                   child: _KindChip(
-                    label: '${k.emoji} ${k.titleFa}',
-                    isSelected: isSelected,
+                    kind: k,
+                    isSelected: widget.selectedKind?.code == k.code,
                     accent: accent,
-                    onTap: () => widget.onKindSelected(k),
+                    colors: colors,
+                    onTap: () => _selectKind(k),
                   ),
                 );
               }).toList(),
@@ -141,38 +207,42 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
           const SizedBox(height: RitmoSpacing.lg),
         ],
 
-        // ── جست‌وجو و نوع دلخواه ──
+        // جست‌وجو + نوع دلخواه
         Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _searchController,
-                onChanged: _onSearchChanged,
-                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
-                decoration: InputDecoration(
-                  hintText: 'جست‌وجوی نوع ورزش...',
-                  hintStyle: TextStyle(
+              child: SizedBox(
+                height: 48,
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontFamily: 'Vazirmatn',
-                    fontSize: 13,
-                    color: colors.textTertiary,
                   ),
-                  prefixIcon: Icon(CupertinoIcons.search, size: 20, color: colors.textSecondary),
-                  filled: true,
-                  fillColor: colors.surfaceSunken,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: RitmoSpacing.md,
-                    vertical: RitmoSpacing.md,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(RitmoRadius.field),
-                    borderSide: BorderSide(color: colors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(RitmoRadius.field),
-                    borderSide: BorderSide(color: accent, width: 1.5),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                  decoration: InputDecoration(
+                    hintText: 'جست‌وجوی نوع ورزش...',
+                    hintStyle: TextStyle(
+                      color: colors.textTertiary,
+                      fontFamily: 'Vazirmatn',
+                    ),
+                    prefixIcon: const Icon(CupertinoIcons.search, size: 20),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(RitmoRadius.field),
+                      borderSide: BorderSide(color: colors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(RitmoRadius.field),
+                      borderSide: BorderSide(color: colors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(RitmoRadius.field),
+                      borderSide: BorderSide(color: accent),
+                    ),
                   ),
                 ),
               ),
@@ -182,22 +252,21 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
               height: 48,
               child: OutlinedButton.icon(
                 onPressed: _openCustomKindSheet,
-                icon: Icon(CupertinoIcons.add, size: 18, color: accent),
-                label: Text(
-                  'دلخواه',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold,
-                    color: accent,
-                  ),
+                icon: const Icon(CupertinoIcons.add, size: 18),
+                label: const Text(
+                  'نوع دلخواه',
+                  style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: accent.withValues(alpha: 0.5)),
+                  foregroundColor: colors.textSecondary,
+                  side: BorderSide(color: colors.border),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(RitmoRadius.field),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ),
@@ -205,20 +274,44 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
         ),
         const SizedBox(height: RitmoSpacing.md),
 
-        // ── دسته‌بندی خانوادگی ──
+        // تب‌های خانواده
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: MovementFamily.values.map((f) {
               final isSelected = f == _selectedFamilyTab;
               return Padding(
-                padding: const EdgeInsets.only(left: RitmoSpacing.xs + 2),
-                child: _KindChip(
-                  label: '${f.emoji} ${f.titleFa}',
-                  isSelected: isSelected,
-                  accent: accent,
-                  fontSize: 12,
+                padding: const EdgeInsetsDirectional.only(end: RitmoSpacing.sm),
+                child: GestureDetector(
                   onTap: () => _selectFamilyTab(f),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? accent.withValues(alpha: 0.15)
+                          : colors.surfaceSunken,
+                      borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                      border: Border.all(
+                        color: isSelected ? accent : colors.border,
+                        width: isSelected ? 1.5 : 1.0,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${f.emoji} ${f.titleFa}',
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 12,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                          color: isSelected ? accent : colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               );
             }).toList(),
@@ -226,22 +319,22 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
         ),
         const SizedBox(height: RitmoSpacing.md),
 
-        // ── نتیجهٔ فهرست ──
+        // شبکهٔ انواع
         if (_isLoadingKinds)
           const Center(
             child: Padding(
-              padding: EdgeInsets.all(RitmoSpacing.lg),
+              padding: EdgeInsets.all(16),
               child: CupertinoActivityIndicator(),
             ),
           )
         else if (_displayKinds.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.md),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(
-              'ورزشی در این دسته پیدا نشد. می‌توانی با دکمهٔ «دلخواه» خودت بسازی.',
+              'ورزشی در این دسته یافت نشد. می‌توانید با «نوع دلخواه» اضافه کنید.',
               style: TextStyle(
                 fontFamily: 'Vazirmatn',
-                fontSize: 12.5,
+                fontSize: 12,
                 color: colors.textSecondary,
               ),
             ),
@@ -251,12 +344,12 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
             spacing: RitmoSpacing.sm,
             runSpacing: RitmoSpacing.sm,
             children: _displayKinds.map((k) {
-              final isSelected = widget.selectedKind?.code == k.code;
               return _KindChip(
-                label: '${k.emoji} ${k.titleFa}',
-                isSelected: isSelected,
+                kind: k,
+                isSelected: widget.selectedKind?.code == k.code,
                 accent: accent,
-                onTap: () => widget.onKindSelected(k),
+                colors: colors,
+                onTap: () => _selectKind(k),
               );
             }).toList(),
           ),
@@ -265,25 +358,26 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
   }
 }
 
-/// چیپ یکدست برای هر سه ردیف (اخیر، خانواده، نتایج) — پیش‌از‌این سه سبک متفاوت داشتند.
+// ─── چیپ یکدست ≥ ۴۴ پیکسل ───────────────────────────────────────────────────────────────────────────────
+
 class _KindChip extends StatelessWidget {
   const _KindChip({
-    required this.label,
+    required this.kind,
     required this.isSelected,
     required this.accent,
+    required this.colors,
     required this.onTap,
-    this.fontSize = 13,
   });
 
-  final String label;
+  final MovementKind kind;
   final bool isSelected;
   final Color accent;
+  // ignore: avoid_annotating_with_dynamic
+  final dynamic colors;
   final VoidCallback onTap;
-  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     return Semantics(
       button: true,
       selected: isSelected,
@@ -292,28 +386,36 @@ class _KindChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(RitmoRadius.chip),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          constraints: const BoxConstraints(minHeight: 40),
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(
-            horizontal: RitmoSpacing.md,
-            vertical: RitmoSpacing.sm,
-          ),
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: isSelected ? accent.withValues(alpha: 0.18) : colors.surfaceSunken,
+            color: isSelected
+                ? accent.withValues(alpha: 0.18)
+                : (colors.surfaceSunken as Color),
             borderRadius: BorderRadius.circular(RitmoRadius.chip),
             border: Border.all(
-              color: isSelected ? accent : colors.border,
-              width: isSelected ? 1.5 : 1,
+              color: isSelected ? accent : (colors.border as Color),
+              width: isSelected ? 1.5 : 1.0,
             ),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontSize: fontSize,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? accent : colors.textPrimary,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(kind.emoji, style: const TextStyle(fontSize: 14)),
+              const SizedBox(width: 6),
+              Text(
+                kind.titleFa,
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 13,
+                  fontWeight:
+                      isSelected ? FontWeight.bold : FontWeight.w500,
+                  color: isSelected
+                      ? accent
+                      : (colors.textPrimary as Color),
+                ),
+              ),
+            ],
           ),
         ),
       ),

@@ -16,6 +16,7 @@ class AiProviderPreset {
     this.worksInIranWithoutVpn = false,
     this.needsAccountId = false,
     this.allowsHttp = false,
+    this.supportsNativeTools = false,
   });
 
   final String id;
@@ -28,6 +29,7 @@ class AiProviderPreset {
   final bool worksInIranWithoutVpn;
   final bool needsAccountId;
   final bool allowsHttp;
+  final bool supportsNativeTools;
 }
 
 const List<AiProviderPreset> kAiProviderPresets = [
@@ -40,6 +42,7 @@ const List<AiProviderPreset> kAiProviderPresets = [
     keyUrl: 'https://opencode.ai/',
     brandColor: Color(0xff10B981),
     worksInIranWithoutVpn: true,
+    supportsNativeTools: true,
   ),
   AiProviderPreset(
     id: 'zhipu',
@@ -50,6 +53,7 @@ const List<AiProviderPreset> kAiProviderPresets = [
     keyUrl: 'https://open.bigmodel.cn/usercenter/apikeys',
     brandColor: Color(0xff3B82F6),
     worksInIranWithoutVpn: true,
+    supportsNativeTools: true,
   ),
   AiProviderPreset(
     id: 'openrouter',
@@ -64,6 +68,7 @@ const List<AiProviderPreset> kAiProviderPresets = [
     keyUrl: 'https://openrouter.ai/keys',
     brandColor: Color(0xff6366F1),
     worksInIranWithoutVpn: true,
+    supportsNativeTools: true,
   ),
   AiProviderPreset(
     id: 'cloudflare',
@@ -80,6 +85,7 @@ const List<AiProviderPreset> kAiProviderPresets = [
     brandColor: Color(0xffF97316),
     worksInIranWithoutVpn: false,
     needsAccountId: true,
+    supportsNativeTools: false,
   ),
   AiProviderPreset(
     id: 'groq',
@@ -94,6 +100,7 @@ const List<AiProviderPreset> kAiProviderPresets = [
     keyUrl: 'https://console.groq.com/keys',
     brandColor: Color(0xffF43F5E),
     worksInIranWithoutVpn: false,
+    supportsNativeTools: true,
   ),
   AiProviderPreset(
     id: 'local',
@@ -105,6 +112,7 @@ const List<AiProviderPreset> kAiProviderPresets = [
     brandColor: Color(0xff10B981),
     worksInIranWithoutVpn: true,
     allowsHttp: true,
+    supportsNativeTools: false,
   ),
   AiProviderPreset(
     id: 'chatgpt_web',
@@ -115,6 +123,7 @@ const List<AiProviderPreset> kAiProviderPresets = [
     keyUrl: 'https://chatgpt.com/',
     brandColor: Color(0xff10A37F),
     worksInIranWithoutVpn: false,
+    supportsNativeTools: false,
   ),
   AiProviderPreset(
     id: 'custom',
@@ -125,6 +134,7 @@ const List<AiProviderPreset> kAiProviderPresets = [
     keyUrl: '',
     brandColor: Color(0xff8B5CF6),
     worksInIranWithoutVpn: false,
+    supportsNativeTools: true,
   ),
 ];
 
@@ -162,6 +172,15 @@ class AiConnectionConfig {
   final bool? lastTestOk;
   final int? lastTestLatencyMs;
   final String? lastErrorCode;
+
+  /// آیا این پرووایدر از ارسال مستقیم آرایه tools (Native Tool Calling) پشتیبانی می‌کند؟
+  bool get supportsNativeTools {
+    final preset = kAiProviderPresets.firstWhere(
+      (p) => p.id == providerPresetId,
+      orElse: () => kAiProviderPresets.last,
+    );
+    return preset.supportsNativeTools;
+  }
 
   AiConnectionConfig copyWith({
     AiSlot? slot,

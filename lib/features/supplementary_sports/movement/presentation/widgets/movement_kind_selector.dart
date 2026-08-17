@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_tokens.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_custom_kind_sheet.dart';
 
 class MovementKindSelector extends StatefulWidget {
@@ -17,6 +16,10 @@ class MovementKindSelector extends StatefulWidget {
   });
 
   final MovementKind? selectedKind;
+
+  /// فقط وقتی صدا زده می‌شود که کاربر خودش یک نوع را انتخاب کند.
+  /// (پیش‌از‌این هنگام لود شدن هم خودبه‌خود صدا می‌شد و یک ورزش
+  /// انتخاب‌نشده را جا می‌انداخت.)
   final ValueChanged<MovementKind> onKindSelected;
 
   @override
@@ -50,21 +53,12 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
     final recents = await MovementRepository.instance.recentKinds(limit: 6);
     final kinds = await MovementRepository.instance.getKinds(family: _selectedFamilyTab);
 
-    if (mounted) {
-      setState(() {
-        _recentKinds = recents;
-        _displayKinds = kinds;
-        _isLoadingKinds = false;
-        // If nothing is selected, default to first recent or first kind
-        if (widget.selectedKind == null) {
-          if (recents.isNotEmpty) {
-            widget.onKindSelected(recents.first);
-          } else if (kinds.isNotEmpty) {
-            widget.onKindSelected(kinds.first);
-          }
-        }
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      _recentKinds = recents;
+      _displayKinds = kinds;
+      _isLoadingKinds = false;
+    });
   }
 
   void _onSearchChanged(String query) {
@@ -110,173 +104,219 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final accent = context.modules.sports;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // --- Recent Kinds ---
+        // ── پرکاربردها و انتخاب‌های اخیر ──
         if (_recentKinds.isNotEmpty) ...[
-          const Text(
-            'انواع اخیر:',
+          Text(
+            'پرکاربرد و اخیر',
             style: TextStyle(
               fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.bold,
               fontSize: 13,
+              color: colors.textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: RitmoSpacing.sm),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: _recentKinds.map((k) {
                 final isSelected = widget.selectedKind?.code == k.code;
                 return Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: ChoiceChip(
-                    label: Text(
-                      '${k.emoji} ${k.titleFa}',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        color: isSelected ? Colors.white : colors.onSurface,
-                      ),
-                    ),
-                    selected: isSelected,
-                    selectedColor: colors.primary,
-                    onSelected: (val) {
-                      if (val) widget.onKindSelected(k);
-                    },
+                  padding: const EdgeInsets.only(left: RitmoSpacing.sm),
+                  child: _KindChip(
+                    label: '${k.emoji} ${k.titleFa}',
+                    isSelected: isSelected,
+                    accent: accent,
+                    onTap: () => widget.onKindSelected(k),
                   ),
                 );
               }).toList(),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: RitmoSpacing.lg),
         ],
 
-        // --- Search & Custom Button ---
+        // ── جست‌وجو و نوع دلخواه ──
         Row(
           children: [
             Expanded(
               child: TextField(
                 controller: _searchController,
                 onChanged: _onSearchChanged,
-                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.onSurface),
+                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'جست‌وجوی نوع ورزش...',
-                  prefixIcon: const Icon(CupertinoIcons.search, size: 20),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  hintStyle: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 13,
+                    color: colors.textTertiary,
+                  ),
+                  prefixIcon: Icon(CupertinoIcons.search, size: 20, color: colors.textSecondary),
+                  filled: true,
+                  fillColor: colors.surfaceSunken,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: RitmoSpacing.md,
+                    vertical: RitmoSpacing.md,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                    borderSide: BorderSide(color: colors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                    borderSide: BorderSide(color: accent, width: 1.5),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: _openCustomKindSheet,
-              icon: const Icon(CupertinoIcons.add, size: 18),
-              label: const Text(
-                'نوع دلخواه',
-                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
-              ),
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            const SizedBox(width: RitmoSpacing.sm),
+            SizedBox(
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: _openCustomKindSheet,
+                icon: Icon(CupertinoIcons.add, size: 18, color: accent),
+                label: Text(
+                  'دلخواه',
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                    color: accent,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: accent.withValues(alpha: 0.5)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md),
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: RitmoSpacing.md),
 
-        // --- Family Tabs ---
+        // ── دسته‌بندی خانوادگی ──
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: MovementFamily.values.map((f) {
               final isSelected = f == _selectedFamilyTab;
               return Padding(
-                padding: const EdgeInsets.only(left: 6),
-                child: ChoiceChip(
-                  label: Text(
-                    '${f.emoji} ${f.titleFa}',
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 12,
-                      color: isSelected ? Colors.white : colors.onSurface,
-                    ),
-                  ),
-                  selected: isSelected,
-                  selectedColor: colors.primary,
-                  onSelected: (_) => _selectFamilyTab(f),
+                padding: const EdgeInsets.only(left: RitmoSpacing.xs + 2),
+                child: _KindChip(
+                  label: '${f.emoji} ${f.titleFa}',
+                  isSelected: isSelected,
+                  accent: accent,
+                  fontSize: 12,
+                  onTap: () => _selectFamilyTab(f),
                 ),
               );
             }).toList(),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: RitmoSpacing.md),
 
-        // --- Display Kinds Grid/List ---
-        _isLoadingKinds
-            ? const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CupertinoActivityIndicator(),
-                ),
-              )
-            : (_displayKinds.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Text(
-                      'ورزشی در این دسته یافت نشد. می‌توانید با «نوع دلخواه» اضافه کنید.',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 12,
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  )
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _displayKinds.map((k) {
-                      final isSelected = widget.selectedKind?.code == k.code;
-                      return InkWell(
-                        onTap: () => widget.onKindSelected(k),
-                        borderRadius: BorderRadius.circular(12),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? CalendarTokens.emerald.withValues(alpha: 0.22)
-                                : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.30),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isSelected
-                                  ? CalendarTokens.emerald
-                                  : colors.outlineVariant.withValues(alpha: 0.20),
-                              width: isSelected ? 1.5 : 1.0,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(k.emoji, style: const TextStyle(fontSize: 14)),
-                              const SizedBox(width: 6),
-                              Text(
-                                k.titleFa,
-                                style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
-                                  fontSize: 13,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                  color: isSelected ? CalendarTokens.emerald : colors.onSurface,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  )),
+        // ── نتیجهٔ فهرست ──
+        if (_isLoadingKinds)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(RitmoSpacing.lg),
+              child: CupertinoActivityIndicator(),
+            ),
+          )
+        else if (_displayKinds.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.md),
+            child: Text(
+              'ورزشی در این دسته پیدا نشد. می‌توانی با دکمهٔ «دلخواه» خودت بسازی.',
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 12.5,
+                color: colors.textSecondary,
+              ),
+            ),
+          )
+        else
+          Wrap(
+            spacing: RitmoSpacing.sm,
+            runSpacing: RitmoSpacing.sm,
+            children: _displayKinds.map((k) {
+              final isSelected = widget.selectedKind?.code == k.code;
+              return _KindChip(
+                label: '${k.emoji} ${k.titleFa}',
+                isSelected: isSelected,
+                accent: accent,
+                onTap: () => widget.onKindSelected(k),
+              );
+            }).toList(),
+          ),
       ],
+    );
+  }
+}
+
+/// چیپ یکدست برای هر سه ردیف (اخیر، خانواده، نتایج) — پیش‌از‌این سه سبک متفاوت داشتند.
+class _KindChip extends StatelessWidget {
+  const _KindChip({
+    required this.label,
+    required this.isSelected,
+    required this.accent,
+    required this.onTap,
+    this.fontSize = 13,
+  });
+
+  final String label;
+  final bool isSelected;
+  final Color accent;
+  final VoidCallback onTap;
+  final double fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(RitmoRadius.chip),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          constraints: const BoxConstraints(minHeight: 40),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(
+            horizontal: RitmoSpacing.md,
+            vertical: RitmoSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected ? accent.withValues(alpha: 0.18) : colors.surfaceSunken,
+            borderRadius: BorderRadius.circular(RitmoRadius.chip),
+            border: Border.all(
+              color: isSelected ? accent : colors.border,
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontSize: fontSize,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? accent : colors.textPrimary,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

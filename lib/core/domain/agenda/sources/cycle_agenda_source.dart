@@ -24,8 +24,8 @@ class CycleAgendaSource implements AgendaSource {
   const CycleAgendaSource({
     required this.cycleOutput,
     required this.cycleAllowed,
-    required this.periodRows,
-    required this.isPregnancy,
+    this.periodRows = const [],
+    this.isPregnancy = false,
   });
 
   @override

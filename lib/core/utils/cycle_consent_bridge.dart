@@ -4,7 +4,9 @@ import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
+import 'package:ritmo/features/cycle/logic/cycle_worship_policy.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
+import 'package:sqflite/sqflite.dart';
 
 class CycleConsentBridge {
   /// Checks if the user is menstruating on [targetDate] (defaults to today).

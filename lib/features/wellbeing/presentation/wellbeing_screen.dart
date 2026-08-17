@@ -801,15 +801,38 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'بازتاب‌های $_selectedHorizonDays روز اخیر',
-                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'پیوستگی بازتاب: ${RitmoNumber.faInt(_reflectionOutput?.currentStreak ?? 0)} روز پیاپی 🔥',
+                          style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                        ),
+                        if (_reflectionOutput?.longestStreak != null && (_reflectionOutput?.longestStreak ?? 0) > 0)
+                          Text(
+                            'بهترین: ${RitmoNumber.faInt(_reflectionOutput!.longestStreak)} روز',
+                            style: RitmoTextStyles.caption(colors.textSecondary),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${RitmoNumber.faInt(_reflections.length)} بازتاب و ${RitmoNumber.faInt(_checkins.length)} چک‌ین ثبت شده است.',
+                      '${RitmoNumber.faInt(_reflections.length)} بازتاب و ${RitmoNumber.faInt(_checkins.length)} چک‌ین در $_selectedHorizonDays روز اخیر ثبت شده است.',
                       style: RitmoTextStyles.body(colors.textSecondary),
                     ),
+                    if (_reflectionOutput?.forgivenThisWeek == true) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.shield_outlined, size: 16, color: colors.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'فرصت جبران ۱ روزهٔ این هفته اعمال شد 🌱',
+                            style: TextStyle(fontSize: 11.5, color: colors.primary, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -847,9 +870,28 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  RitmoNumber.fa(r.date),
-                                  style: RitmoTextStyles.caption(colors.textSecondary),
+                                Row(
+                                  children: [
+                                    Text(
+                                      RitmoNumber.fa(r.date),
+                                      style: RitmoTextStyles.caption(colors.textSecondary),
+                                    ),
+                                    if (r.moodScore > 0) ...[
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        r.moodScore == 1
+                                            ? '😫'
+                                            : r.moodScore == 2
+                                                ? '🥱'
+                                                : r.moodScore == 3
+                                                    ? '😐'
+                                                    : r.moodScore == 4
+                                                        ? '🙂'
+                                                        : '😴',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 Icon(Icons.chevron_left, size: 18, color: colors.textSecondary),
                               ],

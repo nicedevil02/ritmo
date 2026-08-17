@@ -3,19 +3,24 @@ class RitmoNumber {
 
   static const List<String> _fa = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 
-  /// هر رقم لاتین داخل رشته را به رقم فارسی تبدیل می‌کند.
+  /// هر رقم لاتین یا عربی داخل رشته را به رقم فارسی تبدیل می‌کند.
   static String fa(Object? input) {
     final s = input?.toString() ?? '';
     final buffer = StringBuffer();
     for (final code in s.runes) {
       if (code >= 0x30 && code <= 0x39) {
         buffer.write(_fa[code - 0x30]);
+      } else if (code >= 0x0660 && code <= 0x0669) {
+        buffer.write(_fa[code - 0x0660]);
       } else {
         buffer.writeCharCode(code);
       }
     }
     return buffer.toString();
   }
+
+  /// Alias for `fa` with single-pass traversal.
+  static String toFa(Object? input) => fa(input);
 
   /// مثال: 62 -> ۶۲
   static String faInt(num value) => fa(value.round().toString());
@@ -30,6 +35,20 @@ class RitmoNumber {
         ? rounded.toInt().toString()
         : rounded.toStringAsFixed(1).replaceAll('.', '٫');
     return '${fa(text)} ساعت';
+  }
+
+  /// قالب‌بندی مدت زمان بر حسب دقیقه به زبان فارسی
+  /// مثال: 45 -> ۴۵ دقیقه ، 90 -> ۱ ساعت و ۳۰ دقیقه ، 120 -> ۲ ساعت
+  static String formatDuration(int minutes) {
+    if (minutes < 60) {
+      return '${toFa(minutes)} دقیقه';
+    }
+    final hours = minutes ~/ 60;
+    final remaining = minutes % 60;
+    if (remaining == 0) {
+      return '${toFa(hours)} ساعت';
+    }
+    return '${toFa(hours)} ساعت و ${toFa(remaining)} دقیقه';
   }
 
   /// مثال: ۷٫۵ -> 7.5

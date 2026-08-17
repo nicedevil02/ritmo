@@ -28,8 +28,8 @@
 | T22 | عبور tools از AIGateway | DONE | 59152c5 | ارسال آرایه tools و tool_choice در متدهای streaming گیت‌وی به پرووایدرهای پشتیبان |
 | T23 | نرمال‌ساز واحد فراخوانی ابزار + fallback XML | DONE | 7cb7a0f | پشتیبانی از پارس ساختارهای XML، function tags، کدبلاک‌های مارک‌داون و JSON خام |
 | T24 | فشرده‌سازی پرامپت ابزار | DONE | 7d24497 | پیاده‌سازی toCompactPromptDescription و compactPromptFor جهت کاهش مصرف توکن |
-| T25 | حذف مسیر موازی <actions> از شیت | DOING | | |
-| T26 | تولید خودکار ابزار از رجیستری فرمان‌ها | TODO | | |
+| T25 | حذف مسیر موازی <actions> از شیت | DONE | 8866523 | حذف اجرای موازی اکشن‌های متنی در مسیر AgentCompletedEvent شیت دستیار |
+| T26 | تولید خودکار ابزار از رجیستری فرمان‌ها | DOING | | |
 | T27 | حذف هر ابزاری که SQL خام می‌نویسد | TODO | | |
 | T28 | Undo یکپارچه روی AgentJournal | TODO | | |
 | T29 | یک broker برای تایید و پرسش | TODO | | |

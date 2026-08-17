@@ -19,14 +19,14 @@ class CourseValidator {
     if (title.length > 120) {
       throw CourseValidationException('TITLE_TOO_LONG', 'عنوان دوره نمی‌تواند بیش از ۱۲۰ کاراکتر باشد.');
     }
-    if (c.totalSessions < 1 || c.totalSessions > 500) {
-      throw CourseValidationException('INVALID_TOTAL_SESSIONS', 'تعداد جلسات باید بین ۱ تا ۵۰۰ باشد.');
+    if (c.totalSessions < CourseLimits.minTotalSessions || c.totalSessions > CourseLimits.maxTotalSessions) {
+      throw CourseValidationException('INVALID_TOTAL_SESSIONS', 'تعداد جلسات باید بین ${CourseLimits.minTotalSessions} تا ${CourseLimits.maxTotalSessions} باشد.');
     }
-    if (c.sessionDurationMinutes < 1 || c.sessionDurationMinutes > 600) {
-      throw CourseValidationException('INVALID_DURATION', 'مدت زمان هر جلسه باید بین ۱ تا ۶۰۰ دقیقه باشد.');
+    if (c.sessionDurationMinutes < CourseLimits.minSessionDurationMinutes || c.sessionDurationMinutes > CourseLimits.maxSessionDurationMinutes) {
+      throw CourseValidationException('INVALID_DURATION', 'مدت زمان هر جلسه باید بین ${CourseLimits.minSessionDurationMinutes} تا ${CourseLimits.maxSessionDurationMinutes} دقیقه باشد.');
     }
-    if (c.weeklyTargetSessions < 1 || c.weeklyTargetSessions > 21) {
-      throw CourseValidationException('INVALID_WEEKLY_TARGET', 'هدف هفتگی باید بین ۱ تا ۲۱ جلسه باشد.');
+    if (c.weeklyTargetSessions < CourseLimits.minWeeklyTarget || c.weeklyTargetSessions > CourseLimits.maxWeeklyTarget) {
+      throw CourseValidationException('INVALID_WEEKLY_TARGET', 'هدف هفتگی باید بین ${CourseLimits.minWeeklyTarget} تا ${CourseLimits.maxWeeklyTarget} جلسه باشد.');
     }
 
     if (c.reminderEnabled) {

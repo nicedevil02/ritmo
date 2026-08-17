@@ -182,6 +182,20 @@ class AgentCompletedEvent extends AgentEvent {
     this.interactiveAction,
     this.sessionId = '',
   });
+
+  /// آیا اقدامی با موفقیت انجام شده است؟
+  bool get hasExecutedActions =>
+      steps.any((s) => s.status == AgentStepStatus.success);
+
+  /// خلاصه شفاف اقدامات انجام‌شده برای نمایش و بازرسی کاربر
+  String get actionsSummaryFa {
+    final successfulSteps =
+        steps.where((s) => s.status == AgentStepStatus.success).toList();
+    if (successfulSteps.isEmpty) return 'هیچ اقدام مستقیمی انجام نشد.';
+    return successfulSteps
+        .map((s) => '• ${s.titleFa}: ${s.descriptionFa ?? 'انجام شد'}')
+        .join('\n');
+  }
 }
 
 /// وقوع خطا در اجرای ایجنت

@@ -6,24 +6,28 @@ import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
 import 'package:ritmo/features/courses/logic/course_date_contract.dart';
+import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/features/courses/logic/courses_repository.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 import 'package:ritmo/features/courses/presentation/widgets/course_formatters.dart';
 import 'package:ritmo/features/courses/presentation/widgets/create_course_sheet.dart';
+import 'package:ritmo/features/courses/presentation/widgets/floating_timer_bar.dart';
+import 'package:ritmo/features/courses/presentation/widgets/recovery_mode_sheet.dart';
 import 'package:ritmo/features/courses/presentation/widgets/segmented_visual_journey_track.dart';
+import 'package:ritmo/features/courses/presentation/widgets/session_debrief_sheet.dart';
 import 'package:ritmo/features/courses/presentation/widgets/study_timer_sheet.dart';
 import 'package:ritmo/features/notes/presentation/widgets/module_note_history.dart';
 
-
 class CourseDetailScreen extends StatefulWidget {
-
   const CourseDetailScreen({
     super.key,
     required this.course,
   });
+
   final Course course;
 
   @override
@@ -34,35 +38,41 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   late Course _course;
   List<CourseSession> _sessions = [];
   bool _isLoading = true;
+  bool _isReordering = false;
 
   Map<String, dynamic>? _linkedGoal;
   double _linkedGoalProgress = 0;
   final Set<String> _resolvedQuestionIds = {};
-
+  StreamSubscription<dynamic>? _eventSub;
 
   @override
   void initState() {
     super.initState();
     _course = widget.course;
     _loadCourseData();
+    _eventSub = CoursesRepository.instance.events.listen((event) {
+      final cId = event.payload['courseId'];
+      if (cId == null || cId == _course.id) {
+        _loadCourseData();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _eventSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadCourseData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
-      // 1. Fetch latest course details
       final updated = await CoursesRepository.instance.getCourseById(_course.id);
       if (updated != null) {
         _course = updated;
       }
 
-      // 2. Fetch sessions
       _sessions = await CoursesRepository.instance.getSessionsForCourse(_course.id);
 
-      // 3. Fetch linked goal title + real progress if exists (fixes always-zero progress)
       if (_course.linkedGoalId != null) {
         final goalInfo = await CoursesRepository.instance.getLinkedGoalInfo(_course.linkedGoalId!);
         if (goalInfo != null) {
@@ -77,7 +87,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         _linkedGoalProgress = 0;
       }
 
-      // 4. Restore persisted resolved-question state (was screen-local and reset on reload)
       _resolvedQuestionIds
         ..clear()
         ..addAll(_sessions.where((s) => s.questionResolved).map((s) => s.id));
@@ -208,7 +217,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   primary: colors.primary,
                   onPrimary: Colors.white,
                   surface: Colors.transparent,
-                ), dialogTheme: DialogThemeData(backgroundColor: Colors.black.withValues(alpha: 0.7)),
+                ),
+                dialogTheme: DialogThemeData(backgroundColor: Colors.black.withValues(alpha: 0.7)),
               ),
               child: child!,
             ),
@@ -246,6 +256,187 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     );
   }
 
+  Future<void> _openSessionActionMenu(CourseSession session) async {
+    final colors = context.colors;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                session.sessionTitle ?? '${_course.unitLabelResolved} ${RitmoNumber.toFa(session.sessionNumber)}',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+              ),
+              const SizedBox(height: 16),
+              if (!session.isCompleted) ...[
+                ListTile(
+                  leading: Icon(CupertinoIcons.play_circle_fill, color: colors.primary),
+                  title: const Text('شروع تایمر مطالعه'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _startSessionTimer(session);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(CupertinoIcons.checkmark_circle_fill, color: colors.success),
+                  title: const Text('ثبت تکمیل جلسه و ارزیابی تسلط'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    SessionDebriefSheet.show(
+                      context,
+                      session: session,
+                      actualDurationMinutes: session.estimatedDurationMinutes ?? _course.sessionDurationMinutes,
+                      onCompleted: _loadCourseData,
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: Icon(CupertinoIcons.calendar, color: colors.primary),
+                  title: const Text('تغییر تاریخ زمان‌بندی'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _rescheduleSessionDate(session);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(CupertinoIcons.arrow_right_to_line_alt, color: colors.warning),
+                  title: const Text('عبور / رد کردن جلسه'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _skipSessionWithDialog(session);
+                  },
+                ),
+              ] else ...[
+                ListTile(
+                  leading: Icon(CupertinoIcons.arrow_counterclockwise, color: colors.warning),
+                  title: const Text('لغو وضعیت تکمیل (بازگشت به معوقه)'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _uncompleteSessionWithDialog(session);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(CupertinoIcons.pencil, color: colors.primary),
+                  title: const Text('ویرایش یادداشت و ارزیابی'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    SessionDebriefSheet.show(
+                      context,
+                      session: session,
+                      actualDurationMinutes: session.actualDurationMinutes ?? _course.sessionDurationMinutes,
+                      onCompleted: _loadCourseData,
+                    );
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _skipSessionWithDialog(CourseSession session) async {
+    final colors = context.colors;
+    final controller = TextEditingController();
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: colors.surface,
+          title: const Text('عبور از جلسه'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('آیا می‌خواهید از ${session.sessionTitle ?? "این جلسه"} عبور کنید؟', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: 'دلیل عبور (اختیاری)',
+                  hintText: 'مثلاً: قبلاً مسلط بودم / از منبع دیگر خواندم',
+                  labelStyle: TextStyle(color: colors.textSecondary, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text('انصراف', style: TextStyle(color: colors.textSecondary))),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: colors.warning),
+              child: const Text('عبور از جلسه', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirm ?? false) {
+      await CoursesRepository.instance.skipSession(session.id, reason: controller.text.trim().isEmpty ? null : controller.text.trim());
+      await _loadCourseData();
+    }
+  }
+
+  Future<void> _uncompleteSessionWithDialog(CourseSession session) async {
+    final colors = context.colors;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: colors.surface,
+          title: const Text('لغو تکمیل جلسه'),
+          content: const Text('آیا می‌خواهید این جلسه را از حالت تکمیل‌شده خارج کرده و به وضعیت در انتظار بازگردانید؟'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text('انصراف', style: TextStyle(color: colors.textSecondary))),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
+              child: const Text('تأیید بازگشت', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirm ?? false) {
+      await CoursesRepository.instance.uncompleteSession(session.id);
+      await _loadCourseData();
+    }
+  }
+
+  Future<void> _handleReorder(int oldIndex, int newIndex) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    setState(() {
+      final item = _sessions.removeAt(oldIndex);
+      _sessions.insert(newIndex, item);
+    });
+
+    final newOrderIds = _sessions.map((s) => s.id).toList();
+    final res = await CoursesRepository.instance.reorderSessions(_course.id, newOrderIds);
+    if (!res.isApplied && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: const Text('خطا در ذخیره ترتیب جدید جلسات'), backgroundColor: context.colors.error),
+      );
+      await _loadCourseData();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -265,6 +456,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         ? (completedCount / _course.totalSessions).clamp(0.0, 1.0)
         : 0.0;
     final progressPercent = (progress * 100).round();
+    final overdueCount = CourseScheduler.daysBehind(sessions: _sessions, today: DateTime.now());
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -288,6 +480,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           actions: [
             IconButton(
               icon: Icon(
+                _isReordering ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.arrow_up_arrow_down,
+                color: _isReordering ? colors.primary : colors.textPrimary,
+              ),
+              tooltip: _isReordering ? 'اتمام جابجایی' : 'تغییر ترتیب جلسات',
+              onPressed: () => setState(() => _isReordering = !_isReordering),
+            ),
+            IconButton(
+              icon: Icon(
                 _course.status == CourseStatus.paused ? CupertinoIcons.play_fill : CupertinoIcons.pause_fill,
                 color: colors.textPrimary,
               ),
@@ -303,6 +503,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             ),
           ],
         ),
+        bottomNavigationBar: const FloatingTimerBar(),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Column(
@@ -401,7 +602,58 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 2. Linked Goal Card (One-way read-only display)
+              // 2. Overdue / Catchup Banner
+              if (overdueCount > 0) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: colors.warning.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colors.warning.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(CupertinoIcons.exclamationmark_triangle_fill, color: colors.warning, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${RitmoNumber.toFa(overdueCount)} جلسه از برنامه عقب هستید',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'برای جلوگیری از فشار انباشتگی، برنامه جبرانی را فعال کنید.',
+                              style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => RecoveryModeSheet.show(
+                          context,
+                          course: _course,
+                          sessions: _sessions,
+                          onApplied: _loadCourseData,
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.warning,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('برنامه جبرانی ⚡', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // 3. Linked Goal Card
               if (_linkedGoal != null) ...[
                 RitmoTheme.glassCardLight(
                   borderRadius: 20,
@@ -470,7 +722,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 const SizedBox(height: 20),
               ],
 
-              // 3. Weekly study configuration summary
+              // 4. Weekly study configuration summary
               Text(
                 'برنامه زمانی مطالعاتی',
                 style: TextStyle(
@@ -490,7 +742,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 ),
                 child: Column(
                   children: [
-                    _buildConfigItem('هدف هفتگی مطالعه', '${toPersianDigits(_course.weeklyTargetSessions)} جلسه در هفته', colors),
+                    _buildConfigItem('هدف هفتگی مطالعه', '${RitmoNumber.toFa(_course.weeklyTargetSessions)} جلسه در هفته', colors),
                     const Divider(height: 20),
                     _buildConfigItem(
                       'روزهای ترجیحی',
@@ -514,7 +766,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     _buildConfigItem(
                       'یادآور مطالعه',
                       _course.reminderEnabled && _course.preferredTime != null
-                          ? 'فعال در ساعت ${toPersianDigits(_course.preferredTime)}'
+                          ? 'فعال در ساعت ${RitmoNumber.toFa(_course.preferredTime ?? "")}'
                           : 'غیرفعال',
                       colors,
                     ),
@@ -523,107 +775,185 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 4. Session list
-              Text(
-                'سرفصل‌ها و جلسات دوره',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
+              // 5. Session list
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'سرفصل‌ها و جلسات دوره (${RitmoNumber.toFa(_sessions.length)})',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  if (_isReordering)
+                    Text(
+                      'جلسات را با لمس و کشیدن جابجا کنید',
+                      style: TextStyle(fontSize: 11, color: colors.primary),
+                    ),
+                ],
               ),
               const SizedBox(height: 12),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _sessions.length,
-                itemBuilder: (context, index) {
-                  final session = _sessions[index];
-                  final isCompleted = session.isCompleted;
 
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isCompleted
-                          ? colors.success.withValues(alpha: 0.04)
-                          : colors.card.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isCompleted
-                            ? colors.success.withValues(alpha: 0.2)
-                            : colors.border.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      child: Row(
-                        children: [
-                          // Status checkmark
-                          Icon(
-                            isCompleted ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.circle,
-                            color: isCompleted ? colors.success : colors.textSecondary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  session.sessionTitle ?? '${_course.unitLabelResolved} ${session.sessionNumber}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: isCompleted ? colors.textSecondary : colors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Row(
-                                  children: [
-                                    GestureDetector(
-                                      onTap: isCompleted ? null : () => _rescheduleSessionDate(session),
-                                      child: Text(
-                                        session.plannedDate != null
-                                            ? 'برنامه‌ریزی: ${CourseDate.dayKeyToJalaliDisplay(session.plannedDate!)} 📅'
-                                            : 'بدون تاریخ زمان‌بندی',
-                                        style: TextStyle(
-                                          fontSize: 10.5,
-                                          color: isCompleted ? colors.textSecondary : colors.primary,
-                                          decoration: isCompleted ? null : TextDecoration.underline,
-                                        ),
-                                      ),
-                                    ),
-                                    if (isCompleted && session.actualDurationMinutes != null) ...[
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        '• مدت مطالعه: ${toPersianDigits(session.actualDurationMinutes)} دقیقه',
-                                        style: TextStyle(
-                                          fontSize: 10.5,
-                                          color: colors.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (!isCompleted)
-                            IconButton(
-                              icon: const Icon(CupertinoIcons.play_arrow_solid, size: 16),
-                              color: colors.primary,
-                              onPressed: () => _startSessionTimer(session),
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+              if (_sessions.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: colors.card.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Center(
+                    child: Text('جلسه‌ای برای این دوره ثبت نشده است.', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+                  ),
+                )
+              else if (_isReordering)
+                ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _sessions.length,
+                  // ignore: deprecated_member_use
+                  onReorder: _handleReorder,
+                  itemBuilder: (context, index) {
+                    final session = _sessions[index];
+                    return _buildSessionCard(session, colors, key: ValueKey(session.id), isDragMode: true);
+                  },
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _sessions.length,
+                  itemBuilder: (context, index) {
+                    final session = _sessions[index];
+                    return _buildSessionCard(session, colors, key: ValueKey(session.id), isDragMode: false);
+                  },
+                ),
+
               const SizedBox(height: 20),
               _buildDebriefsSection(colors),
               const SizedBox(height: 20),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSessionCard(CourseSession session, RitmoColors colors, {required Key key, required bool isDragMode}) {
+    final isCompleted = session.isCompleted;
+    final isSkipped = session.isSkipped;
+    final isReview = session.activityKind == CourseActivityKind.review || session.needsReview;
+
+    return Container(
+      key: key,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: isCompleted
+            ? colors.success.withValues(alpha: 0.04)
+            : (isSkipped ? colors.textSecondary.withValues(alpha: 0.05) : colors.card.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isCompleted
+              ? colors.success.withValues(alpha: 0.2)
+              : (isSkipped ? colors.textSecondary.withValues(alpha: 0.2) : colors.border.withValues(alpha: 0.5)),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: isDragMode ? null : () => _openSessionActionMenu(session),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                if (isDragMode) ...[
+                  Icon(CupertinoIcons.bars, color: colors.textSecondary, size: 20),
+                  const SizedBox(width: 10),
+                ],
+                // Status icon
+                Icon(
+                  isCompleted
+                      ? CupertinoIcons.check_mark_circled_solid
+                      : (isSkipped ? CupertinoIcons.slash_circle_fill : CupertinoIcons.circle),
+                  color: isCompleted ? colors.success : (isSkipped ? colors.textSecondary : colors.textSecondary),
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              session.sessionTitle ?? '${_course.unitLabelResolved} ${RitmoNumber.toFa(session.sessionNumber)}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: isCompleted || isSkipped ? colors.textSecondary : colors.textPrimary,
+                                decoration: isSkipped ? TextDecoration.lineThrough : null,
+                              ),
+                            ),
+                          ),
+                          if (isReview)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: colors.primary.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text('مرور فاصله‌دار 🔄', style: TextStyle(fontSize: 9.5, color: colors.primary, fontWeight: FontWeight.bold)),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            session.plannedDate != null
+                                ? 'برنامه‌ریزی: ${CourseDate.dayKeyToJalaliDisplay(session.plannedDate!)} 📅'
+                                : 'بدون تاریخ زمان‌بندی',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: isCompleted || isSkipped ? colors.textSecondary : colors.primary,
+                            ),
+                          ),
+                          if (isCompleted && session.actualDurationMinutes != null) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              '• مدت مطالعه: ${RitmoNumber.toFa(session.actualDurationMinutes ?? 0)} دقیقه',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ],
+                          if (isSkipped && session.skipReason != null) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              '• عبور داده شد: ${session.skipReason!}',
+                              style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (!isCompleted && !isSkipped && !isDragMode)
+                  IconButton(
+                    icon: const Icon(CupertinoIcons.play_arrow_solid, size: 16),
+                    color: colors.primary,
+                    onPressed: () => _startSessionTimer(session),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -681,7 +1011,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           // 1. Key takeaways
           if (takeaways.isNotEmpty) ...[
             Text(
-              '💡 نکته‌های کلیدی (${toPersianDigits(takeaways.length)})',
+              '💡 نکته‌های کلیدی (${RitmoNumber.toFa(takeaways.length)})',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary),
             ),
             const SizedBox(height: 6),
@@ -693,7 +1023,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   Text('• ', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
                   Expanded(
                     child: Text(
-                      '${s.keyTakeaway!} (جلسه ${toPersianDigits(s.sessionNumber)})',
+                      '${s.keyTakeaway!} (جلسه ${RitmoNumber.toFa(s.sessionNumber)})',
                       textDirection: TextDirection.rtl,
                       style: TextStyle(fontSize: 12, color: colors.textPrimary),
                     ),
@@ -707,7 +1037,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           // 2. Open questions (with resolved checkbox, persisted via setSessionQuestionResolved)
           if (questions.isNotEmpty) ...[
             Text(
-              '❓ سؤال‌های باز (${toPersianDigits(questions.length)})',
+              '❓ سؤال‌های باز (${RitmoNumber.toFa(questions.length)})',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.warning),
             ),
             const SizedBox(height: 6),
@@ -739,7 +1069,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     ),
                     Expanded(
                       child: Text(
-                        '${s.openQuestion!} (جلسه ${toPersianDigits(s.sessionNumber)})',
+                        '${s.openQuestion!} (جلسه ${RitmoNumber.toFa(s.sessionNumber)})',
                         textDirection: TextDirection.rtl,
                         style: TextStyle(
                           fontSize: 12,
@@ -763,7 +1093,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           // 3. Free study notes
           if (freeNotes.isNotEmpty) ...[
             Text(
-              '📝 یادداشت‌های آزاد (${toPersianDigits(freeNotes.length)})',
+              '📝 یادداشت‌های آزاد (${RitmoNumber.toFa(freeNotes.length)})',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textSecondary),
             ),
             const SizedBox(height: 6),
@@ -775,7 +1105,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   const Text('📝 ', style: TextStyle(fontSize: 11)),
                   Expanded(
                     child: Text(
-                      '${s.note!} (جلسه ${toPersianDigits(s.sessionNumber)})',
+                      '${s.note!} (جلسه ${RitmoNumber.toFa(s.sessionNumber)})',
                       textDirection: TextDirection.rtl,
                       style: TextStyle(fontSize: 12, color: colors.textPrimary),
                     ),
@@ -791,7 +1121,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       ),
     );
   }
-
 
   Widget _buildConfigItem(String title, String value, RitmoColors colors) {
     return Row(

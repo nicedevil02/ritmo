@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/courses/logic/courses_repository.dart';
@@ -96,7 +97,8 @@ class _SessionDebriefSheetState extends State<SessionDebriefSheet> {
         Navigator.pop(context);
         widget.onCompleted?.call();
       }
-    } catch (e) {
+    } catch (e, st) {
+      RitmoLog.error('COURSES', 'Error in session debrief save: $e', e, st);
       if (mounted) {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(

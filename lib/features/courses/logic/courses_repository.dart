@@ -19,6 +19,8 @@ class CoursesRepository {
 
   Future<Database> get _database async => DatabaseHelper.instance.database;
 
+  Stream<RitmoEvent> get events => RitmoEventBus().onEvents.where((e) => e.type == 'CoursesChanged' || e.type == 'CourseSessionCompleted');
+
   void _fireEvent(String reason, {String? courseId, String? sessionId, bool allSkipped = false}) {
     final now = DateTime.now();
     RitmoEventBus().fire(RitmoEvent(

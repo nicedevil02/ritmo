@@ -97,6 +97,7 @@ class AgentToolScope {
     // سیستم
     'navigate_to_app_screen': ToolScopeRequirement.command('app.openPage'),
     'update_app_preference': ToolScopeRequirement.command('setting.update'),
+    'handoff_to_persona': ToolScopeRequirement.command('assistant.handoff'),
 
     // زیرساخت: برای همه پرسوناها لازم است
     'verify_state': ToolScopeRequirement.universal(),

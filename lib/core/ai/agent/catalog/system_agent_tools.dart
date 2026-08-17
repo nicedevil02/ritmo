@@ -1,5 +1,7 @@
 import 'package:ritmo/core/ai/agent/agent_journal.dart';
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
+import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
+import 'package:ritmo/core/domain/commands/command_plan.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 
 /// مسیرهای واقعی و تعریف‌شده در RitmoRouter به همراه نام فارسی بخش.
@@ -386,5 +388,76 @@ class UndoLastActionTool extends AgentTool {
       data: {'status': 'undone'},
       summaryFa: outcome.messageFa,
     );
+  }
+}
+
+/// ۵. ابزار ارجاع و تحویل گفتگو به دستیار دیگر (T36)
+class HandoffToPersonaTool extends KernelCommandTool {
+  const HandoffToPersonaTool()
+      : super(
+          name: 'handoff_to_persona',
+          categoryFa: 'سیستم و ناوبری',
+          titleFa: 'ارجاع به دستیار متخصص دیگر',
+          descriptionFa:
+              'وقتی موضوع درخواست کاربر به تخصص یک دستیار دیگر (مانند خواب، ورزش، کنکور، دروس، اهداف، سلامت یا عبادات) مربوط می‌شود، گفتگو را به آن دستیار واگذار کن.',
+          commandId: 'assistant.handoff',
+          policy: ToolPolicy.readOnly,
+          parameters: const [
+            ToolParameter(
+              name: 'personaId',
+              descriptionFa:
+                  'شناسه دستیار مقصد: global, worship, konkur, courses, sports, wellbeing, goals, sleep, reflection, cycle, health',
+              type: 'string',
+              isRequired: true,
+              allowedValues: [
+                'global',
+                'worship',
+                'konkur',
+                'courses',
+                'sports',
+                'wellbeing',
+                'goals',
+                'sleep',
+                'reflection',
+                'cycle',
+                'health',
+              ],
+            ),
+            ToolParameter(
+              name: 'reasonFa',
+              descriptionFa: 'دلیل کوتاه ارجاع به فارسی',
+              type: 'string',
+            ),
+          ],
+        );
+
+  @override
+  Future<List<PlanStep>> buildSteps(Map<String, dynamic> args) async {
+    final personaId =
+        KernelCommandTool.optionalString(args['personaId']) ?? 'global';
+    final reasonFa = KernelCommandTool.optionalString(args['reasonFa']) ??
+        'تخصص بیشتر دستیار مقصد';
+
+    return <PlanStep>[
+      PlanStep(
+        commandId: commandId,
+        payload: <String, dynamic>{
+          'personaId': personaId,
+          'reasonFa': reasonFa,
+          'carryHistory': true,
+        },
+        note: 'ارجاع خودکار توسط دستیار ریتمو',
+      ),
+    ];
+  }
+
+  @override
+  String buildSummaryFa(Map<String, dynamic> args, Map<String, dynamic> output) {
+    final personaId =
+        KernelCommandTool.optionalString(args['personaId']) ?? 'global';
+    final reasonFa = KernelCommandTool.optionalString(args['reasonFa']);
+    final reasonSuffix =
+        (reasonFa != null && reasonFa.isNotEmpty) ? ' (علت: $reasonFa)' : '';
+    return 'گفتگو به دستیار «$personaId» ارجاع داده شد$reasonSuffix.';
   }
 }

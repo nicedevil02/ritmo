@@ -70,6 +70,7 @@ void initializeAllAgentTools() {
     const NavigateToAppScreenTool(),
     const UpdateAppPreferenceTool(),
     const UndoLastActionTool(),
+    const HandoffToPersonaTool(),
 
     // ۹. بازرسی و دقت (فاز ۲)
     const VerifyStateTool(),

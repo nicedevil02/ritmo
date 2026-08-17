@@ -167,15 +167,13 @@ String? validateAndNormalize(String key, String value) {
     if (schema.allowed != null && schema.allowed!.contains(cleaned)) {
       return cleaned;
     }
-    // Try case-insensitive matching
-    try {
-      final matched = schema.allowed?.firstWhere(
-        (e) => e.toLowerCase() == cleaned.toLowerCase(),
-      );
-      if (matched != null && matched.isNotEmpty) {
-        return matched;
-      }
-    } catch (_) {}
+    final matched = schema.allowed?.firstWhere(
+      (e) => e.toLowerCase() == cleaned.toLowerCase(),
+      orElse: () => '',
+    );
+    if (matched != null && matched.isNotEmpty) {
+      return matched;
+    }
     return null;
   }
 

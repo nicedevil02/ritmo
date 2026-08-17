@@ -38,15 +38,24 @@ class AssistantTables {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS assistant_plans (
         id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
+        titleFa TEXT NOT NULL DEFAULT '',
+        title TEXT,
+        personaId TEXT NOT NULL DEFAULT '',
+        stepCount INTEGER NOT NULL DEFAULT 0,
         status TEXT NOT NULL DEFAULT 'draft',
         schedule_json TEXT,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
+        createdAt INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER,
+        appliedAt INTEGER,
+        undoneAt INTEGER,
+        updated_at INTEGER
       );
     ''');
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_assistant_plans_status ON assistant_plans(status);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_assistant_plans_createdAt ON assistant_plans(createdAt);',
     );
   }
 
@@ -55,15 +64,24 @@ class AssistantTables {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS assistant_plans (
         id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
+        titleFa TEXT NOT NULL DEFAULT '',
+        title TEXT,
+        personaId TEXT NOT NULL DEFAULT '',
+        stepCount INTEGER NOT NULL DEFAULT 0,
         status TEXT NOT NULL DEFAULT 'draft',
         schedule_json TEXT,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
+        createdAt INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER,
+        appliedAt INTEGER,
+        undoneAt INTEGER,
+        updated_at INTEGER
       );
     ''');
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_assistant_plans_status ON assistant_plans(status);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_assistant_plans_createdAt ON assistant_plans(createdAt);',
     );
   }
 }

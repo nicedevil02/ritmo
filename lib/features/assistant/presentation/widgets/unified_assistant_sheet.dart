@@ -221,7 +221,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
       );
       if (recent.isNotEmpty) {
         final plan = recent.first;
-        final createdAt = plan['createdAt'] as int;
+        final createdAt = (plan['createdAt'] as int?) ?? (plan['created_at'] as int?) ?? 0;
         final settingsRows = await db.query('app_settings', where: 'key = ?', whereArgs: ['ai_undo_window_hours'], limit: 1);
         final hours = settingsRows.isNotEmpty ? (int.tryParse(settingsRows.first['value']?.toString() ?? '24') ?? 24) : 24;
         final limit = DateTime.now().subtract(Duration(hours: hours)).millisecondsSinceEpoch;
@@ -237,7 +237,15 @@ class _AssistantSheetState extends State<AssistantSheet> {
           _lastPlanId = null;
         });
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[AssistantSheet] failed to check last plan: $e\n$st');
+      if (mounted) {
+        setState(() {
+          _canUndoLast = false;
+          _lastPlanId = null;
+        });
+      }
+    }
   }
 
   String _getTodayJalaliString() {

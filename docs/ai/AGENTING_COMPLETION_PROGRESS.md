@@ -12,8 +12,8 @@
 | T06 | اصلاح «تاریخچه اخیر» معکوس | DONE | 344ce6f | ارسال ۴ پیام اخیر با حفظ ترتیب زمانی صحیح و افزودن تست یونیت |
 | T07 | اعمال یا حذف PersonaInferenceProfile | DONE | c440ff0 | دریافت و اعمال PersonaInferenceProfile در حلقه ایجنت و گیت‌وی هوش مصنوعی |
 | T08 | بودجه‌ی نوشتن نباید با شکست مصرف شود | DONE | f48fb97 | شمارش writesUsed فقط در صورت اجرای موفقیت‌آمیز ابزار |
-| T09 | trimToBudget نباید سؤال کاربر را حذف کند | DOING | | |
-| T10 | بریدن نادرست متن نهایی | TODO | | |
+| T09 | trimToBudget نباید سؤال کاربر را حذف کند | DONE | 1305448 | تثبیت سیستم پرامپت و سؤال کاربر و برش از نوبت‌های میانی |
+| T10 | بریدن نادرست متن نهایی | DOING | | |
 | T11 | تقارن fallback بین چت اصلی و شیت | TODO | | |
 | T12 | حذف catch (_) {} و بررسی جدول assistant_plans | TODO | | |
 | T13 | وصل کردن AgentIntentRouter و حذف AgentIntentPrefetcher | TODO | | |

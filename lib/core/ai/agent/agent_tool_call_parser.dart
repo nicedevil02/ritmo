@@ -10,10 +10,10 @@ class AgentToolCallScan {
   /// متن قابل نمایش به کاربر (بدون تگ ابزار/اکشن/حافظه)
   final String cleanText;
 
-  /// تگ <tool_call> باز شده ولی هنوز بسته نشده (استریم در حال نوشتن است)
+  /// تگ `<tool_call>` باز شده ولی هنوز بسته نشده (استریم در حال نوشتن است)
   final bool hasOpenTag;
 
-  /// تعداد کاراکترهایی که مدل پس از آخرین </tool_call> نوشته است.
+  /// تعداد کاراکترهایی که مدل پس از آخرین `</tool_call>` نوشته است.
   /// حلقه با این عدد استریم را زود قطع می‌کند تا مدل پس از فراخوانی ابزار
   /// شروع به ساختن پاسخ خیالی نکند.
   final int tailLength;
@@ -132,6 +132,7 @@ class AgentToolCallParser {
     text = text.replaceAll(_memOpsRe, '');
     text = text.replaceAll(_danglingTagRe, '');
     text = text.replaceAll(_partialTagRe, '');
+    text = text.replaceAll(RegExp(r'[ \t]{2,}'), ' ');
     while (true) {
       final before = text;
       text = text.replaceFirst(_noisePrefixRe, '').trimLeft();

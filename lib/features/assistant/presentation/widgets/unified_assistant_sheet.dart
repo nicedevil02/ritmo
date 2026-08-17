@@ -32,6 +32,7 @@ import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
 import 'package:ritmo/features/assistant/models/assistant_models.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_loop_runner.dart';
+import 'package:ritmo/core/ai/agent/ui/agent_confirmation_card.dart';
 import 'package:ritmo/features/chat/presentation/widgets/agent_timeline_visualizer.dart';
 import 'package:ritmo/features/chat/presentation/widgets/streaming_message_bubble.dart';
 
@@ -411,6 +412,19 @@ class _AssistantSheetState extends State<AssistantSheet> {
                   isStreaming: false,
                 );
               });
+            }
+          } else if (event is AgentConfirmationTimedOutEvent) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    event.messageFa,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.orange.shade800,
+                  duration: const Duration(seconds: 4),
+                ),
+              );
             }
           }
         },
@@ -1019,6 +1033,9 @@ class _AssistantSheetState extends State<AssistantSheet> {
                 statusText: _agentStatusText,
                 isWorking: _isAgentWorking,
               ),
+
+              // Agent Confirmation Card Host
+              const AgentConfirmationHost(),
 
               // Live Mini ChatGPT Preview Window
               const ChatGptMiniPreview(),

@@ -109,7 +109,7 @@ class AgentConfirmationBroker {
 
   Future<AgentConfirmationResponse> ask(
     AgentConfirmationRequest request, {
-    Duration timeout = const Duration(minutes: 3),
+    Duration timeout = const Duration(seconds: 90),
   }) async {
     final completer = Completer<AgentConfirmationResponse>();
     _pending[request.id] = completer;

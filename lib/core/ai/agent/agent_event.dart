@@ -118,6 +118,19 @@ class AgentConfirmationResolvedEvent extends AgentEvent {
   });
 }
 
+/// مهلت تایید به پایان رسید و اقدامی انجام نشد
+class AgentConfirmationTimedOutEvent extends AgentEvent {
+  final String requestId;
+  final String toolName;
+  final String messageFa;
+
+  const AgentConfirmationTimedOutEvent({
+    required this.requestId,
+    required this.toolName,
+    this.messageFa = 'زمان تایید تمام شد، اقدام انجام نشد. اگر می‌خواهی، دوباره درخواست بده.',
+  });
+}
+
 /// یک چانک متنی استریم شد
 class AgentTokenStreamEvent extends AgentEvent {
   final String delta;

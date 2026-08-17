@@ -363,6 +363,13 @@ class AgentLoopRunner {
           );
 
           if (!response.approved) {
+            if (response.timedOut) {
+              yield AgentConfirmationTimedOutEvent(
+                requestId: request.id,
+                toolName: tool.name,
+                messageFa: 'زمان تایید تمام شد، اقدام انجام نشد. اگر می‌خواهی، دوباره درخواست بده.',
+              );
+            }
             final reason = response.reasonFa;
             final suffix =
                 (reason != null && reason.isNotEmpty) ? ' ($reason)' : '';

@@ -1,3 +1,4 @@
+import 'package:ritmo/core/ai/agent/agent_journal.dart';
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 
@@ -324,14 +325,14 @@ class UpdateAppPreferenceTool extends AgentTool {
     // از SettingsService عبور می‌کنیم (نه SQL خام و نه حتی فرمان setting.update):
     // تنها این مسیر اعتبارسنجی رجیستری، به‌روزرسانی کش درون‌حافظه، بالابردن
     // revision و ریفرش دیبانس‌شدهٔ اجندا را یکجا انجام می‌دهد. نوشتن مستقیم در
-    // app_settings تنطیم را ذخیره می‌کرد ولی UI تا ریستارت مقدار قدیم را نشان می‌داد.
+    // app_settings تنظیم را ذخیره می‌کرد ولی UI تا ریستارت مقدار قدیم را نشان می‌داد.
     bool ok;
     try {
       ok = await service.set(key, normalized);
     } catch (e) {
       return AgentToolResult.failure(
         toolName: name,
-        errorMessage: 'ذخیرهٔ تنطیم «${rule.labelFa}» با خطا متوقف شد: $e',
+        errorMessage: 'ذخیرهٔ تنظیم «${rule.labelFa}» با خطا متوقف شد: $e',
       );
     }
 
@@ -339,7 +340,7 @@ class UpdateAppPreferenceTool extends AgentTool {
       return AgentToolResult.failure(
         toolName: name,
         errorMessage:
-            'تنطیم «${rule.labelFa}» ذخیره نشد (مقدار توسط رجیستری تنطیمات رد شد یا این کلید در این نسخه وجود ندارد). مقدار قبلی دست‌نخورده ماند.',
+            'تنظیم «${rule.labelFa}» ذخیره نشد (مقدار توسط رجیستری تنظیمات رد شد یا این کلید در این نسخه وجود ندارد). مقدار قبلی دست‌نخورده ماند.',
       );
     }
 
@@ -352,7 +353,36 @@ class UpdateAppPreferenceTool extends AgentTool {
         'newValue': normalized.toString(),
       },
       summaryFa:
-          'تنطیم «${rule.labelFa}» از «$oldValue» به «${normalized.toString()}» تغییر کرد و اعمال شد.',
+          'تنظیم «${rule.labelFa}» از «$oldValue» به «${normalized.toString()}» تغییر کرد و اعمال شد.',
+    );
+  }
+}
+
+/// ۴. ابزار لغو و بازگردانی آخرین اقدام دستیار
+class UndoLastActionTool extends AgentTool {
+  const UndoLastActionTool()
+      : super(
+          name: 'undo_last_action',
+          categoryFa: 'سیستم و مدیریت',
+          titleFa: 'بازگردانی آخرین اقدام دستیار',
+          descriptionFa:
+              'آخرین تغییر ایجادشده توسط دستیار (مانند ساخت روتین، هدف، یادداشت یا تغییر تنظیمات) را لغو کرده و به حالت قبل برمی‌گرداند.',
+          policy: ToolPolicy.actionDirect,
+        );
+
+  @override
+  Future<AgentToolResult> execute(Map<String, dynamic> args) async {
+    final outcome = await AgentJournal.instance.undoLast();
+    if (!outcome.success) {
+      return AgentToolResult.failure(
+        toolName: name,
+        errorMessage: outcome.messageFa,
+      );
+    }
+    return AgentToolResult.success(
+      toolName: name,
+      data: {'status': 'undone'},
+      summaryFa: outcome.messageFa,
     );
   }
 }

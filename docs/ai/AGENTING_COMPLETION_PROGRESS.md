@@ -30,8 +30,8 @@
 | T24 | فشرده‌سازی پرامپت ابزار | DONE | 7d24497 | پیاده‌سازی toCompactPromptDescription و compactPromptFor جهت کاهش مصرف توکن |
 | T25 | حذف مسیر موازی <actions> از شیت | DONE | 8866523 | حذف اجرای موازی اکشن‌های متنی در مسیر AgentCompletedEvent شیت دستیار |
 | T26 | تولید خودکار ابزار از رجیستری فرمان‌ها | DONE | dcd6573 | پیاده‌سازی CommandToolBridge برای ساخت خودکار AgentTool از روی هر RitmoCommand |
-| T27 | حذف هر ابزاری که SQL خام می‌نویسد | DOING | | |
-| T28 | Undo یکپارچه روی AgentJournal | TODO | | |
+| T27 | حذف هر ابزاری که SQL خام می‌نویسد | DONE | 28128d6 | بازنویسی تمام ابزارهای تغییردهنده بر پایه KernelCommandTool و حذف نوشتن مستقیم در SQL |
+| T28 | Undo یکپارچه روی AgentJournal | DOING | | |
 | T29 | یک broker برای تایید و پرسش | TODO | | |
 | T30 | AskUserTool که واقعاً حلقه را متوقف می‌کند | TODO | | |
 | T31 | تأیید خودکار و اجباری حالت پس از نوشتن | TODO | | |

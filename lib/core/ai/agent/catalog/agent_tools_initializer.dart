@@ -67,12 +67,13 @@ void initializeAllAgentTools() {
     // ۸. سیستم و ناوبری
     const NavigateToAppScreenTool(),
     const UpdateAppPreferenceTool(),
+    const UndoLastActionTool(),
 
     // ۹. بازرسی و دقت (فاز ۲)
     const VerifyStateTool(),
     const AskUserTool(),
 
-    // ۱۰. حافطه دستیار (فاز ۵)
+    // ۱۰. حافظه دستیار (فاز ۵)
     const RememberFactTool(),
     const RecallFactsTool(),
   ]);

@@ -294,6 +294,52 @@ class AgentJournal {
     return undoEntry(rows.first.id);
   }
 
+  /// بازگردانی بر اساس planId مشخص از طریق RitmoCommandBus
+  Future<AgentUndoOutcome> undoLastPlan(String planId) async {
+    try {
+      await ensureSchema();
+      final db = await DatabaseHelper.instance.database;
+
+      final rows = await db.query(
+        table,
+        where: 'undoRef = ? AND undoKind = ?',
+        whereArgs: [planId, 'plan'],
+        limit: 1,
+      );
+
+      final res = await RitmoCommandBus.instance.undoPlan(planId);
+      if (!res.success) {
+        return AgentUndoOutcome(
+          success: false,
+          messageFa: res.errorMessage ?? 'بازگردانی پلن ممکن نشد.',
+        );
+      }
+
+      if (rows.isNotEmpty) {
+        final entryId = rows.first['id']?.toString();
+        if (entryId != null) {
+          await db.update(
+            table,
+            <String, Object?>{'undoneAt': DateTime.now().millisecondsSinceEpoch},
+            where: 'id = ?',
+            whereArgs: [entryId],
+          );
+        }
+      }
+
+      return const AgentUndoOutcome(
+        success: true,
+        messageFa: 'پلن عملیاتی دستیار با موفقیت بازگردانده شد.',
+      );
+    } catch (e, st) {
+      RitmoLog.error('AgentJournal', 'undoLastPlan failed for $planId', e, st);
+      return const AgentUndoOutcome(
+        success: false,
+        messageFa: 'خطای غیرمنتظره در بازگردانی پلن.',
+      );
+    }
+  }
+
   Future<void> purgeOlderThan({int days = 45}) async {
     try {
       await ensureSchema();

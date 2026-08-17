@@ -101,6 +101,7 @@ class AgentToolScope {
     'ask_user': ToolScopeRequirement.universal(),
     'remember_fact': ToolScopeRequirement.universal(),
     'recall_facts': ToolScopeRequirement.universal(),
+    'undo_last_action': ToolScopeRequirement.universal(),
   };
 
   AssistantPersona? _persona(String personaId) {

@@ -22,8 +22,8 @@
 | T16 | تست یکپارچگی نقشه‌ی اسکوپ (نگهبان CI) | DONE | 7701498 | ایجاد تست یکپارچگی تناظر ۱:۱ ابزارهای رجیستری و اسکوپ و تست پرسونای خواب |
 | T17 | اسکیمای واقعی JSON Schema | DONE | 5368756 | پیاده‌سازی خروجی استاندارد JSON Schema در AgentTool و ToolParameter |
 | T18 | اعتبارسنج مرکزی آرگومان‌ها | DONE | daf34cd | پیاده‌سازی AgentToolArgumentValidator، اعمال type coercion و مقادیر پیش‌فرض |
-| T19 | حذف پارسرهای دستی تکراری | DOING | | |
-| T20 | idempotencyKey | TODO | | |
+| T19 | حذف پارسرهای دستی تکراری | DONE | bea2680 | پاکسازی تبدیل‌های نوع تکراری در کاتالوگ ابزارها به اتکای اعتبارسنج مرکزی |
+| T20 | idempotencyKey | DOING | | |
 | T21 | قابلیت‌سنجی provider | TODO | | |
 | T22 | عبور tools از AIGateway | TODO | | |
 | T23 | نرمال‌ساز واحد فراخوانی ابزار + fallback XML | TODO | | |

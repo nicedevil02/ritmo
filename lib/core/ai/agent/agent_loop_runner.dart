@@ -66,6 +66,9 @@ class AgentLoopRunner {
     /// یک ابزار با پارامترهای یکسان دوبار به دیتابیس نمی‌زند.
     final toolCache = <String, AgentToolResult>{};
 
+    /// کش ابزارهای تغییردهنده برای جلوگیری از تکرار همان اکشن در یک اجرا (T20)
+    final mutationCache = <String, AgentToolResult>{};
+
     /// تعداد تغییرات واقعی انجام‌شده در این پیام (سقف در گیت)
     var writesUsed = 0;
 
@@ -330,6 +333,19 @@ class AgentLoopRunner {
             debugPrint('[Agent] cache hit | ${tool.name}');
             continue;
           }
+        } else {
+          // محافظ Idempotency برای ابزارهای تغییردهنده در طول این اجرا (T20)
+          final previousMutation = mutationCache[cacheKey];
+          if (previousMutation != null && previousMutation.isSuccess) {
+            turnResults.add(AgentToolResult.success(
+              toolName: previousMutation.toolName,
+              data: previousMutation.data,
+              summaryFa:
+                  '${previousMutation.summaryFa} (این تغییر پیش‌تر در همین گفتگو با موفقیت اعمال شده بود و تکرار نشد)',
+            ));
+            debugPrint('[Agent] mutation idempotency hit | ${tool.name}');
+            continue;
+          }
         }
 
         // دروازه سیاست (فاز ۳ · P3-1)
@@ -447,6 +463,8 @@ class AgentLoopRunner {
         if (tool.policy != ToolPolicy.readOnly) {
           if (result.isSuccess) {
             writesUsed++;
+            final mutationKey = _cacheKey(tool.name, effectiveArgs);
+            mutationCache[mutationKey] = result;
           }
         } else if (result.isSuccess) {
           toolCache[cacheKey] = result;

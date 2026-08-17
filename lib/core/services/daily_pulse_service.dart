@@ -3,7 +3,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 class DailyPulseInput {
   const DailyPulseInput({
     required this.ratingScore, // 1 to 5 slider ("امروز چطور بود؟")
-    this.note,                 // Optional note / reflection text
+    this.note, // Optional note / reflection text
     this.dateStr,
   });
 
@@ -26,36 +26,32 @@ class DailyPulseService {
     final moodScore = input.ratingScore.clamp(1, 5).toDouble();
 
     // 1. Record/Update mood_logs
-    await db.insert(
-      'mood_logs',
-      {
-        'id': 'pulse_mood_${dateStr}_$nowMs',
-        'date': dateStr,
-        'timestamp': nowMs,
-        'moodScore': moodScore,
-        'note': input.note,
-        'createdAt': nowMs,
-      },
-    );
+    await db.insert('mood_logs', {
+      'id': 'pulse_mood_${dateStr}_$nowMs',
+      'date': dateStr,
+      'timestamp': nowMs,
+      'moodScore': moodScore,
+      'note': input.note,
+      'createdAt': nowMs,
+    });
 
     // 2. Record/Update daily_reflections
     if (input.note != null && input.note!.isNotEmpty) {
-      await db.insert(
-        'daily_reflections',
-        {
-          'id': 'pulse_reflection_${dateStr}_$nowMs',
-          'date': dateStr,
-          'timestamp': nowMs,
-          'content': input.note,
-          'moodScore': moodScore,
-          'createdAt': nowMs,
-        },
-      );
+      await db.insert('daily_reflections', {
+        'id': 'pulse_reflection_${dateStr}_$nowMs',
+        'date': dateStr,
+        'timestamp': nowMs,
+        'content': input.note,
+        'moodScore': moodScore,
+        'createdAt': nowMs,
+      });
     }
   }
 
   /// Derives energy level from real user behavior (completion rate, density) instead of asking user (§6).
-  Future<double> deriveBehavioralEnergy(List<Map<String, dynamic>> completionsToday) async {
+  Future<double> deriveBehavioralEnergy(
+    List<Map<String, dynamic>> completionsToday,
+  ) async {
     if (completionsToday.isEmpty) return 2.5; // neutral baseline
     int doneCount = 0;
     for (final c in completionsToday) {

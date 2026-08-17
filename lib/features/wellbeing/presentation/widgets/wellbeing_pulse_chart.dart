@@ -14,18 +14,14 @@ class WellbeingPulseDayData {
   });
 
   final String dateStr;
-  final double? sleepHours;   // e.g. 7.5
-  final double? energyLevel;  // 1..3
-  final double? moodScore;    // 1..5
+  final double? sleepHours; // e.g. 7.5
+  final double? energyLevel; // 1..3
+  final double? moodScore; // 1..5
   final bool hasReflection;
 }
 
 class WellbeingPulseChart extends StatelessWidget {
-  const WellbeingPulseChart({
-    super.key,
-    required this.days,
-    this.onDayTap,
-  });
+  const WellbeingPulseChart({super.key, required this.days, this.onDayTap});
 
   final List<WellbeingPulseDayData> days;
   final ValueChanged<WellbeingPulseDayData>? onDayTap;
@@ -57,10 +53,10 @@ class WellbeingPulseChart extends StatelessWidget {
                 days.length <= 7
                     ? 'نبض هفته'
                     : (days.length <= 14
-                        ? 'نبض دو هفته'
-                        : (days.length <= 30
-                            ? 'نبض یک ماه'
-                            : 'نبض ${RitmoNumber.faInt(days.length)} روز اخیر')),
+                          ? 'نبض دو هفته'
+                          : (days.length <= 30
+                                ? 'نبض یک ماه'
+                                : 'نبض ${RitmoNumber.faInt(days.length)} روز اخیر')),
                 style: RitmoTextStyles.cardTitle(colors.textPrimary),
               ),
               const Spacer(),
@@ -80,7 +76,9 @@ class WellbeingPulseChart extends StatelessWidget {
 
                 // Width each bar would get if all days were squeezed into the
                 // available width with a fixed gap between them.
-                final fitWidth = (constraints.maxWidth - (days.length - 1) * _barGap) / days.length;
+                final fitWidth =
+                    (constraints.maxWidth - (days.length - 1) * _barGap) /
+                    days.length;
                 final barWidth = fitWidth.clamp(_minBarWidth, _maxBarWidth);
                 final needsScroll = fitWidth < _minBarWidth;
 
@@ -92,7 +90,9 @@ class WellbeingPulseChart extends StatelessWidget {
 
                 final row = Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: needsScroll ? MainAxisAlignment.start : MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: needsScroll
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.spaceBetween,
                   children: bars,
                 );
 
@@ -130,16 +130,24 @@ class WellbeingPulseChart extends StatelessWidget {
     );
   }
 
-  Widget _buildDayBar(BuildContext context, WellbeingPulseDayData d, double width) {
+  Widget _buildDayBar(
+    BuildContext context,
+    WellbeingPulseDayData d,
+    double width,
+  ) {
     final colors = context.colors;
 
     // Sleep bar height ratio (max 12h = 1.0)
-    final sleepRatio = d.sleepHours == null ? 0.0 : (d.sleepHours! / 12.0).clamp(0.0, 1.0);
+    final sleepRatio = d.sleepHours == null
+        ? 0.0
+        : (d.sleepHours! / 12.0).clamp(0.0, 1.0);
 
     // Energy / Mood position ratio
     final energyRatio = d.energyLevel != null
         ? ((d.energyLevel! - 1.0) / 2.0).clamp(0.0, 1.0)
-        : (d.moodScore != null ? ((d.moodScore! - 1.0) / 4.0).clamp(0.0, 1.0) : null);
+        : (d.moodScore != null
+              ? ((d.moodScore! - 1.0) / 4.0).clamp(0.0, 1.0)
+              : null);
 
     return GestureDetector(
       onTap: () {
@@ -183,8 +191,10 @@ class WellbeingPulseChart extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: d.moodScore != null
                               ? (d.moodScore! >= 4
-                                  ? colors.success
-                                  : (d.moodScore! <= 2 ? colors.error : colors.cautionAccent))
+                                    ? colors.success
+                                    : (d.moodScore! <= 2
+                                          ? colors.error
+                                          : colors.cautionAccent))
                               : colors.energyAccent,
                           shape: BoxShape.circle,
                           boxShadow: [
@@ -209,7 +219,9 @@ class WellbeingPulseChart extends StatelessWidget {
             // Day label
             Text(
               _dayLabel(d.dateStr),
-              style: RitmoTextStyles.caption(colors.textSecondary).copyWith(fontSize: 10),
+              style: RitmoTextStyles.caption(
+                colors.textSecondary,
+              ).copyWith(fontSize: 10),
             ),
           ],
         ),
@@ -229,7 +241,9 @@ class WellbeingPulseChart extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colors.surfaceElevated,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.card)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
+        ),
         title: Text(
           'جزئیات روز ${RitmoNumber.fa(d.dateStr)}',
           style: RitmoTextStyles.cardTitle(colors.textPrimary),
@@ -238,13 +252,35 @@ class WellbeingPulseChart extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _detailRow(colors, 'خواب', d.sleepHours != null ? RitmoNumber.faHours(d.sleepHours!) : 'ثبت نشده'),
+            _detailRow(
+              colors,
+              'خواب',
+              d.sleepHours != null
+                  ? RitmoNumber.faHours(d.sleepHours!)
+                  : 'ثبت نشده',
+            ),
             const SizedBox(height: 8),
-            _detailRow(colors, 'انرژی', d.energyLevel != null ? '${RitmoNumber.fa(d.energyLevel!.toStringAsFixed(1))} از ۳' : 'ثبت نشده'),
+            _detailRow(
+              colors,
+              'انرژی',
+              d.energyLevel != null
+                  ? '${RitmoNumber.fa(d.energyLevel!.toStringAsFixed(1))} از ۳'
+                  : 'ثبت نشده',
+            ),
             const SizedBox(height: 8),
-            _detailRow(colors, 'حال', d.moodScore != null ? '${RitmoNumber.fa(d.moodScore!.toStringAsFixed(1))} از ۵' : 'ثبت نشده'),
+            _detailRow(
+              colors,
+              'حال',
+              d.moodScore != null
+                  ? '${RitmoNumber.fa(d.moodScore!.toStringAsFixed(1))} از ۵'
+                  : 'ثبت نشده',
+            ),
             const SizedBox(height: 8),
-            _detailRow(colors, 'بازتاب', d.hasReflection ? 'ثبت شده ✓' : 'ثبت نشده'),
+            _detailRow(
+              colors,
+              'بازتاب',
+              d.hasReflection ? 'ثبت شده ✓' : 'ثبت نشده',
+            ),
           ],
         ),
         actions: [

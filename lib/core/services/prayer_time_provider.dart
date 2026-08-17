@@ -33,18 +33,21 @@ class PrayerTimeProvider {
 
     final settingsResult = await db.query('app_settings');
     final settings = {
-      for (final row in settingsResult) row['key']! as String: row['value']! as String
+      for (final row in settingsResult)
+        row['key']! as String: row['value']! as String,
     };
 
-    final calcMethodStr = settings['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
+    final calcMethodStr =
+        settings['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
 
     // 2. Try online API first (if forced or not in SQLite cache)
     if (forceOnline) {
-      final onlineTimes = await OnlinePrayerTimeService.instance.fetchPrayerTimesFromApi(
-        latitude: latitude,
-        longitude: longitude,
-        date: date,
-      );
+      final onlineTimes = await OnlinePrayerTimeService.instance
+          .fetchPrayerTimesFromApi(
+            latitude: latitude,
+            longitude: longitude,
+            date: date,
+          );
       if (onlineTimes != null) {
         return onlineTimes;
       }
@@ -73,11 +76,12 @@ class PrayerTimeProvider {
     }
 
     // 4. Try online API fetch before local calculation
-    final onlineTimes = await OnlinePrayerTimeService.instance.fetchPrayerTimesFromApi(
-      latitude: latitude,
-      longitude: longitude,
-      date: date,
-    );
+    final onlineTimes = await OnlinePrayerTimeService.instance
+        .fetchPrayerTimesFromApi(
+          latitude: latitude,
+          longitude: longitude,
+          date: date,
+        );
 
     if (onlineTimes != null) {
       return onlineTimes;
@@ -110,11 +114,23 @@ class PrayerTimeProvider {
     final params = method.getParameters();
 
     final todayComponents = DateComponents(date.year, date.month, date.day);
-    final todayTimes = PrayerTimes(Coordinates(latitude, longitude), todayComponents, params);
+    final todayTimes = PrayerTimes(
+      Coordinates(latitude, longitude),
+      todayComponents,
+      params,
+    );
 
     final tomorrow = date.add(const Duration(days: 1));
-    final tomorrowComponents = DateComponents(tomorrow.year, tomorrow.month, tomorrow.day);
-    final tomorrowTimes = PrayerTimes(Coordinates(latitude, longitude), tomorrowComponents, params);
+    final tomorrowComponents = DateComponents(
+      tomorrow.year,
+      tomorrow.month,
+      tomorrow.day,
+    );
+    final tomorrowTimes = PrayerTimes(
+      Coordinates(latitude, longitude),
+      tomorrowComponents,
+      params,
+    );
 
     final fajr = todayTimes.fajr;
     final sunrise = todayTimes.sunrise;
@@ -126,7 +142,11 @@ class PrayerTimeProvider {
     final tomorrowFajr = tomorrowTimes.fajr;
 
     final sunniParams = CalculationMethod.muslim_world_league.getParameters();
-    final sunniTimes = PrayerTimes(Coordinates(latitude, longitude), todayComponents, sunniParams);
+    final sunniTimes = PrayerTimes(
+      Coordinates(latitude, longitude),
+      todayComponents,
+      sunniParams,
+    );
     final sunset = sunniTimes.maghrib;
 
     // Midnight Shari is midpoint between Sunset and tomorrow's Fajr
@@ -153,33 +173,35 @@ class PrayerTimeProvider {
     final db = await DatabaseHelper.instance.database;
     final dateStr = date.toIso8601String().substring(0, 10);
 
-    final times = await getPrayerTimesForDate(cityId: cityId, date: date, forceOnline: forceOnline);
+    final times = await getPrayerTimesForDate(
+      cityId: cityId,
+      date: date,
+      forceOnline: forceOnline,
+    );
 
     final settingsResult = await db.query('app_settings');
     final settings = {
-      for (final row in settingsResult) row['key']! as String: row['value']! as String
+      for (final row in settingsResult)
+        row['key']! as String: row['value']! as String,
     };
-    final calcMethodStr = settings['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
+    final calcMethodStr =
+        settings['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
 
-    await db.insert(
-      'prayer_times_cache',
-      {
-        'date': dateStr,
-        'cityId': cityId,
-        'fajr': times['fajr'],
-        'sunrise': times['sunrise'],
-        'dhuhr': times['dhuhr'],
-        'asr': times['asr'],
-        'maghrib': times['maghrib'],
-        'isha': times['isha'],
-        'midnightShari': times['midnightShari'],
-        'sunset': times['sunset'],
-        'calculationMethod': calcMethodStr,
-        'ihtiyatMinutes': 0,
-        'computedAt': DateTime.now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('prayer_times_cache', {
+      'date': dateStr,
+      'cityId': cityId,
+      'fajr': times['fajr'],
+      'sunrise': times['sunrise'],
+      'dhuhr': times['dhuhr'],
+      'asr': times['asr'],
+      'maghrib': times['maghrib'],
+      'isha': times['isha'],
+      'midnightShari': times['midnightShari'],
+      'sunset': times['sunset'],
+      'calculationMethod': calcMethodStr,
+      'ihtiyatMinutes': 0,
+      'computedAt': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<int> cacheRange({
@@ -209,10 +231,12 @@ class PrayerTimeProvider {
     // 2. Fetch app_settings ONCE
     final settingsResult = await db.query('app_settings');
     final settings = {
-      for (final row in settingsResult) row['key']! as String: row['value']! as String
+      for (final row in settingsResult)
+        row['key']! as String: row['value']! as String,
     };
 
-    final calcMethodStr = settings['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
+    final calcMethodStr =
+        settings['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     // 3. Batch insert using db.batch() for blazing fast atomic I/O
@@ -228,30 +252,29 @@ class PrayerTimeProvider {
         date: date,
       );
 
-      batch.insert(
-        'prayer_times_cache',
-        {
-          'date': dateStr,
-          'cityId': cityId,
-          'fajr': times['fajr'],
-          'sunrise': times['sunrise'],
-          'dhuhr': times['dhuhr'],
-          'asr': times['asr'],
-          'maghrib': times['maghrib'],
-          'isha': times['isha'],
-          'midnightShari': times['midnightShari'],
-          'sunset': times['sunset'],
-          'calculationMethod': calcMethodStr,
-          'ihtiyatMinutes': 0,
-          'computedAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      batch.insert('prayer_times_cache', {
+        'date': dateStr,
+        'cityId': cityId,
+        'fajr': times['fajr'],
+        'sunrise': times['sunrise'],
+        'dhuhr': times['dhuhr'],
+        'asr': times['asr'],
+        'maghrib': times['maghrib'],
+        'isha': times['isha'],
+        'midnightShari': times['midnightShari'],
+        'sunset': times['sunset'],
+        'calculationMethod': calcMethodStr,
+        'ihtiyatMinutes': 0,
+        'computedAt': nowMs,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
 
     await batch.commit(noResult: true);
 
-    final thresholdDate = from.subtract(const Duration(days: 90)).toIso8601String().substring(0, 10);
+    final thresholdDate = from
+        .subtract(const Duration(days: 90))
+        .toIso8601String()
+        .substring(0, 10);
     try {
       await db.delete(
         'prayer_times_cache',

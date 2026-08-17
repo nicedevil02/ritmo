@@ -29,9 +29,7 @@ class KonkurAgendaSource implements AgendaSource {
     konkurEnabled: false,
   );
 
-  static Future<KonkurAgendaSource> load(
-    bool konkurEnabled,
-  ) async {
+  static Future<KonkurAgendaSource> load(bool konkurEnabled) async {
     final konkurByDate = <String, List<KonkurPlanItem>>{};
     final konkurSubjectNames = <String, String>{};
 
@@ -48,7 +46,9 @@ class KonkurAgendaSource implements AgendaSource {
             konkurSubjectNames[s.id] = s.name;
           }
         }
-      } catch (e, st) { debugPrint('Error in konkur_agenda_source.dart: $e\n$st'); }
+      } catch (e, st) {
+        debugPrint('Error in konkur_agenda_source.dart: $e\n$st');
+      }
     }
 
     return KonkurAgendaSource(
@@ -73,21 +73,26 @@ class KonkurAgendaSource implements AgendaSource {
         default:
           completion = AgendaCompletion.pending;
       }
-      final subjectName =
-          item.subjectId != null ? konkurSubjectNames[item.subjectId] : null;
+      final subjectName = item.subjectId != null
+          ? konkurSubjectNames[item.subjectId]
+          : null;
       return AgendaItem(
         id: buildAgendaItemId(AgendaDomain.konkur, item.id, ctx.dateStr),
         domain: AgendaDomain.konkur,
         sourceId: item.id,
         title: subjectName ?? 'برنامه کنکور',
-        subtitle: item.plannedMinutes > 0 ? '${item.plannedMinutes} دقیقه' : null,
+        subtitle: item.plannedMinutes > 0
+            ? '${item.plannedMinutes} دقیقه'
+            : null,
         dateStr: ctx.dateStr,
         durationMinutes: item.plannedMinutes > 0 ? item.plannedMinutes : null,
         category: Category.konkur,
         completion: completion,
         priority: 1.2,
-        deepLink:
-            AgendaDeepLink(domain: AgendaDomain.konkur, targetId: item.id),
+        deepLink: AgendaDeepLink(
+          domain: AgendaDomain.konkur,
+          targetId: item.id,
+        ),
         meta: {'planItem': item.toMap()},
       );
     }).toList();

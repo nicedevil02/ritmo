@@ -9,9 +9,7 @@ import 'package:shamsi_date/shamsi_date.dart';
 class AgendaWidgetSnapshotService {
   const AgendaWidgetSnapshotService();
 
-  Future<void> sync({
-    required DateTime now,
-  }) async {
+  Future<void> sync({required DateTime now}) async {
     try {
       final dayAgenda = await DayAgendaService.instance.agendaForDate(
         now,
@@ -21,7 +19,7 @@ class AgendaWidgetSnapshotService {
       // Filter out cycle and sensitive items (Zero-Leak)
       final filteredItems = dayAgenda.items.where((item) {
         if (item.domain == AgendaDomain.cycle) return false;
-        
+
         final categoryStr = item.category.name.toLowerCase();
         if (categoryStr == 'medical' || categoryStr == 'cycle') return false;
 
@@ -29,10 +27,12 @@ class AgendaWidgetSnapshotService {
         final subtitleLower = (item.subtitle ?? '').toLowerCase();
 
         for (final kw in SensitiveReflectionFilter.cycleKeywords) {
-          if (titleLower.contains(kw) || subtitleLower.contains(kw)) return false;
+          if (titleLower.contains(kw) || subtitleLower.contains(kw))
+            return false;
         }
         for (final kw in SensitiveReflectionFilter.medicalKeywords) {
-          if (titleLower.contains(kw) || subtitleLower.contains(kw)) return false;
+          if (titleLower.contains(kw) || subtitleLower.contains(kw))
+            return false;
         }
 
         return true;
@@ -56,12 +56,13 @@ class AgendaWidgetSnapshotService {
       });
 
       final jalali = Jalali.now();
-      final formattedDate = '${jalali.formatter.wN}، ${toPersianDigits(jalali.day.toString())} ${jalali.formatter.mN}';
+      final formattedDate =
+          '${jalali.formatter.wN}، ${toPersianDigits(jalali.day.toString())} ${jalali.formatter.mN}';
 
       final completedCount = filteredItems.where((i) => i.isCompleted).length;
       final totalCount = filteredItems.length;
       final remainingCount = totalCount - completedCount;
-      final remainingText = totalCount == 0 
+      final remainingText = totalCount == 0
           ? 'امروز چیزی برنامه‌ریزی نشده'
           : '${toPersianDigits(remainingCount.toString())} از ${toPersianDigits(totalCount.toString())} مانده';
 
@@ -69,7 +70,9 @@ class AgendaWidgetSnapshotService {
         return {
           'id': item.id,
           'title': item.title,
-          'time': item.timeOfDay != null ? toPersianDigits(item.timeOfDay!) : '',
+          'time': item.timeOfDay != null
+              ? toPersianDigits(item.timeOfDay!)
+              : '',
           'isCompleted': item.isCompleted,
           'routineId': item.domain == AgendaDomain.routine ? item.sourceId : '',
           'dateStr': item.dateStr,
@@ -84,7 +87,9 @@ class AgendaWidgetSnapshotService {
         items: itemsData,
       );
     } catch (e, st) {
-      debugPrint('AgendaWidgetSnapshotService: agenda widget snapshot failed: $e\n$st');
+      debugPrint(
+        'AgendaWidgetSnapshotService: agenda widget snapshot failed: $e\n$st',
+      );
     }
   }
 }

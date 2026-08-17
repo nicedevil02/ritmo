@@ -1,9 +1,9 @@
 import 'package:ritmo/core/database/database_helper.dart';
 
 enum OpenLoopDecision {
-  doNow,    // الان انجامش می‌دهم
+  doNow, // الان انجامش می‌دهم
   schedule, // برایش زمان می‌گذارم
-  drop,     // رهایش می‌کنم
+  drop, // رهایش می‌کنم
 }
 
 class OpenLoopCaptureService {
@@ -11,10 +11,7 @@ class OpenLoopCaptureService {
   static final OpenLoopCaptureService instance = OpenLoopCaptureService._();
 
   /// Captures a quick thought / open loop into inbox.
-  Future<String> captureThought({
-    required String text,
-    String? source,
-  }) async {
+  Future<String> captureThought({required String text, String? source}) async {
     final db = await DatabaseHelper.instance.database;
     final now = DateTime.now().millisecondsSinceEpoch;
     final id = 'open_loop_$now';
@@ -54,15 +51,12 @@ class OpenLoopCaptureService {
       loopState = 'SCHEDULED';
     }
 
-    final payloadJson = '{"isOpenLoop": true, "loopState": "$loopState", "scheduledDate": "${scheduledDate ?? ""}"}';
+    final payloadJson =
+        '{"isOpenLoop": true, "loopState": "$loopState", "scheduledDate": "${scheduledDate ?? ""}"}';
 
     await db.update(
       'inbox_items',
-      {
-        'status': status,
-        'readAt': now,
-        'payloadJson': payloadJson,
-      },
+      {'status': status, 'readAt': now, 'payloadJson': payloadJson},
       where: 'id = ?',
       whereArgs: [itemId],
     );

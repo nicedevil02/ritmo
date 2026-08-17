@@ -13,4 +13,3 @@ enum EngineInvalidationTag {
   global,
   notes,
 }
-

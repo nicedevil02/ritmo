@@ -16,11 +16,12 @@ class ForegroundNotificationUpdater {
       // 1. Fetch settings to verify both master notif switch and persistent status notification switch
       final settingsMap = {
         for (final row in await db.query('app_settings'))
-          row['key']! as String: row['value']! as String
+          row['key']! as String: row['value']! as String,
       };
 
       final notifMasterEnabled = settingsMap['notif_master_enabled'] != 'false';
-      final isPersistentEnabled = settingsMap['persistent_status_notification_enabled'] != 'false';
+      final isPersistentEnabled =
+          settingsMap['persistent_status_notification_enabled'] != 'false';
 
       if (!notifMasterEnabled || !isPersistentEnabled) {
         await sl<NotificationPlatform>().stopForegroundService();
@@ -35,7 +36,7 @@ class ForegroundNotificationUpdater {
         (e) => e.name.toLowerCase() == currentEnergyStr.toLowerCase(),
         orElse: () => EnergyLevel.medium,
       );
-      
+
       // Determine zone name
       var actZoneName = 'آزاد';
       if (activeZoneId != 'default_zone') {
@@ -63,22 +64,29 @@ class ForegroundNotificationUpdater {
       final nowTime = DateTime.now();
       ReflectionContext? reflectionContext;
       try {
-        final reflectionMaps = await db.query('daily_reflections', orderBy: 'date DESC');
+        final reflectionMaps = await db.query(
+          'daily_reflections',
+          orderBy: 'date DESC',
+        );
         if (reflectionMaps.isNotEmpty) {
-          final checkinMaps = await db.query('daily_checkins', orderBy: 'date DESC');
+          final checkinMaps = await db.query(
+            'daily_checkins',
+            orderBy: 'date DESC',
+          );
           final energyLogs = await db.query('energy_logs');
           final moodLogs = await db.query('mood_logs');
 
-          final out = await RitmoEngineBus.instance.execute<ReflectionEngineInput, ReflectionEngineOutput>(
-            ReflectionEngine,
-            ReflectionEngineInput(
-              dailyReflections: reflectionMaps,
-              dailyCheckins: checkinMaps,
-              energyLogs: energyLogs,
-              moodLogs: moodLogs,
-              today: nowTime,
-            ),
-          );
+          final out = await RitmoEngineBus.instance
+              .execute<ReflectionEngineInput, ReflectionEngineOutput>(
+                ReflectionEngine,
+                ReflectionEngineInput(
+                  dailyReflections: reflectionMaps,
+                  dailyCheckins: checkinMaps,
+                  energyLogs: energyLogs,
+                  moodLogs: moodLogs,
+                  today: nowTime,
+                ),
+              );
 
           if (out.entryCount > 0) {
             var direction = MoodTrendDirection.flat;
@@ -127,7 +135,9 @@ class ForegroundNotificationUpdater {
         whereArgs: [todayStr],
       );
       final totalRoutines = occurrences.length;
-      final completedRoutines = occurrences.where((e) => e['status'] == 'done').length;
+      final completedRoutines = occurrences
+          .where((e) => e['status'] == 'done')
+          .length;
 
       // 2. Fetch worship practices completion stats for today
       final activePrayers = await db.query(
@@ -150,7 +160,9 @@ class ForegroundNotificationUpdater {
       // Update Native notification
       await sl<NotificationPlatform>().startStatusMode(
         zone: actZoneName,
-        energy: currentEnergyStr == 'LOW' ? 'پایین' : (currentEnergyStr == 'HIGH' ? 'بالا' : 'متوسط'),
+        energy: currentEnergyStr == 'LOW'
+            ? 'پایین'
+            : (currentEnergyStr == 'HIGH' ? 'بالا' : 'متوسط'),
         proposedTask: nextTask?.title ?? 'استراحت 🌿',
         proposedTaskId: nextTask?.id,
         completedRoutines: completedRoutines,
@@ -161,8 +173,9 @@ class ForegroundNotificationUpdater {
         zoneIds: zoneIds,
       );
     } catch (e, stack) {
-      debugPrint('[ForegroundNotificationUpdater] failed to update notification: $e\n$stack');
+      debugPrint(
+        '[ForegroundNotificationUpdater] failed to update notification: $e\n$stack',
+      );
     }
   }
 }
-

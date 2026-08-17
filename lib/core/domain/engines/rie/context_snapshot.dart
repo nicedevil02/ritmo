@@ -8,7 +8,6 @@ import 'package:ritmo/core/domain/models/reflection_context.dart';
 /// Immutable point-in-time snapshot of the user's daily life environment, settings,
 /// active constraints, and pre-fetched database records.
 class ContextSnapshot {
-
   ContextSnapshot({
     required this.now,
     required this.appSettings,
@@ -35,7 +34,7 @@ class ContextSnapshot {
   // Pre-fetched sets and maps to avoid database calls inside pipeline loops
   final Set<String> blockedRoutineIdsInZone;
   final Set<String> completedRoutineIdsToday;
-  
+
   /// Mapped by routineId to its routine_schedules record
   final Map<String, Map<String, dynamic>> routineSchedulesByRoutineId;
 

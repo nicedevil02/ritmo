@@ -36,7 +36,8 @@ class CycleWorshipPolicy {
         final rows = await db.query('app_settings');
         settings = {
           for (final r in rows)
-            if (r['key'] != null) r['key'].toString(): r['value']?.toString() ?? '',
+            if (r['key'] != null)
+              r['key'].toString(): r['value']?.toString() ?? '',
         };
       }
 
@@ -57,7 +58,9 @@ class CycleWorshipPolicy {
       if (isPregnant) return false;
 
       // 4. Check active bleeding on target date
-      final effectiveDate = CycleDateContract.cleanDate(targetDate ?? DateTime.now());
+      final effectiveDate = CycleDateContract.cleanDate(
+        targetDate ?? DateTime.now(),
+      );
       final periods = await db.query('cycle_periods', orderBy: 'startDate ASC');
 
       for (final p in periods) {
@@ -68,7 +71,8 @@ class CycleWorshipPolicy {
         if (end != null) {
           // Closed period: check within [start..end]
           if (CycleDateContract.inWindow(effectiveDate, start, end)) {
-            final bleedingDays = CycleDateContract.daysBetween(start, effectiveDate) + 1;
+            final bleedingDays =
+                CycleDateContract.daysBetween(start, effectiveDate) + 1;
             if (bleedingDays <= maxFiqhBleedingDays) {
               return true;
             }
@@ -105,10 +109,7 @@ class CycleWorshipPolicy {
     await db.transaction((txn) async {
       await txn.update(
         'fasting_debt',
-        {
-          'isResolved': isResolved ? 1 : 0,
-          'updatedAt': now,
-        },
+        {'isResolved': isResolved ? 1 : 0, 'updatedAt': now},
         where: 'id = ?',
         whereArgs: [id],
       );

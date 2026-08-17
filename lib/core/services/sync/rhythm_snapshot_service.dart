@@ -19,7 +19,7 @@ class RhythmSnapshotService {
       whereArgs: [dateStr],
     );
     final completionMap = {
-      for (final c in completions) c['routineId']! as String: c
+      for (final c in completions) c['routineId']! as String: c,
     };
 
     // 2. Load all active routines and schedules
@@ -47,32 +47,41 @@ class RhythmSnapshotService {
         // Check if the module is enabled
         final categoryStr = rMap['category']! as String;
         final isBuiltIn = Category.values.any((e) => e.name == categoryStr);
-        final category = isBuiltIn 
+        final category = isBuiltIn
             ? Category.values.firstWhere(
                 (e) => e.name.toLowerCase() == categoryStr.toLowerCase(),
                 orElse: () => Category.custom,
               )
             : Category.custom;
 
-        final moduleEnabled = SyncModuleGate.isModuleEnabled(category, settingsMap);
+        final moduleEnabled = SyncModuleGate.isModuleEnabled(
+          category,
+          settingsMap,
+        );
 
         if (moduleEnabled) {
-          final isAsNeeded = routineTypeStr == 'asNeeded' || routineTypeStr == RoutineType.asNeeded.name;
+          final isAsNeeded =
+              routineTypeStr == 'asNeeded' ||
+              routineTypeStr == RoutineType.asNeeded.name;
           final completion = completionMap[rId];
-          final isSystemResult = completion != null && completion['resultSource'] == 'SYSTEM';
+          final isSystemResult =
+              completion != null && completion['resultSource'] == 'SYSTEM';
 
           if (!isAsNeeded && !isSystemResult) {
             totalRoutines++;
             totalWeight += priority;
-            
+
             if (completion != null) {
               completedRoutines++;
               if (isEssential) {
                 criticalRoutines++;
               }
               final resType = completion['resultType'] as String?;
-              final partialRatio = (completion['partialRatio'] as num?)?.toDouble();
-              final completionValue = CompletionResult.fromDb(resType).rhythmWeight(partialRatio);
+              final partialRatio = (completion['partialRatio'] as num?)
+                  ?.toDouble();
+              final completionValue = CompletionResult.fromDb(
+                resType,
+              ).rhythmWeight(partialRatio);
               completedWeight += completionValue * priority;
             }
           }
@@ -84,40 +93,40 @@ class RhythmSnapshotService {
     if (totalWeight > 0) {
       rhythmScore = ((completedWeight / totalWeight) * 100).round();
     }
-    final completionRatio = totalRoutines > 0 ? (completedRoutines / totalRoutines) : 0.0;
+    final completionRatio = totalRoutines > 0
+        ? (completedRoutines / totalRoutines)
+        : 0.0;
 
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     // Insert or replace in daily_rhythm table
-    await db.insert(
-      'daily_rhythm',
-      {
-        'date': dateStr,
-        'rhythmScore': rhythmScore,
-        'scheduledCount': totalRoutines,
-        'countedCount': completedRoutines,
-        'successCount': completedRoutines,
-        'essentialMet': criticalRoutines,
-        'energyDrained': 0,
-        'energyRecharged': 0,
-        'lifeBalanceScore': 0,
-        'isGraceDay': 0,
-        'updatedAt': nowMs,
-        'rhythm_score': rhythmScore,
-        'total_routines': totalRoutines,
-        'completed_routines': completedRoutines,
-        'critical_routines': criticalRoutines,
-        'completion_ratio': completionRatio,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('daily_rhythm', {
+      'date': dateStr,
+      'rhythmScore': rhythmScore,
+      'scheduledCount': totalRoutines,
+      'countedCount': completedRoutines,
+      'successCount': completedRoutines,
+      'essentialMet': criticalRoutines,
+      'energyDrained': 0,
+      'energyRecharged': 0,
+      'lifeBalanceScore': 0,
+      'isGraceDay': 0,
+      'updatedAt': nowMs,
+      'rhythm_score': rhythmScore,
+      'total_routines': totalRoutines,
+      'completed_routines': completedRoutines,
+      'critical_routines': criticalRoutines,
+      'completion_ratio': completionRatio,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> backfillRhythmLogs({
     required Database db,
     required Map<String, String> settingsMap,
   }) async {
-    final minDateResult = await db.rawQuery('SELECT MIN(completionDate) as minDate FROM routine_completions');
+    final minDateResult = await db.rawQuery(
+      'SELECT MIN(completionDate) as minDate FROM routine_completions',
+    );
     if (minDateResult.isEmpty || minDateResult.first['minDate'] == null) {
       return;
     }
@@ -136,9 +145,15 @@ class RhythmSnapshotService {
 
       if (checkDateStr != todayStr) {
         // Check if a record already exists
-        final existing = await db.query('daily_rhythm', where: 'date = ?', whereArgs: [checkDateStr]);
+        final existing = await db.query(
+          'daily_rhythm',
+          where: 'date = ?',
+          whereArgs: [checkDateStr],
+        );
         if (existing.isEmpty) {
-          debugPrint('RhythmSnapshotService: Backfilling rhythm snapshot for $checkDateStr');
+          debugPrint(
+            'RhythmSnapshotService: Backfilling rhythm snapshot for $checkDateStr',
+          );
           await syncDailyRhythmForDate(
             db: db,
             dateStr: checkDateStr,

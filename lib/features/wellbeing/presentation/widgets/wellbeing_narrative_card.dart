@@ -23,7 +23,9 @@ class WellbeingNarrativeCard extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: growing ? 'روایت در حال شکل‌گیری: ${item.title}' : 'روایت امروز: ${item.title}',
+      label: growing
+          ? 'روایت در حال شکل‌گیری: ${item.title}'
+          : 'روایت امروز: ${item.title}',
       child: Container(
         padding: const EdgeInsets.all(RitmoSpacing.lg),
         decoration: BoxDecoration(
@@ -62,10 +64,7 @@ class WellbeingNarrativeCard extends StatelessWidget {
               style: RitmoTextStyles.cardTitle(colors.textPrimary),
             ),
             const SizedBox(height: 6),
-            Text(
-              item.body,
-              style: RitmoTextStyles.body(colors.textSecondary),
-            ),
+            Text(item.body, style: RitmoTextStyles.body(colors.textSecondary)),
             if (growing) ...[
               const SizedBox(height: 12),
               ClipRRect(

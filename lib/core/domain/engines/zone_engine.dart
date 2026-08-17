@@ -53,7 +53,11 @@ class ZoneEngine {
 
   /// Generates the absolute minute intervals in a week for a day and start/end time.
   /// Week starts at Monday 00:00 (minutes 0) and ends Sunday 24:00 (minutes 10080).
-  static List<List<int>> getWeeklyMinutesForSchedule(int weekday, String startTimeStr, String endTimeStr) {
+  static List<List<int>> getWeeklyMinutesForSchedule(
+    int weekday,
+    String startTimeStr,
+    String endTimeStr,
+  ) {
     final startParts = startTimeStr.split(':');
     final endParts = endTimeStr.split(':');
     if (startParts.length != 2 || endParts.length != 2) return [];
@@ -72,7 +76,9 @@ class ZoneEngine {
       // Normal range
       final start = dayOffset + startMinutesInDay;
       final end = dayOffset + endMinutesInDay;
-      return [[start, end]];
+      return [
+        [start, end],
+      ];
     } else {
       // Cross-midnight range
       final start = dayOffset + startMinutesInDay;
@@ -81,7 +87,9 @@ class ZoneEngine {
       final end = nextDayOffset + endMinutesInDay;
 
       if (start <= end) {
-        return [[start, end]];
+        return [
+          [start, end],
+        ];
       } else {
         // Wraps around the end of the week (Sunday night to Monday morning)
         const weekEnd = 7 * 24 * 60;
@@ -102,19 +110,26 @@ class ZoneEngine {
   }) {
     final proposedRanges = <List<int>>[];
     for (final day in proposedDays) {
-      proposedRanges.addAll(getWeeklyMinutesForSchedule(day, proposedStart, proposedEnd));
+      proposedRanges.addAll(
+        getWeeklyMinutesForSchedule(day, proposedStart, proposedEnd),
+      );
     }
 
     for (final existing in existingSchedules) {
       final daysStr = existing['daysOfWeek'] as String? ?? '';
-      final existingDays = daysStr.split(',').map((d) => int.tryParse(d.trim()) ?? 0).toSet();
+      final existingDays = daysStr
+          .split(',')
+          .map((d) => int.tryParse(d.trim()) ?? 0)
+          .toSet();
       final existingStart = existing['startTime'] as String? ?? '00:00';
       final existingEnd = existing['endTime'] as String? ?? '23:59';
       final zoneName = existing['zoneName'] as String? ?? 'زون دیگر';
 
       final existingRanges = <List<int>>[];
       for (final day in existingDays) {
-        existingRanges.addAll(getWeeklyMinutesForSchedule(day, existingStart, existingEnd));
+        existingRanges.addAll(
+          getWeeklyMinutesForSchedule(day, existingStart, existingEnd),
+        );
       }
 
       for (final pRange in proposedRanges) {
@@ -125,7 +140,8 @@ class ZoneEngine {
           if (startMax < endMin) {
             return {
               'hasOverlap': true,
-              'message': 'این زمان‌بندی با زون «$zoneName» ($existingStart الی $existingEnd) در برخی روزها تداخل دارد.',
+              'message':
+                  'این زمان‌بندی با زون «$zoneName» ($existingStart الی $existingEnd) در برخی روزها تداخل دارد.',
               'suggestedStart': existingEnd,
             };
           }

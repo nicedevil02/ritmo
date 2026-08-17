@@ -10,7 +10,11 @@ class QuranDhikrAgendaRenderer extends AgendaTileRenderer {
   const QuranDhikrAgendaRenderer();
 
   @override
-  Widget build(BuildContext context, AgendaItem item, {required VoidCallback onChanged}) {
+  Widget build(
+    BuildContext context,
+    AgendaItem item, {
+    required VoidCallback onChanged,
+  }) {
     final colors = context.colors;
     final isDone = item.isCompleted;
 
@@ -38,7 +42,9 @@ class QuranDhikrAgendaRenderer extends AgendaTileRenderer {
             child: Padding(
               padding: const EdgeInsets.only(left: 12),
               child: Icon(
-                isDone ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
+                isDone
+                    ? CupertinoIcons.checkmark_circle_fill
+                    : CupertinoIcons.circle,
                 color: isDone ? colors.success : colors.textSecondary,
                 size: 20,
               ),
@@ -95,8 +101,13 @@ class QuranDhikrAgendaRenderer extends AgendaTileRenderer {
             ),
             const SizedBox(width: 8),
           ],
-          if (item.hasValidTimeOfDay || (item.meta['practice']?['reminderEnabled'] == 1)) ...[
-            Icon(Icons.notifications_active_outlined, size: 14, color: colors.textSecondary.withValues(alpha: 0.7)),
+          if (item.hasValidTimeOfDay ||
+              (item.meta['practice']?['reminderEnabled'] == 1)) ...[
+            Icon(
+              Icons.notifications_active_outlined,
+              size: 14,
+              color: colors.textSecondary.withValues(alpha: 0.7),
+            ),
             const SizedBox(width: 8),
           ],
         ],

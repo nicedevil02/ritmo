@@ -22,9 +22,11 @@ class TodaySnapshotContextBuilder {
       where: 'completionDate = ?',
       whereArgs: [todayStr],
     );
-    final completedIds = completions.map((c) => c['routineId']! as String).toSet();
+    final completedIds = completions
+        .map((c) => c['routineId']! as String)
+        .toSet();
     final completionMap = {
-      for (final c in completions) c['routineId']! as String: c
+      for (final c in completions) c['routineId']! as String: c,
     };
 
     final routinesResult = await db.query('routines', where: 'isArchived = 0');
@@ -56,7 +58,7 @@ class TodaySnapshotContextBuilder {
         // Check if the module is enabled
         final categoryStr = rMap['category']! as String;
         final isBuiltIn = Category.values.any((e) => e.name == categoryStr);
-        final category = isBuiltIn 
+        final category = isBuiltIn
             ? Category.values.firstWhere(
                 (e) => e.name.toLowerCase() == categoryStr.toLowerCase(),
                 orElse: () => Category.custom,
@@ -64,19 +66,28 @@ class TodaySnapshotContextBuilder {
             : Category.custom;
 
         final customCategoryId = isBuiltIn ? null : categoryStr;
-        final moduleEnabled = SyncModuleGate.isModuleEnabled(category, settingsMap);
+        final moduleEnabled = SyncModuleGate.isModuleEnabled(
+          category,
+          settingsMap,
+        );
 
         if (moduleEnabled) {
-          final isAsNeeded = routineTypeStr == 'asNeeded' || routineTypeStr == RoutineType.asNeeded.name;
+          final isAsNeeded =
+              routineTypeStr == 'asNeeded' ||
+              routineTypeStr == RoutineType.asNeeded.name;
           final completion = completionMap[rId];
-          final isSystemResult = completion != null && completion['resultSource'] == 'SYSTEM';
+          final isSystemResult =
+              completion != null && completion['resultSource'] == 'SYSTEM';
 
           if (!isAsNeeded && !isSystemResult) {
             totalWeight += priority;
             if (completion != null) {
               final resType = completion['resultType'] as String?;
-              final partialRatio = (completion['partialRatio'] as num?)?.toDouble();
-              final completionValue = CompletionResult.fromDb(resType).rhythmWeight(partialRatio);
+              final partialRatio = (completion['partialRatio'] as num?)
+                  ?.toDouble();
+              final completionValue = CompletionResult.fromDb(
+                resType,
+              ).rhythmWeight(partialRatio);
               completedWeight += completionValue * priority;
             }
           }
@@ -91,13 +102,17 @@ class TodaySnapshotContextBuilder {
               orElse: () => RoutineType.timeBased,
             ),
             notificationLevel: NotificationLevel.values.firstWhere(
-              (e) => e.name.toLowerCase() == (rMap['notificationLevel'] as String? ?? '').toLowerCase(),
+              (e) =>
+                  e.name.toLowerCase() ==
+                  (rMap['notificationLevel'] as String? ?? '').toLowerCase(),
               orElse: () => NotificationLevel.none,
             ),
             isEssential: rMap['isEssential'] == 1,
             isEssentialLocked: rMap['isEssentialLocked'] == 1,
             energyRule: EnergyRule.values.firstWhere(
-              (e) => e.name.toLowerCase() == (rMap['energyRule'] as String? ?? '').toLowerCase(),
+              (e) =>
+                  e.name.toLowerCase() ==
+                  (rMap['energyRule'] as String? ?? '').toLowerCase(),
               orElse: () => EnergyRule.none,
             ),
             priority: priority,
@@ -110,15 +125,18 @@ class TodaySnapshotContextBuilder {
             progressionStep: rMap['progressionStep'] as int? ?? 0,
             progressionEveryN: rMap['progressionEveryN'] as int? ?? 1,
             progressionCurrent: rMap['progressionCurrent'] as int? ?? 0,
-            progressionDoneSinceAdvance: rMap['progressionDoneSinceAdvance'] as int? ?? 0,
+            progressionDoneSinceAdvance:
+                rMap['progressionDoneSinceAdvance'] as int? ?? 0,
             itemType: rMap['itemType'] as String? ?? 'ROUTINE',
           );
 
-          activeTasks.add(RoutineTask(
-            routine: routine,
-            scheduleTimeStr: timeOfDayStr,
-            scheduledTime: schedTime,
-          ));
+          activeTasks.add(
+            RoutineTask(
+              routine: routine,
+              scheduleTimeStr: timeOfDayStr,
+              scheduledTime: schedTime,
+            ),
+          );
         }
       }
     }
@@ -130,12 +148,19 @@ class TodaySnapshotContextBuilder {
 
     // Resolve energy
     var resolvedEnergy = EnergyLevel.medium;
-    final energyLog = await db.query('energy_logs', limit: 1, orderBy: 'loggedAt DESC');
+    final energyLog = await db.query(
+      'energy_logs',
+      limit: 1,
+      orderBy: 'loggedAt DESC',
+    );
     if (energyLog.isNotEmpty) {
       final eLevelStr = energyLog.first['energyLevel']! as String;
       final loggedAt = energyLog.first['loggedAt']! as int;
-      final validity = int.tryParse(settingsMap['energy_validity_minutes'] ?? '180') ?? 180;
-      final isStale = DateTime.now().millisecondsSinceEpoch - loggedAt > validity * 60 * 1000;
+      final validity =
+          int.tryParse(settingsMap['energy_validity_minutes'] ?? '180') ?? 180;
+      final isStale =
+          DateTime.now().millisecondsSinceEpoch - loggedAt >
+          validity * 60 * 1000;
 
       if (!isStale) {
         resolvedEnergy = EnergyLevel.values.firstWhere(

@@ -1,14 +1,10 @@
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 
-enum OverdoseResult {
-  safe,
-  warningUnderInterval,
-  warningMaxLimitExceeded,
-}
+enum OverdoseResult { safe, warningUnderInterval, warningMaxLimitExceeded }
 
 class MedicalEngine {
   /// Pure function to evaluate medication overdose risk.
-  /// 
+  ///
   /// [now] is the current timestamp in epoch milliseconds.
   /// [prnLogs24h] holds timestamps of doses taken in the last 24 hours.
   /// [minIntervalHours] is the minimum hours that must pass between doses.
@@ -22,10 +18,13 @@ class MedicalEngine {
     if (prnLogs24h.isEmpty) return OverdoseResult.safe;
 
     // Find the latest dose taken
-    final lastTaken = prnLogs24h.fold<int>(0, (max, val) => val > max ? val : max);
-    
+    final lastTaken = prnLogs24h.fold<int>(
+      0,
+      (max, val) => val > max ? val : max,
+    );
+
     final diffHours = (now - lastTaken).toDouble() / (1000 * 60 * 60);
-    
+
     if (minIntervalHours > 0 && diffHours < minIntervalHours) {
       return OverdoseResult.warningUnderInterval;
     }
@@ -61,7 +60,6 @@ class MedicalEngine {
 }
 
 class MedicineEngineInput {
-
   MedicineEngineInput({
     required this.now,
     required this.prnLogs24h,
@@ -79,7 +77,6 @@ class MedicineEngineInput {
 }
 
 class MedicineEngineOutput {
-
   MedicineEngineOutput({
     required this.overdoseResult,
     required this.refillNeeded,
@@ -90,7 +87,8 @@ class MedicineEngineOutput {
   final bool outOfStock;
 }
 
-class MedicineEngine implements CachedEngine<MedicineEngineInput, MedicineEngineOutput> {
+class MedicineEngine
+    implements CachedEngine<MedicineEngineInput, MedicineEngineOutput> {
   @override
   Future<MedicineEngineOutput> calculate(MedicineEngineInput input) async {
     final overdose = MedicalEngine.checkOverdoseStatus(

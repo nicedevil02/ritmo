@@ -50,15 +50,22 @@ class RelativeTimeFormatter {
 
     // 5. 60 <= diff < 1440
     if (diffMinutes >= 60 && diffMinutes < 1440) {
-      final isSameDay = target.year == now.year && target.month == now.month && target.day == now.day;
+      final isSameDay =
+          target.year == now.year &&
+          target.month == now.month &&
+          target.day == now.day;
       if (isSameDay) {
         return 'تا ${durationFa(diffMinutes)} دیگر';
       }
 
       final tomorrow = now.add(const Duration(days: 1));
-      final isTomorrow = target.year == tomorrow.year && target.month == tomorrow.month && target.day == tomorrow.day;
+      final isTomorrow =
+          target.year == tomorrow.year &&
+          target.month == tomorrow.month &&
+          target.day == tomorrow.day;
 
-      final timeStr = '${target.hour.toString().padLeft(2, '0')}:${target.minute.toString().padLeft(2, '0')}';
+      final timeStr =
+          '${target.hour.toString().padLeft(2, '0')}:${target.minute.toString().padLeft(2, '0')}';
       final faTimeStr = toPersianDigits(timeStr);
 
       if (isTomorrow) {
@@ -71,7 +78,8 @@ class RelativeTimeFormatter {
     final nowMidnight = DateTime(now.year, now.month, now.day);
     final days = targetMidnight.difference(nowMidnight).inDays;
 
-    final timeStr = '${target.hour.toString().padLeft(2, '0')}:${target.minute.toString().padLeft(2, '0')}';
+    final timeStr =
+        '${target.hour.toString().padLeft(2, '0')}:${target.minute.toString().padLeft(2, '0')}';
     final faTimeStr = toPersianDigits(timeStr);
 
     if (days == 1) {

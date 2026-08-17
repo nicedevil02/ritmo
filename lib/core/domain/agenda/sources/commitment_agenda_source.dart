@@ -31,7 +31,8 @@ class CommitmentAgendaSource implements AgendaSource {
     final allocationsByDate = <String, List<Map<String, dynamic>>>{};
 
     try {
-      final allocRes = await db.rawQuery('''
+      final allocRes = await db.rawQuery(
+        '''
         SELECT a.id as allocId, a.dayKey, a.plannedMinutes, a.timeWindowStart, a.timeWindowEnd,
                a.exactTime, a.status as allocStatus, a.materializedEntityType, a.materializedEntityId,
                c.id as commId, c.title as commTitle, c.importance, c.workKind, c.flexibility, c.goalId
@@ -40,7 +41,9 @@ class CommitmentAgendaSource implements AgendaSource {
         WHERE a.dayKey >= ? AND a.dayKey <= ? AND a.status != 'DROPPED' AND c.status != 'DROPPED'
           AND (a.materializedEntityType IS NULL OR a.materializedEntityType != 'TASK' OR a.materializedEntityId IS NULL)
         ORDER BY a.exactTime ASC, a.timeWindowStart ASC, a.createdAt ASC
-      ''', [startStr, endStr]);
+      ''',
+        [startStr, endStr],
+      );
 
       for (final row in allocRes) {
         final dateStr = row['dayKey'] as String?;
@@ -86,27 +89,37 @@ class CommitmentAgendaSource implements AgendaSource {
       final resolvedTime = exactTime ?? timeWindowStart;
       final isFixed = flexibility == 'FIXED' || exactTime != null;
 
-      final startDt = _parseWindowTime(ctx.dateStr, timeWindowStart ?? exactTime);
+      final startDt = _parseWindowTime(
+        ctx.dateStr,
+        timeWindowStart ?? exactTime,
+      );
       final endDt = _parseWindowTime(ctx.dateStr, timeWindowEnd);
 
-      items.add(AgendaItem(
-        id: buildAgendaItemId(AgendaDomain.commitment, allocId, ctx.dateStr),
-        domain: AgendaDomain.commitment,
-        sourceId: allocId,
-        title: title,
-        dateStr: ctx.dateStr,
-        timeOfDay: resolvedTime,
-        durationMinutes: plannedMinutes,
-        windowStart: startDt,
-        windowEnd: endDt,
-        category: _mapWorkKindToCategory(workKind),
-        priority: _mapImportanceToPriority(importance),
-        isEssential: importance == 'MUST',
-        itemType: isFixed ? AgendaItemType.fixed : AgendaItemType.flexible,
-        completion: allocStatus == 'DONE' ? AgendaCompletion.done : AgendaCompletion.pending,
-        deepLink: AgendaDeepLink(domain: AgendaDomain.commitment, targetId: allocId),
-        meta: {'allocation': row},
-      ));
+      items.add(
+        AgendaItem(
+          id: buildAgendaItemId(AgendaDomain.commitment, allocId, ctx.dateStr),
+          domain: AgendaDomain.commitment,
+          sourceId: allocId,
+          title: title,
+          dateStr: ctx.dateStr,
+          timeOfDay: resolvedTime,
+          durationMinutes: plannedMinutes,
+          windowStart: startDt,
+          windowEnd: endDt,
+          category: _mapWorkKindToCategory(workKind),
+          priority: _mapImportanceToPriority(importance),
+          isEssential: importance == 'MUST',
+          itemType: isFixed ? AgendaItemType.fixed : AgendaItemType.flexible,
+          completion: allocStatus == 'DONE'
+              ? AgendaCompletion.done
+              : AgendaCompletion.pending,
+          deepLink: AgendaDeepLink(
+            domain: AgendaDomain.commitment,
+            targetId: allocId,
+          ),
+          meta: {'allocation': row},
+        ),
+      );
     }
 
     return items;

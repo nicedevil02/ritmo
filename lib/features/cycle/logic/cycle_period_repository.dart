@@ -181,7 +181,10 @@ class CyclePeriodRepository {
     // Invalidate engine cache (C-16)
     CycleEngine().invalidate();
     if (db is Database) {
-      await CycleReminderScheduler.rescheduleAll(dbExecutor: db, now: effectiveNow);
+      await CycleReminderScheduler.rescheduleAll(
+        dbExecutor: db,
+        now: effectiveNow,
+      );
     }
     return id;
   }
@@ -240,7 +243,10 @@ class CyclePeriodRepository {
     // Invalidate engine cache (C-16)
     CycleEngine().invalidate();
     if (db is Database) {
-      await CycleReminderScheduler.rescheduleAll(dbExecutor: db, now: effectiveNow);
+      await CycleReminderScheduler.rescheduleAll(
+        dbExecutor: db,
+        now: effectiveNow,
+      );
     }
   }
 

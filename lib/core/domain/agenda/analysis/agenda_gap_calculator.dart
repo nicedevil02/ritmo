@@ -31,7 +31,7 @@ class TimeGap {
 class AgendaGapCalculator {
   const AgendaGapCalculator({
     this.wakingStartMinutes = 420, // 07:00
-    this.wakingEndMinutes = 1380,  // 23:00
+    this.wakingEndMinutes = 1380, // 23:00
   });
 
   final int wakingStartMinutes;
@@ -53,7 +53,9 @@ class AgendaGapCalculator {
       final intervals = <_TimeInterval>[];
       for (final item in timedItems) {
         final start = _parseStartMinutes(item.timeOfDay);
-        final duration = (item.durationMinutes ?? 0) <= 0 ? 15 : item.durationMinutes!;
+        final duration = (item.durationMinutes ?? 0) <= 0
+            ? 15
+            : item.durationMinutes!;
         intervals.add(_TimeInterval(start, start + duration));
       }
 
@@ -79,7 +81,9 @@ class AgendaGapCalculator {
       var currentPointer = wakingStartMinutes;
       for (final block in merged) {
         if (block.start > currentPointer) {
-          final gapEnd = block.start < wakingEndMinutes ? block.start : wakingEndMinutes;
+          final gapEnd = block.start < wakingEndMinutes
+              ? block.start
+              : wakingEndMinutes;
           if (gapEnd > currentPointer) {
             rawGaps.add(_TimeInterval(currentPointer, gapEnd));
           }
@@ -109,12 +113,14 @@ class AgendaGapCalculator {
 
       final tag = _deriveQualityTag(gapDuration, score);
 
-      scoredGaps.add(TimeGap(
-        startMinutes: raw.start,
-        endMinutes: raw.end,
-        qualityScore: score,
-        qualityTag: tag,
-      ));
+      scoredGaps.add(
+        TimeGap(
+          startMinutes: raw.start,
+          endMinutes: raw.end,
+          qualityScore: score,
+          qualityTag: tag,
+        ),
+      );
     }
 
     scoredGaps.sort((a, b) => b.qualityScore.compareTo(a.qualityScore));

@@ -4,7 +4,8 @@ import 'package:ritmo/core/domain/engines/engine_enums.dart';
 import 'package:ritmo/core/domain/engines/rie/context_snapshot.dart';
 import 'package:ritmo/core/domain/engines/rie/rie_filters.dart';
 import 'package:ritmo/core/domain/engines/rie/rie_scorers.dart';
-import 'package:ritmo/core/domain/engines/ritmo_intelligence_engine.dart' show RitmoEngineOutput;
+import 'package:ritmo/core/domain/engines/ritmo_intelligence_engine.dart'
+    show RitmoEngineOutput;
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/daily_behavior.dart';
 
@@ -26,7 +27,7 @@ class RitmoIntelligencePipeline {
   RitmoEngineOutput execute(ContextSnapshot snapshot) {
     // 1. Run Filters step-by-step to capture specific suppression reasons
     // (matches legacy visibleRoutines & hiddenRoutines categorization exactly)
-    
+
     // Layer 0: Module Gate
     final enteredRoutines = <Routine>[];
     for (final r in snapshot.enteredRoutines) {
@@ -38,9 +39,12 @@ class RitmoIntelligencePipeline {
     // Layer 1: Biological Constraints
     final biologicalRoutines = <Routine>[];
     final suppressedByBiology = <Routine>[];
-    final worshipConsent = snapshot.appSettings['cycle_consent_worship'] != 'false';
+    final worshipConsent =
+        snapshot.appSettings['cycle_consent_worship'] != 'false';
     for (final r in enteredRoutines) {
-      if (snapshot.isMenstruating && r.category == Category.religious && worshipConsent) {
+      if (snapshot.isMenstruating &&
+          r.category == Category.religious &&
+          worshipConsent) {
         suppressedByBiology.add(r);
       } else {
         biologicalRoutines.add(r);
@@ -51,8 +55,11 @@ class RitmoIntelligencePipeline {
     final zoneCheckedRoutines = <Routine>[];
     final suppressedByZone = <Routine>[];
     for (final r in biologicalRoutines) {
-      final isZoneBlocked = snapshot.blockedRoutineIdsInZone.contains(r.id) ||
-          ((snapshot.activeZoneMode == 'SILENT' || snapshot.activeZoneMode == 'FOCUS') && !r.isEssential);
+      final isZoneBlocked =
+          snapshot.blockedRoutineIdsInZone.contains(r.id) ||
+          ((snapshot.activeZoneMode == 'SILENT' ||
+                  snapshot.activeZoneMode == 'FOCUS') &&
+              !r.isEssential);
 
       if (isZoneBlocked) {
         if (r.isEssential) {
@@ -70,7 +77,8 @@ class RitmoIntelligencePipeline {
     final suppressedByEnergy = <Routine>[];
     for (final r in zoneCheckedRoutines) {
       if (snapshot.currentEnergy == EnergyLevel.low && !r.isEssential) {
-        if (r.energyRule == EnergyRule.skip || r.energyRule == EnergyRule.highEnergyOnly) {
+        if (r.energyRule == EnergyRule.skip ||
+            r.energyRule == EnergyRule.highEnergyOnly) {
           suppressedByEnergy.add(r);
           continue;
         }
@@ -85,7 +93,8 @@ class RitmoIntelligencePipeline {
 
     for (final r in energyCheckedRoutines) {
       if (dailyBehavior.behavior == 'SILENCE_ALL') {
-        final isCriticalMedicine = r.category == Category.medical && r.isEssential;
+        final isCriticalMedicine =
+            r.category == Category.medical && r.isEssential;
         if (!isCriticalMedicine) {
           suppressedByContext.add(r);
           continue;
@@ -97,7 +106,8 @@ class RitmoIntelligencePipeline {
         }
       }
 
-      if (dailyBehavior.context == LifeContext.sick && r.category == Category.fitness) {
+      if (dailyBehavior.context == LifeContext.sick &&
+          r.category == Category.fitness) {
         suppressedByContext.add(r);
         continue;
       }
@@ -106,7 +116,11 @@ class RitmoIntelligencePipeline {
     }
 
     final visibleRoutines = contextCheckedRoutines;
-    final hiddenRoutines = suppressedByBiology + suppressedByZone + suppressedByEnergy + suppressedByContext;
+    final hiddenRoutines =
+        suppressedByBiology +
+        suppressedByZone +
+        suppressedByEnergy +
+        suppressedByContext;
 
     // 2. Score visible routines using Scorers
     final scores = <String, double>{};
@@ -125,7 +139,9 @@ class RitmoIntelligencePipeline {
 
     Routine? suggestedRoutine;
     if (incompleteVisible.isNotEmpty) {
-      incompleteVisible.sort((a, b) => (scores[b.id] ?? 0.0).compareTo(scores[a.id] ?? 0.0));
+      incompleteVisible.sort(
+        (a, b) => (scores[b.id] ?? 0.0).compareTo(scores[a.id] ?? 0.0),
+      );
       suggestedRoutine = incompleteVisible.first;
     }
 
@@ -144,7 +160,8 @@ class RitmoIntelligencePipeline {
         suggestedRoutine.category == Category.fitness) {
       suggestLightVersion = true;
     }
-    final reflectionLight = snapshot.gentleMode &&
+    final reflectionLight =
+        snapshot.gentleMode &&
         suggestedRoutine != null &&
         !suggestedRoutine.isEssential &&
         (suggestedRoutine.energyRule == EnergyRule.offerLight ||
@@ -161,7 +178,9 @@ class RitmoIntelligencePipeline {
       if (r.category == Category.medical &&
           r.medStockCount > 0 &&
           r.medStockCount <= r.medRefillThreshold) {
-        criticalAlerts.add('موجودی داروی «${r.title}» رو‌به‌اتمام است (موجودی فعلی: ${r.medStockCount}).');
+        criticalAlerts.add(
+          'موجودی داروی «${r.title}» رو‌به‌اتمام است (موجودی فعلی: ${r.medStockCount}).',
+        );
       }
     }
 
@@ -175,7 +194,10 @@ class RitmoIntelligencePipeline {
       final sched = snapshot.routineSchedulesByRoutineId[r.id];
       if (sched != null) {
         final daysOfWeekStr = sched['daysOfWeek'] as String? ?? '6,7,1,2,3,4,5';
-        final activeDays = daysOfWeekStr.split(',').map((d) => int.tryParse(d.trim()) ?? 1).toSet();
+        final activeDays = daysOfWeekStr
+            .split(',')
+            .map((d) => int.tryParse(d.trim()) ?? 1)
+            .toSet();
         if (activeDays.contains(todayWeekday)) {
           final timeStr = sched['timeOfDay'] as String?;
           if (timeStr != null) {
@@ -201,27 +223,46 @@ class RitmoIntelligencePipeline {
         final a = intervals[i];
         final b = intervals[j];
         if (a['start'] < b['end'] && b['start'] < a['end']) {
-          criticalAlerts.add('تداخل زمانی بین روتین‌های «${a['title']}» و «${b['title']}» شناسایی شد.');
+          criticalAlerts.add(
+            'تداخل زمانی بین روتین‌های «${a['title']}» و «${b['title']}» شناسایی شد.',
+          );
         }
       }
     }
 
     // 6. Generate Context Explanation
-    var contextExplanation = ContextExplanation(type: ContextExplanationType.rest);
+    var contextExplanation = ContextExplanation(
+      type: ContextExplanationType.rest,
+    );
     if (suggestedRoutine != null) {
       final title = suggestedRoutine.title;
       final context = dailyBehavior.context;
 
       if (suggestedRoutine.isEssential) {
-        contextExplanation = ContextExplanation(type: ContextExplanationType.essential, params: {'title': title});
+        contextExplanation = ContextExplanation(
+          type: ContextExplanationType.essential,
+          params: {'title': title},
+        );
       } else if (snapshot.gentleMode) {
-        contextExplanation = ContextExplanation(type: ContextExplanationType.reflectionAware, params: {'title': title});
+        contextExplanation = ContextExplanation(
+          type: ContextExplanationType.reflectionAware,
+          params: {'title': title},
+        );
       } else if (context == LifeContext.sick) {
-        contextExplanation = ContextExplanation(type: ContextExplanationType.sick, params: {'title': title});
+        contextExplanation = ContextExplanation(
+          type: ContextExplanationType.sick,
+          params: {'title': title},
+        );
       } else if (context == LifeContext.exam) {
-        contextExplanation = ContextExplanation(type: ContextExplanationType.exam, params: {'title': title});
+        contextExplanation = ContextExplanation(
+          type: ContextExplanationType.exam,
+          params: {'title': title},
+        );
       } else if (context == LifeContext.busy) {
-        contextExplanation = ContextExplanation(type: ContextExplanationType.busy, params: {'title': title});
+        contextExplanation = ContextExplanation(
+          type: ContextExplanationType.busy,
+          params: {'title': title},
+        );
       } else if (context == LifeContext.worship) {
         contextExplanation = ContextExplanation(
           type: ContextExplanationType.worship,
@@ -230,12 +271,22 @@ class RitmoIntelligencePipeline {
             'season': dailyBehavior.activeWorshipSeasonTitle ?? '',
           },
         );
-      } else if (snapshot.activeZoneId != null && suggestedRoutine.zoneId == snapshot.activeZoneId) {
-        contextExplanation = ContextExplanation(type: ContextExplanationType.zone, params: {'title': title});
+      } else if (snapshot.activeZoneId != null &&
+          suggestedRoutine.zoneId == snapshot.activeZoneId) {
+        contextExplanation = ContextExplanation(
+          type: ContextExplanationType.zone,
+          params: {'title': title},
+        );
       } else if (snapshot.currentEnergy == EnergyLevel.low) {
-        contextExplanation = ContextExplanation(type: ContextExplanationType.lowEnergy, params: {'title': title});
+        contextExplanation = ContextExplanation(
+          type: ContextExplanationType.lowEnergy,
+          params: {'title': title},
+        );
       } else {
-        contextExplanation = ContextExplanation(type: ContextExplanationType.dynamic, params: {'title': title});
+        contextExplanation = ContextExplanation(
+          type: ContextExplanationType.dynamic,
+          params: {'title': title},
+        );
       }
     }
 

@@ -43,7 +43,10 @@ class BazaarGateway implements PaymentGateway {
   Future<PurchaseResult> purchase(String sku) async {
     await init();
     if (!_connected) {
-      return PurchaseResult(success: false, errorMessage: 'خطا در اتصال به کافه‌بازار');
+      return PurchaseResult(
+        success: false,
+        errorMessage: 'خطا در اتصال به کافه‌بازار',
+      );
     }
     try {
       final info = await FlutterPoolakey.purchase(sku);
@@ -59,11 +62,15 @@ class BazaarGateway implements PaymentGateway {
     if (!_connected) return [];
     try {
       final purchases = await FlutterPoolakey.getAllPurchasedProducts();
-      return purchases.map((p) => PurchaseInfo(
-        sku: p.productId,
-        purchaseToken: p.purchaseToken,
-        purchaseTime: p.purchaseTime,
-      )).toList();
+      return purchases
+          .map(
+            (p) => PurchaseInfo(
+              sku: p.productId,
+              purchaseToken: p.purchaseToken,
+              purchaseTime: p.purchaseTime,
+            ),
+          )
+          .toList();
     } catch (_) {
       return [];
     }

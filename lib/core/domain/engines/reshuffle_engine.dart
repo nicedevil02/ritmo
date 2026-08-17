@@ -2,7 +2,6 @@ import 'package:ritmo/core/domain/engines/context_engine.dart';
 import 'package:ritmo/core/domain/models.dart';
 
 class ReshuffleEvent {
-
   ReshuffleEvent({
     required this.id,
     required this.title,
@@ -27,7 +26,6 @@ enum ReshuffleActionType {
 }
 
 class ReshuffleAction {
-
   ReshuffleAction({
     required this.routineId,
     required this.routineTitle,
@@ -57,7 +55,6 @@ class ReshuffleAction {
 }
 
 class ReshuffleResult {
-
   ReshuffleResult({
     required this.success,
     required this.actions,
@@ -77,7 +74,6 @@ class ReshuffleEngine {
     var score = 0.0;
 
     // 1. Category base score
-
 
     // 2. Flexibility in duration (light or minimal versions)
     if (routine.lightDurationMinutes != null) {
@@ -112,11 +108,14 @@ class ReshuffleEngine {
     // Find today's tasks that overlap with the new event
     final conflictingTasks = todayTasks.where((task) {
       final taskStart = task.scheduledTime;
-      final taskDuration = Duration(minutes: task.routine.targetDurationMinutes ?? 30);
+      final taskDuration = Duration(
+        minutes: task.routine.targetDurationMinutes ?? 30,
+      );
       final taskEnd = taskStart.add(taskDuration);
 
       // Check for overlap
-      return taskStart.isBefore(event.endTime) && taskEnd.isAfter(event.startTime);
+      return taskStart.isBefore(event.endTime) &&
+          taskEnd.isAfter(event.startTime);
     }).toList();
 
     if (conflictingTasks.isEmpty) {
@@ -125,21 +124,28 @@ class ReshuffleEngine {
 
     // Check if any conflicting task is absolute locked/essential
     final lockedConflicts = conflictingTasks.where((task) {
-      return task.routine.isEssential || preferredRoutineIds.contains(task.routine.id);
+      return task.routine.isEssential ||
+          preferredRoutineIds.contains(task.routine.id);
     }).toList();
 
     if (lockedConflicts.isNotEmpty) {
-      final lockedTitles = lockedConflicts.map((t) => t.routine.title).join('، ');
+      final lockedTitles = lockedConflicts
+          .map((t) => t.routine.title)
+          .join('، ');
       return ReshuffleResult(
         success: false,
         actions: [],
-        message: 'امکان جابه‌جایی وجود ندارد زیرا با روتین‌های حیاتی تداخل دارد: $lockedTitles',
+        message:
+            'امکان جابه‌جایی وجود ندارد زیرا با روتین‌های حیاتی تداخل دارد: $lockedTitles',
       );
     }
 
     // Sort conflicting tasks by moveability score descending (easiest to move first)
-    conflictingTasks.sort((a, b) =>
-        calculateMoveabilityScore(b.routine).compareTo(calculateMoveabilityScore(a.routine)));
+    conflictingTasks.sort(
+      (a, b) => calculateMoveabilityScore(
+        b.routine,
+      ).compareTo(calculateMoveabilityScore(a.routine)),
+    );
 
     var minutesNeeded = event.durationMinutes;
 
@@ -153,60 +159,73 @@ class ReshuffleEngine {
           task.routine.minimalDurationMinutes! < originalDuration) {
         final minDur = task.routine.minimalDurationMinutes!;
         final saved = originalDuration - minDur;
-        proposedActions.add(ReshuffleAction(
-          routineId: task.routine.id,
-          routineTitle: task.routine.title,
-          actionType: ReshuffleActionType.compress,
-          originalDuration: originalDuration,
-          newDuration: minDur,
-        ));
+        proposedActions.add(
+          ReshuffleAction(
+            routineId: task.routine.id,
+            routineTitle: task.routine.title,
+            actionType: ReshuffleActionType.compress,
+            originalDuration: originalDuration,
+            newDuration: minDur,
+          ),
+        );
         minutesNeeded -= saved;
         continue;
       } else if (task.routine.lightDurationMinutes != null &&
           task.routine.lightDurationMinutes! < originalDuration) {
         final lightDur = task.routine.lightDurationMinutes!;
         final saved = originalDuration - lightDur;
-        proposedActions.add(ReshuffleAction(
-          routineId: task.routine.id,
-          routineTitle: task.routine.title,
-          actionType: ReshuffleActionType.compress,
-          originalDuration: originalDuration,
-          newDuration: lightDur,
-        ));
+        proposedActions.add(
+          ReshuffleAction(
+            routineId: task.routine.id,
+            routineTitle: task.routine.title,
+            actionType: ReshuffleActionType.compress,
+            originalDuration: originalDuration,
+            newDuration: lightDur,
+          ),
+        );
         minutesNeeded -= saved;
         continue;
       }
 
       // Strategy B/C: Shift to free slots of the day (mocked/stubbed as shifting time)
       // For simplicity, we pretend we shift it by the event duration.
-      final newScheduledTime = task.scheduledTime.add(Duration(minutes: event.durationMinutes));
+      final newScheduledTime = task.scheduledTime.add(
+        Duration(minutes: event.durationMinutes),
+      );
       if (newScheduledTime.day == task.scheduledTime.day) {
-        proposedActions.add(ReshuffleAction(
-          routineId: task.routine.id,
-          routineTitle: task.routine.title,
-          actionType: ReshuffleActionType.shiftWithinZone,
-          originalTime: task.scheduledTime,
-          newTime: newScheduledTime,
-        ));
+        proposedActions.add(
+          ReshuffleAction(
+            routineId: task.routine.id,
+            routineTitle: task.routine.title,
+            actionType: ReshuffleActionType.shiftWithinZone,
+            originalTime: task.scheduledTime,
+            newTime: newScheduledTime,
+          ),
+        );
         minutesNeeded -= originalDuration;
         continue;
       }
 
       // Strategy D: Move to Tomorrow (Checking Capacity)
       final tomorrowRoutinesDuration = tomorrowTasks.fold<int>(
-          0, (sum, t) => sum + (t.routine.targetDurationMinutes ?? 30));
+        0,
+        (sum, t) => sum + (t.routine.targetDurationMinutes ?? 30),
+      );
 
-      final freeMinutesTomorrow = maxCapacityMinutesTomorrow - tomorrowRoutinesDuration;
+      final freeMinutesTomorrow =
+          maxCapacityMinutesTomorrow - tomorrowRoutinesDuration;
 
       if (freeMinutesTomorrow >= originalDuration) {
         // We have capacity tomorrow
-        proposedActions.add(ReshuffleAction(
-          routineId: task.routine.id,
-          routineTitle: task.routine.title,
-          actionType: ReshuffleActionType.moveToTomorrow,
-          originalTime: task.scheduledTime,
-          newTime: task.scheduledTime.add(const Duration(days: 1)),
-        ));
+        proposedActions.add(
+          ReshuffleAction(
+            routineId: task.routine.id,
+            routineTitle: task.routine.title,
+            actionType: ReshuffleActionType.moveToTomorrow,
+            originalTime: task.scheduledTime,
+            newTime: task.scheduledTime.add(const Duration(days: 1)),
+          ),
+        );
         minutesNeeded -= originalDuration;
       } else {
         // Recursive capacity resolution on tomorrow's tasks (depth = 1)
@@ -218,24 +237,32 @@ class ReshuffleEngine {
         }).toList();
 
         // Sort tomorrow's compressible tasks by moveability score descending
-        compressibleTomorrowTasks.sort((a, b) =>
-            calculateMoveabilityScore(b.routine).compareTo(calculateMoveabilityScore(a.routine)));
+        compressibleTomorrowTasks.sort(
+          (a, b) => calculateMoveabilityScore(
+            b.routine,
+          ).compareTo(calculateMoveabilityScore(a.routine)),
+        );
 
         var freedTomorrow = 0;
         final tomorrowCompressions = <ReshuffleAction>[];
 
         for (final tomTask in compressibleTomorrowTasks) {
           final tomOriginal = tomTask.routine.targetDurationMinutes ?? 30;
-          final tomMin = tomTask.routine.minimalDurationMinutes ?? tomTask.routine.lightDurationMinutes ?? tomOriginal;
+          final tomMin =
+              tomTask.routine.minimalDurationMinutes ??
+              tomTask.routine.lightDurationMinutes ??
+              tomOriginal;
           if (tomMin < tomOriginal) {
             freedTomorrow += tomOriginal - tomMin;
-            tomorrowCompressions.add(ReshuffleAction(
-              routineId: tomTask.routine.id,
-              routineTitle: '${tomTask.routine.title} (فردا)',
-              actionType: ReshuffleActionType.compress,
-              originalDuration: tomOriginal,
-              newDuration: tomMin,
-            ));
+            tomorrowCompressions.add(
+              ReshuffleAction(
+                routineId: tomTask.routine.id,
+                routineTitle: '${tomTask.routine.title} (فردا)',
+                actionType: ReshuffleActionType.compress,
+                originalDuration: tomOriginal,
+                newDuration: tomMin,
+              ),
+            );
           }
           if (freeMinutesTomorrow + freedTomorrow >= originalDuration) {
             break;
@@ -245,13 +272,15 @@ class ReshuffleEngine {
         if (freeMinutesTomorrow + freedTomorrow >= originalDuration) {
           // Yes! Compress tomorrow's tasks and move this to tomorrow
           proposedActions.addAll(tomorrowCompressions);
-          proposedActions.add(ReshuffleAction(
-            routineId: task.routine.id,
-            routineTitle: task.routine.title,
-            actionType: ReshuffleActionType.moveToTomorrow,
-            originalTime: task.scheduledTime,
-            newTime: task.scheduledTime.add(const Duration(days: 1)),
-          ));
+          proposedActions.add(
+            ReshuffleAction(
+              routineId: task.routine.id,
+              routineTitle: task.routine.title,
+              actionType: ReshuffleActionType.moveToTomorrow,
+              originalTime: task.scheduledTime,
+              newTime: task.scheduledTime.add(const Duration(days: 1)),
+            ),
+          );
           minutesNeeded -= originalDuration;
         } else {
           // Capacity completely exhausted tomorrow
@@ -259,7 +288,8 @@ class ReshuffleEngine {
             success: false,
             actions: [],
             capacityExhaustedTomorrow: true,
-            message: 'فردا هم ظرفیت ندارد. برای اضافه کردن "${event.title}" باید روتین "${task.routine.title}" یا برخی روتین‌های فردا را حذف کنید.',
+            message:
+                'فردا هم ظرفیت ندارد. برای اضافه کردن "${event.title}" باید روتین "${task.routine.title}" یا برخی روتین‌های فردا را حذف کنید.',
           );
         }
       }

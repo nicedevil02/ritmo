@@ -2,7 +2,9 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/services/payment_gateway.dart';
 
 class MyketGateway implements PaymentGateway {
-  static const MethodChannel _channel = MethodChannel('com.ritmo.app/myket_billing');
+  static const MethodChannel _channel = MethodChannel(
+    'com.ritmo.app/myket_billing',
+  );
 
   // کلید RSA از طریق --dart-define=MYKET_RSA_KEY=... در build تزریق می‌شود
   static const String _myketRsaKey = String.fromEnvironment('MYKET_RSA_KEY');
@@ -13,7 +15,9 @@ class MyketGateway implements PaymentGateway {
   Future<void> init() async {
     if (_initialized) return;
     try {
-      final success = await _channel.invokeMethod('init', {'rsaKey': _myketRsaKey}) ?? false;
+      final success =
+          await _channel.invokeMethod('init', {'rsaKey': _myketRsaKey}) ??
+          false;
       _initialized = success;
     } catch (_) {
       _initialized = false;
@@ -25,9 +29,13 @@ class MyketGateway implements PaymentGateway {
     await init();
     if (!_initialized) return {};
     try {
-      final details = await _channel.invokeMethod('getProductDetails', {'skus': skus});
+      final details = await _channel.invokeMethod('getProductDetails', {
+        'skus': skus,
+      });
       if (details == null) return {};
-      return details.map((key, value) => MapEntry(key.toString(), value.toString()));
+      return details.map(
+        (key, value) => MapEntry(key.toString(), value.toString()),
+      );
     } catch (_) {
       return {};
     }
@@ -37,14 +45,24 @@ class MyketGateway implements PaymentGateway {
   Future<PurchaseResult> purchase(String sku) async {
     await init();
     if (!_initialized) {
-      return PurchaseResult(success: false, errorMessage: 'خطا در اتصال به مایکت');
+      return PurchaseResult(
+        success: false,
+        errorMessage: 'خطا در اتصال به مایکت',
+      );
     }
     try {
       final result = await _channel.invokeMethod('purchase', {'sku': sku});
       if (result != null && result['success'] == true) {
-        return PurchaseResult(success: true, purchaseToken: result['purchaseToken']?.toString());
+        return PurchaseResult(
+          success: true,
+          purchaseToken: result['purchaseToken']?.toString(),
+        );
       }
-      return PurchaseResult(success: false, errorMessage: result?['errorMessage']?.toString() ?? 'خرید با خطا مواجه شد.');
+      return PurchaseResult(
+        success: false,
+        errorMessage:
+            result?['errorMessage']?.toString() ?? 'خرید با خطا مواجه شد.',
+      );
     } catch (e) {
       return PurchaseResult(success: false, errorMessage: 'خطای سیستمی: $e');
     }

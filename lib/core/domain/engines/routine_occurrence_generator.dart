@@ -119,10 +119,9 @@ class RoutineOccurrenceGenerator {
       final dateStr = targetDate.toIso8601String().substring(0, 10);
 
       if (shouldOccurOnDate(targetDate, rule)) {
-        var timeStr =
-            rule.reminderTimes.isNotEmpty
-                ? rule.reminderTimes.first
-                : '08:00';
+        var timeStr = rule.reminderTimes.isNotEmpty
+            ? rule.reminderTimes.first
+            : '08:00';
         if (rule.intervalHours != null &&
             rule.intervalHours! > 0 &&
             rule.startDate != null) {
@@ -144,16 +143,12 @@ class RoutineOccurrenceGenerator {
           timeStr = occurrence.toIso8601String().substring(11, 16);
         }
 
-        await db.insert(
-          'routine_occurrences',
-          {
-            'routine_id': routineId,
-            'date': dateStr,
-            'scheduled_time': timeStr,
-            'status': 'pending',
-          },
-          conflictAlgorithm: ConflictAlgorithm.ignore,
-        );
+        await db.insert('routine_occurrences', {
+          'routine_id': routineId,
+          'date': dateStr,
+          'scheduled_time': timeStr,
+          'status': 'pending',
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
       }
     }
   }
@@ -224,21 +219,23 @@ class RoutineOccurrenceGenerator {
       if (sched['recurrenceRule'] != null &&
           (sched['recurrenceRule']! as String).isNotEmpty) {
         final decoded =
-            jsonDecode(sched['recurrenceRule']! as String) as Map<String, dynamic>;
+            jsonDecode(sched['recurrenceRule']! as String)
+                as Map<String, dynamic>;
         rule = RecurrenceRule.fromMap(decoded);
       } else {
         // Build fallback RecurrenceRule from daysOfWeek / timeOfDay
         // Use routineFloor as startDate to prevent generating past overdue items
         final daysStr = sched['daysOfWeek'] as String? ?? '6,7,1,2,3,4,5';
-        final days =
-            daysStr.split(',').map((d) => int.tryParse(d.trim()) ?? 1).toList();
+        final days = daysStr
+            .split(',')
+            .map((d) => int.tryParse(d.trim()) ?? 1)
+            .toList();
         rule = RecurrenceRule(
           weekdays: days,
           startDate: routineFloor,
-          reminderTimes:
-              sched['timeOfDay'] != null
-                  ? [sched['timeOfDay']! as String]
-                  : ['08:00'],
+          reminderTimes: sched['timeOfDay'] != null
+              ? [sched['timeOfDay']! as String]
+              : ['08:00'],
         );
       }
 
@@ -252,10 +249,9 @@ class RoutineOccurrenceGenerator {
         final dateStr = targetDate.toIso8601String().substring(0, 10);
 
         if (shouldOccurOnDate(targetDate, rule)) {
-          var timeStr =
-              rule.reminderTimes.isNotEmpty
-                  ? rule.reminderTimes.first
-                  : '08:00';
+          var timeStr = rule.reminderTimes.isNotEmpty
+              ? rule.reminderTimes.first
+              : '08:00';
           if (rule.intervalHours != null &&
               rule.intervalHours! > 0 &&
               rule.startDate != null) {
@@ -277,16 +273,12 @@ class RoutineOccurrenceGenerator {
             timeStr = occurrence.toIso8601String().substring(11, 16);
           }
 
-          batch.insert(
-            'routine_occurrences',
-            {
-              'routine_id': rId,
-              'date': dateStr,
-              'scheduled_time': timeStr,
-              'status': 'pending',
-            },
-            conflictAlgorithm: ConflictAlgorithm.ignore,
-          );
+          batch.insert('routine_occurrences', {
+            'routine_id': rId,
+            'date': dateStr,
+            'scheduled_time': timeStr,
+            'status': 'pending',
+          }, conflictAlgorithm: ConflictAlgorithm.ignore);
         }
       }
     }

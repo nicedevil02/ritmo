@@ -34,7 +34,6 @@ enum RitmoEventType {
   noteDeleted('NoteDeleted'),
   experienceCreated('ExperienceCreated');
 
-
   const RitmoEventType(this.code);
   final String code;
 }
@@ -45,15 +44,16 @@ class RitmoEvent {
     DateTime? timestamp,
     Map<String, dynamic>? data,
     Map<String, dynamic>? payload,
-  })  : timestamp = timestamp ?? DateTime.now(),
-        payload = payload ?? data ?? const {};
+  }) : timestamp = timestamp ?? DateTime.now(),
+       payload = payload ?? data ?? const {};
 
   final String type;
   final DateTime timestamp;
   final Map<String, dynamic> payload;
 
   @override
-  String toString() => 'RitmoEvent(type: $type, timestamp: $timestamp, payload: $payload)';
+  String toString() =>
+      'RitmoEvent(type: $type, timestamp: $timestamp, payload: $payload)';
 }
 
 class RitmoEventBus {

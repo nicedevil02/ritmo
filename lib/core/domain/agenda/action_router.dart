@@ -40,7 +40,11 @@ import 'package:ritmo/features/worship/presentation/widgets/prayer_sheet.dart';
 class ActionRouter {
   ActionRouter._();
 
-  static Future<void> open(BuildContext context, {required AgendaItem item, VoidCallback? onChanged}) async {
+  static Future<void> open(
+    BuildContext context, {
+    required AgendaItem item,
+    VoidCallback? onChanged,
+  }) async {
     switch (item.domain) {
       case AgendaDomain.routine:
         await _handleRoutineAction(context, item, onChanged: onChanged);
@@ -49,7 +53,11 @@ class ActionRouter {
       case AgendaDomain.prayer:
         final groupKey = _resolvePrayerGroupKey(item);
         final targetDate = DateTime.tryParse(item.dateStr) ?? DateTime.now();
-        final target = await PrayerTarget.fromGroupKey(groupKey, targetDate, titleFa: item.title);
+        final target = await PrayerTarget.fromGroupKey(
+          groupKey,
+          targetDate,
+          titleFa: item.title,
+        );
         if (context.mounted) {
           await PrayerSheet.show(context, target);
         }
@@ -64,10 +72,7 @@ class ActionRouter {
           domainLabel: 'مستحبات',
           successMessage: 'مستحب انجام شد',
           onConfirm: () => CompletionGateway.instance.submit(
-            WorshipCompletion(
-              practiceId: item.sourceId,
-              dateStr: item.dateStr,
-            ),
+            WorshipCompletion(practiceId: item.sourceId, dateStr: item.dateStr),
           ),
         );
         break;
@@ -101,10 +106,7 @@ class ActionRouter {
           domainLabel: 'بدهی عبادی',
           successMessage: 'یک واحد از بدهی کسر شد',
           onConfirm: () => CompletionGateway.instance.submit(
-            WorshipDebtProgress(
-              debtId: item.sourceId,
-              delta: 1,
-            ),
+            WorshipDebtProgress(debtId: item.sourceId, delta: 1),
           ),
         );
         break;
@@ -127,12 +129,11 @@ class ActionRouter {
         break;
 
       case AgendaDomain.goalStep:
-        if (item.sourceId == 'goal_weekly_review' || item.meta['isWeeklyReview'] == true) {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (ctx) => const GoalsScreen(),
-            ),
-          );
+        if (item.sourceId == 'goal_weekly_review' ||
+            item.meta['isWeeklyReview'] == true) {
+          await Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (ctx) => const GoalsScreen()));
           onChanged?.call();
           break;
         }
@@ -153,7 +154,10 @@ class ActionRouter {
         break;
 
       case AgendaDomain.medicine:
-        final doseTime = item.deepLink.slot ?? item.timeOfDay ?? (item.meta['doseTime'] as String?);
+        final doseTime =
+            item.deepLink.slot ??
+            item.timeOfDay ??
+            (item.meta['doseTime'] as String?);
         final logId = item.meta['medicationLogId'] as String?;
         await _showDomainConfirmationSheet(
           context,
@@ -175,7 +179,11 @@ class ActionRouter {
         bool canShow = false;
         try {
           final db = await DatabaseHelper.instance.database;
-          final rows = await db.query('app_settings', where: 'key = ?', whereArgs: ['user_gender']);
+          final rows = await db.query(
+            'app_settings',
+            where: 'key = ?',
+            whereArgs: ['user_gender'],
+          );
           if (rows.isNotEmpty) {
             final val = rows.first['value'] as String?;
             canShow = CyclePrivacyGuard.isVisible({'user_gender': val ?? ''});
@@ -227,7 +235,10 @@ class ActionRouter {
 
     if (task == null) {
       if (context.mounted) {
-        ActionFeedback.failure(context, message: 'اطلاعات این کار در دسترس نیست');
+        ActionFeedback.failure(
+          context,
+          message: 'اطلاعات این کار در دسترس نیست',
+        );
       }
       return;
     }
@@ -242,20 +253,24 @@ class ActionRouter {
         task: task!,
         onTaskUpdated: () {
           DayAgendaService.instance.invalidateDate(item.dateStr);
-          RitmoEventBus().fire(RitmoEvent(
-            type: 'TaskUpdated',
-            timestamp: DateTime.now(),
-            payload: {'date': item.dateStr, 'taskId': item.sourceId},
-          ));
+          RitmoEventBus().fire(
+            RitmoEvent(
+              type: 'TaskUpdated',
+              timestamp: DateTime.now(),
+              payload: {'date': item.dateStr, 'taskId': item.sourceId},
+            ),
+          );
           onChanged?.call();
         },
         onTaskDeleted: () {
           DayAgendaService.instance.invalidateDate(item.dateStr);
-          RitmoEventBus().fire(RitmoEvent(
-            type: 'TaskUpdated',
-            timestamp: DateTime.now(),
-            payload: {'date': item.dateStr, 'taskId': item.sourceId},
-          ));
+          RitmoEventBus().fire(
+            RitmoEvent(
+              type: 'TaskUpdated',
+              timestamp: DateTime.now(),
+              payload: {'date': item.dateStr, 'taskId': item.sourceId},
+            ),
+          );
           onChanged?.call();
         },
       ),
@@ -278,7 +293,11 @@ class ActionRouter {
     }
   }
 
-  static Future<void> _handleRoutineAction(BuildContext context, AgendaItem item, {VoidCallback? onChanged}) async {
+  static Future<void> _handleRoutineAction(
+    BuildContext context,
+    AgendaItem item, {
+    VoidCallback? onChanged,
+  }) async {
     Routine? routine;
     final routineMap = item.meta['routine'] as Map<String, dynamic>?;
 
@@ -287,20 +306,32 @@ class ActionRouter {
     } else {
       try {
         final db = await DatabaseHelper.instance.database;
-        final rows = await db.query('routines', where: 'id = ?', whereArgs: [item.sourceId], limit: 1);
+        final rows = await db.query(
+          'routines',
+          where: 'id = ?',
+          whereArgs: [item.sourceId],
+          limit: 1,
+        );
         if (rows.isNotEmpty) {
           routine = Routine.fromMap(rows.first);
         }
       } catch (e) {
-        debugPrint('[ActionRouter] Failed DB lookup for routine ${item.sourceId}: $e');
+        debugPrint(
+          '[ActionRouter] Failed DB lookup for routine ${item.sourceId}: $e',
+        );
       }
     }
 
     if (routine == null) {
       if (context.mounted) {
-        ActionFeedback.failure(context, message: 'اطلاعات این برنامه در دسترس نیست');
+        ActionFeedback.failure(
+          context,
+          message: 'اطلاعات این برنامه در دسترس نیست',
+        );
       }
-      debugPrint('[ActionRouter] routine meta and DB fallback missing for item ${item.id}');
+      debugPrint(
+        '[ActionRouter] routine meta and DB fallback missing for item ${item.id}',
+      );
       return;
     }
 
@@ -388,7 +419,10 @@ class ActionRouter {
             final minutes = _minutesForMode(targetRoutine, selectedMode);
             if (minutes <= 0) {
               if (context.mounted) {
-                ActionFeedback.failure(context, message: 'مدت زمانی برای این حالت تعریف نشده است');
+                ActionFeedback.failure(
+                  context,
+                  message: 'مدت زمانی برای این حالت تعریف نشده است',
+                );
               }
               return;
             }
@@ -411,8 +445,9 @@ class ActionRouter {
                 builder: (ctx) => ActiveTimerOverlay(
                   routine: targetRoutine,
                   completionMode: selectedMode,
-                  dateStr: item.dateStr,    // T4: item date, not DateTime.now()
-                  onCompleted: (outcome) {  // T6: only fires on confirmed completion
+                  dateStr: item.dateStr, // T4: item date, not DateTime.now()
+                  onCompleted: (outcome) {
+                    // T6: only fires on confirmed completion
                     Navigator.pop(ctx);
                     DayAgendaService.instance.invalidateDate(item.dateStr);
                     onChanged?.call();
@@ -426,11 +461,14 @@ class ActionRouter {
                     } else {
                       ActionFeedback.failure(
                         context,
-                        message: outcome.errorMessage ?? 'ثبت پس از تایمر انجام نشد. دوباره تلاش کن.',
+                        message:
+                            outcome.errorMessage ??
+                            'ثبت پس از تایمر انجام نشد. دوباره تلاش کن.',
                       );
                     }
                   },
-                  onCancelled: () {         // T6: neutral — no success message
+                  onCancelled: () {
+                    // T6: neutral — no success message
                     Navigator.pop(ctx);
                     DayAgendaService.instance.invalidateDate(item.dateStr);
                     onChanged?.call();
@@ -470,7 +508,10 @@ class ActionRouter {
                 undoToken: outcome.undoToken,
               );
             } else {
-              ActionFeedback.failure(context, message: outcome.errorMessage ?? 'ثبت انجام نشد');
+              ActionFeedback.failure(
+                context,
+                message: outcome.errorMessage ?? 'ثبت انجام نشد',
+              );
             }
           },
         );
@@ -481,10 +522,15 @@ class ActionRouter {
           tag: 'snooze',
           failureMessage: 'تعویق انجام نشد. دوباره تلاش کن.',
           run: () async {
-            final currentDeferCount = await _getCurrentDeferCount(targetRoutine.id, item.dateStr);
+            final currentDeferCount = await _getCurrentDeferCount(
+              targetRoutine.id,
+              item.dateStr,
+            );
             final requestedMinutes = await _snoozeMinutesFromSettings();
             final configuredMax = await _configuredMaxDefer();
-            final recurrenceRuleType = await _getRecurrenceRuleType(targetRoutine.id);
+            final recurrenceRuleType = await _getRecurrenceRuleType(
+              targetRoutine.id,
+            );
 
             final decision = SnoozePolicy.evaluate(
               itemId: targetRoutine.id,
@@ -512,17 +558,28 @@ class ActionRouter {
                     onChanged?.call();
                   },
                 );
-                if (decision.verdict == SnoozeVerdict.lastCall && context.mounted) {
-                  ActionFeedback.info(context, message: 'این آخرین تعویق ممکن برای امروز است');
+                if (decision.verdict == SnoozeVerdict.lastCall &&
+                    context.mounted) {
+                  ActionFeedback.info(
+                    context,
+                    message: 'این آخرین تعویق ممکن برای امروز است',
+                  );
                 }
                 break;
 
               case SnoozeVerdict.exhausted:
-                await _showExitOptionsSheet(context, routine: targetRoutine, dateStr: item.dateStr);
+                await _showExitOptionsSheet(
+                  context,
+                  routine: targetRoutine,
+                  dateStr: item.dateStr,
+                );
                 break;
 
               case SnoozeVerdict.blockedMidnight:
-                ActionFeedback.failure(context, message: 'زمان امروز به پایان رسیده است');
+                ActionFeedback.failure(
+                  context,
+                  message: 'زمان امروز به پایان رسیده است',
+                );
                 break;
             }
           },
@@ -566,7 +623,10 @@ class ActionRouter {
     );
   }
 
-  static Future<void> _handleKonkurAction(BuildContext context, AgendaItem item) async {
+  static Future<void> _handleKonkurAction(
+    BuildContext context,
+    AgendaItem item,
+  ) async {
     try {
       final subjects = await KonkurRepository.instance.getSubjects();
       final allTopics = await KonkurRepository.instance.getTopics();
@@ -577,7 +637,10 @@ class ActionRouter {
       if (!context.mounted) return;
 
       if (subjects.isEmpty) {
-        ActionFeedback.failure(context, message: 'ماژول کنکور غیرفعال است یا سرفصل‌ها بارگذاری نشده‌اند');
+        ActionFeedback.failure(
+          context,
+          message: 'ماژول کنکور غیرفعال است یا سرفصل‌ها بارگذاری نشده‌اند',
+        );
         return;
       }
 
@@ -644,16 +707,32 @@ class ActionRouter {
         final val = int.tryParse(rows.first['value']?.toString() ?? '');
         if (val != null && val > 0) return val;
       }
-    } catch (e, st) { debugPrint('Error in action_router.dart: $e\n$st'); }
+    } catch (e, st) {
+      debugPrint('Error in action_router.dart: $e\n$st');
+    }
     return 10;
   }
 
-  static Future<int> _getCurrentDeferCount(String routineId, String dateStr) async {
+  static Future<int> _getCurrentDeferCount(
+    String routineId,
+    String dateStr,
+  ) async {
     try {
       final db = await DatabaseHelper.instance.database;
       final selectedDateMidnight = DateTime.tryParse(dateStr) ?? DateTime.now();
-      final startOfDay = DateTime(selectedDateMidnight.year, selectedDateMidnight.month, selectedDateMidnight.day).millisecondsSinceEpoch;
-      final endOfDay = DateTime(selectedDateMidnight.year, selectedDateMidnight.month, selectedDateMidnight.day, 23, 59, 59).millisecondsSinceEpoch;
+      final startOfDay = DateTime(
+        selectedDateMidnight.year,
+        selectedDateMidnight.month,
+        selectedDateMidnight.day,
+      ).millisecondsSinceEpoch;
+      final endOfDay = DateTime(
+        selectedDateMidnight.year,
+        selectedDateMidnight.month,
+        selectedDateMidnight.day,
+        23,
+        59,
+        59,
+      ).millisecondsSinceEpoch;
 
       final reminders = await db.query(
         'pending_reminders',
@@ -663,7 +742,9 @@ class ActionRouter {
       if (reminders.isNotEmpty) {
         return (reminders.first['deferCount'] as int?) ?? 0;
       }
-    } catch (e, st) { debugPrint('Error in action_router.dart: $e\n$st'); }
+    } catch (e, st) {
+      debugPrint('Error in action_router.dart: $e\n$st');
+    }
     return 0;
   }
 
@@ -728,12 +809,17 @@ class ActionRouter {
                         backgroundColor: colors.success,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       icon: const Icon(Icons.flash_on_rounded, size: 20),
                       label: const Text(
                         'همین حالا نسخهٔ حداقلی را انجام بده',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       onPressed: () async {
                         Navigator.pop(sheetCtx);
@@ -742,7 +828,10 @@ class ActionRouter {
                             routineId: routine.id,
                             dateStr: dateStr,
                             result: CompletionResult.minimal,
-                            durationMinutes: _minutesForMode(routine, 'MINIMAL'),
+                            durationMinutes: _minutesForMode(
+                              routine,
+                              'MINIMAL',
+                            ),
                           ),
                         );
                         if (!context.mounted) return;
@@ -754,7 +843,10 @@ class ActionRouter {
                             undoToken: outcome.undoToken,
                           );
                         } else {
-                          ActionFeedback.failure(context, message: outcome.errorMessage ?? 'ثبت انجام نشد');
+                          ActionFeedback.failure(
+                            context,
+                            message: outcome.errorMessage ?? 'ثبت انجام نشد',
+                          );
                         }
                       },
                     ),
@@ -764,16 +856,23 @@ class ActionRouter {
                         foregroundColor: colors.primary,
                         side: BorderSide(color: colors.primary),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       icon: const Icon(Icons.arrow_forward_rounded, size: 20),
                       label: const Text(
                         'به فردا منتقل کن',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       onPressed: () async {
                         Navigator.pop(sheetCtx);
-                        final tomorrowStr = RitmoDate.parse(dateStr)!.addDays(1).value;
+                        final tomorrowStr = RitmoDate.parse(
+                          dateStr,
+                        )!.addDays(1).value;
                         final outcome = await CompletionGateway.instance.submit(
                           RoutineReschedule(
                             routineId: routine.id,
@@ -789,7 +888,10 @@ class ActionRouter {
                             dateStr: dateStr,
                           );
                         } else {
-                          ActionFeedback.failure(context, message: outcome.errorMessage ?? 'انتقال انجام نشد');
+                          ActionFeedback.failure(
+                            context,
+                            message: outcome.errorMessage ?? 'انتقال انجام نشد',
+                          );
                         }
                       },
                     ),
@@ -821,7 +923,10 @@ class ActionRouter {
                             dateStr: dateStr,
                           );
                         } else {
-                          ActionFeedback.failure(context, message: outcome.errorMessage ?? 'ثبت انجام نشد');
+                          ActionFeedback.failure(
+                            context,
+                            message: outcome.errorMessage ?? 'ثبت انجام نشد',
+                          );
                         }
                       },
                     ),
@@ -898,11 +1003,17 @@ class ActionRouter {
                         backgroundColor: colors.success,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: const Text(
                         'ثبت انجام',
-                        style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 15),
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
                       onPressed: () async {
                         Navigator.pop(sheetCtx);
@@ -957,7 +1068,9 @@ class ActionRouter {
         final parsed = int.tryParse(rows.first['value'].toString());
         if (parsed != null && parsed > 0) return parsed;
       }
-    } catch (e, st) { debugPrint('Error in action_router.dart: $e\n$st'); }
+    } catch (e, st) {
+      debugPrint('Error in action_router.dart: $e\n$st');
+    }
     return 3;
   }
 
@@ -976,7 +1089,9 @@ class ActionRouter {
         if (rule != null && rule.isNotEmpty) return rule;
         return rows.first['scheduleType']?.toString();
       }
-    } catch (e, st) { debugPrint('Error in action_router.dart: $e\n$st'); }
+    } catch (e, st) {
+      debugPrint('Error in action_router.dart: $e\n$st');
+    }
     return null;
   }
 

@@ -10,16 +10,22 @@ abstract class PaymentGateway {
 }
 
 class PurchaseResult {
-
-  PurchaseResult({required this.success, this.purchaseToken, this.errorMessage});
+  PurchaseResult({
+    required this.success,
+    this.purchaseToken,
+    this.errorMessage,
+  });
   final bool success;
   final String? purchaseToken;
   final String? errorMessage;
 }
 
 class PurchaseInfo {
-
-  PurchaseInfo({required this.sku, required this.purchaseToken, required this.purchaseTime});
+  PurchaseInfo({
+    required this.sku,
+    required this.purchaseToken,
+    required this.purchaseTime,
+  });
   final String sku;
   final String purchaseToken;
   final int purchaseTime;

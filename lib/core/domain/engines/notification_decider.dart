@@ -16,7 +16,9 @@ class NotificationDecider {
     // 2. Menstruation Suspension (تعلیق حیض):
     // Consent is strictly opt-in: an absent key must mean "no effect".
     final worshipConsent = appSettings['cycle_consent_worship'] == 'true';
-    if (isMenstruating && routine.category == Category.religious && worshipConsent) {
+    if (isMenstruating &&
+        routine.category == Category.religious &&
+        worshipConsent) {
       return DecisionOutcome.ignore;
     }
 
@@ -35,16 +37,31 @@ class NotificationDecider {
     return DecisionOutcome.sendStandard;
   }
 
-  static bool _isModuleEnabled(Category category, Map<String, String> settings) {
+  static bool _isModuleEnabled(
+    Category category,
+    Map<String, String> settings,
+  ) {
     switch (category) {
       case Category.religious:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_religion_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_religion_enabled',
+        );
       case Category.medical:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_medicine_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_medicine_enabled',
+        );
       case Category.learning:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_courses_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_courses_enabled',
+        );
       case Category.konkur:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_study_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_study_enabled',
+        );
       case Category.custom:
         return true;
       case Category.work:

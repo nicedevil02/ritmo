@@ -4,13 +4,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SnapshotHelper {
   /// Updates the notification settings in SharedPreferences for Kotlin consumption.
-  static Future<void> updateNotificationSettingsSnapshot(Map<String, String> settings) async {
+  static Future<void> updateNotificationSettingsSnapshot(
+    Map<String, String> settings,
+  ) async {
     if (kIsWeb) return;
     final prefs = await SharedPreferences.getInstance();
-    
+
     final digestMode = settings['digest_mode'] ?? 'false';
-    final coalescingMinutes = int.tryParse(settings['coalescing_window_minutes'] ?? '10') ?? 10;
-    final maxNonEssential = int.tryParse(settings['max_non_essential_per_hour'] ?? '3') ?? 3;
+    final coalescingMinutes =
+        int.tryParse(settings['coalescing_window_minutes'] ?? '10') ?? 10;
+    final maxNonEssential =
+        int.tryParse(settings['max_non_essential_per_hour'] ?? '3') ?? 3;
 
     await prefs.setString('notif_digest_mode', digestMode);
     await prefs.setInt('notif_coalescing_window_minutes', coalescingMinutes);

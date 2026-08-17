@@ -28,7 +28,8 @@ class CycleReminderScheduler {
         final rows = await db.query('app_settings');
         settings = {
           for (final r in rows)
-            if (r['key'] != null) r['key'].toString(): r['value']?.toString() ?? '',
+            if (r['key'] != null)
+              r['key'].toString(): r['value']?.toString() ?? '',
         };
       }
 
@@ -49,11 +50,7 @@ class CycleReminderScheduler {
       final engineOutput = await RitmoEngineBus.instance
           .execute<CycleEngineInput, CycleEngineOutput>(
             CycleEngine,
-            CycleEngineInput(
-              db: db,
-              appSettings: settings,
-              now: effectiveNow,
-            ),
+            CycleEngineInput(db: db, appSettings: settings, now: effectiveNow),
           );
 
       if (engineOutput.hasData && engineOutput.nextPeriodWindowStart != null) {

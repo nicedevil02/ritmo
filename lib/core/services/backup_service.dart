@@ -11,7 +11,10 @@ import 'package:sqflite/sqflite.dart';
 
 class BackupService {
   /// Exports the local database to an encrypted JSON backup string.
-  static Future<String> exportBackup(String passcode, {String? customDbPath}) async {
+  static Future<String> exportBackup(
+    String passcode, {
+    String? customDbPath,
+  }) async {
     if (kIsWeb) {
       throw Exception('پشتیبان‌گیری در نسخه وب پشتیبانی نمی‌شود.');
     }
@@ -66,19 +69,27 @@ class BackupService {
   }
 
   /// Restores the database from an encrypted JSON backup string.
-  static Future<void> restoreBackup(String backupJson, String passcode, {String? customDbPath}) async {
+  static Future<void> restoreBackup(
+    String backupJson,
+    String passcode, {
+    String? customDbPath,
+  }) async {
     if (kIsWeb) {
       throw Exception('پشتیبان‌گیری در نسخه وب پشتیبانی نمی‌شود.');
     }
     // 1. Parse JSON structure
     final Map<String, dynamic> backupMap = json.decode(backupJson);
-    if (!backupMap.containsKey('salt') || !backupMap.containsKey('iv') || !backupMap.containsKey('ciphertext')) {
+    if (!backupMap.containsKey('salt') ||
+        !backupMap.containsKey('iv') ||
+        !backupMap.containsKey('ciphertext')) {
       throw Exception('فرمت فایل پشتیبان معتبر نیست.');
     }
 
     final backupVersion = (backupMap['version'] as num?)?.toInt() ?? 1;
     if (backupVersion > 2) {
-      throw Exception('نسخه فایل پشتیبان جدیدتر از این نسخه اپلیکیشن است. لطفاً ریتمو را بروزرسانی کنید.');
+      throw Exception(
+        'نسخه فایل پشتیبان جدیدتر از این نسخه اپلیکیشن است. لطفاً ریتمو را بروزرسانی کنید.',
+      );
     }
 
     final saltBytes = base64.decode(backupMap['salt'] as String);
@@ -96,7 +107,9 @@ class BackupService {
     Uint8List decryptedBytes;
     try {
       final encrypted = enc.Encrypted.fromBase64(ciphertextBase64);
-      decryptedBytes = Uint8List.fromList(encrypter.decryptBytes(encrypted, iv: iv));
+      decryptedBytes = Uint8List.fromList(
+        encrypter.decryptBytes(encrypted, iv: iv),
+      );
     } catch (e) {
       throw Exception('رمز عبور نادرست است یا فایل پشتیبان مخدوش شده است.');
     }
@@ -132,7 +145,11 @@ class BackupService {
   static Uint8List _deriveKey(String password, Uint8List salt) {
     final hmac = HMac(SHA256Digest(), 64);
     final derivator = PBKDF2KeyDerivator(hmac);
-    final params = Pbkdf2Parameters(salt, 100000, 32); // 100,000 iterations for secure key derivation
+    final params = Pbkdf2Parameters(
+      salt,
+      100000,
+      32,
+    ); // 100,000 iterations for secure key derivation
     derivator.init(params);
     return derivator.process(Uint8List.fromList(utf8.encode(password)));
   }

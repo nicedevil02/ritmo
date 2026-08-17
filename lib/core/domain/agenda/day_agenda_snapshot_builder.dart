@@ -53,7 +53,9 @@ class DayAgendaSnapshotBuilder {
     try {
       conflicts = conflictDetector.detectConflicts(items);
     } catch (e, st) {
-      debugPrint('[DayAgendaSnapshotBuilder] conflicts failed for $ds: $e\n$st');
+      debugPrint(
+        '[DayAgendaSnapshotBuilder] conflicts failed for $ds: $e\n$st',
+      );
     }
 
     var freeGaps = const <TimeGap>[];
@@ -85,7 +87,9 @@ class DayAgendaSnapshotBuilder {
         sleepWindow: sleepWindow,
       );
     } catch (e, st) {
-      debugPrint('[DayAgendaSnapshotBuilder] suggestions failed for $ds: $e\n$st');
+      debugPrint(
+        '[DayAgendaSnapshotBuilder] suggestions failed for $ds: $e\n$st',
+      );
     }
 
     AgendaItem? previous;
@@ -136,7 +140,8 @@ class DayAgendaSnapshotBuilder {
       // اگر به دلیل اتمام زودهنگام کار، current خالی شد اما کارهای آینده وجود دارند
       if (next == null) {
         for (final item in timedItems) {
-          if (!item.isCompleted && _parseMinutes(item.timeOfDay) > currentMinutes) {
+          if (!item.isCompleted &&
+              _parseMinutes(item.timeOfDay) > currentMinutes) {
             if (next == null) {
               next = item;
             } else if (afterNext == null && item.id != next.id) {

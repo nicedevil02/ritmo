@@ -16,7 +16,10 @@ class SecureKeyStore {
     return null;
   }
 
-  static Future<String?> getKey(String keyName, [DatabaseExecutor? dbExecutor]) async {
+  static Future<String?> getKey(
+    String keyName, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     try {
       final value = await _storage.read(key: keyName);
       if (value != null && value.isNotEmpty) {
@@ -30,12 +33,20 @@ class SecureKeyStore {
     try {
       final db = _resolveDb(dbExecutor);
       if (db != null) {
-        final rows = await db.query('app_settings', where: 'key = ?', whereArgs: [keyName]);
+        final rows = await db.query(
+          'app_settings',
+          where: 'key = ?',
+          whereArgs: [keyName],
+        );
         if (rows.isNotEmpty) {
           final legacyVal = rows.first['value'] as String?;
           if (legacyVal != null && legacyVal.isNotEmpty) {
             await setKey(keyName, legacyVal, db);
-            await db.delete('app_settings', where: 'key = ?', whereArgs: [keyName]);
+            await db.delete(
+              'app_settings',
+              where: 'key = ?',
+              whereArgs: [keyName],
+            );
             return legacyVal;
           }
         }
@@ -45,14 +56,22 @@ class SecureKeyStore {
     return null;
   }
 
-  static Future<void> setKey(String keyName, String value, [DatabaseExecutor? dbExecutor]) async {
+  static Future<void> setKey(
+    String keyName,
+    String value, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     try {
       await _storage.write(key: keyName, value: value);
       // Remove any legacy plaintext entry in SQLite
       try {
         final db = _resolveDb(dbExecutor);
         if (db != null) {
-          await db.delete('app_settings', where: 'key = ?', whereArgs: [keyName]);
+          await db.delete(
+            'app_settings',
+            where: 'key = ?',
+            whereArgs: [keyName],
+          );
         }
       } catch (_) {}
     } catch (e) {
@@ -60,17 +79,26 @@ class SecureKeyStore {
     }
   }
 
-  static Future<void> deleteKey(String keyName, [DatabaseExecutor? dbExecutor]) async {
+  static Future<void> deleteKey(
+    String keyName, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     try {
       await _storage.delete(key: keyName);
       try {
         final db = _resolveDb(dbExecutor);
         if (db != null) {
-          await db.delete('app_settings', where: 'key = ?', whereArgs: [keyName]);
+          await db.delete(
+            'app_settings',
+            where: 'key = ?',
+            whereArgs: [keyName],
+          );
         }
       } catch (_) {}
     } catch (e) {
-      debugPrint('[SecureKeyStore] SecureStorage delete error for $keyName: $e');
+      debugPrint(
+        '[SecureKeyStore] SecureStorage delete error for $keyName: $e',
+      );
     }
   }
 }

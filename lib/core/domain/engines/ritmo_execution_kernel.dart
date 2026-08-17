@@ -133,41 +133,38 @@ class TestAlarmCommand extends KernelCommand {
 
 class RitmoExecutionKernel {
   RitmoExecutionKernel._internal()
-      : _handlers = const KernelCommandHandlerRegistry(
-          createRoutineHandler: CreateRoutineHandler(),
-          editRoutineHandler: EditRoutineHandler(),
-          deleteRoutineHandler: DeleteRoutineHandler(),
-          archiveRoutineHandler: ArchiveRoutineHandler(),
-          unarchiveRoutineHandler: UnarchiveRoutineHandler(),
-          completeOccurrenceHandler: CompleteOccurrenceHandler(),
-          skipOccurrenceHandler: SkipOccurrenceHandler(),
-          snoozeReminderHandler: SnoozeReminderHandler(),
-          confirmReshuffleHandler: ConfirmReshuffleHandler(),
-          testAlarmHandler: TestAlarmHandler(),
-        );
+    : _handlers = const KernelCommandHandlerRegistry(
+        createRoutineHandler: CreateRoutineHandler(),
+        editRoutineHandler: EditRoutineHandler(),
+        deleteRoutineHandler: DeleteRoutineHandler(),
+        archiveRoutineHandler: ArchiveRoutineHandler(),
+        unarchiveRoutineHandler: UnarchiveRoutineHandler(),
+        completeOccurrenceHandler: CompleteOccurrenceHandler(),
+        skipOccurrenceHandler: SkipOccurrenceHandler(),
+        snoozeReminderHandler: SnoozeReminderHandler(),
+        confirmReshuffleHandler: ConfirmReshuffleHandler(),
+        testAlarmHandler: TestAlarmHandler(),
+      );
 
   static final RitmoExecutionKernel instance = RitmoExecutionKernel._internal();
 
   final RitmoEventBus _eventBus = RitmoEventBus();
   final KernelCommandHandlerRegistry _handlers;
 
-  Future<KernelMutationResult> execute(KernelCommand command, {Transaction? txn}) async {
+  Future<KernelMutationResult> execute(
+    KernelCommand command, {
+    Transaction? txn,
+  }) async {
     late KernelMutationResult result;
 
     if (txn != null) {
-      final context = CommandContext(
-        txn: txn,
-        now: DateTime.now(),
-      );
+      final context = CommandContext(txn: txn, now: DateTime.now());
       final handler = _handlers.resolve(command);
       result = await handler.handle(context, command);
     } else {
       final db = await DatabaseHelper.instance.database;
       await db.transaction((txnContext) async {
-        final context = CommandContext(
-          txn: txnContext,
-          now: DateTime.now(),
-        );
+        final context = CommandContext(txn: txnContext, now: DateTime.now());
         final handler = _handlers.resolve(command);
         result = await handler.handle(context, command);
       });

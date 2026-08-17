@@ -37,7 +37,9 @@ class InboxPolicy {
         [category.name, startOfDay],
       );
 
-      final count = countRes.isNotEmpty ? (countRes.first['cnt'] as int? ?? 0) : 0;
+      final count = countRes.isNotEmpty
+          ? (countRes.first['cnt'] as int? ?? 0)
+          : 0;
 
       switch (category) {
         case InboxCategory.INSIGHT:
@@ -60,7 +62,8 @@ class InboxPolicy {
     required String eventType,
     String? dateBucket,
   }) {
-    final bucket = dateBucket ?? DateTime.now().toIso8601String().substring(0, 10);
+    final bucket =
+        dateBucket ?? DateTime.now().toIso8601String().substring(0, 10);
     return '$sourceSystem|$entityId|$eventType|$bucket';
   }
 

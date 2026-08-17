@@ -7,14 +7,17 @@ import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:tapsell_plus/tapsell_plus.dart';
 
-
 class AdService {
   AdService._internal();
   static final AdService instance = AdService._internal();
 
   static const String _tapsellAppId = String.fromEnvironment('TAPSELL_APP_ID');
-  static const String _bannerZoneId = String.fromEnvironment('TAPSELL_BANNER_ZONE_ID');
-  static const String _rewardedZoneId = String.fromEnvironment('TAPSELL_REWARDED_ZONE_ID');
+  static const String _bannerZoneId = String.fromEnvironment(
+    'TAPSELL_BANNER_ZONE_ID',
+  );
+  static const String _rewardedZoneId = String.fromEnvironment(
+    'TAPSELL_REWARDED_ZONE_ID',
+  );
 
   /// صفحاتی که هرگز تبلیغ نمی‌بینند — محتوای حساس یا دینی/پزشکی/زیستی
   static const Set<String> _adFreeScreens = {
@@ -50,7 +53,9 @@ class AdService {
     _initAttempted = true;
 
     if (_tapsellAppId.trim().isEmpty) {
-      debugPrint('AdService: TAPSELL_APP_ID is empty; skipping Tapsell initialization.');
+      debugPrint(
+        'AdService: TAPSELL_APP_ID is empty; skipping Tapsell initialization.',
+      );
       return;
     }
 
@@ -104,7 +109,9 @@ class AdService {
             ),
           );
         } catch (e) {
-          debugPrint('AdService banner rendering error: $e; falling back to simulated ad');
+          debugPrint(
+            'AdService banner rendering error: $e; falling back to simulated ad',
+          );
           return _buildSimulatedBannerAd(context);
         }
       },
@@ -123,7 +130,10 @@ class AdService {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xffFFA500).withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(
+          color: const Color(0xffFFA500).withValues(alpha: 0.3),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.15),
@@ -191,11 +201,17 @@ class AdService {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text(
               'ارتقا',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn'),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Vazirmatn',
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -218,8 +234,10 @@ class AdService {
     }
     try {
       final completer = Completer<bool>();
-      final responseId = await TapsellPlus.instance.requestRewardedVideoAd(_rewardedZoneId);
-      
+      final responseId = await TapsellPlus.instance.requestRewardedVideoAd(
+        _rewardedZoneId,
+      );
+
       await TapsellPlus.instance.showRewardedVideoAd(
         responseId,
         onOpened: (map) {
@@ -244,7 +262,6 @@ class AdService {
 }
 
 class TapsellPlusBannerAd extends StatefulWidget {
-
   const TapsellPlusBannerAd({
     super.key,
     required this.zoneId,

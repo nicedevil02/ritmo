@@ -15,7 +15,7 @@ void notificationActionDispatcher() {
   WidgetsFlutterBinding.ensureInitialized();
 
   const channel = MethodChannel('com.ritmo.app/notif_action_bg');
-  
+
   channel.setMethodCallHandler((call) async {
     if (call.method == 'handleAction') {
       final args = call.arguments as Map?;
@@ -51,21 +51,39 @@ void notificationActionDispatcher() {
         if (zoneId != null) {
           final db = await DatabaseHelper.instance.database;
           final nowMs = DateTime.now().millisecondsSinceEpoch;
-          
+
           if (zoneId.isEmpty || zoneId == 'default_zone') {
-            await db.insert('app_settings', {'key': 'realm_override_id', 'value': '', 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
-            await db.insert('app_settings', {'key': 'realm_override_until_ms', 'value': '0', 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
+            await db.insert('app_settings', {
+              'key': 'realm_override_id',
+              'value': '',
+              'updatedAt': nowMs,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
+            await db.insert('app_settings', {
+              'key': 'realm_override_until_ms',
+              'value': '0',
+              'updatedAt': nowMs,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
           } else {
             final untilMs = nowMs + 60 * 60 * 1000;
-            await db.insert('app_settings', {'key': 'realm_override_id', 'value': zoneId, 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
-            await db.insert('app_settings', {'key': 'realm_override_until_ms', 'value': untilMs.toString(), 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
+            await db.insert('app_settings', {
+              'key': 'realm_override_id',
+              'value': zoneId,
+              'updatedAt': nowMs,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
+            await db.insert('app_settings', {
+              'key': 'realm_override_until_ms',
+              'value': untilMs.toString(),
+              'updatedAt': nowMs,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
           }
-          
-          RitmoEventBus().fire(RitmoEvent(
-            type: 'ZoneChanged',
-            timestamp: DateTime.now(),
-            payload: {},
-          ));
+
+          RitmoEventBus().fire(
+            RitmoEvent(
+              type: 'ZoneChanged',
+              timestamp: DateTime.now(),
+              payload: {},
+            ),
+          );
           RitmoEvents.notifyRoutineChanged();
           await ForegroundNotificationUpdater.update();
         }
@@ -78,14 +96,20 @@ void notificationActionDispatcher() {
         if (energy != null) {
           final db = await DatabaseHelper.instance.database;
           final nowMs = DateTime.now().millisecondsSinceEpoch;
-          
-          await db.insert('app_settings', {'key': 'default_energy_level', 'value': energy.toUpperCase(), 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
-          
-          RitmoEventBus().fire(RitmoEvent(
-            type: 'EnergyLogged',
-            timestamp: DateTime.now(),
-            payload: {},
-          ));
+
+          await db.insert('app_settings', {
+            'key': 'default_energy_level',
+            'value': energy.toUpperCase(),
+            'updatedAt': nowMs,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+          RitmoEventBus().fire(
+            RitmoEvent(
+              type: 'EnergyLogged',
+              timestamp: DateTime.now(),
+              payload: {},
+            ),
+          );
           RitmoEvents.notifyRoutineChanged();
           await ForegroundNotificationUpdater.update();
         }
@@ -127,7 +151,10 @@ class NotificationActionHandler {
       final date = DateTime.fromMillisecondsSinceEpoch(originalTime);
       final dateStr = date.toIso8601String().substring(0, 10);
 
-      RitmoLog.info('NOTIF', 'Processing action $action for reminder $reminderId (routine: $routineId, date: $dateStr)');
+      RitmoLog.info(
+        'NOTIF',
+        'Processing action $action for reminder $reminderId (routine: $routineId, date: $dateStr)',
+      );
 
       // 2. Perform database actions based on action type
       switch (action) {
@@ -138,7 +165,7 @@ class NotificationActionHandler {
             where: 'id = ?',
             whereArgs: [routineId],
           );
-          
+
           if (routines.isNotEmpty) {
             await RitmoExecutionKernel.instance.execute(
               CompleteOccurrenceCommand(
@@ -168,10 +195,13 @@ class NotificationActionHandler {
             where: "key IN ('snooze_minutes', 'snooze_max_defer_count')",
           );
           final settings = {
-            for (final r in settingsRows) r['key'] as String: r['value'] as String
+            for (final r in settingsRows)
+              r['key'] as String: r['value'] as String,
           };
-          final snoozeMins = int.tryParse(settings['snooze_minutes'] ?? '10') ?? 10;
-          final maxDefer = int.tryParse(settings['snooze_max_defer_count'] ?? '0') ?? 0;
+          final snoozeMins =
+              int.tryParse(settings['snooze_minutes'] ?? '10') ?? 10;
+          final maxDefer =
+              int.tryParse(settings['snooze_max_defer_count'] ?? '0') ?? 0;
           final quotaEnabled = maxDefer > 0;
 
           final decision = SnoozePolicy.evaluate(
@@ -188,7 +218,9 @@ class NotificationActionHandler {
               await RitmoExecutionKernel.instance.execute(
                 SnoozeReminderCommand(
                   reminderId: reminderId,
-                  snoozeMinutes: decision.allowedMinutes > 0 ? decision.allowedMinutes : snoozeMins,
+                  snoozeMinutes: decision.allowedMinutes > 0
+                      ? decision.allowedMinutes
+                      : snoozeMins,
                   dateStr: dateStr,
                 ),
               );
@@ -231,13 +263,18 @@ class NotificationActionHandler {
 
       // Re-trigger alarm synchronization to dismiss or reschedule alarms
       await AlarmSchedulerService.scheduleNextAlarms();
-      
     } catch (e, stacktrace) {
       RitmoLog.error('NOTIF', 'Error handling action $action', e, stacktrace);
     }
   }
 
-  static Future<void> _postBlockedSnoozeNotification(String reminderId, SnoozeDecision decision) async {
-    RitmoLog.warning('NOTIF', 'Snooze blocked for $reminderId: ${decision.verdict.name} (${decision.userMessage})');
+  static Future<void> _postBlockedSnoozeNotification(
+    String reminderId,
+    SnoozeDecision decision,
+  ) async {
+    RitmoLog.warning(
+      'NOTIF',
+      'Snooze blocked for $reminderId: ${decision.verdict.name} (${decision.userMessage})',
+    );
   }
 }

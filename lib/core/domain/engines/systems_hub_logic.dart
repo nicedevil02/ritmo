@@ -1,11 +1,6 @@
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 
-enum ModuleStatus {
-  active,
-  setupRequired,
-  locked,
-  inactive,
-}
+enum ModuleStatus { active, setupRequired, locked, inactive }
 
 class SystemsHubLogic {
   static bool isCycleVisible(String gender) {

@@ -31,6 +31,7 @@ class AlarmSchedulerService {
     }
     return NotificationChannelId.routine;
   }
+
   /// Scans all active routine schedules and schedules the next occurrences (next 24h-48h).
   /// Reconciles with AlarmManager via NativeBridge.
   static Future<void> scheduleNextAlarms() async {
@@ -39,7 +40,9 @@ class AlarmSchedulerService {
     final nowMs = now.millisecondsSinceEpoch;
 
     final settingsList = await db.query('app_settings');
-    final settingsMap = {for (final s in settingsList) s['key']! as String: s['value']! as String};
+    final settingsMap = {
+      for (final s in settingsList) s['key']! as String: s['value']! as String,
+    };
 
     final masterEnabled = settingsMap['notif_master_enabled'] != 'false';
     if (!masterEnabled) {
@@ -52,11 +55,10 @@ class AlarmSchedulerService {
         final id = r['id'] as String;
         await sl<AlarmPlatform>().cancelAlarm(id);
       }
-      await db.update(
-        'pending_reminders',
-        {'nativeScheduled': 0, 'updatedAt': nowMs},
-        where: 'nativeScheduled = 1',
-      );
+      await db.update('pending_reminders', {
+        'nativeScheduled': 0,
+        'updatedAt': nowMs,
+      }, where: 'nativeScheduled = 1');
       await sweepMissedAlarms();
       await SnapshotSyncService.syncAll();
       return;
@@ -75,11 +77,10 @@ class AlarmSchedulerService {
     // Fetch calendar exceptions and routines map
     final exceptions = await db.query('calendar_exceptions');
     final exceptionsMap = {
-      for (final e in exceptions) e['date']! as String: e['behavior']! as String
+      for (final e in exceptions)
+        e['date']! as String: e['behavior']! as String,
     };
-    final routinesMap = {
-      for (final r in routines) r['id']! as String: r
-    };
+    final routinesMap = {for (final r in routines) r['id']! as String: r};
 
     // Clean up existing alarms that conflict with exceptions
     final pending = await db.query(
@@ -91,14 +92,17 @@ class AlarmSchedulerService {
       final id = pMap['id']! as String;
       final routineId = pMap['routineId']! as String;
       final scheduledTimeMs = pMap['scheduledTime']! as int;
-      final scheduledDate = DateTime.fromMillisecondsSinceEpoch(scheduledTimeMs);
+      final scheduledDate = DateTime.fromMillisecondsSinceEpoch(
+        scheduledTimeMs,
+      );
       final dateStr = scheduledDate.toIso8601String().substring(0, 10);
 
       final behavior = exceptionsMap[dateStr] ?? 'NORMAL';
       final r = routinesMap[routineId];
       final isEssential = r != null && r['isEssential'] == 1;
 
-      if (behavior == 'SILENCE_ALL' || (behavior == 'ESSENTIAL_ONLY' && !isEssential)) {
+      if (behavior == 'SILENCE_ALL' ||
+          (behavior == 'ESSENTIAL_ONLY' && !isEssential)) {
         // Cancel physical alarm
         await sl<AlarmPlatform>().cancelAlarm(id);
         // Mark as CANCELLED in db
@@ -141,19 +145,29 @@ class AlarmSchedulerService {
         final ruleStr = sched['recurrenceRule'] as String?;
         if (ruleStr != null && ruleStr.isNotEmpty) {
           try {
-            rule = RecurrenceRule.fromMap(jsonDecode(ruleStr) as Map<String, dynamic>);
+            rule = RecurrenceRule.fromMap(
+              jsonDecode(ruleStr) as Map<String, dynamic>,
+            );
           } catch (_) {
             rule = RecurrenceRule(
               weekdays: const [6, 7, 1, 2, 3, 4, 5],
-              reminderTimes: sched['timeOfDay'] != null ? [sched['timeOfDay'] as String] : const ['08:00'],
+              reminderTimes: sched['timeOfDay'] != null
+                  ? [sched['timeOfDay'] as String]
+                  : const ['08:00'],
             );
           }
         } else {
           final daysStr = sched['daysOfWeek'] as String? ?? '6,7,1,2,3,4,5';
-          final days = daysStr.split(',').map((d) => int.tryParse(d.trim())).whereType<int>().toList();
+          final days = daysStr
+              .split(',')
+              .map((d) => int.tryParse(d.trim()))
+              .whereType<int>()
+              .toList();
           rule = RecurrenceRule(
             weekdays: days,
-            reminderTimes: sched['timeOfDay'] != null ? [sched['timeOfDay'] as String] : const ['08:00'],
+            reminderTimes: sched['timeOfDay'] != null
+                ? [sched['timeOfDay'] as String]
+                : const ['08:00'],
           );
         }
 
@@ -165,7 +179,9 @@ class AlarmSchedulerService {
         // Extract all reminder times (multi-dose support)
         final times = rule.reminderTimes.isNotEmpty
             ? rule.reminderTimes
-            : (sched['timeOfDay'] != null ? [sched['timeOfDay'] as String] : const ['08:00']);
+            : (sched['timeOfDay'] != null
+                  ? [sched['timeOfDay'] as String]
+                  : const ['08:00']);
 
         for (final rawTime in times) {
           final timeStr = rawTime.trim();
@@ -176,9 +192,12 @@ class AlarmSchedulerService {
 
           final reminderOffset = r['reminderOffsetMinutes'] as int? ?? 0;
           final targetTime = DateTime(year, month, day, hour, minute);
-          var scheduledMs = targetTime.subtract(Duration(minutes: reminderOffset)).millisecondsSinceEpoch;
+          var scheduledMs = targetTime
+              .subtract(Duration(minutes: reminderOffset))
+              .millisecondsSinceEpoch;
 
-          final reminderId = 'rem_${rId}_${scheduleId}_${dateStr}_${timeStr.replaceAll(':', '')}';
+          final reminderId =
+              'rem_${rId}_${scheduleId}_${dateStr}_${timeStr.replaceAll(':', '')}';
 
           // Check if already completed / logged for this slot
           if (isMedical) {
@@ -209,17 +228,35 @@ class AlarmSchedulerService {
                   NotificationRequest(
                     id: reminderId,
                     channel: channel,
-                    scheduledAt: DateTime.fromMillisecondsSinceEpoch(scheduledMs),
+                    scheduledAt: DateTime.fromMillisecondsSinceEpoch(
+                      scheduledMs,
+                    ),
                     title: title,
-                    privacy: isEssential ? NotificationPrivacy.redacted : NotificationPrivacy.none,
-                    redactedTitle: isEssential ? (isMedical ? 'ریتمو: زمان مصرف دارو 🌸' : 'ریتمو: یک یادآوری روتین دارید 🌸') : null,
+                    privacy: isEssential
+                        ? NotificationPrivacy.redacted
+                        : NotificationPrivacy.none,
+                    redactedTitle: isEssential
+                        ? (isMedical
+                              ? 'ریتمو: زمان مصرف دارو 🌸'
+                              : 'ریتمو: یک یادآوری روتین دارید 🌸')
+                        : null,
                     sourceSystem: 'routines',
                     entityId: rId,
                   ),
                 );
-                await db.update('pending_reminders', {'nativeScheduled': ok ? 1 : 0}, where: 'id = ?', whereArgs: [reminderId]);
+                await db.update(
+                  'pending_reminders',
+                  {'nativeScheduled': ok ? 1 : 0},
+                  where: 'id = ?',
+                  whereArgs: [reminderId],
+                );
               } else {
-                await db.update('pending_reminders', {'state': 'unknown'}, where: 'id = ?', whereArgs: [reminderId]);
+                await db.update(
+                  'pending_reminders',
+                  {'state': 'unknown'},
+                  where: 'id = ?',
+                  whereArgs: [reminderId],
+                );
               }
             } else if (remState == 'completed' || remState == 'CANCELLED') {
               continue;
@@ -234,15 +271,21 @@ class AlarmSchedulerService {
 
           // Apply calendar behavior filter
           final behavior = exceptionsMap[dateStr] ?? 'NORMAL';
-          if (behavior == 'SILENCE_ALL' || (behavior == 'ESSENTIAL_ONLY' && !isEssential)) {
+          if (behavior == 'SILENCE_ALL' ||
+              (behavior == 'ESSENTIAL_ONLY' && !isEssential)) {
             continue;
           }
 
           // Check quiet hours: if routine is not essential and not medical/health, postpone after quiet hours
           if (quietEnabled && !isEssential && !isMedical) {
-            final schedDateTime = DateTime.fromMillisecondsSinceEpoch(scheduledMs);
+            final schedDateTime = DateTime.fromMillisecondsSinceEpoch(
+              scheduledMs,
+            );
             if (isTimeInQuietHours(schedDateTime, quietStart, quietEnd)) {
-              final adjustedTime = adjustTimeForQuietHours(schedDateTime, quietEnd);
+              final adjustedTime = adjustTimeForQuietHours(
+                schedDateTime,
+                quietEnd,
+              );
               scheduledMs = adjustedTime.millisecondsSinceEpoch;
             }
           }
@@ -255,30 +298,32 @@ class AlarmSchedulerService {
               channel: channel,
               scheduledAt: DateTime.fromMillisecondsSinceEpoch(scheduledMs),
               title: title,
-              privacy: isEssential ? NotificationPrivacy.redacted : NotificationPrivacy.none,
-              redactedTitle: isEssential ? (isMedical ? 'ریتمو: زمان مصرف دارو 🌸' : 'ریتمو: یک یادآوری روتین دارید 🌸') : null,
+              privacy: isEssential
+                  ? NotificationPrivacy.redacted
+                  : NotificationPrivacy.none,
+              redactedTitle: isEssential
+                  ? (isMedical
+                        ? 'ریتمو: زمان مصرف دارو 🌸'
+                        : 'ریتمو: یک یادآوری روتین دارید 🌸')
+                  : null,
               sourceSystem: 'routines',
               entityId: rId,
             ),
           );
 
           // Insert new reminder with 'unknown' state
-          await db.insert(
-            'pending_reminders',
-            {
-              'id': reminderId,
-              'routineId': rId,
-              'scheduleId': scheduleId,
-              'originalTime': targetTime.millisecondsSinceEpoch,
-              'scheduledTime': scheduledMs,
-              'state': 'unknown',
-              'deferCount': 0,
-              'nativeScheduled': ok ? 1 : 0,
-              'createdAt': nowMs,
-              'updatedAt': nowMs,
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
+          await db.insert('pending_reminders', {
+            'id': reminderId,
+            'routineId': rId,
+            'scheduleId': scheduleId,
+            'originalTime': targetTime.millisecondsSinceEpoch,
+            'scheduledTime': scheduledMs,
+            'state': 'unknown',
+            'deferCount': 0,
+            'nativeScheduled': ok ? 1 : 0,
+            'createdAt': nowMs,
+            'updatedAt': nowMs,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
 
           await DatabaseHelper.instance.logNotificationEvent(
             routineId: rId,
@@ -292,7 +337,9 @@ class AlarmSchedulerService {
             entityId: rId,
             eventType: 'reminder',
             title: title,
-            body: isMedical ? 'زمان مصرف داروی شما فرا رسیده است' : 'زمان انجام روتین فرا رسیده است',
+            body: isMedical
+                ? 'زمان مصرف داروی شما فرا رسیده است'
+                : 'زمان انجام روتین فرا رسیده است',
             priority: isEssential ? 2 : 0,
             linkModule: isMedical ? 'health' : 'routines',
             linkEntityId: rId,
@@ -304,19 +351,30 @@ class AlarmSchedulerService {
     }
 
     // Schedule private cycle reminders if gender is FEMALE and consent is granted
-    final cycleConsentReminders = settingsMap['cycle_consent_reminders'] == 'true';
-    final cycleModuleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
+    final cycleConsentReminders =
+        settingsMap['cycle_consent_reminders'] == 'true';
+    final cycleModuleEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_cycle_enabled',
+    );
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
 
     if (isFemale && cycleModuleEnabled && cycleConsentReminders) {
-      final periods = await db.query('cycle_periods', orderBy: 'startDate DESC', limit: 1);
+      final periods = await db.query(
+        'cycle_periods',
+        orderBy: 'startDate DESC',
+        limit: 1,
+      );
       if (periods.isNotEmpty) {
         final latestPeriod = periods.first;
         final start = DateTime.parse(latestPeriod['startDate']! as String);
-        final cycleLength = int.tryParse(settingsMap['cycle_avg_length'] ?? '28') ?? 28;
+        final cycleLength =
+            int.tryParse(settingsMap['cycle_avg_length'] ?? '28') ?? 28;
         final daysSinceStart = now.difference(start).inDays;
         final cyclesElapsed = (daysSinceStart / cycleLength).floor() + 1;
-        final nextPeriodStart = start.add(Duration(days: cyclesElapsed * cycleLength));
+        final nextPeriodStart = start.add(
+          Duration(days: cyclesElapsed * cycleLength),
+        );
 
         final offsets = [-7, -3, -1, 0];
         for (final offset in offsets) {
@@ -330,8 +388,9 @@ class AlarmSchedulerService {
 
           // Only schedule if in future and within next 48 hours
           if (reminderMs > nowMs && reminderMs < nowMs + 48 * 3600 * 1000) {
-            final reminderId = 'cycle_rem_${nextPeriodStart.toIso8601String().substring(0, 10)}_$offset';
-            
+            final reminderId =
+                'cycle_rem_${nextPeriodStart.toIso8601String().substring(0, 10)}_$offset';
+
             final existing = await db.query(
               'pending_reminders',
               where: 'id = ?',
@@ -381,7 +440,12 @@ class AlarmSchedulerService {
   }
 
   /// Completes an occurrence, saves to completions, updates occurrence, cancels alarm
-  static Future<void> completeOccurrence(String routineId, String dateStr, {String resultType = 'FULL', int? durationMinutes}) async {
+  static Future<void> completeOccurrence(
+    String routineId,
+    String dateStr, {
+    String resultType = 'FULL',
+    int? durationMinutes,
+  }) async {
     final db = await DatabaseHelper.instance.database;
     final now = DateTime.now().millisecondsSinceEpoch;
     final alarmsToCancel = <String>[];
@@ -394,7 +458,8 @@ class AlarmSchedulerService {
         whereArgs: [routineId],
         limit: 1,
       );
-      final isInterval = scheduleList.isNotEmpty &&
+      final isInterval =
+          scheduleList.isNotEmpty &&
           (scheduleList.first['intervalHours'] as int? ?? 0) > 0;
 
       var shouldInsert = true;
@@ -449,13 +514,32 @@ class AlarmSchedulerService {
 
       // 3. Update pending_reminders state to 'opened'
       final dateDateTime = DateTime.parse(dateStr);
-      final startOfDay = DateTime(dateDateTime.year, dateDateTime.month, dateDateTime.day).millisecondsSinceEpoch;
-      final endOfDay = DateTime(dateDateTime.year, dateDateTime.month, dateDateTime.day, 23, 59, 59).millisecondsSinceEpoch;
+      final startOfDay = DateTime(
+        dateDateTime.year,
+        dateDateTime.month,
+        dateDateTime.day,
+      ).millisecondsSinceEpoch;
+      final endOfDay = DateTime(
+        dateDateTime.year,
+        dateDateTime.month,
+        dateDateTime.day,
+        23,
+        59,
+        59,
+      ).millisecondsSinceEpoch;
 
       final reminders = await txn.query(
         'pending_reminders',
-        where: 'routineId = ? AND (state = ? OR state = ? OR state = ?) AND scheduledTime >= ? AND scheduledTime <= ?',
-        whereArgs: [routineId, 'unknown', 'delayed', 'sent', startOfDay, endOfDay],
+        where:
+            'routineId = ? AND (state = ? OR state = ? OR state = ?) AND scheduledTime >= ? AND scheduledTime <= ?',
+        whereArgs: [
+          routineId,
+          'unknown',
+          'delayed',
+          'sent',
+          startOfDay,
+          endOfDay,
+        ],
       );
 
       for (final rem in reminders) {
@@ -476,7 +560,11 @@ class AlarmSchedulerService {
         executor: txn,
       );
 
-      await CentralInboxService.markActionedForEntity('routines', routineId, executor: txn);
+      await CentralInboxService.markActionedForEntity(
+        'routines',
+        routineId,
+        executor: txn,
+      );
     });
 
     // Run native cancel alarms outside the transaction
@@ -514,13 +602,25 @@ class AlarmSchedulerService {
 
       // 3. Revert reminders today back to 'unknown' if they were 'opened'
       final dateDateTime = DateTime.parse(dateStr);
-      final startOfDay = DateTime(dateDateTime.year, dateDateTime.month, dateDateTime.day).millisecondsSinceEpoch;
-      final endOfDay = DateTime(dateDateTime.year, dateDateTime.month, dateDateTime.day, 23, 59, 59).millisecondsSinceEpoch;
+      final startOfDay = DateTime(
+        dateDateTime.year,
+        dateDateTime.month,
+        dateDateTime.day,
+      ).millisecondsSinceEpoch;
+      final endOfDay = DateTime(
+        dateDateTime.year,
+        dateDateTime.month,
+        dateDateTime.day,
+        23,
+        59,
+        59,
+      ).millisecondsSinceEpoch;
 
       await txn.update(
         'pending_reminders',
         {'state': 'unknown', 'updatedAt': now},
-        where: 'routineId = ? AND state = ? AND scheduledTime >= ? AND scheduledTime <= ?',
+        where:
+            'routineId = ? AND state = ? AND scheduledTime >= ? AND scheduledTime <= ?',
         whereArgs: [routineId, 'opened', startOfDay, endOfDay],
       );
     });
@@ -550,11 +650,7 @@ class AlarmSchedulerService {
       if (existing.isNotEmpty) {
         await txn.update(
           'routine_completions',
-          {
-            'completionTime': now,
-            'resultType': 'SKIPPED',
-            'createdAt': now,
-          },
+          {'completionTime': now, 'resultType': 'SKIPPED', 'createdAt': now},
           where: 'routineId = ? AND completionDate = ?',
           whereArgs: [routineId, dateStr],
         );
@@ -580,13 +676,32 @@ class AlarmSchedulerService {
 
       // 3. Update pending_reminders state to 'opened'
       final dateDateTime = DateTime.parse(dateStr);
-      final startOfDay = DateTime(dateDateTime.year, dateDateTime.month, dateDateTime.day).millisecondsSinceEpoch;
-      final endOfDay = DateTime(dateDateTime.year, dateDateTime.month, dateDateTime.day, 23, 59, 59).millisecondsSinceEpoch;
+      final startOfDay = DateTime(
+        dateDateTime.year,
+        dateDateTime.month,
+        dateDateTime.day,
+      ).millisecondsSinceEpoch;
+      final endOfDay = DateTime(
+        dateDateTime.year,
+        dateDateTime.month,
+        dateDateTime.day,
+        23,
+        59,
+        59,
+      ).millisecondsSinceEpoch;
 
       final reminders = await txn.query(
         'pending_reminders',
-        where: 'routineId = ? AND (state = ? OR state = ? OR state = ?) AND scheduledTime >= ? AND scheduledTime <= ?',
-        whereArgs: [routineId, 'unknown', 'delayed', 'sent', startOfDay, endOfDay],
+        where:
+            'routineId = ? AND (state = ? OR state = ? OR state = ?) AND scheduledTime >= ? AND scheduledTime <= ?',
+        whereArgs: [
+          routineId,
+          'unknown',
+          'delayed',
+          'sent',
+          startOfDay,
+          endOfDay,
+        ],
       );
 
       for (final rem in reminders) {
@@ -607,7 +722,11 @@ class AlarmSchedulerService {
         executor: txn,
       );
 
-      await CentralInboxService.markActionedForEntity('routines', routineId, executor: txn);
+      await CentralInboxService.markActionedForEntity(
+        'routines',
+        routineId,
+        executor: txn,
+      );
     });
 
     // Run native cancel alarms outside the transaction
@@ -620,7 +739,10 @@ class AlarmSchedulerService {
 
   /// Triggered when a routine completion is logged.
   /// Handles interval-based schedules by setting the next alarm.
-  static Future<void> onRoutineCompleted(String routineId, DateTime completionTime) async {
+  static Future<void> onRoutineCompleted(
+    String routineId,
+    DateTime completionTime,
+  ) async {
     final db = await DatabaseHelper.instance.database;
     final now = DateTime.now();
     final nowMs = now.millisecondsSinceEpoch;
@@ -640,39 +762,46 @@ class AlarmSchedulerService {
       final nextAlarmTime = completionTime.add(Duration(hours: intervalHours));
       final nextAlarmMs = nextAlarmTime.millisecondsSinceEpoch;
 
-      final routineRes = await db.query('routines', where: 'id = ?', whereArgs: [routineId], limit: 1);
+      final routineRes = await db.query(
+        'routines',
+        where: 'id = ?',
+        whereArgs: [routineId],
+        limit: 1,
+      );
       if (routineRes.isNotEmpty) {
         final title = routineRes.first['title']! as String;
         final isEssential = routineRes.first['isEssential'] == 1;
 
         final reminderId = 'rem_${routineId}_${scheduleId}_$nextAlarmMs';
 
-        await db.insert(
-          'pending_reminders',
-          {
-            'id': reminderId,
-            'routineId': routineId,
-            'scheduleId': scheduleId,
-            'originalTime': nextAlarmMs,
-            'scheduledTime': nextAlarmMs,
-            'state': 'unknown',
-            'deferCount': 0,
-            'createdAt': nowMs,
-            'updatedAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await db.insert('pending_reminders', {
+          'id': reminderId,
+          'routineId': routineId,
+          'scheduleId': scheduleId,
+          'originalTime': nextAlarmMs,
+          'scheduledTime': nextAlarmMs,
+          'state': 'unknown',
+          'deferCount': 0,
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
 
         // Register exact alarm via NotificationGateway
-        final channel = _channelForCategory(routineRes.first['category'] as String?);
+        final channel = _channelForCategory(
+          routineRes.first['category'] as String?,
+        );
         await NotificationGateway.schedule(
           NotificationRequest(
             id: reminderId,
             channel: channel,
             scheduledAt: DateTime.fromMillisecondsSinceEpoch(nextAlarmMs),
             title: title,
-            privacy: isEssential ? NotificationPrivacy.redacted : NotificationPrivacy.none,
-            redactedTitle: isEssential ? 'ریتمو: یک یادآوری روتین دارید 🌸' : null,
+            privacy: isEssential
+                ? NotificationPrivacy.redacted
+                : NotificationPrivacy.none,
+            redactedTitle: isEssential
+                ? 'ریتمو: یک یادآوری روتین دارید 🌸'
+                : null,
             sourceSystem: 'routines',
             entityId: routineId,
           ),
@@ -692,7 +821,10 @@ class AlarmSchedulerService {
     await SnapshotSyncService.syncAll();
   }
 
-  static Future<void> _scheduleStatusUpdateAlarms(Database db, DateTime now) async {
+  static Future<void> _scheduleStatusUpdateAlarms(
+    Database db,
+    DateTime now,
+  ) async {
     // 1. Midnight update silent tick
     final nextMidnight = DateTime(now.year, now.month, now.day + 1);
     await sl<AlarmPlatform>().scheduleSilentTick(
@@ -704,14 +836,17 @@ class AlarmSchedulerService {
     try {
       final zoneSchedules = await db.query('zone_schedules');
       final todayStr = now.toIso8601String().substring(0, 10);
-      final tomorrowStr = now.add(const Duration(days: 1)).toIso8601String().substring(0, 10);
+      final tomorrowStr = now
+          .add(const Duration(days: 1))
+          .toIso8601String()
+          .substring(0, 10);
 
       final transitionTimesMs = <int>{};
 
       for (final sched in zoneSchedules) {
         final start = sched['startTime'] as String? ?? '09:00';
         final end = sched['endTime'] as String? ?? '17:00';
-        
+
         for (final dateStr in [todayStr, tomorrowStr]) {
           for (final timeStr in [start, end]) {
             final parts = timeStr.split(':');
@@ -766,7 +901,8 @@ class AlarmSchedulerService {
 
     final pending = await db.query(
       'pending_reminders',
-      where: "scheduledTime < ? AND state IN ('unknown', 'delayed', 'SCHEDULED', 'active', 'scheduled')",
+      where:
+          "scheduledTime < ? AND state IN ('unknown', 'delayed', 'SCHEDULED', 'active', 'scheduled')",
       whereArgs: [nowMs],
     );
 
@@ -779,7 +915,9 @@ class AlarmSchedulerService {
       final scheduledTime = row['scheduledTime']! as int;
 
       if (routineId != null && originalTime != null) {
-        final dateStr = DateTime.fromMillisecondsSinceEpoch(originalTime).toIso8601String().substring(0, 10);
+        final dateStr = DateTime.fromMillisecondsSinceEpoch(
+          originalTime,
+        ).toIso8601String().substring(0, 10);
         final occurrences = await db.query(
           'routine_occurrences',
           where: 'routine_id = ? AND date = ?',
@@ -797,19 +935,15 @@ class AlarmSchedulerService {
       missedReminders.add(row);
 
       final logId = 'missed_$remId';
-      await db.insert(
-        'alarm_delivery_log',
-        {
-          'id': logId,
-          'reminderId': remId,
-          'routineId': routineId,
-          'expectedAt': scheduledTime,
-          'firedAt': null,
-          'outcome': 'missed',
-          'createdAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.ignore,
-      );
+      await db.insert('alarm_delivery_log', {
+        'id': logId,
+        'reminderId': remId,
+        'routineId': routineId,
+        'expectedAt': scheduledTime,
+        'firedAt': null,
+        'outcome': 'missed',
+        'createdAt': nowMs,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
       await db.update(
         'pending_reminders',
@@ -822,7 +956,11 @@ class AlarmSchedulerService {
     return missedReminders;
   }
 
-  static bool isTimeInQuietHours(DateTime time, String startStr, String endStr) {
+  static bool isTimeInQuietHours(
+    DateTime time,
+    String startStr,
+    String endStr,
+  ) {
     final startParts = startStr.split(':');
     final endParts = endStr.split(':');
     final startH = int.tryParse(startParts[0]) ?? 0;
@@ -859,4 +997,3 @@ class AlarmSchedulerService {
     return adjusted;
   }
 }
-

@@ -6,10 +6,7 @@ import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/wellbeing/logic/wellbeing_log_gateway.dart';
 
 class FrictionlessMoodBar extends StatefulWidget {
-  const FrictionlessMoodBar({
-    super.key,
-    required this.onLogChanged,
-  });
+  const FrictionlessMoodBar({super.key, required this.onLogChanged});
 
   final VoidCallback onLogChanged;
 
@@ -39,7 +36,9 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
         orderBy: 'loggedAt DESC',
       );
       if (rows.isNotEmpty && mounted) {
-        final lastTime = DateTime.fromMillisecondsSinceEpoch(rows.first['loggedAt'] as int);
+        final lastTime = DateTime.fromMillisecondsSinceEpoch(
+          rows.first['loggedAt'] as int,
+        );
         final hour = lastTime.hour.toString().padLeft(2, '0');
         final minute = lastTime.minute.toString().padLeft(2, '0');
         setState(() {
@@ -162,15 +161,9 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: color.withValues(alpha: 0.12),
-            border: Border.all(
-              color: color.withValues(alpha: 0.4),
-              width: 1.5,
-            ),
+            border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
           ),
-          child: Text(
-            emoji,
-            style: const TextStyle(fontSize: 20),
-          ),
+          child: Text(emoji, style: const TextStyle(fontSize: 20)),
         ),
       ),
     );

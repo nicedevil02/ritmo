@@ -21,7 +21,6 @@ import 'package:sqflite/sqflite.dart';
 /// Holds raw in-memory rows (loaded once) and resolves per-date without extra
 /// queries, which keeps the month range view (31 days) cheap.
 class RoutineAgendaSource implements AgendaSource {
-
   const RoutineAgendaSource({
     required this.routines,
     required this.schedules,
@@ -74,15 +73,18 @@ class RoutineAgendaSource implements AgendaSource {
     );
 
     final completionsByDate = <String, Map<String, Map<String, dynamic>>>{};
-    final comps = await db.query('routine_completions', where: 'completionDate >= ? AND completionDate <= ?', whereArgs: [startStr, endStr]);
+    final comps = await db.query(
+      'routine_completions',
+      where: 'completionDate >= ? AND completionDate <= ?',
+      whereArgs: [startStr, endStr],
+    );
     for (final c in comps) {
       final resType = c['resultType'] as String?;
       if (resType == 'SNOOZED' || resType == 'CANNOT_NOW') continue;
       final dateStr = (c['completionDate'] ?? c['completion_date']) as String?;
       final routineId = (c['routineId'] ?? c['routine_id']) as String?;
       if (dateStr == null || routineId == null) continue;
-      completionsByDate
-          .putIfAbsent(dateStr, () => {})[routineId] =
+      completionsByDate.putIfAbsent(dateStr, () => {})[routineId] =
           Map<String, dynamic>.from(c);
     }
 
@@ -130,22 +132,49 @@ class RoutineAgendaSource implements AgendaSource {
     return RoutineAgendaSource(
       routines: routines.map(Map<String, dynamic>.from).toList(),
       schedules: schedules.map(Map<String, dynamic>.from).toList(),
-      occurrences:
-          occurrences.map(Map<String, dynamic>.from).toList(),
+      occurrences: occurrences.map(Map<String, dynamic>.from).toList(),
       avgDurations: avgDurations,
       categoryAvgDurations: categoryAvgDurations,
       completionsByDate: completionsByDate,
       eventsEnabled: settingsMap['calendar_show_events'] != 'false',
       activeModules: {
-        'religion': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled'),
-        'medicine': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_medicine_enabled'),
-        'courses': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_courses_enabled'),
-        'study': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_study_enabled'),
-        'sports': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sports_enabled') ||
-            ModuleGate.instance.isEnabledFrom(settingsMap, 'module_supplementary_sports_enabled'),
-        'goals': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_goals_enabled'),
-        'habits': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_progressive_habits_enabled'),
-        'cycle': ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled'),
+        'religion': ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_religion_enabled',
+        ),
+        'medicine': ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_medicine_enabled',
+        ),
+        'courses': ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_courses_enabled',
+        ),
+        'study': ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_study_enabled',
+        ),
+        'sports':
+            ModuleGate.instance.isEnabledFrom(
+              settingsMap,
+              'module_sports_enabled',
+            ) ||
+            ModuleGate.instance.isEnabledFrom(
+              settingsMap,
+              'module_supplementary_sports_enabled',
+            ),
+        'goals': ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_goals_enabled',
+        ),
+        'habits': ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_progressive_habits_enabled',
+        ),
+        'cycle': ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_cycle_enabled',
+        ),
       },
     );
   }
@@ -181,8 +210,9 @@ class RoutineAgendaSource implements AgendaSource {
     final rawTime = s['timeOfDay']?.toString();
     return RecurrenceRule(
       weekdays: days,
-      reminderTimes:
-          (rawTime != null && rawTime.isNotEmpty) ? [rawTime] : ['08:00'],
+      reminderTimes: (rawTime != null && rawTime.isNotEmpty)
+          ? [rawTime]
+          : ['08:00'],
     );
   }
 
@@ -200,22 +230,32 @@ class RoutineAgendaSource implements AgendaSource {
       final catStr = r['category']?.toString() ?? 'personal';
       // Build a settings-compatible map from the stored module flags.
       final settingsForVisibility = <String, String>{
-        'module_religion_enabled': (activeModules['religion'] ?? false).toString(),
-        'module_medicine_enabled': (activeModules['medicine'] ?? false).toString(),
-        'module_courses_enabled': (activeModules['courses'] ?? false).toString(),
+        'module_religion_enabled': (activeModules['religion'] ?? false)
+            .toString(),
+        'module_medicine_enabled': (activeModules['medicine'] ?? false)
+            .toString(),
+        'module_courses_enabled': (activeModules['courses'] ?? false)
+            .toString(),
         'module_study_enabled': (activeModules['study'] ?? false).toString(),
         'module_sports_enabled': (activeModules['sports'] ?? false).toString(),
-        'module_supplementary_sports_enabled': (activeModules['sports'] ?? false).toString(),
+        'module_supplementary_sports_enabled':
+            (activeModules['sports'] ?? false).toString(),
         'module_goals_enabled': (activeModules['goals'] ?? false).toString(),
-        'module_progressive_habits_enabled': (activeModules['habits'] ?? false).toString(),
+        'module_progressive_habits_enabled': (activeModules['habits'] ?? false)
+            .toString(),
         'module_cycle_enabled': (activeModules['cycle'] ?? false).toString(),
       };
-      if (!RoutineVisibility.isVisible(routineId: routineId, category: catStr, settings: settingsForVisibility)) continue;
+      if (!RoutineVisibility.isVisible(
+        routineId: routineId,
+        category: catStr,
+        settings: settingsForVisibility,
+      ))
+        continue;
 
       Map<String, dynamic>? matchedSchedule;
       for (final sched in schedules) {
-        final schedRoutineId =
-            (sched['routineId'] ?? sched['routine_id'])?.toString();
+        final schedRoutineId = (sched['routineId'] ?? sched['routine_id'])
+            ?.toString();
         if (schedRoutineId == routineId) {
           matchedSchedule = sched;
           break;
@@ -225,8 +265,8 @@ class RoutineAgendaSource implements AgendaSource {
       // 1. Check database occurrences in memory (normalised comparison: the id
       //    may be int/String and the date may carry a time suffix).
       final hasOcc = occurrences.any((occ) {
-        final occRoutineId =
-            (occ['routine_id'] ?? occ['routineId'])?.toString();
+        final occRoutineId = (occ['routine_id'] ?? occ['routineId'])
+            ?.toString();
         if (occRoutineId != routineId) return false;
         final occDate = occ['date']?.toString();
         if (occDate == null || occDate.length < 10) return false;
@@ -440,7 +480,8 @@ class RoutineAgendaSource implements AgendaSource {
       // Only estimate when duration is missing or invalid.
       // Do NOT replace legitimate long routines with a fake shorter average.
       if (dur == null || dur <= 0) {
-        final avg = avgDurations[routineId] ?? categoryAvgDurations[catStr] ?? 30.0;
+        final avg =
+            avgDurations[routineId] ?? categoryAvgDurations[catStr] ?? 30.0;
         dur = avg.round().clamp(DurationBounds.minMinutes, 120);
         isEstimated = true;
       } else {
@@ -463,27 +504,28 @@ class RoutineAgendaSource implements AgendaSource {
           kind = AgendaItemKind.routine;
       }
 
-      items.add(AgendaItem(
-        id: buildAgendaItemId(itemDomain, routineId, dateStr),
-        domain: itemDomain,
-        kind: kind,
-        sourceId: routineId,
-        title: r['title'] as String? ?? '',
-        dateStr: dateStr,
-        timeOfDay: resolvedTime,
-        durationMinutes: dur,
-        category: category,
-        completion: completionState,
-        priority: (r['priority'] as num?)?.toDouble() ?? 1.0,
-        isEssential: r['isEssential'] == 1,
-        deepLink:
-            AgendaDeepLink(domain: itemDomain, targetId: routineId),
-        meta: {
-          'routine': r,
-          'schedule': s,
-          if (isEstimated) 'isAIEstimated': true,
-        },
-      ));
+      items.add(
+        AgendaItem(
+          id: buildAgendaItemId(itemDomain, routineId, dateStr),
+          domain: itemDomain,
+          kind: kind,
+          sourceId: routineId,
+          title: r['title'] as String? ?? '',
+          dateStr: dateStr,
+          timeOfDay: resolvedTime,
+          durationMinutes: dur,
+          category: category,
+          completion: completionState,
+          priority: (r['priority'] as num?)?.toDouble() ?? 1.0,
+          isEssential: r['isEssential'] == 1,
+          deepLink: AgendaDeepLink(domain: itemDomain, targetId: routineId),
+          meta: {
+            'routine': r,
+            'schedule': s,
+            if (isEstimated) 'isAIEstimated': true,
+          },
+        ),
+      );
     }
 
     return items;

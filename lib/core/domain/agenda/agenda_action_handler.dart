@@ -23,7 +23,8 @@ class SnoozeApplied extends SnoozeOutcome {
 }
 
 class SnoozeRefused extends SnoozeOutcome {
-  final String reasonCode; // 'QUOTA_EXHAUSTED' | 'WINDOW_CLOSED' | 'PAST_MIDNIGHT'
+  final String
+  reasonCode; // 'QUOTA_EXHAUSTED' | 'WINDOW_CLOSED' | 'PAST_MIDNIGHT'
   final String userMessage;
   SnoozeRefused(this.reasonCode, this.userMessage);
 }
@@ -32,12 +33,16 @@ class AgendaActionHandler {
   AgendaActionHandler._();
   static final AgendaActionHandler instance = AgendaActionHandler._();
 
-  Future<List<String>> _practiceIdsForGroup(DatabaseExecutor db, String group) async {
+  Future<List<String>> _practiceIdsForGroup(
+    DatabaseExecutor db,
+    String group,
+  ) async {
     if (group == 'RAMADAN_FAST') {
       final rows = await db.query(
         'worship_practices',
         columns: ['id'],
-        where: "id = 'wp_fasting_ramadan' OR subType = 'RAMADAN' OR practiceType = 'FASTING'",
+        where:
+            "id = 'wp_fasting_ramadan' OR subType = 'RAMADAN' OR practiceType = 'FASTING'",
       );
       if (rows.isNotEmpty) {
         return rows.map((r) => r['id']! as String).toList();
@@ -80,7 +85,9 @@ class AgendaActionHandler {
     final ids = await _practiceIdsForGroup(db, group);
 
     if (ids.isEmpty) {
-      debugPrint('[AgendaActionHandler] Unknown or unconfigured prayer group: $group');
+      debugPrint(
+        '[AgendaActionHandler] Unknown or unconfigured prayer group: $group',
+      );
       return;
     }
 
@@ -92,17 +99,19 @@ class AgendaActionHandler {
           date: date,
         );
         if (result is WorshipLogFailed) {
-          debugPrint('[AgendaActionHandler] togglePrayer logDone error: ${result.error}');
+          debugPrint(
+            '[AgendaActionHandler] togglePrayer logDone error: ${result.error}',
+          );
         }
       } else {
-        await WorshipEngine.instance.clearLog(
-          practiceId: id,
-          date: date,
-        );
+        await WorshipEngine.instance.clearLog(practiceId: id, date: date);
       }
     }
 
-    _invalidateAndNotify(dateStr, 'WorshipUpdated', {'date': dateStr, 'group': group});
+    _invalidateAndNotify(dateStr, 'WorshipUpdated', {
+      'date': dateStr,
+      'group': group,
+    });
   }
 
   /// Centralized logic to snooze a prayer reminder.
@@ -115,10 +124,15 @@ class AgendaActionHandler {
     final now = DateTime.now();
     final nowMs = now.millisecondsSinceEpoch;
 
-    final pTimesMap = await WorshipRepository.instance.getPrayerTimesForDate(now);
+    final pTimesMap = await WorshipRepository.instance.getPrayerTimesForDate(
+      now,
+    );
     final pTime = PrayerTime.fromMap(pTimesMap);
 
-    SnoozeOutcome outcome = SnoozeRefused('QUOTA_EXHAUSTED', 'سقف تعویق این مورد پر شده است.');
+    SnoozeOutcome outcome = SnoozeRefused(
+      'QUOTA_EXHAUSTED',
+      'سقف تعویق این مورد پر شده است.',
+    );
 
     for (final id in practiceIds) {
       final practiceRows = await db.query(
@@ -133,8 +147,14 @@ class AgendaActionHandler {
       final subType = (pMap['subType'] as String? ?? 'FAJR').toUpperCase();
       final pType = (pMap['practiceType'] as String? ?? 'PRAYER').toUpperCase();
 
-      final quotaEnabledRows = await db.query('app_settings', where: "key = 'snooze_quota_enabled'", limit: 1);
-      final quotaEnabled = quotaEnabledRows.isNotEmpty && quotaEnabledRows.first['value'] == 'true';
+      final quotaEnabledRows = await db.query(
+        'app_settings',
+        where: "key = 'snooze_quota_enabled'",
+        limit: 1,
+      );
+      final quotaEnabled =
+          quotaEnabledRows.isNotEmpty &&
+          quotaEnabledRows.first['value'] == 'true';
 
       final decision = SnoozePolicy.evaluate(
         itemId: id,
@@ -166,7 +186,10 @@ class AgendaActionHandler {
         if (targetTime.isAfter(deadline)) {
           final remainingToDeadline = deadline.difference(now).inMinutes;
           if (remainingToDeadline < 5) {
-            return SnoozeRefused('WINDOW_CLOSED', 'مهلت شرعی این نماز در حال پایان است.');
+            return SnoozeRefused(
+              'WINDOW_CLOSED',
+              'مهلت شرعی این نماز در حال پایان است.',
+            );
           }
           allowedMins = remainingToDeadline;
         }
@@ -187,21 +210,17 @@ class AgendaActionHandler {
       );
 
       final reminderId = 'worship_snooze_${id}_$nowMs';
-      await db.insert(
-        'pending_reminders',
-        {
-          'id': reminderId,
-          'routineId': 'worship_$id',
-          'originalTime': nowMs,
-          'scheduledTime': snoozeUntilMs,
-          'snoozeUntil': snoozeUntilMs,
-          'state': 'delayed',
-          'deferCount': newDeferCount,
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('pending_reminders', {
+        'id': reminderId,
+        'routineId': 'worship_$id',
+        'originalTime': nowMs,
+        'scheduledTime': snoozeUntilMs,
+        'snoozeUntil': snoozeUntilMs,
+        'state': 'delayed',
+        'deferCount': newDeferCount,
+        'createdAt': nowMs,
+        'updatedAt': nowMs,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       outcome = SnoozeApplied(
         DateTime.fromMillisecondsSinceEpoch(snoozeUntilMs),
@@ -253,7 +272,10 @@ class AgendaActionHandler {
         if (res is WorshipLogFailed) {
           RitmoLogger.error('toggleAgendaItem: ${res.error}');
           if (context != null && context.mounted) {
-            ActionFeedback.failure(context, message: 'خطا در ثبت: ${res.error}');
+            ActionFeedback.failure(
+              context,
+              message: 'خطا در ثبت: ${res.error}',
+            );
           }
           throw Exception(res.error.toString());
         } else if (res is WorshipLogBlocked) {
@@ -296,10 +318,7 @@ class AgendaActionHandler {
       } else if (item.domain == AgendaDomain.goalStep) {
         await txn.update(
           'goal_steps',
-          {
-            'isCompleted': isDone ? 1 : 0,
-            'updatedAt': nowMs,
-          },
+          {'isCompleted': isDone ? 1 : 0, 'updatedAt': nowMs},
           where: 'id = ?',
           whereArgs: [item.sourceId],
         );
@@ -320,7 +339,7 @@ class AgendaActionHandler {
         );
         if (debts.isNotEmpty) {
           final currentRemaining = debts.first['remainingCount'] as int? ?? 0;
-          final newRemaining = isDone 
+          final newRemaining = isDone
               ? (currentRemaining - 1).clamp(0, 99999)
               : (currentRemaining + 1).clamp(0, 99999);
           final isNowArchived = newRemaining == 0;
@@ -337,13 +356,13 @@ class AgendaActionHandler {
           );
 
           if (item.sourceId.startsWith('debt_cycle_fast_')) {
-            final cycleDebtId = item.sourceId.replaceFirst('debt_cycle_fast_', '');
+            final cycleDebtId = item.sourceId.replaceFirst(
+              'debt_cycle_fast_',
+              '',
+            );
             await txn.update(
               'fasting_debt',
-              {
-                'isResolved': isNowArchived ? 1 : 0,
-                'updatedAt': nowMs,
-              },
+              {'isResolved': isNowArchived ? 1 : 0, 'updatedAt': nowMs},
               where: 'id = ?',
               whereArgs: [cycleDebtId],
             );
@@ -353,15 +372,17 @@ class AgendaActionHandler {
     });
 
     if (item.domain == AgendaDomain.course) {
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'CourseSessionCompleted',
-        timestamp: DateTime.now(),
-        payload: {
-          'sessionId': item.sourceId,
-          'done': isDone,
-          'plannedDate': item.dateStr,
-        },
-      ));
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'CourseSessionCompleted',
+          timestamp: DateTime.now(),
+          payload: {
+            'sessionId': item.sourceId,
+            'done': isDone,
+            'plannedDate': item.dateStr,
+          },
+        ),
+      );
     }
 
     _invalidateAndNotify(item.dateStr, 'AgendaItemToggled', {
@@ -388,10 +409,7 @@ class AgendaActionHandler {
         if (newTimeOfDay != null) {
           await txn.update(
             'routine_schedules',
-            {
-              'timeOfDay': newTimeOfDay,
-              'updatedAt': nowMs,
-            },
+            {'timeOfDay': newTimeOfDay, 'updatedAt': nowMs},
             where: 'routineId = ?',
             whereArgs: [item.sourceId],
           );
@@ -399,10 +417,7 @@ class AgendaActionHandler {
         if (newDurationMinutes != null) {
           await txn.update(
             'routines',
-            {
-              'targetDurationMinutes': newDurationMinutes,
-              'updatedAt': nowMs,
-            },
+            {'targetDurationMinutes': newDurationMinutes, 'updatedAt': nowMs},
             where: 'id = ?',
             whereArgs: [item.sourceId],
           );
@@ -411,7 +426,8 @@ class AgendaActionHandler {
         final courseId = item.deepLink.targetId;
         final updates = <String, dynamic>{'updatedAt': nowMs};
         if (newTimeOfDay != null) updates['preferredTime'] = newTimeOfDay;
-        if (newDurationMinutes != null) updates['sessionDurationMinutes'] = newDurationMinutes;
+        if (newDurationMinutes != null)
+          updates['sessionDurationMinutes'] = newDurationMinutes;
 
         await txn.update(
           'courses',
@@ -423,10 +439,7 @@ class AgendaActionHandler {
         if (newDurationMinutes != null) {
           await txn.update(
             'ss_workout_plan',
-            {
-              'estimatedMinutes': newDurationMinutes,
-              'updatedAt': nowMs,
-            },
+            {'estimatedMinutes': newDurationMinutes, 'updatedAt': nowMs},
             where: 'id = ?',
             whereArgs: [item.sourceId],
           );
@@ -435,10 +448,7 @@ class AgendaActionHandler {
         if (newDurationMinutes != null) {
           await txn.update(
             'konkur_plan_items',
-            {
-              'plannedMinutes': newDurationMinutes,
-              'isUserEdited': 1,
-            },
+            {'plannedMinutes': newDurationMinutes, 'isUserEdited': 1},
             where: 'id = ?',
             whereArgs: [item.sourceId],
           );
@@ -461,7 +471,8 @@ class AgendaActionHandler {
       'date': item.dateStr,
     };
     if (newTimeOfDay != null) payload['timeOfDay'] = newTimeOfDay;
-    if (newDurationMinutes != null) payload['durationMinutes'] = newDurationMinutes;
+    if (newDurationMinutes != null)
+      payload['durationMinutes'] = newDurationMinutes;
 
     _invalidateAndNotify(item.dateStr, 'RoutineUpdated', payload);
   }
@@ -475,10 +486,7 @@ class AgendaActionHandler {
       if (item.domain == AgendaDomain.routine) {
         await txn.update(
           'routine_schedules',
-          {
-            'timeOfDay': null,
-            'updatedAt': nowMs,
-          },
+          {'timeOfDay': null, 'updatedAt': nowMs},
           where: 'routineId = ?',
           whereArgs: [item.sourceId],
         );
@@ -486,20 +494,14 @@ class AgendaActionHandler {
         final courseId = item.deepLink.targetId;
         await txn.update(
           'courses',
-          {
-            'preferredTime': null,
-            'updatedAt': nowMs,
-          },
+          {'preferredTime': null, 'updatedAt': nowMs},
           where: 'id = ?',
           whereArgs: [courseId],
         );
       } else if (item.domain == AgendaDomain.task) {
         await txn.update(
           'simple_tasks',
-          {
-            'dueTime': null,
-            'updatedAt': nowMs,
-          },
+          {'dueTime': null, 'updatedAt': nowMs},
           where: 'id = ?',
           whereArgs: [item.sourceId],
         );
@@ -518,13 +520,15 @@ class AgendaActionHandler {
     _invalidateAndNotify(dateStr, 'WorshipUpdated', {'date': dateStr});
   }
 
-  void _invalidateAndNotify(String dateStr, String eventType, Map<String, dynamic> payload) {
+  void _invalidateAndNotify(
+    String dateStr,
+    String eventType,
+    Map<String, dynamic> payload,
+  ) {
     DayAgendaService.instance.invalidateDate(dateStr);
     RitmoEvents.notifyRoutineChanged();
-    RitmoEventBus().fire(RitmoEvent(
-      type: eventType,
-      timestamp: DateTime.now(),
-      payload: payload,
-    ));
+    RitmoEventBus().fire(
+      RitmoEvent(type: eventType, timestamp: DateTime.now(), payload: payload),
+    );
   }
 }

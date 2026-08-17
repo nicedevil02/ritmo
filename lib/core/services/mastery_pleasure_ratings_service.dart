@@ -2,7 +2,8 @@ import 'package:ritmo/core/database/database_helper.dart';
 
 class MasteryPleasureRatingsService {
   MasteryPleasureRatingsService._();
-  static final MasteryPleasureRatingsService instance = MasteryPleasureRatingsService._();
+  static final MasteryPleasureRatingsService instance =
+      MasteryPleasureRatingsService._();
 
   /// Records optional 0-5 mastery and pleasure ratings for a routine completion (§3, م-۱۱).
   Future<void> recordRatings({
@@ -12,8 +13,10 @@ class MasteryPleasureRatingsService {
   }) async {
     final db = await DatabaseHelper.instance.database;
     final updates = <String, dynamic>{};
-    if (masteryRating != null) updates['masteryRating'] = masteryRating.clamp(0, 5);
-    if (pleasureRating != null) updates['pleasureRating'] = pleasureRating.clamp(0, 5);
+    if (masteryRating != null)
+      updates['masteryRating'] = masteryRating.clamp(0, 5);
+    if (pleasureRating != null)
+      updates['pleasureRating'] = pleasureRating.clamp(0, 5);
 
     if (updates.isNotEmpty) {
       await db.update(

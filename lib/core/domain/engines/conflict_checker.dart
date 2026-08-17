@@ -22,11 +22,15 @@ class ConflictChecker {
       final d = int.parse(dateParts[2]);
       final targetDate = DateTime(y, m, d);
 
-      final dayAgenda = await DayAgendaService.instance.agendaForDate(targetDate);
+      final dayAgenda = await DayAgendaService.instance.agendaForDate(
+        targetDate,
+      );
       final items = dayAgenda.items;
 
       final startMinutes = TimelineSnappingHelper.parseTimeToMinutes(timeStr);
-      final dur = durationMinutes <= 0 ? CalendarDefaults.fallbackDurationMinutes : durationMinutes;
+      final dur = durationMinutes <= 0
+          ? CalendarDefaults.fallbackDurationMinutes
+          : durationMinutes;
 
       final detector = const AgendaConflictDetector();
       final conflicts = detector.checkCandidate(

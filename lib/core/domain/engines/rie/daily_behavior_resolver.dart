@@ -66,7 +66,9 @@ class DailyBehaviorResolver {
 
     // 1. SICK (Highest Priority exception)
     if (sickException != null || lifeContexts.contains('🤒 بیماری')) {
-      final behavior = sickException != null ? (sickException['behavior'] as String? ?? 'NORMAL') : 'ESSENTIAL_ONLY';
+      final behavior = sickException != null
+          ? (sickException['behavior'] as String? ?? 'NORMAL')
+          : 'ESSENTIAL_ONLY';
       return DailyBehavior(
         context: LifeContext.sick,
         behavior: behavior,
@@ -76,7 +78,9 @@ class DailyBehaviorResolver {
 
     // 2. TRAVEL
     if (travelException != null || lifeContexts.contains('✈️ سفر')) {
-      final behavior = travelException != null ? (travelException['behavior'] as String? ?? 'NORMAL') : 'NORMAL';
+      final behavior = travelException != null
+          ? (travelException['behavior'] as String? ?? 'NORMAL')
+          : 'NORMAL';
       return DailyBehavior(
         context: LifeContext.travel,
         behavior: behavior,
@@ -85,9 +89,14 @@ class DailyBehaviorResolver {
     }
 
     // 3. EXAM (Mock exam scheduled or calendar exception)
-    final isExamDay = examException != null || lifeContexts.contains('📚 امتحانات') || konkurMockExamsToday.isNotEmpty;
+    final isExamDay =
+        examException != null ||
+        lifeContexts.contains('📚 امتحانات') ||
+        konkurMockExamsToday.isNotEmpty;
     if (isExamDay) {
-      final behavior = examException != null ? (examException['behavior'] as String? ?? 'NORMAL') : 'NORMAL';
+      final behavior = examException != null
+          ? (examException['behavior'] as String? ?? 'NORMAL')
+          : 'NORMAL';
       return DailyBehavior(
         context: LifeContext.exam,
         behavior: behavior,
@@ -110,8 +119,12 @@ class DailyBehaviorResolver {
       );
 
       if (schedule.isNotEmpty) {
-        final daysOfWeekStr = schedule['daysOfWeek'] as String? ?? '6,7,1,2,3,4,5';
-        final activeDays = daysOfWeekStr.split(',').map((d) => int.tryParse(d.trim()) ?? 1).toSet();
+        final daysOfWeekStr =
+            schedule['daysOfWeek'] as String? ?? '6,7,1,2,3,4,5';
+        final activeDays = daysOfWeekStr
+            .split(',')
+            .map((d) => int.tryParse(d.trim()) ?? 1)
+            .toSet();
         if (activeDays.contains(todayWeekday)) {
           final targetDur = r['targetDurationMinutes'] as int? ?? 30;
           totalScheduledDuration += targetDur;
@@ -122,7 +135,9 @@ class DailyBehaviorResolver {
     final capacityLimitStr = settings['daily_capacity_minutes'] ?? '360';
     final capacityLimit = int.tryParse(capacityLimitStr) ?? 360;
 
-    final hasBusyContext = lifeContexts.contains('💼 فصل کاری سنگین') || lifeContexts.contains('🎯 پروژه مهم');
+    final hasBusyContext =
+        lifeContexts.contains('💼 فصل کاری سنگین') ||
+        lifeContexts.contains('🎯 پروژه مهم');
 
     if (totalScheduledDuration > capacityLimit || hasBusyContext) {
       return DailyBehavior(
@@ -133,7 +148,12 @@ class DailyBehaviorResolver {
     }
 
     // 5. WORSHIP (if religion module is enabled and a worship season is active)
-    if (activeSeasonTitle != null && ModuleGate.instance.isEnabledFrom(settings, 'module_religion_enabled') && maxSeason != null) {
+    if (activeSeasonTitle != null &&
+        ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_religion_enabled',
+        ) &&
+        maxSeason != null) {
       var behavior = 'NORMAL';
       final behaviorRaw = maxSeason['behaviorJson'] as String?;
       if (behaviorRaw != null && behaviorRaw.isNotEmpty) {

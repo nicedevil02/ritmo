@@ -5,7 +5,8 @@ import 'package:sqflite/sqflite.dart';
 
 class ProgressionEngine {
   int currentTargetMinutes(Map<String, dynamic> routine) {
-    if (routine['progressionMode'] == 'NONE' || routine['progressionMode'] == null) {
+    if (routine['progressionMode'] == 'NONE' ||
+        routine['progressionMode'] == null) {
       return routine['targetDurationMinutes'] as int? ?? 0;
     }
     final current = routine['progressionCurrent'] as int? ?? 0;
@@ -19,7 +20,11 @@ class ProgressionEngine {
     return current;
   }
 
-  Future<void> onCompletion(DatabaseExecutor db, String routineId, [CompletionResult? result]) async {
+  Future<void> onCompletion(
+    DatabaseExecutor db,
+    String routineId, [
+    CompletionResult? result,
+  ]) async {
     if (result != null && !result.advancesProgression) return;
 
     final List<Map<String, dynamic>> results = await db.query(
@@ -35,7 +40,7 @@ class ProgressionEngine {
       final step = routine['progressionStep'] as int? ?? 0;
       final target = routine['progressionTarget'] as int? ?? 0;
       final everyN = routine['progressionEveryN'] as int? ?? 1;
-      
+
       var current = routine['progressionCurrent'] as int? ?? 0;
       var done = routine['progressionDoneSinceAdvance'] as int? ?? 0;
 

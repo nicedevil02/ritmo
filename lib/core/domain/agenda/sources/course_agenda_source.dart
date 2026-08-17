@@ -89,17 +89,20 @@ class CourseAgendaSource implements AgendaSource {
 
     for (final s in sessions) {
       final course = coursesMap[s.courseId];
-      if (course != null && (course.status == CourseStatus.paused || course.isArchived)) {
+      if (course != null &&
+          (course.status == CourseStatus.paused || course.isArchived)) {
         continue;
       }
 
       // 1. Time fallback chain: session.plannedStartTime -> course.preferredTime -> null
-      final resolvedTime = (s.plannedStartTime != null && s.plannedStartTime!.trim().isNotEmpty)
+      final resolvedTime =
+          (s.plannedStartTime != null && s.plannedStartTime!.trim().isNotEmpty)
           ? s.plannedStartTime!.trim()
           : course?.preferredTime;
 
       // 2. Duration fallback chain: session.estimatedDurationMinutes -> course.sessionDurationMinutes -> 30
-      final resolvedDuration = s.estimatedDurationMinutes ?? course?.sessionDurationMinutes ?? 30;
+      final resolvedDuration =
+          s.estimatedDurationMinutes ?? course?.sessionDurationMinutes ?? 30;
 
       // 3. Status mapping: completed -> done, skipped -> skipped, pending -> pending
       AgendaCompletion completion = AgendaCompletion.pending;
@@ -109,22 +112,29 @@ class CourseAgendaSource implements AgendaSource {
         completion = AgendaCompletion.skipped;
       }
 
-      items.add(AgendaItem(
-        id: buildAgendaItemId(AgendaDomain.course, s.id, ctx.dateStr),
-        domain: AgendaDomain.course,
-        sourceId: s.id,
-        title: s.sessionTitle ?? 'جلسه ${s.sessionNumber}',
-        subtitle: course?.title,
-        dateStr: ctx.dateStr,
-        timeOfDay: resolvedTime,
-        durationMinutes: resolvedDuration,
-        category: Category.learning,
-        itemType: resolvedTime != null ? AgendaItemType.fixed : AgendaItemType.flexible,
-        completion: completion,
-        priority: 1.5,
-        deepLink: AgendaDeepLink(domain: AgendaDomain.course, targetId: s.courseId),
-        meta: {'session': s.toMap()},
-      ));
+      items.add(
+        AgendaItem(
+          id: buildAgendaItemId(AgendaDomain.course, s.id, ctx.dateStr),
+          domain: AgendaDomain.course,
+          sourceId: s.id,
+          title: s.sessionTitle ?? 'جلسه ${s.sessionNumber}',
+          subtitle: course?.title,
+          dateStr: ctx.dateStr,
+          timeOfDay: resolvedTime,
+          durationMinutes: resolvedDuration,
+          category: Category.learning,
+          itemType: resolvedTime != null
+              ? AgendaItemType.fixed
+              : AgendaItemType.flexible,
+          completion: completion,
+          priority: 1.5,
+          deepLink: AgendaDeepLink(
+            domain: AgendaDomain.course,
+            targetId: s.courseId,
+          ),
+          meta: {'session': s.toMap()},
+        ),
+      );
     }
 
     return items;

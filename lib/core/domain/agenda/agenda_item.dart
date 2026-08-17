@@ -23,26 +23,13 @@ enum AgendaDomain {
 }
 
 /// Explicit classification of an agenda item's scheduling constraints.
-enum AgendaItemType {
-  fixed,
-  flexible,
-  floating,
-  optional,
-}
+enum AgendaItemType { fixed, flexible, floating, optional }
 
 /// Completion / lifecycle state of an agenda item for its date.
 ///
 /// Historical prayer/worship completion in the past is treated as
 /// [AgendaCompletion.none] (unknown) — only today carries a real status.
-enum AgendaCompletion {
-  none,
-  pending,
-  done,
-  partial,
-  skipped,
-  overdue,
-  missed,
-}
+enum AgendaCompletion { none, pending, done, partial, skipped, overdue, missed }
 
 /// A lightweight pointer that lets the UI deep-link into the owning section
 /// for a given agenda item.
@@ -127,11 +114,12 @@ class AgendaItem {
     this.meta = const {},
     AgendaItemType? itemType,
     AgendaItemKind? kind,
-  })  : itemType = itemType ??
-            (_isValidTime(timeOfDay)
-                ? AgendaItemType.fixed
-                : AgendaItemType.flexible),
-        kind = kind ?? defaultKindFor(domain);
+  }) : itemType =
+           itemType ??
+           (_isValidTime(timeOfDay)
+               ? AgendaItemType.fixed
+               : AgendaItemType.flexible),
+       kind = kind ?? defaultKindFor(domain);
 
   static bool _isValidTime(String? timeOfDay) {
     final value = timeOfDay?.trim();
@@ -234,12 +222,12 @@ class AgendaItem {
       final key = sourceId.isNotEmpty ? sourceId : title;
       return '${domain.name}|$key';
     }
-    final seriesId = (meta['routine'] as Map?)?['id']?.toString() ??
+    final seriesId =
+        (meta['routine'] as Map?)?['id']?.toString() ??
         (meta['schedule'] as Map?)?['id']?.toString() ??
         title;
     return '${domain.name}|$seriesId|${timeOfDay ?? '-'}';
   }
-
 
   AgendaItem copyWith({
     String? id,
@@ -290,12 +278,12 @@ class AgendaItem {
 
 /// Options controlling how a day's agenda is assembled.
 class AgendaQueryOptions {
-
   const AgendaQueryOptions({
     this.includeCompleted = true,
     this.domains = const {},
     this.includeWorshipDebt = false,
   });
+
   /// Whether to include items that are already completed (Calendar: true,
   /// Home pending-lists: false).
   final bool includeCompleted;
@@ -316,7 +304,6 @@ class AgendaQueryOptions {
 
 /// The assembled agenda for a single day.
 class DayAgenda {
-
   const DayAgenda({
     required this.dateStr,
     required this.items,

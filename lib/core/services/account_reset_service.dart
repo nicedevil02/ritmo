@@ -11,14 +11,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Full transactional account and user data reset service.
 class AccountResetService {
   static Future<void> wipeUserData() async {
-    RitmoLog.info('AccountResetService', 'Starting full ordered wipe of user data');
+    RitmoLog.info(
+      'AccountResetService',
+      'Starting full ordered wipe of user data',
+    );
 
     // 0. Backup premium status
     Map<String, String>? premiumBackup;
     try {
       premiumBackup = await PremiumService.instance.exportEntitlement();
     } catch (e) {
-      RitmoLog.error('AccountResetService', 'Error backing up premium state', e);
+      RitmoLog.error(
+        'AccountResetService',
+        'Error backing up premium state',
+        e,
+      );
     }
 
     // 1. Cancel active alarms & notifications
@@ -41,7 +48,12 @@ class AccountResetService {
       final shmFile = File('$dbPath-shm');
       if (await shmFile.exists()) await shmFile.delete();
     } catch (e, st) {
-      RitmoLog.error('AccountResetService', 'Error resetting database files', e, st);
+      RitmoLog.error(
+        'AccountResetService',
+        'Error resetting database files',
+        e,
+        st,
+      );
     }
 
     // 4. Wipe attachment and document files directory
@@ -57,7 +69,12 @@ class AccountResetService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
     } catch (e, st) {
-      RitmoLog.error('AccountResetService', 'Error clearing SharedPreferences', e, st);
+      RitmoLog.error(
+        'AccountResetService',
+        'Error clearing SharedPreferences',
+        e,
+        st,
+      );
     }
 
     // 6. Clear Secure Storage (PIN, backup passcodes, tokens)
@@ -71,7 +88,11 @@ class AccountResetService {
       try {
         await PremiumService.instance.restoreEntitlement(premiumBackup);
       } catch (e) {
-        RitmoLog.error('AccountResetService', 'Error restoring premium state', e);
+        RitmoLog.error(
+          'AccountResetService',
+          'Error restoring premium state',
+          e,
+        );
       }
     }
 
@@ -81,16 +102,28 @@ class AccountResetService {
       await SeedService.seedSettings(freshDb);
       await SeedService.seedWorshipPractices(freshDb);
     } catch (e, st) {
-      RitmoLog.error('AccountResetService', 'Error re-seeding database after wipe', e, st);
+      RitmoLog.error(
+        'AccountResetService',
+        'Error re-seeding database after wipe',
+        e,
+        st,
+      );
     }
 
     // 8. Re-load premium state
     try {
       await PremiumService.instance.loadEntitlement();
     } catch (e) {
-      RitmoLog.error('AccountResetService', 'Error reloading premium state after restore', e);
+      RitmoLog.error(
+        'AccountResetService',
+        'Error reloading premium state after restore',
+        e,
+      );
     }
 
-    RitmoLog.info('AccountResetService', 'Full ordered reset completed successfully');
+    RitmoLog.info(
+      'AccountResetService',
+      'Full ordered reset completed successfully',
+    );
   }
 }

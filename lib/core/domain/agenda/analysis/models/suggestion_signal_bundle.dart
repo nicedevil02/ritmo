@@ -28,5 +28,6 @@ class SuggestionSignalBundle {
   int get pendingCount => items.where((i) => !i.isCompleted).length;
 
   /// Minute of the current time (0..1439), if [now] is available.
-  int? get currentMinutes => now != null ? (now!.hour * 60) + now!.minute : null;
+  int? get currentMinutes =>
+      now != null ? (now!.hour * 60) + now!.minute : null;
 }

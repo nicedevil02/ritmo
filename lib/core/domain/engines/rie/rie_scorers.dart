@@ -30,9 +30,10 @@ class ContextMatchScorer implements RoutineScorer {
   @override
   double score(Routine routine, ContextSnapshot snapshot) {
     final context = snapshot.dailyBehavior.context;
-    
+
     if (context == LifeContext.exam &&
-        (routine.category == Category.learning || routine.category == Category.konkur)) {
+        (routine.category == Category.learning ||
+            routine.category == Category.konkur)) {
       return 2;
     }
     if (context == LifeContext.sick && routine.category == Category.medical) {
@@ -41,7 +42,8 @@ class ContextMatchScorer implements RoutineScorer {
     if (context == LifeContext.travel && routine.category == Category.free) {
       return 1;
     }
-    if (context == LifeContext.worship && routine.category == Category.religious) {
+    if (context == LifeContext.worship &&
+        routine.category == Category.religious) {
       return 2;
     }
     return 0;
@@ -57,13 +59,16 @@ class EnergyFitScorer implements RoutineScorer {
     final currentEnergy = snapshot.currentEnergy;
 
     if (currentEnergy == EnergyLevel.high) {
-      return (routine.category == Category.fitness || routine.priority > 1.5) ? 2.0 : 1.0;
+      return (routine.category == Category.fitness || routine.priority > 1.5)
+          ? 2.0
+          : 1.0;
     }
     if (currentEnergy == EnergyLevel.medium) {
       return 1;
     }
     if (currentEnergy == EnergyLevel.low) {
-      if (routine.energyRule == EnergyRule.offerLight || routine.energyRule == EnergyRule.offerMinimal) {
+      if (routine.energyRule == EnergyRule.offerLight ||
+          routine.energyRule == EnergyRule.offerMinimal) {
         return 2;
       }
     }
@@ -122,15 +127,28 @@ class FocusAreaBoostScorer implements RoutineScorer {
 
     var isFocusCategory = false;
     for (final area in focusAreas) {
-      if (area == 'سلامتی' && routine.category == Category.medical) isFocusCategory = true;
-      if (area == 'ورزش' && routine.category == Category.fitness) isFocusCategory = true;
-      if (area == 'درس' && (routine.category == Category.learning || routine.category == Category.konkur)) isFocusCategory = true;
-      if (area == 'یادگیری مهارت' && routine.category == Category.learning) isFocusCategory = true;
-      if (area == 'کار' && routine.category == Category.work) isFocusCategory = true;
-      if (area == 'کسب درآمد' && routine.category == Category.work) isFocusCategory = true;
-      if (area == 'عبادت' && routine.category == Category.religious) isFocusCategory = true;
-      if (area == 'خانواده' && routine.category == Category.personal) isFocusCategory = true;
-      if (area == 'کاهش استرس' && (routine.category == Category.free || routine.category == Category.personal)) isFocusCategory = true;
+      if (area == 'سلامتی' && routine.category == Category.medical)
+        isFocusCategory = true;
+      if (area == 'ورزش' && routine.category == Category.fitness)
+        isFocusCategory = true;
+      if (area == 'درس' &&
+          (routine.category == Category.learning ||
+              routine.category == Category.konkur))
+        isFocusCategory = true;
+      if (area == 'یادگیری مهارت' && routine.category == Category.learning)
+        isFocusCategory = true;
+      if (area == 'کار' && routine.category == Category.work)
+        isFocusCategory = true;
+      if (area == 'کسب درآمد' && routine.category == Category.work)
+        isFocusCategory = true;
+      if (area == 'عبادت' && routine.category == Category.religious)
+        isFocusCategory = true;
+      if (area == 'خانواده' && routine.category == Category.personal)
+        isFocusCategory = true;
+      if (area == 'کاهش استرس' &&
+          (routine.category == Category.free ||
+              routine.category == Category.personal))
+        isFocusCategory = true;
     }
 
     return isFocusCategory ? 1.5 : 0.0;
@@ -159,7 +177,8 @@ class ReflectionAwareScorer implements RoutineScorer {
     if (!snapshot.gentleMode || routine.isEssential) return 0;
 
     var scoreAdjustment = 0.0;
-    final isHeavy = routine.priority > 1.5 ||
+    final isHeavy =
+        routine.priority > 1.5 ||
         routine.energyRule == EnergyRule.highEnergyOnly ||
         routine.energyImpact > 0;
 

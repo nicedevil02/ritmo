@@ -83,13 +83,20 @@ class OccurrenceOverride {
 abstract class OccurrenceOverrideRepository {
   Future<Map<String, OccurrenceOverride>> forDate(String dateStr);
   Future<Map<String, List<OccurrenceOverride>>> forRange(
-      String startDateStr, String endDateStr);
+    String startDateStr,
+    String endDateStr,
+  );
   Future<void> upsert(OccurrenceOverride override);
   Future<void> remove(String sourceType, String sourceId, String dateStr);
-  Future<void> removeAllFuture(String sourceType, String sourceId, String dateStr);
+  Future<void> removeAllFuture(
+    String sourceType,
+    String sourceId,
+    String dateStr,
+  );
 }
 
-class SqliteOccurrenceOverrideRepository implements OccurrenceOverrideRepository {
+class SqliteOccurrenceOverrideRepository
+    implements OccurrenceOverrideRepository {
   const SqliteOccurrenceOverrideRepository();
 
   /// Ensures the occurrence_overrides table and indexes exist.
@@ -151,7 +158,9 @@ class SqliteOccurrenceOverrideRepository implements OccurrenceOverrideRepository
 
   @override
   Future<Map<String, List<OccurrenceOverride>>> forRange(
-      String startDateStr, String endDateStr) async {
+    String startDateStr,
+    String endDateStr,
+  ) async {
     final db = await DatabaseHelper.instance.database;
     List<Map<String, dynamic>> rows;
     try {
@@ -205,7 +214,11 @@ class SqliteOccurrenceOverrideRepository implements OccurrenceOverrideRepository
   }
 
   @override
-  Future<void> remove(String sourceType, String sourceId, String dateStr) async {
+  Future<void> remove(
+    String sourceType,
+    String sourceId,
+    String dateStr,
+  ) async {
     final db = await DatabaseHelper.instance.database;
     try {
       await db.delete(
@@ -223,7 +236,11 @@ class SqliteOccurrenceOverrideRepository implements OccurrenceOverrideRepository
   }
 
   @override
-  Future<void> removeAllFuture(String sourceType, String sourceId, String dateStr) async {
+  Future<void> removeAllFuture(
+    String sourceType,
+    String sourceId,
+    String dateStr,
+  ) async {
     final db = await DatabaseHelper.instance.database;
     try {
       await db.delete(

@@ -12,7 +12,8 @@ class PersianDigits {
   static String toPersian(Object? input) => convert(input?.toString() ?? '');
 }
 
-String toPersianDigits(Object? input) => PersianDigits.convert(input?.toString() ?? '');
+String toPersianDigits(Object? input) =>
+    PersianDigits.convert(input?.toString() ?? '');
 
 extension PersianDigitsExtension on Object {
   String toPersianDigits() => PersianDigits.convert(toString());

@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 @immutable
 class RitmoDate {
   RitmoDate(DateTime dt)
-      : dateTime = DateTime(dt.year, dt.month, dt.day),
-        value =
-            '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+    : dateTime = DateTime(dt.year, dt.month, dt.day),
+      value =
+          '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 
   final DateTime dateTime;
   final String value; // Format: 'YYYY-MM-DD'

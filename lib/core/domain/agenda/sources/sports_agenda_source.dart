@@ -48,8 +48,15 @@ class SportsAgendaSource implements AgendaSource {
     Database db,
     Map<String, String> settingsMap,
   ) async {
-    final sportsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sports_enabled') ||
-        ModuleGate.instance.isEnabledFrom(settingsMap, 'module_supplementary_sports_enabled');
+    final sportsEnabled =
+        ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_sports_enabled',
+        ) ||
+        ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_supplementary_sports_enabled',
+        );
 
     if (!sportsEnabled) {
       return SportsAgendaSource(
@@ -97,7 +104,9 @@ class SportsAgendaSource implements AgendaSource {
         legacyPlans.add(Map<String, dynamic>.from(r));
       }
     } catch (e, st) {
-      debugPrint('[SportsAgendaSource] schema load ss_workout_plan error: $e\n$st');
+      debugPrint(
+        '[SportsAgendaSource] schema load ss_workout_plan error: $e\n$st',
+      );
     }
 
     return SportsAgendaSource(
@@ -135,31 +144,46 @@ class SportsAgendaSource implements AgendaSource {
 
     List<Map<String, dynamic>> filteredPlans;
     if (hasWeekCol) {
-      filteredPlans = legacyPlans.where((p) => p['dayOfWeek'] == legacyDay && p['week'] == activeW).toList();
+      filteredPlans = legacyPlans
+          .where((p) => p['dayOfWeek'] == legacyDay && p['week'] == activeW)
+          .toList();
     } else {
-      filteredPlans = legacyPlans.where((p) => p['dayOfWeek'] == legacyDay).toList();
+      filteredPlans = legacyPlans
+          .where((p) => p['dayOfWeek'] == legacyDay)
+          .toList();
     }
 
-    final items = filteredPlans.map((plan) => _legacyPlanItem(plan, dateStr)).toList(growable: false);
+    final items = filteredPlans
+        .map((plan) => _legacyPlanItem(plan, dateStr))
+        .toList(growable: false);
 
     // Step 4: Final Deduplication Guard
     final seen = <String>{};
-    return items.where((i) => seen.add('${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}')).toList();
+    return items
+        .where(
+          (i) => seen.add(
+            '${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}',
+          ),
+        )
+        .toList();
   }
 
   List<AgendaItem> _itemsForPrescription(
     Map<String, dynamic> prescription,
     String dateStr,
   ) {
-    final slotType = prescription['slotType']?.toString().toUpperCase() ?? 'REST';
+    final slotType =
+        prescription['slotType']?.toString().toUpperCase() ?? 'REST';
     if (slotType == 'REST') return const [];
 
     final id = prescription['id']?.toString() ?? 'ss_prescription_$dateStr';
-    final title = prescription['headlineFa']?.toString().trim().isNotEmpty == true
+    final title =
+        prescription['headlineFa']?.toString().trim().isNotEmpty == true
         ? prescription['headlineFa'].toString()
         : 'تمرین ورزشی';
     final duration = prescription['targetMinutes'] as int? ?? 45;
-    final status = prescription['status']?.toString().toUpperCase() ?? 'PLANNED';
+    final status =
+        prescription['status']?.toString().toUpperCase() ?? 'PLANNED';
 
     return [
       AgendaItem(

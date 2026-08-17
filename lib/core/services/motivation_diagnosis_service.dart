@@ -2,17 +2,18 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 
 enum SkipReasonType {
-  tired,        // خسته بودم
+  tired, // خسته بودم
   noStartPoint, // نمی‌دانستم از کجا شروع کنم
-  tooBig,       // خیلی بزرگ بود
-  notInMood,    // حوصله نداشتم
-  forgot,       // یادم رفت
-  external,     // بیرونی بود (مهمان، سفر، کار)
+  tooBig, // خیلی بزرگ بود
+  notInMood, // حوصله نداشتم
+  forgot, // یادم رفت
+  external, // بیرونی بود (مهمان، سفر، کار)
 }
 
 class MotivationDiagnosisService {
   MotivationDiagnosisService._();
-  static final MotivationDiagnosisService instance = MotivationDiagnosisService._();
+  static final MotivationDiagnosisService instance =
+      MotivationDiagnosisService._();
 
   /// Maps human-readable Persian skip reason selection to enum.
   SkipReasonType parseReason(String reasonKey) {
@@ -52,19 +53,15 @@ class MotivationDiagnosisService {
 
       if (dateStr != null && dateStr.isNotEmpty) {
         final nowMs = DateTime.now().millisecondsSinceEpoch;
-        await txn.insert(
-          'skip_reasons',
-          {
-            'id': 'sr_${routineId}_$dateStr',
-            'itemId': routineId,
-            'domain': 'routine',
-            'dateStr': dateStr,
-            'reason': reason.name.toUpperCase(),
-            'note': null,
-            'createdAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await txn.insert('skip_reasons', {
+          'id': 'sr_${routineId}_$dateStr',
+          'itemId': routineId,
+          'domain': 'routine',
+          'dateStr': dateStr,
+          'reason': reason.name.toUpperCase(),
+          'note': null,
+          'createdAt': nowMs,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
     });
   }
@@ -76,13 +73,15 @@ class MotivationDiagnosisService {
         return {
           'actionType': 'SHRINK_OR_MOVE_PEAK',
           'title': 'پیشنهاد نسخهٔ حداقلی یا انتقال به اوج انرژی',
-          'description': 'برای دفعهٔ بعد نسخهٔ کوتاه‌تر اجرا شود یا زمان به پنجرهٔ اوج انرژی منتقل شود.',
+          'description':
+              'برای دفعهٔ بعد نسخهٔ کوتاه‌تر اجرا شود یا زمان به پنجرهٔ اوج انرژی منتقل شود.',
         };
       case SkipReasonType.noStartPoint:
         return {
           'actionType': 'ADD_FIRST_PHYSICAL_STEP',
           'title': 'تعیین اولین قدم فیزیکی',
-          'description': 'یک اقدام کوچک فیزیکی (مثلاً: باز کردن کتاب صفحهٔ ۱۲) ثبت کنید.',
+          'description':
+              'یک اقدام کوچک فیزیکی (مثلاً: باز کردن کتاب صفحهٔ ۱۲) ثبت کنید.',
         };
       case SkipReasonType.tooBig:
         return {
@@ -94,7 +93,8 @@ class MotivationDiagnosisService {
         return {
           'actionType': 'TEMPTATION_BUNDLE',
           'title': 'بسته‌بندی وسوسه یا تغییر ساعت',
-          'description': 'اتصال این کار به یک فعالیت لذت‌بخش یا انتقال به بازهٔ خلق بالا.',
+          'description':
+              'اتصال این کار به یک فعالیت لذت‌بخش یا انتقال به بازهٔ خلق بالا.',
         };
       case SkipReasonType.forgot:
         return {
@@ -106,7 +106,8 @@ class MotivationDiagnosisService {
         return {
           'actionType': 'NONE_PRESERVE_STREAK',
           'title': 'ثبت دلیل بیرونی (حفظ زنجیره)',
-          'description': 'دلیل بیرونی ثبت شد. این نوبت در آمار شکست حساب نمی‌شود.',
+          'description':
+              'دلیل بیرونی ثبت شد. این نوبت در آمار شکست حساب نمی‌شود.',
         };
     }
   }

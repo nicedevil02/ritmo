@@ -1,9 +1,5 @@
 // C-11: CyclePrivacyGuard with explicit CycleAudience enum and canonical user_gender matching.
-enum CycleAudience {
-  eligible,
-  notEligible,
-  unknown,
-}
+enum CycleAudience { eligible, notEligible, unknown }
 
 class CyclePrivacyGuard {
   const CyclePrivacyGuard._();
@@ -27,7 +23,9 @@ class CyclePrivacyGuard {
   /// Evaluates cycle audience eligibility strictly against canonical key `user_gender`.
   /// Exact normalized matching is used (no substring contains).
   static CycleAudience getAudience(Map<String, dynamic> settings) {
-    final raw = (settings['user_gender']?.toString() ?? '').trim().toUpperCase();
+    final raw = (settings['user_gender']?.toString() ?? '')
+        .trim()
+        .toUpperCase();
     if (raw.isEmpty || raw == 'UNSET' || raw == 'UNKNOWN') {
       return CycleAudience.unknown;
     }

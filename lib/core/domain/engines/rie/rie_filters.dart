@@ -17,19 +17,33 @@ class ModuleGateFilter implements RoutineFilter {
 
   @override
   List<Routine> filter(List<Routine> routines, ContextSnapshot snapshot) {
-    return routines.where((r) => isModuleEnabled(r.category, snapshot.appSettings)).toList();
+    return routines
+        .where((r) => isModuleEnabled(r.category, snapshot.appSettings))
+        .toList();
   }
 
   static bool isModuleEnabled(Category category, Map<String, String> settings) {
     switch (category) {
       case Category.religious:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_religion_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_religion_enabled',
+        );
       case Category.medical:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_medicine_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_medicine_enabled',
+        );
       case Category.learning:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_courses_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_courses_enabled',
+        );
       case Category.konkur:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_study_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_study_enabled',
+        );
       case Category.work:
       case Category.personal:
       case Category.fitness:
@@ -47,11 +61,14 @@ class BiologicalConstraintsFilter implements RoutineFilter {
   @override
   List<Routine> filter(List<Routine> routines, ContextSnapshot snapshot) {
     // Consent is strictly opt-in: an absent key must mean "no effect".
-    final worshipConsent = snapshot.appSettings['cycle_consent_worship'] == 'true';
+    final worshipConsent =
+        snapshot.appSettings['cycle_consent_worship'] == 'true';
 
     return routines.where((r) {
       // Menstruation suppresses religious routines if consent is enabled
-      if (snapshot.isMenstruating && r.category == Category.religious && worshipConsent) {
+      if (snapshot.isMenstruating &&
+          r.category == Category.religious &&
+          worshipConsent) {
         return false;
       }
       return true;
@@ -69,8 +86,10 @@ class ZoneAndEssentialFilter implements RoutineFilter {
     final blockedRoutineIds = snapshot.blockedRoutineIdsInZone;
 
     return routines.where((r) {
-      final isZoneBlocked = blockedRoutineIds.contains(r.id) ||
-          ((activeZoneMode == 'SILENT' || activeZoneMode == 'FOCUS') && !r.isEssential);
+      final isZoneBlocked =
+          blockedRoutineIds.contains(r.id) ||
+          ((activeZoneMode == 'SILENT' || activeZoneMode == 'FOCUS') &&
+              !r.isEssential);
 
       if (isZoneBlocked) {
         // Bypass blocked zone constraint if the routine is marked essential
@@ -91,7 +110,8 @@ class EnergyEngineFilter implements RoutineFilter {
 
     return routines.where((r) {
       if (currentEnergy == EnergyLevel.low && !r.isEssential) {
-        if (r.energyRule == EnergyRule.skip || r.energyRule == EnergyRule.highEnergyOnly) {
+        if (r.energyRule == EnergyRule.skip ||
+            r.energyRule == EnergyRule.highEnergyOnly) {
           return false;
         }
       }
@@ -112,7 +132,8 @@ class ContextDailyBehaviorFilter implements RoutineFilter {
 
     return routines.where((r) {
       if (behavior == 'SILENCE_ALL') {
-        final isCriticalMedicine = r.category == Category.medical && r.isEssential;
+        final isCriticalMedicine =
+            r.category == Category.medical && r.isEssential;
         if (!isCriticalMedicine) {
           return false;
         }

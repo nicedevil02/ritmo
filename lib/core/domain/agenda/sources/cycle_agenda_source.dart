@@ -45,7 +45,8 @@ class CycleAgendaSource implements AgendaSource {
       'module_cycle_enabled',
     );
     final dashboardConsent = settingsMap['cycle_consent_dashboard'] == 'true';
-    final effectiveAllowed = isFemale && isCycleEnabled && dashboardConsent && cycleAllowed;
+    final effectiveAllowed =
+        isFemale && isCycleEnabled && dashboardConsent && cycleAllowed;
     final isPregnant = CycleSettings.isPregnancyMode(settingsMap);
 
     if (!effectiveAllowed) {
@@ -63,16 +64,32 @@ class CycleAgendaSource implements AgendaSource {
     try {
       periodRows = await db.query('cycle_periods', orderBy: 'startDate ASC');
 
-      cycleOutput = await RitmoEngineBus.instance.execute<CycleEngineInput, CycleEngineOutput>(
-        CycleEngine,
-        CycleEngineInput(
-          db: db,
-          appSettings: settingsMap,
-          now: DateTime.now(),
-        ),
-      );
+      try {
+        cycleOutput = await RitmoEngineBus.instance
+            .execute<CycleEngineInput, CycleEngineOutput>(
+              CycleEngine,
+              CycleEngineInput(
+                db: db,
+                appSettings: settingsMap,
+                now: DateTime.now(),
+              ),
+            );
+      } catch (_) {
+        // Fallback to direct calculation if bus is uninitialized (e.g. In isolated unit tests)
+        cycleOutput = await CycleEngine().calculate(
+          CycleEngineInput(
+            db: db,
+            appSettings: settingsMap,
+            now: DateTime.now(),
+          ),
+        );
+      }
     } catch (e, st) {
-      RitmoLogger.error('[CycleAgendaSource] error during load', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleAgendaSource] error during load',
+        error: e,
+        stack: st,
+      );
     }
 
     return CycleAgendaSource(
@@ -86,11 +103,6 @@ class CycleAgendaSource implements AgendaSource {
   @override
   List<AgendaItem> itemsForDate(AgendaDayContext ctx) {
     if (!ctx.options.wants(AgendaDomain.cycle) || !isEnabled || isPregnancy) {
-      return const [];
-    }
-
-    final out = cycleOutput;
-    if (out == null || !out.hasData || out.currentPhase == CyclePhase.pregnancy) {
       return const [];
     }
 
@@ -109,14 +121,21 @@ class CycleAgendaSource implements AgendaSource {
           final dayNum = CycleDateContract.daysBetween(start, day) + 1;
           items.add(
             AgendaItem(
-              id: buildAgendaItemId(AgendaDomain.cycle, '${ctx.dateStr}_actual', ctx.dateStr),
+              id: buildAgendaItemId(
+                AgendaDomain.cycle,
+                '${ctx.dateStr}_actual',
+                ctx.dateStr,
+              ),
               domain: AgendaDomain.cycle,
               sourceId: '${ctx.dateStr}_actual',
               title: 'ریتم طبیعی بدن (روز $dayNum)',
               dateStr: ctx.dateStr,
               category: Category.personal,
               priority: 0.85,
-              deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: ctx.dateStr),
+              deepLink: AgendaDeepLink(
+                domain: AgendaDomain.cycle,
+                targetId: ctx.dateStr,
+              ),
             ),
           );
           break;
@@ -128,14 +147,21 @@ class CycleAgendaSource implements AgendaSource {
           final dayNum = daysDiff + 1;
           items.add(
             AgendaItem(
-              id: buildAgendaItemId(AgendaDomain.cycle, '${ctx.dateStr}_actual_open', ctx.dateStr),
+              id: buildAgendaItemId(
+                AgendaDomain.cycle,
+                '${ctx.dateStr}_actual_open',
+                ctx.dateStr,
+              ),
               domain: AgendaDomain.cycle,
               sourceId: '${ctx.dateStr}_actual_open',
               title: 'ریتم طبیعی بدن (روز $dayNum)',
               dateStr: ctx.dateStr,
               category: Category.personal,
               priority: 0.85,
-              deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: ctx.dateStr),
+              deepLink: AgendaDeepLink(
+                domain: AgendaDomain.cycle,
+                targetId: ctx.dateStr,
+              ),
             ),
           );
           break;
@@ -144,59 +170,85 @@ class CycleAgendaSource implements AgendaSource {
     }
 
     // 2. Future prediction items
-    bool inFutureWindow(DateTime? start, DateTime? end) {
-      if (start == null || end == null) return false;
-      final s = CycleDateContract.cleanDate(start);
-      final e = CycleDateContract.cleanDate(end);
-      return CycleDateContract.inWindow(day, s, e);
-    }
+    final out = cycleOutput;
+    if (out != null &&
+        out.hasData &&
+        out.currentPhase != CyclePhase.pregnancy) {
+      bool inFutureWindow(DateTime? start, DateTime? end) {
+        if (start == null || end == null) return false;
+        final s = CycleDateContract.cleanDate(start);
+        final e = CycleDateContract.cleanDate(end);
+        return CycleDateContract.inWindow(day, s, e);
+      }
 
-    // Next period prediction window
-    if (inFutureWindow(out.nextPeriodWindowStart, out.nextPeriodWindowEnd)) {
-      items.add(
-        AgendaItem(
-          id: buildAgendaItemId(AgendaDomain.cycle, '${ctx.dateStr}_pred_period', ctx.dateStr),
-          domain: AgendaDomain.cycle,
-          sourceId: '${ctx.dateStr}_pred_period',
-          title: 'پیش‌بینی شروع دوره',
-          dateStr: ctx.dateStr,
-          category: Category.personal,
-          priority: 0.8,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: ctx.dateStr),
-        ),
-      );
-    }
+      // Next period prediction window
+      if (inFutureWindow(out.nextPeriodWindowStart, out.nextPeriodWindowEnd)) {
+        items.add(
+          AgendaItem(
+            id: buildAgendaItemId(
+              AgendaDomain.cycle,
+              '${ctx.dateStr}_pred_period',
+              ctx.dateStr,
+            ),
+            domain: AgendaDomain.cycle,
+            sourceId: '${ctx.dateStr}_pred_period',
+            title: 'پیش‌بینی شروع دوره',
+            dateStr: ctx.dateStr,
+            category: Category.personal,
+            priority: 0.8,
+            deepLink: AgendaDeepLink(
+              domain: AgendaDomain.cycle,
+              targetId: ctx.dateStr,
+            ),
+          ),
+        );
+      }
 
-    // PMS window prediction
-    if (inFutureWindow(out.pmsWindowStart, out.pmsWindowEnd)) {
-      items.add(
-        AgendaItem(
-          id: buildAgendaItemId(AgendaDomain.cycle, '${ctx.dateStr}_pred_pms', ctx.dateStr),
-          domain: AgendaDomain.cycle,
-          sourceId: '${ctx.dateStr}_pred_pms',
-          title: 'پنجره‌ی پیش‌بینی PMS',
-          dateStr: ctx.dateStr,
-          category: Category.personal,
-          priority: 0.75,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: ctx.dateStr),
-        ),
-      );
-    }
+      // PMS window prediction
+      if (inFutureWindow(out.pmsWindowStart, out.pmsWindowEnd)) {
+        items.add(
+          AgendaItem(
+            id: buildAgendaItemId(
+              AgendaDomain.cycle,
+              '${ctx.dateStr}_pred_pms',
+              ctx.dateStr,
+            ),
+            domain: AgendaDomain.cycle,
+            sourceId: '${ctx.dateStr}_pred_pms',
+            title: 'پنجره‌ی پیش‌بینی PMS',
+            dateStr: ctx.dateStr,
+            category: Category.personal,
+            priority: 0.75,
+            deepLink: AgendaDeepLink(
+              domain: AgendaDomain.cycle,
+              targetId: ctx.dateStr,
+            ),
+          ),
+        );
+      }
 
-    // Fertile window prediction
-    if (inFutureWindow(out.fertileWindowStart, out.fertileWindowEnd)) {
-      items.add(
-        AgendaItem(
-          id: buildAgendaItemId(AgendaDomain.cycle, '${ctx.dateStr}_pred_fertile', ctx.dateStr),
-          domain: AgendaDomain.cycle,
-          sourceId: '${ctx.dateStr}_pred_fertile',
-          title: 'پنجره‌ی باروری',
-          dateStr: ctx.dateStr,
-          category: Category.personal,
-          priority: 0.7,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: ctx.dateStr),
-        ),
-      );
+      // Fertile window prediction
+      if (inFutureWindow(out.fertileWindowStart, out.fertileWindowEnd)) {
+        items.add(
+          AgendaItem(
+            id: buildAgendaItemId(
+              AgendaDomain.cycle,
+              '${ctx.dateStr}_pred_fertile',
+              ctx.dateStr,
+            ),
+            domain: AgendaDomain.cycle,
+            sourceId: '${ctx.dateStr}_pred_fertile',
+            title: 'پنجره‌ی باروری',
+            dateStr: ctx.dateStr,
+            category: Category.personal,
+            priority: 0.7,
+            deepLink: AgendaDeepLink(
+              domain: AgendaDomain.cycle,
+              targetId: ctx.dateStr,
+            ),
+          ),
+        );
+      }
     }
 
     return items;

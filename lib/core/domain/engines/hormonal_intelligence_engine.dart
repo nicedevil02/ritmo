@@ -57,14 +57,19 @@ class HormonalEngineOutput {
 
 /// Compatibility adapter over [CycleEngine] (Canonical Source of Truth).
 /// Deprecated: Direct callers should consume [CycleEngine] or [CycleWorshipPolicy] / [CycleConsentBridge].
-@Deprecated('Direct callers should consume CycleEngine or CycleWorshipPolicy / CycleConsentBridge.')
+@Deprecated(
+  'Direct callers should consume CycleEngine or CycleWorshipPolicy / CycleConsentBridge.',
+)
 class HormonalIntelligenceEngine {
   static Future<HormonalEngineOutput> evaluate({
     required Database db,
     required Map<String, String> appSettings,
     required DateTime now,
   }) async {
-    final cycleEnabled = ModuleGate.instance.isEnabledFrom(appSettings, 'module_cycle_enabled');
+    final cycleEnabled = ModuleGate.instance.isEnabledFrom(
+      appSettings,
+      'module_cycle_enabled',
+    );
     final isFemale = CyclePrivacyGuard.isVisible(appSettings);
 
     if (!cycleEnabled || !isFemale) {
@@ -168,7 +173,9 @@ class HormonalIntelligenceEngine {
         fastingSuspended: isWorshipSuspended,
         qadaTracked: isWorshipSuspended,
       ),
-      nextCycleStartDate: engineOutput.nextPeriodPrediction ?? now.add(const Duration(days: 14)),
+      nextCycleStartDate:
+          engineOutput.nextPeriodPrediction ??
+          now.add(const Duration(days: 14)),
       hasData: true,
     );
   }

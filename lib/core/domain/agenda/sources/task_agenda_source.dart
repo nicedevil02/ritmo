@@ -40,10 +40,10 @@ class TaskAgendaSource implements AgendaSource {
     Database db,
     DateTime start,
     DateTime end,
-    String todayStr,
-    [String? appStartDateStr,
-    int lookbackDays = 14]
-  ) async {
+    String todayStr, [
+    String? appStartDateStr,
+    int lookbackDays = 14,
+  ]) async {
     try {
       final startStr = start.toIso8601String().substring(0, 10);
       final endStr = end.toIso8601String().substring(0, 10);
@@ -78,15 +78,19 @@ class TaskAgendaSource implements AgendaSource {
 
       // 3) Overdue tasks with configurable lookback window (M2-7)
       final parsedToday = DateTime.tryParse(todayStr) ?? DateTime.now();
-      final lookbackDate = parsedToday.subtract(Duration(days: lookbackDays > 0 ? lookbackDays : 14));
+      final lookbackDate = parsedToday.subtract(
+        Duration(days: lookbackDays > 0 ? lookbackDays : 14),
+      );
       final lookbackStartStr = lookbackDate.toIso8601String().substring(0, 10);
 
       String effectiveStartDate = lookbackStartStr;
-      if (appStartDateStr != null && appStartDateStr.compareTo(lookbackStartStr) > 0) {
+      if (appStartDateStr != null &&
+          appStartDateStr.compareTo(lookbackStartStr) > 0) {
         effectiveStartDate = appStartDateStr;
       }
 
-      const overdueWhere = 'isDone = 0 AND dueDate IS NOT NULL AND dueDate != "" AND dueDate < ? AND dueDate >= ?';
+      const overdueWhere =
+          'isDone = 0 AND dueDate IS NOT NULL AND dueDate != "" AND dueDate < ? AND dueDate >= ?';
       final overdueArgs = [todayStr, effectiveStartDate];
 
       // Count total overdue
@@ -169,34 +173,39 @@ class TaskAgendaSource implements AgendaSource {
 
       String? subtitle;
       if (steps != null && steps.total > 0) {
-        subtitle = '${toPersianDigits(steps.done)} از ${toPersianDigits(steps.total)}';
+        subtitle =
+            '${toPersianDigits(steps.done)} از ${toPersianDigits(steps.total)}';
       } else if (note != null && note.trim().isNotEmpty) {
         final trimmed = note.trim();
-        subtitle = trimmed.length > 50 ? '${trimmed.substring(0, 50)}…' : trimmed;
+        subtitle = trimmed.length > 50
+            ? '${trimmed.substring(0, 50)}…'
+            : trimmed;
       }
 
-      result.add(AgendaItem(
-        id: buildAgendaItemId(AgendaDomain.task, taskId, ctx.dateStr),
-        domain: AgendaDomain.task,
-        kind: AgendaItemKind.task,
-        sourceId: taskId,
-        title: title,
-        subtitle: subtitle,
-        dateStr: ctx.dateStr,
-        timeOfDay: dueTime,
-        durationMinutes: null,
-        category: Category.personal,
-        completion: isDone ? AgendaCompletion.done : AgendaCompletion.pending,
-        priority: isImportant ? 2.0 : 1.0,
-        isEssential: false,
-        deepLink: AgendaDeepLink(domain: AgendaDomain.task, targetId: taskId),
-        meta: {
-          'taskRow': row,
-          'stepsDone': steps?.done ?? 0,
-          'stepsTotal': steps?.total ?? 0,
-          'isImportant': isImportant,
-        },
-      ));
+      result.add(
+        AgendaItem(
+          id: buildAgendaItemId(AgendaDomain.task, taskId, ctx.dateStr),
+          domain: AgendaDomain.task,
+          kind: AgendaItemKind.task,
+          sourceId: taskId,
+          title: title,
+          subtitle: subtitle,
+          dateStr: ctx.dateStr,
+          timeOfDay: dueTime,
+          durationMinutes: null,
+          category: Category.personal,
+          completion: isDone ? AgendaCompletion.done : AgendaCompletion.pending,
+          priority: isImportant ? 2.0 : 1.0,
+          isEssential: false,
+          deepLink: AgendaDeepLink(domain: AgendaDomain.task, targetId: taskId),
+          meta: {
+            'taskRow': row,
+            'stepsDone': steps?.done ?? 0,
+            'stepsTotal': steps?.total ?? 0,
+            'isImportant': isImportant,
+          },
+        ),
+      );
     }
 
     // 2) Dateless tasks (ONLY on today, M2-7)
@@ -210,34 +219,42 @@ class TaskAgendaSource implements AgendaSource {
 
         String? subtitle = 'بدون تاریخ مشخص';
         if (steps != null && steps.total > 0) {
-          subtitle = '${toPersianDigits(steps.done)} از ${toPersianDigits(steps.total)} (بدون تاریخ)';
+          subtitle =
+              '${toPersianDigits(steps.done)} از ${toPersianDigits(steps.total)} (بدون تاریخ)';
         } else if (note != null && note.trim().isNotEmpty) {
           final trimmed = note.trim();
-          subtitle = trimmed.length > 40 ? '${trimmed.substring(0, 40)}…' : trimmed;
+          subtitle = trimmed.length > 40
+              ? '${trimmed.substring(0, 40)}…'
+              : trimmed;
         }
 
-        result.add(AgendaItem(
-          id: 'task:$taskId:dateless:${ctx.dateStr}',
-          domain: AgendaDomain.task,
-          kind: AgendaItemKind.task,
-          sourceId: taskId,
-          title: title,
-          subtitle: subtitle,
-          dateStr: ctx.dateStr,
-          timeOfDay: null,
-          durationMinutes: null,
-          category: Category.personal,
-          itemType: AgendaItemType.floating,
-          completion: AgendaCompletion.pending,
-          priority: isImportant ? 1.8 : 0.9,
-          isEssential: false,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.task, targetId: taskId),
-          meta: {
-            'taskRow': row,
-            'isDateless': true,
-            'isImportant': isImportant,
-          },
-        ));
+        result.add(
+          AgendaItem(
+            id: 'task:$taskId:dateless:${ctx.dateStr}',
+            domain: AgendaDomain.task,
+            kind: AgendaItemKind.task,
+            sourceId: taskId,
+            title: title,
+            subtitle: subtitle,
+            dateStr: ctx.dateStr,
+            timeOfDay: null,
+            durationMinutes: null,
+            category: Category.personal,
+            itemType: AgendaItemType.floating,
+            completion: AgendaCompletion.pending,
+            priority: isImportant ? 1.8 : 0.9,
+            isEssential: false,
+            deepLink: AgendaDeepLink(
+              domain: AgendaDomain.task,
+              targetId: taskId,
+            ),
+            meta: {
+              'taskRow': row,
+              'isDateless': true,
+              'isImportant': isImportant,
+            },
+          ),
+        );
       }
     }
 
@@ -253,61 +270,75 @@ class TaskAgendaSource implements AgendaSource {
         try {
           final parts = origDateStr.split('-');
           if (parts.length == 3) {
-            final dt = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+            final dt = DateTime(
+              int.parse(parts[0]),
+              int.parse(parts[1]),
+              int.parse(parts[2]),
+            );
             final j = Jalali.fromDateTime(dt);
-            jalaliSubtitle = 'معوقه از ${toPersianDigits(j.day)} ${j.formatter.mN}';
+            jalaliSubtitle =
+                'معوقه از ${toPersianDigits(j.day)} ${j.formatter.mN}';
           }
-        } catch (e, st) { debugPrint('Error in task_agenda_source.dart: $e\n$st'); }
+        } catch (e, st) {
+          debugPrint('Error in task_agenda_source.dart: $e\n$st');
+        }
 
-        result.add(AgendaItem(
-          // Exception: overdue tasks deliberately have a distinct ID pattern.
-          id: 'task:$taskId:overdue:${ctx.dateStr}',
-          domain: AgendaDomain.task,
-          kind: AgendaItemKind.task,
-          sourceId: taskId,
-          title: title,
-          subtitle: jalaliSubtitle,
-          dateStr: ctx.dateStr,
-          timeOfDay: null,
-          durationMinutes: null,
-          category: Category.personal,
-          completion: AgendaCompletion.overdue,
-          priority: 3.0,
-          isEssential: false,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.task, targetId: taskId),
-          meta: {
-            'taskRow': row,
-            'isOverdue': true,
-            'originalDueDate': origDateStr,
-            'isImportant': isImportant,
-          },
-        ));
+        result.add(
+          AgendaItem(
+            // Exception: overdue tasks deliberately have a distinct ID pattern.
+            id: 'task:$taskId:overdue:${ctx.dateStr}',
+            domain: AgendaDomain.task,
+            kind: AgendaItemKind.task,
+            sourceId: taskId,
+            title: title,
+            subtitle: jalaliSubtitle,
+            dateStr: ctx.dateStr,
+            timeOfDay: null,
+            durationMinutes: null,
+            category: Category.personal,
+            completion: AgendaCompletion.overdue,
+            priority: 3.0,
+            isEssential: false,
+            deepLink: AgendaDeepLink(
+              domain: AgendaDomain.task,
+              targetId: taskId,
+            ),
+            meta: {
+              'taskRow': row,
+              'isOverdue': true,
+              'originalDueDate': origDateStr,
+              'isImportant': isImportant,
+            },
+          ),
+        );
       }
 
       // Overflow card for overdue tasks (M2-7)
       final remaining = totalOverdueCount - overdueTasks.length;
       if (remaining > 0) {
-        result.add(AgendaItem(
-          id: 'task:overdue_overflow:${ctx.dateStr}',
-          domain: AgendaDomain.task,
-          kind: AgendaItemKind.task,
-          sourceId: 'overdue_overflow',
-          title: '${toPersianDigits(remaining)} مورد دیگر از کارهای معوقه',
-          subtitle: 'برای مشاهده همه کارهای معوقه به بخش کارها بروید',
-          dateStr: ctx.dateStr,
-          timeOfDay: null,
-          durationMinutes: null,
-          category: Category.personal,
-          itemType: AgendaItemType.flexible,
-          completion: AgendaCompletion.overdue,
-          priority: 0.1,
-          isEssential: false,
-          deepLink: const AgendaDeepLink(domain: AgendaDomain.task, targetId: 'tasks_all'),
-          meta: {
-            'isOverdueOverflow': true,
-            'remainingCount': remaining,
-          },
-        ));
+        result.add(
+          AgendaItem(
+            id: 'task:overdue_overflow:${ctx.dateStr}',
+            domain: AgendaDomain.task,
+            kind: AgendaItemKind.task,
+            sourceId: 'overdue_overflow',
+            title: '${toPersianDigits(remaining)} مورد دیگر از کارهای معوقه',
+            subtitle: 'برای مشاهده همه کارهای معوقه به بخش کارها بروید',
+            dateStr: ctx.dateStr,
+            timeOfDay: null,
+            durationMinutes: null,
+            category: Category.personal,
+            itemType: AgendaItemType.flexible,
+            completion: AgendaCompletion.overdue,
+            priority: 0.1,
+            isEssential: false,
+            deepLink: const AgendaDeepLink(
+              domain: AgendaDomain.task,
+              targetId: 'tasks_all',
+            ),
+            meta: {'isOverdueOverflow': true, 'remainingCount': remaining},
+          ),
+        );
       }
     }
 

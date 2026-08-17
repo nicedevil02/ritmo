@@ -11,7 +11,8 @@ import 'package:ritmo/core/services/backup_service.dart';
 
 class GoogleDriveBackupService implements BackupPlatform {
   GoogleDriveBackupService._internal();
-  static final GoogleDriveBackupService instance = GoogleDriveBackupService._internal();
+  static final GoogleDriveBackupService instance =
+      GoogleDriveBackupService._internal();
 
   static const List<String> _scopes = [drive.DriveApi.driveAppdataScope];
   GoogleSignInAccount? _currentUser;
@@ -23,8 +24,11 @@ class GoogleDriveBackupService implements BackupPlatform {
       // Initialize first (required in google_sign_in v7.x)
       await GoogleSignIn.instance.initialize();
       // Try silent sign in first
-      _currentUser = await GoogleSignIn.instance.attemptLightweightAuthentication();
-      _currentUser ??= await GoogleSignIn.instance.authenticate(scopeHint: _scopes);
+      _currentUser = await GoogleSignIn.instance
+          .attemptLightweightAuthentication();
+      _currentUser ??= await GoogleSignIn.instance.authenticate(
+        scopeHint: _scopes,
+      );
       return _currentUser != null;
     } catch (e) {
       debugPrint('Google Drive Sign-in Error: $e');
@@ -53,7 +57,8 @@ class GoogleDriveBackupService implements BackupPlatform {
       final success = await signIn();
       if (!success || _currentUser == null) return null;
     }
-    final authorization = await _currentUser!.authorizationClient.authorizationForScopes(_scopes);
+    final authorization = await _currentUser!.authorizationClient
+        .authorizationForScopes(_scopes);
     if (authorization == null) return null;
     final authClient = authorization.authClient(scopes: _scopes);
     return drive.DriveApi(authClient);
@@ -122,7 +127,9 @@ class GoogleDriveBackupService implements BackupPlatform {
     final backups = <RemoteBackupMetadata>[];
     if (fileList.files != null) {
       for (final file in fileList.files!) {
-        if (file.name != null && file.name!.startsWith('ritmo_backup_') && file.name!.endsWith('.json')) {
+        if (file.name != null &&
+            file.name!.startsWith('ritmo_backup_') &&
+            file.name!.endsWith('.json')) {
           final sizeBytes = int.tryParse(file.size ?? '') ?? 0;
           final createdAt = file.createdTime ?? DateTime.now();
           backups.add(
@@ -151,8 +158,13 @@ class GoogleDriveBackupService implements BackupPlatform {
     }
 
     // 1. Download file content
-    final media = await driveApi.files.get(fileId, downloadOptions: drive.DownloadOptions.fullMedia) as drive.Media;
-    
+    final media =
+        await driveApi.files.get(
+              fileId,
+              downloadOptions: drive.DownloadOptions.fullMedia,
+            )
+            as drive.Media;
+
     // 2. Read bytes from stream
     final bytes = <int>[];
     await for (final chunk in media.stream) {
@@ -190,7 +202,6 @@ class GoogleDriveBackupService implements BackupPlatform {
 }
 
 class BackupUploadResult {
-
   BackupUploadResult({
     required this.fileId,
     required this.fileName,
@@ -204,7 +215,6 @@ class BackupUploadResult {
 }
 
 class RemoteBackupMetadata {
-
   RemoteBackupMetadata({
     required this.fileId,
     required this.fileName,

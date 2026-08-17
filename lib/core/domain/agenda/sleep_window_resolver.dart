@@ -49,7 +49,10 @@ class SleepWindowResolver {
     required String dateStr,
     String defaultLabel = 'پنجره خواب',
   }) async {
-    final isEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sleep_enabled');
+    final isEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_sleep_enabled',
+    );
     final showSleepBand = settingsMap['calendar_show_sleep_band'] != 'false';
 
     if (!isEnabled || !showSleepBand) {
@@ -57,12 +60,15 @@ class SleepWindowResolver {
     }
 
     try {
-      final rows = await db.rawQuery('''
+      final rows = await db.rawQuery(
+        '''
         SELECT plannedBedtimeMin, plannedWakeMin
         FROM sleep_plan_days
         WHERE date = ?
         LIMIT 1
-      ''', [dateStr]);
+      ''',
+        [dateStr],
+      );
 
       if (rows.isNotEmpty) {
         final bedMin = rows.first['plannedBedtimeMin'] as int?;
@@ -89,12 +95,16 @@ class SleepWindowResolver {
     Map<String, String> settingsMap, {
     String defaultLabel = 'پنجره خواب',
   }) {
-    final isEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sleep_enabled');
+    final isEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_sleep_enabled',
+    );
     final showSleepBand = settingsMap['calendar_show_sleep_band'] != 'false';
     final bedtime = settingsMap['sleep_target_bedtime'];
     final wakeTime = settingsMap['sleep_target_wake'];
 
-    if ((!isEnabled || !showSleepBand) && (bedtime == null || wakeTime == null)) {
+    if ((!isEnabled || !showSleepBand) &&
+        (bedtime == null || wakeTime == null)) {
       return null;
     }
 
@@ -111,22 +121,28 @@ class SleepWindowResolver {
     required int plannedWakeMin,
     String? label,
   }) {
-    if (plannedBedtimeMin < 0 || plannedBedtimeMin >= 1440 ||
-        plannedWakeMin < 0 || plannedWakeMin >= 1440 ||
+    if (plannedBedtimeMin < 0 ||
+        plannedBedtimeMin >= 1440 ||
+        plannedWakeMin < 0 ||
+        plannedWakeMin >= 1440 ||
         plannedBedtimeMin == plannedWakeMin) {
       return null;
     }
 
     final crossesMidnight = plannedBedtimeMin > plannedWakeMin;
-    final normalizedEndM = crossesMidnight ? plannedWakeMin + 1440 : plannedWakeMin;
+    final normalizedEndM = crossesMidnight
+        ? plannedWakeMin + 1440
+        : plannedWakeMin;
 
     final bedH = plannedBedtimeMin ~/ 60;
     final bedM = plannedBedtimeMin % 60;
     final wakeH = plannedWakeMin ~/ 60;
     final wakeM = plannedWakeMin % 60;
 
-    final bedStr = '${bedH.toString().padLeft(2, '0')}:${bedM.toString().padLeft(2, '0')}';
-    final wakeStr = '${wakeH.toString().padLeft(2, '0')}:${wakeM.toString().padLeft(2, '0')}';
+    final bedStr =
+        '${bedH.toString().padLeft(2, '0')}:${bedM.toString().padLeft(2, '0')}';
+    final wakeStr =
+        '${wakeH.toString().padLeft(2, '0')}:${wakeM.toString().padLeft(2, '0')}';
 
     return SleepWindowBlock(
       startMinutes: plannedBedtimeMin,

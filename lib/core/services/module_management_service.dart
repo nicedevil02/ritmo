@@ -18,8 +18,10 @@ import 'package:sqflite/sqflite.dart';
 enum ModuleToggleResult {
   /// موفق
   success,
+
   /// به سقف رایگان رسیده — نمایش آپگرید
   limitReached,
+
   /// خطا
   error,
 }
@@ -30,7 +32,8 @@ class ModuleManagementService {
   static final ModuleManagementService instance = ModuleManagementService._();
 
   /// Canonical list of all module keys dynamically retrieved from ModuleRegistry (§2.1)
-  static List<String> get allModuleKeys => ModuleRegistry.modules.map((m) => m.key).toList();
+  static List<String> get allModuleKeys =>
+      ModuleRegistry.modules.map((m) => m.key).toList();
 
   /// Fetches all module enable flags atomically from SQLite `app_settings`
   Future<Map<String, bool>> getAllModuleStates() async {
@@ -38,7 +41,7 @@ class ModuleManagementService {
       final db = await DatabaseHelper.instance.database;
       final settings = await db.query('app_settings');
       final settingsMap = <String, String>{
-        for (final s in settings) s['key']! as String: s['value']! as String
+        for (final s in settings) s['key']! as String: s['value']! as String,
       };
 
       final states = <String, bool>{};
@@ -47,7 +50,9 @@ class ModuleManagementService {
           states[desc.key] = true;
         } else {
           final rawVal = settingsMap[desc.key];
-          states[desc.key] = rawVal != null ? rawVal == 'true' : desc.defaultEnabled;
+          states[desc.key] = rawVal != null
+              ? rawVal == 'true'
+              : desc.defaultEnabled;
         }
       }
       return states;
@@ -89,7 +94,9 @@ class ModuleManagementService {
       if (!ModuleRegistry.isCoreModule(key)) {
         if (!ModuleGate.instance.canActivateMoreModules) {
           final limit = FeatureLimits.current.maxActiveModules;
-          debugPrint('ModuleManagementService: Module cap ($limit) reached. Upgrade required.');
+          debugPrint(
+            'ModuleManagementService: Module cap ($limit) reached. Upgrade required.',
+          );
           return ModuleToggleResult.limitReached;
         }
       }
@@ -98,66 +105,52 @@ class ModuleManagementService {
       final now = DateTime.now().millisecondsSinceEpoch;
 
       // 1. Atomic Replace into app_settings (Never fails even if key was missing)
-      await db.insert(
-        'app_settings',
-        {
-          'key': key,
+      await db.insert('app_settings', {
+        'key': key,
+        'value': 'true',
+        'updatedAt': now,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+      if (key == 'module_sports_enabled' ||
+          key == 'module_supplementary_sports_enabled') {
+        await db.insert('app_settings', {
+          'key': 'module_sports_enabled',
           'value': 'true',
           'updatedAt': now,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-
-      if (key == 'module_sports_enabled' || key == 'module_supplementary_sports_enabled') {
-        await db.insert(
-          'app_settings',
-          {
-            'key': 'module_sports_enabled',
-            'value': 'true',
-            'updatedAt': now,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-        await db.insert(
-          'app_settings',
-          {
-            'key': 'module_supplementary_sports_enabled',
-            'value': 'true',
-            'updatedAt': now,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('app_settings', {
+          'key': 'module_supplementary_sports_enabled',
+          'value': 'true',
+          'updatedAt': now,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
 
       if (key == 'module_medicine_enabled' || key == 'module_health_enabled') {
-        await db.insert(
-          'app_settings',
-          {
-            'key': 'module_medicine_enabled',
-            'value': 'true',
-            'updatedAt': now,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-        await db.insert(
-          'app_settings',
-          {
-            'key': 'module_health_enabled',
-            'value': 'true',
-            'updatedAt': now,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await db.insert('app_settings', {
+          'key': 'module_medicine_enabled',
+          'value': 'true',
+          'updatedAt': now,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('app_settings', {
+          'key': 'module_health_enabled',
+          'value': 'true',
+          'updatedAt': now,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
 
       // 2. Update in-memory settings service
       try {
         await SettingsService.instance.set(key, true);
-        if (key == 'module_sports_enabled' || key == 'module_supplementary_sports_enabled') {
+        if (key == 'module_sports_enabled' ||
+            key == 'module_supplementary_sports_enabled') {
           await SettingsService.instance.set('module_sports_enabled', true);
-          await SettingsService.instance.set('module_supplementary_sports_enabled', true);
+          await SettingsService.instance.set(
+            'module_supplementary_sports_enabled',
+            true,
+          );
         }
-        if (key == 'module_medicine_enabled' || key == 'module_health_enabled') {
+        if (key == 'module_medicine_enabled' ||
+            key == 'module_health_enabled') {
           await SettingsService.instance.set('module_medicine_enabled', true);
           await SettingsService.instance.set('module_health_enabled', true);
         }
@@ -175,7 +168,9 @@ class ModuleManagementService {
 
       return ModuleToggleResult.success;
     } catch (e) {
-      debugPrint('ModuleManagementService: Error setting module $key to $enabled: $e');
+      debugPrint(
+        'ModuleManagementService: Error setting module $key to $enabled: $e',
+      );
       return ModuleToggleResult.error;
     }
   }
@@ -193,13 +188,21 @@ class ModuleManagementService {
 
         Future<void> safeDeleteSettingsLike(String pattern) async {
           try {
-            await txn.delete('app_settings', where: 'key LIKE ? AND key != ?', whereArgs: [pattern, key]);
+            await txn.delete(
+              'app_settings',
+              where: 'key LIKE ? AND key != ?',
+              whereArgs: [pattern, key],
+            );
           } catch (_) {}
         }
 
         Future<void> safeDeleteSettingExact(String exactKey) async {
           try {
-            await txn.delete('app_settings', where: 'key = ?', whereArgs: [exactKey]);
+            await txn.delete(
+              'app_settings',
+              where: 'key = ?',
+              whereArgs: [exactKey],
+            );
           } catch (_) {}
         }
 
@@ -274,16 +277,28 @@ class ModuleManagementService {
             await safeDeleteSettingExact('show_cycle_in_calendar');
             await safeDeleteSettingExact('period_duration_days');
             try {
-              await txn.delete('worship_debts', where: "id LIKE 'debt_cycle_fast_%'");
-              await txn.delete('worship_day_context', where: "reason = 'MENSTRUATION'");
+              await txn.delete(
+                'worship_debts',
+                where: "id LIKE 'debt_cycle_fast_%'",
+              );
+              await txn.delete(
+                'worship_day_context',
+                where: "reason = 'MENSTRUATION'",
+              );
             } catch (_) {}
             WorshipEngine.instance.invalidate();
-            DayAgendaService.instance.invalidateDate(DateTime.now().toIso8601String().substring(0, 10));
-            RitmoEventBus().fire(RitmoEvent(
-              type: 'WorshipUpdated',
-              timestamp: DateTime.now(),
-              payload: {'date': DateTime.now().toIso8601String().substring(0, 10)},
-            ));
+            DayAgendaService.instance.invalidateDate(
+              DateTime.now().toIso8601String().substring(0, 10),
+            );
+            RitmoEventBus().fire(
+              RitmoEvent(
+                type: 'WorshipUpdated',
+                timestamp: DateTime.now(),
+                payload: {
+                  'date': DateTime.now().toIso8601String().substring(0, 10),
+                },
+              ),
+            );
             break;
 
           case 'module_courses_enabled':
@@ -374,29 +389,40 @@ class ModuleManagementService {
 
         // Set module enable flag to 'false' so it requires activation & onboarding
         final now = DateTime.now().millisecondsSinceEpoch;
-        await txn.insert(
-          'app_settings',
-          {
-            'key': key,
-            'value': 'false',
-            'updatedAt': now,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await txn.insert('app_settings', {
+          'key': key,
+          'value': 'false',
+          'updatedAt': now,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       });
 
       RitmoEvents.notifyRoutineChanged();
     } catch (e) {
-      debugPrint('ModuleManagementService: Error resetting module data for $key: $e');
+      debugPrint(
+        'ModuleManagementService: Error resetting module data for $key: $e',
+      );
     }
   }
 
-  static Future<void> _safeDeleteRoutinesByCategory(DatabaseExecutor txn, String category) async {
-    final rows = await txn.query('routines', columns: ['id'], where: 'category = ?', whereArgs: [category]);
+  static Future<void> _safeDeleteRoutinesByCategory(
+    DatabaseExecutor txn,
+    String category,
+  ) async {
+    final rows = await txn.query(
+      'routines',
+      columns: ['id'],
+      where: 'category = ?',
+      whereArgs: [category],
+    );
     for (final row in rows) {
       final rId = row['id'] as String;
-      
-      final pendingRows = await txn.query('pending_reminders', columns: ['id'], where: 'routineId = ?', whereArgs: [rId]);
+
+      final pendingRows = await txn.query(
+        'pending_reminders',
+        columns: ['id'],
+        where: 'routineId = ?',
+        whereArgs: [rId],
+      );
       for (final pRow in pendingRows) {
         final pid = pRow['id'] as String;
         try {
@@ -404,11 +430,31 @@ class ModuleManagementService {
         } catch (_) {}
       }
 
-      await txn.delete('pending_reminders', where: 'routineId = ?', whereArgs: [rId]);
-      await txn.delete('routine_occurrences', where: 'routine_id = ?', whereArgs: [rId]);
-      await txn.delete('routine_completions', where: 'routineId = ?', whereArgs: [rId]);
-      await txn.delete('routine_logs', where: 'routineId = ?', whereArgs: [rId]);
-      await txn.delete('routine_schedules', where: 'routineId = ?', whereArgs: [rId]);
+      await txn.delete(
+        'pending_reminders',
+        where: 'routineId = ?',
+        whereArgs: [rId],
+      );
+      await txn.delete(
+        'routine_occurrences',
+        where: 'routine_id = ?',
+        whereArgs: [rId],
+      );
+      await txn.delete(
+        'routine_completions',
+        where: 'routineId = ?',
+        whereArgs: [rId],
+      );
+      await txn.delete(
+        'routine_logs',
+        where: 'routineId = ?',
+        whereArgs: [rId],
+      );
+      await txn.delete(
+        'routine_schedules',
+        where: 'routineId = ?',
+        whereArgs: [rId],
+      );
       await txn.delete('routines', where: 'id = ?', whereArgs: [rId]);
     }
   }

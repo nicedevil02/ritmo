@@ -88,7 +88,10 @@ class LocalBackupService {
 
     // 1. Check for modern RITMO_ENC2 header
     if (encryptedBytes.length >= 42) {
-      final header10 = utf8.decode(encryptedBytes.sublist(0, 10), allowMalformed: true);
+      final header10 = utf8.decode(
+        encryptedBytes.sublist(0, 10),
+        allowMalformed: true,
+      );
       if (header10 == 'RITMO_ENC2') {
         final saltBytes = Uint8List.fromList(encryptedBytes.sublist(10, 26));
         final ivBytes = Uint8List.fromList(encryptedBytes.sublist(26, 42));
@@ -102,14 +105,19 @@ class LocalBackupService {
         try {
           return encrypter.decryptBytes(enc.Encrypted(payloadBytes), iv: iv);
         } catch (e) {
-          throw const FormatException('Incorrect password or corrupted backup file.');
+          throw const FormatException(
+            'Incorrect password or corrupted backup file.',
+          );
         }
       }
     }
 
     // 2. Fallback to legacy RITMO_ENC header
     if (encryptedBytes.length >= 25) {
-      final header9 = utf8.decode(encryptedBytes.sublist(0, 9), allowMalformed: true);
+      final header9 = utf8.decode(
+        encryptedBytes.sublist(0, 9),
+        allowMalformed: true,
+      );
       if (header9 == 'RITMO_ENC') {
         final ivBytes = Uint8List.fromList(encryptedBytes.sublist(9, 25));
         final payloadBytes = Uint8List.fromList(encryptedBytes.sublist(25));
@@ -122,7 +130,9 @@ class LocalBackupService {
         try {
           return encrypter.decryptBytes(enc.Encrypted(payloadBytes), iv: iv);
         } catch (e) {
-          throw const FormatException('Incorrect password or corrupted backup file.');
+          throw const FormatException(
+            'Incorrect password or corrupted backup file.',
+          );
         }
       }
     }

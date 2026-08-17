@@ -41,32 +41,42 @@ class ActiveTimerModel {
   bool get isExpired => remainingSeconds <= 0;
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'domain': domain,
-        'itemId': itemId,
-        'mode': mode,
-        'direction': direction.name.toUpperCase(),
-        'targetTimestamp': targetTimestamp,
-        'durationSeconds': durationSeconds,
-        'createdAt': createdAt,
-        // Compatibility fields for legacy NOT NULL table schemas
-        'routineId': itemId.isNotEmpty ? itemId : id,
-        'startedAt': createdAt,
-        'plannedDurationMinutes': (durationSeconds / 60).round(),
-      };
+    'id': id,
+    'domain': domain,
+    'itemId': itemId,
+    'mode': mode,
+    'direction': direction.name.toUpperCase(),
+    'targetTimestamp': targetTimestamp,
+    'durationSeconds': durationSeconds,
+    'createdAt': createdAt,
+    // Compatibility fields for legacy NOT NULL table schemas
+    'routineId': itemId.isNotEmpty ? itemId : id,
+    'startedAt': createdAt,
+    'plannedDurationMinutes': (durationSeconds / 60).round(),
+  };
 
   factory ActiveTimerModel.fromMap(Map<String, dynamic> map) {
-    final rawItemId = (map['itemId'] as String?) ?? (map['routineId'] as String?) ?? '';
-    final rawCreatedAt = (map['createdAt'] as int?) ?? (map['startedAt'] as int?) ?? DateTime.now().millisecondsSinceEpoch;
-    final rawDuration = (map['durationSeconds'] as int?) ?? ((map['plannedDurationMinutes'] as int? ?? 0) * 60);
+    final rawItemId =
+        (map['itemId'] as String?) ?? (map['routineId'] as String?) ?? '';
+    final rawCreatedAt =
+        (map['createdAt'] as int?) ??
+        (map['startedAt'] as int?) ??
+        DateTime.now().millisecondsSinceEpoch;
+    final rawDuration =
+        (map['durationSeconds'] as int?) ??
+        ((map['plannedDurationMinutes'] as int? ?? 0) * 60);
 
     return ActiveTimerModel(
       id: map['id']! as String,
       domain: map['domain'] as String? ?? 'routine',
       itemId: rawItemId,
       mode: map['mode'] as String? ?? 'FULL',
-      direction: map['direction'] == 'UP' ? TimerDirection.up : TimerDirection.down,
-      targetTimestamp: map['targetTimestamp'] as int? ?? (rawCreatedAt + (rawDuration * 1000)),
+      direction: map['direction'] == 'UP'
+          ? TimerDirection.up
+          : TimerDirection.down,
+      targetTimestamp:
+          map['targetTimestamp'] as int? ??
+          (rawCreatedAt + (rawDuration * 1000)),
       durationSeconds: rawDuration,
       createdAt: rawCreatedAt,
     );

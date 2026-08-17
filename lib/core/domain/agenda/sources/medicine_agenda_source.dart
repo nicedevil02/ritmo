@@ -29,7 +29,7 @@ class MedicineAgendaSource implements AgendaSource {
 
   /// routineId -> `yyyy-MM-dd` -> that day's logs, ordered in time.
   final Map<String, Map<String, List<Map<String, dynamic>>>>
-      logsByRoutineAndDate;
+  logsByRoutineAndDate;
 
   final bool medicineEnabled;
 
@@ -52,7 +52,10 @@ class MedicineAgendaSource implements AgendaSource {
     DateTime start,
     DateTime end,
   ) async {
-    final medicineEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_medicine_enabled');
+    final medicineEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_medicine_enabled',
+    );
     if (!medicineEnabled) {
       return MedicineAgendaSource(
         medicationRoutines: const [],
@@ -89,18 +92,26 @@ class MedicineAgendaSource implements AgendaSource {
 
       // COALESCE, because rows written before scheduledTime was populated would
       // otherwise fall out of the range filter entirely and look untaken.
-      final startMs =
-          DateTime(start.year, start.month, start.day).millisecondsSinceEpoch;
-      final endMs = DateTime(end.year, end.month, end.day)
-          .add(const Duration(days: 1))
-          .millisecondsSinceEpoch;
-      final logs = await db.rawQuery('''
+      final startMs = DateTime(
+        start.year,
+        start.month,
+        start.day,
+      ).millisecondsSinceEpoch;
+      final endMs = DateTime(
+        end.year,
+        end.month,
+        end.day,
+      ).add(const Duration(days: 1)).millisecondsSinceEpoch;
+      final logs = await db.rawQuery(
+        '''
         SELECT m.*, r.title as medicationName
         FROM medication_logs m
         LEFT JOIN routines r ON m.routineId = r.id
         WHERE COALESCE(m.scheduledTime, m.takenTime, m.createdAt) >= ?
           AND COALESCE(m.scheduledTime, m.takenTime, m.createdAt) < ?
-      ''', [startMs, endMs]);
+      ''',
+        [startMs, endMs],
+      );
 
       for (final row in logs) {
         final log = Map<String, dynamic>.from(row);
@@ -109,7 +120,10 @@ class MedicineAgendaSource implements AgendaSource {
         final ts = _logMs(log);
         if (ts == null) continue;
         logsByRoutineAndDate
-            .putIfAbsent(routineId, () => <String, List<Map<String, dynamic>>>{})
+            .putIfAbsent(
+              routineId,
+              () => <String, List<Map<String, dynamic>>>{},
+            )
             .putIfAbsent(
               _dateStr(DateTime.fromMillisecondsSinceEpoch(ts)),
               () => <Map<String, dynamic>>[],
@@ -146,54 +160,59 @@ class MedicineAgendaSource implements AgendaSource {
       final routineId = routine['id'] as String?;
       if (routineId == null) continue;
 
-      final dayLogs = logsByRoutineAndDate[routineId]?[ctx.dateStr] ??
+      final dayLogs =
+          logsByRoutineAndDate[routineId]?[ctx.dateStr] ??
           const <Map<String, dynamic>>[];
       final asNeeded = MedicationIdentity.isAsNeeded(routine);
 
       // PRN has no due time, so only what was actually taken is shown.
-      final slots =
-          asNeeded ? const <String>[] : _slotsForDate(schedule, ctx.date);
+      final slots = asNeeded
+          ? const <String>[]
+          : _slotsForDate(schedule, ctx.date);
 
       if (slots.isEmpty) {
         if (asNeeded && ctx.isToday) {
-          items.add(_buildPrnActionItem(
-            ctx: ctx,
-            routine: routine,
-          ));
+          items.add(_buildPrnActionItem(ctx: ctx, routine: routine));
         }
         for (final log in dayLogs) {
-          items.add(_buildItem(
-            ctx: ctx,
-            routine: routine,
-            slot: _slotOfLog(log),
-            log: log,
-            asNeeded: asNeeded,
-          ));
+          items.add(
+            _buildItem(
+              ctx: ctx,
+              routine: routine,
+              slot: _slotOfLog(log),
+              log: log,
+              asNeeded: asNeeded,
+            ),
+          );
         }
         continue;
       }
 
       final match = _matchLogsToSlots(slots, dayLogs);
       for (var i = 0; i < slots.length; i++) {
-        items.add(_buildItem(
-          ctx: ctx,
-          routine: routine,
-          slot: slots[i],
-          log: match.perSlot[i],
-          asNeeded: asNeeded,
-        ));
+        items.add(
+          _buildItem(
+            ctx: ctx,
+            routine: routine,
+            slot: slots[i],
+            log: match.perSlot[i],
+            asNeeded: asNeeded,
+          ),
+        );
       }
 
       // Extra doses beyond the schedule (e.g. a rescue dose) stay visible
       // instead of being swallowed by the slot mapping.
       for (final log in match.extras) {
-        items.add(_buildItem(
-          ctx: ctx,
-          routine: routine,
-          slot: _slotOfLog(log),
-          log: log,
-          asNeeded: asNeeded,
-        ));
+        items.add(
+          _buildItem(
+            ctx: ctx,
+            routine: routine,
+            slot: _slotOfLog(log),
+            log: log,
+            asNeeded: asNeeded,
+          ),
+        );
       }
     }
 
@@ -229,11 +248,7 @@ class MedicineAgendaSource implements AgendaSource {
         targetId: routineId,
       ),
       completion: AgendaCompletion.pending,
-      meta: {
-        'routineId': routineId,
-        'isPrnAction': true,
-        'isPrn': true,
-      },
+      meta: {'routineId': routineId, 'isPrnAction': true, 'isPrn': true},
     );
   }
 
@@ -246,7 +261,8 @@ class MedicineAgendaSource implements AgendaSource {
   }) {
     final routineId = routine['id']! as String;
     final logId = log?['id']?.toString();
-    final title = log?['medicationName'] as String? ??
+    final title =
+        log?['medicationName'] as String? ??
         routine['title'] as String? ??
         'یادآور دارو';
 
@@ -307,12 +323,13 @@ class MedicineAgendaSource implements AgendaSource {
 
     // reminderTimes is the multi-dose carrier: "08:00, 14:00, 20:00" means three
     // separate doses, not one routine that repeats.
-    final times = rule.reminderTimes
-        .map(_normalizeTime)
-        .whereType<String>()
-        .toSet()
-        .toList()
-      ..sort();
+    final times =
+        rule.reminderTimes
+            .map(_normalizeTime)
+            .whereType<String>()
+            .toSet()
+            .toList()
+          ..sort();
     if (times.isNotEmpty) return times;
 
     final fallback = _normalizeTime(schedule['timeOfDay'] as String?);

@@ -43,11 +43,7 @@ class PersonalKanbanWIPService {
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.update(
       'goals',
-      {
-        'status': 'PARKED',
-        'pausedAt': now,
-        'updatedAt': now,
-      },
+      {'status': 'PARKED', 'pausedAt': now, 'updatedAt': now},
       where: 'id = ?',
       whereArgs: [goalId],
     );
@@ -59,11 +55,7 @@ class PersonalKanbanWIPService {
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.update(
       'goals',
-      {
-        'status': 'ACTIVE',
-        'pausedAt': null,
-        'updatedAt': now,
-      },
+      {'status': 'ACTIVE', 'pausedAt': null, 'updatedAt': now},
       where: 'id = ?',
       whereArgs: [goalId],
     );

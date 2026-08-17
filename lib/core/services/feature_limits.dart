@@ -21,28 +21,28 @@ class FeatureLimits {
 
   // ─── ریتمو پایه (رایگان) ───────────────────────────────────────────────────
   static const _free = FeatureLimits._(
-    maxActiveModules: 4,         // ماژول اختیاری فعال همزمان
-    maxActiveRoutines: 7,        // روتین فعال
-    maxActiveGoals: 3,           // هدف فعال
-    historyDays: 30,             // تاریخچه تحلیل (روز)
-    monthlyAiMessages: 10,       // پیام AI در ماه
-    crossEngineInsights: false,  // بینش Cross-Engine (RIE)
+    maxActiveModules: 4, // ماژول اختیاری فعال همزمان
+    maxActiveRoutines: 7, // روتین فعال
+    maxActiveGoals: 3, // هدف فعال
+    historyDays: 30, // تاریخچه تحلیل (روز)
+    monthlyAiMessages: 10, // پیام AI در ماه
+    crossEngineInsights: false, // بینش Cross-Engine (RIE)
     adaptiveSportsSchedule: false,
-    cloudBackup: false,          // بکاپ ابری خودکار
-    multiDeviceSync: false,      // همگام‌سازی چنددستگاهی
-    allThemes: false,            // تم‌ها و آیکن‌های سفارشی
-    reportWatermark: true,       // واترمارک روی گزارش صادرشده
-    showAds: true,               // نمایش تبلیغات بنری
-    smartReshuffle: false,       // برنامه‌ریزی تطبیقی خودکار
+    cloudBackup: false, // بکاپ ابری خودکار
+    multiDeviceSync: false, // همگام‌سازی چنددستگاهی
+    allThemes: false, // تم‌ها و آیکن‌های سفارشی
+    reportWatermark: true, // واترمارک روی گزارش صادرشده
+    showAds: true, // نمایش تبلیغات بنری
+    smartReshuffle: false, // برنامه‌ریزی تطبیقی خودکار
   );
 
   // ─── ریتمو پلاس ────────────────────────────────────────────────────────────
   static const _plus = FeatureLimits._(
-    maxActiveModules: 15,        // تمام ماژول‌های اختیاری
-    maxActiveRoutines: 50,       // سقف قانون ۲۲
-    maxActiveGoals: 20,          // سقف قانون ۲۲
-    historyDays: 730,            // ۲ سال
-    monthlyAiMessages: 500,      // سهمیه ماهانه پلاس
+    maxActiveModules: 15, // تمام ماژول‌های اختیاری
+    maxActiveRoutines: 50, // سقف قانون ۲۲
+    maxActiveGoals: 20, // سقف قانون ۲۲
+    historyDays: 730, // ۲ سال
+    monthlyAiMessages: 500, // سهمیه ماهانه پلاس
     crossEngineInsights: true,
     adaptiveSportsSchedule: true,
     cloudBackup: true,

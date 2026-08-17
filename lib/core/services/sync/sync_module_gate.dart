@@ -5,16 +5,34 @@ class SyncModuleGate {
   static bool isModuleEnabled(Category category, Map<String, String> settings) {
     switch (category) {
       case Category.religious:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_religion_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_religion_enabled',
+        );
       case Category.medical:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_medicine_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_medicine_enabled',
+        );
       case Category.learning:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_courses_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_courses_enabled',
+        );
       case Category.konkur:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_study_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_study_enabled',
+        );
       case Category.fitness:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_sports_enabled') ||
-            ModuleGate.instance.isEnabledFrom(settings, 'module_supplementary_sports_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+              settings,
+              'module_sports_enabled',
+            ) ||
+            ModuleGate.instance.isEnabledFrom(
+              settings,
+              'module_supplementary_sports_enabled',
+            );
       case Category.custom:
       case Category.personal:
       case Category.work:
@@ -23,4 +41,3 @@ class SyncModuleGate {
     }
   }
 }
-

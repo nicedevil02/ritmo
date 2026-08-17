@@ -2,7 +2,6 @@ import 'package:ritmo/core/domain/engines/notification_decider.dart';
 import 'package:ritmo/core/domain/models.dart';
 
 class RoutineTask {
-
   RoutineTask({
     required this.routine,
     this.scheduleTimeStr,

@@ -1,7 +1,6 @@
 import 'package:ritmo/core/domain/models.dart';
 
 class EnergyLog {
-
   EnergyLog({
     required this.id,
     required this.energyLevel,

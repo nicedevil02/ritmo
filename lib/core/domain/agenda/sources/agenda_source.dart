@@ -33,5 +33,8 @@ abstract class AgendaSource {
 }
 
 /// متد کمکی برای یکسانسازی فرمت شناسه‌های اجندا.
-String buildAgendaItemId(AgendaDomain domain, String sourceId, String dateStr) =>
-    '${domain.name}:$sourceId:$dateStr';
+String buildAgendaItemId(
+  AgendaDomain domain,
+  String sourceId,
+  String dateStr,
+) => '${domain.name}:$sourceId:$dateStr';

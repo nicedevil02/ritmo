@@ -30,13 +30,21 @@ class EventAgendaRenderer extends AgendaTileRenderer {
   const EventAgendaRenderer();
 
   @override
-  Widget build(BuildContext context, AgendaItem item, {required VoidCallback onChanged}) {
+  Widget build(
+    BuildContext context,
+    AgendaItem item, {
+    required VoidCallback onChanged,
+  }) {
     // Defence in depth. If a routine-backed event ever lands on this domain
     // again, hand it to the renderer that can drive a real Routine rather than
     // silently degrading it into a read-only chip.
     final routineMap = item.meta['routine'];
     if (routineMap is Map<String, dynamic> && routineMap.isNotEmpty) {
-      return const RoutineAgendaRenderer().build(context, item, onChanged: onChanged);
+      return const RoutineAgendaRenderer().build(
+        context,
+        item,
+        onChanged: onChanged,
+      );
     }
 
     final colors = context.colors;
@@ -68,7 +76,11 @@ class EventAgendaRenderer extends AgendaTileRenderer {
               color: colors.accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(CupertinoIcons.calendar, size: 15, color: colors.accent),
+            child: Icon(
+              CupertinoIcons.calendar,
+              size: 15,
+              color: colors.accent,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -134,7 +146,8 @@ class EventAgendaRenderer extends AgendaTileRenderer {
     final start = item.timeOfDay!;
     final end = item.windowEnd;
     if (end == null) return toPersianDigits(start);
-    final endStr = '${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
+    final endStr =
+        '${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
     return toPersianDigits('$start – $endStr');
   }
 

@@ -32,29 +32,33 @@ class WellbeingLogGateway {
         'createdAt': nowMs,
       };
 
-      await db.insert('energy_logs', row, conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(
+        'energy_logs',
+        row,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
 
       // Dual-write to wellbeing_entry (B15)
       // TODO(DB_TECH_DEBT): Dual-write until legacy tables are deprecated. Reference: docs/DB_TECH_DEBT.md
       try {
-        await db.insert(
-          'wellbeing_entry',
-          {
-            'id': id,
-            'dateIso': dateStr,
-            'dimension': 'ENERGY',
-            'value': level == EnergyLevel.high ? 3.0 : (level == EnergyLevel.low ? 1.0 : 2.0),
-            'note': null,
-            'loggedAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await db.insert('wellbeing_entry', {
+          'id': id,
+          'dateIso': dateStr,
+          'dimension': 'ENERGY',
+          'value': level == EnergyLevel.high
+              ? 3.0
+              : (level == EnergyLevel.low ? 1.0 : 2.0),
+          'note': null,
+          'loggedAt': nowMs,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       } catch (_) {}
 
-      RitmoEventBus().publish(RitmoEvent(
-        type: RitmoEventType.energyLogged.code,
-        data: {'id': id, 'level': level.name, 'loggedAt': nowMs},
-      ));
+      RitmoEventBus().publish(
+        RitmoEvent(
+          type: RitmoEventType.energyLogged.code,
+          data: {'id': id, 'level': level.name, 'loggedAt': nowMs},
+        ),
+      );
 
       return id;
     } catch (e, st) {
@@ -93,29 +97,36 @@ class WellbeingLogGateway {
         'updatedAt': nowMs,
       };
 
-      await db.insert('bedtime_diagnostics', row, conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(
+        'bedtime_diagnostics',
+        row,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
 
       // Dual-write to wellbeing_entry (B15)
       // TODO(DB_TECH_DEBT): Dual-write until legacy tables are deprecated. Reference: docs/DB_TECH_DEBT.md
       try {
-        await db.insert(
-          'wellbeing_entry',
-          {
-            'id': id,
-            'dateIso': date,
-            'dimension': 'SLEEP',
-            'value': quality.toDouble(),
-            'note': note,
-            'loggedAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await db.insert('wellbeing_entry', {
+          'id': id,
+          'dateIso': date,
+          'dimension': 'SLEEP',
+          'value': quality.toDouble(),
+          'note': note,
+          'loggedAt': nowMs,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       } catch (_) {}
 
-      RitmoEventBus().publish(RitmoEvent(
-        type: RitmoEventType.sleepLogged.code,
-        data: {'id': id, 'date': date, 'durationMinutes': durationMinutes, 'quality': quality},
-      ));
+      RitmoEventBus().publish(
+        RitmoEvent(
+          type: RitmoEventType.sleepLogged.code,
+          data: {
+            'id': id,
+            'date': date,
+            'durationMinutes': durationMinutes,
+            'quality': quality,
+          },
+        ),
+      );
 
       return id;
     } catch (e, st) {
@@ -171,30 +182,32 @@ class WellbeingLogGateway {
           'source': source,
           'loggedAt': nowMs,
         };
-        await db.insert('mood_logs', row, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert(
+          'mood_logs',
+          row,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
       }
 
       // Dual-write to wellbeing_entry (B15)
       // TODO(DB_TECH_DEBT): Dual-write until legacy tables are deprecated. Reference: docs/DB_TECH_DEBT.md
       try {
-        await db.insert(
-          'wellbeing_entry',
-          {
-            'id': id,
-            'dateIso': dateStr,
-            'dimension': 'MOOD',
-            'value': score.toDouble(),
-            'note': note,
-            'loggedAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await db.insert('wellbeing_entry', {
+          'id': id,
+          'dateIso': dateStr,
+          'dimension': 'MOOD',
+          'value': score.toDouble(),
+          'note': note,
+          'loggedAt': nowMs,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       } catch (_) {}
 
-      RitmoEventBus().publish(RitmoEvent(
-        type: RitmoEventType.moodLogged.code,
-        data: {'id': id, 'score': score, 'loggedAt': nowMs},
-      ));
+      RitmoEventBus().publish(
+        RitmoEvent(
+          type: RitmoEventType.moodLogged.code,
+          data: {'id': id, 'score': score, 'loggedAt': nowMs},
+        ),
+      );
 
       return id;
     } catch (e, st) {
@@ -211,10 +224,12 @@ class WellbeingLogGateway {
       try {
         await db.delete('wellbeing_entry', where: 'id = ?', whereArgs: [id]);
       } catch (_) {}
-      RitmoEventBus().publish(RitmoEvent(
-        type: RitmoEventType.moodLogged.code,
-        data: {'id': id, 'deleted': true},
-      ));
+      RitmoEventBus().publish(
+        RitmoEvent(
+          type: RitmoEventType.moodLogged.code,
+          data: {'id': id, 'deleted': true},
+        ),
+      );
       return true;
     } catch (e, st) {
       RitmoLog.error('WellbeingLogGateway', 'deleteMood failed', e, st);
@@ -236,14 +251,24 @@ class WellbeingLogGateway {
       final nowMs = effectiveNow.millisecondsSinceEpoch;
       final dateStr = RitmoDate.dayKey(effectiveNow);
 
-      final existing = await db.query('daily_reflections', where: 'date = ?', whereArgs: [dateStr], limit: 1);
+      final existing = await db.query(
+        'daily_reflections',
+        where: 'date = ?',
+        whereArgs: [dateStr],
+        limit: 1,
+      );
 
       String id;
       String finalText = goodThing;
       if (existing.isNotEmpty) {
         id = existing.first['id']?.toString() ?? 'refl_$nowMs';
-        final oldText = existing.first['goodThing']?.toString() ?? existing.first['wins']?.toString() ?? '';
-        if (appendIfExists && oldText.isNotEmpty && !oldText.contains(goodThing)) {
+        final oldText =
+            existing.first['goodThing']?.toString() ??
+            existing.first['wins']?.toString() ??
+            '';
+        if (appendIfExists &&
+            oldText.isNotEmpty &&
+            !oldText.contains(goodThing)) {
           finalText = '$oldText\n$goodThing';
         }
         await db.update(
@@ -275,24 +300,22 @@ class WellbeingLogGateway {
       // Dual-write to wellbeing_entry (B15)
       // TODO(DB_TECH_DEBT): Dual-write until legacy tables are deprecated. Reference: docs/DB_TECH_DEBT.md
       try {
-        await db.insert(
-          'wellbeing_entry',
-          {
-            'id': id,
-            'dateIso': dateStr,
-            'dimension': 'REFLECTION',
-            'value': (moodScore ?? 3).toDouble(),
-            'note': finalText,
-            'loggedAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await db.insert('wellbeing_entry', {
+          'id': id,
+          'dateIso': dateStr,
+          'dimension': 'REFLECTION',
+          'value': (moodScore ?? 3).toDouble(),
+          'note': finalText,
+          'loggedAt': nowMs,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       } catch (_) {}
 
-      RitmoEventBus().publish(RitmoEvent(
-        type: RitmoEventType.reflectionSaved.code,
-        data: {'id': id, 'date': dateStr, 'loggedAt': nowMs},
-      ));
+      RitmoEventBus().publish(
+        RitmoEvent(
+          type: RitmoEventType.reflectionSaved.code,
+          data: {'id': id, 'date': dateStr, 'loggedAt': nowMs},
+        ),
+      );
 
       return id;
     } catch (e, st) {
@@ -314,15 +337,25 @@ class WellbeingLogGateway {
       if (existing.isEmpty) return null;
 
       final row = Map<String, dynamic>.from(existing.first);
-      await db.delete('daily_reflections', where: 'id = ? OR date = ?', whereArgs: [dateOrId, dateOrId]);
+      await db.delete(
+        'daily_reflections',
+        where: 'id = ? OR date = ?',
+        whereArgs: [dateOrId, dateOrId],
+      );
       try {
-        await db.delete('wellbeing_entry', where: 'id = ? OR dateIso = ?', whereArgs: [dateOrId, dateOrId]);
+        await db.delete(
+          'wellbeing_entry',
+          where: 'id = ? OR dateIso = ?',
+          whereArgs: [dateOrId, dateOrId],
+        );
       } catch (_) {}
 
-      RitmoEventBus().publish(RitmoEvent(
-        type: RitmoEventType.reflectionSaved.code,
-        data: {'id': row['id'], 'deleted': true},
-      ));
+      RitmoEventBus().publish(
+        RitmoEvent(
+          type: RitmoEventType.reflectionSaved.code,
+          data: {'id': row['id'], 'deleted': true},
+        ),
+      );
 
       return row;
     } catch (e, st) {
@@ -335,7 +368,11 @@ class WellbeingLogGateway {
   Future<bool> restoreReflection(Map<String, dynamic> row) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.insert('daily_reflections', row, conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(
+        'daily_reflections',
+        row,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
       try {
         await db.insert('wellbeing_entry', {
           'id': row['id'],
@@ -347,10 +384,12 @@ class WellbeingLogGateway {
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       } catch (_) {}
 
-      RitmoEventBus().publish(RitmoEvent(
-        type: RitmoEventType.reflectionSaved.code,
-        data: {'id': row['id'], 'restored': true},
-      ));
+      RitmoEventBus().publish(
+        RitmoEvent(
+          type: RitmoEventType.reflectionSaved.code,
+          data: {'id': row['id'], 'restored': true},
+        ),
+      );
       return true;
     } catch (e, st) {
       RitmoLog.error('WellbeingLogGateway', 'restoreReflection failed', e, st);

@@ -21,10 +21,14 @@ class IdentityVoteService {
   static final IdentityVoteService instance = IdentityVoteService._();
 
   /// Calculates votes cast for identity-based goals in the past week (§3, م-۱۰).
-  Future<List<IdentityVoteSummary>> getWeeklyIdentityVotes({DateTime? now}) async {
+  Future<List<IdentityVoteSummary>> getWeeklyIdentityVotes({
+    DateTime? now,
+  }) async {
     final db = await DatabaseHelper.instance.database;
     final currentTime = now ?? DateTime.now();
-    final weekStartMs = currentTime.subtract(const Duration(days: 7)).millisecondsSinceEpoch;
+    final weekStartMs = currentTime
+        .subtract(const Duration(days: 7))
+        .millisecondsSinceEpoch;
 
     final goals = await db.query(
       'goals',
@@ -39,12 +43,15 @@ class IdentityVoteService {
       final statement = g['identityStatement'] as String;
 
       // Count completions linked to this goal or its steps using routine_actual_completions view
-      final completions = await db.rawQuery('''
+      final completions = await db.rawQuery(
+        '''
         SELECT rc.completionTime FROM routine_actual_completions rc
         JOIN routines r ON rc.routineId = r.id
         JOIN goal_steps gs ON gs.linkedRoutineId = r.id
         WHERE gs.goalId = ? AND r.isArchived = 0
-      ''', [goalId]);
+      ''',
+        [goalId],
+      );
 
       int weekVotes = 0;
       final totalVotes = completions.length;
@@ -56,13 +63,15 @@ class IdentityVoteService {
         }
       }
 
-      summaries.add(IdentityVoteSummary(
-        goalId: goalId,
-        goalTitle: title,
-        identityStatement: statement,
-        votesThisWeek: weekVotes,
-        totalVotes: totalVotes,
-      ));
+      summaries.add(
+        IdentityVoteSummary(
+          goalId: goalId,
+          goalTitle: title,
+          identityStatement: statement,
+          votesThisWeek: weekVotes,
+          totalVotes: totalVotes,
+        ),
+      );
     }
 
     return summaries;

@@ -57,7 +57,6 @@ class RitmoDatePicker {
 }
 
 class _RitmoDatePickerDialog extends StatefulWidget {
-
   const _RitmoDatePickerDialog({
     required this.initialDate,
     required this.firstDate,
@@ -174,10 +173,9 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
           decoration: BoxDecoration(
-            color:
-                isDark
-                    ? const Color(0xFF111424).withValues(alpha: 0.85)
-                    : Colors.white.withValues(alpha: 0.9),
+            color: isDark
+                ? const Color(0xFF111424).withValues(alpha: 0.85)
+                : Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
               color: colors.border.withValues(alpha: isDark ? 0.12 : 0.4),
@@ -232,7 +230,9 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
                     ),
                     const SizedBox(height: 16),
                     Divider(
-                      color: colors.border.withValues(alpha: isDark ? 0.12 : 0.4),
+                      color: colors.border.withValues(
+                        alpha: isDark ? 0.12 : 0.4,
+                      ),
                       height: 1,
                     ),
                     const SizedBox(height: 12),
@@ -318,18 +318,17 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
                     // Content panel (Grid or Selector)
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 200),
-                      child:
-                          _showYearMonthPicker
-                              ? _buildYearMonthPanel(yearsList, colors, isDark)
-                              : _buildDaysPanel(
-                                totalCells,
-                                startOffset,
-                                daysInMonth,
-                                jalaliFirstLimit,
-                                jalaliLastLimit,
-                                colors,
-                                isDark,
-                              ),
+                      child: _showYearMonthPicker
+                          ? _buildYearMonthPanel(yearsList, colors, isDark)
+                          : _buildDaysPanel(
+                              totalCells,
+                              startOffset,
+                              daysInMonth,
+                              jalaliFirstLimit,
+                              jalaliLastLimit,
+                              colors,
+                              isDark,
+                            ),
                     ),
 
                     const SizedBox(height: 16),
@@ -349,11 +348,10 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
-                          onPressed:
-                              () => Navigator.pop(
-                                context,
-                                _selectedDate.toDateTime(),
-                              ),
+                          onPressed: () => Navigator.pop(
+                            context,
+                            _selectedDate.toDateTime(),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colors.primary,
                             foregroundColor: Colors.white,
@@ -397,22 +395,21 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
         // Weekday labels
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children:
-              _weekdayLabels.map((lbl) {
-                return SizedBox(
-                  width: 36,
-                  child: Text(
-                    lbl,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textSecondary.withValues(alpha: 0.6),
-                    ),
-                  ),
-                );
-              }).toList(),
+          children: _weekdayLabels.map((lbl) {
+            return SizedBox(
+              width: 36,
+              child: Text(
+                lbl,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textSecondary.withValues(alpha: 0.6),
+                ),
+              ),
+            );
+          }).toList(),
         ),
         const SizedBox(height: 8),
         GridView.builder(
@@ -458,14 +455,13 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
                 cellDate.day == _selectedDate.day;
 
             return InkWell(
-              onTap:
-                  isEnabled
-                      ? () {
-                        setState(() {
-                          _selectedDate = cellDate;
-                        });
-                      }
-                      : null,
+              onTap: isEnabled
+                  ? () {
+                      setState(() {
+                        _selectedDate = cellDate;
+                      });
+                    }
+                  : null,
               borderRadius: BorderRadius.circular(18),
               child: Container(
                 alignment: Alignment.center,
@@ -478,14 +474,14 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
                   style: TextStyle(
                     fontFamily: 'Vazirmatn',
                     fontSize: 14,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
-                    color:
-                        isSelected
-                            ? Colors.white
-                            : (isEnabled
-                                ? colors.textPrimary
-                                : colors.textSecondary.withValues(alpha: 0.3)),
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: isSelected
+                        ? Colors.white
+                        : (isEnabled
+                              ? colors.textPrimary
+                              : colors.textSecondary.withValues(alpha: 0.3)),
                   ),
                 ),
               ),
@@ -527,10 +523,12 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
                   selectedColor: colors.primary.withValues(alpha: 0.15),
                   checkmarkColor: colors.primary,
                   labelStyle: TextStyle(
-                    color:
-                        isSelectedYear ? colors.primary : colors.textSecondary,
-                    fontWeight:
-                        isSelectedYear ? FontWeight.bold : FontWeight.normal,
+                    color: isSelectedYear
+                        ? colors.primary
+                        : colors.textSecondary,
+                    fontWeight: isSelectedYear
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                   onSelected: (selected) {
                     if (selected) {
@@ -579,26 +577,26 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color:
-                        isSelectedMonth
-                            ? colors.primary
-                            : colors.border.withValues(alpha: 0.4),
+                    color: isSelectedMonth
+                        ? colors.primary
+                        : colors.border.withValues(alpha: 0.4),
                     width: 1.5,
                   ),
-                  color:
-                      isSelectedMonth
-                          ? colors.primary.withValues(alpha: 0.08)
-                          : Colors.transparent,
+                  color: isSelectedMonth
+                      ? colors.primary.withValues(alpha: 0.08)
+                      : Colors.transparent,
                 ),
                 child: Text(
                   monthName,
                   style: TextStyle(
                     fontFamily: 'Vazirmatn',
                     fontSize: 13,
-                    fontWeight:
-                        isSelectedMonth ? FontWeight.bold : FontWeight.normal,
-                    color:
-                        isSelectedMonth ? colors.primary : colors.textPrimary,
+                    fontWeight: isSelectedMonth
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: isSelectedMonth
+                        ? colors.primary
+                        : colors.textPrimary,
                   ),
                 ),
               ),

@@ -19,10 +19,13 @@ class ActionFeedback {
     DayAgendaService.instance.invalidateDate(dateStr);
     if (!context.mounted) return;
 
-    final VoidCallback? undoCallback = onUndo ??
+    final VoidCallback? undoCallback =
+        onUndo ??
         (undoToken != null
             ? () async {
-                final outcome = await CompletionGateway.instance.undo(undoToken);
+                final outcome = await CompletionGateway.instance.undo(
+                  undoToken,
+                );
                 if (!context.mounted) return;
                 if (outcome.didWrite) {
                   ActionFeedback.success(
@@ -39,11 +42,7 @@ class ActionFeedback {
               }
             : null);
 
-    RitmoToast.show(
-      context,
-      message,
-      onUndo: undoCallback,
-    );
+    RitmoToast.show(context, message, onUndo: undoCallback);
   }
 
   static void failure(BuildContext context, {required String message}) {

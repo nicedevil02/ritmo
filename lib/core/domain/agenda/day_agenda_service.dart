@@ -126,7 +126,8 @@ class DayAgendaService {
     RitmoEventBus().onEvents.listen((event) {
       if (!_cacheInvalidatingEvents.contains(event.type)) return;
 
-      final date = (event.payload['date'] ?? event.payload['dateStr']) as String?;
+      final date =
+          (event.payload['date'] ?? event.payload['dateStr']) as String?;
       if (event.type == 'DayRolledOver' || event.type == 'DataImported') {
         invalidateAll();
       } else if (date != null) {
@@ -212,7 +213,10 @@ class DayAgendaService {
       if (!failures.contains('context')) failures.add('context');
       _lastStatus = AgendaLoadStatus(failedSources: failures, fatal: true);
       for (final date in dates) {
-        result.putIfAbsent(_dateStr(date), () => DayAgenda.empty(_dateStr(date)));
+        result.putIfAbsent(
+          _dateStr(date),
+          () => DayAgenda.empty(_dateStr(date)),
+        );
       }
       return result;
     }
@@ -301,29 +305,63 @@ class DayAgendaService {
 
     final settings = await db.query('app_settings');
     final settingsMap = <String, String>{
-      for (final s in settings) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''
+      for (final s in settings)
+        if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? '',
     };
 
-    final routinesEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_today_routines');
-    final goalsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_goals_enabled');
-    final commitmentsEnabled = goalsEnabled && settingsMap['calendar_show_commitments'] != 'false';
-    final tasksEnabled = routinesEnabled && settingsMap['calendar_show_tasks'] != 'false';
-    final eventsEnabled = routinesEnabled && settingsMap['calendar_show_events'] != 'false';
-    final religionEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled');
-    final coursesEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_courses_enabled');
-    final konkurEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_study_enabled') &&
+    final routinesEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_today_routines',
+    );
+    final goalsEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_goals_enabled',
+    );
+    final commitmentsEnabled =
+        goalsEnabled && settingsMap['calendar_show_commitments'] != 'false';
+    final tasksEnabled =
+        routinesEnabled && settingsMap['calendar_show_tasks'] != 'false';
+    final eventsEnabled =
+        routinesEnabled && settingsMap['calendar_show_events'] != 'false';
+    final religionEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_religion_enabled',
+    );
+    final coursesEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_courses_enabled',
+    );
+    final konkurEnabled =
+        ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_study_enabled',
+        ) &&
         settingsMap['konkur_show_in_dashboard'] != 'false';
-    final sportsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_supplementary_sports_enabled');
-    final medicineEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_medicine_enabled');
-    final appointmentsEnabled = medicineEnabled && settingsMap['calendar_show_appointments'] != 'false';
+    final sportsEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_supplementary_sports_enabled',
+    );
+    final medicineEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_medicine_enabled',
+    );
+    final appointmentsEnabled =
+        medicineEnabled && settingsMap['calendar_show_appointments'] != 'false';
 
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-    final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
+    final cycleEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_cycle_enabled',
+    );
     final cycleConsent = settingsMap['cycle_consent_dashboard'] == 'true';
     final cycleSetupDone = settingsMap['cycle_setup_done'] == 'true';
     final showCycleInCalendar = settingsMap['show_cycle_in_calendar'] == 'true';
     final cycleAllowed =
-        isFemale && cycleEnabled && cycleConsent && cycleSetupDone && showCycleInCalendar;
+        isFemale &&
+        cycleEnabled &&
+        cycleConsent &&
+        cycleSetupDone &&
+        showCycleInCalendar;
 
     final startStr = _dateStr(start);
     final endStr = _dateStr(end);
@@ -345,17 +383,34 @@ class DayAgendaService {
 
     // Defensive lookups: a wrong runtime type must degrade a single source,
     // never abort the whole range build with a cast error.
-    final routineSource = _sourceOf<RoutineAgendaSource>(sources, 'routine') ?? RoutineAgendaSource.disabled();
-    final worshipSource = _sourceOf<WorshipAgendaSource>(sources, 'worship') ?? WorshipAgendaSource.disabled(settingsMap, db);
-    final sportsSource = _sourceOf<SportsAgendaSource>(sources, 'sports') ?? SportsAgendaSource.disabled(db);
-    final medicineSource = _sourceOf<MedicineAgendaSource>(sources, 'medicine') ?? MedicineAgendaSource.disabled();
-    final goalStepsSource = _sourceOf<GoalStepsAgendaSource>(sources, 'goalSteps') ?? GoalStepsAgendaSource.empty();
+    final routineSource =
+        _sourceOf<RoutineAgendaSource>(sources, 'routine') ??
+        RoutineAgendaSource.disabled();
+    final worshipSource =
+        _sourceOf<WorshipAgendaSource>(sources, 'worship') ??
+        WorshipAgendaSource.disabled(settingsMap, db);
+    final sportsSource =
+        _sourceOf<SportsAgendaSource>(sources, 'sports') ??
+        SportsAgendaSource.disabled(db);
+    final medicineSource =
+        _sourceOf<MedicineAgendaSource>(sources, 'medicine') ??
+        MedicineAgendaSource.disabled();
+    final goalStepsSource =
+        _sourceOf<GoalStepsAgendaSource>(sources, 'goalSteps') ??
+        GoalStepsAgendaSource.empty();
     final taskSource = _sourceOf<TaskAgendaSource>(sources, 'task');
-    final courseSource = _sourceOf<CourseAgendaSource>(sources, 'course') ?? CourseAgendaSource.disabled();
-    final konkurSource = _sourceOf<KonkurAgendaSource>(sources, 'konkur') ?? KonkurAgendaSource.disabled();
-    final cycleSource = _sourceOf<CycleAgendaSource>(sources, 'cycle') ?? const CycleAgendaSource(cycleOutput: null, cycleAllowed: false);
+    final courseSource =
+        _sourceOf<CourseAgendaSource>(sources, 'course') ??
+        CourseAgendaSource.disabled();
+    final konkurSource =
+        _sourceOf<KonkurAgendaSource>(sources, 'konkur') ??
+        KonkurAgendaSource.disabled();
+    final cycleSource =
+        _sourceOf<CycleAgendaSource>(sources, 'cycle') ??
+        const CycleAgendaSource(cycleOutput: null, cycleAllowed: false);
 
-    final cityId = settingsMap['prayer_city_id'] ??
+    final cityId =
+        settingsMap['prayer_city_id'] ??
         settingsMap['home_city_id'] ??
         'TEHRAN_TEHRAN';
 
@@ -370,7 +425,12 @@ class DayAgendaService {
         limit: 1,
       );
     } catch (e, st) {
-      RitmoLog.error('DayAgendaService', 'iran_cities lookup failed for $cityId', e, st);
+      RitmoLog.error(
+        'DayAgendaService',
+        'iran_cities lookup failed for $cityId',
+        e,
+        st,
+      );
     }
 
     var latitude = 35.6892;
@@ -383,8 +443,10 @@ class DayAgendaService {
       if (lng is num) longitude = lng.toDouble();
     }
 
-    final ihtiyatMinutes = int.tryParse(settingsMap['ihtiyat_minutes'] ?? '0') ?? 0;
-    final calcMethodStr = settingsMap['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
+    final ihtiyatMinutes =
+        int.tryParse(settingsMap['ihtiyat_minutes'] ?? '0') ?? 0;
+    final calcMethodStr =
+        settingsMap['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
 
     final dayMarksByDate = <String, String>{};
     try {
@@ -418,7 +480,11 @@ class DayAgendaService {
       const overrideRepo = SqliteOccurrenceOverrideRepository();
       overridesByDate = await overrideRepo.forRange(startStr, endStr);
     } catch (e) {
-      RitmoLog.error('DayAgendaService', 'Failed to load occurrence overrides', e);
+      RitmoLog.error(
+        'DayAgendaService',
+        'Failed to load occurrence overrides',
+        e,
+      );
     }
 
     return _AgendaContext(
@@ -487,8 +553,6 @@ class DayAgendaService {
     final isToday = dateStr == todayStr;
     final prayerTimes = await ctx.prayerTimesFor(date);
     var items = <AgendaItem>[];
-
-
 
     final enabledDomains = <AgendaDomain, bool>{
       AgendaDomain.routine: ctx.routinesEnabled,
@@ -566,58 +630,63 @@ class DayAgendaService {
           .toList();
     });
 
-    safeCollect(
-      'worship',
-      {AgendaDomain.prayer, AgendaDomain.mustahab, AgendaDomain.worshipDebt},
-      () => ctx.worshipSource.itemsForDate(agendaCtx),
-    );
-    safeCollect(
-      'sports',
-      {AgendaDomain.sport},
-      () => ctx.sportsSource.itemsForDate(agendaCtx),
-    );
-    safeCollect(
-      'medicine',
-      {AgendaDomain.medicine},
-      () => ctx.medicineSource.itemsForDate(agendaCtx),
-    );
-    safeCollect(
-      'goalSteps',
-      {AgendaDomain.goalStep},
-      () => ctx.goalStepsSource.itemsForDate(agendaCtx),
-    );
+    safeCollect('worship', {
+      AgendaDomain.prayer,
+      AgendaDomain.mustahab,
+      AgendaDomain.worshipDebt,
+    }, () => ctx.worshipSource.itemsForDate(agendaCtx));
+    safeCollect('sports', {
+      AgendaDomain.sport,
+    }, () => ctx.sportsSource.itemsForDate(agendaCtx));
+    safeCollect('medicine', {
+      AgendaDomain.medicine,
+    }, () => ctx.medicineSource.itemsForDate(agendaCtx));
+    safeCollect('goalSteps', {
+      AgendaDomain.goalStep,
+    }, () => ctx.goalStepsSource.itemsForDate(agendaCtx));
 
     final taskSource = ctx.taskSource;
     if (taskSource != null) {
-      safeCollect('task', {AgendaDomain.task}, () => taskSource.itemsForDate(agendaCtx));
+      safeCollect('task', {
+        AgendaDomain.task,
+      }, () => taskSource.itemsForDate(agendaCtx));
     }
 
-    safeCollect(
-      'course',
-      {AgendaDomain.course},
-      () => ctx.courseSource.itemsForDate(agendaCtx),
-    );
-    safeCollect(
-      'konkur',
-      {AgendaDomain.konkur},
-      () => ctx.konkurSource.itemsForDate(agendaCtx),
-    );
-    safeCollect(
-      'cycle',
-      {AgendaDomain.cycle},
-      () => ctx.cycleSource.itemsForDate(agendaCtx),
-    );
+    safeCollect('course', {
+      AgendaDomain.course,
+    }, () => ctx.courseSource.itemsForDate(agendaCtx));
+    safeCollect('konkur', {
+      AgendaDomain.konkur,
+    }, () => ctx.konkurSource.itemsForDate(agendaCtx));
+    safeCollect('cycle', {
+      AgendaDomain.cycle,
+    }, () => ctx.cycleSource.itemsForDate(agendaCtx));
 
     // Additional / custom registered sources (e.g. from tests or new modules)
-    const standardKeys = {'routine', 'worship', 'sports', 'medicine', 'goalSteps', 'task', 'course', 'konkur', 'cycle'};
+    const standardKeys = {
+      'routine',
+      'worship',
+      'sports',
+      'medicine',
+      'goalSteps',
+      'task',
+      'course',
+      'konkur',
+      'cycle',
+    };
     for (final entry in ctx.allSources.entries) {
       if (!standardKeys.contains(entry.key)) {
-        safeCollect(entry.key, entry.value.domains, () => entry.value.itemsForDate(agendaCtx));
+        safeCollect(
+          entry.key,
+          entry.value.domains,
+          () => entry.value.itemsForDate(agendaCtx),
+        );
       }
     }
 
     // Apply occurrence overrides (single-day moves, resizes, skips)
-    final dayOverrides = ctx.overridesByDate[dateStr] ?? const <OccurrenceOverride>[];
+    final dayOverrides =
+        ctx.overridesByDate[dateStr] ?? const <OccurrenceOverride>[];
     if (dayOverrides.isNotEmpty) {
       final overrideMap = <String, OccurrenceOverride>{};
       for (final ovr in dayOverrides) {
@@ -626,7 +695,8 @@ class DayAgendaService {
       }
 
       items = items.map((item) {
-        final ovr = overrideMap['${item.domain.name.toLowerCase()}:${item.sourceId}'] ??
+        final ovr =
+            overrideMap['${item.domain.name.toLowerCase()}:${item.sourceId}'] ??
             overrideMap[item.sourceId];
         if (ovr == null) return item;
 
@@ -641,9 +711,7 @@ class DayAgendaService {
           );
         }
         if (ovr.durationMinutes != null && ovr.durationMinutes! > 0) {
-          updated = updated.copyWith(
-            durationMinutes: ovr.durationMinutes,
-          );
+          updated = updated.copyWith(durationMinutes: ovr.durationMinutes);
         }
         return updated;
       }).toList();
@@ -710,16 +778,13 @@ class DayAgendaService {
   // Collectors
   // ---------------------------------------------------------------------------
 
-
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
 }
 
-
 /// Shared, range-scoped data loaded once and reused across every day.
 class _AgendaContext {
-
   _AgendaContext({
     required this.settingsMap,
     required this.routinesEnabled,
@@ -786,7 +851,8 @@ class _AgendaContext {
   final Map<String, Map<String, String>> _prayerCache = {};
 
   Future<Map<String, String>> prayerTimesFor(DateTime date) async {
-    final cityId = settingsMap['prayer_city_id'] ??
+    final cityId =
+        settingsMap['prayer_city_id'] ??
         settingsMap['home_city_id'] ??
         'TEHRAN_TEHRAN';
     final ds = date.toIso8601String().substring(0, 10);

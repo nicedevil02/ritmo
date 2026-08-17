@@ -17,7 +17,6 @@ enum InsightType {
 }
 
 class InsightResult {
-
   InsightResult({
     required this.type,
     required this.params,
@@ -64,7 +63,9 @@ class InsightResult {
       severity: map['severity']?.toString() ?? 'INFO',
       actionType: map['actionType']?.toString(),
       linkModule: map['linkModule']?.toString(),
-      actionParams: map['actionParams'] != null ? Map<String, dynamic>.from(map['actionParams'] as Map) : null,
+      actionParams: map['actionParams'] != null
+          ? Map<String, dynamic>.from(map['actionParams'] as Map)
+          : null,
     );
   }
 }
@@ -83,20 +84,9 @@ enum ContextExplanationType {
 }
 
 class ContextExplanation {
-
-  ContextExplanation({
-    required this.type,
-    this.params = const {},
-  });
+  ContextExplanation({required this.type, this.params = const {}});
   final ContextExplanationType type;
   final Map<String, dynamic> params;
 }
 
-enum HormonalPhase {
-  menstrual,
-  preCycle,
-  postCycle,
-  normal,
-  noData,
-  disabled,
-}
+enum HormonalPhase { menstrual, preCycle, postCycle, normal, noData, disabled }

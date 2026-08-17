@@ -23,7 +23,11 @@ import 'package:ritmo/features/worship/domain/prayer_target.dart';
 abstract class AgendaTileRenderer {
   const AgendaTileRenderer();
 
-  Widget build(BuildContext context, AgendaItem item, {required VoidCallback onChanged});
+  Widget build(
+    BuildContext context,
+    AgendaItem item, {
+    required VoidCallback onChanged,
+  });
 }
 
 class AgendaRendererRegistry {
@@ -37,12 +41,20 @@ class AgendaRendererRegistry {
     _registry[domain] = renderer;
   }
 
-  static Widget render(BuildContext context, AgendaItem item, {required VoidCallback onChanged}) {
+  static Widget render(
+    BuildContext context,
+    AgendaItem item, {
+    required VoidCallback onChanged,
+  }) {
     if (item.domain == AgendaDomain.mustahab) {
       final practice = item.meta['practice'] as Map<String, dynamic>? ?? {};
       final type = practice['practiceType'] as String?;
       if (type == 'QURAN' || type == 'DHIKR') {
-        return const QuranDhikrAgendaRenderer().build(context, item, onChanged: onChanged);
+        return const QuranDhikrAgendaRenderer().build(
+          context,
+          item,
+          onChanged: onChanged,
+        );
       }
     }
 
@@ -57,13 +69,17 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
   Duration get expiringSoonThreshold => const Duration(minutes: 30);
 
   @override
-  Widget build(BuildContext context, AgendaItem item, {required VoidCallback onChanged}) {
+  Widget build(
+    BuildContext context,
+    AgendaItem item, {
+    required VoidCallback onChanged,
+  }) {
     final practice = item.meta['practice'] as Map<String, dynamic>? ?? {};
     final isDone = item.isCompleted;
     final isSkipped = item.completion == AgendaCompletion.skipped;
     final isSnoozed = practice['lastDeferredUntil'] != null;
     final deferCount = practice['deferCount'] as int? ?? 0;
-    
+
     // Check if the setting module_religion_enabled is true
     // Also check menstruation
 
@@ -88,7 +104,9 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
     if (isToday && item.windowEnd != null && !isDone && !isSkipped) {
       final now = DateTime.now();
       isExpired = now.isAfter(item.windowEnd!);
-      isExpiringSoon = !isExpired && now.isAfter(item.windowEnd!.subtract(expiringSoonThreshold));
+      isExpiringSoon =
+          !isExpired &&
+          now.isAfter(item.windowEnd!.subtract(expiringSoonThreshold));
     }
 
     final hasReminder = (practice['reminderEnabled'] as int? ?? 0) == 1;
@@ -111,7 +129,8 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
           group = 'DHUHR_ASR';
         } else if (combined.contains('maghrib') || combined.contains('isha')) {
           group = 'MAGHRIB_ISHA';
-        } else if (combined.contains('fasting') || combined.contains('ramadan')) {
+        } else if (combined.contains('fasting') ||
+            combined.contains('ramadan')) {
           group = 'RAMADAN_FAST';
         } else {
           group = 'FAJR';
@@ -147,14 +166,22 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
         // let's show a snackbar or implement it if settings dialog is accessible.
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('تنظیمات یادآور نماز را می‌توانید در بخش عبادات تغییر دهید.', style: TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text(
+              'تنظیمات یادآور نماز را می‌توانید در بخش عبادات تغییر دهید.',
+              style: TextStyle(fontFamily: 'Vazirmatn'),
+            ),
           ),
         );
       },
     );
   }
 
-  Future<void> _showSnoozeBottomSheet(BuildContext context, AgendaItem item, Map<String, dynamic> practice, VoidCallback onChanged) async {
+  Future<void> _showSnoozeBottomSheet(
+    BuildContext context,
+    AgendaItem item,
+    Map<String, dynamic> practice,
+    VoidCallback onChanged,
+  ) async {
     final colors = context.colors;
     var selectedMinutes = 15;
 
@@ -165,10 +192,16 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
           textDirection: TextDirection.rtl,
           child: AlertDialog(
             backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
             title: const Text(
               'تعویق نماز',
-              style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16.5, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 16.5,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             content: StatefulBuilder(
               builder: (context, setState) {
@@ -183,12 +216,48 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
                     DropdownButton<int>(
                       value: selectedMinutes,
                       items: const [
-                        DropdownMenuItem(value: 5, child: Text('۵ دقیقه', style: TextStyle(fontFamily: 'Vazirmatn'))),
-                        DropdownMenuItem(value: 10, child: Text('۱۰ دقیقه', style: TextStyle(fontFamily: 'Vazirmatn'))),
-                        DropdownMenuItem(value: 15, child: Text('۱۵ دقیقه', style: TextStyle(fontFamily: 'Vazirmatn'))),
-                        DropdownMenuItem(value: 30, child: Text('۳۰ دقیقه', style: TextStyle(fontFamily: 'Vazirmatn'))),
-                        DropdownMenuItem(value: 45, child: Text('۴۵ دقیقه', style: TextStyle(fontFamily: 'Vazirmatn'))),
-                        DropdownMenuItem(value: 60, child: Text('۱ ساعت', style: TextStyle(fontFamily: 'Vazirmatn'))),
+                        DropdownMenuItem(
+                          value: 5,
+                          child: Text(
+                            '۵ دقیقه',
+                            style: TextStyle(fontFamily: 'Vazirmatn'),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 10,
+                          child: Text(
+                            '۱۰ دقیقه',
+                            style: TextStyle(fontFamily: 'Vazirmatn'),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 15,
+                          child: Text(
+                            '۱۵ دقیقه',
+                            style: TextStyle(fontFamily: 'Vazirmatn'),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 30,
+                          child: Text(
+                            '۳۰ دقیقه',
+                            style: TextStyle(fontFamily: 'Vazirmatn'),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 45,
+                          child: Text(
+                            '۴۵ دقیقه',
+                            style: TextStyle(fontFamily: 'Vazirmatn'),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 60,
+                          child: Text(
+                            '۱ ساعت',
+                            style: TextStyle(fontFamily: 'Vazirmatn'),
+                          ),
+                        ),
                       ],
                       onChanged: (val) {
                         if (val != null) {
@@ -205,21 +274,30 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('انصراف', style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                child: Text(
+                  'انصراف',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontFamily: 'Vazirmatn',
+                  ),
+                ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xffD4A843),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 onPressed: () async {
                   Navigator.pop(context);
                   try {
-                    final outcome = await AgendaActionHandler.instance.snoozePrayer(
-                      practiceIds: [practice['id'] as String],
-                      minutes: selectedMinutes,
-                      dateStr: item.dateStr,
-                    );
+                    final outcome = await AgendaActionHandler.instance
+                        .snoozePrayer(
+                          practiceIds: [practice['id'] as String],
+                          minutes: selectedMinutes,
+                          dateStr: item.dateStr,
+                        );
                     if (context.mounted) {
                       if (outcome is SnoozeRefused) {
                         RitmoToast.show(context, outcome.userMessage);
@@ -227,9 +305,19 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
                         onChanged();
                       }
                     }
-                  } catch (e, st) { debugPrint('Error in agenda_renderer_registry.dart: $e\n$st'); }
+                  } catch (e, st) {
+                    debugPrint(
+                      'Error in agenda_renderer_registry.dart: $e\n$st',
+                    );
+                  }
                 },
-                child: Text('ثبت تعویق', style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                child: Text(
+                  'ثبت تعویق',
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontFamily: 'Vazirmatn',
+                  ),
+                ),
               ),
             ],
           ),
@@ -238,7 +326,12 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
     );
   }
 
-  Future<void> _showSkipConfirmationDialog(BuildContext context, AgendaItem item, Map<String, dynamic> practice, VoidCallback onChanged) async {
+  Future<void> _showSkipConfirmationDialog(
+    BuildContext context,
+    AgendaItem item,
+    Map<String, dynamic> practice,
+    VoidCallback onChanged,
+  ) async {
     final colors = context.colors;
 
     final addToQada = await showDialog<bool>(
@@ -248,27 +341,52 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
           textDirection: TextDirection.rtl,
           child: AlertDialog(
             backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: Text(
               'ثبت نماز قضای ${item.title}',
-              style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn', fontSize: 16.5, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontFamily: 'Vazirmatn',
+                fontSize: 16.5,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             content: Text(
               'آیا مایلید نماز امروز (${item.title}) را به بدهی‌های عبادی (نماز قضا) اضافه کنید؟',
-              style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn', fontSize: 14.5),
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontFamily: 'Vazirmatn',
+                fontSize: 14.5,
+              ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('خیر', style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn')),
+                child: Text(
+                  'خیر',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontFamily: 'Vazirmatn',
+                  ),
+                ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xffD4A843),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 onPressed: () => Navigator.pop(context, true),
-                child: Text('بله، اضافه کن', style: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn')),
+                child: Text(
+                  'بله، اضافه کن',
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontFamily: 'Vazirmatn',
+                  ),
+                ),
               ),
             ],
           ),
@@ -284,7 +402,7 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
             'subType': practice['subType'] as String?,
             'title': practice['title'] as String?,
             'practiceType': practice['practiceType'] as String?,
-          }
+          },
         ],
         addToQada: addToQada,
         dateStr: item.dateStr,
@@ -293,7 +411,10 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
       if (addToQada && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('نماز قضای ${item.title} به بدهی‌های شما اضافه شد.', style: const TextStyle(fontFamily: 'Vazirmatn')),
+            content: Text(
+              'نماز قضای ${item.title} به بدهی‌های شما اضافه شد.',
+              style: const TextStyle(fontFamily: 'Vazirmatn'),
+            ),
             backgroundColor: const Color(0xffD4A843),
           ),
         );
@@ -307,7 +428,11 @@ class RoutineAgendaRenderer extends AgendaTileRenderer {
   const RoutineAgendaRenderer();
 
   @override
-  Widget build(BuildContext context, AgendaItem item, {required VoidCallback onChanged}) {
+  Widget build(
+    BuildContext context,
+    AgendaItem item, {
+    required VoidCallback onChanged,
+  }) {
     final routineMap = item.meta['routine'] as Map<String, dynamic>? ?? {};
     final routine = Routine.fromMap(routineMap);
     final isDone = item.isCompleted;
@@ -330,7 +455,10 @@ class RoutineAgendaRenderer extends AgendaTileRenderer {
             context: context,
             routine: routine,
             onStartTimer: (selectedMode) async {
-              final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+              final todayStr = DateTime.now().toIso8601String().substring(
+                0,
+                10,
+              );
               final isToday = item.dateStr == todayStr;
               if (isToday) {
                 unawaited(
@@ -340,12 +468,14 @@ class RoutineAgendaRenderer extends AgendaTileRenderer {
                       builder: (context) => ActiveTimerOverlay(
                         routine: routine,
                         completionMode: selectedMode,
-                        dateStr: item.dateStr,        // T4: item's date
-                        onCompleted: (outcome) {      // T6: only on confirmed completion
+                        dateStr: item.dateStr, // T4: item's date
+                        onCompleted: (outcome) {
+                          // T6: only on confirmed completion
                           Navigator.pop(context);
                           onChanged();
                         },
-                        onCancelled: () {             // T6: neutral — no success
+                        onCancelled: () {
+                          // T6: neutral — no success
                           Navigator.pop(context);
                         },
                       ),
@@ -437,11 +567,16 @@ class DefaultAgendaRenderer extends AgendaTileRenderer {
   const DefaultAgendaRenderer();
 
   @override
-  Widget build(BuildContext context, AgendaItem item, {required VoidCallback onChanged}) {
+  Widget build(
+    BuildContext context,
+    AgendaItem item, {
+    required VoidCallback onChanged,
+  }) {
     final colors = context.colors;
     final isDone = item.isCompleted;
     // All module/system items are read-only mirrors in the calendar screen
-    final isCompletable = item.domain == AgendaDomain.prayer ||
+    final isCompletable =
+        item.domain == AgendaDomain.prayer ||
         item.domain == AgendaDomain.course ||
         item.domain == AgendaDomain.goalStep ||
         item.domain == AgendaDomain.worshipDebt ||
@@ -506,7 +641,9 @@ class DefaultAgendaRenderer extends AgendaTileRenderer {
           ],
           if (isCompletable) ...[
             Icon(
-              isDone ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
+              isDone
+                  ? CupertinoIcons.checkmark_circle_fill
+                  : CupertinoIcons.circle,
               color: isDone ? colors.success : colors.textSecondary,
               size: 20,
             ),

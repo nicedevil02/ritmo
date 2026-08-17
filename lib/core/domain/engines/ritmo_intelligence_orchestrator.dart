@@ -10,7 +10,7 @@ class RitmoIntelligenceOrchestrator {
     required this.eventBus,
     EngineInvalidationPolicy? invalidationPolicy,
   }) : _invalidationPolicy =
-            invalidationPolicy ?? const EngineInvalidationPolicy() {
+           invalidationPolicy ?? const EngineInvalidationPolicy() {
     _subscription = eventBus.onEvents.listen(_handleEvent);
   }
 

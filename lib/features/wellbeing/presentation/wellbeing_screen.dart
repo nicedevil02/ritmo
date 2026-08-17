@@ -85,10 +85,12 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   SleepTarget _sleepTarget = SleepTarget.defaultTarget();
   List<WellbeingPulseDayData> _pulseDays = [];
   WellbeingInsightLoopState? _loopPrevious;
-  WellbeingInsightSnapshot _insightSnapshotCache = const WellbeingInsightSnapshot();
+  WellbeingInsightSnapshot _insightSnapshotCache =
+      const WellbeingInsightSnapshot();
   SleepProgramState? _sleepProgramState;
 
-  final TextEditingController _quickReflectionController = TextEditingController();
+  final TextEditingController _quickReflectionController =
+      TextEditingController();
   bool _isSavingReflection = false;
   int? _quickReflectionMood;
 
@@ -97,7 +99,11 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialSection.index);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialSection.index,
+    );
 
     RitmoEvents.routineChanges.addListener(_requestReload);
 
@@ -153,8 +159,12 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
     try {
       final db = await DatabaseHelper.instance.database;
-      final horizonMs = RitmoDate.startOfDayMillis(now.subtract(Duration(days: _selectedHorizonDays)));
-      final horizonKey = RitmoDate.dayKey(now.subtract(Duration(days: _selectedHorizonDays)));
+      final horizonMs = RitmoDate.startOfDayMillis(
+        now.subtract(Duration(days: _selectedHorizonDays)),
+      );
+      final horizonKey = RitmoDate.dayKey(
+        now.subtract(Duration(days: _selectedHorizonDays)),
+      );
 
       final dailyLimit = _selectedHorizonDays + 7;
       final multiLogLimit = math.max(200, _selectedHorizonDays * 8);
@@ -162,15 +172,73 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       final dbResults = await Future.wait([
         Future.value(ModuleGate.instance.isEnabled('module_energy_enabled')),
         Future.value(ModuleGate.instance.isEnabled('module_sleep_enabled')),
-        db.query('app_settings', where: "key LIKE 'sleep_target_%'").catchError((_) => <Map<String, dynamic>>[]),
-        db.query('energy_logs', where: 'loggedAt >= ?', whereArgs: [horizonMs], orderBy: 'loggedAt DESC', limit: multiLogLimit).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('mood_logs', where: 'loggedAt >= ?', whereArgs: [horizonMs], orderBy: 'loggedAt DESC', limit: multiLogLimit).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('bedtime_diagnostics', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: dailyLimit).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('daily_reflections', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: dailyLimit).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('daily_checkins', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: dailyLimit).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('routines', where: 'isArchived = 0').catchError((_) => <Map<String, dynamic>>[]),
-        db.query('routine_completions', where: 'completionTime >= ?', whereArgs: [horizonMs], limit: 1000).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('daily_rhythm', where: 'date >= ?', whereArgs: [horizonKey], limit: dailyLimit).catchError((_) => <Map<String, dynamic>>[]),
+        db
+            .query('app_settings', where: "key LIKE 'sleep_target_%'")
+            .catchError((_) => <Map<String, dynamic>>[]),
+        db
+            .query(
+              'energy_logs',
+              where: 'loggedAt >= ?',
+              whereArgs: [horizonMs],
+              orderBy: 'loggedAt DESC',
+              limit: multiLogLimit,
+            )
+            .catchError((_) => <Map<String, dynamic>>[]),
+        db
+            .query(
+              'mood_logs',
+              where: 'loggedAt >= ?',
+              whereArgs: [horizonMs],
+              orderBy: 'loggedAt DESC',
+              limit: multiLogLimit,
+            )
+            .catchError((_) => <Map<String, dynamic>>[]),
+        db
+            .query(
+              'bedtime_diagnostics',
+              where: 'date >= ?',
+              whereArgs: [horizonKey],
+              orderBy: 'date DESC',
+              limit: dailyLimit,
+            )
+            .catchError((_) => <Map<String, dynamic>>[]),
+        db
+            .query(
+              'daily_reflections',
+              where: 'date >= ?',
+              whereArgs: [horizonKey],
+              orderBy: 'date DESC',
+              limit: dailyLimit,
+            )
+            .catchError((_) => <Map<String, dynamic>>[]),
+        db
+            .query(
+              'daily_checkins',
+              where: 'date >= ?',
+              whereArgs: [horizonKey],
+              orderBy: 'date DESC',
+              limit: dailyLimit,
+            )
+            .catchError((_) => <Map<String, dynamic>>[]),
+        db
+            .query('routines', where: 'isArchived = 0')
+            .catchError((_) => <Map<String, dynamic>>[]),
+        db
+            .query(
+              'routine_completions',
+              where: 'completionTime >= ?',
+              whereArgs: [horizonMs],
+              limit: 1000,
+            )
+            .catchError((_) => <Map<String, dynamic>>[]),
+        db
+            .query(
+              'daily_rhythm',
+              where: 'date >= ?',
+              whereArgs: [horizonKey],
+              limit: dailyLimit,
+            )
+            .catchError((_) => <Map<String, dynamic>>[]),
       ]);
 
       if (!mounted || token != _loadToken) return;
@@ -187,9 +255,14 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         final v = r['value'] as String;
         if (k == 'sleep_target_bedtime') bedtime = v;
         if (k == 'sleep_target_wake') wake = v;
-        if (k == 'sleep_target_duration_minutes') durationMinutes = int.tryParse(v) ?? 450;
+        if (k == 'sleep_target_duration_minutes')
+          durationMinutes = int.tryParse(v) ?? 450;
       }
-      _sleepTarget = SleepTarget(bedtime: bedtime, wake: wake, durationMinutes: durationMinutes);
+      _sleepTarget = SleepTarget(
+        bedtime: bedtime,
+        wake: wake,
+        durationMinutes: durationMinutes,
+      );
 
       final energyRows = dbResults[3] as List<Map<String, dynamic>>;
       final moodRows = dbResults[4] as List<Map<String, dynamic>>;
@@ -203,7 +276,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       _rawEnergyLogs = energyRows.map((r) => EnergyLog.fromMap(r)).toList();
       _rawMoodLogs = moodRows.map((r) => MoodLog.fromMap(r)).toList();
       _rawSleepLogs = sleepRows.map((r) => SleepLog.fromMap(r)).toList();
-      _reflections = reflectionRows.map((r) => ReflectionEntry.fromMap(r)).toList();
+      _reflections = reflectionRows
+          .map((r) => ReflectionEntry.fromMap(r))
+          .toList();
       _checkins = checkinRows.map((r) => CheckinEntry.fromMap(r)).toList();
 
       final energyInput = EnergyAnalyticsEngineInput(
@@ -241,10 +316,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         routineCompletions: completionRows,
       );
 
-      Future<T?> evalEngine<I, T>(
-        Type engineType,
-        I input,
-      ) async {
+      Future<T?> evalEngine<I, T>(Type engineType, I input) async {
         try {
           return await RitmoEngineBus.instance
               .execute<I, T>(engineType, input)
@@ -256,15 +328,22 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
       final engineResults = await Future.wait([
         evalEngine<EnergyAnalyticsEngineInput, EnergyAnalyticsOutput>(
-            EnergyAnalyticsEngine, energyInput),
-        evalEngine<MoodEngineInput, MoodEngineOutput>(
-            MoodEngine, moodInput),
+          EnergyAnalyticsEngine,
+          energyInput,
+        ),
+        evalEngine<MoodEngineInput, MoodEngineOutput>(MoodEngine, moodInput),
         evalEngine<SleepEngineInput, SleepEngineOutput>(
-            SleepEngine, sleepInput),
+          SleepEngine,
+          sleepInput,
+        ),
         evalEngine<ReflectionEngineInput, ReflectionEngineOutput>(
-            ReflectionEngine, reflectionInput),
+          ReflectionEngine,
+          reflectionInput,
+        ),
         evalEngine<LifeBalanceEngineInput, LifeBalanceEngineOutput>(
-            LifeBalanceEngine, balanceInput),
+          LifeBalanceEngine,
+          balanceInput,
+        ),
       ]);
 
       if (!mounted || token != _loadToken) return;
@@ -277,14 +356,25 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
       final uniqueSleepDays = _rawSleepLogs.map((l) => l.date).toSet().length;
       final uniqueEnergyDays = _rawEnergyLogs
-          .map((e) => RitmoDate.dayKey(DateTime.fromMillisecondsSinceEpoch(e.loggedAt)))
+          .map(
+            (e) => RitmoDate.dayKey(
+              DateTime.fromMillisecondsSinceEpoch(e.loggedAt),
+            ),
+          )
           .toSet()
           .length;
       final uniqueMoodDays = _rawMoodLogs
-          .map((m) => RitmoDate.dayKey(DateTime.fromMillisecondsSinceEpoch(m.loggedAt)))
+          .map(
+            (m) => RitmoDate.dayKey(
+              DateTime.fromMillisecondsSinceEpoch(m.loggedAt),
+            ),
+          )
           .toSet()
           .length;
-      final uniqueReflectionDays = _reflections.map((r) => r.date).toSet().length;
+      final uniqueReflectionDays = _reflections
+          .map((r) => r.date)
+          .toSet()
+          .length;
 
       _wellbeing = const WellbeingEngine().compute(
         WellbeingEngineInput(
@@ -311,7 +401,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
       final energyValuesByDate = <String, List<double>>{};
       for (final e in _rawEnergyLogs) {
-        final key = RitmoDate.dayKey(DateTime.fromMillisecondsSinceEpoch(e.loggedAt));
+        final key = RitmoDate.dayKey(
+          DateTime.fromMillisecondsSinceEpoch(e.loggedAt),
+        );
         var val = 2.0;
         if (e.energyLevel == EnergyLevel.high) val = 3.0;
         if (e.energyLevel == EnergyLevel.low) val = 1.0;
@@ -333,7 +425,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
       final moodValuesByDate = <String, List<double>>{};
       for (final m in _rawMoodLogs) {
-        final key = RitmoDate.dayKey(DateTime.fromMillisecondsSinceEpoch(m.loggedAt));
+        final key = RitmoDate.dayKey(
+          DateTime.fromMillisecondsSinceEpoch(m.loggedAt),
+        );
         moodValuesByDate.putIfAbsent(key, () => []).add(m.valence.toDouble());
       }
       final moodByDate = <String, double>{
@@ -373,7 +467,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         targetSleepHours: _sleepTarget.durationMinutes / 60.0,
         loopPrevious: _loopPrevious,
       );
-      _insightSnapshotCache = const WellbeingInsightArbiter().evaluate(insightInput);
+      _insightSnapshotCache = const WellbeingInsightArbiter().evaluate(
+        insightInput,
+      );
       _sleepProgramState = await SleepPlanGateway.loadState(now: now);
       _insightSnapshotCache = await SleepPlanGateway.mergeInto(
         _insightSnapshotCache,
@@ -441,12 +537,22 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => AssistantSheet(persona: PersonaRegistry.instance.getPersona('wellbeing')!),
+      builder: (ctx) => AssistantSheet(
+        persona: PersonaRegistry.instance.getPersona('wellbeing')!,
+      ),
     );
   }
 
   void _showExplanation(BuildContext context) {
-    final w = _wellbeing ?? WellbeingIndex(value: null, confidence: 0, contributions: const [], missing: const [], computedAtMillis: DateTime.now().millisecondsSinceEpoch);
+    final w =
+        _wellbeing ??
+        WellbeingIndex(
+          value: null,
+          confidence: 0,
+          contributions: const [],
+          missing: const [],
+          computedAtMillis: DateTime.now().millisecondsSinceEpoch,
+        );
     WellbeingExplanationSheet.show(context, w);
   }
 
@@ -466,10 +572,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         RitmoSheetScaffold.present(
           context: context,
           title: 'ثبت خواب دیشب',
-          builder: (ctx) => SleepLogSheet(
-            onSaved: _requestReload,
-            target: _sleepTarget,
-          ),
+          builder: (ctx) =>
+              SleepLogSheet(onSaved: _requestReload, target: _sleepTarget),
         );
       case WellbeingInsightAction.logEnergy:
         RitmoSheetScaffold.present(
@@ -501,8 +605,13 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.card)),
-        title: Text('پنجرهٔ طلایی انرژی', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
+        ),
+        title: Text(
+          'پنجرهٔ طلایی انرژی',
+          style: RitmoTextStyles.cardTitle(colors.textPrimary),
+        ),
         content: Text(
           'در بازهٔ ${_energyOutput?.peakPerformanceWindow ?? "نامشخص"} معمولاً بیشترین انرژی را داری. کارهای مهم یا سخت‌تر خودت را از برنامهٔ «امروزِ من» به این بازه منتقل کن تا از این انرژی استفاده کنی.',
           style: RitmoTextStyles.body(colors.textSecondary),
@@ -560,7 +669,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 labelColor: colors.primary,
                 unselectedLabelColor: colors.textSecondary,
                 labelStyle: RitmoTextStyles.label(colors.primary),
-                unselectedLabelStyle: RitmoTextStyles.caption(colors.textSecondary),
+                unselectedLabelStyle: RitmoTextStyles.caption(
+                  colors.textSecondary,
+                ),
                 tabs: const [
                   Tab(text: 'امروزِ من'),
                   Tab(text: 'روند من'),
@@ -605,7 +716,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 insight: snapshot.featured,
                 onAction: _onInsightAction,
               ),
-              if (snapshot.featured != null) const SizedBox(height: RitmoSpacing.lg),
+              if (snapshot.featured != null)
+                const SizedBox(height: RitmoSpacing.lg),
               _buildSleepProgramCard(context),
               const SizedBox(height: RitmoSpacing.lg),
               FrictionlessMoodBar(onLogChanged: _requestReload),
@@ -614,7 +726,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               const SizedBox(height: RitmoSpacing.lg),
               _buildGoldenWindowCard(
                 context,
-                hideWhenFeatured: snapshot.featured?.kind == WellbeingInsightKind.goldenWindow,
+                hideWhenFeatured:
+                    snapshot.featured?.kind ==
+                    WellbeingInsightKind.goldenWindow,
               ),
             ]),
           ),
@@ -641,7 +755,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               selectedColor: colors.primary.withValues(alpha: 0.18),
               backgroundColor: colors.surface,
               side: BorderSide(
-                color: isSelected ? colors.primary : colors.border.withValues(alpha: 0.5),
+                color: isSelected
+                    ? colors.primary
+                    : colors.border.withValues(alpha: 0.5),
                 width: isSelected ? 1.2 : 0.8,
               ),
               labelStyle: TextStyle(
@@ -699,7 +815,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(RitmoRadius.card),
-                  border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -720,48 +838,64 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       style: RitmoTextStyles.body(colors.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'امروز چه چیز خوبی اتفاق افتاد؟',
-                        hintStyle: RitmoTextStyles.caption(colors.textSecondary),
+                        hintStyle: RitmoTextStyles.caption(
+                          colors.textSecondary,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(color: colors.border),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        Text('حال امروز (اختیاری):', style: RitmoTextStyles.caption(colors.textSecondary)),
+                        Text(
+                          'حال امروز (اختیاری):',
+                          style: RitmoTextStyles.caption(colors.textSecondary),
+                        ),
                         const Spacer(),
                         for (int score = 1; score <= 5; score++) ...[
                           InkWell(
                             onTap: () {
                               setState(() {
-                                _quickReflectionMood = _quickReflectionMood == score ? null : score;
+                                _quickReflectionMood =
+                                    _quickReflectionMood == score
+                                    ? null
+                                    : score;
                               });
                             },
                             borderRadius: BorderRadius.circular(16),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: _quickReflectionMood == score
                                     ? colors.primary.withValues(alpha: 0.2)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: _quickReflectionMood == score ? colors.primary : colors.border.withValues(alpha: 0.5),
+                                  color: _quickReflectionMood == score
+                                      ? colors.primary
+                                      : colors.border.withValues(alpha: 0.5),
                                 ),
                               ),
                               child: Text(
                                 score == 1
                                     ? '😫'
                                     : score == 2
-                                        ? '🥱'
-                                        : score == 3
-                                            ? '😐'
-                                            : score == 4
-                                                ? '🙂'
-                                                : '😴',
+                                    ? '🥱'
+                                    : score == 3
+                                    ? '😐'
+                                    : score == 4
+                                    ? '🙂'
+                                    : '😴',
                                 style: const TextStyle(fontSize: 16),
                               ),
                             ),
@@ -774,16 +908,33 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                     Align(
                       alignment: Alignment.centerLeft,
                       child: ElevatedButton.icon(
-                        onPressed: _isSavingReflection ? null : _saveQuickReflection,
+                        onPressed: _isSavingReflection
+                            ? null
+                            : _saveQuickReflection,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colors.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
                         ),
                         icon: _isSavingReflection
-                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
                             : const Icon(Icons.send, size: 16),
-                        label: Text('ثبت بازتاب', style: RitmoTextStyles.label(colors.onPrimary)),
+                        label: Text(
+                          'ثبت بازتاب',
+                          style: RitmoTextStyles.label(colors.onPrimary),
+                        ),
                       ),
                     ),
                   ],
@@ -796,7 +947,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 decoration: BoxDecoration(
                   color: colors.primaryContainer.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(RitmoRadius.card),
-                  border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -808,10 +961,13 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                           'پیوستگی بازتاب: ${RitmoNumber.faInt(_reflectionOutput?.currentStreak ?? 0)} روز پیاپی 🔥',
                           style: RitmoTextStyles.cardTitle(colors.textPrimary),
                         ),
-                        if (_reflectionOutput?.longestStreak != null && (_reflectionOutput?.longestStreak ?? 0) > 0)
+                        if (_reflectionOutput?.longestStreak != null &&
+                            (_reflectionOutput?.longestStreak ?? 0) > 0)
                           Text(
                             'بهترین: ${RitmoNumber.faInt(_reflectionOutput!.longestStreak)} روز',
-                            style: RitmoTextStyles.caption(colors.textSecondary),
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ),
                           ),
                       ],
                     ),
@@ -824,11 +980,19 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.shield_outlined, size: 16, color: colors.primary),
+                          Icon(
+                            Icons.shield_outlined,
+                            size: 16,
+                            color: colors.primary,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'فرصت جبران ۱ روزهٔ این هفته اعمال شد 🌱',
-                            style: TextStyle(fontSize: 11.5, color: colors.primary, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: colors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
@@ -874,7 +1038,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                                   children: [
                                     Text(
                                       RitmoNumber.fa(r.date),
-                                      style: RitmoTextStyles.caption(colors.textSecondary),
+                                      style: RitmoTextStyles.caption(
+                                        colors.textSecondary,
+                                      ),
                                     ),
                                     if (r.moodScore > 0) ...[
                                       const SizedBox(width: 6),
@@ -882,21 +1048,26 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                                         r.moodScore == 1
                                             ? '😫'
                                             : r.moodScore == 2
-                                                ? '🥱'
-                                                : r.moodScore == 3
-                                                    ? '😐'
-                                                    : r.moodScore == 4
-                                                        ? '🙂'
-                                                        : '😴',
+                                            ? '🥱'
+                                            : r.moodScore == 3
+                                            ? '😐'
+                                            : r.moodScore == 4
+                                            ? '🙂'
+                                            : '😴',
                                         style: const TextStyle(fontSize: 14),
                                       ),
                                     ],
                                   ],
                                 ),
-                                Icon(Icons.chevron_left, size: 18, color: colors.textSecondary),
+                                Icon(
+                                  Icons.chevron_left,
+                                  size: 18,
+                                  color: colors.textSecondary,
+                                ),
                               ],
                             ),
-                            if (r.goodThing != null && r.goodThing!.isNotEmpty) ...[
+                            if (r.goodThing != null &&
+                                r.goodThing!.isNotEmpty) ...[
                               const SizedBox(height: 6),
                               Text(
                                 '💡 ${r.goodThing}',
@@ -976,15 +1147,22 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             TextButton.icon(
               onPressed: () => _showExplanation(context),
               icon: Icon(Icons.help_outline, size: 16, color: colors.primary),
-              label: Text('چرا این عدد؟ (راهنمای سیگنال‌ها)', style: RitmoTextStyles.label(colors.primary)),
+              label: Text(
+                'چرا این عدد؟ (راهنمای سیگنال‌ها)',
+                style: RitmoTextStyles.label(colors.primary),
+              ),
             ),
           ],
         ),
       );
     }
 
-    final lower = w.lowerBound != null ? RitmoNumber.faInt(w.lowerBound!) : '---';
-    final upper = w.upperBound != null ? RitmoNumber.faInt(w.upperBound!) : '---';
+    final lower = w.lowerBound != null
+        ? RitmoNumber.faInt(w.lowerBound!)
+        : '---';
+    final upper = w.upperBound != null
+        ? RitmoNumber.faInt(w.upperBound!)
+        : '---';
     final valStr = w.value != null ? RitmoNumber.faInt(w.value!) : '---';
 
     return Container(
@@ -1012,7 +1190,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           TextButton.icon(
             onPressed: () => _showExplanation(context),
             icon: Icon(Icons.info_outline, size: 16, color: colors.primary),
-            label: Text('چرا این عدد؟', style: RitmoTextStyles.label(colors.primary)),
+            label: Text(
+              'چرا این عدد؟',
+              style: RitmoTextStyles.label(colors.primary),
+            ),
           ),
         ],
       ),
@@ -1041,15 +1222,27 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             ),
             ElevatedButton(
               onPressed: () async {
-                await ModuleManagementService.instance.setModuleEnabled('module_energy_enabled', true);
-                await ModuleManagementService.instance.setModuleEnabled('module_sleep_enabled', true);
+                await ModuleManagementService.instance.setModuleEnabled(
+                  'module_energy_enabled',
+                  true,
+                );
+                await ModuleManagementService.instance.setModuleEnabled(
+                  'module_sleep_enabled',
+                  true,
+                );
                 _requestReload();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
               ),
-              child: Text('فعالسازی درجا', style: RitmoTextStyles.label(colors.onPrimary)),
+              child: Text(
+                'فعالسازی درجا',
+                style: RitmoTextStyles.label(colors.onPrimary),
+              ),
             ),
           ],
         ),
@@ -1067,15 +1260,33 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           ),
           child: Row(
             children: [
-              Text('انرژی الان:', style: RitmoTextStyles.caption(colors.textSecondary)),
+              Text(
+                'انرژی الان:',
+                style: RitmoTextStyles.caption(colors.textSecondary),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _energyLevelChip(context, label: 'کم ⚡', level: 'LOW', color: colors.cautionAccent),
-                    _energyLevelChip(context, label: 'متوسط ⚡', level: 'MEDIUM', color: colors.primary),
-                    _energyLevelChip(context, label: 'زیاد ⚡', level: 'HIGH', color: colors.success),
+                    _energyLevelChip(
+                      context,
+                      label: 'کم ⚡',
+                      level: 'LOW',
+                      color: colors.cautionAccent,
+                    ),
+                    _energyLevelChip(
+                      context,
+                      label: 'متوسط ⚡',
+                      level: 'MEDIUM',
+                      color: colors.primary,
+                    ),
+                    _energyLevelChip(
+                      context,
+                      label: 'زیاد ⚡',
+                      level: 'HIGH',
+                      color: colors.success,
+                    ),
                   ],
                 ),
               ),
@@ -1125,7 +1336,12 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     );
   }
 
-  Widget _energyLevelChip(BuildContext context, {required String label, required String level, required Color color}) {
+  Widget _energyLevelChip(
+    BuildContext context, {
+    required String label,
+    required String level,
+    required Color color,
+  }) {
     return InkWell(
       onTap: () async {
         RitmoHapticsPolicy.tap();
@@ -1146,7 +1362,14 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
-        child: Text(label, style: TextStyle(fontSize: 11.5, color: color, fontWeight: FontWeight.bold)),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
@@ -1183,7 +1406,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     );
   }
 
-  Widget _buildGoldenWindowCard(BuildContext context, {bool hideWhenFeatured = false}) {
+  Widget _buildGoldenWindowCard(
+    BuildContext context, {
+    bool hideWhenFeatured = false,
+  }) {
     final colors = context.colors;
 
     if (hideWhenFeatured) {
@@ -1218,7 +1444,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               ),
               TextButton(
                 onPressed: _showGoldenWindowDialog,
-                child: Text('یعنی چی؟', style: TextStyle(fontSize: 11.5, color: colors.primary)),
+                child: Text(
+                  'یعنی چی؟',
+                  style: TextStyle(fontSize: 11.5, color: colors.primary),
+                ),
               ),
             ],
           ),
@@ -1280,7 +1509,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   style: RitmoTextStyles.body(colors.textPrimary),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
@@ -1375,7 +1607,11 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                     color: colors.sleepAccent.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.headphones_rounded, color: colors.sleepAccent, size: 20),
+                  child: Icon(
+                    Icons.headphones_rounded,
+                    color: colors.sleepAccent,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1417,15 +1653,24 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   ),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => _onInsightAction(WellbeingInsightAction.logSleep),
+                  onPressed: () =>
+                      _onInsightAction(WellbeingInsightAction.logSleep),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colors.sleepAccent,
                     side: BorderSide(color: colors.sleepAccent),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('ثبت خواب دیشب', style: TextStyle(fontSize: 12)),
+                  label: const Text(
+                    'ثبت خواب دیشب',
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),
@@ -1451,7 +1696,11 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 color: colors.sleepAccent.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.nightlife_rounded, color: colors.sleepAccent, size: 22),
+              child: Icon(
+                Icons.nightlife_rounded,
+                color: colors.sleepAccent,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1496,7 +1745,11 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   color: colors.sleepAccent.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.bedtime_rounded, color: colors.sleepAccent, size: 22),
+                child: Icon(
+                  Icons.bedtime_rounded,
+                  color: colors.sleepAccent,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1522,7 +1775,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             state.holdTonight
                 ? 'امشب روی همین پله می‌مانیم تا بدنت تثبیت شود.'
                 : 'برای رسیدن تدریجی به هدف نهایی، خوابیدن در بازهٔ ۱۵± دقیقه از این پله پیشنهاد می‌شود.',
-            style: RitmoTextStyles.body(colors.textSecondary).copyWith(fontSize: 12),
+            style: RitmoTextStyles.body(
+              colors.textSecondary,
+            ).copyWith(fontSize: 12),
           ),
           const SizedBox(height: 12),
           Row(
@@ -1531,17 +1786,27 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               if (state.adherence7d != null)
                 Text(
                   'پایبندی ۷ روزه: ${RitmoNumber.faPercent((state.adherence7d! * 100).round())}',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.sleepAccent),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: colors.sleepAccent,
+                  ),
                 )
               else
                 const SizedBox.shrink(),
               OutlinedButton.icon(
-                onPressed: () => _onInsightAction(WellbeingInsightAction.logSleep),
+                onPressed: () =>
+                    _onInsightAction(WellbeingInsightAction.logSleep),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colors.sleepAccent,
                   side: BorderSide(color: colors.sleepAccent),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 icon: const Icon(Icons.check, size: 16),
                 label: const Text('ثبت خواب', style: TextStyle(fontSize: 12)),
@@ -1584,7 +1849,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             Icon(
               isZeroData
                   ? Icons.bedtime_outlined
-                  : (isDeficit ? Icons.battery_alert : Icons.battery_charging_full),
+                  : (isDeficit
+                        ? Icons.battery_alert
+                        : Icons.battery_charging_full),
               color: isZeroData
                   ? colors.textSecondary
                   : (isDeficit ? colors.cautionAccent : colors.success),
@@ -1599,8 +1866,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                     isZeroData
                         ? 'ذخیرهٔ خواب: داده‌ای ثبت نشده است'
                         : (isDeficit
-                            ? 'کسری خواب: ${RitmoNumber.faHours(balance.abs())}'
-                            : 'ذخیرهٔ خواب: ${RitmoNumber.faHours(balance)}'),
+                              ? 'کسری خواب: ${RitmoNumber.faHours(balance.abs())}'
+                              : 'ذخیرهٔ خواب: ${RitmoNumber.faHours(balance)}'),
                     style: RitmoTextStyles.cardTitle(
                       isZeroData
                           ? colors.textPrimary
@@ -1612,8 +1879,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                     isZeroData
                         ? 'برای تنظیم هدف خواب و پایش ذخیره زیستی، کلیک کنید.'
                         : (isDeficit
-                            ? 'یک خواب جبرانی کوتاه می‌تواند به بازیابی کمک کند.'
-                            : 'خواب کافی در روزهای اخیر ذخیرهٔ خوبی ایجاد کرده است.'),
+                              ? 'یک خواب جبرانی کوتاه می‌تواند به بازیابی کمک کند.'
+                              : 'خواب کافی در روزهای اخیر ذخیرهٔ خوبی ایجاد کرده است.'),
                     style: RitmoTextStyles.caption(colors.textSecondary),
                   ),
                 ],
@@ -1653,10 +1920,15 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             style: RitmoTextStyles.cardTitle(colors.textPrimary),
           ),
           const SizedBox(height: RitmoSpacing.md),
-          ...quotes.map((q) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text('💬 «$q»', style: RitmoTextStyles.body(colors.textPrimary)),
-              )),
+          ...quotes.map(
+            (q) => Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                '💬 «$q»',
+                style: RitmoTextStyles.body(colors.textPrimary),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1686,7 +1958,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             ElevatedButton(
               onPressed: _loadAllData,
               style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: Text('تلاش دوباره', style: RitmoTextStyles.label(colors.onPrimary)),
+              child: Text(
+                'تلاش دوباره',
+                style: RitmoTextStyles.label(colors.onPrimary),
+              ),
             ),
           ],
         ),
@@ -1709,14 +1984,22 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             children: [
               ListTile(
                 leading: Icon(Icons.bedtime, color: colors.sleepAccent),
-                title: Text(day.sleepHours != null ? 'خواب: ${RitmoNumber.faHours(day.sleepHours!)}' : 'خواب ثبت نشده است', style: const TextStyle()),
+                title: Text(
+                  day.sleepHours != null
+                      ? 'خواب: ${RitmoNumber.faHours(day.sleepHours!)}'
+                      : 'خواب ثبت نشده است',
+                  style: const TextStyle(),
+                ),
                 trailing: TextButton(
                   onPressed: () {
                     Navigator.pop(ctx);
                     RitmoSheetScaffold.present(
                       context: context,
                       title: 'ثبت خواب',
-                      builder: (_) => SleepLogSheet(onSaved: _requestReload, target: _sleepTarget),
+                      builder: (_) => SleepLogSheet(
+                        onSaved: _requestReload,
+                        target: _sleepTarget,
+                      ),
                     );
                   },
                   child: const Text('ثبت / ویرایش', style: TextStyle()),
@@ -1724,7 +2007,12 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               ),
               ListTile(
                 leading: Icon(Icons.bolt, color: colors.energyAccent),
-                title: Text(day.energyLevel != null ? 'انرژی: ${RitmoNumber.faInt((day.energyLevel! * 33).round())}٪' : 'انرژی ثبت نشده است', style: const TextStyle()),
+                title: Text(
+                  day.energyLevel != null
+                      ? 'انرژی: ${RitmoNumber.faInt((day.energyLevel! * 33).round())}٪'
+                      : 'انرژی ثبت نشده است',
+                  style: const TextStyle(),
+                ),
                 trailing: TextButton(
                   onPressed: () {
                     Navigator.pop(ctx);
@@ -1738,16 +2026,23 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 ),
               ),
               ListTile(
-                leading: Icon(Icons.sentiment_satisfied_alt, color: colors.accent),
+                leading: Icon(
+                  Icons.sentiment_satisfied_alt,
+                  color: colors.accent,
+                ),
                 title: Text(
-                  day.moodScore != null ? 'حال: ${RitmoNumber.fa(day.moodScore!.toStringAsFixed(1))} از ۵' : 'حال ثبت نشده است',
+                  day.moodScore != null
+                      ? 'حال: ${RitmoNumber.fa(day.moodScore!.toStringAsFixed(1))} از ۵'
+                      : 'حال ثبت نشده است',
                   style: RitmoTextStyles.body(colors.textPrimary),
                 ),
               ),
               ListTile(
                 leading: Icon(Icons.edit_note, color: colors.primary),
                 title: Text(
-                  day.hasReflection ? 'بازتاب ثبت شده است ✅' : 'بازتاب ثبت نشده است',
+                  day.hasReflection
+                      ? 'بازتاب ثبت شده است ✅'
+                      : 'بازتاب ثبت نشده است',
                   style: RitmoTextStyles.body(colors.textPrimary),
                 ),
                 trailing: TextButton(
@@ -1759,7 +2054,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       onSaved: _requestReload,
                     );
                   },
-                  child: Text('ثبت بازتاب', style: RitmoTextStyles.label(colors.primary)),
+                  child: Text(
+                    'ثبت بازتاب',
+                    style: RitmoTextStyles.label(colors.primary),
+                  ),
                 ),
               ),
             ],
@@ -1769,7 +2067,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     );
   }
 
-  void _showReflectionDetailSheet(BuildContext context, ReflectionEntry reflection) {
+  void _showReflectionDetailSheet(
+    BuildContext context,
+    ReflectionEntry reflection,
+  ) {
     RitmoSheetScaffold.present(
       context: context,
       title: 'بازتاب روز ${RitmoNumber.fa(reflection.date)}',
@@ -1782,21 +2083,39 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (reflection.goodThing != null) ...[
-                Text('💡 اتفاق خوب:', style: RitmoTextStyles.caption(colors.textSecondary)),
+                Text(
+                  '💡 اتفاق خوب:',
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
                 const SizedBox(height: 4),
-                Text(reflection.goodThing!, style: RitmoTextStyles.body(colors.textPrimary)),
+                Text(
+                  reflection.goodThing!,
+                  style: RitmoTextStyles.body(colors.textPrimary),
+                ),
                 const SizedBox(height: 12),
               ],
               if (reflection.gratitude != null) ...[
-                Text('🙏 شکرگزاری:', style: RitmoTextStyles.caption(colors.textSecondary)),
+                Text(
+                  '🙏 شکرگزاری:',
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
                 const SizedBox(height: 4),
-                Text(reflection.gratitude!, style: RitmoTextStyles.body(colors.textPrimary)),
+                Text(
+                  reflection.gratitude!,
+                  style: RitmoTextStyles.body(colors.textPrimary),
+                ),
                 const SizedBox(height: 12),
               ],
               if (reflection.challenges != null) ...[
-                Text('🌱 چالش و یادگیری:', style: RitmoTextStyles.caption(colors.textSecondary)),
+                Text(
+                  '🌱 چالش و یادگیری:',
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
                 const SizedBox(height: 4),
-                Text(reflection.challenges!, style: RitmoTextStyles.body(colors.textPrimary)),
+                Text(
+                  reflection.challenges!,
+                  style: RitmoTextStyles.body(colors.textPrimary),
+                ),
                 const SizedBox(height: 12),
               ],
               Row(
@@ -1820,7 +2139,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                         context: context,
                         builder: (dCtx) => AlertDialog(
                           title: const Text('حذف بازتاب'),
-                          content: const Text('آیا از حذف این بازتاب مطمئن هستید؟'),
+                          content: const Text(
+                            'آیا از حذف این بازتاب مطمئن هستید؟',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(dCtx, false),
@@ -1828,7 +2149,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(dCtx, true),
-                              child: Text('حذف', style: TextStyle(color: colors.error)),
+                              child: Text(
+                                'حذف',
+                                style: TextStyle(color: colors.error),
+                              ),
                             ),
                           ],
                         ),
@@ -1836,7 +2160,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
                       if (confirmed == true && context.mounted) {
                         Navigator.pop(ctx);
-                        final deletedRow = await WellbeingLogGateway.instance.deleteReflection(reflection.date);
+                        final deletedRow = await WellbeingLogGateway.instance
+                            .deleteReflection(reflection.date);
                         _requestReload();
 
                         if (deletedRow != null && context.mounted) {
@@ -1846,7 +2171,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                               action: SnackBarAction(
                                 label: 'برگردان',
                                 onPressed: () async {
-                                  await WellbeingLogGateway.instance.restoreReflection(deletedRow);
+                                  await WellbeingLogGateway.instance
+                                      .restoreReflection(deletedRow);
                                   _requestReload();
                                 },
                               ),

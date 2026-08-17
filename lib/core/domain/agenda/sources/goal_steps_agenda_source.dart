@@ -13,8 +13,11 @@ class GoalStepsAgendaSource implements AgendaSource {
     this.isEnabled = true,
   });
 
-  factory GoalStepsAgendaSource.disabled() =>
-      const GoalStepsAgendaSource(goalStepsByDate: {}, activeGoals: [], isEnabled: false);
+  factory GoalStepsAgendaSource.disabled() => const GoalStepsAgendaSource(
+    goalStepsByDate: {},
+    activeGoals: [],
+    isEnabled: false,
+  );
 
   /// Returns an empty source (fallback on load failure).
   static GoalStepsAgendaSource empty() =>
@@ -40,13 +43,16 @@ class GoalStepsAgendaSource implements AgendaSource {
     var activeGoalsList = <Map<String, dynamic>>[];
 
     try {
-      final res = await db.rawQuery('''
+      final res = await db.rawQuery(
+        '''
         SELECT gs.*, g.title as goalTitle
         FROM goal_steps gs
         JOIN goals g ON gs.goalId = g.id
         WHERE gs.scheduledDate >= ? AND gs.scheduledDate <= ? AND g.status = 'ACTIVE'
         ORDER BY gs.scheduledDate ASC, gs.displayOrder ASC
-      ''', [startStr, endStr]);
+      ''',
+        [startStr, endStr],
+      );
 
       for (final row in res) {
         final dateStr = row['scheduledDate'] as String?;
@@ -58,10 +64,7 @@ class GoalStepsAgendaSource implements AgendaSource {
       }
 
       // Load active goals for Friday review (M2-14)
-      activeGoalsList = await db.query(
-        'goals',
-        where: "status = 'ACTIVE'",
-      );
+      activeGoalsList = await db.query('goals', where: "status = 'ACTIVE'");
     } catch (e, st) {
       debugPrint('[GoalStepsAgendaSource] Load goals error: $e\n$st');
     }
@@ -89,45 +92,56 @@ class GoalStepsAgendaSource implements AgendaSource {
       final isDone = (row['isCompleted'] as int? ?? 0) == 1;
       final duration = (row['durationMinutes'] as int?) ?? 30;
 
-      items.add(AgendaItem(
-        id: buildAgendaItemId(AgendaDomain.goalStep, stepId, ctx.dateStr),
-        sourceId: stepId,
-        domain: AgendaDomain.goalStep,
-        kind: AgendaItemKind.task,
-        itemType: AgendaItemType.flexible,
-        title: stepTitle,
-        subtitle: goalTitle,
-        dateStr: ctx.dateStr,
-        durationMinutes: duration,
-        category: Category.personal,
-        deepLink: AgendaDeepLink(domain: AgendaDomain.goalStep, targetId: stepId),
-        completion: isDone ? AgendaCompletion.done : AgendaCompletion.pending,
-        meta: {'goalStep': row, 'goalId': row['goalId']},
-      ));
+      items.add(
+        AgendaItem(
+          id: buildAgendaItemId(AgendaDomain.goalStep, stepId, ctx.dateStr),
+          sourceId: stepId,
+          domain: AgendaDomain.goalStep,
+          kind: AgendaItemKind.task,
+          itemType: AgendaItemType.flexible,
+          title: stepTitle,
+          subtitle: goalTitle,
+          dateStr: ctx.dateStr,
+          durationMinutes: duration,
+          category: Category.personal,
+          deepLink: AgendaDeepLink(
+            domain: AgendaDomain.goalStep,
+            targetId: stepId,
+          ),
+          completion: isDone ? AgendaCompletion.done : AgendaCompletion.pending,
+          meta: {'goalStep': row, 'goalId': row['goalId']},
+        ),
+      );
     }
 
     // 2. Friday Weekly Goal Review (M2-14)
     if (ctx.date.weekday == DateTime.friday && activeGoals.isNotEmpty) {
-      items.add(AgendaItem(
-        id: 'goal_weekly_review:${ctx.dateStr}',
-        sourceId: 'goal_weekly_review',
-        domain: AgendaDomain.goalStep,
-        kind: AgendaItemKind.reflection,
-        itemType: AgendaItemType.flexible,
-        title: 'مرور و ارزیابی هفتگی اهداف',
-        subtitle: '${toPersianDigits(activeGoals.length)} هدف فعال نیازمند بررسی پیشرفت',
-        dateStr: ctx.dateStr,
-        timeOfDay: '18:00',
-        durationMinutes: 20,
-        category: Category.personal,
-        priority: 2.5,
-        deepLink: const AgendaDeepLink(domain: AgendaDomain.goalStep, targetId: 'weekly_review'),
-        completion: AgendaCompletion.pending,
-        meta: {
-          'isWeeklyReview': true,
-          'activeGoalsCount': activeGoals.length,
-        },
-      ));
+      items.add(
+        AgendaItem(
+          id: 'goal_weekly_review:${ctx.dateStr}',
+          sourceId: 'goal_weekly_review',
+          domain: AgendaDomain.goalStep,
+          kind: AgendaItemKind.reflection,
+          itemType: AgendaItemType.flexible,
+          title: 'مرور و ارزیابی هفتگی اهداف',
+          subtitle:
+              '${toPersianDigits(activeGoals.length)} هدف فعال نیازمند بررسی پیشرفت',
+          dateStr: ctx.dateStr,
+          timeOfDay: '18:00',
+          durationMinutes: 20,
+          category: Category.personal,
+          priority: 2.5,
+          deepLink: const AgendaDeepLink(
+            domain: AgendaDomain.goalStep,
+            targetId: 'weekly_review',
+          ),
+          completion: AgendaCompletion.pending,
+          meta: {
+            'isWeeklyReview': true,
+            'activeGoalsCount': activeGoals.length,
+          },
+        ),
+      );
     }
 
     return items;

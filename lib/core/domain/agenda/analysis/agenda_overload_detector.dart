@@ -31,7 +31,9 @@ class AgendaOverloadDetector {
 
     for (final item in timed) {
       final startM = _parseStartMinutes(item.timeOfDay);
-      final durM = (item.durationMinutes ?? 0) <= 0 ? 30 : item.durationMinutes!;
+      final durM = (item.durationMinutes ?? 0) <= 0
+          ? 30
+          : item.durationMinutes!;
       final endM = startM + durM;
 
       for (var m = startM; m < endM; m += 15) {
@@ -50,7 +52,11 @@ class AgendaOverloadDetector {
   }
 
   /// Checks if placing a slot at [startMinutes] with [durationMinutes] hits an overloaded hour block.
-  bool isSlotOverloaded(int startMinutes, int durationMinutes, List<AgendaItem> items) {
+  bool isSlotOverloaded(
+    int startMinutes,
+    int durationMinutes,
+    List<AgendaItem> items,
+  ) {
     final overloadedHours = findOverloadedHourBlocks(items);
     final startHour = (startMinutes ~/ 60) % 24;
     final endHour = ((startMinutes + durationMinutes) ~/ 60) % 24;

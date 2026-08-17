@@ -24,9 +24,13 @@ class CentralInboxService {
     DatabaseExecutor? executor,
   }) async {
     final pr = InboxPriority.values[priority.clamp(0, 2)];
-    
+
     // 1. Guard check
-    if (!InboxPolicy.shouldPush(category: category, priority: pr, sourceSystem: sourceSystem)) {
+    if (!InboxPolicy.shouldPush(
+      category: category,
+      priority: pr,
+      sourceSystem: sourceSystem,
+    )) {
       return;
     }
 
@@ -49,40 +53,34 @@ class CentralInboxService {
     final id = 'inbox_${category.name.toLowerCase()}_${entityId}_$now';
 
     // 4. Insert into database
-    await db.insert(
-      'inbox_items',
-      {
-        'id': id,
-        'category': category.name,
-        'sourceSystem': sourceSystem,
-        'title': title,
-        'body': body,
-        'priority': pr.index,
-        'linkModule': linkModule,
-        'linkEntityId': linkEntityId ?? entityId,
-        'linkAction': linkAction,
-        'payloadJson': jsonEncode(payload ?? {}),
-        'status': InboxStatus.UNREAD.name,
-        'createdAt': now,
-        'expiresAt': expiresAt,
-        'dedupeKey': dedupeKey,
-      },
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    await db.insert('inbox_items', {
+      'id': id,
+      'category': category.name,
+      'sourceSystem': sourceSystem,
+      'title': title,
+      'body': body,
+      'priority': pr.index,
+      'linkModule': linkModule,
+      'linkEntityId': linkEntityId ?? entityId,
+      'linkAction': linkAction,
+      'payloadJson': jsonEncode(payload ?? {}),
+      'status': InboxStatus.UNREAD.name,
+      'createdAt': now,
+      'expiresAt': expiresAt,
+      'dedupeKey': dedupeKey,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
     // 5. Notify observers
-    RitmoEventBus().fire(RitmoEvent(
-      type: 'inbox_updated',
-      timestamp: DateTime.now(),
-      payload: {},
-    ));
+    RitmoEventBus().fire(
+      RitmoEvent(type: 'inbox_updated', timestamp: DateTime.now(), payload: {}),
+    );
   }
 
   static Future<int> unreadCount() async {
     try {
       final db = await DatabaseHelper.instance.database;
       final res = await db.rawQuery(
-        "SELECT COUNT(*) as cnt FROM inbox_items WHERE status = 'UNREAD'"
+        "SELECT COUNT(*) as cnt FROM inbox_items WHERE status = 'UNREAD'",
       );
       return res.isNotEmpty ? (res.first['cnt'] as int? ?? 0) : 0;
     } catch (e, st) {
@@ -98,7 +96,7 @@ class CentralInboxService {
   }) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      
+
       var whereClause = "status != 'EXPIRED'";
       final whereArgs = <dynamic>[];
 
@@ -131,19 +129,18 @@ class CentralInboxService {
       final now = DateTime.now().millisecondsSinceEpoch;
       await db.update(
         'inbox_items',
-        {
-          'status': InboxStatus.READ.name,
-          'readAt': now,
-        },
+        {'status': InboxStatus.READ.name, 'readAt': now},
         where: 'id = ?',
         whereArgs: [id],
       );
-      
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'inbox_updated',
-        timestamp: DateTime.now(),
-        payload: {},
-      ));
+
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'inbox_updated',
+          timestamp: DateTime.now(),
+          payload: {},
+        ),
+      );
     } catch (e, st) {
       debugPrint('Error in CentralInboxService: $e\n$st');
     }
@@ -155,43 +152,45 @@ class CentralInboxService {
       final now = DateTime.now().millisecondsSinceEpoch;
       await db.update(
         'inbox_items',
-        {
-          'status': InboxStatus.ACTIONED.name,
-          'readAt': now,
-        },
+        {'status': InboxStatus.ACTIONED.name, 'readAt': now},
         where: 'id = ?',
         whereArgs: [id],
       );
-      
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'inbox_updated',
-        timestamp: DateTime.now(),
-        payload: {},
-      ));
+
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'inbox_updated',
+          timestamp: DateTime.now(),
+          payload: {},
+        ),
+      );
     } catch (e, st) {
       debugPrint('Error in CentralInboxService: $e\n$st');
     }
   }
 
-  static Future<void> markActionedForEntity(String sourceSystem, String entityId, {DatabaseExecutor? executor}) async {
+  static Future<void> markActionedForEntity(
+    String sourceSystem,
+    String entityId, {
+    DatabaseExecutor? executor,
+  }) async {
     try {
       final db = executor ?? await DatabaseHelper.instance.database;
       final now = DateTime.now().millisecondsSinceEpoch;
       await db.update(
         'inbox_items',
-        {
-          'status': InboxStatus.ACTIONED.name,
-          'readAt': now,
-        },
+        {'status': InboxStatus.ACTIONED.name, 'readAt': now},
         where: 'sourceSystem = ? AND linkEntityId = ? AND status = ?',
         whereArgs: [sourceSystem, entityId, InboxStatus.UNREAD.name],
       );
-      
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'inbox_updated',
-        timestamp: DateTime.now(),
-        payload: {},
-      ));
+
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'inbox_updated',
+          timestamp: DateTime.now(),
+          payload: {},
+        ),
+      );
     } catch (e, st) {
       debugPrint('Error in CentralInboxService: $e\n$st');
     }
@@ -201,20 +200,18 @@ class CentralInboxService {
     try {
       final db = await DatabaseHelper.instance.database;
       final now = DateTime.now().millisecondsSinceEpoch;
-      await db.update(
-        'inbox_items',
-        {
-          'status': InboxStatus.READ.name,
-          'readAt': now,
-        },
-        where: "status = 'UNREAD'",
-      );
+      await db.update('inbox_items', {
+        'status': InboxStatus.READ.name,
+        'readAt': now,
+      }, where: "status = 'UNREAD'");
 
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'inbox_updated',
-        timestamp: DateTime.now(),
-        payload: {},
-      ));
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'inbox_updated',
+          timestamp: DateTime.now(),
+          payload: {},
+        ),
+      );
     } catch (e, st) {
       debugPrint('Error in CentralInboxService: $e\n$st');
     }
@@ -225,18 +222,18 @@ class CentralInboxService {
       final db = await DatabaseHelper.instance.database;
       await db.update(
         'inbox_items',
-        {
-          'status': InboxStatus.ARCHIVED.name,
-        },
+        {'status': InboxStatus.ARCHIVED.name},
         where: 'id = ?',
         whereArgs: [id],
       );
 
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'inbox_updated',
-        timestamp: DateTime.now(),
-        payload: {},
-      ));
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'inbox_updated',
+          timestamp: DateTime.now(),
+          payload: {},
+        ),
+      );
     } catch (e, st) {
       debugPrint('Error in CentralInboxService: $e\n$st');
     }
@@ -246,21 +243,21 @@ class CentralInboxService {
     try {
       final db = await DatabaseHelper.instance.database;
       final now = DateTime.now().millisecondsSinceEpoch;
-      
+
       await db.update(
         'inbox_items',
-        {
-          'status': InboxStatus.EXPIRED.name,
-        },
+        {'status': InboxStatus.EXPIRED.name},
         where: "expiresAt < ? AND status != 'ARCHIVED'",
         whereArgs: [now],
       );
 
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'inbox_updated',
-        timestamp: DateTime.now(),
-        payload: {},
-      ));
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'inbox_updated',
+          timestamp: DateTime.now(),
+          payload: {},
+        ),
+      );
     } catch (e, st) {
       debugPrint('Error in CentralInboxService: $e\n$st');
     }
@@ -272,18 +269,21 @@ class CentralInboxService {
       final cutoff = DateTime.now()
           .subtract(Duration(days: retentionDays))
           .millisecondsSinceEpoch;
-      
+
       await db.delete(
         'inbox_items',
-        where: "(status = 'ARCHIVED' OR status = 'EXPIRED' OR status = 'ACTIONED') AND createdAt < ?",
+        where:
+            "(status = 'ARCHIVED' OR status = 'EXPIRED' OR status = 'ACTIONED') AND createdAt < ?",
         whereArgs: [cutoff],
       );
 
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'inbox_updated',
-        timestamp: DateTime.now(),
-        payload: {},
-      ));
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'inbox_updated',
+          timestamp: DateTime.now(),
+          payload: {},
+        ),
+      );
     } catch (e, st) {
       debugPrint('Error in CentralInboxService: $e\n$st');
     }
@@ -293,11 +293,13 @@ class CentralInboxService {
     try {
       final db = await DatabaseHelper.instance.database;
       await db.delete('inbox_items');
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'inbox_updated',
-        timestamp: DateTime.now(),
-        payload: {},
-      ));
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'inbox_updated',
+          timestamp: DateTime.now(),
+          payload: {},
+        ),
+      );
     } catch (e, st) {
       debugPrint('Error in CentralInboxService: $e\n$st');
     }

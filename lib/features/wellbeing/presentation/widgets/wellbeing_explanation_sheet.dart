@@ -5,10 +5,7 @@ import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 
 class WellbeingExplanationSheet extends StatelessWidget {
-  const WellbeingExplanationSheet({
-    super.key,
-    required this.index,
-  });
+  const WellbeingExplanationSheet({super.key, required this.index});
 
   final WellbeingIndex index;
 
@@ -258,10 +255,12 @@ class WellbeingExplanationSheet extends StatelessWidget {
     final waterfall = index.waterfall;
     for (final c in index.contributions) {
       final diff = waterfall[c.signal] ?? 0.0;
-      if (diff > 0 && (maxPos == null || diff > (waterfall[maxPos.signal] ?? 0.0))) {
+      if (diff > 0 &&
+          (maxPos == null || diff > (waterfall[maxPos.signal] ?? 0.0))) {
         maxPos = c;
       }
-      if (diff < 0 && (maxNeg == null || diff < (waterfall[maxNeg.signal] ?? 0.0))) {
+      if (diff < 0 &&
+          (maxNeg == null || diff < (waterfall[maxNeg.signal] ?? 0.0))) {
         maxNeg = c;
       }
     }

@@ -31,7 +31,6 @@ class RitmoToast {
 }
 
 class _RitmoTopToastWidget extends StatefulWidget {
-
   const _RitmoTopToastWidget({
     required this.message,
     required this.icon,
@@ -49,7 +48,8 @@ class _RitmoTopToastWidget extends StatefulWidget {
   State<_RitmoTopToastWidget> createState() => _RitmoTopToastWidgetState();
 }
 
-class _RitmoTopToastWidgetState extends State<_RitmoTopToastWidget> with SingleTickerProviderStateMixin {
+class _RitmoTopToastWidgetState extends State<_RitmoTopToastWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _offsetAnimation;
   Timer? _dismissTimer;
@@ -67,10 +67,7 @@ class _RitmoTopToastWidgetState extends State<_RitmoTopToastWidget> with SingleT
     _offsetAnimation = Tween<Offset>(
       begin: const Offset(0, -1.2),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     _controller.forward();
 
@@ -132,7 +129,10 @@ class _RitmoTopToastWidgetState extends State<_RitmoTopToastWidget> with SingleT
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: isDark
                         ? const Color(0xff1E2235).withValues(alpha: 0.65)
@@ -145,10 +145,12 @@ class _RitmoTopToastWidgetState extends State<_RitmoTopToastWidget> with SingleT
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.15 : 0.04,
+                        ),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
-                      )
+                      ),
                     ],
                   ),
                   child: Directionality(

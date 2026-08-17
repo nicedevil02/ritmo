@@ -36,7 +36,7 @@ class PremiumService {
   static const _kStore = 'premium_store';
   static const _kPurchaseDate = 'premium_purchase_date';
   static const _kSignature = 'premium_signature';
-  
+
   bool _isPremium = false;
   String _purchaseType = 'free'; // '3month', 'yearly', 'lifetime', 'free'
   int _purchaseDateMs = 0;
@@ -58,7 +58,10 @@ class PremiumService {
   Future<void> loadEntitlement() async {
     try {
       if (_secretKey.isEmpty) {
-        RitmoLog.error('PremiumService', 'RITMO_PREMIUM_KEY is empty. Premium features will not be validated.');
+        RitmoLog.error(
+          'PremiumService',
+          'RITMO_PREMIUM_KEY is empty. Premium features will not be validated.',
+        );
       }
 
       String? sku = await _storage.read(key: _kSku);
@@ -148,7 +151,7 @@ class PremiumService {
     required String storeName,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    final expiry = durationDays > 0 
+    final expiry = durationDays > 0
         ? now + (durationDays * 24 * 60 * 60 * 1000)
         : 0; // 0 means lifetime
 

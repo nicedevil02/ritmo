@@ -5,7 +5,8 @@ import 'package:http/http.dart' as http;
 
 class OnlinePrayerTimeService {
   OnlinePrayerTimeService._init();
-  static final OnlinePrayerTimeService instance = OnlinePrayerTimeService._init();
+  static final OnlinePrayerTimeService instance =
+      OnlinePrayerTimeService._init();
 
   /// Fetches prayer times from Aladhan API using Method 7 (Institute of Geophysics, University of Tehran).
   /// Returns a Map of time keys to 'HH:mm' strings, or null if network/API fails.
@@ -21,7 +22,9 @@ class OnlinePrayerTimeService {
         'https://api.aladhan.com/v1/timings/$timestamp?latitude=$latitude&longitude=$longitude&method=7',
       );
 
-      final response = await http.get(url).timeout(const Duration(milliseconds: 3500));
+      final response = await http
+          .get(url)
+          .timeout(const Duration(milliseconds: 3500));
 
       if (response.statusCode == 200) {
         final jsonMap = json.decode(response.body) as Map<String, dynamic>;

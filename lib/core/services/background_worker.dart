@@ -50,7 +50,12 @@ void ritmoCallbackDispatcher() {
       await SettingsService.instance.init();
       await AppModeService.instance.load();
     } catch (e, st) {
-      RitmoLog.error('BgWorker', 'Bootstrap failed in background isolate', e, st);
+      RitmoLog.error(
+        'BgWorker',
+        'Bootstrap failed in background isolate',
+        e,
+        st,
+      );
       return false;
     }
 
@@ -81,12 +86,16 @@ Future<bool> _runWeeklyBackup() async {
           channel: NotificationChannelId.planning,
           scheduledAt: DateTime.now(),
           title: 'پشتیبان‌گیری خودکار ریتمو ☁️',
-          body: 'برای فعالسازی بکاپ خودکار، یک رمز عبور (passcode) در تنظیمات پروفایل خود تنظیم کنید.',
+          body:
+              'برای فعالسازی بکاپ خودکار، یک رمز عبور (passcode) در تنظیمات پروفایل خود تنظیم کنید.',
           sourceSystem: 'backup',
           entityId: 'backup_immediate',
         ),
       );
-      RitmoLog.warning('BgWorker', 'Weekly backup task aborted: passcode not set.');
+      RitmoLog.warning(
+        'BgWorker',
+        'Weekly backup task aborted: passcode not set.',
+      );
       return true; // Handled, return true to avoid infinite retry loop
     }
 
@@ -96,7 +105,10 @@ Future<bool> _runWeeklyBackup() async {
     final driveService = GoogleDriveBackupService.instance;
     final signedIn = await driveService.signIn();
     if (!signedIn) {
-      RitmoLog.warning('BgWorker', 'Weekly backup task aborted: not signed in to Google Drive.');
+      RitmoLog.warning(
+        'BgWorker',
+        'Weekly backup task aborted: not signed in to Google Drive.',
+      );
       return true; // Not signed in, return true to avoid infinite backoff retry
     }
 
@@ -105,7 +117,12 @@ Future<bool> _runWeeklyBackup() async {
     RitmoLog.info('BgWorker', 'Weekly backup completed successfully.');
     return true;
   } catch (e, st) {
-    RitmoLog.error('BgWorker', 'Weekly backup background task execution failed', e, st);
+    RitmoLog.error(
+      'BgWorker',
+      'Weekly backup background task execution failed',
+      e,
+      st,
+    );
     return false; // Retry later on actual failure
   }
 }
@@ -113,7 +130,10 @@ Future<bool> _runWeeklyBackup() async {
 Future<bool> _runReschedule() async {
   try {
     await AlarmSchedulerService.scheduleNextAlarms();
-    RitmoLog.info('BgWorker', 'Background alarm reschedule completed successfully.');
+    RitmoLog.info(
+      'BgWorker',
+      'Background alarm reschedule completed successfully.',
+    );
     return true;
   } catch (e, st) {
     RitmoLog.error('BgWorker', 'Background alarm reschedule failed', e, st);

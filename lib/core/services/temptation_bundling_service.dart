@@ -2,7 +2,8 @@ import 'package:ritmo/core/database/database_helper.dart';
 
 class TemptationBundlingService {
   TemptationBundlingService._();
-  static final TemptationBundlingService instance = TemptationBundlingService._();
+  static final TemptationBundlingService instance =
+      TemptationBundlingService._();
 
   /// Pairs a low-attraction routine with a rewarding/enjoyable activity (§3, م-۱۳).
   Future<void> pairTemptationBundle({

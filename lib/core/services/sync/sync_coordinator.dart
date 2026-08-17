@@ -67,7 +67,8 @@ class SyncCoordinator {
 
     final settingsResult = await db.query('app_settings');
     final settingsMap = {
-      for (final s in settingsResult) s['key']! as String: s['value']! as String,
+      for (final s in settingsResult)
+        s['key']! as String: s['value']! as String,
     };
 
     await const RhythmSnapshotService().backfillRhythmLogs(
@@ -89,14 +90,9 @@ class SyncCoordinator {
       settingsMap: settingsMap,
     );
 
-    await const HomeWidgetSnapshotService().sync(
-      db: db,
-      state: state,
-    );
+    await const HomeWidgetSnapshotService().sync(db: db, state: state);
 
-    await const AgendaWidgetSnapshotService().sync(
-      now: now,
-    );
+    await const AgendaWidgetSnapshotService().sync(now: now);
 
     await const ReminderSnapshotService().sync(
       db: db,

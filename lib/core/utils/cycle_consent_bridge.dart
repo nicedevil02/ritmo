@@ -12,17 +12,23 @@ class CycleConsentBridge {
   /// Checks if the user is menstruating on [targetDate] (defaults to today).
   static Future<bool> isUserMenstruating({DateTime? targetDate}) async {
     final db = await DatabaseHelper.instance.database;
-    
+
     // Load app settings
     final settingsList = await db.query('app_settings');
-    final settingsMap = {for (final s in settingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
+    final settingsMap = {
+      for (final s in settingsList)
+        if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? '',
+    };
 
     if (CycleSettings.isPregnancyMode(settingsMap)) {
       return false;
     }
 
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-    final isEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
+    final isEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_cycle_enabled',
+    );
     if (!isFemale || !isEnabled) {
       return false;
     }
@@ -41,9 +47,13 @@ class CycleConsentBridge {
       );
 
       for (final period in periods) {
-        final start = CycleDateContract.parseDayKey(period['startDate']?.toString());
+        final start = CycleDateContract.parseDayKey(
+          period['startDate']?.toString(),
+        );
         if (start == null) continue;
-        final end = CycleDateContract.parseDayKey(period['endDate']?.toString());
+        final end = CycleDateContract.parseDayKey(
+          period['endDate']?.toString(),
+        );
 
         if (end != null) {
           if (CycleDateContract.inWindow(cleanTarget, start, end)) {
@@ -58,7 +68,11 @@ class CycleConsentBridge {
         }
       }
     } catch (e, st) {
-      RitmoLogger.error('[CycleConsentBridge] error querying cycle_periods', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleConsentBridge] error querying cycle_periods',
+        error: e,
+        stack: st,
+      );
     }
 
     // 2. Check cycle_day_logs for targetStr
@@ -71,12 +85,19 @@ class CycleConsentBridge {
       );
       if (dayLogs.isNotEmpty) {
         final flow = (dayLogs.first['flowLevel'] as String?)?.toUpperCase();
-        if (flow != null && flow != 'NONE' && flow != 'NONE_CLEAN' && flow != '') {
+        if (flow != null &&
+            flow != 'NONE' &&
+            flow != 'NONE_CLEAN' &&
+            flow != '') {
           return true;
         }
       }
     } catch (e, st) {
-      RitmoLogger.error('[CycleConsentBridge] error querying cycle_day_logs', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleConsentBridge] error querying cycle_day_logs',
+        error: e,
+        stack: st,
+      );
     }
 
     // Note: legacy cycle_logs have been migrated to cycle_periods by migration_v92
@@ -88,7 +109,10 @@ class CycleConsentBridge {
   static Future<bool> isEnergyTuned() async {
     final db = await DatabaseHelper.instance.database;
     final settingsList = await db.query('app_settings');
-    final settingsMap = {for (final s in settingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
+    final settingsMap = {
+      for (final s in settingsList)
+        if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? '',
+    };
 
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
     final energyConsent = settingsMap['cycle_consent_energy'] == 'true';
@@ -97,7 +121,9 @@ class CycleConsentBridge {
   }
 
   /// Returns the active period for [targetDate] if any.
-  static Future<Map<String, dynamic>?> getActivePeriod({DateTime? targetDate}) async {
+  static Future<Map<String, dynamic>?> getActivePeriod({
+    DateTime? targetDate,
+  }) async {
     final db = await DatabaseHelper.instance.database;
     final target = targetDate ?? DateTime.now();
     final cleanTarget = CycleDateContract.cleanDate(target);
@@ -112,9 +138,13 @@ class CycleConsentBridge {
       );
 
       for (final period in periods) {
-        final start = CycleDateContract.parseDayKey(period['startDate']?.toString());
+        final start = CycleDateContract.parseDayKey(
+          period['startDate']?.toString(),
+        );
         if (start == null) continue;
-        final end = CycleDateContract.parseDayKey(period['endDate']?.toString());
+        final end = CycleDateContract.parseDayKey(
+          period['endDate']?.toString(),
+        );
 
         if (end != null) {
           if (CycleDateContract.inWindow(cleanTarget, start, end)) {
@@ -129,7 +159,11 @@ class CycleConsentBridge {
         }
       }
     } catch (e, st) {
-      RitmoLogger.error('[CycleConsentBridge] error in getActivePeriod', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleConsentBridge] error in getActivePeriod',
+        error: e,
+        stack: st,
+      );
     }
 
     return null;
@@ -142,13 +176,21 @@ class CycleConsentBridge {
   }
 
   /// Exposes indirect body rhythm information to outer systems.
-  static Future<BodyRhythmInfluence?> bodyRhythmInfluence({required String forSystem}) async {
+  static Future<BodyRhythmInfluence?> bodyRhythmInfluence({
+    required String forSystem,
+  }) async {
     final db = await DatabaseHelper.instance.database;
     final settingsList = await db.query('app_settings');
-    final settingsMap = {for (final s in settingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
+    final settingsMap = {
+      for (final s in settingsList)
+        if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? '',
+    };
 
     final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-    final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
+    final cycleEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_cycle_enabled',
+    );
     if (!isFemale || !cycleEnabled) return null;
 
     final menstruating = await isUserMenstruating();
@@ -159,7 +201,8 @@ class CycleConsentBridge {
       if (!consent) return null;
       return BodyRhythmInfluence(
         energyDelta: -15,
-        indirectMessage: 'بر اساس ریتم طبیعی بدنتان در این روزها، سطح انرژی شما تحت تأثیر نوسانات زیستی قرار دارد و استراحت بیشتری پیشنهاد می‌شود.',
+        indirectMessage:
+            'بر اساس ریتم طبیعی بدنتان در این روزها، سطح انرژی شما تحت تأثیر نوسانات زیستی قرار دارد و استراحت بیشتری پیشنهاد می‌شود.',
       );
     }
 
@@ -168,7 +211,8 @@ class CycleConsentBridge {
       if (!consent) return null;
       return BodyRhythmInfluence(
         energyDelta: -10,
-        indirectMessage: 'بر اساس ریتم طبیعی بدنتان، کیفیت خواب ممکن است با تغییرات زیستی مواجه شود. تلاش کنید خواب منظم‌تری داشته باشید.',
+        indirectMessage:
+            'بر اساس ریتم طبیعی بدنتان، کیفیت خواب ممکن است با تغییرات زیستی مواجه شود. تلاش کنید خواب منظم‌تری داشته باشید.',
       );
     }
 
@@ -178,7 +222,10 @@ class CycleConsentBridge {
   /// Fasting Debt CRUD - Fetch all debts
   static Future<List<FastingDebt>> getFastingDebts() async {
     final db = await DatabaseHelper.instance.database;
-    final List<Map<String, dynamic>> rows = await db.query('fasting_debt', orderBy: 'dateIso DESC');
+    final List<Map<String, dynamic>> rows = await db.query(
+      'fasting_debt',
+      orderBy: 'dateIso DESC',
+    );
     return rows.map(FastingDebt.fromMap).toList();
   }
 

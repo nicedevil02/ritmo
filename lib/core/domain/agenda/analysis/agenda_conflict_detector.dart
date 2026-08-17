@@ -1,13 +1,7 @@
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 
-enum ConflictType {
-  overlap,
-  sameStart,
-  sameEnd,
-  zeroDuration,
-  overnight,
-}
+enum ConflictType { overlap, sameStart, sameEnd, zeroDuration, overnight }
 
 class AgendaConflict {
   const AgendaConflict({
@@ -44,7 +38,9 @@ class AgendaConflictDetector {
 
   List<AgendaConflict> detectConflicts(List<AgendaItem> items) {
     final conflicts = <AgendaConflict>[];
-    final timedItems = items.where((item) => item.isTimed && !item.isCompleted).toList();
+    final timedItems = items
+        .where((item) => item.isTimed && !item.isCompleted)
+        .toList();
 
     for (var i = 0; i < timedItems.length; i++) {
       for (var j = i + 1; j < timedItems.length; j++) {
@@ -52,11 +48,15 @@ class AgendaConflictDetector {
         final itemB = timedItems[j];
 
         final startA = _parseStartMinutes(itemA.timeOfDay);
-        final durationA = (itemA.durationMinutes ?? 0) <= 0 ? 15 : itemA.durationMinutes!;
+        final durationA = (itemA.durationMinutes ?? 0) <= 0
+            ? 15
+            : itemA.durationMinutes!;
         final endA = startA + durationA;
 
         final startB = _parseStartMinutes(itemB.timeOfDay);
-        final durationB = (itemB.durationMinutes ?? 0) <= 0 ? 15 : itemB.durationMinutes!;
+        final durationB = (itemB.durationMinutes ?? 0) <= 0
+            ? 15
+            : itemB.durationMinutes!;
         final endB = startB + durationB;
 
         final isDragA = DirectManipulationEligibility.isDraggable(itemA);
@@ -70,28 +70,34 @@ class AgendaConflictDetector {
               ? 'تداخل دو مورد ثابت در زمان یکسان'
               : 'شروع همزمان؛ امکان انتقال مورد انعطاف‌پذیر وجود دارد';
 
-          conflicts.add(AgendaConflict(
-            itemA: itemA,
-            itemB: itemB,
-            type: ConflictType.sameStart,
-            description: '${itemA.title} and ${itemB.title} start at the exact same time (${itemA.timeOfDay}).',
-            isHardConflict: isHard,
-            severity: severity,
-            isResolvable: isResolvable,
-            reason: reason,
-          ));
+          conflicts.add(
+            AgendaConflict(
+              itemA: itemA,
+              itemB: itemB,
+              type: ConflictType.sameStart,
+              description:
+                  '${itemA.title} and ${itemB.title} start at the exact same time (${itemA.timeOfDay}).',
+              isHardConflict: isHard,
+              severity: severity,
+              isResolvable: isResolvable,
+              reason: reason,
+            ),
+          );
         } else if (endA > 0 && endA == endB && durationA > 0 && durationB > 0) {
           final severity = isHard ? 0.8 : 0.5;
-          conflicts.add(AgendaConflict(
-            itemA: itemA,
-            itemB: itemB,
-            type: ConflictType.sameEnd,
-            description: '${itemA.title} and ${itemB.title} end at the exact same time.',
-            isHardConflict: isHard,
-            severity: severity,
-            isResolvable: isResolvable,
-            reason: 'پایان همزمان دو برنامه',
-          ));
+          conflicts.add(
+            AgendaConflict(
+              itemA: itemA,
+              itemB: itemB,
+              type: ConflictType.sameEnd,
+              description:
+                  '${itemA.title} and ${itemB.title} end at the exact same time.',
+              isHardConflict: isHard,
+              severity: severity,
+              isResolvable: isResolvable,
+              reason: 'پایان همزمان دو برنامه',
+            ),
+          );
         } else if (startA < endB && startB < endA) {
           final overlapMins = _calculateOverlap(startA, endA, startB, endB);
           final severity = isHard ? 1.0 : (overlapMins >= 15 ? 0.75 : 0.40);
@@ -99,16 +105,18 @@ class AgendaConflictDetector {
               ? 'تداخل برنامه‌های غیرقابل جابه‌جایی'
               : 'تداخل زمانی ($overlapMins دقیقه)';
 
-          conflicts.add(AgendaConflict(
-            itemA: itemA,
-            itemB: itemB,
-            type: ConflictType.overlap,
-            description: '${itemA.title} overlaps with ${itemB.title}.',
-            isHardConflict: isHard,
-            severity: severity,
-            isResolvable: isResolvable,
-            reason: reason,
-          ));
+          conflicts.add(
+            AgendaConflict(
+              itemA: itemA,
+              itemB: itemB,
+              type: ConflictType.overlap,
+              description: '${itemA.title} overlaps with ${itemB.title}.',
+              isHardConflict: isHard,
+              severity: severity,
+              isResolvable: isResolvable,
+              reason: reason,
+            ),
+          );
         }
       }
     }
@@ -135,13 +143,15 @@ class AgendaConflictDetector {
       final end = start + dur;
 
       if (startMinutes < end && start < candidateEnd) {
-        conflicts.add(AgendaConflict(
-          itemA: item,
-          itemB: item,
-          type: ConflictType.overlap,
-          description: 'تداخل با ${item.title}',
-          isHardConflict: !DirectManipulationEligibility.isDraggable(item),
-        ));
+        conflicts.add(
+          AgendaConflict(
+            itemA: item,
+            itemB: item,
+            type: ConflictType.overlap,
+            description: 'تداخل با ${item.title}',
+            isHardConflict: !DirectManipulationEligibility.isDraggable(item),
+          ),
+        );
       }
     }
     return conflicts;

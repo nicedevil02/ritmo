@@ -41,22 +41,20 @@ class Ios26PageRoute<T> extends CupertinoPageRoute<T> {
     );
 
     // جابه‌جایی پارالاکس صفحه خروجی
-    final secondaryTranslate = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(-0.06, 0.0),
-    ).animate(
-      CurvedAnimation(
-        parent: secondaryAnimation,
-        curve: Curves.fastLinearToSlowEaseIn,
-      ),
-    );
+    final secondaryTranslate =
+        Tween<Offset>(
+          begin: Offset.zero,
+          end: const Offset(-0.06, 0.0),
+        ).animate(
+          CurvedAnimation(
+            parent: secondaryAnimation,
+            curve: Curves.fastLinearToSlowEaseIn,
+          ),
+        );
 
     // لایه تاریکی شفاف ۵۰٪
     final secondaryDim = Tween<double>(begin: 0.0, end: 0.35).animate(
-      CurvedAnimation(
-        parent: secondaryAnimation,
-        curve: Curves.easeOut,
-      ),
+      CurvedAnimation(parent: secondaryAnimation, curve: Curves.easeOut),
     );
 
     return AnimatedBuilder(
@@ -80,7 +78,12 @@ class Ios26PageRoute<T> extends CupertinoPageRoute<T> {
             ),
           );
         }
-        return super.buildTransitions(context, slideCurve, secondaryAnimation, currentChild!);
+        return super.buildTransitions(
+          context,
+          slideCurve,
+          secondaryAnimation,
+          currentChild!,
+        );
       },
       child: child,
     );

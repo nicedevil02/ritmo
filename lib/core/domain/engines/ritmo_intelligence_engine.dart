@@ -12,7 +12,6 @@ import 'package:sqflite/sqflite.dart';
 
 /// Output model containing calculated routines and context state.
 class RitmoEngineOutput {
-
   /// Constructs a [RitmoEngineOutput].
   RitmoEngineOutput({
     required this.visibleRoutines,
@@ -23,6 +22,7 @@ class RitmoEngineOutput {
     this.suggestedRoutine,
     this.nextBestAction,
   });
+
   /// List of routines visible to the user today.
   final List<Routine> visibleRoutines;
 
@@ -162,13 +162,25 @@ class RitmoIntelligenceEngine {
   ) {
     switch (category) {
       case Category.religious:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_religion_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_religion_enabled',
+        );
       case Category.medical:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_medicine_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_medicine_enabled',
+        );
       case Category.learning:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_courses_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_courses_enabled',
+        );
       case Category.konkur:
-        return ModuleGate.instance.isEnabledFrom(settings, 'module_study_enabled');
+        return ModuleGate.instance.isEnabledFrom(
+          settings,
+          'module_study_enabled',
+        );
       case Category.fitness:
       case Category.work:
       case Category.personal:

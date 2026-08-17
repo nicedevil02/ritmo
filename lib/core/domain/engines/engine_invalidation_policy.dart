@@ -22,99 +22,40 @@ class EngineInvalidationPolicy {
   const EngineInvalidationPolicy();
 
   static const Map<RitmoEventType, Set<EngineInvalidationTag>> eventTags = {
-    RitmoEventType.routineCreated: {
-      EngineInvalidationTag.routineStructure,
-    },
+    RitmoEventType.routineCreated: {EngineInvalidationTag.routineStructure},
     RitmoEventType.routineUpdated: {
       EngineInvalidationTag.routineStructure,
       EngineInvalidationTag.routineOutcome,
     },
-    RitmoEventType.routineDeleted: {
-      EngineInvalidationTag.routineStructure,
-    },
-    RitmoEventType.occurrenceCompleted: {
-      EngineInvalidationTag.routineOutcome,
-    },
-    RitmoEventType.occurrenceSkipped: {
-      EngineInvalidationTag.routineOutcome,
-    },
-    RitmoEventType.reshuffleConfirmed: {
-      EngineInvalidationTag.routineStructure,
-    },
-    RitmoEventType.goalChanged: {
-      EngineInvalidationTag.goals,
-    },
-    RitmoEventType.goalStepToggled: {
-      EngineInvalidationTag.goals,
-    },
-    RitmoEventType.worshipChanged: {
-      EngineInvalidationTag.worship,
-    },
-    RitmoEventType.worshipPracticeChanged: {
-      EngineInvalidationTag.worship,
-    },
-    RitmoEventType.workoutLogChanged: {
-      EngineInvalidationTag.routineOutcome,
-    },
-    RitmoEventType.reflectionSaved: {
-      EngineInvalidationTag.reflection,
-    },
-    RitmoEventType.completionRecorded: {
-      EngineInvalidationTag.routineOutcome,
-    },
-    RitmoEventType.completionDeleted: {
-      EngineInvalidationTag.routineOutcome,
-    },
-    RitmoEventType.konkurItemChanged: {
-      EngineInvalidationTag.courses,
-    },
-    RitmoEventType.courseSessionCompleted: {
-      EngineInvalidationTag.courses,
-    },
-    RitmoEventType.energyLogged: {
-      EngineInvalidationTag.energy,
-    },
-    RitmoEventType.sleepLogged: {
-      EngineInvalidationTag.sleep,
-    },
-    RitmoEventType.moodLogged: {
-      EngineInvalidationTag.energy,
-    },
-    RitmoEventType.zoneChanged: {
-      EngineInvalidationTag.zone,
-    },
-    RitmoEventType.cycleStarted: {
-      EngineInvalidationTag.cycle,
-    },
-    RitmoEventType.cycleEnded: {
-      EngineInvalidationTag.cycle,
-    },
-    RitmoEventType.medicineTaken: {
-      EngineInvalidationTag.medicine,
-    },
-    RitmoEventType.dayRolledOver: {
-      EngineInvalidationTag.global,
-    },
-    RitmoEventType.dataImported: {
-      EngineInvalidationTag.global,
-    },
-    RitmoEventType.settingsChanged: {
-      EngineInvalidationTag.global,
-    },
-    RitmoEventType.noteCreated: {
-      EngineInvalidationTag.notes,
-    },
-    RitmoEventType.noteUpdated: {
-      EngineInvalidationTag.notes,
-    },
-    RitmoEventType.noteDeleted: {
-      EngineInvalidationTag.notes,
-    },
-    RitmoEventType.experienceCreated: {
-      EngineInvalidationTag.notes,
-    },
+    RitmoEventType.routineDeleted: {EngineInvalidationTag.routineStructure},
+    RitmoEventType.occurrenceCompleted: {EngineInvalidationTag.routineOutcome},
+    RitmoEventType.occurrenceSkipped: {EngineInvalidationTag.routineOutcome},
+    RitmoEventType.reshuffleConfirmed: {EngineInvalidationTag.routineStructure},
+    RitmoEventType.goalChanged: {EngineInvalidationTag.goals},
+    RitmoEventType.goalStepToggled: {EngineInvalidationTag.goals},
+    RitmoEventType.worshipChanged: {EngineInvalidationTag.worship},
+    RitmoEventType.worshipPracticeChanged: {EngineInvalidationTag.worship},
+    RitmoEventType.workoutLogChanged: {EngineInvalidationTag.routineOutcome},
+    RitmoEventType.reflectionSaved: {EngineInvalidationTag.reflection},
+    RitmoEventType.completionRecorded: {EngineInvalidationTag.routineOutcome},
+    RitmoEventType.completionDeleted: {EngineInvalidationTag.routineOutcome},
+    RitmoEventType.konkurItemChanged: {EngineInvalidationTag.courses},
+    RitmoEventType.courseSessionCompleted: {EngineInvalidationTag.courses},
+    RitmoEventType.energyLogged: {EngineInvalidationTag.energy},
+    RitmoEventType.sleepLogged: {EngineInvalidationTag.sleep},
+    RitmoEventType.moodLogged: {EngineInvalidationTag.energy},
+    RitmoEventType.zoneChanged: {EngineInvalidationTag.zone},
+    RitmoEventType.cycleStarted: {EngineInvalidationTag.cycle},
+    RitmoEventType.cycleEnded: {EngineInvalidationTag.cycle},
+    RitmoEventType.medicineTaken: {EngineInvalidationTag.medicine},
+    RitmoEventType.dayRolledOver: {EngineInvalidationTag.global},
+    RitmoEventType.dataImported: {EngineInvalidationTag.global},
+    RitmoEventType.settingsChanged: {EngineInvalidationTag.global},
+    RitmoEventType.noteCreated: {EngineInvalidationTag.notes},
+    RitmoEventType.noteUpdated: {EngineInvalidationTag.notes},
+    RitmoEventType.noteDeleted: {EngineInvalidationTag.notes},
+    RitmoEventType.experienceCreated: {EngineInvalidationTag.notes},
   };
-
 
   static const Map<Type, Set<EngineInvalidationTag>> engineTags = {
     LifeBalanceEngine: {
@@ -147,14 +88,8 @@ class EngineInvalidationPolicy {
       EngineInvalidationTag.medicine,
       EngineInvalidationTag.global,
     },
-    CycleEngine: {
-      EngineInvalidationTag.cycle,
-      EngineInvalidationTag.global,
-    },
-    KonkurEngine: {
-      EngineInvalidationTag.courses,
-      EngineInvalidationTag.global,
-    },
+    CycleEngine: {EngineInvalidationTag.cycle, EngineInvalidationTag.global},
+    KonkurEngine: {EngineInvalidationTag.courses, EngineInvalidationTag.global},
     GoalsEngine: {
       EngineInvalidationTag.goals,
       EngineInvalidationTag.routineStructure,

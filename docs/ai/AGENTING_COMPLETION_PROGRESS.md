@@ -53,4 +53,4 @@
 | T47 | test/agent/agent_loop_fake_model_test.dart | DONE | 3258a44 | تست End-to-End چرخه ReAct ایجنت همراه با شبیه‌سازی مدل فیک و گام‌های اجرای ابزار |
 | T48 | test/agent/kernel_command_tool_test.dart | DONE | 5b762bd | تست‌های جامع پل KernelCommandTool با تبدیل پارامترها و خطاهای ToolArgumentError |
 | T49 | test/agent/agent_policy_gate_test.dart | DONE | 6a4d76f | تست‌های جامع امنیتی AgentPolicyGate (سطوح سیاست، سقف نوشتن، کارت تایید تعاملی، گارد تزریق) |
-| T50 | test/agent/agent_journal_undo_test.dart | DOING | | |
+| T50 | test/agent/agent_journal_undo_test.dart | DONE | dfd2374 | تست‌های جامع ثبت ژورنال، فیلترینگ و رول‌بک (Undo) در AgentJournal |

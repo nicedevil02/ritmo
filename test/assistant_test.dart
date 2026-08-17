@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/ai/ai_response_processor.dart';
 import 'package:ritmo/core/analytics/assistant_engine.dart';
+import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/features/assistant/models/assistant_models.dart';
 import 'package:sqflite/sqflite.dart';
@@ -51,6 +52,11 @@ class MockDatabase implements Database {
   }
 
   @override
+  Future<T> transaction<T>(Future<T> Function(Transaction txn) action, {bool? exclusive}) async {
+    return await action(MockTransaction._(this));
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #execute) {
       return execute(
@@ -79,8 +85,30 @@ class MockDatabase implements Database {
         invocation.positionalArguments[0] as String,
       );
     }
-    return null;
+    return super.noSuchMethod(invocation);
   }
+}
+
+class MockTransaction implements Transaction {
+  final MockDatabase _db;
+  MockTransaction._(this._db);
+
+  @override
+  Future<void> execute(String sql, [List<Object?>? arguments]) => _db.execute(sql, arguments);
+
+  @override
+  Future<int> insert(String table, Map<String, Object?> values, {String? nullColumnHack, ConflictAlgorithm? conflictAlgorithm}) =>
+      _db.insert(table, values, nullColumnHack: nullColumnHack, conflictAlgorithm: conflictAlgorithm);
+
+  @override
+  Future<List<Map<String, Object?>>> query(String table, {bool? distinct, List<String>? columns, String? where, List<Object?>? whereArgs, String? groupBy, String? having, String? orderBy, int? limit, int? offset}) =>
+      _db.query(table, distinct: distinct, columns: columns, where: where, whereArgs: whereArgs, groupBy: groupBy, having: having, orderBy: orderBy, limit: limit, offset: offset);
+
+  @override
+  Future<List<Map<String, Object?>>> rawQuery(String sql, [List<Object?>? arguments]) => _db.rawQuery(sql, arguments);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => _db.noSuchMethod(invocation);
 }
 
 void main() {
@@ -248,6 +276,37 @@ void main() {
       final settings = mockDb.tables['app_settings']!;
       expect(settings.any((s) => s['key'] == 'assistant_briefing_enabled' && s['value'] == 'true'), isTrue);
       expect(settings.any((s) => s['key'] == 'assistant_proactive_enabled' && s['value'] == 'true'), isTrue);
+    });
+  });
+
+  group('Recent History Extraction Tests (T06)', () {
+    test('extracts last 4 messages in chronological order from a 10-message list', () {
+      final messages = List.generate(
+        10,
+        (i) => ChatMessage(
+          id: 'msg_$i',
+          sessionId: 'test_session',
+          role: i % 2 == 0 ? ChatRole.user : ChatRole.assistant,
+          content: 'Message $i',
+          timestamp: DateTime.now().add(Duration(minutes: i)),
+        ),
+      );
+
+      final recentHistory = messages
+          .where((m) => m.content.trim().isNotEmpty)
+          .toList()
+          .reversed
+          .take(4)
+          .toList()
+          .reversed
+          .map((m) => '${m.role == ChatRole.user ? "کاربر" : "دستیار"}: ${m.content}')
+          .toList();
+
+      expect(recentHistory.length, 4);
+      expect(recentHistory[0], 'کاربر: Message 6');
+      expect(recentHistory[1], 'دستیار: Message 7');
+      expect(recentHistory[2], 'کاربر: Message 8');
+      expect(recentHistory[3], 'دستیار: Message 9');
     });
   });
 }

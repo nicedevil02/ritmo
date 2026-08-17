@@ -8,6 +8,10 @@ class AIResponseProcessor {
     'دارو', 'دوز', 'قرص', 'آمپول', 'نسخه', 'پزشکی', 'پزشک', 'سلامت', 'بیماری', 'درمان'
   ];
 
+  static final List<String> _cycleKeywords = [
+    'عادت ماهیانه', 'پریود', 'قاعدگی', 'سیکل قاعدگی', 'سندرم پیش از قاعدگی', 'pms', 'period', 'menstrual', 'cycle'
+  ];
+
   static Map<String, dynamic> process(String rawOutput) {
     var sanitized = rawOutput.trim();
 
@@ -74,6 +78,16 @@ class AIResponseProcessor {
       if (sanitized.toLowerCase().contains(kw)) {
         return {
           'reply': 'برای حفظ ایمنی، اطلاعات پزشکی و یادآورهای دارویی از طریق دستیار مدیریت نمی‌شوند.',
+          'actions': []
+        };
+      }
+    }
+
+    // Zero-leak check for cycle keywords in copilot response
+    for (final kw in _cycleKeywords) {
+      if (sanitized.toLowerCase().contains(kw)) {
+        return {
+          'reply': 'بر اساس قوانین دسترسی، این اطلاعات در محدوده اختیارات دستیار نیست.',
           'actions': []
         };
       }

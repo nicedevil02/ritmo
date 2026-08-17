@@ -309,8 +309,12 @@ class _AssistantSheetState extends State<AssistantSheet> {
       debugPrint('[AssistantSheet] Persona profile maxTokens: ${profile.maxTokens}');
 
       final recentHistory = _messages
-          .where((m) => m.content.isNotEmpty)
+          .where((m) => m.content.trim().isNotEmpty)
+          .toList()
+          .reversed
           .take(4)
+          .toList()
+          .reversed
           .map((m) => '${m.role == ChatRole.user ? "کاربر" : "دستیار"}: ${m.content}')
           .toList();
 

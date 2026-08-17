@@ -12,6 +12,7 @@ import 'package:ritmo/core/ai/agent/agent_tool_protocol.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_registry.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_scope.dart';
 import 'package:ritmo/core/ai/agent/agent_transcript.dart';
+import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
 import 'package:ritmo/core/ai/agent/intent/agent_intent_router.dart';
 import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_connection_repository.dart';
@@ -432,6 +433,62 @@ class AgentLoopRunner {
             effectiveArgs = edited;
           }
           interactiveAction = null;
+        }
+
+        if (tool.name == 'ask_user') {
+          final question =
+              KernelCommandTool.optionalString(effectiveArgs['question']) ??
+                  'پرسش دستیار';
+          final optionsRaw = effectiveArgs['options'];
+          final options = <String>[];
+          if (optionsRaw is List) {
+            for (final o in optionsRaw) {
+              final s = KernelCommandTool.optionalString(o);
+              if (s != null) options.add(s);
+            }
+          }
+          final qReq = AgentQuestionRequest(
+            id: 'q_${DateTime.now().microsecondsSinceEpoch}',
+            sessionId: sessionId,
+            question: question,
+            options: options,
+          );
+
+          yield AgentStatusChangedEvent(
+            statusTextFa: 'در انتظار پاسخ شما...',
+            isWorking: true,
+            currentToolName: tool.name,
+          );
+          yield AgentAwaitingQuestionEvent(qReq);
+
+          final qRes = await AgentQuestionBroker.instance.ask(qReq);
+          yield AgentQuestionResolvedEvent(
+            requestId: qReq.id,
+            answered: qRes.answered,
+            answer: qRes.answer,
+            reasonFa: qRes.reasonFa,
+          );
+
+          if (!qRes.answered) {
+            turnResults.add(AgentToolResult.failure(
+              toolName: tool.name,
+              errorMessage: qRes.reasonFa ?? 'پاسخی از کاربر دریافت نشد.',
+              summaryFa:
+                  'کاربر به پرسش پاسخ نداد یا لغو کرد: ${qRes.reasonFa ?? 'لغو شد'}',
+            ));
+            continue;
+          }
+
+          turnResults.add(AgentToolResult.success(
+            toolName: tool.name,
+            data: {
+              'question': question,
+              'userAnswer': qRes.answer,
+              'options': options,
+            },
+            summaryFa: 'پاسخ کاربر دریافت شد: «${qRes.answer}»',
+          ));
+          continue;
         }
 
         final stepIndex = steps.length;

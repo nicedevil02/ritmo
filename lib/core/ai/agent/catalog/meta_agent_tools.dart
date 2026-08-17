@@ -1,3 +1,4 @@
+import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
 import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -357,16 +358,32 @@ class AskUserTool extends AgentTool {
       }
     }
 
+    final reqId = 'q_${DateTime.now().microsecondsSinceEpoch}';
+    final request = AgentQuestionRequest(
+      id: reqId,
+      sessionId: 'global',
+      question: question,
+      options: options,
+    );
+
+    final response = await AgentQuestionBroker.instance.ask(request);
+    if (!response.answered) {
+      return AgentToolResult.failure(
+        toolName: name,
+        errorMessage: response.reasonFa ?? 'پاسخی از کاربر دریافت نشد.',
+        summaryFa:
+            'کاربر به پرسش پاسخ نداد یا لغو کرد: ${response.reasonFa ?? 'لغو شد'}',
+      );
+    }
+
     return AgentToolResult.success(
       toolName: name,
       data: {
         'question': question,
+        'userAnswer': response.answer,
         'options': options,
-        'awaitingUserAnswer': true,
       },
-      summaryFa:
-          'باید از کاربر بپرسی و متوقف شوی. همین پرسش را در پاسخ نهایی بنویس و هیچ ابزار دیگری را صدا نزن: $question'
-          '${options.isEmpty ? '' : ' (گزینه‌ها: ${options.join('، ')})'}',
+      summaryFa: 'پاسخ کاربر دریافت شد: «${response.answer}»',
     );
   }
 }

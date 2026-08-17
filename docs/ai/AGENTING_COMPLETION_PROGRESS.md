@@ -32,8 +32,8 @@
 | T26 | تولید خودکار ابزار از رجیستری فرمان‌ها | DONE | dcd6573 | پیاده‌سازی CommandToolBridge برای ساخت خودکار AgentTool از روی هر RitmoCommand |
 | T27 | حذف هر ابزاری که SQL خام می‌نویسد | DONE | 28128d6 | بازنویسی تمام ابزارهای تغییردهنده بر پایه KernelCommandTool و حذف نوشتن مستقیم در SQL |
 | T28 | Undo یکپارچه روی AgentJournal | DONE | 5ef410c | افزودن undoLastPlan به AgentJournal و ایجاد ابزار اختصاصی undo_last_action |
-| T29 | یک broker برای تایید و پرسش | DOING | | |
-| T30 | AskUserTool که واقعاً حلقه را متوقف می‌کند | TODO | | |
+| T29 | یک broker برای تایید و پرسش | DONE | 20c3e1e | پیاده‌سازی AgentQuestionBroker و یکپارچه‌سازی چرخه حیات با AgentConfirmationBroker و پاکسازی در dispose |
+| T30 | AskUserTool که واقعاً حلقه را متوقف می‌کند | DOING | | |
 | T31 | تأیید خودکار و اجباری حالت پس از نوشتن | TODO | | |
 | T32 | NavigateToAppScreenTool که واقعاً جابه‌جا می‌کند | TODO | | |
 | T33 | ابزار simulate_plan (حالت «فقط نشانم بده») | TODO | | |

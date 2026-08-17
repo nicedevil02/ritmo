@@ -131,6 +131,27 @@ class AgentConfirmationTimedOutEvent extends AgentEvent {
   });
 }
 
+/// حلقه متوقف شده و منتظر پاسخ کاربر به یک پرسش است (ابزار ask_user)
+class AgentAwaitingQuestionEvent extends AgentEvent {
+  final AgentQuestionRequest request;
+  const AgentAwaitingQuestionEvent(this.request);
+}
+
+/// کاربر به پرسش پاسخ داد یا پرسش لغو شد
+class AgentQuestionResolvedEvent extends AgentEvent {
+  final String requestId;
+  final bool answered;
+  final String? answer;
+  final String? reasonFa;
+
+  const AgentQuestionResolvedEvent({
+    required this.requestId,
+    required this.answered,
+    this.answer,
+    this.reasonFa,
+  });
+}
+
 /// یک چانک متنی استریم شد
 class AgentTokenStreamEvent extends AgentEvent {
   final String delta;
@@ -143,7 +164,7 @@ class AgentCompletedEvent extends AgentEvent {
   /// متن نمایشی و پاک‌سازی‌شده برای کاربر
   final String finalAnswer;
 
-  /// متن خام و فیلترنشده مدل، شامل تگ‌های <tool_call> و <actions> و <memory_ops>.
+  /// متن خام و فیلترنشده مدل، شامل تگ‌های `<tool_call>` و `<actions>` و `<memory_ops>`.
   /// مصرف‌کننده‌های پایین‌دستی (مانند ChatActionParser و AiMemoryService) باید از
   /// این متن استفاده کنند، نه از finalAnswer که تگ‌ها از آن حذف شده است.
   final String rawAnswer;

@@ -869,8 +869,6 @@ class CoursesRepository {
     await SnapshotSyncService.syncAll();
     _fireEvent('DELETE', courseId: courseId);
     return CourseMutationResult.applied;
-  }syncAll();
-    _fireEvent('DELETE', courseId: courseId);
   }
 
   /// Helper to pause, resume, or complete a course (Fixes D-15 auto-reschedule on resume)
@@ -1024,11 +1022,10 @@ class CoursesRepository {
     return null;
   }
 
-  /// Fetch linked goal title + progressCache for the course detail card
-  /// (fixes the always-zero "پیشرفت کل هدف" display).
+  /// Fetch linked goal title + progressCache + status for the course detail card & dropdown (Fixes K-07)
   Future<Map<String, dynamic>?> getLinkedGoalInfo(String goalId) async {
     final db = await _database;
-    final maps = await db.query('goals', columns: ['title', 'progressCache'], where: 'id = ?', whereArgs: [goalId], limit: 1);
+    final maps = await db.query('goals', columns: ['id', 'title', 'status', 'isPrivate', 'progressCache'], where: 'id = ?', whereArgs: [goalId], limit: 1);
     if (maps.isEmpty) return null;
     return maps.first;
   }
@@ -1053,18 +1050,6 @@ class CoursesRepository {
     return await db.query('goals', columns: ['id', 'title'], where: "status = 'ACTIVE' AND isPrivate = 0");
   }
 
-  /// Fetch info for a specific linked goal even if archived or private (Fixes K-07)
-  Future<Map<String, dynamic>?> getLinkedGoalInfo(String goalId) async {
-    final db = await _database;
-    final res = await db.query(
-      'goals',
-      columns: ['id', 'title', 'status', 'isPrivate'],
-      where: 'id = ?',
-      whereArgs: [goalId],
-      limit: 1,
-    );
-    return res.isNotEmpty ? res.first : null;
-  }
 
   /// Fetch current energy level safely with today filter and correct column name (Fixes K-09)
   Future<String> getCurrentEnergyLevel() async {

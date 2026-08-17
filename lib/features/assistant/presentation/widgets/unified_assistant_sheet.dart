@@ -399,7 +399,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
               _scrollToBottom();
             }
           } else if (event is AgentCompletedEvent) {
-            final rawAnswer = event.rawAnswer;
             if (mounted) {
               setState(() {
                 _messages[_messages.length - 1] = ChatMessage(
@@ -413,11 +412,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
                 _isStreaming = false;
                 _isAgentWorking = false;
               });
-            }
-            final textToParse = rawAnswer.trim().isNotEmpty ? rawAnswer : fullResponse;
-            if (textToParse.isNotEmpty && !textToParse.startsWith('error:')) {
-              _validateAndExecute(textToParse);
-              _processMemoryOps(textToParse);
             }
           } else if (event is AgentErrorEvent) {
             if (fullResponse.isEmpty) {

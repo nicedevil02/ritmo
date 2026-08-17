@@ -27,8 +27,8 @@
 | T21 | قابلیت‌سنجی provider | DONE | 5aaed95 | افزودن فلگ و پروپرتی supportsNativeTools به AiProviderPreset و AiConnectionConfig |
 | T22 | عبور tools از AIGateway | DONE | 59152c5 | ارسال آرایه tools و tool_choice در متدهای streaming گیت‌وی به پرووایدرهای پشتیبان |
 | T23 | نرمال‌ساز واحد فراخوانی ابزار + fallback XML | DONE | 7cb7a0f | پشتیبانی از پارس ساختارهای XML، function tags، کدبلاک‌های مارک‌داون و JSON خام |
-| T24 | فشرده‌سازی پرامپت ابزار | DOING | | |
-| T25 | حذف مسیر موازی <actions> از شیت | TODO | | |
+| T24 | فشرده‌سازی پرامپت ابزار | DONE | 7d24497 | پیاده‌سازی toCompactPromptDescription و compactPromptFor جهت کاهش مصرف توکن |
+| T25 | حذف مسیر موازی <actions> از شیت | DOING | | |
 | T26 | تولید خودکار ابزار از رجیستری فرمان‌ها | TODO | | |
 | T27 | حذف هر ابزاری که SQL خام می‌نویسد | TODO | | |
 | T28 | Undo یکپارچه روی AgentJournal | TODO | | |

@@ -138,6 +138,8 @@ class AgentToolScope {
     return all.where((t) => _isToolAllowed(t, persona)).toList();
   }
 
+  bool hasRequirement(String toolName) => requirements.containsKey(toolName);
+
   bool isAllowed(String personaId, String toolName) {
     final persona = _persona(personaId);
     if (persona == null) return true;

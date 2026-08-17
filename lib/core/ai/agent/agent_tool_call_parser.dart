@@ -119,6 +119,12 @@ class AgentToolCallParser {
     return text;
   }
 
+  static final RegExp _authorPrefixRegex = RegExp(
+    r'^[•\-\*\s:]*(ChatGPT\s*said:?|:ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|:You\s*said:?|Assistant\s*said:?)[\s:]*',
+    caseSensitive: false,
+    multiLine: true,
+  );
+
   /// متن نهایی قابل نمایش به کاربر
   static String cleanForDisplay(String raw) {
     var text = stripToolCalls(raw);
@@ -126,6 +132,7 @@ class AgentToolCallParser {
     text = text.replaceAll(_memOpsRe, '');
     text = text.replaceAll(_danglingTagRe, '');
     text = text.replaceAll(_partialTagRe, '');
+    text = text.replaceAll(_authorPrefixRegex, '');
     return text.trim();
   }
 

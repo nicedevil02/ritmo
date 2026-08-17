@@ -222,8 +222,9 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   }
 
   static final _noisePrefixRegex = RegExp(
-    r'^(\s*[\u2022\u2023\u25E6\u2043\u2219\*\-\.\:]\s*)*(:?\s*ChatGPT\s*said:?|:?\s*ChatGPT:?|:?\s*You\s*said:?|:?\s*Assistant\s*said:?)\s*',
+    r'^[•\-\*\s:]*(ChatGPT\s*said:?|:ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|:You\s*said:?|Assistant\s*said:?)[\s:]*',
     caseSensitive: false,
+    multiLine: true,
   );
 
   static final _cssBlockRegex = RegExp(
@@ -231,23 +232,14 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     multiLine: true,
   );
 
-  static bool _isSystemPromptLeak(String text) {
-    return text.contains('[RITMO SYSTEM DIRECTIVE]') ||
-           text.contains('[USER QUERY]') ||
-           text.contains('[دستورالعمل سیستم ریتمو]') ||
-           text.contains('[درخواست جدید کاربر]') ||
-           text.contains('[RITMO AUTONOMOUS AGENT TOOLS]') ||
-           text.contains('[AVAILABLE RITMO AUTONOMOUS AGENT TOOLS]');
-  }
-
   static String _sanitizeResponseText(String text) {
-    if (_isSystemPromptLeak(text)) {
-      debugPrint('[ChatGptWebBridge] Ignored leaked user prompt');
+    if (text.contains('[دستورالعمل سیستم ریتمو]') ||
+        text.contains('[درخواست جدید کاربر]') ||
+        text.contains('نام کاربر مخاطب شما:') ||
+        text.contains('قوانین قطعی:')) {
       return '';
     }
     var cleaned = text.replaceAll(_noisePrefixRegex, '').trimLeft();
-    // Clean any dangling bullet dot or colon before real text
-    cleaned = cleaned.replaceFirst(RegExp(r'^[\u2022\u2023\u25E6\u2043\u2219\*\-\.\:\s]+(?=[\u0600-\u06FF\w])'), '');
     if (cleaned.contains('[data-conversation-') || cleaned.contains('--component-')) {
       cleaned = cleaned.replaceAll(_cssBlockRegex, '').trim();
     }

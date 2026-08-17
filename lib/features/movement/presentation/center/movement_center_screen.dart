@@ -30,7 +30,6 @@ import 'package:ritmo/features/movement/presentation/center/widgets/week_navigat
 import 'package:ritmo/features/movement/presentation/center/widgets/week_rail.dart';
 import 'package:ritmo/features/movement/presentation/center/widgets/week_summary_card.dart';
 import 'package:ritmo/features/movement/presentation/common/confirm_dialog.dart';
-import 'package:ritmo/features/movement/presentation/common/empty_state_block.dart';
 import 'package:ritmo/features/movement/presentation/common/error_block.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_screen_shell.dart';
@@ -691,10 +690,56 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                   )
                 else
                   SliverToBoxAdapter(
-                    child: EmptyStateBlock(
-                      kind: MovementEmptyKind.emptyDay,
-                      actionLabel: MovementStrings.centerAddActivity,
-                      onAction: () => _openAddCommandSheet(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: RitmoSpacing.lg,
+                        vertical: RitmoSpacing.xs,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(RitmoSpacing.md),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(RitmoRadius.card),
+                          border: Border.all(
+                            color: colors.border,
+                            width: RitmoElevation.borderWidthDark,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: (context.modules.sports).withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.event_available_rounded,
+                                color: context.modules.sports,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: RitmoSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'جلسه‌ای برای این روز تنظیم نشده',
+                                    style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'برای ثبت تمرین یا برنامه‌ریزی، دکمهٔ «افزودن فعالیت» پایین را لمس کنید.',
+                                    style: RitmoTextStyles.caption(colors.textSecondary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
 

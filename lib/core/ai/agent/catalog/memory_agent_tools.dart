@@ -50,7 +50,7 @@ class RememberFactTool extends AgentTool {
               'علاقه، ساعت کاری ثابت). برای داده یک‌بارمصرف یا محتوای گفتگو '
               'استفاده نکن. متن را جمله کوتاه سوم‌شخص فارسی بنویس.',
           policy: ToolPolicy.actionDirect,
-          parameters: <ToolParameter>[
+          parameters: const <ToolParameter>[
             ToolParameter(
               name: 'content',
               descriptionFa:
@@ -207,7 +207,7 @@ class RecallFactsTool extends AgentTool {
               'وقتی استفاده کن که مطمئن نیستی قبلا درباره موضوعی چه می‌دانی یا '
               'کاربر پرسید «چی از من یادت هست؟». هرگز حافطه را حدس نزن.',
           policy: ToolPolicy.readOnly,
-          parameters: <ToolParameter>[
+          parameters: const <ToolParameter>[
             ToolParameter(
               name: 'query',
               descriptionFa:

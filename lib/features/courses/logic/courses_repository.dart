@@ -250,15 +250,14 @@ class CoursesRepository {
     await syncCourseAlarms();
     _fireEvent('CREATE', courseId: syncedCourse.id);
   }
-
-  /// Update / edit course details with transactional session count adjustment and rescheduling (Fixes Root 1 & D-5)
-  Future<void> updateCourse(Course updatedCourse) async {
+  /// Update / edit course details with transactional session count adjustment and rescheduling (Fixes Root 1, D-5, K-10, K-11)
+  Future<CourseMutationResult> updateCourse(Course updatedCourse) async {
     CourseValidator.validateCourse(updatedCourse);
     final db = await _database;
     final now = DateTime.now();
 
     final existingCourse = await getCourseById(updatedCourse.id);
-    if (existingCourse == null) return;
+    if (existingCourse == null) return CourseMutationResult.notFound;
 
     final existingSessions = await getSessionsForCourse(updatedCourse.id);
     // Completed AND skipped sessions are both "locked" — they cannot be removed,
@@ -283,18 +282,30 @@ class CoursesRepository {
     final alarmsToCancel = <String>[];
 
     await db.transaction((txn) async {
-      // 1. Adjust session count if totalSessions changed
+      // 1. Adjust session count if totalSessions changed (Fixes K-11)
       if (updatedCourse.totalSessions > existingCourse.totalSessions) {
         final countToAdd = updatedCourse.totalSessions - existingCourse.totalSessions;
-        final startSessionNumber = existingSessions.length + 1;
+        final maxNumRes = await txn.rawQuery(
+          'SELECT COALESCE(MAX(sessionNumber), 0) + 1 as nextNum FROM course_sessions WHERE courseId = ?',
+          [updatedCourse.id],
+        );
+        final startSessionNumber = (maxNumRes.first['nextNum'] as int?) ?? 1;
+
+        final maxOrderRes = await txn.rawQuery(
+          'SELECT COALESCE(MAX(displayOrder), 0) + 1 as nextOrder FROM course_sessions WHERE courseId = ?',
+          [updatedCourse.id],
+        );
+        final startDisplayOrder = (maxOrderRes.first['nextOrder'] as int?) ?? startSessionNumber;
+
         for (var i = 0; i < countToAdd; i++) {
           final sNum = startSessionNumber + i;
-          final sessionId = 'sess_${now.millisecondsSinceEpoch}_${updatedCourse.id.hashCode}_$sNum';
+          final dOrder = startDisplayOrder + i;
+          final sessionId = 'sess_${now.millisecondsSinceEpoch}_${updatedCourse.id}_$sNum';
           final newSession = CourseSession(
             id: sessionId,
             courseId: updatedCourse.id,
             sessionNumber: sNum,
-            displayOrder: sNum,
+            displayOrder: dOrder,
             createdAt: now.millisecondsSinceEpoch,
             updatedAt: now.millisecondsSinceEpoch,
             sessionTitle: '${updatedCourse.unitLabelResolved} $sNum',
@@ -388,10 +399,11 @@ class CoursesRepository {
 
     await syncCourseAlarms();
     _fireEvent('UPDATE', courseId: updatedCourse.id);
+    return CourseMutationResult.applied;
   }
 
-  /// Complete a specific course session (Fixes D-1 Partial Update & D-2 Alarm Cleanup & D-25 Linked Goal)
-  Future<void> completeSession({
+  /// Complete a specific course session (Fixes D-1 Partial Update & D-2 Alarm Cleanup & D-25 Linked Goal & K-10)
+  Future<CourseMutationResult> completeSession({
     required String sessionId,
     required int actualDurationMinutes,
     String? note,
@@ -406,9 +418,9 @@ class CoursesRepository {
     final alarmsToCancel = <String>[];
     var allSkipped = false;
 
-    await db.transaction((txn) async {
+    final mutation = await db.transaction<CourseMutationResult>((txn) async {
       final sessionMaps = await txn.query('course_sessions', where: 'id = ?', whereArgs: [sessionId]);
-      if (sessionMaps.isEmpty) return;
+      if (sessionMaps.isEmpty) return CourseMutationResult.notFound;
       final session = CourseSession.fromMap(sessionMaps.first);
       courseId = session.courseId;
 
@@ -481,7 +493,10 @@ class CoursesRepository {
         final rebuildAlarms = await _rebuildRemindersForCourse(txn, course);
         alarmsToCancel.addAll(rebuildAlarms);
       }
+      return CourseMutationResult.applied;
     });
+
+    if (!mutation.isApplied) return mutation;
 
     for (final id in alarmsToCancel) {
       await sl<AlarmPlatform>().cancelAlarm(id);
@@ -489,17 +504,18 @@ class CoursesRepository {
 
     await syncCourseAlarms();
     _fireEvent('COMPLETE', courseId: courseId, sessionId: sessionId, allSkipped: allSkipped);
+    return CourseMutationResult.applied;
   }
 
-  /// Uncomplete a session (Fixes D-12 State Resets)
-  Future<void> uncompleteSession(String sessionId) async {
+  /// Uncomplete a session (Fixes D-12 State Resets & K-10)
+  Future<CourseMutationResult> uncompleteSession(String sessionId) async {
     final db = await _database;
     final now = DateTime.now();
     String? courseId;
 
-    await db.transaction((txn) async {
+    final mutation = await db.transaction<CourseMutationResult>((txn) async {
       final sessionMaps = await txn.query('course_sessions', where: 'id = ?', whereArgs: [sessionId]);
-      if (sessionMaps.isEmpty) return;
+      if (sessionMaps.isEmpty) return CourseMutationResult.notFound;
       final session = CourseSession.fromMap(sessionMaps.first);
       courseId = session.courseId;
 
@@ -551,23 +567,27 @@ class CoursesRepository {
 
         await _rebuildRemindersForCourse(txn, course);
       }
+      return CourseMutationResult.applied;
     });
+
+    if (!mutation.isApplied) return mutation;
 
     await syncCourseAlarms();
     _fireEvent('UNCOMPLETE', courseId: courseId, sessionId: sessionId);
+    return CourseMutationResult.applied;
   }
 
-  /// Skip a session (Fixes D-1 Note Overwrite, D-27 completedAt for skipped sessions, D-13 honest completion)
-  Future<void> skipSession(String sessionId, {String? reason}) async {
+  /// Skip a session (Fixes D-1 Note Overwrite, D-27 completedAt for skipped sessions, D-13 honest completion, K-10)
+  Future<CourseMutationResult> skipSession(String sessionId, {String? reason}) async {
     final db = await _database;
     final now = DateTime.now();
     String? courseId;
     final alarmsToCancel = <String>[];
     var allSkipped = false;
 
-    await db.transaction((txn) async {
+    final mutation = await db.transaction<CourseMutationResult>((txn) async {
       final sessionMaps = await txn.query('course_sessions', where: 'id = ?', whereArgs: [sessionId]);
-      if (sessionMaps.isEmpty) return;
+      if (sessionMaps.isEmpty) return CourseMutationResult.notFound;
       final session = CourseSession.fromMap(sessionMaps.first);
       courseId = session.courseId;
 
@@ -619,7 +639,10 @@ class CoursesRepository {
         final rebuildAlarms = await _rebuildRemindersForCourse(txn, course);
         alarmsToCancel.addAll(rebuildAlarms);
       }
+      return CourseMutationResult.applied;
     });
+
+    if (!mutation.isApplied) return mutation;
 
     for (final id in alarmsToCancel) {
       await sl<AlarmPlatform>().cancelAlarm(id);
@@ -627,18 +650,19 @@ class CoursesRepository {
 
     await syncCourseAlarms();
     _fireEvent('SKIP', courseId: courseId, sessionId: sessionId, allSkipped: allSkipped);
+    return CourseMutationResult.applied;
   }
 
   /// Batch-skip sessions in a single transaction with ONE reminder rebuild and
   /// ONE alarm sync (instead of per-session cycles). Used by Recovery Mode prune.
-  Future<void> skipSessions(List<String> sessionIds, {String? reason}) async {
-    if (sessionIds.isEmpty) return;
+  Future<CourseMutationResult> skipSessions(List<String> sessionIds, {String? reason}) async {
+    if (sessionIds.isEmpty) return CourseMutationResult.noOp;
     final db = await _database;
     final now = DateTime.now();
     final alarmsToCancel = <String>[];
     String? courseId;
 
-    await db.transaction((txn) async {
+    final mutation = await db.transaction<CourseMutationResult>((txn) async {
       for (final sessionId in sessionIds) {
         final sessionMaps = await txn.query('course_sessions', where: 'id = ?', whereArgs: [sessionId]);
         if (sessionMaps.isEmpty) continue;
@@ -692,7 +716,10 @@ class CoursesRepository {
           alarmsToCancel.addAll(rebuildAlarms);
         }
       }
+      return CourseMutationResult.applied;
     });
+
+    if (!mutation.isApplied) return mutation;
 
     for (final id in alarmsToCancel) {
       await sl<AlarmPlatform>().cancelAlarm(id);
@@ -700,22 +727,32 @@ class CoursesRepository {
 
     await syncCourseAlarms();
     _fireEvent('SKIP_BATCH', courseId: courseId);
+    return CourseMutationResult.applied;
   }
 
-  /// Reorder sessions within a course & keep titles synchronized (Fixes D-17)
-  Future<void> reorderSessions(String courseId, List<String> orderedSessionIds) async {
+  /// Reorder sessions within a course & keep titles synchronized (Fixes D-17 & K-12)
+  Future<CourseMutationResult> reorderSessions(String courseId, List<String> orderedSessionIds) async {
     final db = await _database;
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    await db.transaction((txn) async {
+    final mutation = await db.transaction<CourseMutationResult>((txn) async {
       final courseMaps = await txn.query('courses', where: 'id = ?', whereArgs: [courseId]);
-      final unitLabel = courseMaps.isNotEmpty ? Course.fromMap(courseMaps.first).unitLabelResolved : 'جلسه';
+      if (courseMaps.isEmpty) return CourseMutationResult.notFound;
+      final unitLabel = Course.fromMap(courseMaps.first).unitLabelResolved;
 
       final sessionMaps = await txn.query('course_sessions', where: 'courseId = ?', whereArgs: [courseId]);
       final sessionsById = <String, CourseSession>{
         for (final m in sessionMaps) m['id'] as String: CourseSession.fromMap(m),
       };
 
+      // Step 1: Negate displayOrder and sessionNumber to prevent UNIQUE constraint collision (Fixes K-12)
+      await txn.rawUpdate('''
+        UPDATE course_sessions 
+        SET sessionNumber = -sessionNumber, displayOrder = -displayOrder, updatedAt = ?
+        WHERE courseId = ?
+      ''', [now, courseId]);
+
+      // Step 2: Assign new positive numbers and orders
       for (var i = 0; i < orderedSessionIds.length; i++) {
         final sId = orderedSessionIds[i];
         final newNum = i + 1;
@@ -743,19 +780,26 @@ class CoursesRepository {
           whereArgs: [sId, courseId],
         );
       }
+      return CourseMutationResult.applied;
     });
 
-    _fireEvent('REORDER', courseId: courseId);
+    if (mutation.isApplied) {
+      _fireEvent('REORDER', courseId: courseId);
+    }
+    return mutation;
   }
 
   /// Manually reschedule a specific session to a new date
-  Future<void> rescheduleSession(String sessionId, String? newDateStr) async {
+  Future<CourseMutationResult> rescheduleSession(String sessionId, String? newDateStr) async {
     final db = await _database;
     final now = DateTime.now();
     String? courseId;
     final alarmsToCancel = <String>[];
 
-    await db.transaction((txn) async {
+    final mutation = await db.transaction<CourseMutationResult>((txn) async {
+      final sessionMaps = await txn.query('course_sessions', where: 'id = ?', whereArgs: [sessionId]);
+      if (sessionMaps.isEmpty) return CourseMutationResult.notFound;
+
       await txn.update(
         'course_sessions',
         {
@@ -767,18 +811,19 @@ class CoursesRepository {
         whereArgs: [sessionId],
       );
 
-      final sessionMaps = await txn.query('course_sessions', where: 'id = ?', whereArgs: [sessionId]);
-      if (sessionMaps.isNotEmpty) {
-        final session = CourseSession.fromMap(sessionMaps.first);
-        courseId = session.courseId;
-        final courseMaps = await txn.query('courses', where: 'id = ?', whereArgs: [courseId]);
-        if (courseMaps.isNotEmpty) {
-          final course = Course.fromMap(courseMaps.first);
-          final rebuildAlarms = await _rebuildRemindersForCourse(txn, course);
-          alarmsToCancel.addAll(rebuildAlarms);
-        }
+      final session = CourseSession.fromMap(sessionMaps.first);
+      courseId = session.courseId;
+
+      final courseMaps = await txn.query('courses', where: 'id = ?', whereArgs: [courseId]);
+      if (courseMaps.isNotEmpty) {
+        final course = Course.fromMap(courseMaps.first);
+        final rebuildAlarms = await _rebuildRemindersForCourse(txn, course);
+        alarmsToCancel.addAll(rebuildAlarms);
       }
+      return CourseMutationResult.applied;
     });
+
+    if (!mutation.isApplied) return mutation;
 
     for (final id in alarmsToCancel) {
       await sl<AlarmPlatform>().cancelAlarm(id);
@@ -786,14 +831,18 @@ class CoursesRepository {
 
     await syncCourseAlarms();
     _fireEvent('RESCHEDULE', courseId: courseId, sessionId: sessionId);
+    return CourseMutationResult.applied;
   }
 
-  /// Helper to delete a course (Fixes D-25 Linked Goal reference cleanup)
-  Future<void> deleteCourse(String courseId) async {
+  /// Helper to delete a course (Fixes D-25 Linked Goal reference cleanup & K-10)
+  Future<CourseMutationResult> deleteCourse(String courseId) async {
     final db = await _database;
     final alarmsToCancel = <String>[];
 
-    await db.transaction((txn) async {
+    final mutation = await db.transaction<CourseMutationResult>((txn) async {
+      final exists = await txn.query('courses', where: 'id = ?', whereArgs: [courseId], limit: 1);
+      if (exists.isEmpty) return CourseMutationResult.notFound;
+
       final maps = await txn.rawQuery('''
         SELECT id FROM pending_reminders 
         WHERE courseSessionId IN (SELECT id FROM course_sessions WHERE courseId = ?)
@@ -808,13 +857,19 @@ class CoursesRepository {
       await txn.delete('pending_reminders', where: 'courseSessionId IN (SELECT id FROM course_sessions WHERE courseId = ?)', whereArgs: [courseId]);
       await txn.delete('course_sessions', where: 'courseId = ?', whereArgs: [courseId]);
       await txn.delete('courses', where: 'id = ?', whereArgs: [courseId]);
+      return CourseMutationResult.applied;
     });
+
+    if (!mutation.isApplied) return mutation;
 
     for (final id in alarmsToCancel) {
       await sl<AlarmPlatform>().cancelAlarm(id);
     }
 
     await SnapshotSyncService.syncAll();
+    _fireEvent('DELETE', courseId: courseId);
+    return CourseMutationResult.applied;
+  }syncAll();
     _fireEvent('DELETE', courseId: courseId);
   }
 

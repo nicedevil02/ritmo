@@ -107,8 +107,94 @@ class CourseTables {
     ''');
   }
 
-  /// Self-healing schema validation to ensure course/study session tables exist.
+  /// Self-healing schema validation to ensure course tables, columns, and indexes exist. (Fixes K-13)
   static Future<void> ensureSchema(DatabaseExecutor db) async {
+    // 1. Ensure courses table & indexes
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS courses (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          totalSessions INTEGER NOT NULL,
+          sessionDurationMinutes INTEGER NOT NULL,
+          activityType TEXT NOT NULL,
+          zoneId TEXT,
+          isArchived INTEGER NOT NULL DEFAULT 0,
+          energyRule TEXT NOT NULL DEFAULT 'NONE',
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL,
+          courseType TEXT NOT NULL DEFAULT 'VIDEO',
+          unitLabel TEXT,
+          emoji TEXT,
+          colorHex TEXT,
+          provider TEXT,
+          weeklyTargetSessions INTEGER NOT NULL DEFAULT 3,
+          isAdaptive INTEGER NOT NULL DEFAULT 0,
+          preferredDays TEXT,
+          preferredTime TEXT,
+          reminderEnabled INTEGER NOT NULL DEFAULT 0,
+          linkedGoalId TEXT,
+          status TEXT NOT NULL DEFAULT 'ACTIVE',
+          completedAt INTEGER,
+          targetEndDate TEXT,
+          adaptiveLastAppliedAt INTEGER,
+          masteryScore REAL NOT NULL DEFAULT 0,
+          reviewEnabled INTEGER NOT NULL DEFAULT 0
+      );
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_courses_zoneId ON courses(zoneId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_courses_status ON courses(status, isArchived);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_courses_linkedGoalId ON courses(linkedGoalId);');
+
+    // 2. Ensure course_sessions table & indexes
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS course_sessions (
+          id TEXT PRIMARY KEY,
+          courseId TEXT NOT NULL,
+          sessionNumber INTEGER NOT NULL,
+          plannedDate TEXT,
+          completionStatus TEXT NOT NULL DEFAULT 'PENDING',
+          actualDurationMinutes INTEGER,
+          note TEXT,
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL,
+          sessionTitle TEXT,
+          completedAt INTEGER,
+          isUserScheduled INTEGER NOT NULL DEFAULT 0,
+          plannedStartTime TEXT,
+          estimatedDurationMinutes INTEGER,
+          sectionTitle TEXT,
+          learningObjective TEXT,
+          difficulty INTEGER,
+          activityKind TEXT NOT NULL DEFAULT 'LEARN',
+          understandingScore INTEGER,
+          needsReview INTEGER NOT NULL DEFAULT 0,
+          keyTakeaway TEXT,
+          openQuestion TEXT,
+          questionResolved INTEGER NOT NULL DEFAULT 0,
+          sourceSessionId TEXT,
+          skipReason TEXT,
+          displayOrder INTEGER NOT NULL DEFAULT 0
+      );
+    ''');
+    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS index_course_sessions_courseId_sessionNumber ON course_sessions(courseId, sessionNumber);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_course_sessions_planned ON course_sessions(plannedDate, completionStatus);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_course_sessions_course_status ON course_sessions(courseId, completionStatus);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_course_sessions_completedAt ON course_sessions(completedAt);');
+
+    // 3. Ensure course_active_timers table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS course_active_timers (
+          courseSessionId TEXT PRIMARY KEY,
+          courseId TEXT NOT NULL,
+          startedAt INTEGER NOT NULL,
+          pausedAccumulatedMs INTEGER NOT NULL DEFAULT 0,
+          state TEXT NOT NULL DEFAULT 'RUNNING',
+          targetDurationMinutes INTEGER,
+          updatedAt INTEGER NOT NULL
+      );
+    ''');
+
+    // 4. Ensure study_active_session table (V73)
     await db.execute('''
       CREATE TABLE IF NOT EXISTS study_active_session (
         id TEXT PRIMARY KEY CHECK (id = 'singleton'),

@@ -21,6 +21,7 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/date_key.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 
 /// 🔑 The single source of truth for "what is on a day".
 ///
@@ -740,28 +741,29 @@ class DayAgendaService {
   /// Timed items first (by time), then untimed by descending priority.
   void _sortItems(List<AgendaItem> items) {
     items.sort((a, b) {
-      if (a.isTimed && b.isTimed) {
-        final aM = _parseMinutes(a.timeOfDay);
-        final bM = _parseMinutes(b.timeOfDay);
-        final cmp = aM.compareTo(bM);
-        if (cmp != 0) return cmp;
-        return a.id.compareTo(b.id);
+      int? aM;
+      if (a.isTimed) {
+        aM = TimeOfDayMinutes.tryParse(a.timeOfDay);
+        if (aM == null) {
+          RitmoLog.error('DayAgendaService', 'Invalid timeOfDay for item ${a.id}: "${a.timeOfDay}"');
+        }
       }
-      if (a.isTimed) return -1;
-      if (b.isTimed) return 1;
+      int? bM;
+      if (b.isTimed) {
+        bM = TimeOfDayMinutes.tryParse(b.timeOfDay);
+        if (bM == null) {
+          RitmoLog.error('DayAgendaService', 'Invalid timeOfDay for item ${b.id}: "${b.timeOfDay}"');
+        }
+      }
+      if (aM != null && bM != null) {
+        final cmp = aM.compareTo(bM);
+        return cmp != 0 ? cmp : a.id.compareTo(b.id);
+      }
+      if (aM != null) return -1;
+      if (bM != null) return 1;
       final pCmp = b.priority.compareTo(a.priority);
-      if (pCmp != 0) return pCmp;
-      return a.id.compareTo(b.id);
+      return pCmp != 0 ? pCmp : a.id.compareTo(b.id);
     });
-  }
-
-  static int _parseMinutes(String? timeOfDay) {
-    if (timeOfDay == null) return 0;
-    final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(timeOfDay.trim());
-    if (match == null) return 0;
-    final h = int.tryParse(match.group(1)!) ?? 0;
-    final m = int.tryParse(match.group(2)!) ?? 0;
-    return (h * 60) + m;
   }
 
   // ---------------------------------------------------------------------------

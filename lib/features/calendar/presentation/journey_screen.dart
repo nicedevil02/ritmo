@@ -13,6 +13,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/calendar/data/day_mark_repository.dart';
 import 'package:ritmo/features/calendar/data/occasions_calendar_source.dart';
@@ -22,7 +23,6 @@ import 'package:ritmo/features/calendar/presentation/utils/calendar_date_formatt
 import 'package:ritmo/features/calendar/presentation/widgets/calendar_management_sheet.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/calendar_search_delegate.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/day_review_sheet.dart';
-import 'package:ritmo/features/calendar/presentation/logic/timeline_snapping.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/day_summary_bar.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/agenda_degraded_banner.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/go_to_date_dialog.dart';
@@ -811,7 +811,7 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                     highlightedItemId: _controller.highlightedItemId,
                     onItemTap: _openItemDetails,
                     onItemMove: (item, newStartMinutes) async {
-                      final timeStr = TimelineSnappingHelper.minutesToTimeString(newStartMinutes);
+                      final timeStr = TimeOfDayMinutes.format(newStartMinutes);
                       await _controller.commitItemDrag(
                         item,
                         timeStr,
@@ -846,7 +846,7 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                     onScheduleUntimed: (item, startMinutes, durMinutes) async {
                       await _controller.scheduleItem(item, startMinutes, durMinutes);
                       if (mounted) {
-                        final timeStr = TimelineSnappingHelper.minutesToTimeString(startMinutes);
+                        final timeStr = TimeOfDayMinutes.format(startMinutes);
                         RitmoToast.show(
                           context,
                           'رویداد در ساعت ${toPersianDigits(timeStr)} زمان‌بندی شد',

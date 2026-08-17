@@ -23,6 +23,7 @@ import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/core/services/sync/sync_module_gate.dart';
 import 'package:ritmo/core/modules/routine_visibility.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/persian_digits.dart'; // toPersianDigits
 import 'package:ritmo/core/utils/snapshot_helper.dart';
@@ -631,20 +632,11 @@ class DashboardController {
       try {
         final now = DateTime.now();
         final currentMinutes = now.hour * 60 + now.minute;
-        
-        int? parseTimeToMinutes(String? timeStr) {
-          if (timeStr == null || !timeStr.contains(':')) return null;
-          final parts = timeStr.split(':');
-          final h = int.tryParse(parts[0]);
-          final m = int.tryParse(parts[1]);
-          if (h == null || m == null) return null;
-          return h * 60 + m;
-        }
-        
-        final fajrMin = parseTimeToMinutes(prayerTimes['fajr']);
-        final dhuhrMin = parseTimeToMinutes(prayerTimes['dhuhr']);
-        final maghribMin = parseTimeToMinutes(prayerTimes['maghrib']);
-        final ishaMin = parseTimeToMinutes(prayerTimes['isha']);
+
+        final fajrMin = TimeOfDayMinutes.tryParse(prayerTimes['fajr']);
+        final dhuhrMin = TimeOfDayMinutes.tryParse(prayerTimes['dhuhr']);
+        final maghribMin = TimeOfDayMinutes.tryParse(prayerTimes['maghrib']);
+        final ishaMin = TimeOfDayMinutes.tryParse(prayerTimes['isha']);
         
         String? nextName;
         String? nextTime;

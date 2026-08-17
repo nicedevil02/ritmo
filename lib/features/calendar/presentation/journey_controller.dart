@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/agenda_action_handler.dart';
 import 'package:ritmo/core/domain/agenda/agenda_load_status.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_snapshot_builder.dart';
@@ -19,6 +18,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/core/utils/date_key.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 /// Calendar view scale. `agenda` is the primary view ("what's next?").
@@ -569,7 +569,7 @@ class JourneyController extends ChangeNotifier {
     _isExecutingAction = true;
     notifyListeners();
 
-    final newTimeStr = TimelineSnappingHelper.minutesToTimeString(startMinutes);
+    final newTimeStr = TimeOfDayMinutes.format(startMinutes);
     try {
       final command = _ScheduleItemCommand(
         actionHandler: _actionHandler,

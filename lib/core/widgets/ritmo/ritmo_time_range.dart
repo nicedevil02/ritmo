@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/calendar/presentation/logic/timeline_snapping.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 
 class RitmoTimeRange extends StatelessWidget {
   const RitmoTimeRange({
@@ -25,7 +25,7 @@ class RitmoTimeRange extends StatelessWidget {
       fontFamily: 'Vazirmatn',
     );
 
-    final startStr = toPersianDigits(TimelineSnappingHelper.minutesToTimeString(startMinutes));
+    final startStr = toPersianDigits(TimeOfDayMinutes.format(startMinutes));
 
     if (endMinutes == null) {
       return Text(
@@ -37,7 +37,7 @@ class RitmoTimeRange extends StatelessWidget {
 
     final isOvernight = endMinutes! >= 1440;
     final endClamped = isOvernight ? endMinutes! % 1440 : endMinutes!;
-    final endStr = toPersianDigits(TimelineSnappingHelper.minutesToTimeString(endClamped));
+    final endStr = toPersianDigits(TimeOfDayMinutes.format(endClamped));
 
     final fullString = '\u2066$startStr – $endStr\u2069';
 

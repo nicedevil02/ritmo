@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/features/calendar/presentation/logic/split_day_scroll_helper.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_column_header.dart';
@@ -131,8 +132,8 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
     var firstMinute = rangeStart;
 
     for (final item in timedItems) {
-      final startM = TimelineSnappingHelper.parseTimeToMinutes(item.timeOfDay ?? '');
-      if (startM >= rangeStart && startM < rangeEnd) {
+      final startM = TimeOfDayMinutes.tryParse(item.timeOfDay);
+      if (startM != null && startM >= rangeStart && startM < rangeEnd) {
         firstMinute = startM;
         break;
       }
@@ -159,7 +160,8 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
 
     final columnItems = widget.items.where((item) {
       if (!item.isTimed) return false;
-      final startM = TimelineSnappingHelper.parseTimeToMinutes(item.timeOfDay ?? '');
+      final startM = TimeOfDayMinutes.tryParse(item.timeOfDay);
+      if (startM == null) return false;
       final durM = DurationBounds.sanitize(item.durationMinutes);
       final endM = startM + durM;
       return startM < range.endMinutes && endM > range.startMinutes;

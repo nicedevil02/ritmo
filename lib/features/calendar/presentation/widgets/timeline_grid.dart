@@ -6,6 +6,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/features/calendar/presentation/logic/timeline_layout_engine.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_hour_axis.dart';
@@ -238,7 +239,7 @@ class _TimelineGridState extends State<TimelineGrid> {
                                     borderRadius: BorderRadius.circular(RitmoRadius.badge),
                                   ),
                                   child: Text(
-                                    toPersianDigits(TimelineSnappingHelper.minutesToTimeString(effectiveDragStartMinutes)),
+                                    toPersianDigits(TimeOfDayMinutes.format(effectiveDragStartMinutes)),
                                     style: TextStyle(
                                       color: colors.onPrimary,
                                       fontSize: 11.0,
@@ -387,7 +388,7 @@ class _TimelineGridState extends State<TimelineGrid> {
         : layoutItem.height;
 
     final displayTime = isCurrentlyDragging
-        ? toPersianDigits(TimelineSnappingHelper.minutesToTimeString(_dragStartMinutes))
+        ? toPersianDigits(TimeOfDayMinutes.format(_dragStartMinutes))
         : null;
 
     final displayDuration = isCurrentlyResizing ? _resizeDurationMinutes : null;

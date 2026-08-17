@@ -4,6 +4,7 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/calendar/presentation/logic/today_calendar_convergence_helper.dart';
 
@@ -453,7 +454,7 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
         .where((i) =>
             i.isTimed &&
             !i.isCompleted &&
-            _parseMinutes(i.timeOfDay) < currentMinutes &&
+            (TimeOfDayMinutes.tryParse(i.timeOfDay) ?? 0) < currentMinutes &&
             i.id != current?.id &&
             i.id != next?.id)
         .toList();
@@ -464,8 +465,8 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
           .where((i) => i.isTimed && !i.isCompleted)
           .toList()
         ..sort((a, b) {
-          final aM = _parseMinutes(a.timeOfDay);
-          final bM = _parseMinutes(b.timeOfDay);
+          final aM = TimeOfDayMinutes.tryParse(a.timeOfDay) ?? 0;
+          final bM = TimeOfDayMinutes.tryParse(b.timeOfDay) ?? 0;
           return aM.compareTo(bM);
         });
       for (final item in timedItems) {
@@ -553,15 +554,6 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
     );
   }
 
-  static int _parseMinutes(String? timeOfDay) {
-    if (timeOfDay == null || timeOfDay.isEmpty) return 0;
-    final parts = timeOfDay.split(':');
-    if (parts.length != 2) return 0;
-    final h = int.tryParse(parts[0]) ?? 0;
-    final m = int.tryParse(parts[1]) ?? 0;
-    return h * 60 + m;
-  }
-
   Widget _buildFreeGapRow(
     BuildContext context,
     RitmoColors colors, {
@@ -571,7 +563,7 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
   }) {
     final now = DateTime.now();
     final currentMinutes = now.hour * 60 + now.minute;
-    final nextMinutes = _parseMinutes(next.timeOfDay);
+    final nextMinutes = TimeOfDayMinutes.tryParse(next.timeOfDay) ?? 0;
     final gapMinutes = (nextMinutes - currentMinutes).clamp(1, 1440);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

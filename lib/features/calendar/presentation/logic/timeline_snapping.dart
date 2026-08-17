@@ -34,25 +34,4 @@ class TimelineSnappingHelper {
     final maxAllowed = untilEndOfDay.clamp(minDurationMinutes, DurationBounds.maxMinutes);
     return snapped.clamp(minDurationMinutes, maxAllowed);
   }
-
-  /// Converts minute offset of day (0..1439) to 'HH:mm' string format.
-  static String minutesToTimeString(int totalMinutes) {
-    final clamped = totalMinutes.clamp(0, 1439);
-    final hour = clamped ~/ 60;
-    final minute = clamped % 60;
-    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
-  }
-
-  /// Parses 'HH:mm' string to total minutes of day (0..1439).
-  static int parseTimeToMinutes(String timeStr) {
-    try {
-      final parts = timeStr.trim().split(':');
-      if (parts.length != 2) return 0;
-      final h = int.parse(parts[0]);
-      final m = int.parse(parts[1]);
-      return (h * 60) + m;
-    } catch (_) {
-      return 0;
-    }
-  }
 }

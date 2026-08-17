@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/modules/module_gate.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Represents a normalized sleep / rest window block for timeline presentation.
@@ -162,8 +162,8 @@ class SleepWindowResolver {
   }) {
     if (bedtime == null || wakeTime == null) return null;
 
-    final startM = _parseMinutes(bedtime);
-    final endM = _parseMinutes(wakeTime);
+    final startM = TimeOfDayMinutes.tryParse(bedtime);
+    final endM = TimeOfDayMinutes.tryParse(wakeTime);
 
     if (startM == null || endM == null || startM == endM) return null;
 
@@ -178,19 +178,5 @@ class SleepWindowResolver {
       bedtime: bedtime,
       wakeTime: wakeTime,
     );
-  }
-
-  static int? _parseMinutes(String timeStr) {
-    try {
-      final parts = timeStr.trim().split(':');
-      if (parts.length != 2) return null;
-      final h = int.parse(parts[0]);
-      final m = int.parse(parts[1]);
-      if (h < 0 || h > 23 || m < 0 || m > 59) return null;
-      return (h * 60) + m;
-    } catch (e, st) {
-      debugPrint('Error in sleep_window_resolver.dart: $e\n$st');
-      return null;
-    }
   }
 }

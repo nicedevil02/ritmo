@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/analysis/agenda_conflict_detector.dart';
 import 'package:ritmo/core/domain/agenda/analysis/agenda_gap_calculator.dart';
@@ -6,6 +5,8 @@ import 'package:ritmo/core/domain/agenda/analysis/agenda_overload_detector.dart'
 import 'package:ritmo/core/domain/agenda/analysis/agenda_suggestion_ranker.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/domain/agenda/sleep_window_resolver.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 
 class DayAgendaSnapshotBuilder {
   const DayAgendaSnapshotBuilder({
@@ -53,8 +54,11 @@ class DayAgendaSnapshotBuilder {
     try {
       conflicts = conflictDetector.detectConflicts(items);
     } catch (e, st) {
-      debugPrint(
-        '[DayAgendaSnapshotBuilder] conflicts failed for $ds: $e\n$st',
+      RitmoLog.error(
+        'DayAgendaSnapshotBuilder',
+        'conflicts failed for $ds',
+        e,
+        st,
       );
     }
 
@@ -66,14 +70,14 @@ class DayAgendaSnapshotBuilder {
         sleepWindow: sleepWindow,
       );
     } catch (e, st) {
-      debugPrint('[DayAgendaSnapshotBuilder] freeGaps failed for $ds: $e\n$st');
+      RitmoLog.error('DayAgendaSnapshotBuilder', 'freeGaps failed for $ds', e, st);
     }
 
     var overloadScore = 0.0;
     try {
       overloadScore = overloadDetector.calculateOverloadScore(items);
     } catch (e, st) {
-      debugPrint('[DayAgendaSnapshotBuilder] overload failed for $ds: $e\n$st');
+      RitmoLog.error('DayAgendaSnapshotBuilder', 'overload failed for $ds', e, st);
     }
 
     var suggestions = const <AgendaSuggestion>[];
@@ -87,8 +91,11 @@ class DayAgendaSnapshotBuilder {
         sleepWindow: sleepWindow,
       );
     } catch (e, st) {
-      debugPrint(
-        '[DayAgendaSnapshotBuilder] suggestions failed for $ds: $e\n$st',
+      RitmoLog.error(
+        'DayAgendaSnapshotBuilder',
+        'suggestions failed for $ds',
+        e,
+        st,
       );
     }
 
@@ -100,8 +107,8 @@ class DayAgendaSnapshotBuilder {
     try {
       final timedItems = items.where((i) => i.isTimed).toList();
       timedItems.sort((a, b) {
-        final aM = _parseMinutes(a.timeOfDay);
-        final bM = _parseMinutes(b.timeOfDay);
+        final aM = TimeOfDayMinutes.tryParse(a.timeOfDay) ?? 0;
+        final bM = TimeOfDayMinutes.tryParse(b.timeOfDay) ?? 0;
         return aM.compareTo(bM);
       });
 
@@ -109,7 +116,7 @@ class DayAgendaSnapshotBuilder {
 
       for (int i = 0; i < timedItems.length; i++) {
         final item = timedItems[i];
-        final startMinutes = _parseMinutes(item.timeOfDay);
+        final startMinutes = TimeOfDayMinutes.tryParse(item.timeOfDay) ?? 0;
         var duration = item.durationMinutes ?? 30;
         if (duration <= 0) duration = 30;
         final endMinutes = startMinutes + duration;
@@ -140,8 +147,8 @@ class DayAgendaSnapshotBuilder {
       // اگر به دلیل اتمام زودهنگام کار، current خالی شد اما کارهای آینده وجود دارند
       if (next == null) {
         for (final item in timedItems) {
-          if (!item.isCompleted &&
-              _parseMinutes(item.timeOfDay) > currentMinutes) {
+          final startMinutes = TimeOfDayMinutes.tryParse(item.timeOfDay) ?? 0;
+          if (!item.isCompleted && startMinutes > currentMinutes) {
             if (next == null) {
               next = item;
             } else if (afterNext == null && item.id != next.id) {
@@ -152,7 +159,7 @@ class DayAgendaSnapshotBuilder {
         }
       }
     } catch (e, st) {
-      debugPrint('[DayAgendaSnapshotBuilder] now/next failed for $ds: $e\n$st');
+      RitmoLog.error('DayAgendaSnapshotBuilder', 'now/next failed for $ds', e, st);
     }
 
     return DayAgendaSnapshot(
@@ -170,14 +177,5 @@ class DayAgendaSnapshotBuilder {
       sleepWindow: sleepWindow,
       enabledDomains: dayAgenda.enabledDomains,
     );
-  }
-
-  static int _parseMinutes(String? timeOfDay) {
-    if (timeOfDay == null) return 0;
-    final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(timeOfDay.trim());
-    if (match == null) return 0;
-    final h = int.tryParse(match.group(1)!) ?? 0;
-    final m = int.tryParse(match.group(2)!) ?? 0;
-    return (h * 60) + m;
   }
 }

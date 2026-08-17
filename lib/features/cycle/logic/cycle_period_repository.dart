@@ -5,6 +5,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_reminder_scheduler.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CyclePeriod {
@@ -179,6 +180,9 @@ class CyclePeriodRepository {
 
     // Invalidate engine cache (C-16)
     CycleEngine().invalidate();
+    if (db is Database) {
+      await CycleReminderScheduler.rescheduleAll(dbExecutor: db, now: effectiveNow);
+    }
     return id;
   }
 
@@ -235,6 +239,9 @@ class CyclePeriodRepository {
 
     // Invalidate engine cache (C-16)
     CycleEngine().invalidate();
+    if (db is Database) {
+      await CycleReminderScheduler.rescheduleAll(dbExecutor: db, now: effectiveNow);
+    }
   }
 
   /// Deletes a period by [id].
@@ -243,5 +250,8 @@ class CyclePeriodRepository {
     await db.delete('cycle_periods', where: 'id = ?', whereArgs: [id]);
     // Invalidate engine cache (C-16)
     CycleEngine().invalidate();
+    if (db is Database) {
+      await CycleReminderScheduler.rescheduleAll(dbExecutor: db);
+    }
   }
 }

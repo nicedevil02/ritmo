@@ -55,7 +55,8 @@ class HormonalEngineOutput {
 }
 
 /// Compatibility adapter over [CycleEngine] (Canonical Source of Truth).
-/// Deprecated: Direct callers should consume [CycleEngine] or [CycleConsentBridge].
+/// Deprecated: Direct callers should consume [CycleEngine] or [CycleWorshipPolicy] / [CycleConsentBridge].
+@Deprecated('Direct callers should consume CycleEngine or CycleWorshipPolicy / CycleConsentBridge.')
 class HormonalIntelligenceEngine {
   static Future<HormonalEngineOutput> evaluate({
     required Database db,
@@ -96,13 +97,12 @@ class HormonalIntelligenceEngine {
           fastingSuspended: false,
           qadaTracked: false,
         ),
-        nextCycleStartDate: now,
+        nextCycleStartDate: now.add(const Duration(days: 14)),
         hasData: false,
       );
     }
 
     final isPregnancy = CycleSettings.isPregnancyMode(appSettings);
-    final isMenstrual = !isPregnancy && engineOutput.currentPhase == CyclePhase.menstrual;
 
     final state = isPregnancy
         ? HormonalPhase.normal
@@ -116,17 +116,58 @@ class HormonalIntelligenceEngine {
             CyclePhase.noData => HormonalPhase.noData,
           };
 
+    // Build real private reminder queue (C-38)
+    final reminders = <PrivateReminder>[];
+    final nextPeriod = engineOutput.nextPeriodPrediction;
+    if (nextPeriod != null && !isPregnancy) {
+      reminders.add(
+        PrivateReminder(
+          level: 'T-7',
+          message: 'بررسی الگوی چرخه و آمادگی هفته آینده',
+          date: nextPeriod.subtract(const Duration(days: 7)),
+        ),
+      );
+      reminders.add(
+        PrivateReminder(
+          level: 'T-3',
+          message: 'تخمین شروع پنجره تغییرات هورمونی و مراقبت',
+          date: nextPeriod.subtract(const Duration(days: 3)),
+        ),
+      );
+      reminders.add(
+        PrivateReminder(
+          level: 'T-1',
+          message: 'آمادگی برای آغاز چرخه جدید و استراحت کافی',
+          date: nextPeriod.subtract(const Duration(days: 1)),
+        ),
+      );
+      reminders.add(
+        PrivateReminder(
+          level: 'T0',
+          message: 'آغاز پیش‌بینی‌شده چرخه زیستی',
+          date: nextPeriod,
+        ),
+      );
+    }
+
+    // Delegate fiqh state to canonical CycleWorshipPolicy (C-37)
+    final isWorshipSuspended = await CycleWorshipPolicy.isWorshipSuspended(
+      dbExecutor: db,
+      appSettings: appSettings,
+      targetDate: now,
+    );
+
     return HormonalEngineOutput(
       state: state,
       dayOfCycle: engineOutput.dayOfCycle,
       dayOfMenstruation: engineOutput.dayOfPeriod,
-      privateReminderQueue: [],
+      privateReminderQueue: reminders,
       fiqhState: FiqhState(
-        prayerSuspended: isMenstrual,
-        fastingSuspended: isMenstrual,
-        qadaTracked: isMenstrual,
+        prayerSuspended: isWorshipSuspended,
+        fastingSuspended: isWorshipSuspended,
+        qadaTracked: isWorshipSuspended,
       ),
-      nextCycleStartDate: engineOutput.nextPeriodPrediction,
+      nextCycleStartDate: engineOutput.nextPeriodPrediction ?? now.add(const Duration(days: 14)),
       hasData: true,
     );
   }

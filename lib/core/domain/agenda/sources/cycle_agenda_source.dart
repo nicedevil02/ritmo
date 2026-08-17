@@ -1,17 +1,31 @@
+// C-36: CycleAgendaSource
+// Generates agenda items for both past/recorded periods and future prediction windows.
+// Respects female gender, cycle module enablement, dashboard consent, and pregnancy mode.
+// Uses RitmoEngineBus for cached engine evaluation and supports multiple simultaneous agenda items.
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
-import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
+import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
+import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CycleAgendaSource implements AgendaSource {
   final CycleEngineOutput? cycleOutput;
   final bool cycleAllowed;
+  final List<Map<String, dynamic>> periodRows;
+  final bool isPregnancy;
 
   const CycleAgendaSource({
     required this.cycleOutput,
     required this.cycleAllowed,
+    required this.periodRows,
+    required this.isPregnancy,
   });
 
   @override
@@ -25,67 +39,166 @@ class CycleAgendaSource implements AgendaSource {
     Map<String, String> settingsMap,
     bool cycleAllowed,
   ) async {
-    CycleEngineOutput? cycleOutput;
+    final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
+    final isCycleEnabled = ModuleGate.instance.isEnabledFrom(
+      settingsMap,
+      'module_cycle_enabled',
+    );
+    final dashboardConsent = settingsMap['cycle_consent_dashboard'] == 'true';
+    final effectiveAllowed = isFemale && isCycleEnabled && dashboardConsent && cycleAllowed;
+    final isPregnant = CycleSettings.isPregnancyMode(settingsMap);
 
-    if (cycleAllowed) {
-      try {
-        cycleOutput = await CycleEngine().calculate(CycleEngineInput(
+    if (!effectiveAllowed) {
+      return const CycleAgendaSource(
+        cycleOutput: null,
+        cycleAllowed: false,
+        periodRows: [],
+        isPregnancy: false,
+      );
+    }
+
+    CycleEngineOutput? cycleOutput;
+    List<Map<String, dynamic>> periodRows = const [];
+
+    try {
+      periodRows = await db.query('cycle_periods', orderBy: 'startDate ASC');
+
+      cycleOutput = await RitmoEngineBus.instance.execute<CycleEngineInput, CycleEngineOutput>(
+        CycleEngine,
+        CycleEngineInput(
           db: db,
           appSettings: settingsMap,
           now: DateTime.now(),
-        ));
-      } catch (e) {
-        debugPrint('CycleAgendaSource cycle calc error: $e');
-      }
+        ),
+      );
+    } catch (e, st) {
+      RitmoLogger.error('[CycleAgendaSource] error during load', error: e, stack: st);
     }
 
     return CycleAgendaSource(
       cycleOutput: cycleOutput,
-      cycleAllowed: cycleAllowed,
+      cycleAllowed: effectiveAllowed,
+      periodRows: periodRows,
+      isPregnancy: isPregnant,
     );
   }
 
   @override
   List<AgendaItem> itemsForDate(AgendaDayContext ctx) {
-    if (!ctx.options.wants(AgendaDomain.cycle)) return const [];
+    if (!ctx.options.wants(AgendaDomain.cycle) || !isEnabled || isPregnancy) {
+      return const [];
+    }
 
     final out = cycleOutput;
-    if (out == null || !out.hasData) return const [];
+    if (out == null || !out.hasData || out.currentPhase == CyclePhase.pregnancy) {
+      return const [];
+    }
 
     final date = ctx.date;
-    final day = DateTime(date.year, date.month, date.day);
+    final day = CycleDateContract.cleanDate(date);
+    final items = <AgendaItem>[];
 
-    bool inWindow(DateTime? start, DateTime? end) {
+    // 1. Check actual recorded/past periods from cycle_periods
+    for (final row in periodRows) {
+      final start = CycleDateContract.parseDayKey(row['startDate']?.toString());
+      if (start == null) continue;
+
+      final end = CycleDateContract.parseDayKey(row['endDate']?.toString());
+      if (end != null) {
+        if (CycleDateContract.inWindow(day, start, end)) {
+          final dayNum = CycleDateContract.daysBetween(start, day) + 1;
+          items.add(
+            AgendaItem(
+              id: buildAgendaItemId(AgendaDomain.cycle, '${ctx.dateStr}_actual', ctx.dateStr),
+              domain: AgendaDomain.cycle,
+              sourceId: '${ctx.dateStr}_actual',
+              title: 'ریتم طبیعی بدن (روز $dayNum)',
+              dateStr: ctx.dateStr,
+              category: Category.personal,
+              priority: 0.85,
+              deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: ctx.dateStr),
+            ),
+          );
+          break;
+        }
+      } else {
+        // Open ongoing period
+        final daysDiff = CycleDateContract.daysBetween(start, day);
+        if (daysDiff >= 0 && daysDiff <= 10) {
+          final dayNum = daysDiff + 1;
+          items.add(
+            AgendaItem(
+              id: buildAgendaItemId(AgendaDomain.cycle, '${ctx.dateStr}_actual_open', ctx.dateStr),
+              domain: AgendaDomain.cycle,
+              sourceId: '${ctx.dateStr}_actual_open',
+              title: 'ریتم طبیعی بدن (روز $dayNum)',
+              dateStr: ctx.dateStr,
+              category: Category.personal,
+              priority: 0.85,
+              deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: ctx.dateStr),
+            ),
+          );
+          break;
+        }
+      }
+    }
+
+    // 2. Future prediction items
+    bool inFutureWindow(DateTime? start, DateTime? end) {
       if (start == null || end == null) return false;
-      final s = DateTime(start.year, start.month, start.day);
-      final e = DateTime(end.year, end.month, end.day);
-      return !day.isBefore(s) && !day.isAfter(e);
+      final s = CycleDateContract.cleanDate(start);
+      final e = CycleDateContract.cleanDate(end);
+      return CycleDateContract.inWindow(day, s, e);
     }
 
-    String? title;
-    if (ctx.isToday && out.dayOfPeriod > 0) {
-      title = 'چرخه ماهانه (روز ${out.dayOfPeriod})';
-    } else if (inWindow(out.nextPeriodWindowStart, out.nextPeriodWindowEnd)) {
-      title = 'پیش‌بینی شروع دوره';
-    } else if (inWindow(out.pmsWindowStart, out.pmsWindowEnd)) {
-      title = 'پنجره‌ی PMS';
-    } else if (inWindow(out.fertileWindowStart, out.fertileWindowEnd)) {
-      title = 'پنجره‌ی باروری';
+    // Next period prediction window
+    if (inFutureWindow(out.nextPeriodWindowStart, out.nextPeriodWindowEnd)) {
+      items.add(
+        AgendaItem(
+          id: buildAgendaItemId(AgendaDomain.cycle, '${ctx.dateStr}_pred_period', ctx.dateStr),
+          domain: AgendaDomain.cycle,
+          sourceId: '${ctx.dateStr}_pred_period',
+          title: 'پیش‌بینی شروع دوره',
+          dateStr: ctx.dateStr,
+          category: Category.personal,
+          priority: 0.8,
+          deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: ctx.dateStr),
+        ),
+      );
     }
 
-    if (title == null) return const [];
+    // PMS window prediction
+    if (inFutureWindow(out.pmsWindowStart, out.pmsWindowEnd)) {
+      items.add(
+        AgendaItem(
+          id: buildAgendaItemId(AgendaDomain.cycle, '${ctx.dateStr}_pred_pms', ctx.dateStr),
+          domain: AgendaDomain.cycle,
+          sourceId: '${ctx.dateStr}_pred_pms',
+          title: 'پنجره‌ی پیش‌بینی PMS',
+          dateStr: ctx.dateStr,
+          category: Category.personal,
+          priority: 0.75,
+          deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: ctx.dateStr),
+        ),
+      );
+    }
 
-    final item = AgendaItem(
-      id: buildAgendaItemId(AgendaDomain.cycle, ctx.dateStr, ctx.dateStr),
-      domain: AgendaDomain.cycle,
-      sourceId: ctx.dateStr,
-      title: title,
-      dateStr: ctx.dateStr,
-      category: Category.personal,
-      priority: 0.8,
-      deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: ctx.dateStr),
-    );
-    
-    return [item];
+    // Fertile window prediction
+    if (inFutureWindow(out.fertileWindowStart, out.fertileWindowEnd)) {
+      items.add(
+        AgendaItem(
+          id: buildAgendaItemId(AgendaDomain.cycle, '${ctx.dateStr}_pred_fertile', ctx.dateStr),
+          domain: AgendaDomain.cycle,
+          sourceId: '${ctx.dateStr}_pred_fertile',
+          title: 'پنجره‌ی باروری',
+          dateStr: ctx.dateStr,
+          category: Category.personal,
+          priority: 0.7,
+          deepLink: AgendaDeepLink(domain: AgendaDomain.cycle, targetId: ctx.dateStr),
+        ),
+      );
+    }
+
+    return items;
   }
 }

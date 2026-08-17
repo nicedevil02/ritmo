@@ -54,7 +54,13 @@ class WellbeingPulseChart extends StatelessWidget {
           Row(
             children: [
               Text(
-                'نبض دو هفته',
+                days.length <= 7
+                    ? 'نبض هفته'
+                    : (days.length <= 14
+                        ? 'نبض دو هفته'
+                        : (days.length <= 30
+                            ? 'نبض یک ماه'
+                            : 'نبض ${RitmoNumber.faInt(days.length)} روز اخیر')),
                 style: RitmoTextStyles.cardTitle(colors.textPrimary),
               ),
               const Spacer(),

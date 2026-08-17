@@ -134,8 +134,9 @@ class CycleConsentBridge {
   }
 
   /// Checks if worship should be suspended based on consent and active menstruation.
+  /// Delegates directly to canonical [CycleWorshipPolicy].
   static Future<bool> isWorshipSuspended({DateTime? targetDate}) async {
-    return (await getActivePeriod(targetDate: targetDate)) != null || await isUserMenstruating(targetDate: targetDate);
+    return CycleWorshipPolicy.isWorshipSuspended(targetDate: targetDate);
   }
 
   /// Exposes indirect body rhythm information to outer systems.
@@ -180,39 +181,8 @@ class CycleConsentBridge {
   }
 
   /// Fasting Debt CRUD - Update resolution status
+  /// Delegates to canonical [CycleWorshipPolicy.resolveFastingDebt] for transactional integrity.
   static Future<void> resolveFastingDebt(String id, bool isResolved) async {
-    final db = await DatabaseHelper.instance.database;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    await db.update(
-      'fasting_debt',
-      {
-        'isResolved': isResolved ? 1 : 0,
-        'updatedAt': now,
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-
-    // Also update worship_debts for bidirectional sync
-    final worshipDebtId = 'debt_cycle_fast_$id';
-    final existing = await db.query(
-      'worship_debts',
-      where: 'id = ?',
-      whereArgs: [worshipDebtId],
-      limit: 1,
-    );
-    if (existing.isNotEmpty) {
-      final totalCount = existing.first['totalCount'] as int? ?? 1;
-      await db.update(
-        'worship_debts',
-        {
-          'remainingCount': isResolved ? 0 : totalCount,
-          'isArchived': isResolved ? 1 : 0,
-          'updatedAt': now,
-        },
-        where: 'id = ?',
-        whereArgs: [worshipDebtId],
-      );
-    }
+    await CycleWorshipPolicy.resolveFastingDebt(id, isResolved);
   }
 }

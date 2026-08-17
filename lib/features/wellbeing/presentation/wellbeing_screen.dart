@@ -1320,7 +1320,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: BorderRadius.circular(RitmoRadius.card),
-          border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.25)),
+          border: Border.all(color: colors.sleepAccent.withValues(alpha: 0.25)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1330,10 +1330,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xff8B5CF6).withValues(alpha: 0.12),
+                    color: colors.sleepAccent.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.headphones_rounded, color: Color(0xff8B5CF6), size: 20),
+                  child: Icon(Icons.headphones_rounded, color: colors.sleepAccent, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1361,7 +1361,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 value: progress,
                 minHeight: 6,
                 backgroundColor: colors.border.withValues(alpha: 0.5),
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xff8B5CF6)),
+                valueColor: AlwaysStoppedAnimation<Color>(colors.sleepAccent),
               ),
             ),
             const SizedBox(height: 14),
@@ -1377,8 +1377,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 OutlinedButton.icon(
                   onPressed: () => _onInsightAction(WellbeingInsightAction.logSleep),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xff8B5CF6),
-                    side: const BorderSide(color: Color(0xff8B5CF6)),
+                    foregroundColor: colors.sleepAccent,
+                    side: BorderSide(color: colors.sleepAccent),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -1399,17 +1399,17 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: BorderRadius.circular(RitmoRadius.card),
-          border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.25)),
+          border: Border.all(color: colors.sleepAccent.withValues(alpha: 0.25)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xff8B5CF6).withValues(alpha: 0.12),
+                color: colors.sleepAccent.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.nightlife_rounded, color: Color(0xff8B5CF6), size: 22),
+              child: Icon(Icons.nightlife_rounded, color: colors.sleepAccent, size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1441,7 +1441,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.3)),
+        border: Border.all(color: colors.sleepAccent.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1451,10 +1451,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xff8B5CF6).withValues(alpha: 0.12),
+                  color: colors.sleepAccent.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.bedtime_rounded, color: Color(0xff8B5CF6), size: 22),
+                child: Icon(Icons.bedtime_rounded, color: colors.sleepAccent, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1489,15 +1489,15 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               if (state.adherence7d != null)
                 Text(
                   'پایبندی ۷ روزه: ${RitmoNumber.faPercent((state.adherence7d! * 100).round())}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xff8B5CF6)),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.sleepAccent),
                 )
               else
                 const SizedBox.shrink(),
               OutlinedButton.icon(
                 onPressed: () => _onInsightAction(WellbeingInsightAction.logSleep),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xff8B5CF6),
-                  side: const BorderSide(color: Color(0xff8B5CF6)),
+                  foregroundColor: colors.sleepAccent,
+                  side: BorderSide(color: colors.sleepAccent),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),

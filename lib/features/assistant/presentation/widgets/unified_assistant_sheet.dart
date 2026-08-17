@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:ritmo/core/ai/ai_connection_models.dart';
+import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
@@ -410,7 +412,19 @@ class _AssistantSheetState extends State<AssistantSheet> {
               _processMemoryOps(textToParse);
             }
           } else if (event is AgentErrorEvent) {
-            if (mounted) {
+            if (fullResponse.isEmpty) {
+              debugPrint('[AssistantSheet] Agent error with empty response -> fallback to gateway stream. Reason: ${event.errorMessageFa}');
+              unawaited(_runGatewayFallback(
+                assistantMsgId: assistantMsgId,
+                systemPrompt: systemPrompt,
+                briefJson: briefJson,
+                recentHistory: recentHistory,
+                query: query,
+                slot: profile.slot,
+                maxTokens: profile.maxTokens,
+                temperature: profile.temperature,
+              ));
+            } else if (mounted) {
               setState(() {
                 _isStreaming = false;
                 _isAgentWorking = false;
@@ -418,9 +432,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
                   id: assistantMsgId,
                   sessionId: widget.persona.id,
                   role: ChatRole.assistant,
-                  content: fullResponse.isNotEmpty
-                      ? '$fullResponse\n\n⚠️ [خطا]: ${event.errorMessageFa}'
-                      : 'متأسفانه در حال حاضر خطایی در پردازش رخ داده است: ${event.errorMessageFa}',
+                  content: '$fullResponse\n\n⚠️ [خطا]: ${event.errorMessageFa}',
                   timestamp: DateTime.now(),
                   isStreaming: false,
                 );
@@ -450,21 +462,22 @@ class _AssistantSheetState extends State<AssistantSheet> {
           }
         },
         onError: (err) {
-          if (mounted) {
+          if (fullResponse.isEmpty) {
+            debugPrint('[AssistantSheet] Agent stream onError with empty response -> fallback to gateway stream. Reason: $err');
+            unawaited(_runGatewayFallback(
+              assistantMsgId: assistantMsgId,
+              systemPrompt: systemPrompt,
+              briefJson: briefJson,
+              recentHistory: recentHistory,
+              query: query,
+              slot: profile.slot,
+              maxTokens: profile.maxTokens,
+              temperature: profile.temperature,
+            ));
+          } else if (mounted) {
             setState(() {
               _isStreaming = false;
               _isAgentWorking = false;
-              if (fullResponse.isEmpty) {
-                _messages[_messages.length - 1] = ChatMessage(
-                  id: assistantMsgId,
-                  sessionId: widget.persona.id,
-                  role: ChatRole.assistant,
-                  content:
-                      'خطا در برقراری ارتباط با سرور هوش مصنوعی. لطفاً اتصال اینترنت/فیلترشکن را بررسی کنید 🔌',
-                  timestamp: DateTime.now(),
-                  isStreaming: false,
-                );
-              }
             });
           }
         },
@@ -522,6 +535,107 @@ class _AssistantSheetState extends State<AssistantSheet> {
         }
       } catch (e) {
         debugPrint('[MEMORY] Error processing assistant memory_ops JSON: $e');
+      }
+    }
+  }
+
+  Future<void> _runGatewayFallback({
+    required String assistantMsgId,
+    required String systemPrompt,
+    required String? briefJson,
+    required List<String> recentHistory,
+    required String query,
+    required AiSlot slot,
+    int? maxTokens,
+    double? temperature,
+  }) async {
+    final messages = <Map<String, String>>[
+      {'role': 'system', 'content': systemPrompt},
+      if (briefJson != null && briefJson.isNotEmpty)
+        {'role': 'system', 'content': '[اطلاعات پرونده و وضعیت کاربر]:\n$briefJson'},
+      for (final h in recentHistory)
+        {
+          'role': h.startsWith('کاربر:') ? 'user' : 'assistant',
+          'content': h.replaceFirst(RegExp(r'^(کاربر|دستیار):\s*'), ''),
+        },
+      {'role': 'user', 'content': query},
+    ];
+
+    var accumulated = '';
+    try {
+      await for (final chunk in AIGateway.instance.sendCustomChatStream(
+        messages: messages,
+        slot: slot,
+        temperature: temperature,
+        maxTokens: maxTokens,
+      )) {
+        if (chunk.startsWith('error:')) {
+          if (mounted && accumulated.isEmpty) {
+            setState(() {
+              _isStreaming = false;
+              _isAgentWorking = false;
+              _messages[_messages.length - 1] = ChatMessage(
+                id: assistantMsgId,
+                sessionId: widget.persona.id,
+                role: ChatRole.assistant,
+                content: 'متأسفانه در حال حاضر خطایی در پردازش رخ داده است: ${chunk.substring(6)}',
+                timestamp: DateTime.now(),
+                isStreaming: false,
+              );
+            });
+          }
+          break;
+        }
+        accumulated += chunk;
+        if (mounted) {
+          setState(() {
+            _messages[_messages.length - 1] = ChatMessage(
+              id: assistantMsgId,
+              sessionId: widget.persona.id,
+              role: ChatRole.assistant,
+              content: accumulated,
+              timestamp: DateTime.now(),
+              isStreaming: true,
+            );
+          });
+          _scrollToBottom();
+        }
+      }
+    } catch (e) {
+      if (mounted && accumulated.isEmpty) {
+        setState(() {
+          _isStreaming = false;
+          _isAgentWorking = false;
+          _messages[_messages.length - 1] = ChatMessage(
+            id: assistantMsgId,
+            sessionId: widget.persona.id,
+            role: ChatRole.assistant,
+            content: 'خطا در برقراری ارتباط با سرور هوش مصنوعی. لطفاً اتصال اینترنت/فیلترشکن را بررسی کنید 🔌',
+            timestamp: DateTime.now(),
+            isStreaming: false,
+          );
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isStreaming = false;
+          _isAgentWorking = false;
+          if (accumulated.isNotEmpty) {
+            _messages[_messages.length - 1] = ChatMessage(
+              id: assistantMsgId,
+              sessionId: widget.persona.id,
+              role: ChatRole.assistant,
+              content: accumulated,
+              timestamp: DateTime.now(),
+              isStreaming: false,
+            );
+          }
+        });
+        if (accumulated.isNotEmpty && !accumulated.startsWith('error:')) {
+          _validateAndExecute(accumulated);
+          _processMemoryOps(accumulated);
+        }
       }
     }
   }

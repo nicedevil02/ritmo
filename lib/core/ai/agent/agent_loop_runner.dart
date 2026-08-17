@@ -522,6 +522,8 @@ class AgentLoopRunner {
             writesUsed++;
             final mutationKey = _cacheKey(tool.name, effectiveArgs);
             mutationCache[mutationKey] = result;
+            // بی‌اعتبارسازی کش ابزارهای خواندنی برای دریافت وضعیت تازه
+            toolCache.clear();
           }
         } else if (result.isSuccess) {
           toolCache[cacheKey] = result;

@@ -55,7 +55,8 @@ class CyclePeriod {
 
     return CyclePeriod(
       id: map['id'] as int?,
-      startDate: CycleDateContract.parseDayKey(startRaw?.toString()) ?? DateTime.now(),
+      startDate:
+          CycleDateContract.parseDayKey(startRaw?.toString()) ?? DateTime.now(),
       endDate: CycleDateContract.parseDayKey(endRaw?.toString()),
       cycleLength: map['cycleLength'] as int?,
       periodDuration: map['periodDuration'] as int?,
@@ -75,7 +76,9 @@ class CyclePeriodRepository {
   static const int maxActivePeriodDays = 12;
 
   /// Fetches all recorded cycle periods sorted chronologically newest-first.
-  Future<List<CyclePeriod>> getAllPeriods([DatabaseExecutor? dbExecutor]) async {
+  Future<List<CyclePeriod>> getAllPeriods([
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
       final rows = await db.query(
@@ -84,7 +87,11 @@ class CyclePeriodRepository {
       );
       return rows.map((r) => CyclePeriod.fromMap(r)).toList();
     } catch (e, st) {
-      RitmoLogger.error('[CyclePeriodRepository] failed to fetch periods', error: e, stack: st);
+      RitmoLogger.error(
+        '[CyclePeriodRepository] failed to fetch periods',
+        error: e,
+        stack: st,
+      );
       return [];
     }
   }
@@ -102,7 +109,11 @@ class CyclePeriodRepository {
       if (rows.isEmpty) return null;
       return CyclePeriod.fromMap(rows.first);
     } catch (e, st) {
-      RitmoLogger.error('[CyclePeriodRepository] failed to fetch active period', error: e, stack: st);
+      RitmoLogger.error(
+        '[CyclePeriodRepository] failed to fetch active period',
+        error: e,
+        stack: st,
+      );
       return null;
     }
   }
@@ -131,11 +142,14 @@ class CyclePeriodRepository {
         return active.id!;
       }
       // Auto-close previous open period with a reasonable duration if older than threshold
-      final daysOpen = CycleDateContract.daysBetween(active.startDate, cleanStart);
+      final daysOpen = CycleDateContract.daysBetween(
+        active.startDate,
+        cleanStart,
+      );
       final closeDate = daysOpen > maxActivePeriodDays
           ? active.startDate.add(const Duration(days: 6))
           : cleanStart.subtract(const Duration(days: 1));
-      
+
       await endPeriod(active.id!, closeDate, dbExecutor: db, now: effectiveNow);
     }
 
@@ -185,11 +199,17 @@ class CyclePeriodRepository {
     var cleanEnd = CycleDateContract.cleanDate(endDate);
 
     // Guard: no future end dates
-    if (CycleDateContract.isSameOrAfter(cleanEnd, cleanToday) && !CycleDateContract.isSameDay(cleanEnd, cleanToday)) {
+    if (CycleDateContract.isSameOrAfter(cleanEnd, cleanToday) &&
+        !CycleDateContract.isSameDay(cleanEnd, cleanToday)) {
       cleanEnd = cleanToday;
     }
 
-    final rows = await db.query('cycle_periods', where: 'id = ?', whereArgs: [id], limit: 1);
+    final rows = await db.query(
+      'cycle_periods',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
     if (rows.isEmpty) return;
 
     final period = CyclePeriod.fromMap(rows.first);
@@ -198,7 +218,8 @@ class CyclePeriodRepository {
       cleanEnd = period.startDate;
     }
 
-    final duration = CycleDateContract.daysBetween(period.startDate, cleanEnd) + 1;
+    final duration =
+        CycleDateContract.daysBetween(period.startDate, cleanEnd) + 1;
     final nowMs = effectiveNow.millisecondsSinceEpoch;
 
     await db.update(

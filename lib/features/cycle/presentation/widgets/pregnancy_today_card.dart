@@ -39,14 +39,20 @@ class PregnancyTodayCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2C2C3E) : Colors.pink.shade50,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.colors.primary.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: context.colors.primary.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(CupertinoIcons.sparkles, color: context.colors.primary, size: 18),
+              Icon(
+                CupertinoIcons.sparkles,
+                color: context.colors.primary,
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Text(
                 'کارت امروز بارداری (سه ماهه ${trimester == 1 ? "اول" : (trimester == 2 ? "دوم" : "سوم")})',
@@ -63,9 +69,13 @@ class PregnancyTodayCard extends StatelessWidget {
           // Trimester 1 Content
           if (trimester == 1) ...[
             _buildInfoRow(
-              icon: hasSupplementToday ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.capsule,
+              icon: hasSupplementToday
+                  ? CupertinoIcons.checkmark_circle_fill
+                  : CupertinoIcons.capsule,
               iconColor: hasSupplementToday ? Colors.green : Colors.orange,
-              text: hasSupplementToday ? 'مکمل‌های امروز ثبت شده است' : 'مکمل امروز (فولیک اسید / آهن) را مصرف کنید',
+              text: hasSupplementToday
+                  ? 'مکمل‌های امروز ثبت شده است'
+                  : 'مکمل امروز (فولیک اسید / آهن) را مصرف کنید',
             ),
             const SizedBox(height: 8),
             _buildInfoRow(
@@ -82,7 +92,6 @@ class PregnancyTodayCard extends StatelessWidget {
               ),
             ],
           ]
-
           // Trimester 2 Content
           else if (trimester == 2) ...[
             _buildInfoRow(
@@ -101,20 +110,36 @@ class PregnancyTodayCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(CupertinoIcons.bolt_fill, color: Colors.amber, size: 16),
+                    const Icon(
+                      CupertinoIcons.bolt_fill,
+                      color: Colors.amber,
+                      size: 16,
+                    ),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
                         'اولین لگد را ثبت کنید',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     InkWell(
                       onTap: () => onNavigateTab(2),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(8)),
-                        child: const Text('ثبت', style: TextStyle(fontSize: 11, color: Colors.black)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'ثبت',
+                          style: TextStyle(fontSize: 11, color: Colors.black),
+                        ),
                       ),
                     ),
                   ],
@@ -129,7 +154,6 @@ class PregnancyTodayCard extends StatelessWidget {
               ),
             ),
           ]
-
           // Trimester 3 Content
           else ...[
             Row(
@@ -142,7 +166,13 @@ class PregnancyTodayCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                     icon: const Icon(CupertinoIcons.play_circle_fill, size: 18),
-                    label: const Text('شروع لگدشماری', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'شروع لگدشماری',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     onPressed: () => onNavigateTab(2),
                   ),
                 ),
@@ -155,7 +185,13 @@ class PregnancyTodayCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                     icon: const Icon(CupertinoIcons.timer, size: 18),
-                    label: const Text('شروع انقباض‌سنج', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'شروع انقباض‌سنج',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     onPressed: onOpenLaborMode,
                   ),
                 ),
@@ -168,7 +204,10 @@ class PregnancyTodayCard extends StatelessWidget {
                   minimumSize: const Size(double.infinity, 40),
                 ),
                 icon: const Icon(CupertinoIcons.bag_fill, size: 16),
-                label: const Text('چک‌لیست ساک بیمارستان (هفته ۳۲+)', style: TextStyle(fontSize: 12)),
+                label: const Text(
+                  'چک‌لیست ساک بیمارستان (هفته ۳۲+)',
+                  style: TextStyle(fontSize: 12),
+                ),
                 onPressed: onOpenHospitalBag,
               ),
             ],
@@ -178,17 +217,18 @@ class PregnancyTodayCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow({required IconData icon, required Color iconColor, required String text}) {
+  Widget _buildInfoRow({
+    required IconData icon,
+    required Color iconColor,
+    required String text,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, color: iconColor, size: 16),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(fontSize: 12, height: 1.4),
-          ),
+          child: Text(text, style: const TextStyle(fontSize: 12, height: 1.4)),
         ),
       ],
     );

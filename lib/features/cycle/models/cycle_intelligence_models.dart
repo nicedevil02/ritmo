@@ -1,5 +1,3 @@
-
-
 enum PredictionConfidenceLevel { low, medium, high }
 
 class PredictionConfidence {

@@ -11,14 +11,14 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 /// UX-05 Fullscreen Labor Mode Screen with wakelock_plus, big central pulse button (>=200px),
 /// mm:ss timer, 5-1-1 3-light indicator, contraction_timer DB persistence, and hospital call trigger.
 class LaborModeScreen extends StatefulWidget {
-  const LaborModeScreen({
-    super.key,
-    required this.pregnancyId,
-  });
+  const LaborModeScreen({super.key, required this.pregnancyId});
 
   final String pregnancyId;
 
-  static Future<void> show(BuildContext context, {required String pregnancyId}) {
+  static Future<void> show(
+    BuildContext context, {
+    required String pregnancyId,
+  }) {
     return Navigator.of(context).push<void>(
       MaterialPageRoute(
         fullscreenDialog: true,
@@ -70,7 +70,12 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
   Future<void> _loadHospitalPhone() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final rows = await db.query('app_settings', where: 'key = ?', whereArgs: ['preg_hospital_phone'], limit: 1);
+      final rows = await db.query(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: ['preg_hospital_phone'],
+        limit: 1,
+      );
       if (rows.isNotEmpty && mounted) {
         setState(() {
           _hospitalPhone = rows.first['value'] as String?;
@@ -134,11 +139,18 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
     }
   }
 
-  Future<void> _saveContraction(DateTime start, DateTime end, int durationSecs) async {
+  Future<void> _saveContraction(
+    DateTime start,
+    DateTime end,
+    int durationSecs,
+  ) async {
     int intervalFromPrevSecs = 0;
     if (_contractions.isNotEmpty) {
-      final prevStartMs = (_contractions.first['startTime'] as int?) ?? start.millisecondsSinceEpoch;
-      intervalFromPrevSecs = (start.millisecondsSinceEpoch - prevStartMs) ~/ 1000;
+      final prevStartMs =
+          (_contractions.first['startTime'] as int?) ??
+          start.millisecondsSinceEpoch;
+      intervalFromPrevSecs =
+          (start.millisecondsSinceEpoch - prevStartMs) ~/ 1000;
     }
 
     final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -174,19 +186,30 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
     // Filter recent contractions within last 1 hour
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final oneHourAgoMs = nowMs - (3600 * 1000);
-    final recent = _contractions.where((c) => (c['startTime'] as int) >= oneHourAgoMs).toList();
+    final recent = _contractions
+        .where((c) => (c['startTime'] as int) >= oneHourAgoMs)
+        .toList();
 
     if (recent.length < 3) {
       return {'durOk': false, 'intOk': false, 'spanOk': false, 'all511': false};
     }
 
     // 1. Duration check: avg duration >= 60s
-    final avgDur = recent.map((c) => (c['durationSeconds'] as int)).reduce((a, b) => a + b) / recent.length;
+    final avgDur =
+        recent
+            .map((c) => (c['durationSeconds'] as int))
+            .reduce((a, b) => a + b) /
+        recent.length;
     final durOk = avgDur >= 60;
 
     // 2. Interval check: avg interval <= 300s
-    final intervals = recent.map((c) => (c['intervalFromPrevious'] as int)).where((i) => i > 0).toList();
-    final avgInt = intervals.isNotEmpty ? (intervals.reduce((a, b) => a + b) / intervals.length) : 999.0;
+    final intervals = recent
+        .map((c) => (c['intervalFromPrevious'] as int))
+        .where((i) => i > 0)
+        .toList();
+    final avgInt = intervals.isNotEmpty
+        ? (intervals.reduce((a, b) => a + b) / intervals.length)
+        : 999.0;
     final intOk = avgInt <= 300;
 
     // 3. Continuity check: span between oldest and newest >= 3600s (or at least 50 mins)
@@ -205,8 +228,10 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
       _hospitalPhone = input.trim();
       try {
         final db = await DatabaseHelper.instance.database;
-        await db.insert('app_settings', {'key': 'preg_hospital_phone', 'value': _hospitalPhone},
-            conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('app_settings', {
+          'key': 'preg_hospital_phone',
+          'value': _hospitalPhone,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       } catch (_) {}
     }
 
@@ -301,7 +326,10 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
               // 5-1-1 Banner alert
               if (all511)
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: Colors.red.shade900,
@@ -309,12 +337,20 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.white, size: 28),
+                      const Icon(
+                        CupertinoIcons.exclamationmark_triangle_fill,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
                           'الگوی ۵-۱-۱ کامل شد — با بیمارستان تماس بگیرید.',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                       ElevatedButton.icon(
@@ -323,7 +359,10 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                           foregroundColor: Colors.red.shade900,
                         ),
                         icon: const Icon(CupertinoIcons.phone_fill, size: 16),
-                        label: const Text('تماس', style: TextStyle(fontWeight: FontWeight.bold)),
+                        label: const Text(
+                          'تماس',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         onPressed: _handleHospitalCall,
                       ),
                     ],
@@ -332,13 +371,22 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
 
               // 3-Light Status Indicator
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildStatusLight('طول ≥ ۱ دقیقه', status['durOk'] == true),
-                    _buildStatusLight('فاصله ≤ ۵ دقیقه', status['intOk'] == true),
-                    _buildStatusLight('تداوم ≥ ۱ ساعت', status['spanOk'] == true),
+                    _buildStatusLight(
+                      'فاصله ≤ ۵ دقیقه',
+                      status['intOk'] == true,
+                    ),
+                    _buildStatusLight(
+                      'تداوم ≥ ۱ ساعت',
+                      status['spanOk'] == true,
+                    ),
                   ],
                 ),
               ),
@@ -368,10 +416,14 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                     height: 220,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _isContracting ? Colors.pinkAccent : const Color(0xFF2C2C3E),
+                      color: _isContracting
+                          ? Colors.pinkAccent
+                          : const Color(0xFF2C2C3E),
                       boxShadow: [
                         BoxShadow(
-                          color: _isContracting ? Colors.pinkAccent.withValues(alpha: 0.5) : Colors.black45,
+                          color: _isContracting
+                              ? Colors.pinkAccent.withValues(alpha: 0.5)
+                              : Colors.black45,
                           blurRadius: _isContracting ? 30 : 10,
                           spreadRadius: _isContracting ? 8 : 2,
                         ),
@@ -382,13 +434,17 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            _isContracting ? CupertinoIcons.square_fill : CupertinoIcons.play_fill,
+                            _isContracting
+                                ? CupertinoIcons.square_fill
+                                : CupertinoIcons.play_fill,
                             size: 48,
                             color: Colors.white,
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            _isContracting ? 'انقباض تمام شد' : 'انقباض شروع شد',
+                            _isContracting
+                                ? 'انقباض تمام شد'
+                                : 'انقباض شروع شد',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -417,7 +473,11 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                   children: [
                     const Text(
                       'تاریخچه انقباضات اخیر',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 13),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Expanded(
@@ -425,33 +485,53 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                           ? const Center(
                               child: Text(
                                 'هنوز انقباضی ثبت نشده است',
-                                style: TextStyle(color: Colors.white38, fontSize: 12),
+                                style: TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 12,
+                                ),
                               ),
                             )
                           : ListView.builder(
                               itemCount: _contractions.length,
                               itemBuilder: (ctx, idx) {
                                 final item = _contractions[idx];
-                                final dur = _formatMmSs(item['durationSeconds'] as int);
-                                final interval = item['intervalFromPrevious'] as int;
-                                final intervalText = interval > 0 ? '${interval ~/ 60} دقیقه فاصله' : 'اولین انقباض';
+                                final dur = _formatMmSs(
+                                  item['durationSeconds'] as int,
+                                );
+                                final interval =
+                                    item['intervalFromPrevious'] as int;
+                                final intervalText = interval > 0
+                                    ? '${interval ~/ 60} دقیقه فاصله'
+                                    : 'اولین انقباض';
 
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 4,
+                                  ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         'انقباض #${_contractions.length - idx}',
-                                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                        ),
                                       ),
                                       Text(
                                         'مدت: $dur',
-                                        style: const TextStyle(color: Colors.pinkAccent, fontSize: 13),
+                                        style: const TextStyle(
+                                          color: Colors.pinkAccent,
+                                          fontSize: 13,
+                                        ),
                                       ),
                                       Text(
                                         intervalText,
-                                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                                        style: const TextStyle(
+                                          color: Colors.white54,
+                                          fontSize: 12,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -480,7 +560,13 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
             shape: BoxShape.circle,
             color: isActive ? Colors.greenAccent : Colors.grey.shade800,
             boxShadow: isActive
-                ? [const BoxShadow(color: Colors.greenAccent, blurRadius: 8, spreadRadius: 2)]
+                ? [
+                    const BoxShadow(
+                      color: Colors.greenAccent,
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                    ),
+                  ]
                 : [],
           ),
         ),

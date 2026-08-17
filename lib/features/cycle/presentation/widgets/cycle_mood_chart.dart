@@ -5,11 +5,7 @@ import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 class CycleMoodChart extends StatefulWidget {
-
-  const CycleMoodChart({
-    super.key,
-    required this.averageCycleLength,
-  });
+  const CycleMoodChart({super.key, required this.averageCycleLength});
   final int averageCycleLength;
 
   @override
@@ -58,7 +54,7 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
       final L = widget.averageCycleLength;
       final moodValuesByDay = <int, List<double>>{};
       final energyValuesByDay = <int, List<double>>{};
-      
+
       final anxietyCounts = <int, int>{};
       final highEnergyCounts = <int, int>{};
 
@@ -77,7 +73,9 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
 
         if (currentPeriod == null) continue;
 
-        final periodStart = DateTime.parse(currentPeriod['startDate'] as String);
+        final periodStart = DateTime.parse(
+          currentPeriod['startDate'] as String,
+        );
         final diff = logDate.difference(periodStart).inDays;
 
         final dayOfCycle = diff + 1;
@@ -111,7 +109,8 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
           energyValuesByDay.putIfAbsent(dayOfCycle, () => []).add(score);
 
           if (energy == 'HIGH') {
-            highEnergyCounts[dayOfCycle] = (highEnergyCounts[dayOfCycle] ?? 0) + 1;
+            highEnergyCounts[dayOfCycle] =
+                (highEnergyCounts[dayOfCycle] ?? 0) + 1;
           }
         }
       }
@@ -249,7 +248,11 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              const Icon(CupertinoIcons.heart_circle, color: Color(0xffEC4899), size: 36),
+              const Icon(
+                CupertinoIcons.heart_circle,
+                color: Color(0xffEC4899),
+                size: 36,
+              ),
               const SizedBox(height: 12),
               Text(
                 'هنوز در حالِ یادگیریِ الگوی احساست هستم 🌸',
@@ -264,10 +267,7 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
               Text(
                 'با ثبتِ روزانهی احوال، نمودار دقیقتر میشود.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  color: colors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
               ),
             ],
           ),
@@ -289,7 +289,7 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
                 fontSize: 13.5,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white70 : colors.textPrimary,
-                ),
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -310,9 +310,15 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
                     cycleLength: widget.averageCycleLength,
                     maxAnxietyDay: _maxAnxietyDay,
                     maxEnergyDay: _maxEnergyDay,
-                    textColor: isDark ? Colors.white38 : colors.textSecondary.withValues(alpha: 0.7),
-                    gridColor: isDark ? Colors.white.withValues(alpha: 0.05) : colors.border.withValues(alpha: 0.1),
-                    criticalTextColor: isDark ? Colors.white70 : colors.textPrimary,
+                    textColor: isDark
+                        ? Colors.white38
+                        : colors.textSecondary.withValues(alpha: 0.7),
+                    gridColor: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : colors.border.withValues(alpha: 0.1),
+                    criticalTextColor: isDark
+                        ? Colors.white70
+                        : colors.textPrimary,
                   ),
                 ),
               ),
@@ -323,11 +329,26 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
               runSpacing: 8,
               alignment: WrapAlignment.center,
               children: [
-                _buildLegendDot(const Color(0xffEC4899), 'میانگین خلق‌وخو (عالی تا کلافه)', isDark, colors),
+                _buildLegendDot(
+                  const Color(0xffEC4899),
+                  'میانگین خلق‌وخو (عالی تا کلافه)',
+                  isDark,
+                  colors,
+                ),
                 if (_maxAnxietyDay != -1)
-                  _buildLegendDot(const Color(0xffF43F5E), 'نقطه اوج اضطراب/بی‌حوصلگی (روز ${_toPersianDigits(_maxAnxietyDay.toString())})', isDark, colors),
+                  _buildLegendDot(
+                    const Color(0xffF43F5E),
+                    'نقطه اوج اضطراب/بی‌حوصلگی (روز ${_toPersianDigits(_maxAnxietyDay.toString())})',
+                    isDark,
+                    colors,
+                  ),
                 if (_maxEnergyDay != -1)
-                  _buildLegendDot(const Color(0xff4ADE80), 'نقطه اوج انرژی بالا (روز ${_toPersianDigits(_maxEnergyDay.toString())})', isDark, colors),
+                  _buildLegendDot(
+                    const Color(0xff4ADE80),
+                    'نقطه اوج انرژی بالا (روز ${_toPersianDigits(_maxEnergyDay.toString())})',
+                    isDark,
+                    colors,
+                  ),
               ],
             ),
           ],
@@ -336,7 +357,12 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
     );
   }
 
-  Widget _buildLegendDot(Color color, String label, bool isDark, RitmoColors colors) {
+  Widget _buildLegendDot(
+    Color color,
+    String label,
+    bool isDark,
+    RitmoColors colors,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -349,9 +375,9 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 10.5, 
-            color: isDark ? Colors.white60 : colors.textSecondary, 
-            ),
+            fontSize: 10.5,
+            color: isDark ? Colors.white60 : colors.textSecondary,
+          ),
         ),
       ],
     );
@@ -359,7 +385,6 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
 }
 
 class _MoodChartPainter extends CustomPainter {
-
   _MoodChartPainter({
     required this.moodAverages,
     required this.cycleLength,
@@ -389,7 +414,8 @@ class _MoodChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const paddingLeft = 60.0; // Increased padding to prevent clipping of Farsi/Emoji labels
+    const paddingLeft =
+        60.0; // Increased padding to prevent clipping of Farsi/Emoji labels
     const paddingBottom = 20.0;
     const paddingTop = 12.0;
     const paddingRight = 12.0;
@@ -407,8 +433,7 @@ class _MoodChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    final fillPaint = Paint()
-      ..style = PaintingStyle.fill;
+    final fillPaint = Paint()..style = PaintingStyle.fill;
 
     final dotPaint = Paint()..style = PaintingStyle.fill;
 
@@ -426,7 +451,11 @@ class _MoodChartPainter extends CustomPainter {
     yLabels.forEach((val, label) {
       final y = paddingTop + chartHeight - (val / 4.0) * chartHeight;
       // Draw grid line
-      canvas.drawLine(Offset(paddingLeft, y), Offset(size.width - paddingRight, y), gridPaint);
+      canvas.drawLine(
+        Offset(paddingLeft, y),
+        Offset(size.width - paddingRight, y),
+        gridPaint,
+      );
 
       // Draw label on the left space
       textPainter.text = TextSpan(
@@ -434,15 +463,28 @@ class _MoodChartPainter extends CustomPainter {
         style: TextStyle(fontSize: 8.5, color: textColor),
       );
       textPainter.layout();
-      textPainter.paint(canvas, Offset(paddingLeft - textPainter.width - 6, y - 6));
+      textPainter.paint(
+        canvas,
+        Offset(paddingLeft - textPainter.width - 6, y - 6),
+      );
     });
 
     // Draw X-axis labels (Days)
-    final xDays = [1, (cycleLength / 4).round(), (cycleLength / 2).round(), (3 * cycleLength / 4).round(), cycleLength];
+    final xDays = [
+      1,
+      (cycleLength / 4).round(),
+      (cycleLength / 2).round(),
+      (3 * cycleLength / 4).round(),
+      cycleLength,
+    ];
     for (final day in xDays) {
       final x = paddingLeft + ((day - 1) / (cycleLength - 1)) * chartWidth;
       // Draw vertical tick
-      canvas.drawLine(Offset(x, paddingTop), Offset(x, paddingTop + chartHeight), gridPaint);
+      canvas.drawLine(
+        Offset(x, paddingTop),
+        Offset(x, paddingTop + chartHeight),
+        gridPaint,
+      );
 
       // Label
       textPainter.text = TextSpan(
@@ -450,7 +492,10 @@ class _MoodChartPainter extends CustomPainter {
         style: TextStyle(fontSize: 8.5, color: textColor),
       );
       textPainter.layout();
-      textPainter.paint(canvas, Offset(x - textPainter.width / 2, paddingTop + chartHeight + 4));
+      textPainter.paint(
+        canvas,
+        Offset(x - textPainter.width / 2, paddingTop + chartHeight + 4),
+      );
     }
 
     // Prepare line points
@@ -486,7 +531,9 @@ class _MoodChartPainter extends CustomPainter {
           const Color(0xffEC4899).withValues(alpha: 0),
         ],
       );
-      fillPaint.shader = gradient.createShader(Rect.fromLTWH(paddingLeft, paddingTop, chartWidth, chartHeight));
+      fillPaint.shader = gradient.createShader(
+        Rect.fromLTWH(paddingLeft, paddingTop, chartWidth, chartHeight),
+      );
       canvas.drawPath(fillPath, fillPaint);
 
       // Draw the line
@@ -507,7 +554,9 @@ class _MoodChartPainter extends CustomPainter {
       // 1. Max Anxiety Point
       if (maxAnxietyDay != -1 && moodAverages.containsKey(maxAnxietyDay)) {
         final val = moodAverages[maxAnxietyDay]!;
-        final x = paddingLeft + ((maxAnxietyDay - 1) / (cycleLength - 1)) * chartWidth;
+        final x =
+            paddingLeft +
+            ((maxAnxietyDay - 1) / (cycleLength - 1)) * chartWidth;
         final y = paddingTop + chartHeight - (val / 4.0) * chartHeight;
 
         // Draw Highlight Outer Ring
@@ -519,13 +568,17 @@ class _MoodChartPainter extends CustomPainter {
         // Draw Label text above
         textPainter.text = const TextSpan(
           text: 'اوج بی‌حوصلگی 😰',
-          style: TextStyle(fontSize: 8.5, color: Color(0xffF43F5E), fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 8.5,
+            color: Color(0xffF43F5E),
+            fontWeight: FontWeight.bold,
+          ),
         );
         textPainter.layout();
         final textX = x - textPainter.width / 2;
         const minX = paddingLeft + 4.0;
         final maxX = size.width - textPainter.width - 4.0;
-        
+
         var labelY = y - 18;
         if (labelY < 2.0) {
           labelY = y + 8.0;
@@ -537,7 +590,8 @@ class _MoodChartPainter extends CustomPainter {
       // 2. Max Energy Point
       if (maxEnergyDay != -1 && moodAverages.containsKey(maxEnergyDay)) {
         final val = moodAverages[maxEnergyDay]!;
-        final x = paddingLeft + ((maxEnergyDay - 1) / (cycleLength - 1)) * chartWidth;
+        final x =
+            paddingLeft + ((maxEnergyDay - 1) / (cycleLength - 1)) * chartWidth;
         final y = paddingTop + chartHeight - (val / 4.0) * chartHeight;
 
         // Draw Highlight Outer Ring
@@ -555,7 +609,11 @@ class _MoodChartPainter extends CustomPainter {
 
         textPainter.text = const TextSpan(
           text: 'اوج انرژی ⚡',
-          style: TextStyle(fontSize: 8.5, color: Color(0xff4ADE80), fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 8.5,
+            color: Color(0xff4ADE80),
+            fontWeight: FontWeight.bold,
+          ),
         );
         textPainter.layout();
         final textX = x - textPainter.width / 2;

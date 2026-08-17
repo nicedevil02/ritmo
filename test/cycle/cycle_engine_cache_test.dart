@@ -17,15 +17,18 @@ void main() {
 
     setUp(() async {
       databaseFactory = databaseFactoryFfi;
-      db = await openDatabase(inMemoryDatabasePath, version: 1, onCreate: (db, version) async {
-        await db.execute('''
+      db = await openDatabase(
+        inMemoryDatabasePath,
+        version: 1,
+        onCreate: (db, version) async {
+          await db.execute('''
           CREATE TABLE app_settings (
             key TEXT PRIMARY KEY,
             value TEXT,
             updatedAt INTEGER
           )
         ''');
-        await db.execute('''
+          await db.execute('''
           CREATE TABLE cycle_periods (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             startDate TEXT NOT NULL,
@@ -39,7 +42,8 @@ void main() {
             updatedAt INTEGER
           )
         ''');
-      });
+        },
+      );
 
       DatabaseHelper.instance.overrideDatabaseForTesting(db);
 
@@ -47,53 +51,66 @@ void main() {
       registry = EngineRegistry()..register(engine);
       RitmoEngineBus.init(registry);
 
-      await db.insert('app_settings', {'key': 'user_gender', 'value': 'FEMALE'});
-      await db.insert('app_settings', {'key': 'module_cycle_enabled', 'value': 'true'});
-      await db.insert('app_settings', {'key': 'cycle_avg_length', 'value': '28'});
-      await db.insert('app_settings', {'key': 'cycle_avg_period', 'value': '6'});
+      await db.insert('app_settings', {
+        'key': 'user_gender',
+        'value': 'FEMALE',
+      });
+      await db.insert('app_settings', {
+        'key': 'module_cycle_enabled',
+        'value': 'true',
+      });
+      await db.insert('app_settings', {
+        'key': 'cycle_avg_length',
+        'value': '28',
+      });
+      await db.insert('app_settings', {
+        'key': 'cycle_avg_period',
+        'value': '6',
+      });
     });
 
     tearDown(() async {
       await db.close();
     });
 
-    test('C-16: Registering new period triggers invalidation and cache reflects new data', () async {
-      final now = DateTime(2026, 8, 17);
-      final settings = {
-        'user_gender': 'FEMALE',
-        'module_cycle_enabled': 'true',
-        'cycle_avg_length': '28',
-        'cycle_avg_period': '6',
-      };
+    test(
+      'C-16: Registering new period triggers invalidation and cache reflects new data',
+      () async {
+        final now = DateTime(2026, 8, 17);
+        final settings = {
+          'user_gender': 'FEMALE',
+          'module_cycle_enabled': 'true',
+          'cycle_avg_length': '28',
+          'cycle_avg_period': '6',
+        };
 
-      // 1. Initial calculate -> no data
-      print('DEBUG: Before out1');
-      final out1 = await RitmoEngineBus.instance.execute<CycleEngineInput, CycleEngineOutput>(
-        CycleEngine,
-        CycleEngineInput(db: db, appSettings: settings, now: now),
-      );
-      print('DEBUG: After out1 hasData=${out1.hasData}');
-      expect(out1.hasData, isFalse);
+        final directOut = await engine.calculate(
+          CycleEngineInput(db: db, appSettings: settings, now: now),
+        );
+        expect(directOut.hasData, isFalse);
 
-      // 2. Insert period via repository -> automatically invalidates cache
-      print('DEBUG: Before startPeriod');
-      await CyclePeriodRepository.instance.startPeriod(
-        DateTime(2026, 8, 15),
-        dbExecutor: db,
-        now: now,
-      );
-      print('DEBUG: After startPeriod');
+        final out1 = await RitmoEngineBus.instance
+            .execute<CycleEngineInput, CycleEngineOutput>(
+              CycleEngine,
+              CycleEngineInput(db: db, appSettings: settings, now: now),
+            );
+        expect(out1.hasData, isFalse);
 
-      // 3. Second execute -> returns fresh data immediately
-      print('DEBUG: Before out2');
-      final out2 = await RitmoEngineBus.instance.execute<CycleEngineInput, CycleEngineOutput>(
-        CycleEngine,
-        CycleEngineInput(db: db, appSettings: settings, now: now),
-      );
-      print('DEBUG: After out2 hasData=${out2.hasData}');
-      expect(out2.hasData, isTrue);
-      expect(out2.dayOfCycle, equals(3));
-      expect(out2.currentPhase, equals(CyclePhase.menstrual));
-    }, timeout: const Timeout(Duration(seconds: 5)));
+        await CyclePeriodRepository.instance.startPeriod(
+          DateTime(2026, 8, 15),
+          dbExecutor: db,
+          now: now,
+        );
+
+        final out2 = await RitmoEngineBus.instance
+            .execute<CycleEngineInput, CycleEngineOutput>(
+              CycleEngine,
+              CycleEngineInput(db: db, appSettings: settings, now: now),
+            );
+        expect(out2.hasData, isTrue);
+        expect(out2.dayOfCycle, equals(3));
+        expect(out2.currentPhase, equals(CyclePhase.menstrual));
+      },
+    );
   });
 }

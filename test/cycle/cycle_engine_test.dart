@@ -23,7 +23,11 @@ void main() {
         periodDuration: pDuration,
         lutealPhaseDays: lutealPhaseDays,
         isIrregular: false,
-        stats: CycleStats(avgCycleLength: 28, avgPeriodDuration: 6, totalRecordedCycles: 1),
+        stats: CycleStats(
+          avgCycleLength: 28,
+          avgPeriodDuration: 6,
+          totalRecordedCycles: 1,
+        ),
         dataMaturity: 'MEDIUM',
         endDate: DateTime(2026, 5, 6),
         trendPoints: [],
@@ -35,7 +39,10 @@ void main() {
 
       expect(output.currentPhase, CyclePhase.ovulation);
       expect(output.dayOfCycle, 14);
-      expect(output.ovulationDay, DateTime(2026, 5, 15)); // 2026-05-29 - 14 days
+      expect(
+        output.ovulationDay,
+        DateTime(2026, 5, 15),
+      ); // 2026-05-29 - 14 days
       expect(output.nextPeriodPrediction, DateTime(2026, 5, 29));
       expect(output.fertileWindowStart, DateTime(2026, 5, 10)); // ovulation - 5
       expect(output.fertileWindowEnd, DateTime(2026, 5, 16)); // ovulation + 1
@@ -53,7 +60,11 @@ void main() {
         periodDuration: 6,
         lutealPhaseDays: 14,
         isIrregular: false,
-        stats: CycleStats(avgCycleLength: 28, avgPeriodDuration: 6, totalRecordedCycles: 1),
+        stats: CycleStats(
+          avgCycleLength: 28,
+          avgPeriodDuration: 6,
+          totalRecordedCycles: 1,
+        ),
         dataMaturity: 'MEDIUM',
         endDate: null, // open period
         trendPoints: [],
@@ -79,7 +90,11 @@ void main() {
         periodDuration: 6,
         lutealPhaseDays: 14,
         isIrregular: false,
-        stats: CycleStats(avgCycleLength: 28, avgPeriodDuration: 6, totalRecordedCycles: 1),
+        stats: CycleStats(
+          avgCycleLength: 28,
+          avgPeriodDuration: 6,
+          totalRecordedCycles: 1,
+        ),
         dataMaturity: 'MEDIUM',
         endDate: DateTime(2026, 5, 6),
         trendPoints: [],
@@ -93,15 +108,18 @@ void main() {
       expect(output.dayOfCycle, 20);
     });
 
-    test('Pregnancy mode output suppresses bleeding predictions and marks hasData true', () {
-      final engine = CycleEngine();
-      final now = DateTime(2026, 5, 1);
-      final output = engine.pregnancyOutputForTesting(now);
+    test(
+      'Pregnancy mode output suppresses bleeding predictions and marks hasData true',
+      () {
+        final engine = CycleEngine();
+        final now = DateTime(2026, 5, 1);
+        final output = engine.pregnancyOutputForTesting(now);
 
-      expect(output.hasData, true);
-      expect(output.regularityLabel, 'دوران بارداری');
-      expect(output.dayOfPeriod, 0);
-      expect(output.dayOfCycle, 0);
-    });
+        expect(output.hasData, true);
+        expect(output.regularityLabel, 'دوران بارداری');
+        expect(output.dayOfPeriod, 0);
+        expect(output.dayOfCycle, 0);
+      },
+    );
   });
 }

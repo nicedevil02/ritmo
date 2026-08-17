@@ -1,5 +1,4 @@
 class SymptomStat {
-
   SymptomStat({
     required this.key,
     required this.count,
@@ -11,7 +10,6 @@ class SymptomStat {
 }
 
 class CycleTrendPoint {
-
   CycleTrendPoint({
     required this.index,
     required this.lengthDays,
@@ -25,7 +23,6 @@ class CycleTrendPoint {
 }
 
 class CycleCorrelation {
-
   CycleCorrelation({
     required this.metric,
     this.coefficient,
@@ -37,7 +34,6 @@ class CycleCorrelation {
 }
 
 class FastingDebt {
-
   FastingDebt({
     required this.id,
     required this.dateIso,
@@ -73,7 +69,6 @@ class FastingDebt {
 }
 
 class BodyRhythmInfluence {
-
   BodyRhythmInfluence({
     required this.energyDelta,
     required this.indirectMessage,

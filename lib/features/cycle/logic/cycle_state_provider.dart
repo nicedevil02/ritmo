@@ -59,8 +59,11 @@ class CycleState {
       isModuleEnabled: isModuleEnabled ?? this.isModuleEnabled,
       isLocked: isLocked ?? this.isLocked,
       isPregnancyMode: isPregnancyMode ?? this.isPregnancyMode,
-      justFinishedOnboarding: justFinishedOnboarding ?? this.justFinishedOnboarding,
-      activePeriod: clearActivePeriod ? null : (activePeriod ?? this.activePeriod),
+      justFinishedOnboarding:
+          justFinishedOnboarding ?? this.justFinishedOnboarding,
+      activePeriod: clearActivePeriod
+          ? null
+          : (activePeriod ?? this.activePeriod),
       periods: periods ?? this.periods,
       engineOutput: engineOutput ?? this.engineOutput,
       settings: settings ?? this.settings,
@@ -82,25 +85,42 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
       final settingsList = await db.query('app_settings');
       final settingsMap = {
         for (final s in settingsList)
-          if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''
+          if (s['key'] != null)
+            s['key'].toString(): s['value']?.toString() ?? '',
       };
 
       final isEligible = CyclePrivacyGuard.isVisible(settingsMap);
-      final isModuleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
+      final isModuleEnabled = ModuleGate.instance.isEnabledFrom(
+        settingsMap,
+        'module_cycle_enabled',
+      );
       final isPregnancy = CycleSettings.isPregnancyMode(settingsMap);
       final isLockConfigured = CycleSettings.isLockEnabled(settingsMap);
       final hasPin = await CycleLockService.instance.hasCyclePin(db);
       final isLocked = isLockConfigured && hasPin;
-      final justOnboarded = settingsMap['cycle_onboarding_just_completed'] == 'true';
+      final justOnboarded =
+          settingsMap['cycle_onboarding_just_completed'] == 'true';
 
       final periods = await CyclePeriodRepository.instance.getAllPeriods(db);
       final active = await CyclePeriodRepository.instance.getActivePeriod(db);
 
       CycleEngineOutput? engineOutput;
       if (isEligible && isModuleEnabled) {
-        engineOutput = await CycleEngine().calculate(
-          CycleEngineInput(db: db, appSettings: settingsMap, now: DateTime.now()),
+        final cycleInput = CycleEngineInput(
+          db: db,
+          appSettings: settingsMap,
+          now: DateTime.now(),
         );
+        try {
+          engineOutput = await RitmoEngineBus.instance
+              .execute<CycleEngineInput, CycleEngineOutput>(
+                CycleEngine,
+                cycleInput,
+              );
+        } catch (_) {
+          const fallbackEngine = CycleEngine();
+          engineOutput = await fallbackEngine.calculate(cycleInput);
+        }
       }
 
       state = CycleState(
@@ -116,7 +136,11 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
         settings: settingsMap,
       );
     } catch (e, st) {
-      RitmoLogger.error('[CycleStateNotifier] Error loading state', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleStateNotifier] Error loading state',
+        error: e,
+        stack: st,
+      );
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'خطا در بارگذاری اطلاعات چرخه',
@@ -129,11 +153,18 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
     try {
       final db = await DatabaseHelper.instance.database;
       final targetDate = startDate ?? DateTime.now();
-      await CyclePeriodRepository.instance.startPeriod(targetDate, dbExecutor: db);
+      await CyclePeriodRepository.instance.startPeriod(
+        targetDate,
+        dbExecutor: db,
+      );
       RitmoEvents.notifyRoutineChanged();
       await loadState();
     } catch (e, st) {
-      RitmoLogger.error('[CycleStateNotifier] startPeriod error', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleStateNotifier] startPeriod error',
+        error: e,
+        stack: st,
+      );
     }
   }
 
@@ -141,15 +172,25 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
   Future<void> endPeriod({DateTime? endDate}) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final active = state.activePeriod ?? await CyclePeriodRepository.instance.getActivePeriod(db);
+      final active =
+          state.activePeriod ??
+          await CyclePeriodRepository.instance.getActivePeriod(db);
       if (active != null && active.id != null) {
         final targetDate = endDate ?? DateTime.now();
-        await CyclePeriodRepository.instance.endPeriod(active.id!, targetDate, dbExecutor: db);
+        await CyclePeriodRepository.instance.endPeriod(
+          active.id!,
+          targetDate,
+          dbExecutor: db,
+        );
         RitmoEvents.notifyRoutineChanged();
         await loadState();
       }
     } catch (e, st) {
-      RitmoLogger.error('[CycleStateNotifier] endPeriod error', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleStateNotifier] endPeriod error',
+        error: e,
+        stack: st,
+      );
     }
   }
 
@@ -160,7 +201,11 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
       RitmoEvents.notifyRoutineChanged();
       await loadState();
     } catch (e, st) {
-      RitmoLogger.error('[CycleStateNotifier] deletePeriod error', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleStateNotifier] deletePeriod error',
+        error: e,
+        stack: st,
+      );
     }
   }
 
@@ -168,25 +213,41 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
   Future<void> dismissOnboardingBanner() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.delete('app_settings', where: 'key = ?', whereArgs: ['cycle_onboarding_just_completed']);
+      await db.delete(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: ['cycle_onboarding_just_completed'],
+      );
       state = state.copyWith(justFinishedOnboarding: false);
     } catch (e, st) {
-      RitmoLogger.error('[CycleStateNotifier] dismissOnboardingBanner error', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleStateNotifier] dismissOnboardingBanner error',
+        error: e,
+        stack: st,
+      );
     }
   }
 
   /// Toggles cycle module enabled/disabled state.
   Future<void> toggleModule(bool enabled) async {
     try {
-      await ModuleManagementService.instance.setModuleEnabled('module_cycle_enabled', enabled);
+      await ModuleManagementService.instance.setModuleEnabled(
+        'module_cycle_enabled',
+        enabled,
+      );
       RitmoEvents.notifyRoutineChanged();
       await loadState();
     } catch (e, st) {
-      RitmoLogger.error('[CycleStateNotifier] toggleModule error', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleStateNotifier] toggleModule error',
+        error: e,
+        stack: st,
+      );
     }
   }
 }
 
-final cycleStateProvider = StateNotifierProvider<CycleStateNotifier, CycleState>((ref) {
-  return CycleStateNotifier();
-});
+final cycleStateProvider =
+    StateNotifierProvider<CycleStateNotifier, CycleState>((ref) {
+      return CycleStateNotifier();
+    });

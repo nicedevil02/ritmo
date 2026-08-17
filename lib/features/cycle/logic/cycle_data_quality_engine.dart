@@ -14,7 +14,10 @@ class CycleDataQualityEngine {
     DateTime? now,
     String? todayIso,
   }) async {
-    final effectiveNow = now ?? (todayIso != null ? CycleDateContract.parseDayKey(todayIso) : null) ?? DateTime.now();
+    final effectiveNow =
+        now ??
+        (todayIso != null ? CycleDateContract.parseDayKey(todayIso) : null) ??
+        DateTime.now();
     final cleanNow = CycleDateContract.cleanDate(effectiveNow);
     final hasEnoughCycles = periodRows.length >= 3;
 
@@ -22,12 +25,17 @@ class CycleDataQualityEngine {
     // startDate DESC). Find the truly latest period by startDate.
     bool hasForgottenOpenPeriod = false;
     if (periodRows.isNotEmpty) {
-      final sorted = [...periodRows]..sort((a, b) => (a['startDate'] ?? '')
-          .toString()
-          .compareTo((b['startDate'] ?? '').toString()));
+      final sorted = [...periodRows]
+        ..sort(
+          (a, b) => (a['startDate'] ?? '').toString().compareTo(
+            (b['startDate'] ?? '').toString(),
+          ),
+        );
       final latest = sorted.last;
       if (latest['endDate'] == null) {
-        final start = CycleDateContract.parseDayKey(latest['startDate']?.toString());
+        final start = CycleDateContract.parseDayKey(
+          latest['startDate']?.toString(),
+        );
         if (start != null) {
           final daysOpen = CycleDateContract.daysBetween(start, cleanNow);
           if (daysOpen >= forgottenOpenPeriodThresholdDays) {
@@ -68,9 +76,12 @@ class CycleDataQualityEngine {
       warningsFa.add('در ۳۰ روز اخیر ثبت روزانه کمی دارید');
     }
 
-    final qualityLabelFa = periodRows.length >= 5 && hasRecentDailyLogs && !hasForgottenOpenPeriod
+    final qualityLabelFa =
+        periodRows.length >= 5 && hasRecentDailyLogs && !hasForgottenOpenPeriod
         ? 'عالی'
-        : (periodRows.length >= 2 && !hasForgottenOpenPeriod ? 'متوسط' : 'نیازمند داده بیشتر');
+        : (periodRows.length >= 2 && !hasForgottenOpenPeriod
+              ? 'متوسط'
+              : 'نیازمند داده بیشتر');
 
     return DataQualityReport(
       hasEnoughCycles: hasEnoughCycles,

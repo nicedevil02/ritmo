@@ -121,7 +121,10 @@ class CycleDayLogsRepository {
   };
 
   /// Gets log for a specific calendar date.
-  Future<CycleDayLog?> getLogForDate(DateTime date, [DatabaseExecutor? dbExecutor]) async {
+  Future<CycleDayLog?> getLogForDate(
+    DateTime date, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
       final dayKey = CycleDateContract.toDayKey(date);
@@ -134,13 +137,21 @@ class CycleDayLogsRepository {
       if (rows.isEmpty) return null;
       return CycleDayLog.fromMap(rows.first);
     } catch (e, st) {
-      RitmoLogger.error('[CycleDayLogsRepository] getLogForDate error', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleDayLogsRepository] getLogForDate error',
+        error: e,
+        stack: st,
+      );
       return null;
     }
   }
 
   /// Gets all logs within [from] and [to] inclusive.
-  Future<List<CycleDayLog>> getLogsForRange(DateTime from, DateTime to, [DatabaseExecutor? dbExecutor]) async {
+  Future<List<CycleDayLog>> getLogsForRange(
+    DateTime from,
+    DateTime to, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
       final fromKey = CycleDateContract.toDayKey(from);
@@ -154,7 +165,11 @@ class CycleDayLogsRepository {
       );
       return rows.map((r) => CycleDayLog.fromMap(r)).toList();
     } catch (e, st) {
-      RitmoLogger.error('[CycleDayLogsRepository] getLogsForRange error', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleDayLogsRepository] getLogsForRange error',
+        error: e,
+        stack: st,
+      );
       return [];
     }
   }
@@ -176,12 +191,19 @@ class CycleDayLogsRepository {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     } catch (e, st) {
-      RitmoLogger.error('[CycleDayLogsRepository] saveLog error', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleDayLogsRepository] saveLog error',
+        error: e,
+        stack: st,
+      );
     }
   }
 
   /// Deletes log for a given calendar date.
-  Future<void> deleteLogForDate(DateTime date, [DatabaseExecutor? dbExecutor]) async {
+  Future<void> deleteLogForDate(
+    DateTime date, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
       final dayKey = CycleDateContract.toDayKey(date);
@@ -191,7 +213,11 @@ class CycleDayLogsRepository {
         whereArgs: [dayKey],
       );
     } catch (e, st) {
-      RitmoLogger.error('[CycleDayLogsRepository] deleteLogForDate error', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleDayLogsRepository] deleteLogForDate error',
+        error: e,
+        stack: st,
+      );
     }
   }
 }

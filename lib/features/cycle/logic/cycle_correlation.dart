@@ -8,19 +8,41 @@ import 'package:sqflite/sqflite.dart';
 class CycleCorrelationAnalyzer {
   static Future<List<CycleCorrelation>> analyzeCorrelations(Database db) async {
     // 1. Fetch cycle day logs
-    final List<Map<String, dynamic>> dayLogs = await db.query('cycle_day_logs', orderBy: 'logDate ASC');
+    final List<Map<String, dynamic>> dayLogs = await db.query(
+      'cycle_day_logs',
+      orderBy: 'logDate ASC',
+    );
     // 2. Fetch energy logs
-    final List<Map<String, dynamic>> energyLogs = await db.query('energy_logs', orderBy: 'loggedAt ASC');
+    final List<Map<String, dynamic>> energyLogs = await db.query(
+      'energy_logs',
+      orderBy: 'loggedAt ASC',
+    );
     // 3. Fetch sleep logs (bedtime_diagnostics ordered by date)
-    final List<Map<String, dynamic>> sleepLogs = await db.query('bedtime_diagnostics', orderBy: 'date ASC');
+    final List<Map<String, dynamic>> sleepLogs = await db.query(
+      'bedtime_diagnostics',
+      orderBy: 'date ASC',
+    );
     // 4. Fetch routine completions
-    final List<Map<String, dynamic>> completions = await db.query('routine_completions', orderBy: 'completionTime ASC');
+    final List<Map<String, dynamic>> completions = await db.query(
+      'routine_completions',
+      orderBy: 'completionTime ASC',
+    );
 
     if (dayLogs.length < 3) {
       return [
-        CycleCorrelation(metric: 'انرژی بدنی', insight: 'داده‌های کافی برای محاسبه همبستگی انرژی بدنی وجود ندارد (حداقل ۳ ثبت روزانه نیاز است).'),
-        CycleCorrelation(metric: 'کیفیت خواب', insight: 'داده‌های کافی برای محاسبه همبستگی کیفیت خواب وجود ندارد.'),
-        CycleCorrelation(metric: 'پایبندی به روتین‌ها', insight: 'داده‌های کافی برای محاسبه همبستگی روتین‌ها وجود ندارد.'),
+        CycleCorrelation(
+          metric: 'انرژی بدنی',
+          insight:
+              'داده‌های کافی برای محاسبه همبستگی انرژی بدنی وجود ندارد (حداقل ۳ ثبت روزانه نیاز است).',
+        ),
+        CycleCorrelation(
+          metric: 'کیفیت خواب',
+          insight: 'داده‌های کافی برای محاسبه همبستگی کیفیت خواب وجود ندارد.',
+        ),
+        CycleCorrelation(
+          metric: 'پایبندی به روتین‌ها',
+          insight: 'داده‌های کافی برای محاسبه همبستگی روتین‌ها وجود ندارد.',
+        ),
       ];
     }
 
@@ -64,7 +86,9 @@ class CycleCorrelationAnalyzer {
     // Map energy logs to dates
     for (final log in energyLogs) {
       final loggedAt = log['loggedAt'] as int;
-      final dateStr = DateTime.fromMillisecondsSinceEpoch(loggedAt).toIso8601String().substring(0, 10);
+      final dateStr = DateTime.fromMillisecondsSinceEpoch(
+        loggedAt,
+      ).toIso8601String().substring(0, 10);
       if (mergedData.containsKey(dateStr)) {
         final levelStr = log['energyLevel'] as String? ?? 'MEDIUM';
         var score = 65.0;
@@ -89,7 +113,8 @@ class CycleCorrelationAnalyzer {
       if (compDate != null && mergedData.containsKey(compDate)) {
         final resType = comp['resultType'] as String? ?? 'FULL';
         if (resType != 'SNOOZED') {
-          mergedData[compDate]!['completionCount'] = (mergedData[compDate]!['completionCount'] as double) + 1.0;
+          mergedData[compDate]!['completionCount'] =
+              (mergedData[compDate]!['completionCount'] as double) + 1.0;
         }
       }
     }
@@ -113,7 +138,9 @@ class CycleCorrelationAnalyzer {
         final energyList = map['energy'] as List<double>;
         if (energyList.isNotEmpty) {
           flowForEnergy.add(flow);
-          energyVector.add(energyList.reduce((a, b) => a + b) / energyList.length);
+          energyVector.add(
+            energyList.reduce((a, b) => a + b) / energyList.length,
+          );
         }
 
         final sleepList = map['sleepQuality'] as List<double>;
@@ -138,45 +165,67 @@ class CycleCorrelationAnalyzer {
       compCorr = _calculatePearson(flowVector, completionVector);
     }
 
-
     // Generate Farsi insights
     var energyInsight = 'همبستگی مشخصی بین شدت چرخه و انرژی بدنی ثبت نشده است.';
     if (energyCorr != null) {
       if (energyCorr < -0.3) {
-        energyInsight = 'در روزهای با شدت جریان بیشتر، سطح انرژی بدنی شما کاهش نسبی نشان می‌دهد که طبیعی است. استراحت بیشتری را برنامه‌ریزی کنید. ⚡';
+        energyInsight =
+            'در روزهای با شدت جریان بیشتر، سطح انرژی بدنی شما کاهش نسبی نشان می‌دهد که طبیعی است. استراحت بیشتری را برنامه‌ریزی کنید. ⚡';
       } else if (energyCorr > 0.3) {
-        energyInsight = 'جالب است که در روزهای جریان شدیدتر، سطح انرژی شما باثبات یا افزایشی گزارش شده است. ⚡';
+        energyInsight =
+            'جالب است که در روزهای جریان شدیدتر، سطح انرژی شما باثبات یا افزایشی گزارش شده است. ⚡';
       } else {
-        energyInsight = 'سطح انرژی بدنی شما نوسان مستقیمی با شدت فیزیکی چرخه نشان نمی‌دهد. ⚡';
+        energyInsight =
+            'سطح انرژی بدنی شما نوسان مستقیمی با شدت فیزیکی چرخه نشان نمی‌دهد. ⚡';
       }
     }
 
-    var sleepInsight = 'رابطه مستقیمی بین کیفیت خواب و شدت ریتم بدنی شما یافت نشد.';
+    var sleepInsight =
+        'رابطه مستقیمی بین کیفیت خواب و شدت ریتم بدنی شما یافت نشد.';
     if (sleepCorr != null) {
       if (sleepCorr < -0.3) {
-        sleepInsight = 'کیفیت خواب شما در روزهای جریان شدیدتر اندکی افت می‌کند. دمای اتاق خواب را ملایم‌تر نگه دارید. 🌙';
+        sleepInsight =
+            'کیفیت خواب شما در روزهای جریان شدیدتر اندکی افت می‌کند. دمای اتاق خواب را ملایم‌تر نگه دارید. 🌙';
       } else if (sleepCorr > 0.3) {
-        sleepInsight = 'کیفیت خواب شما در روزهای با ریتم بدنی فعال بهبود می‌یابد. 🌙';
+        sleepInsight =
+            'کیفیت خواب شما در روزهای با ریتم بدنی فعال بهبود می‌یابد. 🌙';
       } else {
-        sleepInsight = 'کیفیت خواب شما در طول دوره‌های مختلف چرخه پایدار و مستقل است. 🌙';
+        sleepInsight =
+            'کیفیت خواب شما در طول دوره‌های مختلف چرخه پایدار و مستقل است. 🌙';
       }
     }
 
-    var compInsight = 'تأثیر محسوسی روی انجام و پایبندی به روتین‌های روزانه‌تان مشاهده نشد.';
+    var compInsight =
+        'تأثیر محسوسی روی انجام و پایبندی به روتین‌های روزانه‌تان مشاهده نشد.';
     if (compCorr != null) {
       if (compCorr < -0.3) {
-        compInsight = 'پایبندی به برنامه‌ها در روزهای اوج ریتم بدنی کمی سخت‌تر می‌شود؛ پیشنهاد می‌کنیم روتین‌های سبک‌تر را فعال کنید. 🌸';
+        compInsight =
+            'پایبندی به برنامه‌ها در روزهای اوج ریتم بدنی کمی سخت‌تر می‌شود؛ پیشنهاد می‌کنیم روتین‌های سبک‌تر را فعال کنید. 🌸';
       } else if (compCorr > 0.3) {
-        compInsight = 'تمرکز و تعهد شما به انجام روتین‌ها در این روزها بالا ارزیابی می‌شود. 🌸';
+        compInsight =
+            'تمرکز و تعهد شما به انجام روتین‌ها در این روزها بالا ارزیابی می‌شود. 🌸';
       } else {
-        compInsight = 'روال روزانه شما مستقل از فازهای طبیعی بدن با کیفیت مناسب ادامه دارد. 🌸';
+        compInsight =
+            'روال روزانه شما مستقل از فازهای طبیعی بدن با کیفیت مناسب ادامه دارد. 🌸';
       }
     }
 
     return [
-      CycleCorrelation(metric: 'انرژی بدنی', coefficient: energyCorr, insight: energyInsight),
-      CycleCorrelation(metric: 'کیفیت خواب', coefficient: sleepCorr, insight: sleepInsight),
-      CycleCorrelation(metric: 'پایبندی به روتین‌ها', coefficient: compCorr, insight: compInsight),
+      CycleCorrelation(
+        metric: 'انرژی بدنی',
+        coefficient: energyCorr,
+        insight: energyInsight,
+      ),
+      CycleCorrelation(
+        metric: 'کیفیت خواب',
+        coefficient: sleepCorr,
+        insight: sleepInsight,
+      ),
+      CycleCorrelation(
+        metric: 'پایبندی به روتین‌ها',
+        coefficient: compCorr,
+        insight: compInsight,
+      ),
     ];
   }
 
@@ -197,7 +246,9 @@ class CycleCorrelationAnalyzer {
       sumXY += x[i] * y[i];
     }
 
-    final denominator = math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+    final denominator = math.sqrt(
+      (n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY),
+    );
     // Zero variance on either side means "not computable", not "zero
     // correlation" — report null so the UI stays honest.
     if (denominator == 0) return null;
@@ -206,7 +257,10 @@ class CycleCorrelationAnalyzer {
 
   static Future<List<SymptomStat>> analyzeSymptomStats(Database db) async {
     final List<Map<String, dynamic>> dayLogs = await db.query('cycle_day_logs');
-    final List<Map<String, dynamic>> periods = await db.query('cycle_periods', orderBy: 'startDate ASC');
+    final List<Map<String, dynamic>> periods = await db.query(
+      'cycle_periods',
+      orderBy: 'startDate ASC',
+    );
 
     if (dayLogs.isEmpty) return [];
 
@@ -264,7 +318,9 @@ class CycleCorrelationAnalyzer {
         days.sort();
         typicalDay = days[days.length ~/ 2]; // median
       }
-      stats.add(SymptomStat(key: key, count: count, typicalCycleDay: typicalDay));
+      stats.add(
+        SymptomStat(key: key, count: count, typicalCycleDay: typicalDay),
+      );
     });
 
     stats.sort((a, b) => b.count.compareTo(a.count));

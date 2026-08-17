@@ -37,7 +37,11 @@ class Step1PrivacyLock extends StatelessWidget {
                 color: primaryColor.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(CupertinoIcons.lock_shield_fill, color: primaryColor, size: 34),
+              child: Icon(
+                CupertinoIcons.lock_shield_fill,
+                color: primaryColor,
+                size: 34,
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -48,7 +52,7 @@ class Step1PrivacyLock extends StatelessWidget {
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
                 color: colors.textPrimary,
-                ),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -56,19 +60,22 @@ class Step1PrivacyLock extends StatelessWidget {
           _buildPrivacyCommitmentCard(
             icon: CupertinoIcons.device_phone_portrait,
             title: 'داده‌ها روی همین گوشی می‌ماند',
-            description: 'تمام داده‌های شما به‌صورت کاملاً آفلاین روی دیتابیس محلی ذخیره شده و به هیچ سروری ارسال نمی‌شوند.',
+            description:
+                'تمام داده‌های شما به‌صورت کاملاً آفلاین روی دیتابیس محلی ذخیره شده و به هیچ سروری ارسال نمی‌شوند.',
           ),
           const SizedBox(height: 10),
           _buildPrivacyCommitmentCard(
             icon: CupertinoIcons.eye_slash_fill,
             title: 'بدون واژه صریح بیرون از این صفحه',
-            description: 'در اعلانات، داشبورد اصلی و سایر صفحات اپلیکیشن هیچ کلمه صریح یا افشاکننده‌ای استفاده نمی‌شود.',
+            description:
+                'در اعلانات، داشبورد اصلی و سایر صفحات اپلیکیشن هیچ کلمه صریح یا افشاکننده‌ای استفاده نمی‌شود.',
           ),
           const SizedBox(height: 10),
           _buildPrivacyCommitmentCard(
             icon: CupertinoIcons.switch_camera,
             title: 'کنترل کامل اتصالات در دست شماست',
-            description: 'هیچ اتصالی با سایر بخش‌ها بدون اجازه و انتخاب صریح شما در گام‌های بعدی فعال نخواهد شد.',
+            description:
+                'هیچ اتصالی با سایر بخش‌ها بدون اجازه و انتخاب صریح شما در گام‌های بعدی فعال نخواهد شد.',
           ),
 
           Divider(height: 32, color: colors.border.withValues(alpha: 0.5)),
@@ -77,10 +84,14 @@ class Step1PrivacyLock extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? Colors.black.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.6),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : Colors.white.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: data.enableLock ? primaryColor.withValues(alpha: 0.6) : colors.border.withValues(alpha: 0.5),
+                color: data.enableLock
+                    ? primaryColor.withValues(alpha: 0.6)
+                    : colors.border.withValues(alpha: 0.5),
                 width: data.enableLock ? 1.5 : 1,
               ),
             ),
@@ -92,7 +103,11 @@ class Step1PrivacyLock extends StatelessWidget {
                     color: primaryColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(CupertinoIcons.lock_fill, color: primaryColor, size: 20),
+                  child: Icon(
+                    CupertinoIcons.lock_fill,
+                    color: primaryColor,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -105,7 +120,7 @@ class Step1PrivacyLock extends StatelessWidget {
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          ),
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -113,7 +128,7 @@ class Step1PrivacyLock extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           color: colors.textSecondary,
-                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -137,7 +152,9 @@ class Step1PrivacyLock extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 elevation: 0,
               ),
@@ -161,7 +178,9 @@ class Step1PrivacyLock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.02),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.black.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors.border.withValues(alpha: 0.3)),
       ),
@@ -180,7 +199,7 @@ class Step1PrivacyLock extends StatelessWidget {
                     fontSize: 12.5,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    ),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(

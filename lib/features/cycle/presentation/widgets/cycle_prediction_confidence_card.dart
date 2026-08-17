@@ -74,24 +74,30 @@ class CyclePredictionConfidenceCard extends StatelessWidget {
           ),
           if (confidence.reasonsFa.isNotEmpty) ...[
             const SizedBox(height: 8),
-            ...confidence.reasonsFa.map((r) => Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline, size: 12, color: colors.textSecondary),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          r,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colors.textSecondary,
-                          ),
+            ...confidence.reasonsFa.map(
+              (r) => Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 12,
+                      color: colors.textSecondary,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        r,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colors.textSecondary,
                         ),
                       ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ],
       ),

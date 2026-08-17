@@ -26,41 +26,44 @@ void main() {
       expect(period.isOpen, false);
     });
 
-    test('toMap and fromMap serialize and deserialize accurately with DayKey format', () {
-      final original = CyclePeriod(
-        id: 42,
-        startDate: DateTime(2026, 5, 1),
-        endDate: DateTime(2026, 5, 7),
-        cycleLength: 28,
-        periodDuration: 7,
-        notes: 'تست دوره',
-        suppressedPrayer: true,
-        fastDebtCreated: false,
-        createdAt: 1700000000,
-        updatedAt: 1700005000,
-      );
+    test(
+      'toMap and fromMap serialize and deserialize accurately with DayKey format',
+      () {
+        final original = CyclePeriod(
+          id: 42,
+          startDate: DateTime(2026, 5, 1),
+          endDate: DateTime(2026, 5, 7),
+          cycleLength: 28,
+          periodDuration: 7,
+          notes: 'تست دوره',
+          suppressedPrayer: true,
+          fastDebtCreated: false,
+          createdAt: 1700000000,
+          updatedAt: 1700005000,
+        );
 
-      final map = original.toMap();
-      expect(map['id'], 42);
-      expect(map['startDate'], '2026-05-01');
-      expect(map['endDate'], '2026-05-07');
-      expect(map['periodDuration'], 7);
-      expect(map['suppressedPrayer'], 1);
-      expect(map['fastDebtCreated'], 0);
+        final map = original.toMap();
+        expect(map['id'], 42);
+        expect(map['startDate'], '2026-05-01');
+        expect(map['endDate'], '2026-05-07');
+        expect(map['periodDuration'], 7);
+        expect(map['suppressedPrayer'], 1);
+        expect(map['fastDebtCreated'], 0);
 
-      final restored = CyclePeriod.fromMap(map);
-      expect(restored.id, 42);
-      expect(restored.startDate.year, 2026);
-      expect(restored.startDate.month, 5);
-      expect(restored.startDate.day, 1);
-      expect(restored.endDate!.year, 2026);
-      expect(restored.endDate!.month, 5);
-      expect(restored.endDate!.day, 7);
-      expect(restored.periodDuration, 7);
-      expect(restored.suppressedPrayer, true);
-      expect(restored.fastDebtCreated, false);
-      expect(restored.notes, 'تست دوره');
-    });
+        final restored = CyclePeriod.fromMap(map);
+        expect(restored.id, 42);
+        expect(restored.startDate.year, 2026);
+        expect(restored.startDate.month, 5);
+        expect(restored.startDate.day, 1);
+        expect(restored.endDate!.year, 2026);
+        expect(restored.endDate!.month, 5);
+        expect(restored.endDate!.day, 7);
+        expect(restored.periodDuration, 7);
+        expect(restored.suppressedPrayer, true);
+        expect(restored.fastDebtCreated, false);
+        expect(restored.notes, 'تست دوره');
+      },
+    );
 
     test('fromMap gracefully maps legacy cycleStartDate/cycleEndDate keys', () {
       final legacyMap = {

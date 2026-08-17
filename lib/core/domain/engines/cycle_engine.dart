@@ -68,8 +68,9 @@ class CycleStats {
     int? recordedPeriods,
     int? completedCycles,
     int? totalRecordedCycles,
-  })  : recordedPeriods = recordedPeriods ?? totalRecordedCycles ?? 0,
-        completedCycles = completedCycles ?? (recordedPeriods ?? totalRecordedCycles ?? 0);
+  }) : recordedPeriods = recordedPeriods ?? totalRecordedCycles ?? 0,
+       completedCycles =
+           completedCycles ?? (recordedPeriods ?? totalRecordedCycles ?? 0);
 
   final double avgCycleLength;
   final double avgPeriodDuration;
@@ -110,8 +111,8 @@ class CycleEngineOutput {
     this.hasImplausiblePeriodData = false,
     this.isProjected = false,
     this.discardedOutliers = 0,
-  })  : _regularityLabel = regularityLabel,
-        _predictionDisclaimer = predictionDisclaimer;
+  }) : _regularityLabel = regularityLabel,
+       _predictionDisclaimer = predictionDisclaimer;
 
   final CyclePhase currentPhase;
   final int dayOfCycle;
@@ -187,7 +188,10 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     final now = CycleDateContract.cleanDate(input.now);
 
     final isFemale = CyclePrivacyGuard.isVisible(appSettings);
-    final cycleEnabled = ModuleGate.instance.isEnabledFrom(appSettings, 'module_cycle_enabled');
+    final cycleEnabled = ModuleGate.instance.isEnabledFrom(
+      appSettings,
+      'module_cycle_enabled',
+    );
 
     if (!isFemale || !cycleEnabled) {
       return _emptyOutput(now);
@@ -221,8 +225,12 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
 
     final cycleLengths = <int>[];
     for (var i = 0; i < periodRows.length - 1; i++) {
-      final start1 = CycleDateContract.parseDayKey(periodRows[i]['startDate']?.toString());
-      final start2 = CycleDateContract.parseDayKey(periodRows[i + 1]['startDate']?.toString());
+      final start1 = CycleDateContract.parseDayKey(
+        periodRows[i]['startDate']?.toString(),
+      );
+      final start2 = CycleDateContract.parseDayKey(
+        periodRows[i + 1]['startDate']?.toString(),
+      );
       if (start1 != null && start2 != null) {
         final diffDays = CycleDateContract.daysBetween(start1, start2);
         if (diffDays >= minPlausibleCycle && diffDays <= maxPlausibleCycle) {
@@ -236,7 +244,8 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     final completedCycles = cycleLengths.length;
 
     if (cycleLengths.isNotEmpty) {
-      avgCycleLength = cycleLengths.reduce((a, b) => a + b) / cycleLengths.length;
+      avgCycleLength =
+          cycleLengths.reduce((a, b) => a + b) / cycleLengths.length;
     }
 
     // Average period duration
@@ -253,12 +262,19 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     }
 
     if (periodDurations.isNotEmpty) {
-      avgPeriodDuration = periodDurations.reduce((a, b) => a + b) / periodDurations.length;
+      avgPeriodDuration =
+          periodDurations.reduce((a, b) => a + b) / periodDurations.length;
     }
 
     // Safe clamped configurations
-    final L = avgCycleLength.round().clamp(CycleSettings.minCycleLength, CycleSettings.maxCycleLength);
-    final pDuration = avgPeriodDuration.round().clamp(CycleSettings.minPeriodDuration, CycleSettings.maxPeriodDuration);
+    final L = avgCycleLength.round().clamp(
+      CycleSettings.minCycleLength,
+      CycleSettings.maxCycleLength,
+    );
+    final pDuration = avgPeriodDuration.round().clamp(
+      CycleSettings.minPeriodDuration,
+      CycleSettings.maxPeriodDuration,
+    );
 
     // 4. Regularity calculation (C-20)
     final regularity = _computeRegularity(cycleLengths);
@@ -276,8 +292,14 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     // 6. Trend Points (v2 Upgrades, C-45)
     final trendPoints = <CycleTrendPoint>[];
     for (var i = 0; i < periodRows.length; i++) {
-      final start = CycleDateContract.parseDayKey(periodRows[i]['startDate']?.toString()) ?? now;
-      final end = CycleDateContract.parseDayKey(periodRows[i]['endDate']?.toString());
+      final start =
+          CycleDateContract.parseDayKey(
+            periodRows[i]['startDate']?.toString(),
+          ) ??
+          now;
+      final end = CycleDateContract.parseDayKey(
+        periodRows[i]['endDate']?.toString(),
+      );
       var pDays = pDuration;
       if (end != null) {
         pDays = CycleDateContract.daysBetween(start, end) + 1;
@@ -286,7 +308,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       var lenDays = L;
       var isInProgress = false;
       if (i < periodRows.length - 1) {
-        final nextStart = CycleDateContract.parseDayKey(periodRows[i + 1]['startDate']?.toString());
+        final nextStart = CycleDateContract.parseDayKey(
+          periodRows[i + 1]['startDate']?.toString(),
+        );
         if (nextStart != null) {
           lenDays = CycleDateContract.daysBetween(start, nextStart);
         }
@@ -297,15 +321,19 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
         isInProgress = true;
       }
 
-      trendPoints.add(CycleTrendPoint(
-        index: i + 1,
-        lengthDays: lenDays,
-        periodDays: pDays,
-        isInProgress: isInProgress,
-      ));
+      trendPoints.add(
+        CycleTrendPoint(
+          index: i + 1,
+          lengthDays: lenDays,
+          periodDays: pDays,
+          isInProgress: isInProgress,
+        ),
+      );
     }
 
-    final pmsWindowDays = int.tryParse(appSettings[CycleSettings.keyPmsWindowDays] ?? '4') ?? CycleSettings.defaultPmsWindowDays;
+    final pmsWindowDays =
+        int.tryParse(appSettings[CycleSettings.keyPmsWindowDays] ?? '4') ??
+        CycleSettings.defaultPmsWindowDays;
 
     final stats = CycleStats(
       avgCycleLength: avgCycleLength,
@@ -317,7 +345,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     // 7. Find current status based on target date `now`
     Map<String, dynamic>? currentPeriodRow;
     for (var i = periodRows.length - 1; i >= 0; i--) {
-      final start = CycleDateContract.parseDayKey(periodRows[i]['startDate']?.toString());
+      final start = CycleDateContract.parseDayKey(
+        periodRows[i]['startDate']?.toString(),
+      );
       if (start != null && CycleDateContract.isSameOrBefore(start, now)) {
         currentPeriodRow = periodRows[i];
         break;
@@ -325,10 +355,16 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     }
 
     if (currentPeriodRow == null) {
-      final firstStart = CycleDateContract.parseDayKey(periodRows.first['startDate']?.toString()) ?? now;
+      final firstStart =
+          CycleDateContract.parseDayKey(
+            periodRows.first['startDate']?.toString(),
+          ) ??
+          now;
       final daysDiff = CycleDateContract.daysBetween(now, firstStart);
       final cyclesToSubtract = (daysDiff / L).ceil();
-      final estimatedPrevStart = firstStart.subtract(Duration(days: cyclesToSubtract * L));
+      final estimatedPrevStart = firstStart.subtract(
+        Duration(days: cyclesToSubtract * L),
+      );
 
       return _evaluateWithStart(
         estimatedPrevStart,
@@ -348,8 +384,14 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       );
     }
 
-    final currentPeriodStart = CycleDateContract.parseDayKey(currentPeriodRow['startDate']?.toString()) ?? now;
-    final currentPeriodEnd = CycleDateContract.parseDayKey(currentPeriodRow['endDate']?.toString());
+    final currentPeriodStart =
+        CycleDateContract.parseDayKey(
+          currentPeriodRow['startDate']?.toString(),
+        ) ??
+        now;
+    final currentPeriodEnd = CycleDateContract.parseDayKey(
+      currentPeriodRow['endDate']?.toString(),
+    );
 
     return _evaluateWithStart(
       currentPeriodStart,
@@ -382,7 +424,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
 
     final n = cycleLengths.length;
     final mean = cycleLengths.reduce((a, b) => a + b) / n;
-    final variance = cycleLengths.map((x) => math.pow(x - mean, 2)).reduce((a, b) => a + b) / n;
+    final variance =
+        cycleLengths.map((x) => math.pow(x - mean, 2)).reduce((a, b) => a + b) /
+        n;
     final sd = math.sqrt(variance);
     final sdPenalty = (sd * 10).round();
     final score = (100 - sdPenalty).clamp(0, 100);
@@ -462,9 +506,12 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
 
     // Overdue tracking (C-18)
     final missedCycles = (daysSinceStart / L).floor();
-    final daysOverdue = (!isBleeding && daysSinceStart >= L) ? (daysSinceStart - L) : 0;
+    final daysOverdue = (!isBleeding && daysSinceStart >= L)
+        ? (daysSinceStart - L)
+        : 0;
     final isOverdue = daysOverdue > 0;
-    final needsUserAttention = (!isBleeding && (missedCycles >= 2 || daysOverdue >= 45));
+    final needsUserAttention =
+        (!isBleeding && (missedCycles >= 2 || daysOverdue >= 45));
 
     // Phase determination
     CyclePhase phase;
@@ -477,7 +524,8 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       final ovulationDayNum = L - lutealDays;
       if (currentDayInCycle < ovulationDayNum - 1) {
         phase = CyclePhase.follicular;
-      } else if (currentDayInCycle >= ovulationDayNum - 1 && currentDayInCycle <= ovulationDayNum + 1) {
+      } else if (currentDayInCycle >= ovulationDayNum - 1 &&
+          currentDayInCycle <= ovulationDayNum + 1) {
         phase = CyclePhase.ovulation;
       } else {
         phase = CyclePhase.luteal;
@@ -486,7 +534,8 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
 
     // C-19: Phase conflict check
     final currentDayInCycle = (daysSinceStart % L) + 1;
-    final hasPhaseConflict = isBleeding && currentDayInCycle >= (L - lutealDays - 1);
+    final hasPhaseConflict =
+        isBleeding && currentDayInCycle >= (L - lutealDays - 1);
 
     // Prediction Dates (C-17, C-25)
     DateTime? nextPeriodPrediction;
@@ -501,9 +550,13 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     if (!needsUserAttention) {
       var cyclesElapsedForPrediction = (daysSinceStart / L).ceil();
       if (cyclesElapsedForPrediction < 1) cyclesElapsedForPrediction = 1;
-      nextPeriodPrediction = cleanStart.add(Duration(days: cyclesElapsedForPrediction * L));
+      nextPeriodPrediction = cleanStart.add(
+        Duration(days: cyclesElapsedForPrediction * L),
+      );
 
-      predictedOvulation = nextPeriodPrediction.subtract(Duration(days: lutealDays));
+      predictedOvulation = nextPeriodPrediction.subtract(
+        Duration(days: lutealDays),
+      );
       fertileStart = predictedOvulation.subtract(const Duration(days: 5));
       fertileEnd = predictedOvulation.add(const Duration(days: 1));
 
@@ -527,11 +580,15 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
         nextPeriodWindowStart = winStart;
         nextPeriodWindowEnd = winEnd;
       } else {
-        nextPeriodWindowStart = nextPeriodPrediction.subtract(const Duration(days: 2));
+        nextPeriodWindowStart = nextPeriodPrediction.subtract(
+          const Duration(days: 2),
+        );
         nextPeriodWindowEnd = nextPeriodPrediction.add(const Duration(days: 2));
       }
 
-      pmsWindowStart = nextPeriodPrediction.subtract(Duration(days: pmsWindowDays));
+      pmsWindowStart = nextPeriodPrediction.subtract(
+        Duration(days: pmsWindowDays),
+      );
       pmsWindowEnd = nextPeriodPrediction.subtract(const Duration(days: 1));
     }
 
@@ -599,7 +656,8 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     );
   }
 
-  CycleEngineOutput pregnancyOutputForTesting(DateTime now) => _pregnancyOutput(now);
+  CycleEngineOutput pregnancyOutputForTesting(DateTime now) =>
+      _pregnancyOutput(now);
 
   CycleEngineOutput _pregnancyOutput(DateTime now) {
     return CycleEngineOutput(
@@ -611,7 +669,12 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       fertileWindowEnd: null,
       ovulationDay: null,
       isIrregular: false,
-      stats: CycleStats(avgCycleLength: 28, avgPeriodDuration: 6, recordedPeriods: 0, completedCycles: 0),
+      stats: CycleStats(
+        avgCycleLength: 28,
+        avgPeriodDuration: 6,
+        recordedPeriods: 0,
+        completedCycles: 0,
+      ),
       dataMaturity: 'HIGH',
       hasData: true,
       nextPeriodWindowStart: null,
@@ -643,7 +706,12 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       fertileWindowEnd: null,
       ovulationDay: null,
       isIrregular: false,
-      stats: CycleStats(avgCycleLength: 28, avgPeriodDuration: 6, recordedPeriods: 0, completedCycles: 0),
+      stats: CycleStats(
+        avgCycleLength: 28,
+        avgPeriodDuration: 6,
+        recordedPeriods: 0,
+        completedCycles: 0,
+      ),
       dataMaturity: 'LOW',
       hasData: false,
       nextPeriodWindowStart: null,
@@ -687,7 +755,10 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
   @override
   bool canRun(CycleEngineInput input) {
     final isFemale = CyclePrivacyGuard.isVisible(input.appSettings);
-    final cycleEnabled = ModuleGate.instance.isEnabledFrom(input.appSettings, 'module_cycle_enabled');
+    final cycleEnabled = ModuleGate.instance.isEnabledFrom(
+      input.appSettings,
+      'module_cycle_enabled',
+    );
     return isFemale && cycleEnabled;
   }
 

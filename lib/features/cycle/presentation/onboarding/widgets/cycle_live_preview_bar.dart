@@ -24,11 +24,14 @@ class CycleLivePreviewBar extends StatelessWidget {
     final primaryColor = colors.primary;
 
     return Semantics(
-      label: 'پیش‌نمایش زنده چرخه: $periodDuration روز خونریزی از $cycleLength روز چرخه',
+      label:
+          'پیش‌نمایش زنده چرخه: $periodDuration روز خونریزی از $cycleLength روز چرخه',
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? Colors.black.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.6),
+          color: isDark
+              ? Colors.black.withValues(alpha: 0.25)
+              : Colors.white.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: colors.border.withValues(alpha: 0.5),
@@ -47,7 +50,7 @@ class CycleLivePreviewBar extends StatelessWidget {
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    ),
+                  ),
                 ),
                 Text(
                   '${_toPersianDigits(periodDuration.toString())} روز خونریزی / ${_toPersianDigits(cycleLength.toString())} روز کل',
@@ -55,7 +58,7 @@ class CycleLivePreviewBar extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: primaryColor,
-                    ),
+                  ),
                 ),
               ],
             ),
@@ -116,7 +119,7 @@ class CycleLivePreviewBar extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         color: colors.textSecondary,
-                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -138,7 +141,7 @@ class CycleLivePreviewBar extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         color: colors.textSecondary,
-                        ),
+                      ),
                     ),
                   ],
                 ),

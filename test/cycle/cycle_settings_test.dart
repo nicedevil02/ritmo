@@ -5,7 +5,10 @@ import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 void main() {
   group('CycleSettings (C-13)', () {
     test('getCycleLength returns default when key absent', () {
-      expect(CycleSettings.getCycleLength({}), CycleSettings.defaultCycleLength);
+      expect(
+        CycleSettings.getCycleLength({}),
+        CycleSettings.defaultCycleLength,
+      );
     });
 
     test('getCycleLength reads canonical key', () {
@@ -16,16 +19,25 @@ void main() {
       expect(CycleSettings.getCycleLength({'cycle_avg_length': '32'}), 32);
     });
 
-    test('getCycleLength ignores out-of-range canonical value and falls back', () {
-      expect(CycleSettings.getCycleLength({'cycle_length_days': '60'}), CycleSettings.defaultCycleLength);
-    });
+    test(
+      'getCycleLength ignores out-of-range canonical value and falls back',
+      () {
+        expect(
+          CycleSettings.getCycleLength({'cycle_length_days': '60'}),
+          CycleSettings.defaultCycleLength,
+        );
+      },
+    );
 
     test('getCycleLength clamps alias value if in-range', () {
       expect(CycleSettings.getCycleLength({'cycle_avg_length': '21'}), 21);
     });
 
     test('getPeriodDuration returns default when absent', () {
-      expect(CycleSettings.getPeriodDuration({}), CycleSettings.defaultPeriodDuration);
+      expect(
+        CycleSettings.getPeriodDuration({}),
+        CycleSettings.defaultPeriodDuration,
+      );
     });
 
     test('getPeriodDuration reads canonical key', () {
@@ -37,7 +49,10 @@ void main() {
     });
 
     test('getLutealPhase returns default when absent', () {
-      expect(CycleSettings.getLutealPhase({}), CycleSettings.defaultLutealPhase);
+      expect(
+        CycleSettings.getLutealPhase({}),
+        CycleSettings.defaultLutealPhase,
+      );
     });
 
     test('getLutealPhase reads canonical key', () {
@@ -45,7 +60,10 @@ void main() {
     });
 
     test('getLutealPhase ignores out-of-range value', () {
-      expect(CycleSettings.getLutealPhase({'luteal_phase_days': '5'}), CycleSettings.defaultLutealPhase);
+      expect(
+        CycleSettings.getLutealPhase({'luteal_phase_days': '5'}),
+        CycleSettings.defaultLutealPhase,
+      );
     });
 
     test('isPregnancyMode returns false when absent', () {
@@ -53,7 +71,10 @@ void main() {
     });
 
     test('isPregnancyMode returns true for canonical key', () {
-      expect(CycleSettings.isPregnancyMode({'cycle_pregnancy_mode': 'true'}), true);
+      expect(
+        CycleSettings.isPregnancyMode({'cycle_pregnancy_mode': 'true'}),
+        true,
+      );
     });
 
     test('isPregnancyMode returns true for legacy alias pregnancy_mode', () {
@@ -65,7 +86,10 @@ void main() {
     });
 
     test('isLockEnabled returns false when explicitly set false', () {
-      expect(CycleSettings.isLockEnabled({'cycle_lock_enabled': 'false'}), false);
+      expect(
+        CycleSettings.isLockEnabled({'cycle_lock_enabled': 'false'}),
+        false,
+      );
     });
 
     test('isLockEnabled returns true when explicitly set true', () {

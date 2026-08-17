@@ -4,6 +4,7 @@ class RitmoIdFactory {
     return '${now.millisecondsSinceEpoch}_${now.microsecondsSinceEpoch % 100000}';
   }
 
+  static String uuid() => _stamp();
   static String routine() => 'routine_${_stamp()}';
   static String schedule(String routineId) => 'sched_${routineId}_${_stamp()}';
   static String goal() => 'goal_${_stamp()}';

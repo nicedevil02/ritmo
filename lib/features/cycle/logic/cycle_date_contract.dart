@@ -29,7 +29,13 @@ class CycleDateContract {
       final y = int.tryParse(match.group(1)!);
       final m = int.tryParse(match.group(2)!);
       final d = int.tryParse(match.group(3)!);
-      if (y != null && m != null && d != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+      if (y != null &&
+          m != null &&
+          d != null &&
+          m >= 1 &&
+          m <= 12 &&
+          d >= 1 &&
+          d <= 31) {
         final dt = DateTime(y, m, d);
         if (dt.year == y && dt.month == m && dt.day == d) {
           return dt;

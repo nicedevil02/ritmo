@@ -37,8 +37,15 @@ class CycleSettings {
   static const int defaultPmsWindowDays = 4;
 
   // Legacy fallback aliases
-  static const List<String> _cycleLengthAliases = ['cycle_avg_length', 'user_cycle_length'];
-  static const List<String> _periodDurationAliases = ['cycle_avg_period', 'period_avg_duration', 'user_period_duration'];
+  static const List<String> _cycleLengthAliases = [
+    'cycle_avg_length',
+    'user_cycle_length',
+  ];
+  static const List<String> _periodDurationAliases = [
+    'cycle_avg_period',
+    'period_avg_duration',
+    'user_period_duration',
+  ];
   static const List<String> _lutealPhaseAliases = ['luteal_phase_length'];
   static const List<String> _lockEnabledAliases = ['cycle_lock_active'];
   static const List<String> _pregnancyModeAliases = ['pregnancy_mode'];
@@ -48,7 +55,9 @@ class CycleSettings {
     final raw = settings[keyCycleLength];
     if (raw != null) {
       final parsed = int.tryParse(raw.toString());
-      if (parsed != null && parsed >= minCycleLength && parsed <= maxCycleLength) {
+      if (parsed != null &&
+          parsed >= minCycleLength &&
+          parsed <= maxCycleLength) {
         return parsed;
       }
     }
@@ -57,7 +66,9 @@ class CycleSettings {
       final aliasVal = settings[alias];
       if (aliasVal != null) {
         final parsed = int.tryParse(aliasVal.toString());
-        if (parsed != null && parsed >= minCycleLength && parsed <= maxCycleLength) {
+        if (parsed != null &&
+            parsed >= minCycleLength &&
+            parsed <= maxCycleLength) {
           return parsed;
         }
       }
@@ -70,7 +81,9 @@ class CycleSettings {
     final raw = settings[keyPeriodDuration];
     if (raw != null) {
       final parsed = int.tryParse(raw.toString());
-      if (parsed != null && parsed >= minPeriodDuration && parsed <= maxPeriodDuration) {
+      if (parsed != null &&
+          parsed >= minPeriodDuration &&
+          parsed <= maxPeriodDuration) {
         return parsed;
       }
     }
@@ -79,7 +92,9 @@ class CycleSettings {
       final aliasVal = settings[alias];
       if (aliasVal != null) {
         final parsed = int.tryParse(aliasVal.toString());
-        if (parsed != null && parsed >= minPeriodDuration && parsed <= maxPeriodDuration) {
+        if (parsed != null &&
+            parsed >= minPeriodDuration &&
+            parsed <= maxPeriodDuration) {
           return parsed;
         }
       }
@@ -92,7 +107,9 @@ class CycleSettings {
     final raw = settings[keyLutealPhase];
     if (raw != null) {
       final parsed = int.tryParse(raw.toString());
-      if (parsed != null && parsed >= minLutealPhase && parsed <= maxLutealPhase) {
+      if (parsed != null &&
+          parsed >= minLutealPhase &&
+          parsed <= maxLutealPhase) {
         return parsed;
       }
     }
@@ -100,7 +117,9 @@ class CycleSettings {
       final aliasVal = settings[alias];
       if (aliasVal != null) {
         final parsed = int.tryParse(aliasVal.toString());
-        if (parsed != null && parsed >= minLutealPhase && parsed <= maxLutealPhase) {
+        if (parsed != null &&
+            parsed >= minLutealPhase &&
+            parsed <= maxLutealPhase) {
           return parsed;
         }
       }
@@ -137,7 +156,10 @@ class CycleSettings {
   }
 
   /// Saves [days] as the canonical cycle length and synchronizes aliases.
-  static Future<void> setCycleLength(int days, [DatabaseExecutor? dbExecutor]) async {
+  static Future<void> setCycleLength(
+    int days, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     final clamped = days.clamp(minCycleLength, maxCycleLength);
     await _saveSetting(keyCycleLength, clamped.toString(), dbExecutor);
     for (final alias in _cycleLengthAliases) {
@@ -146,7 +168,10 @@ class CycleSettings {
   }
 
   /// Saves [days] as the canonical period duration and synchronizes aliases.
-  static Future<void> setPeriodDuration(int days, [DatabaseExecutor? dbExecutor]) async {
+  static Future<void> setPeriodDuration(
+    int days, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     final clamped = days.clamp(minPeriodDuration, maxPeriodDuration);
     await _saveSetting(keyPeriodDuration, clamped.toString(), dbExecutor);
     for (final alias in _periodDurationAliases) {
@@ -155,7 +180,10 @@ class CycleSettings {
   }
 
   /// Saves [days] as the canonical luteal phase length and synchronizes aliases.
-  static Future<void> setLutealPhase(int days, [DatabaseExecutor? dbExecutor]) async {
+  static Future<void> setLutealPhase(
+    int days, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     final clamped = days.clamp(minLutealPhase, maxLutealPhase);
     await _saveSetting(keyLutealPhase, clamped.toString(), dbExecutor);
     for (final alias in _lutealPhaseAliases) {
@@ -164,41 +192,66 @@ class CycleSettings {
   }
 
   /// Saves pregnancy mode status.
-  static Future<void> setPregnancyMode(bool enabled, [DatabaseExecutor? dbExecutor]) async {
-    await _saveSetting(keyPregnancyMode, enabled ? 'true' : 'false', dbExecutor);
+  static Future<void> setPregnancyMode(
+    bool enabled, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
+    await _saveSetting(
+      keyPregnancyMode,
+      enabled ? 'true' : 'false',
+      dbExecutor,
+    );
     for (final alias in _pregnancyModeAliases) {
       await _deleteSetting(alias, dbExecutor);
     }
   }
 
   /// Saves cycle lock status.
-  static Future<void> setLockEnabled(bool enabled, [DatabaseExecutor? dbExecutor]) async {
+  static Future<void> setLockEnabled(
+    bool enabled, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     await _saveSetting(keyLockEnabled, enabled ? 'true' : 'false', dbExecutor);
     for (final alias in _lockEnabledAliases) {
       await _deleteSetting(alias, dbExecutor);
     }
   }
 
-  static Future<void> _saveSetting(String key, String value, [DatabaseExecutor? dbExecutor]) async {
+  static Future<void> _saveSetting(
+    String key,
+    String value, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
       final now = DateTime.now().millisecondsSinceEpoch;
-      await db.insert(
-        'app_settings',
-        {'key': key, 'value': value, 'updatedAt': now},
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('app_settings', {
+        'key': key,
+        'value': value,
+        'updatedAt': now,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     } catch (e, st) {
-      RitmoLogger.error('[CycleSettings] error saving setting $key', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleSettings] error saving setting $key',
+        error: e,
+        stack: st,
+      );
     }
   }
 
-  static Future<void> _deleteSetting(String key, [DatabaseExecutor? dbExecutor]) async {
+  static Future<void> _deleteSetting(
+    String key, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
       await db.delete('app_settings', where: 'key = ?', whereArgs: [key]);
     } catch (e, st) {
-      RitmoLogger.error('[CycleSettings] error deleting alias setting $key', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleSettings] error deleting alias setting $key',
+        error: e,
+        stack: st,
+      );
     }
   }
 }

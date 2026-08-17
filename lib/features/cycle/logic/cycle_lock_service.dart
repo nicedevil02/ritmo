@@ -65,27 +65,34 @@ class CycleLockService {
       // If setting is unset, lock is enabled if a PIN is configured
       return await hasCyclePin(dbExecutor);
     } catch (e, st) {
-      RitmoLogger.error('[CycleLockService] error reading lock enabled setting', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleLockService] error reading lock enabled setting',
+        error: e,
+        stack: st,
+      );
       return false;
     }
   }
 
   /// Sets whether the cycle lock is enabled.
-  Future<void> setLockEnabled(bool enabled, [DatabaseExecutor? dbExecutor]) async {
+  Future<void> setLockEnabled(
+    bool enabled, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
       final now = DateTime.now().millisecondsSinceEpoch;
-      await db.insert(
-        'app_settings',
-        {
-          'key': 'cycle_lock_enabled',
-          'value': enabled ? 'true' : 'false',
-          'updatedAt': now,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('app_settings', {
+        'key': 'cycle_lock_enabled',
+        'value': enabled ? 'true' : 'false',
+        'updatedAt': now,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     } catch (e, st) {
-      RitmoLogger.error('[CycleLockService] error saving lock enabled setting', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleLockService] error saving lock enabled setting',
+        error: e,
+        stack: st,
+      );
     }
   }
 
@@ -120,7 +127,10 @@ class CycleLockService {
 
   /// Calculates remaining lockout seconds. Returns 0 if not locked out.
   Future<int> remainingLockoutSeconds([DatabaseExecutor? dbExecutor]) async {
-    final lockoutMsStr = await SecureKeyStore.getKey(_keyLockoutUntilMs, dbExecutor);
+    final lockoutMsStr = await SecureKeyStore.getKey(
+      _keyLockoutUntilMs,
+      dbExecutor,
+    );
     if (lockoutMsStr == null || lockoutMsStr.isEmpty) return 0;
 
     final lockoutMs = int.tryParse(lockoutMsStr) ?? 0;
@@ -137,7 +147,10 @@ class CycleLockService {
   }
 
   /// Verifies [enteredPin] against stored hash with brute-force rate limiting.
-  Future<bool> verifyPin(String enteredPin, [DatabaseExecutor? dbExecutor]) async {
+  Future<bool> verifyPin(
+    String enteredPin, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
     // 1. Check if locked out
     final remaining = await remainingLockoutSeconds(dbExecutor);
     if (remaining > 0) {
@@ -162,9 +175,16 @@ class CycleLockService {
       return true;
     } else {
       // Increment failed attempts
-      final attemptsStr = await SecureKeyStore.getKey(_keyFailedAttempts, dbExecutor);
+      final attemptsStr = await SecureKeyStore.getKey(
+        _keyFailedAttempts,
+        dbExecutor,
+      );
       final attempts = (int.tryParse(attemptsStr ?? '0') ?? 0) + 1;
-      await SecureKeyStore.setKey(_keyFailedAttempts, attempts.toString(), dbExecutor);
+      await SecureKeyStore.setKey(
+        _keyFailedAttempts,
+        attempts.toString(),
+        dbExecutor,
+      );
 
       // Calculate exponential backoff lockout
       int lockoutSecs = 0;
@@ -177,8 +197,13 @@ class CycleLockService {
       }
 
       if (lockoutSecs > 0) {
-        final lockoutUntilMs = DateTime.now().millisecondsSinceEpoch + (lockoutSecs * 1000);
-        await SecureKeyStore.setKey(_keyLockoutUntilMs, lockoutUntilMs.toString(), dbExecutor);
+        final lockoutUntilMs =
+            DateTime.now().millisecondsSinceEpoch + (lockoutSecs * 1000);
+        await SecureKeyStore.setKey(
+          _keyLockoutUntilMs,
+          lockoutUntilMs.toString(),
+          dbExecutor,
+        );
       }
 
       return false;
@@ -203,7 +228,11 @@ class CycleLockService {
       );
       return didAuth;
     } catch (e, st) {
-      RitmoLogger.error('[CycleLockService] biometric auth failed', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleLockService] biometric auth failed',
+        error: e,
+        stack: st,
+      );
       return false;
     }
   }

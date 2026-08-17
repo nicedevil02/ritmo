@@ -37,7 +37,11 @@ class CyclePersonalPatternEngine {
         if (dateStr == null) continue;
         final logDateRaw = DateTime.tryParse(dateStr);
         if (logDateRaw == null) continue;
-        final logDate = DateTime(logDateRaw.year, logDateRaw.month, logDateRaw.day);
+        final logDate = DateTime(
+          logDateRaw.year,
+          logDateRaw.month,
+          logDateRaw.day,
+        );
 
         // Attribute the log to the LATEST period start <= logDate, exactly once.
         DateTime? activeStart;
@@ -71,7 +75,8 @@ class CyclePersonalPatternEngine {
           final key = sym.trim();
           if (key.isEmpty) continue;
           symptomDayCounts.putIfAbsent(key, () => {});
-          symptomDayCounts[key]![cycleDay] = (symptomDayCounts[key]![cycleDay] ?? 0) + 1;
+          symptomDayCounts[key]![cycleDay] =
+              (symptomDayCounts[key]![cycleDay] ?? 0) + 1;
         }
       }
 
@@ -91,12 +96,15 @@ class CyclePersonalPatternEngine {
         if (maxCount >= 2) {
           final confidence = (maxCount / periodRows.length).clamp(0.4, 0.95);
           final labelFa = _getSymptomFarsiLabel(symptomKey);
-          forecasts.add(SymptomForecast(
-            symptomKey: symptomKey,
-            likelyCycleDay: maxDay,
-            confidence: confidence,
-            insightFa: 'در داده‌های ثبت‌شده شما، $labelFa معمولاً حوالی روز $maxDay چرخه تکرار شده است.',
-          ));
+          forecasts.add(
+            SymptomForecast(
+              symptomKey: symptomKey,
+              likelyCycleDay: maxDay,
+              confidence: confidence,
+              insightFa:
+                  'در داده‌های ثبت‌شده شما، $labelFa معمولاً حوالی روز $maxDay چرخه تکرار شده است.',
+            ),
+          );
         }
       });
 

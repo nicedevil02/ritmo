@@ -37,7 +37,7 @@ class Step4Consents extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.w900,
               color: colors.textPrimary,
-              ),
+            ),
           ),
           const SizedBox(height: 6),
           Container(
@@ -48,7 +48,11 @@ class Step4Consents extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(CupertinoIcons.info_circle_fill, color: primaryColor, size: 16),
+                Icon(
+                  CupertinoIcons.info_circle_fill,
+                  color: primaryColor,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -57,7 +61,7 @@ class Step4Consents extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: colors.textPrimary,
-                      ),
+                    ),
                   ),
                 ),
               ],
@@ -68,28 +72,36 @@ class Step4Consents extends StatelessWidget {
           // 1. Worship Consent
           _buildConsentTile(
             title: 'هماهنگی با بخش عبادات',
-            subtitle: 'محاسبه خودکار روزهای قضا و پیشنهاد تعلیق فرایض در زمان عادت.',
-            whatGoesOut: 'خروجی: فقط در دیتابیس محلی دستگاه، بدون هیچ ارسال اینترنتی.',
+            subtitle:
+                'محاسبه خودکار روزهای قضا و پیشنهاد تعلیق فرایض در زمان عادت.',
+            whatGoesOut:
+                'خروجی: فقط در دیتابیس محلی دستگاه، بدون هیچ ارسال اینترنتی.',
             value: data.worshipConsent,
-            onChanged: (val) => onDataChanged(data.copyWith(worshipConsent: val)),
+            onChanged: (val) =>
+                onDataChanged(data.copyWith(worshipConsent: val)),
           ),
           const SizedBox(height: 10),
 
           // 2. Energy Consent
           _buildConsentTile(
             title: 'تأثیر بر شاخص انرژی و روتین‌ها',
-            subtitle: 'تعدیل خودکار فشار کارهای روزانه و محاسبه اثر فاز بر عدد انرژی.',
-            whatGoesOut: 'خروجی: فقط یک اثر عددی ملایم روی شاخص انرژی، بدون هیچ واژه صریحی.',
+            subtitle:
+                'تعدیل خودکار فشار کارهای روزانه و محاسبه اثر فاز بر عدد انرژی.',
+            whatGoesOut:
+                'خروجی: فقط یک اثر عددی ملایم روی شاخص انرژی، بدون هیچ واژه صریحی.',
             value: data.energyConsent,
-            onChanged: (val) => onDataChanged(data.copyWith(energyConsent: val)),
+            onChanged: (val) =>
+                onDataChanged(data.copyWith(energyConsent: val)),
           ),
           const SizedBox(height: 10),
 
           // 3. Sleep Consent
           _buildConsentTile(
             title: 'هماهنگی با بخش خواب و استراحت',
-            subtitle: 'پیشنهاد ساعات خواب و استراحت متناسب با نیاز بدن در فازهای مختلف.',
-            whatGoesOut: 'خروجی: فقط در دیتابیس محلی دستگاه برای تنظیم اهداف خواب.',
+            subtitle:
+                'پیشنهاد ساعات خواب و استراحت متناسب با نیاز بدن در فازهای مختلف.',
+            whatGoesOut:
+                'خروجی: فقط در دیتابیس محلی دستگاه برای تنظیم اهداف خواب.',
             value: data.sleepConsent,
             onChanged: (val) => onDataChanged(data.copyWith(sleepConsent: val)),
           ),
@@ -98,30 +110,38 @@ class Step4Consents extends StatelessWidget {
           // 4. Reminders Consent
           _buildConsentTile(
             title: 'یادآوری‌های محرمانه',
-            subtitle: 'دریافت اعلان‌های ساده و بدون متن صریح برای ثبت دوره و حالات بدنی.',
-            whatGoesOut: 'خروجی: اعلان محلی روی همین گوشی، بدون درج کلمات افشاکننده.',
+            subtitle:
+                'دریافت اعلان‌های ساده و بدون متن صریح برای ثبت دوره و حالات بدنی.',
+            whatGoesOut:
+                'خروجی: اعلان محلی روی همین گوشی، بدون درج کلمات افشاکننده.',
             value: data.remindersConsent,
-            onChanged: (val) => onDataChanged(data.copyWith(remindersConsent: val)),
+            onChanged: (val) =>
+                onDataChanged(data.copyWith(remindersConsent: val)),
           ),
           const SizedBox(height: 10),
 
           // 5. Dashboard Consent
           _buildConsentTile(
             title: 'نمایش کارت خلاصه در امروز',
-            subtitle: 'نمایش وضعیت فاز جاری در تب امروز برای دسترسی و پایش سریع.',
+            subtitle:
+                'نمایش وضعیت فاز جاری در تب امروز برای دسترسی و پایش سریع.',
             whatGoesOut: 'خروجی: فقط یک کارت محرمانه در تب امروز همین دستگاه.',
             value: data.dashboardConsent,
-            onChanged: (val) => onDataChanged(data.copyWith(dashboardConsent: val)),
+            onChanged: (val) =>
+                onDataChanged(data.copyWith(dashboardConsent: val)),
           ),
           const SizedBox(height: 10),
 
           // 6. Calendar Consent
           _buildConsentTile(
             title: 'نمایش فاز چرخه در تقویم اصلی',
-            subtitle: 'علامت‌گذاری ملایم روزهای پیش‌بینی‌شده و فاز جاری در تقویم و ریتم‌های روزانه.',
-            whatGoesOut: 'خروجی: نمایش نشانگر غیرمستقیم در تقویم داخلی همین دستگاه.',
+            subtitle:
+                'علامت‌گذاری ملایم روزهای پیش‌بینی‌شده و فاز جاری در تقویم و ریتم‌های روزانه.',
+            whatGoesOut:
+                'خروجی: نمایش نشانگر غیرمستقیم در تقویم داخلی همین دستگاه.',
             value: data.calendarConsent,
-            onChanged: (val) => onDataChanged(data.copyWith(calendarConsent: val)),
+            onChanged: (val) =>
+                onDataChanged(data.copyWith(calendarConsent: val)),
           ),
 
           const SizedBox(height: 24),
@@ -134,7 +154,9 @@ class Step4Consents extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colors.textPrimary,
                     side: BorderSide(color: colors.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: onBack,
@@ -147,7 +169,9 @@ class Step4Consents extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     elevation: 0,
                   ),
@@ -179,10 +203,14 @@ class Step4Consents extends StatelessWidget {
       decoration: BoxDecoration(
         color: value
             ? primaryColor.withValues(alpha: isDark ? 0.14 : 0.06)
-            : (isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02)),
+            : (isDark
+                  ? Colors.white.withValues(alpha: 0.03)
+                  : Colors.black.withValues(alpha: 0.02)),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: value ? primaryColor.withValues(alpha: 0.5) : colors.border.withValues(alpha: 0.4),
+          color: value
+              ? primaryColor.withValues(alpha: 0.5)
+              : colors.border.withValues(alpha: 0.4),
           width: value ? 1.5 : 1,
         ),
       ),
@@ -199,7 +227,7 @@ class Step4Consents extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    ),
+                  ),
                 ),
               ),
               CupertinoSwitch(
@@ -235,7 +263,7 @@ class Step4Consents extends StatelessWidget {
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
                     color: value ? primaryColor : colors.textSecondary,
-                    ),
+                  ),
                 ),
               ),
             ],

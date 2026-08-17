@@ -9,7 +9,6 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_ai_consent_sheet.dart';
 
 class CycleSosSection extends StatelessWidget {
-
   const CycleSosSection({
     super.key,
     required this.engineOutput,
@@ -34,7 +33,8 @@ class CycleSosSection extends StatelessWidget {
     if (phase == CyclePhase.ovulation) {
       emoji = '✨';
       title = 'سلامت و شادابی در فاز باروری';
-      subtitle = 'راهکارها و رژیم‌های غذایی برای استفاده حداکثری از اوج شادابی بدنی';
+      subtitle =
+          'راهکارها و رژیم‌های غذایی برای استفاده حداکثری از اوج شادابی بدنی';
       themeColor = const Color(0xff06B6D4);
     } else if (phase == CyclePhase.luteal) {
       emoji = '💆';
@@ -44,7 +44,8 @@ class CycleSosSection extends StatelessWidget {
     } else if (phase == CyclePhase.follicular) {
       emoji = '⚡';
       title = 'تقویت انرژی و روتین فاز فولیکولار';
-      subtitle = 'راهکارهای مناسب برای برنامه‌ریزی فعالیت‌ها و ارتقای توان فیزیکی';
+      subtitle =
+          'راهکارهای مناسب برای برنامه‌ریزی فعالیت‌ها و ارتقای توان فیزیکی';
       themeColor = const Color(0xff8B5CF6);
     }
 
@@ -63,12 +64,12 @@ class CycleSosSection extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: themeColor.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
-                    border: Border.all(color: themeColor.withValues(alpha: 0.3), width: 1.5),
+                    border: Border.all(
+                      color: themeColor.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
                   ),
-                  child: Text(
-                    emoji,
-                    style: const TextStyle(fontSize: 24),
-                  ),
+                  child: Text(emoji, style: const TextStyle(fontSize: 24)),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -116,7 +117,7 @@ class CycleSosSection extends StatelessWidget {
       isScrollControlled: true,
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        
+
         var sheetTitle = 'راهکارهای سریع تسکین درد';
         var emoji = '🆘';
         if (phase == CyclePhase.ovulation) {
@@ -137,75 +138,95 @@ class CycleSosSection extends StatelessWidget {
           expand: false,
           builder: (context, scrollController) {
             return ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.black.withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.65),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.35)
+                        : Colors.white.withValues(alpha: 0.65),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
                     border: Border.all(
-                      color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08),
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.08),
                     ),
                   ),
-              child: Column(
-                children: [
-                  // Handle
-                  Container(
-                    margin: const EdgeInsets.only(top: 12, bottom: 8),
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white24 : Colors.black26,
-                      borderRadius: BorderRadius.circular(2.5),
-                    ),
-                  ),
-                  // Title
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
+                  child: Column(
+                    children: [
+                      // Handle
+                      Container(
+                        margin: const EdgeInsets.only(top: 12, bottom: 8),
+                        width: 40,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white24 : Colors.black26,
+                          borderRadius: BorderRadius.circular(2.5),
+                        ),
+                      ),
+                      // Title
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 16,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(emoji, style: const TextStyle(fontSize: 20)),
-                            const SizedBox(width: 8),
-                            Text(
-                              sheetTitle,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
+                            Row(
+                              children: [
+                                Text(
+                                  emoji,
+                                  style: const TextStyle(fontSize: 20),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  sheetTitle,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                CupertinoIcons.clear_circled_solid,
+                                color: colors.textSecondary,
                               ),
+                              onPressed: () => Navigator.pop(context),
                             ),
                           ],
                         ),
-                        IconButton(
-                          icon: Icon(CupertinoIcons.clear_circled_solid, color: colors.textSecondary),
-                          onPressed: () => Navigator.pop(context),
+                      ),
+                      Divider(
+                        color: isDark ? Colors.white12 : Colors.black12,
+                        height: 1,
+                      ),
+                      Expanded(
+                        child: ListView(
+                          controller: scrollController,
+                          padding: const EdgeInsets.all(16),
+                          children: [
+                            _buildAiAssistantCard(context),
+                            const SizedBox(height: 20),
+                            ..._buildPhaseSpecificContent(context),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Divider(color: isDark ? Colors.white12 : Colors.black12, height: 1),
-                  Expanded(
-                    child: ListView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        _buildAiAssistantCard(context),
-                        const SizedBox(height: 20),
-                        ..._buildPhaseSpecificContent(context),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
-      },
-    );
       },
     );
   }
@@ -220,13 +241,15 @@ class CycleSosSection extends StatelessWidget {
         _buildPositionCard(
           context,
           title: 'ورزش‌های قدرتی و هوازی شدید (HIIT)',
-          description: 'به دلیل بالا بودن سطح استروژن و تستوسترون در فاز تخمک‌گذاری، قدرت عضلانی و هماهنگی بدنی شما در اوج است. بهترین زمان برای دویدن، بدنسازی و ورزش‌های چالشی.',
+          description:
+              'به دلیل بالا بودن سطح استروژن و تستوسترون در فاز تخمک‌گذاری، قدرت عضلانی و هماهنگی بدنی شما در اوج است. بهترین زمان برای دویدن، بدنسازی و ورزش‌های چالشی.',
           icon: CupertinoIcons.sportscourt,
         ),
         _buildPositionCard(
           context,
           title: 'برنامه‌ریزی کارهای مهم و مذاکره',
-          description: 'افزایش طبیعی اعتماد به نفس و مهارت‌های ارتباطی در این دوره، انجام کارهای اجتماعی و جلسات مهم کاری را بسیار اثربخش‌تر می‌کند.',
+          description:
+              'افزایش طبیعی اعتماد به نفس و مهارت‌های ارتباطی در این دوره، انجام کارهای اجتماعی و جلسات مهم کاری را بسیار اثربخش‌تر می‌کند.',
           icon: CupertinoIcons.lightbulb,
         ),
         const SizedBox(height: 20),
@@ -235,12 +258,14 @@ class CycleSosSection extends StatelessWidget {
         _buildHomeRemedyCard(
           context,
           title: 'تغذیه سبک و سرشار از آنتی‌اکسیدان 🥦',
-          description: 'مصرف غلات کامل، دانه‌های کنجد و آفتابگردان، میوه‌های تازه و سبزیجات برگ‌پهن به کبد در پردازش استروژن‌های اضافی کمک می‌کند.',
+          description:
+              'مصرف غلات کامل، دانه‌های کنجد و آفتابگردان، میوه‌های تازه و سبزیجات برگ‌پهن به کبد در پردازش استروژن‌های اضافی کمک می‌کند.',
         ),
         _buildHomeRemedyCard(
           context,
           title: 'آبرسانی و هیدراتاسیون کامل پوست 💧',
-          description: 'نوشیدن آب کافی و دمنوش‌های سرد نعناع یا بهارنارنج، علاوه بر شادابی بیشتر، به بهبود کیفیت مخاط دهانه رحم کمک می‌کند.',
+          description:
+              'نوشیدن آب کافی و دمنوش‌های سرد نعناع یا بهارنارنج، علاوه بر شادابی بیشتر، به بهبود کیفیت مخاط دهانه رحم کمک می‌کند.',
         ),
       ];
     } else if (phase == CyclePhase.luteal) {
@@ -250,12 +275,14 @@ class CycleSosSection extends StatelessWidget {
         _buildPositionCard(
           context,
           title: 'تنفس عمیق شکمی ۴-۷-۸ و یوگا 🧘',
-          description: 'فعال‌سازی سیستم عصبی پاراسمپاتیک برای مهار ترشح کورتیزول و کاهش اضطراب، خشم و تنش‌های روانی پیش از قاعدگی.',
+          description:
+              'فعال‌سازی سیستم عصبی پاراسمپاتیک برای مهار ترشح کورتیزول و کاهش اضطراب، خشم و تنش‌های روانی پیش از قاعدگی.',
         ),
         _buildPositionCard(
           context,
           title: 'تمرینات کششی سبک و پیلاتس 🤸',
-          description: 'کشش ملایم لگن و فیله کمر به کاهش گرفتگی‌های زودرس و تسکین اسپاسم‌های شکمی ملایم پیش‌قاعدگی کمک می‌کند.',
+          description:
+              'کشش ملایم لگن و فیله کمر به کاهش گرفتگی‌های زودرس و تسکین اسپاسم‌های شکمی ملایم پیش‌قاعدگی کمک می‌کند.',
         ),
         const SizedBox(height: 20),
         _buildSectionHeader(context, '🫖 راهکارهای تغذیه‌ای برای کنترل علائم'),
@@ -263,27 +290,34 @@ class CycleSosSection extends StatelessWidget {
         _buildHomeRemedyCard(
           context,
           title: 'کاهش شدید مصرف نمک و کافئین ☕',
-          description: 'نمک کمتر از احتباس مایعات، نفخ و درد سینه جلوگیری می‌کند. کافئین کمتر نیز تحریک‌پذیری و نوسانات خلق را کنترل می‌کند.',
+          description:
+              'نمک کمتر از احتباس مایعات، نفخ و درد سینه جلوگیری می‌کند. کافئین کمتر نیز تحریک‌پذیری و نوسانات خلق را کنترل می‌کند.',
         ),
         _buildHomeRemedyCard(
           context,
           title: 'دمنوش گل‌گاوزبان یا بابونه 🫖',
-          description: 'دمنوش‌های آرام‌بخش عضلات و اعصاب که ترجیحاً ۲ تا ۳ روز قبل از موعد پریود مصرف شوند تا خواب باکیفیتی داشته باشید.',
+          description:
+              'دمنوش‌های آرام‌بخش عضلات و اعصاب که ترجیحاً ۲ تا ۳ روز قبل از موعد پریود مصرف شوند تا خواب باکیفیتی داشته باشید.',
         ),
       ];
     } else if (phase == CyclePhase.follicular) {
       return [
-        _buildSectionHeader(context, '💪 برنامه‌ریزی فعالیت‌ها و افزایش تدریجی تحرک'),
+        _buildSectionHeader(
+          context,
+          '💪 برنامه‌ریزی فعالیت‌ها و افزایش تدریجی تحرک',
+        ),
         const SizedBox(height: 12),
         _buildPositionCard(
           context,
           title: 'شروع برنامه‌های ورزشی و تحرک قدرتی 🏃',
-          description: 'استروژن رو به افزایش است، بنابراین زمان عالی برای تمرینات هوازی، ورزش‌های استقامتی متوسط و پیاده‌روی سریع است.',
+          description:
+              'استروژن رو به افزایش است، بنابراین زمان عالی برای تمرینات هوازی، ورزش‌های استقامتی متوسط و پیاده‌روی سریع است.',
         ),
         _buildPositionCard(
           context,
           title: 'شروع پروژه‌های جدید و یادگیری',
-          description: 'پس از پایان پریود، تمرکز ذهنی و تمایل به یادگیری افزایش می‌یابد. زمان بسیار خوبی برای خواندن کتاب‌های جدید یا کارهای فکری خلاقانه است.',
+          description:
+              'پس از پایان پریود، تمرکز ذهنی و تمایل به یادگیری افزایش می‌یابد. زمان بسیار خوبی برای خواندن کتاب‌های جدید یا کارهای فکری خلاقانه است.',
           icon: CupertinoIcons.lightbulb,
         ),
         const SizedBox(height: 20),
@@ -292,12 +326,14 @@ class CycleSosSection extends StatelessWidget {
         _buildHomeRemedyCard(
           context,
           title: 'غذاهای غنی از آهن و ویتامین C 🥑',
-          description: 'برای جبران آهن از دست رفته در قاعدگی قبلی، اسفناج، حبوبات، مغزها و مرکبات تازه را به رژیم غذایی اضافه کنید.',
+          description:
+              'برای جبران آهن از دست رفته در قاعدگی قبلی، اسفناج، حبوبات، مغزها و مرکبات تازه را به رژیم غذایی اضافه کنید.',
         ),
         _buildHomeRemedyCard(
           context,
           title: 'مصرف پروبیوتیک‌ها و هضم بهتر 🥕',
-          description: 'غذاهای تخمیری، ماست پروبیوتیک و مواد غذایی فیبردار به کارکرد بهتر سیستم گوارش و طراوت پوست در این دوره کمک می‌کنند.',
+          description:
+              'غذاهای تخمیری، ماست پروبیوتیک و مواد غذایی فیبردار به کارکرد بهتر سیستم گوارش و طراوت پوست در این دوره کمک می‌کنند.',
         ),
       ];
     } else {
@@ -307,22 +343,26 @@ class CycleSosSection extends StatelessWidget {
         _buildPositionCard(
           context,
           title: "پوزیشن کودک (Child's Pose) 🧒",
-          description: 'روی زانو بنشینید، بالاتنه را جلو ببرید و پیشانی را روی زمین بگذارید. دست‌ها را جلو بکشید. ۱ تا ۳ دقیقه نگه دارید. فشار از عضلات شکم و کمر کم می‌شود.',
+          description:
+              'روی زانو بنشینید، بالاتنه را جلو ببرید و پیشانی را روی زمین بگذارید. دست‌ها را جلو بکشید. ۱ تا ۳ دقیقه نگه دارید. فشار از عضلات شکم و کمر کم می‌شود.',
         ),
         _buildPositionCard(
           context,
           title: 'پوزیشن گربه-گاو (Cat-Cow) 🐱',
-          description: 'چهار دست و پا، سر بالا + کمر گود (گاو) ← سر پایین + کمر قوس (گربه). ۱۰ بار تکرار. گردش خون لگن بهتر می‌شود.',
+          description:
+              'چهار دست و پا، سر بالا + کمر گود (گاو) ← سر پایین + کمر قوس (گربه). ۱۰ بار تکرار. گردش خون لگن بهتر می‌شود.',
         ),
         _buildPositionCard(
           context,
           title: 'پوزیشن پروانه (Butterfly) 🦋',
-          description: 'نشسته، کف پاها را به هم بچسبانید، زانوها را آرام بالا و پایین ببرید. عضلات لگن شل می‌شوند.',
+          description:
+              'نشسته، کف پاها را به هم بچسبانید، زانوها را آرام بالا و پایین ببرید. عضلات لگن شل می‌شوند.',
         ),
         _buildPositionCard(
           context,
           title: 'پوزیشن جنینی (Fetal Position)',
-          description: 'به پهلو بخوابید، زانوها را به سینه نزدیک کنید. عضلات شکم ریلکس می‌شوند.',
+          description:
+              'به پهلو بخوابید، زانوها را به سینه نزدیک کنید. عضلات شکم ریلکس می‌شوند.',
           icon: CupertinoIcons.moon_stars,
         ),
         const SizedBox(height: 20),
@@ -331,22 +371,26 @@ class CycleSosSection extends StatelessWidget {
         _buildHomeRemedyCard(
           context,
           title: 'دمنوش‌های ضداسپاسم 🫖',
-          description: 'دمنوش بابونه یا زنجبیل. ۱ قاشق چایخوری در آب جوش، ۱۰ دقیقه دم بکشد. ضد اسپاسم و آرام‌بخش عضلات صاف رحم.',
+          description:
+              'دمنوش بابونه یا زنجبیل. ۱ قاشق چایخوری در آب جوش، ۱۰ دقیقه دم بکشد. ضد اسپاسم و آرام‌بخش عضلات صاف رحم.',
         ),
         _buildHomeRemedyCard(
           context,
           title: 'کمپرس گرم 🔥',
-          description: 'یک کیسه آبگرم یا حوله گرم روی شکم یا کمر بگذارید. ۱۵-۲۰ دقیقه. گرما جریان خون را بهبود داده و عضلات منقبض را شل می‌کند.',
+          description:
+              'یک کیسه آبگرم یا حوله گرم روی شکم یا کمر بگذارید. ۱۵-۲۰ دقیقه. گرما جریان خون را بهبود داده و عضلات منقبض را شل می‌کند.',
         ),
         _buildHomeRemedyCard(
           context,
           title: 'ماساژ ملایم شکم 🫧',
-          description: 'با حرکات دایره‌ای آرام، شکم را در جهت عقربه‌های ساعت ماساژ دهید. استفاده از روغن بابونه یا اسطوخودوس به تسکین کمک بیشتری می‌کند.',
+          description:
+              'با حرکات دایره‌ای آرام، شکم را در جهت عقربه‌های ساعت ماساژ دهید. استفاده از روغن بابونه یا اسطوخودوس به تسکین کمک بیشتری می‌کند.',
         ),
         _buildHomeRemedyCard(
           context,
           title: 'تنفس عمیق ۴-۷-۸ 🧘',
-          description: '۴ ثانیه نفس بکشید، ۷ ثانیه نگه دارید، ۸ ثانیه بازدم. ۴ بار تکرار. سیستم عصبی پاراسمپاتیک را فعال و ادراک درد را کاهش می‌دهد.',
+          description:
+              '۴ ثانیه نفس بکشید، ۷ ثانیه نگه دارید، ۸ ثانیه بازدم. ۴ بار تکرار. سیستم عصبی پاراسمپاتیک را فعال و ادراک درد را کاهش می‌دهد.',
         ),
         const SizedBox(height: 24),
         Container(
@@ -354,11 +398,17 @@ class CycleSosSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xffEC4899).withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xffEC4899).withValues(alpha: 0.15)),
+            border: Border.all(
+              color: const Color(0xffEC4899).withValues(alpha: 0.15),
+            ),
           ),
           child: Row(
             children: [
-              const Icon(CupertinoIcons.info_circle_fill, color: Color(0xffEC4899), size: 20),
+              const Icon(
+                CupertinoIcons.info_circle_fill,
+                color: Color(0xffEC4899),
+                size: 20,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -390,7 +440,12 @@ class CycleSosSection extends StatelessWidget {
     );
   }
 
-  Widget _buildPositionCard(BuildContext context, {required String title, required String description, IconData? icon}) {
+  Widget _buildPositionCard(
+    BuildContext context, {
+    required String title,
+    required String description,
+    IconData? icon,
+  }) {
     final colors = context.colors;
     var themeColor = const Color(0xffEC4899);
     if (phase == CyclePhase.ovulation) {
@@ -404,7 +459,10 @@ class CycleSosSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: themeColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: themeColor.withValues(alpha: 0.1), width: 1.2),
+        border: Border.all(
+          color: themeColor.withValues(alpha: 0.1),
+          width: 1.2,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -444,17 +502,26 @@ class CycleSosSection extends StatelessWidget {
     );
   }
 
-  Widget _buildHomeRemedyCard(BuildContext context, {required String title, required String description, IconData? icon}) {
+  Widget _buildHomeRemedyCard(
+    BuildContext context, {
+    required String title,
+    required String description,
+    IconData? icon,
+  }) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.02)
+            : Colors.black.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05), 
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.05),
           width: 1.2,
         ),
       ),
@@ -533,11 +600,7 @@ class CycleSosSection extends StatelessWidget {
             padding: EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(
-                  CupertinoIcons.sparkles,
-                  color: Colors.white,
-                  size: 24,
-                ),
+                Icon(CupertinoIcons.sparkles, color: Colors.white, size: 24),
                 SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -554,15 +617,16 @@ class CycleSosSection extends StatelessWidget {
                       SizedBox(height: 4),
                       Text(
                         'مشاوره اختصاصی و خودمراقبتی هوشمند برای تسکین درد و ارتقای سلامتی ✨',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.white70),
                       ),
                     ],
                   ),
                 ),
-                Icon(CupertinoIcons.chevron_left, color: Colors.white, size: 16),
+                Icon(
+                  CupertinoIcons.chevron_left,
+                  color: Colors.white,
+                  size: 16,
+                ),
               ],
             ),
           ),
@@ -582,7 +646,9 @@ class CycleSosSection extends StatelessWidget {
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => AssistantSheet(persona: PersonaRegistry.instance.getPersona('cycle')!),
+          builder: (context) => AssistantSheet(
+            persona: PersonaRegistry.instance.getPersona('cycle')!,
+          ),
         );
       },
     );

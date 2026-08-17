@@ -53,12 +53,18 @@ Future<void> showCycleAiConsentSheet(
                     color: const Color(0xFFEC4899).withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.psychology_rounded, color: Color(0xFFEC4899), size: 28),
+                  child: const Icon(
+                    Icons.psychology_rounded,
+                    color: Color(0xFFEC4899),
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
-                    isPregnancyMode ? 'دستیار هوشمند بارداری' : 'دستیار هوشمند سیکل بانوان',
+                    isPregnancyMode
+                        ? 'دستیار هوشمند بارداری'
+                        : 'دستیار هوشمند سیکل بانوان',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -87,7 +93,9 @@ Future<void> showCycleAiConsentSheet(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white70,
                       side: const BorderSide(color: Color(0xFF334155)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     onPressed: () => Navigator.pop(ctx, false),
@@ -101,20 +109,19 @@ Future<void> showCycleAiConsentSheet(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFEC4899),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     onPressed: () async {
                       try {
                         final db = await DatabaseHelper.instance.database;
-                        await db.insert(
-                          'settings',
-                          {
-                            'key': 'cycle_consent_ai',
-                            'value': 'true',
-                            'updatedAt': DateTime.now().millisecondsSinceEpoch,
-                          },
-                        );
+                        await db.insert('settings', {
+                          'key': 'cycle_consent_ai',
+                          'value': 'true',
+                          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                        });
                         if (settings != null) {
                           settings['cycle_consent_ai'] = 'true';
                         }

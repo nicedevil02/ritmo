@@ -10,7 +10,8 @@ class CycleCorrelationSection extends StatefulWidget {
   const CycleCorrelationSection({super.key});
 
   @override
-  State<CycleCorrelationSection> createState() => _CycleCorrelationSectionState();
+  State<CycleCorrelationSection> createState() =>
+      _CycleCorrelationSectionState();
 }
 
 class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
@@ -63,7 +64,9 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xffEC4899)));
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xffEC4899)),
+      );
     }
 
     return Column(
@@ -75,7 +78,11 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                const Icon(CupertinoIcons.info_circle_fill, color: Colors.blueAccent, size: 18),
+                const Icon(
+                  CupertinoIcons.info_circle_fill,
+                  color: Colors.blueAccent,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -103,10 +110,14 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
           if (hasCoeff) {
             if (coeff.abs() > 0.6) {
               indicatorColor = const Color(0xffEC4899);
-              strengthText = coeff > 0 ? 'همبستگی مستقیم قوی' : 'همبستگی معکوس قوی';
+              strengthText = coeff > 0
+                  ? 'همبستگی مستقیم قوی'
+                  : 'همبستگی معکوس قوی';
             } else if (coeff.abs() > 0.3) {
               indicatorColor = Colors.amber;
-              strengthText = coeff > 0 ? 'همبستگی مستقیم ملایم' : 'همبستگی معکوس ملایم';
+              strengthText = coeff > 0
+                  ? 'همبستگی مستقیم ملایم'
+                  : 'همبستگی معکوس ملایم';
             } else {
               indicatorColor = Colors.green;
               strengthText = 'بدون نوسان همبسته';
@@ -130,14 +141,19 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: isDark ? Colors.white : colors.textPrimary,
-                            ),
+                          ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: indicatorColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: indicatorColor.withValues(alpha: 0.3)),
+                            border: Border.all(
+                              color: indicatorColor.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Text(
                             strengthText,
@@ -145,7 +161,7 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                               fontSize: 14,
                               color: indicatorColor,
                               fontWeight: FontWeight.bold,
-                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -159,15 +175,20 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                           children: [
                             Text(
                               'ضریب پیرسون: ',
-                              style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: colors.textSecondary,
+                              ),
                             ),
                             Text(
                               _toPersianDigits(coeff.toStringAsFixed(2)),
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : colors.textPrimary,
-                                ),
+                                color: isDark
+                                    ? Colors.white
+                                    : colors.textPrimary,
+                              ),
                             ),
                           ],
                         ),
@@ -186,7 +207,6 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
             ),
           );
         }),
-
       ],
     );
   }

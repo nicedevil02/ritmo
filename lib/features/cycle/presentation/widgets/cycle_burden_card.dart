@@ -39,7 +39,11 @@ class CycleBurdenCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.monitor_heart_outlined, size: 20, color: badgeColor),
+                  Icon(
+                    Icons.monitor_heart_outlined,
+                    size: 20,
+                    color: badgeColor,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'شاخص ریتم بدنی و تنظیم بار روزانه',
@@ -69,24 +73,29 @@ class CycleBurdenCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          ...advice.recommendationsFa.map((rec) => Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• ', style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold)),
-                    Expanded(
-                      child: Text(
-                        rec,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.textPrimary,
-                        ),
-                      ),
+          ...advice.recommendationsFa.map(
+            (rec) => Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '• ',
+                    style: TextStyle(
+                      color: badgeColor,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                  Expanded(
+                    child: Text(
+                      rec,
+                      style: TextStyle(fontSize: 12, color: colors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

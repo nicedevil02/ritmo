@@ -13,11 +13,7 @@ class KickSessionTracker {
   DateTime? lastTap;
   DateTime? start;
 
-  KickSessionTracker({
-    this.count = 0,
-    this.start,
-    this.lastTap,
-  });
+  KickSessionTracker({this.count = 0, this.start, this.lastTap});
 
   /// Registers a tap at time [now]. Returns true if target count (10) reached.
   bool registerTap(DateTime now) {
@@ -41,7 +37,8 @@ class KickSessionTracker {
       final db = await DatabaseHelper.instance.database;
       final rows = await db.query(
         'app_settings',
-        where: "key IN ('preg_kick_session_start', 'preg_kick_session_count', 'preg_kick_session_last_tap')",
+        where:
+            "key IN ('preg_kick_session_start', 'preg_kick_session_count', 'preg_kick_session_last_tap')",
       );
 
       final map = <String, String>{};
@@ -64,7 +61,9 @@ class KickSessionTracker {
 
       final countVal = int.tryParse(map['preg_kick_session_count'] ?? '0') ?? 0;
       final lastTapMsStr = map['preg_kick_session_last_tap'];
-      final lastTapDt = lastTapMsStr != null ? DateTime.fromMillisecondsSinceEpoch(int.parse(lastTapMsStr)) : null;
+      final lastTapDt = lastTapMsStr != null
+          ? DateTime.fromMillisecondsSinceEpoch(int.parse(lastTapMsStr))
+          : null;
 
       return KickSessionTracker(
         count: countVal,
@@ -81,13 +80,19 @@ class KickSessionTracker {
     if (start == null) return;
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.insert('app_settings', {'key': 'preg_kick_session_start', 'value': start!.millisecondsSinceEpoch.toString()},
-          conflictAlgorithm: ConflictAlgorithm.replace);
-      await db.insert('app_settings', {'key': 'preg_kick_session_count', 'value': count.toString()},
-          conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert('app_settings', {
+        'key': 'preg_kick_session_start',
+        'value': start!.millisecondsSinceEpoch.toString(),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert('app_settings', {
+        'key': 'preg_kick_session_count',
+        'value': count.toString(),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
       if (lastTap != null) {
-        await db.insert('app_settings', {'key': 'preg_kick_session_last_tap', 'value': lastTap!.millisecondsSinceEpoch.toString()},
-            conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('app_settings', {
+          'key': 'preg_kick_session_last_tap',
+          'value': lastTap!.millisecondsSinceEpoch.toString(),
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
     } catch (_) {}
   }
@@ -96,8 +101,11 @@ class KickSessionTracker {
   static Future<void> clearSettings() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.delete('app_settings',
-          where: "key IN ('preg_kick_session_start', 'preg_kick_session_count', 'preg_kick_session_last_tap')");
+      await db.delete(
+        'app_settings',
+        where:
+            "key IN ('preg_kick_session_start', 'preg_kick_session_count', 'preg_kick_session_last_tap')",
+      );
     } catch (_) {}
   }
 
@@ -122,7 +130,9 @@ class KickSessionTracker {
 
   /// Calculates personal baseline average duration (in seconds) over last 7 complete sessions.
   /// Returns null if fewer than 3 complete sessions exist.
-  static Future<double?> getPersonalBaselineDurationSecs({required String pregnancyId}) async {
+  static Future<double?> getPersonalBaselineDurationSecs({
+    required String pregnancyId,
+  }) async {
     try {
       final db = await DatabaseHelper.instance.database;
       final rows = await db.query(

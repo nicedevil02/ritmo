@@ -50,22 +50,27 @@ class Step3RhythmParams extends StatelessWidget {
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                   color: colors.textPrimary,
-                  ),
+                ),
               ),
               // Preset button
               InkWell(
                 onTap: () {
-                  onDataChanged(data.copyWith(cycleLength: 28, periodDuration: 6));
+                  onDataChanged(
+                    data.copyWith(cycleLength: 28, periodDuration: 6),
+                  );
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
                   child: Text(
                     'مطمئن نیستم (تنظیم میانگین ۲۸/۶)',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: primaryColor,
-                      ),
+                    ),
                   ),
                 ),
               ),
@@ -74,10 +79,7 @@ class Step3RhythmParams extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'میانگین طول چرخه و مدت خونریزی خود را مشخص کنید.',
-            style: TextStyle(
-              fontSize: 12.5,
-              color: colors.textSecondary,
-              ),
+            style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
           ),
           const SizedBox(height: 16),
 
@@ -91,7 +93,7 @@ class Step3RhythmParams extends StatelessWidget {
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
-                  ),
+                ),
               ),
               Text(
                 '${_toPersianDigits(data.cycleLength.toString())} روز',
@@ -99,7 +101,7 @@ class Step3RhythmParams extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: primaryColor,
-                  ),
+                ),
               ),
             ],
           ),
@@ -116,11 +118,16 @@ class Step3RhythmParams extends StatelessWidget {
               onChanged: (v) {
                 final newLen = v.round();
                 final newMaxBleeding = math.min(10, math.max(3, newLen - 2));
-                final cappedPeriod = safePeriodDuration.clamp(3, newMaxBleeding);
-                onDataChanged(data.copyWith(
-                  cycleLength: newLen,
-                  periodDuration: cappedPeriod,
-                ));
+                final cappedPeriod = safePeriodDuration.clamp(
+                  3,
+                  newMaxBleeding,
+                );
+                onDataChanged(
+                  data.copyWith(
+                    cycleLength: newLen,
+                    periodDuration: cappedPeriod,
+                  ),
+                );
               },
             ),
           ),
@@ -137,7 +144,7 @@ class Step3RhythmParams extends StatelessWidget {
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
-                  ),
+                ),
               ),
               Text(
                 '${_toPersianDigits(safePeriodDuration.toString())} روز',
@@ -145,7 +152,7 @@ class Step3RhythmParams extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: primaryColor,
-                  ),
+                ),
               ),
             ],
           ),
@@ -197,7 +204,7 @@ class Step3RhythmParams extends StatelessWidget {
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                         color: colors.textPrimary,
-                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -214,7 +221,9 @@ class Step3RhythmParams extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colors.textPrimary,
                     side: BorderSide(color: colors.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: onBack,
@@ -227,7 +236,9 @@ class Step3RhythmParams extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     elevation: 0,
                   ),
@@ -263,8 +274,18 @@ class Step3RhythmParams extends StatelessWidget {
 
   String _monthNameFa(int m) {
     const months = [
-      'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-      'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+      'فروردین',
+      'اردیبهشت',
+      'خرداد',
+      'تیر',
+      'مرداد',
+      'شهریور',
+      'مهر',
+      'آبان',
+      'آذر',
+      'دی',
+      'بهمن',
+      'اسفند',
     ];
     if (m >= 1 && m <= 12) return months[m - 1];
     return '';

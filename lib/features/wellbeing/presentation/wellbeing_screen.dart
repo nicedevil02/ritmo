@@ -2,6 +2,7 @@ import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:ritmo/features/wellbeing/logic/wellbeing_log_gateway.dart';
 
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
@@ -243,32 +244,27 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       Future<T?> evalEngine<I, T>(
         Type engineType,
         I input,
-        Future<T> Function() fallbackCalc,
       ) async {
         try {
           return await RitmoEngineBus.instance
               .execute<I, T>(engineType, input)
               .timeout(const Duration(milliseconds: 1000));
         } catch (_) {
-          try {
-            return await fallbackCalc().timeout(const Duration(milliseconds: 1000));
-          } catch (_) {
-            return null;
-          }
+          return null;
         }
       }
 
       final engineResults = await Future.wait([
         evalEngine<EnergyAnalyticsEngineInput, EnergyAnalyticsOutput>(
-            EnergyAnalyticsEngine, energyInput, () => EnergyAnalyticsEngine().calculate(energyInput)),
+            EnergyAnalyticsEngine, energyInput),
         evalEngine<MoodEngineInput, MoodEngineOutput>(
-            MoodEngine, moodInput, () => MoodEngine().calculate(moodInput)),
+            MoodEngine, moodInput),
         evalEngine<SleepEngineInput, SleepEngineOutput>(
-            SleepEngine, sleepInput, () => SleepEngine().calculate(sleepInput)),
+            SleepEngine, sleepInput),
         evalEngine<ReflectionEngineInput, ReflectionEngineOutput>(
-            ReflectionEngine, reflectionInput, () => ReflectionEngine().calculate(reflectionInput)),
+            ReflectionEngine, reflectionInput),
         evalEngine<LifeBalanceEngineInput, LifeBalanceEngineOutput>(
-            LifeBalanceEngine, balanceInput, () => LifeBalanceEngine().calculate(balanceInput)),
+            LifeBalanceEngine, balanceInput),
       ]);
 
       if (!mounted || token != _loadToken) return;
@@ -412,11 +408,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       if (mounted) {
         setState(() {
           _loadFailed = true;
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
           _hasLoadedOnce = true;
         });
       }
@@ -429,34 +420,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
     setState(() => _isSavingReflection = true);
     try {
-      final db = await DatabaseHelper.instance.database;
-      final todayStr = RitmoDate.dayKey(DateTime.now());
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
-
-      final existing = await db.query('daily_reflections', where: 'date = ?', whereArgs: [todayStr]);
-      if (existing.isNotEmpty) {
-        await db.update(
-          'daily_reflections',
-          {
-            'goodThing': text,
-            'wins': text,
-            if (_quickReflectionMood != null) 'mood_score': _quickReflectionMood,
-            'updatedAt': nowMs,
-          },
-          where: 'date = ?',
-          whereArgs: [todayStr],
-        );
-      } else {
-        await db.insert('daily_reflections', {
-          'id': 'refl_$nowMs',
-          'date': todayStr,
-          'goodThing': text,
-          'wins': text,
-          if (_quickReflectionMood != null) 'mood_score': _quickReflectionMood,
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        });
-      }
+      await WellbeingLogGateway.instance.saveReflection(
+        goodThing: text,
+        moodScore: _quickReflectionMood,
+      );
 
       _quickReflectionController.clear();
       setState(() => _quickReflectionMood = null);
@@ -1120,13 +1087,13 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     return InkWell(
       onTap: () async {
         RitmoHapticsPolicy.tap();
-        final db = await DatabaseHelper.instance.database;
-        final nowMs = DateTime.now().millisecondsSinceEpoch;
-        await db.insert('energy_logs', {
-          'id': 'eng_$nowMs',
-          'energyLevel': level,
-          'loggedAt': nowMs,
-        });
+        final energyLevel = level == 'HIGH'
+            ? EnergyLevel.high
+            : (level == 'LOW' ? EnergyLevel.low : EnergyLevel.medium);
+        await WellbeingLogGateway.instance.logEnergy(
+          level: energyLevel,
+          source: 'wellbeing_screen',
+        );
         _requestReload();
       },
       borderRadius: BorderRadius.circular(8),
@@ -1797,10 +1764,44 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   ),
                   TextButton.icon(
                     onPressed: () async {
-                      Navigator.pop(ctx);
-                      final db = await DatabaseHelper.instance.database;
-                      await db.delete('daily_reflections', where: 'date = ?', whereArgs: [reflection.date]);
-                      _requestReload();
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (dCtx) => AlertDialog(
+                          title: const Text('حذف بازتاب'),
+                          content: const Text('آیا از حذف این بازتاب مطمئن هستید؟'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dCtx, false),
+                              child: const Text('انصراف'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(dCtx, true),
+                              child: Text('حذف', style: TextStyle(color: colors.error)),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmed == true && context.mounted) {
+                        Navigator.pop(ctx);
+                        final deletedRow = await WellbeingLogGateway.instance.deleteReflection(reflection.date);
+                        _requestReload();
+
+                        if (deletedRow != null && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('بازتاب حذف شد'),
+                              action: SnackBarAction(
+                                label: 'برگردان',
+                                onPressed: () async {
+                                  await WellbeingLogGateway.instance.restoreReflection(deletedRow);
+                                  _requestReload();
+                                },
+                              ),
+                            ),
+                          );
+                        }
+                      }
                     },
                     icon: Icon(Icons.delete, size: 16, color: colors.error),
                     label: Text('حذف', style: TextStyle(color: colors.error)),

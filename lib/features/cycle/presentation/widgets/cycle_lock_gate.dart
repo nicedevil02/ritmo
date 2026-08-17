@@ -19,7 +19,8 @@ class CycleLockGate extends StatefulWidget {
   State<CycleLockGate> createState() => _CycleLockGateState();
 }
 
-class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserver {
+class _CycleLockGateState extends State<CycleLockGate>
+    with WidgetsBindingObserver {
   final CycleLockService _lockService = CycleLockService.instance;
   bool _isLoading = true;
   bool _isLocked = true;
@@ -180,7 +181,8 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
             setState(() {
               _enteredPin = '';
               _firstEnteredPin = null;
-              _pinErrorMessage = 'رمز عبور با تاییدیه مطابقت ندارد. دوباره تلاش کنید.';
+              _pinErrorMessage =
+                  'رمز عبور با تاییدیه مطابقت ندارد. دوباره تلاش کنید.';
             });
           }
         }
@@ -205,7 +207,8 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
             _enteredPin = '';
             _lockoutSeconds = remaining;
             if (remaining > 0) {
-              _pinErrorMessage = 'تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً کمی صبر کنید.';
+              _pinErrorMessage =
+                  'تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً کمی صبر کنید.';
               _startLockoutCountdown();
             } else {
               _pinErrorMessage = 'رمز عبور نادرست است. دوباره تلاش کنید.';
@@ -266,10 +269,12 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
     if (!_hasPin) {
       if (_firstEnteredPin == null) {
         titleText = 'تعیین رمز عبور جدید';
-        subtitleText = 'یک رمز عبور ۴ رقمی جهت محافظت از اطلاعات این بخش تعیین کنید.';
+        subtitleText =
+            'یک رمز عبور ۴ رقمی جهت محافظت از اطلاعات این بخش تعیین کنید.';
       } else {
         titleText = 'تایید رمز عبور جدید';
-        subtitleText = 'لطفاً رمز عبور ۴ رقمی جدید خود را مجدداً وارد کنید تا تایید شود.';
+        subtitleText =
+            'لطفاً رمز عبور ۴ رقمی جدید خود را مجدداً وارد کنید تا تایید شود.';
       }
     }
 
@@ -278,10 +283,7 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
       child: Stack(
         children: [
           // C-09: Do NOT build or leak child in tree/semantics when locked
-          if (!_isLocked)
-            widget.child
-          else
-            const SizedBox.shrink(),
+          if (!_isLocked) widget.child else const SizedBox.shrink(),
 
           if (_isLocked)
             ExcludeSemantics(
@@ -306,7 +308,10 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
                   Center(
                     child: SingleChildScrollView(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 32,
+                        ),
                         child: Directionality(
                           textDirection: TextDirection.rtl,
                           child: RitmoTheme.glassCardLight(
@@ -319,11 +324,17 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
                                 children: [
                                   // Header Row
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       IconButton(
-                                        icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
-                                        onPressed: () => Navigator.maybePop(context),
+                                        icon: Icon(
+                                          CupertinoIcons.xmark,
+                                          color: colors.textSecondary,
+                                          size: 20,
+                                        ),
+                                        onPressed: () =>
+                                            Navigator.maybePop(context),
                                       ),
                                       Text(
                                         'حریم خصوصی چرخه',
@@ -333,7 +344,11 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
                                           color: colors.textPrimary,
                                         ),
                                       ),
-                                      Icon(CupertinoIcons.lock_fill, color: colors.primary, size: 20),
+                                      Icon(
+                                        CupertinoIcons.lock_fill,
+                                        color: colors.primary,
+                                        size: 20,
+                                      ),
                                     ],
                                   ),
                                   Divider(height: 20, color: colors.divider),
@@ -343,10 +358,16 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
                                     height: 48,
                                     width: 48,
                                     decoration: BoxDecoration(
-                                      color: colors.primary.withValues(alpha: 0.12),
+                                      color: colors.primary.withValues(
+                                        alpha: 0.12,
+                                      ),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: Icon(CupertinoIcons.shield_fill, color: colors.primary, size: 24),
+                                    child: Icon(
+                                      CupertinoIcons.shield_fill,
+                                      color: colors.primary,
+                                      size: 24,
+                                    ),
                                   ),
                                   const SizedBox(height: 10),
 
@@ -399,18 +420,26 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
                                   // PIN Dots with Accessibility LiveRegion
                                   Semantics(
                                     liveRegion: true,
-                                    label: '${_toPersianDigits(_enteredPin.length.toString())} رقم وارد شده',
+                                    label:
+                                        '${_toPersianDigits(_enteredPin.length.toString())} رقم وارد شده',
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: List.generate(4, (index) {
-                                        final isActive = _enteredPin.length > index;
+                                        final isActive =
+                                            _enteredPin.length > index;
                                         return Container(
-                                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                                          margin: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                          ),
                                           height: 12,
                                           width: 12,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color: isActive ? colors.primary : colors.textTertiary.withValues(alpha: 0.3),
+                                            color: isActive
+                                                ? colors.primary
+                                                : colors.textTertiary
+                                                      .withValues(alpha: 0.3),
                                           ),
                                         );
                                       }),
@@ -418,14 +447,24 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
                                   ),
 
                                   // Biometrics Button (if PIN is set)
-                                  if (_hasPin && _lockoutSeconds == 0 && !kIsWeb) ...[
+                                  if (_hasPin &&
+                                      _lockoutSeconds == 0 &&
+                                      !kIsWeb) ...[
                                     const SizedBox(height: 14),
                                     TextButton.icon(
                                       onPressed: _authenticateBiometrics,
-                                      icon: Icon(CupertinoIcons.device_phone_portrait, size: 16, color: colors.primary),
+                                      icon: Icon(
+                                        CupertinoIcons.device_phone_portrait,
+                                        size: 16,
+                                        color: colors.primary,
+                                      ),
                                       label: Text(
                                         'ورود با اثر انگشت / چهره',
-                                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: colors.primary),
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: colors.primary,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -437,7 +476,10 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
                                       onPressed: _optOutLock,
                                       child: Text(
                                         'فعلاً قفل نمی‌خواهم',
-                                        style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: colors.textSecondary,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -446,43 +488,74 @@ class _CycleLockGateState extends State<CycleLockGate> with WidgetsBindingObserv
 
                                   // Responsive Keypad
                                   ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: 260),
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 260,
+                                    ),
                                     child: Column(
                                       children: [
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                          children: ['1', '2', '3'].map((k) => _buildKeyBtn(k, colors)).toList(),
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: ['1', '2', '3']
+                                              .map(
+                                                (k) => _buildKeyBtn(k, colors),
+                                              )
+                                              .toList(),
                                         ),
                                         const SizedBox(height: 10),
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                          children: ['4', '5', '6'].map((k) => _buildKeyBtn(k, colors)).toList(),
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: ['4', '5', '6']
+                                              .map(
+                                                (k) => _buildKeyBtn(k, colors),
+                                              )
+                                              .toList(),
                                         ),
                                         const SizedBox(height: 10),
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                          children: ['7', '8', '9'].map((k) => _buildKeyBtn(k, colors)).toList(),
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: ['7', '8', '9']
+                                              .map(
+                                                (k) => _buildKeyBtn(k, colors),
+                                              )
+                                              .toList(),
                                         ),
                                         const SizedBox(height: 10),
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
                                           children: [
-                                            const SizedBox(width: 52, height: 52),
+                                            const SizedBox(
+                                              width: 52,
+                                              height: 52,
+                                            ),
                                             _buildKeyBtn('0', colors),
                                             Semantics(
                                               label: 'پاک کردن رقم قبلی',
                                               button: true,
                                               child: InkWell(
-                                                onTap: _lockoutSeconds > 0 ? null : _onBackspaceTapped,
-                                                borderRadius: BorderRadius.circular(26),
+                                                onTap: _lockoutSeconds > 0
+                                                    ? null
+                                                    : _onBackspaceTapped,
+                                                borderRadius:
+                                                    BorderRadius.circular(26),
                                                 child: Container(
                                                   height: 52,
                                                   width: 52,
                                                   decoration: BoxDecoration(
-                                                    color: colors.textPrimary.withValues(alpha: 0.04),
+                                                    color: colors.textPrimary
+                                                        .withValues(
+                                                          alpha: 0.04,
+                                                        ),
                                                     shape: BoxShape.circle,
                                                   ),
-                                                  child: Icon(CupertinoIcons.delete_left, color: colors.textPrimary, size: 18),
+                                                  child: Icon(
+                                                    CupertinoIcons.delete_left,
+                                                    color: colors.textPrimary,
+                                                    size: 18,
+                                                  ),
                                                 ),
                                               ),
                                             ),

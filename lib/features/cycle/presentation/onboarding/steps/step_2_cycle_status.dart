@@ -42,7 +42,7 @@ class Step2CycleStatus extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.w900,
               color: colors.textPrimary,
-              ),
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -60,7 +60,8 @@ class Step2CycleStatus extends StatelessWidget {
             choice: CyclePeriodStatusChoice.currentlyInPeriod,
             icon: CupertinoIcons.drop_fill,
             title: 'همین حالا در دوره‌ام',
-            subtitle: 'دوره فعال است؛ تاریخ شروع را مشخص کنید تا دوره باز ثبت شود.',
+            subtitle:
+                'دوره فعال است؛ تاریخ شروع را مشخص کنید تا دوره باز ثبت شود.',
           ),
           const SizedBox(height: 10),
 
@@ -69,7 +70,8 @@ class Step2CycleStatus extends StatelessWidget {
             choice: CyclePeriodStatusChoice.endedWithKnownStart,
             icon: CupertinoIcons.checkmark_circle_fill,
             title: 'تمام شده؛ تاریخ شروعش را می‌دانم',
-            subtitle: 'دوره قبلی به پایان رسیده است؛ تاریخ شروع آن را وارد کنید.',
+            subtitle:
+                'دوره قبلی به پایان رسیده است؛ تاریخ شروع آن را وارد کنید.',
           ),
           const SizedBox(height: 10),
 
@@ -78,12 +80,14 @@ class Step2CycleStatus extends StatelessWidget {
             choice: CyclePeriodStatusChoice.dontKnow,
             icon: CupertinoIcons.question_circle_fill,
             title: 'نمی‌دانم / یادم نیست',
-            subtitle: 'هیچ دوره ساختگی ثبت نمی‌شود. اپ تا ثبت اولین دوره، داده ناکافی اعلام می‌کند.',
+            subtitle:
+                'هیچ دوره ساختگی ثبت نمی‌شود. اپ تا ثبت اولین دوره، داده ناکافی اعلام می‌کند.',
           ),
 
           // Date selection section (shown if Option 1 or Option 2 selected)
           if (data.periodStatus == CyclePeriodStatusChoice.currentlyInPeriod ||
-              data.periodStatus == CyclePeriodStatusChoice.endedWithKnownStart) ...[
+              data.periodStatus ==
+                  CyclePeriodStatusChoice.endedWithKnownStart) ...[
             const SizedBox(height: 20),
             Text(
               'تاریخ شروع دوره:',
@@ -91,25 +95,36 @@ class Step2CycleStatus extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
-                ),
+              ),
             ),
             const SizedBox(height: 8),
             InkWell(
               onTap: () => _pickStartDate(context),
               borderRadius: BorderRadius.circular(16),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.black.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.6),
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.25)
+                      : Colors.white.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: colors.border.withValues(alpha: 0.5),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
-                        Icon(CupertinoIcons.calendar, color: primaryColor, size: 20),
+                        Icon(
+                          CupertinoIcons.calendar,
+                          color: primaryColor,
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
                         Text(
                           _formatJalaliDate(data.startDate),
@@ -117,7 +132,7 @@ class Step2CycleStatus extends StatelessWidget {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: primaryColor,
-                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -126,7 +141,7 @@ class Step2CycleStatus extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: colors.textSecondary,
-                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -145,11 +160,17 @@ class Step2CycleStatus extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xffEC4899).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xffEC4899).withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: const Color(0xffEC4899).withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [
-                  const Icon(CupertinoIcons.sparkles, color: Color(0xffEC4899), size: 18),
+                  const Icon(
+                    CupertinoIcons.sparkles,
+                    color: Color(0xffEC4899),
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -157,14 +178,18 @@ class Step2CycleStatus extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? const Color(0xffF472B6) : const Color(0xffDB2777),
-                        ),
+                        color: isDark
+                            ? const Color(0xffF472B6)
+                            : const Color(0xffDB2777),
+                      ),
                     ),
                   ),
                   Icon(
                     CupertinoIcons.chevron_left,
                     size: 16,
-                    color: isDark ? const Color(0xffF472B6) : const Color(0xffDB2777),
+                    color: isDark
+                        ? const Color(0xffF472B6)
+                        : const Color(0xffDB2777),
                   ),
                 ],
               ),
@@ -181,7 +206,9 @@ class Step2CycleStatus extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colors.textPrimary,
                     side: BorderSide(color: colors.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: onBack,
@@ -194,7 +221,9 @@ class Step2CycleStatus extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     elevation: 0,
                   ),
@@ -232,10 +261,14 @@ class Step2CycleStatus extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? primaryColor.withValues(alpha: isDark ? 0.18 : 0.08)
-              : (isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02)),
+              : (isDark
+                    ? Colors.white.withValues(alpha: 0.03)
+                    : Colors.black.withValues(alpha: 0.02)),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? primaryColor : colors.border.withValues(alpha: 0.4),
+            color: isSelected
+                ? primaryColor
+                : colors.border.withValues(alpha: 0.4),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -244,10 +277,16 @@ class Step2CycleStatus extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isSelected ? primaryColor : primaryColor.withValues(alpha: 0.12),
+                color: isSelected
+                    ? primaryColor
+                    : primaryColor.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: isSelected ? Colors.white : primaryColor, size: 18),
+              child: Icon(
+                icon,
+                color: isSelected ? Colors.white : primaryColor,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -260,7 +299,7 @@ class Step2CycleStatus extends StatelessWidget {
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      ),
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -275,7 +314,11 @@ class Step2CycleStatus extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              Icon(CupertinoIcons.checkmark_alt_circle_fill, color: primaryColor, size: 22),
+              Icon(
+                CupertinoIcons.checkmark_alt_circle_fill,
+                color: primaryColor,
+                size: 22,
+              ),
           ],
         ),
       ),
@@ -308,8 +351,18 @@ class Step2CycleStatus extends StatelessWidget {
 
   String _monthNameFa(int m) {
     const months = [
-      'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-      'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+      'فروردین',
+      'اردیبهشت',
+      'خرداد',
+      'تیر',
+      'مرداد',
+      'شهریور',
+      'مهر',
+      'آبان',
+      'آذر',
+      'دی',
+      'بهمن',
+      'اسفند',
     ];
     if (m >= 1 && m <= 12) return months[m - 1];
     return '';

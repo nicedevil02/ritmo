@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/features/wellbeing/logic/wellbeing_log_gateway.dart';
 
 class FrictionlessMoodBar extends StatefulWidget {
   const FrictionlessMoodBar({
@@ -17,16 +18,17 @@ class FrictionlessMoodBar extends StatefulWidget {
 }
 
 class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
-  int? _selectedMood; // 1 (Sad), 3 (Neutral), 5 (Happy)
+  int _todayLogCount = 0;
+  String? _lastLogTimeFa;
   String? _lastLoggedId;
 
   @override
   void initState() {
     super.initState();
-    _loadTodayMood();
+    _loadTodayStats();
   }
 
-  Future<void> _loadTodayMood() async {
+  Future<void> _loadTodayStats() async {
     try {
       final db = await DatabaseHelper.instance.database;
       final todayMs = RitmoDate.startOfDayMillis(DateTime.now());
@@ -35,12 +37,14 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
         where: 'loggedAt >= ?',
         whereArgs: [todayMs],
         orderBy: 'loggedAt DESC',
-        limit: 1,
       );
       if (rows.isNotEmpty && mounted) {
-        final valence = (rows.first['valence'] as num?)?.toInt() ?? 3;
+        final lastTime = DateTime.fromMillisecondsSinceEpoch(rows.first['loggedAt'] as int);
+        final hour = lastTime.hour.toString().padLeft(2, '0');
+        final minute = lastTime.minute.toString().padLeft(2, '0');
         setState(() {
-          _selectedMood = valence;
+          _todayLogCount = rows.length;
+          _lastLogTimeFa = RitmoNumber.fa('$hour:$minute');
           _lastLoggedId = rows.first['id'] as String?;
         });
       }
@@ -49,30 +53,21 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
 
   Future<void> _logMood(int valence, String label) async {
     RitmoHapticsPolicy.tap();
-    final db = await DatabaseHelper.instance.database;
-    final now = DateTime.now();
-    final id = 'mood_${now.millisecondsSinceEpoch}';
+    final loggedId = await WellbeingLogGateway.instance.logMood(
+      score: valence,
+      source: 'QUICK_BAR',
+    );
 
-    final previousMood = _selectedMood;
-    final previousId = _lastLoggedId;
+    if (loggedId != null) {
+      final now = DateTime.now();
+      final hour = now.hour.toString().padLeft(2, '0');
+      final minute = now.minute.toString().padLeft(2, '0');
 
-    setState(() {
-      _selectedMood = valence;
-      _lastLoggedId = id;
-    });
-
-    try {
-      await db.insert(
-        'mood_logs',
-        {
-          'id': id,
-          'mood': valence >= 4 ? 'HAPPY' : (valence <= 2 ? 'SAD' : 'NEUTRAL'),
-          'valence': valence,
-          'source': 'QUICK_BAR',
-          'loggedAt': now.millisecondsSinceEpoch,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      setState(() {
+        _lastLoggedId = loggedId;
+        _todayLogCount += 1;
+        _lastLogTimeFa = RitmoNumber.fa('$hour:$minute');
+      });
 
       widget.onLogChanged();
 
@@ -81,31 +76,32 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('حال شما ثبت شد ($label)'),
-            duration: const Duration(seconds: 5),
+            duration: const Duration(seconds: 4),
             action: SnackBarAction(
               label: 'برگردان',
               onPressed: () async {
-                try {
-                  await db.delete('mood_logs', where: 'id = ?', whereArgs: [id]);
+                if (_lastLoggedId != null) {
+                  await WellbeingLogGateway.instance.deleteMood(_lastLoggedId!);
                   if (mounted) {
-                    setState(() {
-                      _selectedMood = previousMood;
-                      _lastLoggedId = previousId;
-                    });
+                    await _loadTodayStats();
                     widget.onLogChanged();
                   }
-                } catch (_) {}
+                }
               },
             ),
           ),
         );
       }
-    } catch (_) {}
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+
+    final subtext = _todayLogCount > 0
+        ? 'آخرین ثبت: $_lastLogTimeFa (${RitmoNumber.faInt(_todayLogCount)} ثبت امروز)'
+        : 'ثبت حال لحظه‌ای';
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -120,16 +116,27 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              'الان در چه حالی؟',
-              style: RitmoTextStyles.body(colors.textPrimary),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'الان در چه حالی؟',
+                  style: RitmoTextStyles.body(colors.textPrimary),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtext,
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
+              ],
             ),
           ),
-          _moodButton(context, 1, '🙁', 'ناآرام یا ناراحت', colors.error),
+          _moodButton(context, 1, '🙁', 'ناآرام', colors.error),
           const SizedBox(width: 8),
-          _moodButton(context, 3, '😐', 'معمولی و آرام', colors.cautionAccent),
+          _moodButton(context, 3, '😐', 'معمولی', colors.cautionAccent),
           const SizedBox(width: 8),
-          _moodButton(context, 5, '😊', 'خوب و شاداب', colors.success),
+          _moodButton(context, 5, '😊', 'خوب', colors.success),
         ],
       ),
     );
@@ -142,29 +149,27 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
     String label,
     Color color,
   ) {
-    final isSelected = _selectedMood == valence;
-
     return Semantics(
       button: true,
       label: 'ثبت حال: $label',
-      selected: isSelected,
       child: InkWell(
         onTap: () => _logMood(valence, label),
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(10),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? color.withValues(alpha: 0.2) : Colors.transparent,
-            borderRadius: BorderRadius.circular(RitmoRadius.card),
+            shape: BoxShape.circle,
+            color: color.withValues(alpha: 0.12),
             border: Border.all(
-              color: isSelected ? color : Colors.transparent,
+              color: color.withValues(alpha: 0.4),
               width: 1.5,
             ),
           ),
           child: Text(
             emoji,
-            style: const TextStyle(fontSize: 22),
+            style: const TextStyle(fontSize: 20),
           ),
         ),
       ),

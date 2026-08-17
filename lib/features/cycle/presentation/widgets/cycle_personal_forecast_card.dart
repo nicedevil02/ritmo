@@ -3,10 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 
 class CyclePersonalForecastCard extends StatelessWidget {
-  const CyclePersonalForecastCard({
-    super.key,
-    required this.forecasts,
-  });
+  const CyclePersonalForecastCard({super.key, required this.forecasts});
 
   final List<SymptomForecast> forecasts;
 
@@ -29,7 +26,11 @@ class CyclePersonalForecastCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.psychology_outlined, size: 18, color: Color(0xFFEC4899)),
+              const Icon(
+                Icons.psychology_outlined,
+                size: 18,
+                color: Color(0xFFEC4899),
+              ),
               const SizedBox(width: 8),
               Text(
                 'پیش‌بینی الگوهای شخصی',
@@ -42,25 +43,31 @@ class CyclePersonalForecastCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          ...forecasts.map((f) => Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.auto_awesome, size: 14, color: Color(0xFFEC4899)),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        f.insightFa,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.textSecondary,
-                        ),
+          ...forecasts.map(
+            (f) => Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.auto_awesome,
+                    size: 14,
+                    color: Color(0xFFEC4899),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      f.insightFa,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.textSecondary,
                       ),
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

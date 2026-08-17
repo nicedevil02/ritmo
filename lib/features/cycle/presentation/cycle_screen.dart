@@ -58,9 +58,7 @@ class CycleScreen extends StatefulWidget {
 class _CycleScreenState extends State<CycleScreen> {
   @override
   Widget build(BuildContext context) {
-    return const CycleLockGate(
-      child: _CycleScreenContent(),
-    );
+    return const CycleLockGate(child: _CycleScreenContent());
   }
 }
 
@@ -114,7 +112,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => AssistantSheet(persona: PersonaRegistry.instance.getPersona('cycle')!),
+          builder: (context) => AssistantSheet(
+            persona: PersonaRegistry.instance.getPersona('cycle')!,
+          ),
         );
       },
     );
@@ -124,7 +124,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   int _onboardingStep = 1;
   int _setupCycleLength = 28;
   int _setupPeriodDuration = 6;
-  DateTime _setupLastStartDate = DateTime.now().subtract(const Duration(days: 5));
+  DateTime _setupLastStartDate = DateTime.now().subtract(
+    const Duration(days: 5),
+  );
   bool _setupWorship = false;
   bool _setupEnergy = false;
   bool _setupReminders = false;
@@ -150,7 +152,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
       // Load settings
       final settingsList = await db.query('app_settings');
-      _settings = {for (final s in settingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
+      _settings = {
+        for (final s in settingsList)
+          if (s['key'] != null)
+            s['key'].toString(): s['value']?.toString() ?? '',
+      };
 
       // Seed cycle consent settings if they do not exist
       final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -181,12 +187,17 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       }
       if (consentSeedChanged) {
         final updatedSettingsList = await db.query('app_settings');
-        _settings = {for (final s in updatedSettingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
+        _settings = {
+          for (final s in updatedSettingsList)
+            if (s['key'] != null)
+              s['key'].toString(): s['value']?.toString() ?? '',
+        };
       }
 
       // Migrate settings if legacy settings exist but new ones do not
       var settingsChanged = false;
-      if (!_settings.containsKey('cycle_avg_length') && _settings.containsKey('cycle_length_days')) {
+      if (!_settings.containsKey('cycle_avg_length') &&
+          _settings.containsKey('cycle_length_days')) {
         await db.insert('app_settings', {
           'key': 'cycle_avg_length',
           'value': _settings['cycle_length_days'],
@@ -194,7 +205,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         }, conflictAlgorithm: ConflictAlgorithm.replace);
         settingsChanged = true;
       }
-      if (!_settings.containsKey('cycle_avg_period') && _settings.containsKey('period_duration_days')) {
+      if (!_settings.containsKey('cycle_avg_period') &&
+          _settings.containsKey('period_duration_days')) {
         await db.insert('app_settings', {
           'key': 'cycle_avg_period',
           'value': _settings['period_duration_days'],
@@ -204,7 +216,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       }
       if (settingsChanged) {
         final updatedSettingsList = await db.query('app_settings');
-        _settings = {for (final s in updatedSettingsList) if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''};
+        _settings = {
+          for (final s in updatedSettingsList)
+            if (s['key'] != null)
+              s['key'].toString(): s['value']?.toString() ?? '',
+        };
       }
 
       // Load cycle periods (migration_v92 has already moved legacy cycle_logs into cycle_periods)
@@ -227,11 +243,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
       // Calculate engine output
       final engine = CycleEngine();
-      _engineOutput = await engine.calculate(CycleEngineInput(
-        db: db,
-        appSettings: _settings,
-        now: DateTime.now(),
-      ));
+      _engineOutput = await engine.calculate(
+        CycleEngineInput(db: db, appSettings: _settings, now: DateTime.now()),
+      );
 
       if (_engineOutput != null) {
         final consentReminders = _settings['cycle_consent_reminders'] == 'true';
@@ -249,10 +263,15 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           todayIso: todayStr,
         );
 
-        final confLevel = _periods.length >= 5 && !_dataQualityReport!.hasForgottenOpenPeriod
+        final confLevel =
+            _periods.length >= 5 && !_dataQualityReport!.hasForgottenOpenPeriod
             ? PredictionConfidenceLevel.high
-            : (_periods.length >= 2 ? PredictionConfidenceLevel.medium : PredictionConfidenceLevel.low);
-        final confScore = _periods.length >= 5 ? 0.90 : (_periods.length >= 2 ? 0.65 : 0.35);
+            : (_periods.length >= 2
+                  ? PredictionConfidenceLevel.medium
+                  : PredictionConfidenceLevel.low);
+        final confScore = _periods.length >= 5
+            ? 0.90
+            : (_periods.length >= 2 ? 0.65 : 0.35);
         _predictionConfidence = PredictionConfidence(
           level: confLevel,
           score: confScore,
@@ -261,15 +280,18 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               : ['${_periods.length} چرخه ثبت‌شده و الگوی نسبتاً پایدار'],
         );
 
-        _personalForecasts = await CyclePersonalPatternEngine.computePersonalForecasts(
-          db: db,
-          periodRows: _periods,
-          avgCycleLength: _engineOutput!.stats.avgCycleLength,
-        );
+        _personalForecasts =
+            await CyclePersonalPatternEngine.computePersonalForecasts(
+              db: db,
+              periodRows: _periods,
+              avgCycleLength: _engineOutput!.stats.avgCycleLength,
+            );
 
         final latestLog = _dayLogs.isNotEmpty ? _dayLogs.first : null;
         final symptomsStr = latestLog?['symptoms'] as String? ?? '';
-        final loggedSymptoms = symptomsStr.isNotEmpty ? symptomsStr.split(',') : <String>[];
+        final loggedSymptoms = symptomsStr.isNotEmpty
+            ? symptomsStr.split(',')
+            : <String>[];
 
         _burdenScore = CycleBurdenEngine.calculateBurden(
           phase: _engineOutput!.currentPhase,
@@ -304,7 +326,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         });
 
         if (_settings['cycle_onboarding_just_completed'] == 'true') {
-          await db.delete('app_settings', where: "key = 'cycle_onboarding_just_completed'");
+          await db.delete(
+            'app_settings',
+            where: "key = 'cycle_onboarding_just_completed'",
+          );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -368,11 +393,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       };
 
       for (final entry in settingsToSave.entries) {
-        batch.insert(
-          'app_settings',
-          {'key': entry.key, 'value': entry.value, 'updatedAt': nowMs},
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        batch.insert('app_settings', {
+          'key': entry.key,
+          'value': entry.value,
+          'updatedAt': nowMs,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
 
       // Insert first period starting on last start date
@@ -403,18 +428,23 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     final todayStr = DateTime.now().toIso8601String().substring(0, 10);
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
-    final hasActivePeriod = _periods.any((p) => p['endDate'] == null && !_isPeriodForgotten(p));
+    final hasActivePeriod = _periods.any(
+      (p) => p['endDate'] == null && !_isPeriodForgotten(p),
+    );
 
     if (!hasActivePeriod) {
       if (_forgottenPeriod != null) {
-        unawaited(showDialog(
-          context: context,
-          builder: (context) => _buildConfirmDialog(
-            title: 'خطا در ثبت دوره جدید',
-            content: 'شما یک دورهٔ باز قدیمی (فراموش‌شده) دارید. لطفاً ابتدا از بخش هشدار بالای صفحه تکلیف آن را مشخص کنید تا بتوانید دورهٔ جدید ثبت کنید.',
-            confirmText: 'فهمیدم',
+        unawaited(
+          showDialog(
+            context: context,
+            builder: (context) => _buildConfirmDialog(
+              title: 'خطا در ثبت دوره جدید',
+              content:
+                  'شما یک دورهٔ باز قدیمی (فراموش‌شده) دارید. لطفاً ابتدا از بخش هشدار بالای صفحه تکلیف آن را مشخص کنید تا بتوانید دورهٔ جدید ثبت کنید.',
+              confirmText: 'فهمیدم',
+            ),
           ),
-        ));
+        );
         return;
       }
       // Start Period dialog
@@ -437,10 +467,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           cancelText: 'انصراف',
         );
         if (time == null || !mounted) return;
-        
+
         final now = DateTime.now();
-        final startDateTime = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-        
+        final startDateTime = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          time.hour,
+          time.minute,
+        );
+
         await db.insert('cycle_periods', {
           'id': 'period_$nowMs',
           'startDate': startDateTime.toIso8601String(),
@@ -475,10 +511,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           cancelText: 'انصراف',
         );
         if (time == null || !mounted) return;
-        
+
         final now = DateTime.now();
-        final endDateTime = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-        
+        final endDateTime = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          time.hour,
+          time.minute,
+        );
+
         // Find current ongoing period
         final activePeriods = await db.query(
           'cycle_periods',
@@ -492,10 +534,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           final activeId = activePeriods.first['id']! as String;
           await db.update(
             'cycle_periods',
-            {
-              'endDate': endDateTime.toIso8601String(),
-              'updatedAt': nowMs,
-            },
+            {'endDate': endDateTime.toIso8601String(), 'updatedAt': nowMs},
             where: 'id = ?',
             whereArgs: [activeId],
           );
@@ -555,7 +594,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(CupertinoIcons.xmark, color: Colors.white54, size: 20),
+                            icon: const Icon(
+                              CupertinoIcons.xmark,
+                              color: Colors.white54,
+                              size: 20,
+                            ),
                             onPressed: () => Navigator.pop(context, false),
                           ),
                         ],
@@ -563,14 +606,21 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       const SizedBox(height: 16),
                       Text(
                         'یک عدد بین ${_toPersianDigits(minVal.toString())} تا ${_toPersianDigits(maxVal.toString())} روز انتخاب کنید:',
-                        style: const TextStyle(fontSize: 14, color: Colors.white70),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           IconButton(
-                            icon: const Icon(CupertinoIcons.minus_circle, color: Color(0xffF43F5E), size: 28),
+                            icon: const Icon(
+                              CupertinoIcons.minus_circle,
+                              color: Color(0xffF43F5E),
+                              size: 28,
+                            ),
                             onPressed: () {
                               if (selectedVal > minVal) {
                                 setSheetState(() => selectedVal--);
@@ -580,11 +630,19 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           const SizedBox(width: 16),
                           Text(
                             '${_toPersianDigits(selectedVal.toString())} روز',
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                           const SizedBox(width: 16),
                           IconButton(
-                            icon: const Icon(CupertinoIcons.plus_circle, color: Color(0xffF43F5E), size: 28),
+                            icon: const Icon(
+                              CupertinoIcons.plus_circle,
+                              color: Color(0xffF43F5E),
+                              size: 28,
+                            ),
                             onPressed: () {
                               if (selectedVal < maxVal) {
                                 setSheetState(() => selectedVal++);
@@ -600,11 +658,19 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xffF43F5E),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           onPressed: () => Navigator.pop(context, true),
-                          child: const Text('ذخیره تغییرات', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          child: const Text(
+                            'ذخیره تغییرات',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -620,15 +686,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
     if (confirm ?? false) {
       final db = await DatabaseHelper.instance.database;
-      await db.insert(
-        'app_settings',
-        {
-          'key': key,
-          'value': selectedVal.toString(),
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('app_settings', {
+        'key': key,
+        'value': selectedVal.toString(),
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
       RitmoEvents.notifyRoutineChanged();
       await _loadData();
     }
@@ -650,38 +712,45 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         title: Text(
           title,
           style: TextStyle(
-            color: isDark ? Colors.white : colors.textPrimary, 
-            fontSize: 14, 
-            fontWeight: FontWeight.bold
+            color: isDark ? Colors.white : colors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
           content,
           style: TextStyle(
-            color: isDark ? Colors.white70 : colors.textSecondary, 
-            fontSize: 14, 
-            height: 1.5
+            color: isDark ? Colors.white70 : colors.textSecondary,
+            fontSize: 14,
+            height: 1.5,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'خیر', 
+              'خیر',
               style: TextStyle(
-                color: isDark ? Colors.white54 : colors.textSecondary.withValues(alpha: 0.6)
-              )
+                color: isDark
+                    ? Colors.white54
+                    : colors.textSecondary.withValues(alpha: 0.6),
+              ),
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: _getActivePhaseColor(),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: Text(confirmText, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            child: Text(
+              confirmText,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
           ),
         ],
       ),
@@ -693,7 +762,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       context: context,
       builder: (context) => _buildConfirmDialog(
         title: 'حذف دوره',
-        content: 'آیا از حذف اطلاعات این دوره اطمینان دارید؟ این عمل غیرقابل بازگشت است.',
+        content:
+            'آیا از حذف اطلاعات این دوره اطمینان دارید؟ این عمل غیرقابل بازگشت است.',
         confirmText: 'حذف شود',
       ),
     );
@@ -703,7 +773,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       final batch = db.batch();
       batch.delete('cycle_periods', where: 'id = ?', whereArgs: [id]);
       batch.delete('fasting_debt', where: 'id = ?', whereArgs: ['fd_$id']);
-      batch.delete('worship_debts', where: 'id = ?', whereArgs: ['debt_cycle_fast_fd_$id']);
+      batch.delete(
+        'worship_debts',
+        where: 'id = ?',
+        whereArgs: ['debt_cycle_fast_fd_$id'],
+      );
       await batch.commit(noResult: true);
       RitmoEvents.notifyRoutineChanged();
       await _loadData();
@@ -721,10 +795,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
     await db.update(
       'cycle_periods',
-      {
-        'endDate': endStr,
-        'updatedAt': nowMs,
-      },
+      {'endDate': endStr, 'updatedAt': nowMs},
       where: 'id = ?',
       whereArgs: [period['id']],
     );
@@ -749,15 +820,25 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     return cond1 && cond2;
   }
 
-  String? _validatePeriodDates(DateTime startDate, DateTime? endDate, {String? excludeId}) {
+  String? _validatePeriodDates(
+    DateTime startDate,
+    DateTime? endDate, {
+    String? excludeId,
+  }) {
     final cleanStart = DateTime(startDate.year, startDate.month, startDate.day);
-    final cleanEnd = endDate != null ? DateTime(endDate.year, endDate.month, endDate.day) : null;
+    final cleanEnd = endDate != null
+        ? DateTime(endDate.year, endDate.month, endDate.day)
+        : null;
 
     if (cleanEnd != null && cleanEnd.isBefore(cleanStart)) {
       return 'تاریخ پایان دوره نمی‌تواند قبل از تاریخ شروع باشد.';
     }
 
-    final cleanToday = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final cleanToday = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+    );
     if (cleanStart.isAfter(cleanToday)) {
       return 'تاریخ شروع دوره نمی‌تواند در آینده باشد.';
     }
@@ -769,10 +850,14 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     for (final p in _periods) {
       if (excludeId != null && p['id'] == excludeId) continue;
       final otherStart = DateTime.parse(p['startDate'] as String);
-      final otherEnd = p['endDate'] != null ? DateTime.parse(p['endDate'] as String) : null;
+      final otherEnd = p['endDate'] != null
+          ? DateTime.parse(p['endDate'] as String)
+          : null;
 
       if (rangesOverlap(startDate, endDate, otherStart, otherEnd)) {
-        final formattedOtherStart = _formatIsoToJalali(p['startDate'] as String);
+        final formattedOtherStart = _formatIsoToJalali(
+          p['startDate'] as String,
+        );
         return 'تداخل با دوره ثبت شده دیگر (شروع از $formattedOtherStart)';
       }
     }
@@ -789,7 +874,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         return _AddEditPeriodSheet(
           period: p,
           onValidate: (startDate, endDate) {
-            return _validatePeriodDates(startDate, endDate, excludeId: p['id'] as String);
+            return _validatePeriodDates(
+              startDate,
+              endDate,
+              excludeId: p['id'] as String,
+            );
           },
           onSave: (startDate, endDate) async {
             await _savePeriod(p['id'] as String, startDate, endDate);
@@ -815,7 +904,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     );
   }
 
-  Future<void> _savePeriod(String? id, DateTime startDate, DateTime? endDate) async {
+  Future<void> _savePeriod(
+    String? id,
+    DateTime startDate,
+    DateTime? endDate,
+  ) async {
     final db = await DatabaseHelper.instance.database;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final startIso = startDate.toIso8601String().substring(0, 10);
@@ -839,35 +932,43 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     } else {
       batch.update(
         'cycle_periods',
-        {
-          'startDate': startIso,
-          'endDate': endIso,
-          'updatedAt': nowMs,
-        },
+        {'startDate': startIso, 'endDate': endIso, 'updatedAt': nowMs},
         where: 'id = ?',
         whereArgs: [periodId],
       );
     }
 
     final worshipConsent = _settings['cycle_consent_worship'] == 'true';
-    final sendToWorship = _settings['cycle_send_fasting_debt_to_worship'] == 'true';
+    final sendToWorship =
+        _settings['cycle_send_fasting_debt_to_worship'] == 'true';
     final debtId = 'fd_$periodId';
     final worshipDebtId = 'debt_cycle_fast_$debtId';
 
     var overlapDays = 0;
     if (endIso != null && worshipConsent) {
       // رمضان از تقویم هجری محاسبه میشود؛ جدول worship_seasons حذف شده است.
-      final offsetRows = await db.query('app_settings',
-          where: 'key = ?', whereArgs: ['hijri_offset'], limit: 1);
+      final offsetRows = await db.query(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: ['hijri_offset'],
+        limit: 1,
+      );
       final hijriOffset =
-          int.tryParse(offsetRows.isEmpty ? '' : '${offsetRows.first['value']}') ?? 0;
+          int.tryParse(
+            offsetRows.isEmpty ? '' : '${offsetRows.first['value']}',
+          ) ??
+          0;
 
       final pStart = DateTime.parse(startIso.substring(0, 10));
       final pEnd = DateTime.parse(endIso.substring(0, 10));
       for (var i = 0; i < 60; i++) {
         final day = DateTime(pStart.year, pStart.month, pStart.day + i);
         if (day.isAfter(pEnd)) break;
-        if (HijriCalendarCalculator.hijriFromGregorian(day, offsetDays: hijriOffset).month == 9) {
+        if (HijriCalendarCalculator.hijriFromGregorian(
+              day,
+              offsetDays: hijriOffset,
+            ).month ==
+            9) {
           overlapDays++;
         }
       }
@@ -877,51 +978,55 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       // Check if debt exists to preserve isResolved status
       var isResolved = 0;
       if (!isNew) {
-        final existingDebts = await db.query('fasting_debt', where: 'id = ?', whereArgs: [debtId]);
+        final existingDebts = await db.query(
+          'fasting_debt',
+          where: 'id = ?',
+          whereArgs: [debtId],
+        );
         if (existingDebts.isNotEmpty) {
           isResolved = existingDebts.first['isResolved']! as int;
         }
       }
 
-      batch.insert(
-        'fasting_debt',
-        {
-          'id': debtId,
-          'dateIso': startIso,
-          'daysOwed': overlapDays,
-          'reason': 'عذر شرعی (دوره بدنی)',
-          'isResolved': isResolved,
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      batch.insert('fasting_debt', {
+        'id': debtId,
+        'dateIso': startIso,
+        'daysOwed': overlapDays,
+        'reason': 'عذر شرعی (دوره بدنی)',
+        'isResolved': isResolved,
+        'createdAt': nowMs,
+        'updatedAt': nowMs,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       // If sendToWorship is true, sync to worship_debts
       if (sendToWorship) {
-        batch.insert(
-          'worship_debts',
-          {
-            'id': worshipDebtId,
-            'sourceKind': 'CYCLE_FAST',
-            'debtType': 'FAST',
-            'title': 'روزه قضا (عذر شرعی)',
-            'totalCount': overlapDays,
-            'remainingCount': isResolved == 1 ? 0 : overlapDays,
-            'dailyTarget': 1,
-            'autoCreated': 1,
-            'isArchived': isResolved,
-            'createdAt': nowMs,
-            'updatedAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        batch.insert('worship_debts', {
+          'id': worshipDebtId,
+          'sourceKind': 'CYCLE_FAST',
+          'debtType': 'FAST',
+          'title': 'روزه قضا (عذر شرعی)',
+          'totalCount': overlapDays,
+          'remainingCount': isResolved == 1 ? 0 : overlapDays,
+          'dailyTarget': 1,
+          'autoCreated': 1,
+          'isArchived': isResolved,
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       } else {
-        batch.delete('worship_debts', where: 'id = ?', whereArgs: [worshipDebtId]);
+        batch.delete(
+          'worship_debts',
+          where: 'id = ?',
+          whereArgs: [worshipDebtId],
+        );
       }
     } else {
       batch.delete('fasting_debt', where: 'id = ?', whereArgs: [debtId]);
-      batch.delete('worship_debts', where: 'id = ?', whereArgs: [worshipDebtId]);
+      batch.delete(
+        'worship_debts',
+        where: 'id = ?',
+        whereArgs: [worshipDebtId],
+      );
     }
 
     await batch.commit(noResult: true);
@@ -932,15 +1037,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   Future<void> _toggleFastingDebtSync(bool val) async {
     final db = await DatabaseHelper.instance.database;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    await db.insert(
-      'app_settings',
-      {
-        'key': 'cycle_send_fasting_debt_to_worship',
-        'value': val ? 'true' : 'false',
-        'updatedAt': nowMs,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('app_settings', {
+      'key': 'cycle_send_fasting_debt_to_worship',
+      'value': val ? 'true' : 'false',
+      'updatedAt': nowMs,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
     await _syncFastingDebtsToWorship(val);
     await _loadData();
   }
@@ -953,37 +1054,30 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         'fasting_debt',
         where: 'isResolved = 0',
       );
-      
+
       final batch = db.batch();
       for (final row in unresolvedCycleDebts) {
         final cycleDebtId = row['id']! as String;
         final daysOwed = row['daysOwed'] as int? ?? 1;
         final worshipDebtId = 'debt_cycle_fast_$cycleDebtId';
-        
-        batch.insert(
-          'worship_debts',
-          {
-            'id': worshipDebtId,
-            'sourceKind': 'CYCLE_FAST',
-            'debtType': 'FAST',
-            'title': 'روزه قضا (عذر شرعی)',
-            'totalCount': daysOwed,
-            'remainingCount': daysOwed,
-            'dailyTarget': 1,
-            'autoCreated': 1,
-            'isArchived': 0,
-            'createdAt': nowMs,
-            'updatedAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+
+        batch.insert('worship_debts', {
+          'id': worshipDebtId,
+          'sourceKind': 'CYCLE_FAST',
+          'debtType': 'FAST',
+          'title': 'روزه قضا (عذر شرعی)',
+          'totalCount': daysOwed,
+          'remainingCount': daysOwed,
+          'dailyTarget': 1,
+          'autoCreated': 1,
+          'isArchived': 0,
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
       await batch.commit(noResult: true);
     } else {
-      await db.delete(
-        'worship_debts',
-        where: "id LIKE 'debt_cycle_fast_%'",
-      );
+      await db.delete('worship_debts', where: "id LIKE 'debt_cycle_fast_%'");
     }
   }
 
@@ -992,7 +1086,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: context.colors.bg,
-        body: const Center(child: CircularProgressIndicator(color: Color(0xffF43F5E))),
+        body: const Center(
+          child: CircularProgressIndicator(color: Color(0xffF43F5E)),
+        ),
       );
     }
 
@@ -1022,12 +1118,18 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   children: [
                     // Header Bar
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           IconButton(
-                            icon: RitmoIcons.back(context, color: colors.textPrimary),
+                            icon: RitmoIcons.back(
+                              context,
+                              color: colors.textPrimary,
+                            ),
                             onPressed: () => Navigator.pop(context),
                           ),
                           Text(
@@ -1036,17 +1138,23 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
-                              ),
+                            ),
                           ),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: Icon(CupertinoIcons.sparkles, color: _getActivePhaseColor()),
+                                icon: Icon(
+                                  CupertinoIcons.sparkles,
+                                  color: _getActivePhaseColor(),
+                                ),
                                 onPressed: _openAiAssistant,
                               ),
                               IconButton(
-                                icon: Icon(CupertinoIcons.settings, color: _getActivePhaseColor()),
+                                icon: Icon(
+                                  CupertinoIcons.settings,
+                                  color: _getActivePhaseColor(),
+                                ),
                                 onPressed: _openSettingsSheet,
                               ),
                             ],
@@ -1058,44 +1166,91 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     Expanded(
                       child: isSetupDone
                           ? (_settings['cycle_pregnancy_mode'] == 'true'
-                              ? CyclePregnancyModeView(
-                                  pregnancyStartDate: _settings['cycle_pregnancy_start_date'] ?? '',
-                                  pregnancyDueDate: _settings['cycle_pregnancy_due_date'] ?? '',
-                                  onDeactivated: _loadData,
-                                  settings: _settings,
-                                  dayLogs: _dayLogs,
-                                  engineOutput: _engineOutput,
-                                )
-                              : _buildMainDashboard(colors, isDark))
+                                ? CyclePregnancyModeView(
+                                    pregnancyStartDate:
+                                        _settings['cycle_pregnancy_start_date'] ??
+                                        '',
+                                    pregnancyDueDate:
+                                        _settings['cycle_pregnancy_due_date'] ??
+                                        '',
+                                    onDeactivated: _loadData,
+                                    settings: _settings,
+                                    dayLogs: _dayLogs,
+                                    engineOutput: _engineOutput,
+                                  )
+                                : _buildMainDashboard(colors, isDark))
                           : (_startSetup
-                              ? CycleOnboardingShell(
-                                  onCompleted: () async {
-                                    setState(() {
-                                      _startSetup = false;
-                                    });
-                                    await _loadData();
-                                  },
-                                  onNavigateToPregnancy: () async {
-                                    final db = await DatabaseHelper.instance.database;
-                                    final nowMs = DateTime.now().millisecondsSinceEpoch;
-                                    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-                                    await db.insert('app_settings', {'key': 'cycle_pregnancy_mode', 'value': 'true', 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
-                                    await db.insert('app_settings', {'key': 'cycle_pregnancy_start_date', 'value': todayStr, 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
-                                    await db.insert('app_settings', {'key': 'cycle_setup_done', 'value': 'true', 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
-                                    await db.insert('app_settings', {'key': 'module_cycle_enabled', 'value': 'true', 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
-                                    setState(() {
-                                      _startSetup = false;
-                                    });
-                                    await _loadData();
-                                  },
-                                )
-                              : RitmoEmptyState(
-                                  icon: CupertinoIcons.heart_circle_fill,
-                                  title: 'چرخه بدن فعال نشده است',
-                                  description: 'برای استفاده از پیش‌بینی‌های هوشمند، مدیریت زمان عبادات، تحلیل انرژی و یادآوری‌ها، ابتدا مشخصات چرخه بدن خود را تنظیم کنید.',
-                                  ctaLabel: 'تنظیم چرخه بدن',
-                                  onCta: () => setState(() => _startSetup = true),
-                                )),
+                                ? CycleOnboardingShell(
+                                    onCompleted: () async {
+                                      setState(() {
+                                        _startSetup = false;
+                                      });
+                                      await _loadData();
+                                    },
+                                    onNavigateToPregnancy: () async {
+                                      final db = await DatabaseHelper
+                                          .instance
+                                          .database;
+                                      final nowMs =
+                                          DateTime.now().millisecondsSinceEpoch;
+                                      final todayStr = DateTime.now()
+                                          .toIso8601String()
+                                          .substring(0, 10);
+                                      await db.insert(
+                                        'app_settings',
+                                        {
+                                          'key': 'cycle_pregnancy_mode',
+                                          'value': 'true',
+                                          'updatedAt': nowMs,
+                                        },
+                                        conflictAlgorithm:
+                                            ConflictAlgorithm.replace,
+                                      );
+                                      await db.insert(
+                                        'app_settings',
+                                        {
+                                          'key': 'cycle_pregnancy_start_date',
+                                          'value': todayStr,
+                                          'updatedAt': nowMs,
+                                        },
+                                        conflictAlgorithm:
+                                            ConflictAlgorithm.replace,
+                                      );
+                                      await db.insert(
+                                        'app_settings',
+                                        {
+                                          'key': 'cycle_setup_done',
+                                          'value': 'true',
+                                          'updatedAt': nowMs,
+                                        },
+                                        conflictAlgorithm:
+                                            ConflictAlgorithm.replace,
+                                      );
+                                      await db.insert(
+                                        'app_settings',
+                                        {
+                                          'key': 'module_cycle_enabled',
+                                          'value': 'true',
+                                          'updatedAt': nowMs,
+                                        },
+                                        conflictAlgorithm:
+                                            ConflictAlgorithm.replace,
+                                      );
+                                      setState(() {
+                                        _startSetup = false;
+                                      });
+                                      await _loadData();
+                                    },
+                                  )
+                                : RitmoEmptyState(
+                                    icon: CupertinoIcons.heart_circle_fill,
+                                    title: 'چرخه بدن فعال نشده است',
+                                    description:
+                                        'برای استفاده از پیش‌بینی‌های هوشمند، مدیریت زمان عبادات، تحلیل انرژی و یادآوری‌ها، ابتدا مشخصات چرخه بدن خود را تنظیم کنید.',
+                                    ctaLabel: 'تنظیم چرخه بدن',
+                                    onCta: () =>
+                                        setState(() => _startSetup = true),
+                                  )),
                     ),
                   ],
                 ),
@@ -1106,8 +1261,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       ),
     );
   }
-
-
 
   Widget _buildConsentSwitch({
     required String title,
@@ -1130,9 +1283,23 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(subtitle, style: TextStyle(fontSize: 14, color: colors.textSecondary, height: 1.5)),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1173,7 +1340,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       _buildOrbCard(colors, isDark),
                       const SizedBox(height: 16),
                       _buildNextPeriodPredictionCard(colors, isDark),
-                      if (_predictionConfidence != null && _dataQualityReport != null)
+                      if (_predictionConfidence != null &&
+                          _dataQualityReport != null)
                         CyclePredictionConfidenceCard(
                           confidence: _predictionConfidence!,
                           dataQuality: _dataQualityReport!,
@@ -1190,7 +1358,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       const SizedBox(height: 16),
                       Builder(
                         builder: (context) {
-                          final card = _buildSymptomPredictionCard(colors, isDark);
+                          final card = _buildSymptomPredictionCard(
+                            colors,
+                            isDark,
+                          );
                           return card != null
                               ? Padding(
                                   padding: const EdgeInsets.only(bottom: 16),
@@ -1200,7 +1371,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                         },
                       ),
                       if (_personalForecasts.isNotEmpty)
-                        CyclePersonalForecastCard(forecasts: _personalForecasts),
+                        CyclePersonalForecastCard(
+                          forecasts: _personalForecasts,
+                        ),
                       if (_engineOutput != null) ...[
                         CycleSosSection(
                           engineOutput: _engineOutput,
@@ -1219,15 +1392,13 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     ],
                   )
                 : _activeTab == 1
-                    ? CycleTrendsSection(
-                        key: const ValueKey(1),
-                        engineOutput: _engineOutput!,
-                      )
-                    : _activeTab == 2
-                        ? const CycleCorrelationSection(
-                            key: ValueKey(2),
-                          )
-                        : _buildFastingDebtView(colors, isDark),
+                ? CycleTrendsSection(
+                    key: const ValueKey(1),
+                    engineOutput: _engineOutput!,
+                  )
+                : _activeTab == 2
+                ? const CycleCorrelationSection(key: ValueKey(2))
+                : _buildFastingDebtView(colors, isDark),
           ),
           const SizedBox(height: 24),
         ],
@@ -1236,7 +1407,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   }
 
   Widget _buildSegmentedTabs(RitmoColors colors) {
-    final showWorship = ModuleGate.instance.isEnabledFrom(_settings, 'module_religion_enabled');
+    final showWorship = ModuleGate.instance.isEnabledFrom(
+      _settings,
+      'module_religion_enabled',
+    );
     final activeThemeColor = _getActivePhaseColor();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -1254,25 +1428,41 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             margin: const EdgeInsets.symmetric(horizontal: 2),
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: isActive ? activeThemeColor.withValues(alpha: 0.12) : (isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02)),
+              color: isActive
+                  ? activeThemeColor.withValues(alpha: 0.12)
+                  : (isDark
+                        ? Colors.white.withValues(alpha: 0.02)
+                        : Colors.black.withValues(alpha: 0.02)),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isActive ? activeThemeColor : (isDark ? Colors.white.withValues(alpha: 0.05) : colors.border.withValues(alpha: 0.5)),
+                color: isActive
+                    ? activeThemeColor
+                    : (isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : colors.border.withValues(alpha: 0.5)),
                 width: 1.2,
               ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 12, color: isActive ? activeThemeColor : (isDark ? Colors.white54 : colors.textSecondary)),
+                Icon(
+                  icon,
+                  size: 12,
+                  color: isActive
+                      ? activeThemeColor
+                      : (isDark ? Colors.white54 : colors.textSecondary),
+                ),
                 const SizedBox(width: 4),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    color: isActive ? activeThemeColor : (isDark ? Colors.white70 : colors.textSecondary),
-                    ),
+                    color: isActive
+                        ? activeThemeColor
+                        : (isDark ? Colors.white70 : colors.textSecondary),
+                  ),
                 ),
               ],
             ),
@@ -1286,7 +1476,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         buildTabButton(0, 'داشبورد', CupertinoIcons.today),
         buildTabButton(1, 'روندها', CupertinoIcons.chart_bar_alt_fill),
         buildTabButton(2, 'همبستگی‌ها', CupertinoIcons.sparkles),
-        if (showWorship) buildTabButton(3, 'روزه قضا', CupertinoIcons.bookmark_fill),
+        if (showWorship)
+          buildTabButton(3, 'روزه قضا', CupertinoIcons.bookmark_fill),
       ],
     );
   }
@@ -1303,31 +1494,52 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               children: [
                 Row(
                   children: [
-                    const Icon(CupertinoIcons.bookmark_solid, color: Color(0xffEC4899), size: 20),
+                    const Icon(
+                      CupertinoIcons.bookmark_solid,
+                      color: Color(0xffEC4899),
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'دفترچه قضای روزه‌های واجب',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : colors.textPrimary,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'بر اساس فقه اسلامی و رضایت عبادی شما، روزهای روزه واجب که به علت عذر شرعی بدنی از دست رفته‌اند در این دفترچه ثبت می‌شوند تا بتوانید به مرور زمان قضای آن‌ها را به جا آورید.',
-                  style: TextStyle(fontSize: 15.5, color: colors.textSecondary, height: 1.5),
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    color: colors.textSecondary,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 12),
-                Divider(color: isDark ? Colors.white10 : colors.border, height: 1),
+                Divider(
+                  color: isDark ? Colors.white10 : colors.border,
+                  height: 1,
+                ),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'ارسال بدهی‌ها به بخش عبادت',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : colors.textPrimary,
+                      ),
                     ),
                     CupertinoSwitch(
-                      value: _settings['cycle_send_fasting_debt_to_worship'] == 'true',
+                      value:
+                          _settings['cycle_send_fasting_debt_to_worship'] ==
+                          'true',
                       activeTrackColor: const Color(0xffEC4899),
                       onChanged: (val) async {
                         await HapticFeedback.selectionClick();
@@ -1342,64 +1554,87 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         ),
         const SizedBox(height: 16),
 
-        if (_fastingDebts.isEmpty) RitmoTheme.glassCardLight(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Center(
-                    child: Text(
-                      'هیچ بدهی قضای روزه‌ای ثبت نشده است 🌸',
-                      style: TextStyle(color: colors.textSecondary, fontSize: 14),
-                    ),
-                  ),
+        if (_fastingDebts.isEmpty)
+          RitmoTheme.glassCardLight(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Text(
+                  'هیچ بدهی قضای روزه‌ای ثبت نشده است 🌸',
+                  style: TextStyle(color: colors.textSecondary, fontSize: 14),
                 ),
-              ) else ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _fastingDebts.length,
-                itemBuilder: (context, index) {
-                  final debt = _fastingDebts[index];
-                  var dateStr = debt.dateIso;
-                  try {
-                    final dt = DateTime.parse(debt.dateIso);
-                    final jal = Jalali.fromDateTime(dt);
-                    dateStr = '${_toPersianDigits(jal.year.toString())}/${_toPersianDigits(jal.month.toString())}/${_toPersianDigits(jal.day.toString())}';
-                  } catch (_) {}
+              ),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _fastingDebts.length,
+            itemBuilder: (context, index) {
+              final debt = _fastingDebts[index];
+              var dateStr = debt.dateIso;
+              try {
+                final dt = DateTime.parse(debt.dateIso);
+                final jal = Jalali.fromDateTime(dt);
+                dateStr =
+                    '${_toPersianDigits(jal.year.toString())}/${_toPersianDigits(jal.month.toString())}/${_toPersianDigits(jal.day.toString())}';
+              } catch (_) {}
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: RitmoTheme.glassCardLight(
-                      child: ListTile(
-                        title: Text(
-                          _toPersianDigits('بدهی روزه: ${debt.daysOwed} روز'),
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary),
-                        ),
-                        subtitle: Text(
-                          'شروع دوره: $dateStr • ${debt.reason ?? "عذر شرعی"}',
-                          style: TextStyle(fontSize: 14, color: colors.textSecondary),
-                        ),
-                        trailing: CupertinoButton(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          color: debt.isResolved ? Colors.white10 : const Color(0xffEC4899),
-                          borderRadius: BorderRadius.circular(12),
-                          onPressed: () async {
-                            await HapticFeedback.mediumImpact();
-                            await CycleConsentBridge.resolveFastingDebt(debt.id, !debt.isResolved);
-                            await _loadData();
-                          },
-                          child: Text(
-                            debt.isResolved ? 'تسویه شده' : 'ثبت تسویه',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: debt.isResolved ? Colors.white38 : Colors.black,
-                              fontWeight: FontWeight.bold,
-                              ),
-                          ),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: RitmoTheme.glassCardLight(
+                  child: ListTile(
+                    title: Text(
+                      _toPersianDigits('بدهی روزه: ${debt.daysOwed} روز'),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : colors.textPrimary,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'شروع دوره: $dateStr • ${debt.reason ?? "عذر شرعی"}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    trailing: CupertinoButton(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      color: debt.isResolved
+                          ? Colors.white10
+                          : const Color(0xffEC4899),
+                      borderRadius: BorderRadius.circular(12),
+                      onPressed: () async {
+                        await HapticFeedback.mediumImpact();
+                        await CycleConsentBridge.resolveFastingDebt(
+                          debt.id,
+                          !debt.isResolved,
+                        );
+                        await _loadData();
+                      },
+                      child: Text(
+                        debt.isResolved ? 'تسویه شده' : 'ثبت تسویه',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: debt.isResolved
+                              ? Colors.white38
+                              : Colors.black,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              );
+            },
+          ),
       ],
     );
   }
@@ -1417,7 +1652,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           children: [
             Row(
               children: [
-                const Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.orangeAccent, size: 20),
+                const Icon(
+                  CupertinoIcons.exclamationmark_triangle_fill,
+                  color: Colors.orangeAccent,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -1426,7 +1665,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      ),
+                    ),
                   ),
                 ),
               ],
@@ -1448,13 +1687,18 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xffF43F5E),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
                     onPressed: () => _closeForgottenPeriod(_forgottenPeriod!),
                     child: Text(
                       'ثبت پایان (${_toPersianDigits(_settings['cycle_avg_period'] ?? '6')} روزه)',
-                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -1464,7 +1708,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.textPrimary,
                       side: const BorderSide(color: Colors.white24),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
                     onPressed: () => _editPeriod(_forgottenPeriod!),
@@ -1486,7 +1732,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     if (_engineOutput == null) return const SizedBox();
 
     final hasEnoughData = _engineOutput!.stats.totalRecordedCycles >= 2;
-    final predictedDateStr = _formatJalaliDate(_engineOutput!.nextPeriodPrediction);
+    final predictedDateStr = _formatJalaliDate(
+      _engineOutput!.nextPeriodPrediction,
+    );
 
     var windowText = '';
     if (hasEnoughData) {
@@ -1505,7 +1753,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           children: [
             Row(
               children: [
-                const Icon(CupertinoIcons.calendar_circle, color: Color(0xffF43F5E), size: 20),
+                const Icon(
+                  CupertinoIcons.calendar_circle,
+                  color: Color(0xffF43F5E),
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'پیش‌بینی شروع دوره بعدی',
@@ -1513,7 +1765,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    ),
+                  ),
                 ),
               ],
             ),
@@ -1524,15 +1776,12 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: Color(0xffF43F5E),
-                ),
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               windowText,
-              style: TextStyle(
-                fontSize: 14,
-                color: colors.textSecondary,
-                ),
+              style: TextStyle(fontSize: 14, color: colors.textSecondary),
             ),
             const SizedBox(height: 6),
             Row(
@@ -1542,13 +1791,20 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   style: TextStyle(fontSize: 14, color: colors.textSecondary),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: hasEnoughData && _engineOutput!.regularityLabel == 'نسبتاً منظم'
+                    color:
+                        hasEnoughData &&
+                            _engineOutput!.regularityLabel == 'نسبتاً منظم'
                         ? Colors.green.withValues(alpha: 0.15)
                         : hasEnoughData
-                            ? Colors.orange.withValues(alpha: 0.15)
-                            : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
+                        ? Colors.orange.withValues(alpha: 0.15)
+                        : (isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.05)),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -1556,17 +1812,26 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     style: TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.bold,
-                      color: hasEnoughData && _engineOutput!.regularityLabel == 'نسبتاً منظم'
-                          ? (isDark ? const Color(0xff34D399) : const Color(0xff059669))
+                      color:
+                          hasEnoughData &&
+                              _engineOutput!.regularityLabel == 'نسبتاً منظم'
+                          ? (isDark
+                                ? const Color(0xff34D399)
+                                : const Color(0xff059669))
                           : hasEnoughData
-                              ? (isDark ? const Color(0xffF5B95B) : const Color(0xffD97706))
-                              : colors.textSecondary,
-                      ),
+                          ? (isDark
+                                ? const Color(0xffF5B95B)
+                                : const Color(0xffD97706))
+                          : colors.textSecondary,
+                    ),
                   ),
                 ),
               ],
             ),
-            Divider(color: isDark ? Colors.white10 : Colors.black12, height: 20),
+            Divider(
+              color: isDark ? Colors.white10 : Colors.black12,
+              height: 20,
+            ),
             Text(
               _engineOutput!.predictionDisclaimer,
               style: TextStyle(
@@ -1585,7 +1850,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     if (_engineOutput == null) return CyclePhase.noData;
     final today = DateTime.now();
     if (_checkIsPeriodDay(today)) return CyclePhase.menstrual;
-    if (_checkIsOvulationDay(today) || _checkIsFertileDay(today)) return CyclePhase.ovulation;
+    if (_checkIsOvulationDay(today) || _checkIsFertileDay(today))
+      return CyclePhase.ovulation;
     if (_checkIsPmsDay(today)) return CyclePhase.luteal;
     return CyclePhase.follicular;
   }
@@ -1622,41 +1888,54 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
     if (isTodayPeriod) {
       phaseText = 'دوران قاعدگی (پریود)';
-      remainingText = 'روز ${_toPersianDigits(activePeriodDay.toString())} دوره خونریزی';
+      remainingText =
+          'روز ${_toPersianDigits(activePeriodDay.toString())} دوره خونریزی';
       phaseColor = const Color(0xffF43F5E);
       emoji = '🩸';
-      statusTip = 'بدن شما در حال پاکسازی طبیعی است. استراحت کافی، نوشیدن آب ولرم و دمنوش‌های ملایم به کاهش انقباضات کمک می‌کند.';
+      statusTip =
+          'بدن شما در حال پاکسازی طبیعی است. استراحت کافی، نوشیدن آب ولرم و دمنوش‌های ملایم به کاهش انقباضات کمک می‌کند.';
     } else if (isTodayOvulation) {
       phaseText = 'روز تخمک‌گذاری';
       remainingText = 'اوج هورمون‌های زنانه و باروری';
       phaseColor = const Color(0xff06B6D4);
       emoji = '🥚';
-      statusTip = 'تخمک‌گذاری رخ داده است. هورمون‌ها در بالاترین سطح خود هستند و آمادگی فیزیکی و سطح نشاط بدنی شما عالی است.';
+      statusTip =
+          'تخمک‌گذاری رخ داده است. هورمون‌ها در بالاترین سطح خود هستند و آمادگی فیزیکی و سطح نشاط بدنی شما عالی است.';
     } else if (isTodayFertile) {
       phaseText = 'پنجره باروری (Fertile)';
-      remainingText = 'روز ${_toPersianDigits(_engineOutput?.dayOfCycle.toString() ?? '12')} چرخه بدنی';
+      remainingText =
+          'روز ${_toPersianDigits(_engineOutput?.dayOfCycle.toString() ?? '12')} چرخه بدنی';
       phaseColor = const Color(0xff06B6D4);
       emoji = '🧬';
-      statusTip = 'پنجره باروری شما فعال است. زمان مناسبی برای ورزش‌های پرانرژی و تعاملات اجتماعی بالا است.';
+      statusTip =
+          'پنجره باروری شما فعال است. زمان مناسبی برای ورزش‌های پرانرژی و تعاملات اجتماعی بالا است.';
     } else if (isTodayPms) {
       phaseText = 'روزهای پیش از عادت (PMS)';
-      remainingText = 'روز ${_toPersianDigits(_engineOutput?.dayOfCycle.toString() ?? '24')} چرخه بدنی';
+      remainingText =
+          'روز ${_toPersianDigits(_engineOutput?.dayOfCycle.toString() ?? '24')} چرخه بدنی';
       phaseColor = const Color(0xffEC4899);
       emoji = '🌸';
-      statusTip = 'روزهای قبل از پریود؛ نوسان هورمونی طبیعی است. یوگای آرام، کاهش مصرف نمک و خواب منظم بسیار موثر است.';
+      statusTip =
+          'روزهای قبل از پریود؛ نوسان هورمونی طبیعی است. یوگای آرام، کاهش مصرف نمک و خواب منظم بسیار موثر است.';
     } else {
       phaseText = 'فاز فولیکولار (رشد)';
-      remainingText = 'روز ${_toPersianDigits(_engineOutput?.dayOfCycle.toString() ?? '7')} چرخه بدنی';
+      remainingText =
+          'روز ${_toPersianDigits(_engineOutput?.dayOfCycle.toString() ?? '7')} چرخه بدنی';
       phaseColor = const Color(0xff8B5CF6);
       emoji = '✨';
-      statusTip = 'فاز فولیکولار با رشد فولیکول‌ها شروع شده است. سطح هورمون استروژن افزایش یافته و انرژی و تمرکز شما رو به رشد است.';
+      statusTip =
+          'فاز فولیکولار با رشد فولیکول‌ها شروع شده است. سطح هورمون استروژن افزایش یافته و انرژی و تمرکز شما رو به رشد است.';
     }
 
     final totalCycleLength = _engineOutput?.stats.avgCycleLength ?? 28.0;
     final avgPeriodDuration = _engineOutput?.stats.avgPeriodDuration ?? 7.0;
-    final currentDay = isTodayPeriod ? activePeriodDay : (_engineOutput?.dayOfCycle ?? 1);
+    final currentDay = isTodayPeriod
+        ? activePeriodDay
+        : (_engineOutput?.dayOfCycle ?? 1);
     final totalDays = isTodayPeriod ? avgPeriodDuration : totalCycleLength;
-    final progress = totalDays > 0 ? (currentDay / totalDays).clamp(0.05, 1.0) : 0.1;
+    final progress = totalDays > 0
+        ? (currentDay / totalDays).clamp(0.05, 1.0)
+        : 0.1;
 
     return RitmoTheme.glassCardLight(
       child: Container(
@@ -1679,7 +1958,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                         color: phaseColor.withValues(alpha: 0.12),
                         blurRadius: 35,
                         spreadRadius: 3,
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -1700,14 +1979,18 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   height: 104,
                   width: 104,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xff12101F).withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.92),
+                    color: isDark
+                        ? const Color(0xff12101F).withValues(alpha: 0.85)
+                        : Colors.white.withValues(alpha: 0.92),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.2 : 0.04,
+                        ),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
-                      )
+                      ),
                     ],
                   ),
                   child: Center(
@@ -1715,24 +1998,27 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          phase == CyclePhase.menstrual ? 'روز پریود' : 'روز چرخه',
+                          phase == CyclePhase.menstrual
+                              ? 'روز پریود'
+                              : 'روز چرخه',
                           style: TextStyle(
                             fontSize: 12,
                             color: colors.textSecondary,
-                            ),
+                          ),
                         ),
                         const SizedBox(height: 1),
                         Text(
                           _toPersianDigits(
                             phase == CyclePhase.menstrual
                                 ? activePeriodDay.toString()
-                                : (_engineOutput?.dayOfCycle.toString() ?? '12'),
+                                : (_engineOutput?.dayOfCycle.toString() ??
+                                      '12'),
                           ),
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: phaseColor,
-                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -1741,7 +2027,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               ],
             ),
             const SizedBox(height: 20),
-            
+
             // Phase Badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -1763,13 +2049,13 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : phaseColor,
-                      ),
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 10),
-            
+
             // Remaining Text
             Text(
               remainingText,
@@ -1777,10 +2063,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white70 : colors.textPrimary,
-                ),
+              ),
             ),
             const SizedBox(height: 8),
-            
+
             // Daily Status Tip
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1789,7 +2075,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
-                  color: isDark ? Colors.white54 : colors.textSecondary.withValues(alpha: 0.95),
+                  color: isDark
+                      ? Colors.white54
+                      : colors.textSecondary.withValues(alpha: 0.95),
                   height: 1.5,
                 ),
               ),
@@ -1802,7 +2090,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
   Widget _buildQuickActionButtons(RitmoColors colors, bool isDark) {
     if (_engineOutput == null) return const SizedBox();
-    final hasActivePeriod = _periods.any((p) => p['endDate'] == null && !_isPeriodForgotten(p));
+    final hasActivePeriod = _periods.any(
+      (p) => p['endDate'] == null && !_isPeriodForgotten(p),
+    );
 
     return Row(
       children: [
@@ -1817,7 +2107,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      hasActivePeriod ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.add_circled_solid,
+                      hasActivePeriod
+                          ? CupertinoIcons.check_mark_circled_solid
+                          : CupertinoIcons.add_circled_solid,
                       color: _getActivePhaseColor(),
                       size: 20,
                     ),
@@ -1828,7 +2120,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1859,7 +2151,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1878,19 +2170,30 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     // Try to load today's log if it exists
-    final existingLogs = await db.query('cycle_day_logs', where: 'logDate = ?', whereArgs: [todayStr]);
+    final existingLogs = await db.query(
+      'cycle_day_logs',
+      where: 'logDate = ?',
+      whereArgs: [todayStr],
+    );
     if (!mounted) return;
-    final Map<String, dynamic>? todayLog = existingLogs.isNotEmpty ? existingLogs.first : null;
+    final Map<String, dynamic>? todayLog = existingLogs.isNotEmpty
+        ? existingLogs.first
+        : null;
 
-    var flowLevel = todayLog != null ? todayLog['flowLevel'] as String? : 'NONE';
+    var flowLevel = todayLog != null
+        ? todayLog['flowLevel'] as String?
+        : 'NONE';
     var mood = todayLog != null ? todayLog['mood'] as String? : 'NEUTRAL';
-    var energyTag = todayLog != null ? todayLog['energyTag'] as String? : 'MEDIUM';
+    var energyTag = todayLog != null
+        ? todayLog['energyTag'] as String?
+        : 'MEDIUM';
     final note = todayLog != null ? (todayLog['note'] as String? ?? '') : '';
 
     var symptoms = <String>[];
     if (todayLog != null && todayLog['symptomsJson'] != null) {
       try {
-        final parsed = jsonDecode(todayLog['symptomsJson'] as String) as List<dynamic>;
+        final parsed =
+            jsonDecode(todayLog['symptomsJson'] as String) as List<dynamic>;
         symptoms = parsed.map((e) => e.toString()).toList();
       } catch (_) {}
     }
@@ -1963,287 +2266,430 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   ),
                   child: SingleChildScrollView(
                     child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'ثبت علائم و احوال امروز',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isDark ? Colors.white : colors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(CupertinoIcons.xmark, color: isDark ? Colors.white54 : colors.textSecondary, size: 20),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Section 1: Flow
-                      _buildSectionHeader(CupertinoIcons.drop, 'میزان خونریزی یا ترشح بدنی', colors, isDark),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          {'key': 'NONE', 'label': 'هیچ'},
-                          {'key': 'LIGHT', 'label': 'خفیف'},
-                          {'key': 'MEDIUM', 'label': 'متوسط'},
-                          {'key': 'HEAVY', 'label': 'شدید'},
-                        ].map((item) {
-                          final f = item['key']!;
-                          final label = item['label']!;
-                          final active = flowLevel == f;
-                          return ChoiceChip(
-                            label: Text(label, style: TextStyle(fontSize: 14, color: active ? Colors.white : (isDark ? Colors.white70 : colors.textSecondary))),
-                            selected: active,
-                            selectedColor: _getActivePhaseColor(),
-                            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200,
-                            checkmarkColor: Colors.white,
-                            side: BorderSide(color: isDark ? Colors.white12 : Colors.grey.shade300),
-                            onSelected: (selected) {
-                              if (selected) {
-                                setDialogState(() => flowLevel = f);
-                              }
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Section 2: Mood
-                      _buildSectionHeader(CupertinoIcons.smiley, 'حس و خُلق‌وخو', colors, isDark),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: [
-                          {'key': 'HAPPY', 'label': 'عالی'},
-                          {'key': 'NEUTRAL', 'label': 'معمولی'},
-                          {'key': 'SAD', 'label': 'بی‌حوصله'},
-                          {'key': 'ANXIOUS', 'label': 'مضطرب'},
-                          {'key': 'IRRITABLE', 'label': 'کلافه'},
-                        ].map((item) {
-                          final m = item['key']!;
-                          final label = item['label']!;
-                          final active = mood == m;
-                          return ChoiceChip(
-                            label: Text(label, style: TextStyle(fontSize: 14, color: active ? Colors.white : (isDark ? Colors.white70 : colors.textSecondary))),
-                            selected: active,
-                            selectedColor: _getActivePhaseColor(),
-                            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200,
-                            checkmarkColor: Colors.white,
-                            side: BorderSide(color: isDark ? Colors.white12 : Colors.grey.shade300),
-                            onSelected: (selected) {
-                              if (selected) {
-                                setDialogState(() => mood = m);
-                              }
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Section 3: Energy
-                      _buildSectionHeader(CupertinoIcons.bolt, 'سطح انرژی بدنی', colors, isDark),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          {'key': 'HIGH', 'label': 'پرانرژی'},
-                          {'key': 'MEDIUM', 'label': 'معمولی'},
-                          {'key': 'LOW', 'label': 'نیاز به استراحت'},
-                        ].map((item) {
-                          final e = item['key']!;
-                          final label = item['label']!;
-                          final active = energyTag == e;
-                          return ChoiceChip(
-                            label: Text(label, style: TextStyle(fontSize: 14, color: active ? Colors.white : (isDark ? Colors.white70 : colors.textSecondary))),
-                            selected: active,
-                            selectedColor: _getActivePhaseColor(),
-                            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200,
-                            checkmarkColor: Colors.white,
-                            side: BorderSide(color: isDark ? Colors.white12 : Colors.grey.shade300),
-                            onSelected: (selected) {
-                              if (selected) {
-                                setDialogState(() => energyTag = e);
-                              }
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Section 4: Symptoms
-                      _buildSectionHeader(CupertinoIcons.doc_plaintext, 'علائم جسمی شایع (انتخاب چندگانه)', colors, isDark),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: symptomsList.map((s) {
-                          final key = s['key']!;
-                          final label = s['label']!;
-                          final active = symptoms.contains(key);
-
-                          var activeColor = const Color(0xffEC4899);
-                          var symIcon = CupertinoIcons.tag;
-                          if (key == 'cramps') {
-                            activeColor = const Color(0xffF43F5E);
-                            symIcon = CupertinoIcons.bolt_horizontal_fill;
-                          } else if (key == 'headache') {
-                            activeColor = const Color(0xff3B82F6);
-                            symIcon = CupertinoIcons.sparkles;
-                          } else if (key == 'bloating') {
-                            activeColor = const Color(0xff10B981);
-                            symIcon = CupertinoIcons.wind;
-                          } else if (key == 'fatigue') {
-                            activeColor = const Color(0xff8B5CF6);
-                            symIcon = CupertinoIcons.battery_25;
-                          } else if (key == 'backache') {
-                            activeColor = const Color(0xffF59E0B);
-                            symIcon = CupertinoIcons.arrow_down_right_arrow_up_left;
-                          } else if (key == 'mood_swings') {
-                            activeColor = const Color(0xffEC4899);
-                            symIcon = CupertinoIcons.heart_slash_fill;
-                          }
-
-                          return GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              setDialogState(() {
-                                if (active) {
-                                  symptoms.remove(key);
-                                } else {
-                                  symptoms.add(key);
-                                }
-                              });
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              curve: Curves.easeOutCubic,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: active ? activeColor.withValues(alpha: 0.12) : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey.shade100),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: active ? activeColor : (isDark ? Colors.white10 : Colors.grey.shade300),
-                                  width: 1.5,
-                                ),
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'ثبت علائم و احوال امروز',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark
+                                    ? Colors.white
+                                    : colors.textPrimary,
+                                fontWeight: FontWeight.bold,
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    symIcon,
-                                    color: active ? activeColor : (isDark ? Colors.white54 : colors.textSecondary),
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                CupertinoIcons.xmark,
+                                color: isDark
+                                    ? Colors.white54
+                                    : colors.textSecondary,
+                                size: 20,
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Section 1: Flow
+                        _buildSectionHeader(
+                          CupertinoIcons.drop,
+                          'میزان خونریزی یا ترشح بدنی',
+                          colors,
+                          isDark,
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children:
+                              [
+                                {'key': 'NONE', 'label': 'هیچ'},
+                                {'key': 'LIGHT', 'label': 'خفیف'},
+                                {'key': 'MEDIUM', 'label': 'متوسط'},
+                                {'key': 'HEAVY', 'label': 'شدید'},
+                              ].map((item) {
+                                final f = item['key']!;
+                                final label = item['label']!;
+                                final active = flowLevel == f;
+                                return ChoiceChip(
+                                  label: Text(
                                     label,
                                     style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: active ? FontWeight.bold : FontWeight.normal,
-                                      color: active ? activeColor : (isDark ? Colors.white70 : colors.textSecondary),
+                                      fontSize: 14,
+                                      color: active
+                                          ? Colors.white
+                                          : (isDark
+                                                ? Colors.white70
+                                                : colors.textSecondary),
                                     ),
                                   ),
-                                ],
+                                  selected: active,
+                                  selectedColor: _getActivePhaseColor(),
+                                  backgroundColor: isDark
+                                      ? Colors.white.withValues(alpha: 0.05)
+                                      : Colors.grey.shade200,
+                                  checkmarkColor: Colors.white,
+                                  side: BorderSide(
+                                    color: isDark
+                                        ? Colors.white12
+                                        : Colors.grey.shade300,
+                                  ),
+                                  onSelected: (selected) {
+                                    if (selected) {
+                                      setDialogState(() => flowLevel = f);
+                                    }
+                                  },
+                                );
+                              }).toList(),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Section 2: Mood
+                        _buildSectionHeader(
+                          CupertinoIcons.smiley,
+                          'حس و خُلق‌وخو',
+                          colors,
+                          isDark,
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children:
+                              [
+                                {'key': 'HAPPY', 'label': 'عالی'},
+                                {'key': 'NEUTRAL', 'label': 'معمولی'},
+                                {'key': 'SAD', 'label': 'بی‌حوصله'},
+                                {'key': 'ANXIOUS', 'label': 'مضطرب'},
+                                {'key': 'IRRITABLE', 'label': 'کلافه'},
+                              ].map((item) {
+                                final m = item['key']!;
+                                final label = item['label']!;
+                                final active = mood == m;
+                                return ChoiceChip(
+                                  label: Text(
+                                    label,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: active
+                                          ? Colors.white
+                                          : (isDark
+                                                ? Colors.white70
+                                                : colors.textSecondary),
+                                    ),
+                                  ),
+                                  selected: active,
+                                  selectedColor: _getActivePhaseColor(),
+                                  backgroundColor: isDark
+                                      ? Colors.white.withValues(alpha: 0.05)
+                                      : Colors.grey.shade200,
+                                  checkmarkColor: Colors.white,
+                                  side: BorderSide(
+                                    color: isDark
+                                        ? Colors.white12
+                                        : Colors.grey.shade300,
+                                  ),
+                                  onSelected: (selected) {
+                                    if (selected) {
+                                      setDialogState(() => mood = m);
+                                    }
+                                  },
+                                );
+                              }).toList(),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Section 3: Energy
+                        _buildSectionHeader(
+                          CupertinoIcons.bolt,
+                          'سطح انرژی بدنی',
+                          colors,
+                          isDark,
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children:
+                              [
+                                {'key': 'HIGH', 'label': 'پرانرژی'},
+                                {'key': 'MEDIUM', 'label': 'معمولی'},
+                                {'key': 'LOW', 'label': 'نیاز به استراحت'},
+                              ].map((item) {
+                                final e = item['key']!;
+                                final label = item['label']!;
+                                final active = energyTag == e;
+                                return ChoiceChip(
+                                  label: Text(
+                                    label,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: active
+                                          ? Colors.white
+                                          : (isDark
+                                                ? Colors.white70
+                                                : colors.textSecondary),
+                                    ),
+                                  ),
+                                  selected: active,
+                                  selectedColor: _getActivePhaseColor(),
+                                  backgroundColor: isDark
+                                      ? Colors.white.withValues(alpha: 0.05)
+                                      : Colors.grey.shade200,
+                                  checkmarkColor: Colors.white,
+                                  side: BorderSide(
+                                    color: isDark
+                                        ? Colors.white12
+                                        : Colors.grey.shade300,
+                                  ),
+                                  onSelected: (selected) {
+                                    if (selected) {
+                                      setDialogState(() => energyTag = e);
+                                    }
+                                  },
+                                );
+                              }).toList(),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Section 4: Symptoms
+                        _buildSectionHeader(
+                          CupertinoIcons.doc_plaintext,
+                          'علائم جسمی شایع (انتخاب چندگانه)',
+                          colors,
+                          isDark,
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: symptomsList.map((s) {
+                            final key = s['key']!;
+                            final label = s['label']!;
+                            final active = symptoms.contains(key);
+
+                            var activeColor = const Color(0xffEC4899);
+                            var symIcon = CupertinoIcons.tag;
+                            if (key == 'cramps') {
+                              activeColor = const Color(0xffF43F5E);
+                              symIcon = CupertinoIcons.bolt_horizontal_fill;
+                            } else if (key == 'headache') {
+                              activeColor = const Color(0xff3B82F6);
+                              symIcon = CupertinoIcons.sparkles;
+                            } else if (key == 'bloating') {
+                              activeColor = const Color(0xff10B981);
+                              symIcon = CupertinoIcons.wind;
+                            } else if (key == 'fatigue') {
+                              activeColor = const Color(0xff8B5CF6);
+                              symIcon = CupertinoIcons.battery_25;
+                            } else if (key == 'backache') {
+                              activeColor = const Color(0xffF59E0B);
+                              symIcon =
+                                  CupertinoIcons.arrow_down_right_arrow_up_left;
+                            } else if (key == 'mood_swings') {
+                              activeColor = const Color(0xffEC4899);
+                              symIcon = CupertinoIcons.heart_slash_fill;
+                            }
+
+                            return GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                setDialogState(() {
+                                  if (active) {
+                                    symptoms.remove(key);
+                                  } else {
+                                    symptoms.add(key);
+                                  }
+                                });
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                curve: Curves.easeOutCubic,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: active
+                                      ? activeColor.withValues(alpha: 0.12)
+                                      : (isDark
+                                            ? Colors.white.withValues(
+                                                alpha: 0.04,
+                                              )
+                                            : Colors.grey.shade100),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: active
+                                        ? activeColor
+                                        : (isDark
+                                              ? Colors.white10
+                                              : Colors.grey.shade300),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      symIcon,
+                                      color: active
+                                          ? activeColor
+                                          : (isDark
+                                                ? Colors.white54
+                                                : colors.textSecondary),
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      label,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: active
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                        color: active
+                                            ? activeColor
+                                            : (isDark
+                                                  ? Colors.white70
+                                                  : colors.textSecondary),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Section 5: Notes
+                        _buildSectionHeader(
+                          CupertinoIcons.pencil,
+                          'یادداشت شخصی',
+                          colors,
+                          isDark,
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: noteController,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : colors.textPrimary,
+                            fontSize: 14,
+                          ),
+                          maxLines: 2,
+                          decoration: InputDecoration(
+                            hintText: 'جزئیات یا مشاهدات خود را بنویسید...',
+                            hintStyle: TextStyle(
+                              color: isDark
+                                  ? Colors.white30
+                                  : colors.textSecondary.withValues(alpha: 0.3),
+                              fontSize: 14,
+                            ),
+                            filled: true,
+                            fillColor: isDark
+                                ? Colors.white.withValues(alpha: 0.04)
+                                : Colors.grey.shade100,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.white12
+                                    : Colors.black.withValues(alpha: 0.08),
                               ),
                             ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Section 5: Notes
-                      _buildSectionHeader(CupertinoIcons.pencil, 'یادداشت شخصی', colors, isDark),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: noteController,
-                        style: TextStyle(color: isDark ? Colors.white : colors.textPrimary, fontSize: 14),
-                        maxLines: 2,
-                        decoration: InputDecoration(
-                          hintText: 'جزئیات یا مشاهدات خود را بنویسید...',
-                          hintStyle: TextStyle(color: isDark ? Colors.white30 : colors.textSecondary.withValues(alpha: 0.3), fontSize: 14),
-                          filled: true,
-                          fillColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey.shade100,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.08)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.08)),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.white12
+                                    : Colors.black.withValues(alpha: 0.08),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      // Action Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _getActivePhaseColor(),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                        // Action Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _getActivePhaseColor(),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            onPressed: () async {
+                              final logId = todayLog != null
+                                  ? todayLog['id'] as String
+                                  : 'daylog_$nowMs';
+                              final symptomsJson = jsonEncode(symptoms);
+
+                              await db.insert(
+                                'cycle_day_logs',
+                                {
+                                  'id': logId,
+                                  'logDate': todayStr,
+                                  'flowLevel': flowLevel,
+                                  'symptomsJson': symptomsJson,
+                                  'mood': mood,
+                                  'energyTag': energyTag,
+                                  'note': noteController.text.trim(),
+                                  'createdAt': nowMs,
+                                  'updatedAt': nowMs,
+                                },
+                                conflictAlgorithm: ConflictAlgorithm.replace,
+                              );
+
+                              RitmoEvents.notifyRoutineChanged();
+
+                              setDialogState(() {
+                                showSuccessLottie = true;
+                              });
+
+                              await Future.delayed(
+                                const Duration(milliseconds: 1400),
+                              );
+
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                              }
+                              await _loadData();
+                            },
+                            child: const Text(
+                              'ذخیره احوال امروز',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
                           ),
-                          onPressed: () async {
-                            final logId = todayLog != null ? todayLog['id'] as String : 'daylog_$nowMs';
-                            final symptomsJson = jsonEncode(symptoms);
-
-                            await db.insert(
-                              'cycle_day_logs',
-                              {
-                                'id': logId,
-                                'logDate': todayStr,
-                                'flowLevel': flowLevel,
-                                'symptomsJson': symptomsJson,
-                                'mood': mood,
-                                'energyTag': energyTag,
-                                'note': noteController.text.trim(),
-                                'createdAt': nowMs,
-                                'updatedAt': nowMs,
-                              },
-                              conflictAlgorithm: ConflictAlgorithm.replace,
-                            );
-
-                            RitmoEvents.notifyRoutineChanged();
-
-                            setDialogState(() {
-                              showSuccessLottie = true;
-                            });
-
-                            await Future.delayed(const Duration(milliseconds: 1400));
-
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
-                            await _loadData();
-                          },
-                          child: const Text('ذخیره احوال امروز', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
+            );
+          },
+        );
+      },
+    );
+  }
 
-  Widget _buildSectionHeader(IconData icon, String title, RitmoColors colors, bool isDark) {
+  Widget _buildSectionHeader(
+    IconData icon,
+    String title,
+    RitmoColors colors,
+    bool isDark,
+  ) {
     return Row(
       children: [
         Icon(icon, color: _getActivePhaseColor(), size: 16),
@@ -2251,9 +2697,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         Text(
           title,
           style: TextStyle(
-            fontSize: 15.5, 
-            color: isDark ? Colors.white70 : colors.textSecondary, 
-            fontWeight: FontWeight.bold
+            fontSize: 15.5,
+            color: isDark ? Colors.white70 : colors.textSecondary,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ],
@@ -2293,34 +2739,40 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     switch (phase) {
       case CyclePhase.menstrual:
         title = 'ورزش مناسب: کشش و یوگا 🌸';
-        description = 'با توجه به فاز قاعدگی، امروز تمرینات سبک مانند یوگا، حرکات کششی و پیاده‌روی ملایم را انتخاب کنید تا بدن بازسازی شود.';
+        description =
+            'با توجه به فاز قاعدگی، امروز تمرینات سبک مانند یوگا، حرکات کششی و پیاده‌روی ملایم را انتخاب کنید تا بدن بازسازی شود.';
         icon = CupertinoIcons.heart_fill;
         phaseColor = const Color(0xffF43F5E);
       case CyclePhase.ovulation:
         title = 'ورزش مناسب: قدرت و استقامت 🔥';
-        description = 'شما در فاز تخمک‌گذاری و اوج انرژی هستید. بهترین زمان برای تمرینات قدرتی پرفشار، پلایومتریک و چالش عضلات است.';
+        description =
+            'شما در فاز تخمک‌گذاری و اوج انرژی هستید. بهترین زمان برای تمرینات قدرتی پرفشار، پلایومتریک و چالش عضلات است.';
         icon = CupertinoIcons.flame_fill;
         phaseColor = const Color(0xffD946EF);
       case CyclePhase.luteal:
         title = 'ورزش مناسب: تمرینات تعادلی 🧘‍♀️';
-        description = 'در فاز لوتئال انرژی به مرور کاهش می‌یابد. تمرینات با شدت متوسط، ورزش‌های تعادلی و روتین‌های کششی آرام‌بخش توصیه می‌شوند.';
+        description =
+            'در فاز لوتئال انرژی به مرور کاهش می‌یابد. تمرینات با شدت متوسط، ورزش‌های تعادلی و روتین‌های کششی آرام‌بخش توصیه می‌شوند.';
         icon = CupertinoIcons.waveform_path_ecg;
         phaseColor = const Color(0xffF59E0B);
       case CyclePhase.follicular:
         title = 'ورزش مناسب: کاردیو و هوازی ⚡';
-        description = 'در فاز فولیکولار سطح انرژی رو به افزایش است. زمان عالی برای ورزش‌های هوازی، دویدن و بالا بردن ضربان قلب است.';
+        description =
+            'در فاز فولیکولار سطح انرژی رو به افزایش است. زمان عالی برای ورزش‌های هوازی، دویدن و بالا بردن ضربان قلب است.';
         icon = CupertinoIcons.bolt_fill;
         phaseColor = const Color(0xff10B981);
       case CyclePhase.pregnancy:
         title = 'ورزش مناسب بارداری 🤰';
-        description = 'تمرینات تنفسی، پیاده‌روی سبک و حرکات تقویتی مجاز دوران بارداری با نظر پزشک توصیه می‌شود.';
+        description =
+            'تمرینات تنفسی، پیاده‌روی سبک و حرکات تقویتی مجاز دوران بارداری با نظر پزشک توصیه می‌شود.';
         icon = CupertinoIcons.heart_circle_fill;
         phaseColor = const Color(0xff06B6D4);
       case CyclePhase.dataStale:
       case CyclePhase.noData:
       default:
         title = 'ورزش متناسب با ریتم بدنی 🌸';
-        description = 'با ثبت اطلاعات دوره، برنامه و حرکات پیشنهادی ورزشی شما به طور خودکار متناسب با فاز چرخه بدنتان همگام می‌شود.';
+        description =
+            'با ثبت اطلاعات دوره، برنامه و حرکات پیشنهادی ورزشی شما به طور خودکار متناسب با فاز چرخه بدنتان همگام می‌شود.';
         icon = CupertinoIcons.sparkles;
         phaseColor = const Color(0xffEC4899);
     }
@@ -2350,7 +2802,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       fontSize: 14.5,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : colors.textPrimary,
-                      ),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -2371,7 +2823,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   }
 
   Widget? _buildSymptomPredictionCard(RitmoColors colors, bool isDark) {
-    if (_engineOutput == null || !_engineOutput!.hasData || _symptomStats.isEmpty) return null;
+    if (_engineOutput == null ||
+        !_engineOutput!.hasData ||
+        _symptomStats.isEmpty)
+      return null;
 
     final currentDay = _engineOutput!.dayOfCycle;
     if (currentDay <= 0) return null;
@@ -2388,13 +2843,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     if (upcomingSymptoms.isEmpty) return null;
 
     // Build the warning message
-    final symptomsText = upcomingSymptoms.map((s) {
-      final translated = _translateSymptom(s.key);
-      final diff = s.typicalCycleDay - currentDay;
-      return '$translated (${diff == 1 ? 'فردا' : 'در $diff روز آینده'})';
-    }).join(' و ');
+    final symptomsText = upcomingSymptoms
+        .map((s) {
+          final translated = _translateSymptom(s.key);
+          final diff = s.typicalCycleDay - currentDay;
+          return '$translated (${diff == 1 ? 'فردا' : 'در $diff روز آینده'})';
+        })
+        .join(' و ');
 
-    const tip = 'توصیه خودمراقبتی: آب بیشتری بنوشید، از غذاهای شور بپرهیزید و روتین خواب و پیاده‌روی سبک را منظم نگه‌دارید. 🌸';
+    const tip =
+        'توصیه خودمراقبتی: آب بیشتری بنوشید، از غذاهای شور بپرهیزید و روتین خواب و پیاده‌روی سبک را منظم نگه‌دارید. 🌸';
 
     return RitmoTheme.glassCardLight(
       child: Padding(
@@ -2402,7 +2860,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(CupertinoIcons.bell_fill, color: Color(0xffF59E0B), size: 22),
+            const Icon(
+              CupertinoIcons.bell_fill,
+              color: Color(0xffF59E0B),
+              size: 22,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -2414,7 +2876,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       fontSize: 14.5,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : colors.textPrimary,
-                      ),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -2444,7 +2906,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     );
   }
 
-
   Widget _buildCalendarView(RitmoColors colors, bool isDark) {
     final year = _calendarMonth.year;
     final month = _calendarMonth.month;
@@ -2453,9 +2914,18 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
     // Day week of first day (1: Saturday, 7: Friday)
     final firstDay = Jalali(year, month);
-    final emptyCells = firstDay.weekDay - 1; // standard Jalali week index starts at Sat (1)
+    final emptyCells =
+        firstDay.weekDay - 1; // standard Jalali week index starts at Sat (1)
 
-    final weekdaysHeaders = <String>['شنبه', 'یکشنبه', 'دوشنبه', 'سه شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'];
+    final weekdaysHeaders = <String>[
+      'شنبه',
+      'یکشنبه',
+      'دوشنبه',
+      'سه شنبه',
+      'چهارشنبه',
+      'پنجشنبه',
+      'جمعه',
+    ];
 
     return RitmoTheme.glassCardLight(
       child: Padding(
@@ -2467,7 +2937,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(CupertinoIcons.right_chevron, color: _getActivePhaseColor(), size: 16),
+                  icon: Icon(
+                    CupertinoIcons.right_chevron,
+                    color: _getActivePhaseColor(),
+                    size: 16,
+                  ),
                   onPressed: () {
                     setState(() {
                       _calendarMonth = _calendarMonth.addMonths(-1);
@@ -2479,21 +2953,29 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     Text(
                       monthName,
                       style: TextStyle(
-                        fontSize: 14, 
-                        fontWeight: FontWeight.bold, 
-                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary),
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : colors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       _toPersianDigits(year.toString()),
                       style: TextStyle(
-                        fontSize: 10, 
-                        color: colors.textSecondary.withValues(alpha: 0.7)),
+                        fontSize: 10,
+                        color: colors.textSecondary.withValues(alpha: 0.7),
+                      ),
                     ),
                   ],
                 ),
                 IconButton(
-                  icon: Icon(CupertinoIcons.left_chevron, color: _getActivePhaseColor(), size: 16),
+                  icon: Icon(
+                    CupertinoIcons.left_chevron,
+                    color: _getActivePhaseColor(),
+                    size: 16,
+                  ),
                   onPressed: () {
                     setState(() {
                       _calendarMonth = _calendarMonth.addMonths(1);
@@ -2511,7 +2993,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   child: Center(
                     child: Text(
                       header,
-                      style: TextStyle(fontSize: 9.5, color: colors.textSecondary.withValues(alpha: 0.8), fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        color: colors.textSecondary.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 );
@@ -2547,15 +3033,21 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 final hasLog = _checkHasLog(dateStr);
 
                 final todayJalali = Jalali.now();
-                final isToday = dayJalali.year == todayJalali.year &&
+                final isToday =
+                    dayJalali.year == todayJalali.year &&
                     dayJalali.month == todayJalali.month &&
                     dayJalali.day == todayJalali.day;
 
                 Color? cellBg;
                 Border? cellBorder;
                 var textColor = colors.textPrimary;
-                final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-                final isSpecialDay = isPeriodDay || isPredictedDay || isOvulationDay || isFertileDay;
+                final isDarkTheme =
+                    Theme.of(context).brightness == Brightness.dark;
+                final isSpecialDay =
+                    isPeriodDay ||
+                    isPredictedDay ||
+                    isOvulationDay ||
+                    isFertileDay;
 
                 final isPmsDay = _checkIsPmsDay(dayGregorian);
 
@@ -2563,10 +3055,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   cellBg = const Color(0xffF43F5E).withValues(alpha: 0.35);
                   textColor = isDarkTheme ? Colors.white : colors.textPrimary;
                 } else if (isPredictedDay) {
-                  cellBorder = Border.all(color: const Color(0xffF43F5E).withValues(alpha: 0.6), width: 1.5);
+                  cellBorder = Border.all(
+                    color: const Color(0xffF43F5E).withValues(alpha: 0.6),
+                    width: 1.5,
+                  );
                 } else if (isOvulationDay) {
                   cellBg = const Color(0xff06B6D4).withValues(alpha: 0.4);
-                  cellBorder = Border.all(color: const Color(0xff06B6D4), width: 1.5);
+                  cellBorder = Border.all(
+                    color: const Color(0xff06B6D4),
+                    width: 1.5,
+                  );
                   textColor = isDarkTheme ? Colors.white : colors.textPrimary;
                 } else if (isFertileDay) {
                   cellBg = const Color(0xff06B6D4).withValues(alpha: 0.15);
@@ -2576,10 +3074,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
                 if (isToday) {
                   cellBorder = Border.all(
-                    color: isSpecialDay 
-                        ? (isDarkTheme ? Colors.white : colors.textPrimary) 
-                        : _getActivePhaseColor(), 
-                    width: 2
+                    color: isSpecialDay
+                        ? (isDarkTheme ? Colors.white : colors.textPrimary)
+                        : _getActivePhaseColor(),
+                    width: 2,
                   );
                 }
 
@@ -2592,7 +3090,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       decoration: BoxDecoration(
                         color: cellBg,
                         border: cellBorder,
-                        borderRadius: BorderRadius.circular(10), // Squircle design
+                        borderRadius: BorderRadius.circular(
+                          10,
+                        ), // Squircle design
                       ),
                       child: Center(
                         child: Text(
@@ -2601,7 +3101,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: textColor,
-                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -2612,7 +3112,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           height: 4,
                           width: 4,
                           decoration: BoxDecoration(
-                            color: _getActivePhaseColor(), // Dynamic symptom dot matching active phase
+                            color:
+                                _getActivePhaseColor(), // Dynamic symptom dot matching active phase
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -2633,32 +3134,75 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Divider(color: isDarkTheme ? Colors.white10 : colors.border, height: 24),
+        Divider(
+          color: isDarkTheme ? Colors.white10 : colors.border,
+          height: 24,
+        ),
         Text(
           'راهنمای تقویم چرخه بدنی:',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkTheme ? Colors.white70 : colors.textPrimary),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: isDarkTheme ? Colors.white70 : colors.textPrimary,
+          ),
         ),
         const SizedBox(height: 10),
         Wrap(
           spacing: 12,
           runSpacing: 8,
           children: [
-            _buildLegendItem(const Color(0xffF43F5E).withValues(alpha: 0.35), 'قاعدگی (پریود)', colors.textPrimary),
-            _buildLegendItem(Colors.transparent, 'پیش‌بینی دوره بعدی', colors.textPrimary, borderColor: const Color(0xffF43F5E).withValues(alpha: 0.6)),
-            _buildLegendItem(const Color(0xffEC4899).withValues(alpha: 0.15), 'روزهای پیش از عادت (PMS)', colors.textPrimary),
-            _buildLegendItem(const Color(0xff06B6D4).withValues(alpha: 0.4), 'روز تخمک‌گذاری', colors.textPrimary, borderColor: const Color(0xff06B6D4)),
-            _buildLegendItem(const Color(0xff06B6D4).withValues(alpha: 0.15), 'پنجره باروری (Fertile)', colors.textPrimary),
-            _buildLegendItem(Colors.transparent, 'امروز', colors.textPrimary, borderColor: isDarkTheme ? Colors.white : colors.textPrimary),
+            _buildLegendItem(
+              const Color(0xffF43F5E).withValues(alpha: 0.35),
+              'قاعدگی (پریود)',
+              colors.textPrimary,
+            ),
+            _buildLegendItem(
+              Colors.transparent,
+              'پیش‌بینی دوره بعدی',
+              colors.textPrimary,
+              borderColor: const Color(0xffF43F5E).withValues(alpha: 0.6),
+            ),
+            _buildLegendItem(
+              const Color(0xffEC4899).withValues(alpha: 0.15),
+              'روزهای پیش از عادت (PMS)',
+              colors.textPrimary,
+            ),
+            _buildLegendItem(
+              const Color(0xff06B6D4).withValues(alpha: 0.4),
+              'روز تخمک‌گذاری',
+              colors.textPrimary,
+              borderColor: const Color(0xff06B6D4),
+            ),
+            _buildLegendItem(
+              const Color(0xff06B6D4).withValues(alpha: 0.15),
+              'پنجره باروری (Fertile)',
+              colors.textPrimary,
+            ),
+            _buildLegendItem(
+              Colors.transparent,
+              'امروز',
+              colors.textPrimary,
+              borderColor: isDarkTheme ? Colors.white : colors.textPrimary,
+            ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   width: 5,
                   height: 5,
-                  decoration: BoxDecoration(color: _getActivePhaseColor(), shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: _getActivePhaseColor(),
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: 6),
-                Text('علائم ثبت شده', style: TextStyle(fontSize: 12, color: isDarkTheme ? Colors.white70 : colors.textSecondary)),
+                Text(
+                  'علائم ثبت شده',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDarkTheme ? Colors.white70 : colors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ],
@@ -2667,7 +3211,12 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     );
   }
 
-  Widget _buildLegendItem(Color bg, String text, Color textColor, {Color? borderColor}) {
+  Widget _buildLegendItem(
+    Color bg,
+    String text,
+    Color textColor, {
+    Color? borderColor,
+  }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -2676,7 +3225,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           height: 12,
           decoration: BoxDecoration(
             color: bg,
-            border: borderColor != null ? Border.all(color: borderColor, width: 1.5) : null,
+            border: borderColor != null
+                ? Border.all(color: borderColor, width: 1.5)
+                : null,
             borderRadius: BorderRadius.circular(4), // Squircle legend markers
           ),
         ),
@@ -2693,7 +3244,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       final start = DateTime(pStart.year, pStart.month, pStart.day);
       final endStr = p['endDate'] as String?;
       final end = endStr != null ? DateTime.parse(endStr) : null;
-      final cleanEnd = end != null ? DateTime(end.year, end.month, end.day) : null;
+      final cleanEnd = end != null
+          ? DateTime(end.year, end.month, end.day)
+          : null;
 
       if (!cleanDate.isBefore(start)) {
         if (cleanEnd != null) {
@@ -2715,7 +3268,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       final start = DateTime(pStart.year, pStart.month, pStart.day);
       final endStr = p['endDate'] as String?;
       final end = endStr != null ? DateTime.parse(endStr) : null;
-      final cleanEnd = end != null ? DateTime(end.year, end.month, end.day) : null;
+      final cleanEnd = end != null
+          ? DateTime(end.year, end.month, end.day)
+          : null;
 
       if (!cleanDate.isBefore(start)) {
         if (cleanEnd != null) {
@@ -2730,14 +3285,20 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         }
       }
     }
-    return (_engineOutput?.dayOfPeriod ?? 0) > 0 ? _engineOutput!.dayOfPeriod : 1;
+    return (_engineOutput?.dayOfPeriod ?? 0) > 0
+        ? _engineOutput!.dayOfPeriod
+        : 1;
   }
 
   bool _checkIsPredictedDay(DateTime date) {
     if (_engineOutput == null) return false;
     final nextPeriod = _engineOutput!.nextPeriodPrediction;
     if (nextPeriod == null) return false;
-    final cleanNextPeriod = DateTime(nextPeriod.year, nextPeriod.month, nextPeriod.day);
+    final cleanNextPeriod = DateTime(
+      nextPeriod.year,
+      nextPeriod.month,
+      nextPeriod.day,
+    );
     final cleanDate = DateTime(date.year, date.month, date.day);
     final pDur = int.tryParse(_settings['cycle_avg_period'] ?? '6') ?? 6;
     final diff = cleanDate.difference(cleanNextPeriod).inDays;
@@ -2793,11 +3354,19 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           children: [
             Row(
               children: [
-                const Icon(CupertinoIcons.graph_square, color: Color(0xffF43F5E), size: 18),
+                const Icon(
+                  CupertinoIcons.graph_square,
+                  color: Color(0xffF43F5E),
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'آمار و ریتم بیولوژیک',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : colors.textPrimary,
+                  ),
                 ),
               ],
             ),
@@ -2805,9 +3374,20 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildStatPill('طول چرخه بدنی', '${_toPersianDigits(_engineOutput!.stats.avgCycleLength.toStringAsFixed(1))} روز'),
-                _buildStatPill('طول قاعدگی', '${_toPersianDigits(_engineOutput!.stats.avgPeriodDuration.toStringAsFixed(1))} روز'),
-                _buildStatPill('کل دوره‌ها', _toPersianDigits(_engineOutput!.stats.totalRecordedCycles.toString())),
+                _buildStatPill(
+                  'طول چرخه بدنی',
+                  '${_toPersianDigits(_engineOutput!.stats.avgCycleLength.toStringAsFixed(1))} روز',
+                ),
+                _buildStatPill(
+                  'طول قاعدگی',
+                  '${_toPersianDigits(_engineOutput!.stats.avgPeriodDuration.toStringAsFixed(1))} روز',
+                ),
+                _buildStatPill(
+                  'کل دوره‌ها',
+                  _toPersianDigits(
+                    _engineOutput!.stats.totalRecordedCycles.toString(),
+                  ),
+                ),
               ],
             ),
             if (_engineOutput!.isIrregular) ...[
@@ -2817,16 +3397,26 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 decoration: BoxDecoration(
                   color: Colors.amber.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: Colors.amber.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: const Row(
                   children: [
-                    Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.amber, size: 16),
+                    Icon(
+                      CupertinoIcons.exclamationmark_triangle_fill,
+                      color: Colors.amber,
+                      size: 16,
+                    ),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'نوسان در طول چرخه‌ها مشاهده شد. این موضوع غالباً طبیعی است؛ در صورت تداوم می‌توانید آن را با پزشک متخصص مطرح کنید.',
-                        style: TextStyle(fontSize: 14, color: Colors.amber, height: 1.5),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.amber,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   ],
@@ -2842,9 +3432,24 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   Widget _buildStatPill(String title, String val) {
     return Column(
       children: [
-        Text(title, style: TextStyle(fontSize: 12, color: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : context.colors.textSecondary)),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white54
+                : context.colors.textSecondary,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(val, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xffF43F5E))),
+        Text(
+          val,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xffF43F5E),
+          ),
+        ),
       ],
     );
   }
@@ -2887,12 +3492,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               ),
             ),
           );
-        }
+        },
       ),
     );
   }
 
-  Widget _buildSettingsPanel(RitmoColors colors, bool isDark, [StateSetter? setSheetState]) {
+  Widget _buildSettingsPanel(
+    RitmoColors colors,
+    bool isDark, [
+    StateSetter? setSheetState,
+  ]) {
     final hasBiometrics = _settings['cycle_biometric_enabled'] == 'true';
 
     return Padding(
@@ -2902,11 +3511,21 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         children: [
           Row(
             children: [
-              const Icon(CupertinoIcons.settings_solid, color: Color(0xffF43F5E), size: 18),
+              const Icon(
+                CupertinoIcons.settings_solid,
+                color: Color(0xffF43F5E),
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Text(
                 'تنظیمات و اتصالات حریم خصوصی',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : colors.textPrimary,
+                ),
               ),
             ],
           ),
@@ -2938,7 +3557,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 children: [
                   Row(
                     children: [
-                      const Icon(CupertinoIcons.slider_horizontal_3, color: Color(0xffF43F5E), size: 18),
+                      const Icon(
+                        CupertinoIcons.slider_horizontal_3,
+                        color: Color(0xffF43F5E),
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'ویرایش و بازبینی راه‌اندازی چرخه',
@@ -2946,11 +3569,15 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          ),
+                        ),
                       ),
                     ],
                   ),
-                  Icon(CupertinoIcons.chevron_left, color: colors.textSecondary, size: 14),
+                  Icon(
+                    CupertinoIcons.chevron_left,
+                    color: colors.textSecondary,
+                    size: 14,
+                  ),
                 ],
               ),
             ),
@@ -2961,15 +3588,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             value: hasBiometrics,
             onChanged: (v) async {
               final db = await DatabaseHelper.instance.database;
-              await db.insert(
-                'app_settings',
-                {
-                  'key': 'cycle_biometric_enabled',
-                  'value': v.toString(),
-                  'updatedAt': DateTime.now().millisecondsSinceEpoch
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
+              await db.insert('app_settings', {
+                'key': 'cycle_biometric_enabled',
+                'value': v.toString(),
+                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
               await _loadData();
               if (setSheetState != null) setSheetState(() {});
             },
@@ -2980,15 +3603,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             value: _settings['cycle_lock_enabled'] != 'false',
             onChanged: (v) async {
               final db = await DatabaseHelper.instance.database;
-              await db.insert(
-                'app_settings',
-                {
-                  'key': 'cycle_lock_enabled',
-                  'value': v.toString(),
-                  'updatedAt': DateTime.now().millisecondsSinceEpoch
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
+              await db.insert('app_settings', {
+                'key': 'cycle_lock_enabled',
+                'value': v.toString(),
+                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
               await _loadData();
               if (setSheetState != null) setSheetState(() {});
             },
@@ -3007,23 +3626,25 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 children: [
                   Row(
                     children: [
-                      const Text(
-                        '🔑',
-                        style: TextStyle(fontSize: 14),
-                      ),
+                      const Text('🔑', style: TextStyle(fontSize: 14)),
                       const SizedBox(width: 8),
                       Text(
-                        _settings['app_lock_password'] != null && _settings['app_lock_password']!.isNotEmpty
+                        _settings['app_lock_password'] != null &&
+                                _settings['app_lock_password']!.isNotEmpty
                             ? 'تغییر رمز عبور چرخه'
                             : 'تنظیم رمز عبور چرخه',
                         style: TextStyle(
                           fontSize: 14,
                           color: colors.textSecondary,
-                          ),
+                        ),
                       ),
                     ],
                   ),
-                  Icon(CupertinoIcons.chevron_left, color: colors.textSecondary, size: 14),
+                  Icon(
+                    CupertinoIcons.chevron_left,
+                    color: colors.textSecondary,
+                    size: 14,
+                  ),
                 ],
               ),
             ),
@@ -3034,23 +3655,24 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             value: _settings['cycle_consent_worship'] == 'true',
             onChanged: (v) async {
               final db = await DatabaseHelper.instance.database;
-              await db.insert(
-                'app_settings',
-                {
-                  'key': 'cycle_consent_worship',
-                  'value': v.toString(),
-                  'updatedAt': DateTime.now().millisecondsSinceEpoch
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
+              await db.insert('app_settings', {
+                'key': 'cycle_consent_worship',
+                'value': v.toString(),
+                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
               WorshipEngine.instance.invalidate();
-              final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+              final todayStr = DateTime.now().toIso8601String().substring(
+                0,
+                10,
+              );
               DayAgendaService.instance.invalidateDate(todayStr);
-              RitmoEventBus().fire(RitmoEvent(
-                type: 'WorshipUpdated',
-                timestamp: DateTime.now(),
-                payload: {'date': todayStr},
-              ));
+              RitmoEventBus().fire(
+                RitmoEvent(
+                  type: 'WorshipUpdated',
+                  timestamp: DateTime.now(),
+                  payload: {'date': todayStr},
+                ),
+              );
               await _loadData();
               if (setSheetState != null) setSheetState(() {});
             },
@@ -3061,15 +3683,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             value: _settings['cycle_consent_energy'] == 'true',
             onChanged: (v) async {
               final db = await DatabaseHelper.instance.database;
-              await db.insert(
-                'app_settings',
-                {
-                  'key': 'cycle_consent_energy',
-                  'value': v.toString(),
-                  'updatedAt': DateTime.now().millisecondsSinceEpoch
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
+              await db.insert('app_settings', {
+                'key': 'cycle_consent_energy',
+                'value': v.toString(),
+                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
               await _loadData();
               if (setSheetState != null) setSheetState(() {});
             },
@@ -3080,15 +3698,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             value: _settings['cycle_consent_sleep'] == 'true',
             onChanged: (v) async {
               final db = await DatabaseHelper.instance.database;
-              await db.insert(
-                'app_settings',
-                {
-                  'key': 'cycle_consent_sleep',
-                  'value': v.toString(),
-                  'updatedAt': DateTime.now().millisecondsSinceEpoch
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
+              await db.insert('app_settings', {
+                'key': 'cycle_consent_sleep',
+                'value': v.toString(),
+                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
               await _loadData();
               if (setSheetState != null) setSheetState(() {});
             },
@@ -3099,15 +3713,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             value: _settings['cycle_consent_reminders'] == 'true',
             onChanged: (v) async {
               final db = await DatabaseHelper.instance.database;
-              await db.insert(
-                'app_settings',
-                {
-                  'key': 'cycle_consent_reminders',
-                  'value': v.toString(),
-                  'updatedAt': DateTime.now().millisecondsSinceEpoch
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
+              await db.insert('app_settings', {
+                'key': 'cycle_consent_reminders',
+                'value': v.toString(),
+                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
               await _loadData();
               if (setSheetState != null) setSheetState(() {});
             },
@@ -3118,15 +3728,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             value: _settings['cycle_consent_dashboard'] == 'true',
             onChanged: (v) async {
               final db = await DatabaseHelper.instance.database;
-              await db.insert(
-                'app_settings',
-                {
-                  'key': 'cycle_consent_dashboard',
-                  'value': v.toString(),
-                  'updatedAt': DateTime.now().millisecondsSinceEpoch
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
+              await db.insert('app_settings', {
+                'key': 'cycle_consent_dashboard',
+                'value': v.toString(),
+                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
               await _loadData();
               if (setSheetState != null) setSheetState(() {});
             },
@@ -3137,15 +3743,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             value: _settings['show_cycle_in_calendar'] == 'true',
             onChanged: (v) async {
               final db = await DatabaseHelper.instance.database;
-              await db.insert(
-                'app_settings',
-                {
-                  'key': 'show_cycle_in_calendar',
-                  'value': v.toString(),
-                  'updatedAt': DateTime.now().millisecondsSinceEpoch
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
+              await db.insert('app_settings', {
+                'key': 'show_cycle_in_calendar',
+                'value': v.toString(),
+                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
               await _loadData();
               if (setSheetState != null) setSheetState(() {});
             },
@@ -3153,7 +3755,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           Divider(height: 16, color: isDark ? Colors.white10 : colors.border),
           InkWell(
             onTap: () async {
-              final isPregnancyActive = _settings['cycle_pregnancy_mode'] == 'true';
+              final isPregnancyActive =
+                  _settings['cycle_pregnancy_mode'] == 'true';
               Navigator.pop(context);
               if (isPregnancyActive) {
                 await _deactivatePregnancyFromSettings();
@@ -3170,7 +3773,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   Row(
                     children: [
                       Text(
-                        _settings['cycle_pregnancy_mode'] == 'true' ? '🔄' : '🤰',
+                        _settings['cycle_pregnancy_mode'] == 'true'
+                            ? '🔄'
+                            : '🤰',
                         style: const TextStyle(fontSize: 14),
                       ),
                       const SizedBox(width: 8),
@@ -3183,11 +3788,15 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           color: _settings['cycle_pregnancy_mode'] == 'true'
                               ? const Color(0xffEC4899)
                               : colors.textSecondary,
-                          ),
+                        ),
                       ),
                     ],
                   ),
-                  Icon(CupertinoIcons.chevron_left, color: colors.textSecondary, size: 14),
+                  Icon(
+                    CupertinoIcons.chevron_left,
+                    color: colors.textSecondary,
+                    size: 14,
+                  ),
                 ],
               ),
             ),
@@ -3195,23 +3804,41 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           Divider(height: 24, color: isDark ? Colors.white10 : colors.border),
           Text(
             'تنظیمات طول چرخه بدنی',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : colors.textPrimary),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white70 : colors.textPrimary,
+            ),
           ),
           const SizedBox(height: 12),
           _buildParameterRow(
             title: 'متوسط طول چرخه (فاصله شروع دو پریود)',
-            value: '${_toPersianDigits(_settings['cycle_avg_length'] ?? '28')} روز',
+            value:
+                '${_toPersianDigits(_settings['cycle_avg_length'] ?? '28')} روز',
             onTap: () async {
-              await _editBaselineParameter('cycle_avg_length', 'طول کل چرخه بدنی', 21, 45, 28);
+              await _editBaselineParameter(
+                'cycle_avg_length',
+                'طول کل چرخه بدنی',
+                21,
+                45,
+                28,
+              );
               if (setSheetState != null) setSheetState(() {});
             },
           ),
           Divider(height: 16, color: isDark ? Colors.white10 : colors.border),
           _buildParameterRow(
             title: 'متوسط طول دوره قاعدگی (خونریزی)',
-            value: '${_toPersianDigits(_settings['cycle_avg_period'] ?? '6')} روز',
+            value:
+                '${_toPersianDigits(_settings['cycle_avg_period'] ?? '6')} روز',
             onTap: () async {
-              await _editBaselineParameter('cycle_avg_period', 'طول دوره قاعدگی', 3, 10, 6);
+              await _editBaselineParameter(
+                'cycle_avg_period',
+                'طول دوره قاعدگی',
+                3,
+                10,
+                6,
+              );
               if (setSheetState != null) setSheetState(() {});
             },
           ),
@@ -3236,17 +3863,30 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             Expanded(
               child: Text(
                 title,
-                style: TextStyle(fontSize: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : context.colors.textPrimary),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white70
+                      : context.colors.textPrimary,
+                ),
               ),
             ),
             Row(
               children: [
                 Text(
                   value,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xffF43F5E)),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xffF43F5E),
+                  ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(CupertinoIcons.pencil, color: Color(0xffF43F5E), size: 16),
+                const Icon(
+                  CupertinoIcons.pencil,
+                  color: Color(0xffF43F5E),
+                  size: 16,
+                ),
               ],
             ),
           ],
@@ -3263,7 +3903,15 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: TextStyle(fontSize: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : context.colors.textPrimary)),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : context.colors.textPrimary,
+          ),
+        ),
         CupertinoSwitch(
           value: value,
           activeTrackColor: const Color(0xffF43F5E),
@@ -3284,17 +3932,34 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             children: [
               Text(
                 'تاریخچه دوره‌های قبلی',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : colors.textPrimary),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : colors.textPrimary,
+                ),
               ),
               TextButton.icon(
                 onPressed: _addNewPeriodSheet,
-                icon: const Icon(CupertinoIcons.plus, size: 16, color: Color(0xffF43F5E)),
+                icon: const Icon(
+                  CupertinoIcons.plus,
+                  size: 16,
+                  color: Color(0xffF43F5E),
+                ),
                 label: const Text(
                   'افزودن دوره قبلی',
-                  style: TextStyle(fontSize: 14, color: Color(0xffF43F5E), fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xffF43F5E),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -3331,28 +3996,52 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               }
 
               return Card(
-                color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.02)
+                    : Colors.black.withValues(alpha: 0.02),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 margin: const EdgeInsets.symmetric(vertical: 4),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                   title: Text(
                     endStr != null ? 'دوره تکمیل‌شده' : 'دوره فعال بدنی',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : colors.textPrimary,
+                    ),
                   ),
                   subtitle: Text(
                     subtitle,
-                    style: TextStyle(fontSize: 14, color: isDark ? Colors.white54 : colors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white54 : colors.textSecondary,
+                    ),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(CupertinoIcons.pencil, color: Color(0xffF43F5E), size: 18),
+                        icon: const Icon(
+                          CupertinoIcons.pencil,
+                          color: Color(0xffF43F5E),
+                          size: 18,
+                        ),
                         onPressed: () => _editPeriod(p),
                       ),
                       IconButton(
-                        icon: Icon(CupertinoIcons.trash_fill, color: isDark ? Colors.white30 : colors.textSecondary.withValues(alpha: 0.3), size: 18),
+                        icon: Icon(
+                          CupertinoIcons.trash_fill,
+                          color: isDark
+                              ? Colors.white30
+                              : colors.textSecondary.withValues(alpha: 0.3),
+                          size: 18,
+                        ),
                         onPressed: () => _deletePeriod(p['id'] as String),
                       ),
                     ],
@@ -3385,13 +4074,21 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   Text(
                     'فعالسازی حالت بارداری',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : colors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'آیا باردار هستید؟ با فعالسازی این حالت، پیگیری چرخه قاعدگی متوقف می‌شود و اطلاعات دوران بارداری نمایش داده می‌شود.',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary, height: 1.5),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white70 : colors.textSecondary,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -3399,16 +4096,31 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: Text('انصراف', style: TextStyle(color: isDark ? Colors.white60 : colors.textSecondary.withValues(alpha: 0.7))),
+                        child: Text(
+                          'انصراف',
+                          style: TextStyle(
+                            color: isDark
+                                ? Colors.white60
+                                : colors.textSecondary.withValues(alpha: 0.7),
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _getActivePhaseColor(),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('بله، فعالسازی', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'بله، فعالسازی',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -3425,7 +4137,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       final picked = await RitmoDatePicker.showJalali(
         context: context,
         initialDate: Jalali.now(),
-        firstDate: Jalali.fromDateTime(DateTime.now().subtract(const Duration(days: 300))),
+        firstDate: Jalali.fromDateTime(
+          DateTime.now().subtract(const Duration(days: 300)),
+        ),
         lastDate: Jalali.now(),
         builder: (context, child) {
           return ClipRRect(
@@ -3435,15 +4149,21 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               child: Theme(
                 data: Theme.of(context).copyWith(
                   colorScheme: Theme.of(context).brightness == Brightness.dark
-                              ? const ColorScheme.dark(
-                                  primary: Color(0xffEC4899),
-                                  onPrimary: Colors.white,
-                                  surface: Colors.transparent,
-                                )
-                              : ColorScheme.light(
-                                  primary: const Color(0xffEC4899),
-                                  onSurface: context.colors.textPrimary,
-                                ), dialogTheme: DialogThemeData(backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xff1A1625) : Colors.white),
+                      ? const ColorScheme.dark(
+                          primary: Color(0xffEC4899),
+                          onPrimary: Colors.white,
+                          surface: Colors.transparent,
+                        )
+                      : ColorScheme.light(
+                          primary: const Color(0xffEC4899),
+                          onSurface: context.colors.textPrimary,
+                        ),
+                  dialogTheme: DialogThemeData(
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xff1A1625)
+                        : Colors.white,
+                  ),
                 ),
                 child: child!,
               ),
@@ -3455,11 +4175,12 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       if (picked != null) {
         final lmp = picked.toDateTime();
         final edd = lmp.add(const Duration(days: 280));
-        
+
         final lmpStr = lmp.toIso8601String().substring(0, 10);
         final eddStr = edd.toIso8601String().substring(0, 10);
 
-        final cycleLen = int.tryParse(_settings['cycle_avg_length'] ?? '') ?? 28;
+        final cycleLen =
+            int.tryParse(_settings['cycle_avg_length'] ?? '') ?? 28;
         await PregnancyRepository.instance.startTracker(
           lmp: lmp,
           eddOverride: edd,
@@ -3491,13 +4212,21 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   Text(
                     'غیرفعال‌سازی حالت بارداری',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : colors.textPrimary),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : colors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'آیا مایل به خروج از حالت بارداری و بازگشت به پیگیری چرخه قاعدگی معمولی هستید؟ داده‌های چرخه قبلی شما حفظ خواهند شد.',
                     textAlign: TextAlign.right,
-                    style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary, height: 1.5),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white70 : colors.textSecondary,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -3505,16 +4234,31 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: Text('انصراف', style: TextStyle(color: isDark ? Colors.white60 : colors.textSecondary.withValues(alpha: 0.7))),
+                        child: Text(
+                          'انصراف',
+                          style: TextStyle(
+                            color: isDark
+                                ? Colors.white60
+                                : colors.textSecondary.withValues(alpha: 0.7),
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colors.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('بله، بازگشت', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'بله، بازگشت',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -3529,7 +4273,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     if (confirmed ?? false) {
       final active = await PregnancyRepository.instance.getActiveTracker();
       final trackerId = active?['id'] as String? ?? 'preg_default';
-      await PregnancyRepository.instance.endTracker(trackerId, 'USER_SETTINGS_DEACTIVATED');
+      await PregnancyRepository.instance.endTracker(
+        trackerId,
+        'USER_SETTINGS_DEACTIVATED',
+      );
       await _loadData();
     }
   }
@@ -3552,7 +4299,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) {
           final viewInsets = MediaQuery.of(context).viewInsets;
-          
+
           var titleText = 'تغییر رمز عبور چرخه';
           var subtitleText = '';
           if (step == 0) {
@@ -3603,41 +4350,35 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   if (enteredPin == firstNewPin) {
                     final db = await DatabaseHelper.instance.database;
                     final nowMs = DateTime.now().millisecondsSinceEpoch;
-                    await SecureKeyStore.setKey('cycle_lock_password', enteredPin);
-                    await db.insert(
-                      'app_settings',
-                      {
-                        'key': 'app_lock_password',
-                        'value': enteredPin,
-                        'updatedAt': nowMs,
-                      },
-                      conflictAlgorithm: ConflictAlgorithm.replace,
+                    await SecureKeyStore.setKey(
+                      'cycle_lock_password',
+                      enteredPin,
                     );
-                    await db.insert(
-                      'app_settings',
-                      {
-                        'key': 'cycle_lock_password',
-                        'value': enteredPin,
-                        'updatedAt': nowMs,
-                      },
-                      conflictAlgorithm: ConflictAlgorithm.replace,
-                    );
-                    await db.insert(
-                      'app_settings',
-                      {
-                        'key': 'cycle_lock_enabled',
-                        'value': 'true',
-                        'updatedAt': nowMs,
-                      },
-                      conflictAlgorithm: ConflictAlgorithm.replace,
-                    );
+                    await db.insert('app_settings', {
+                      'key': 'app_lock_password',
+                      'value': enteredPin,
+                      'updatedAt': nowMs,
+                    }, conflictAlgorithm: ConflictAlgorithm.replace);
+                    await db.insert('app_settings', {
+                      'key': 'cycle_lock_password',
+                      'value': enteredPin,
+                      'updatedAt': nowMs,
+                    }, conflictAlgorithm: ConflictAlgorithm.replace);
+                    await db.insert('app_settings', {
+                      'key': 'cycle_lock_enabled',
+                      'value': 'true',
+                      'updatedAt': nowMs,
+                    }, conflictAlgorithm: ConflictAlgorithm.replace);
                     await HapticFeedback.mediumImpact();
                     await _loadData();
                     if (context.mounted) {
                       Navigator.pop(context); // Close sheet
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('رمز عبور چرخه با موفقیت ذخیره شد.', style: TextStyle()),
+                          content: Text(
+                            'رمز عبور چرخه با موفقیت ذخیره شد.',
+                            style: TextStyle(),
+                          ),
                         ),
                       );
                     }
@@ -3647,7 +4388,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       enteredPin = '';
                       firstNewPin = null;
                       step = 1;
-                      errorMessage = 'رمز عبور با تاییدیه مطابقت ندارد. دوباره تعریف کنید.';
+                      errorMessage =
+                          'رمز عبور با تاییدیه مطابقت ندارد. دوباره تعریف کنید.';
                     });
                   }
                 }
@@ -3681,7 +4423,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
-                      ),
+                    ),
                   ),
                 ),
               ),
@@ -3692,7 +4434,12 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             textDirection: TextDirection.rtl,
             child: RitmoSheetGlassCard(
               child: Padding(
-                padding: EdgeInsets.only(bottom: viewInsets.bottom + 16, left: 24, right: 24, top: 12),
+                padding: EdgeInsets.only(
+                  bottom: viewInsets.bottom + 16,
+                  left: 24,
+                  right: 24,
+                  top: 12,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -3708,17 +4455,25 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(CupertinoIcons.lock_shield_fill, color: Color(0xffF43F5E), size: 22),
+                        const Icon(
+                          CupertinoIcons.lock_shield_fill,
+                          color: Color(0xffF43F5E),
+                          size: 22,
+                        ),
                         Text(
                           titleText,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            ),
+                          ),
                         ),
                         IconButton(
-                          icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
+                          icon: Icon(
+                            CupertinoIcons.xmark,
+                            color: colors.textSecondary,
+                            size: 20,
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
@@ -3731,7 +4486,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       style: TextStyle(
                         fontSize: 12,
                         color: colors.textSecondary,
-                        ),
+                      ),
                     ),
                     if (errorMessage.isNotEmpty) ...[
                       const SizedBox(height: 10),
@@ -3742,7 +4497,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           fontSize: 12,
                           color: Colors.redAccent,
                           fontWeight: FontWeight.bold,
-                          ),
+                        ),
                       ),
                     ],
                     const SizedBox(height: 20),
@@ -3794,10 +4549,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                   height: 48,
                                   width: 48,
                                   decoration: BoxDecoration(
-                                    color: colors.textPrimary.withValues(alpha: 0.04),
+                                    color: colors.textPrimary.withValues(
+                                      alpha: 0.04,
+                                    ),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(CupertinoIcons.delete_left, color: colors.textPrimary, size: 16),
+                                  child: Icon(
+                                    CupertinoIcons.delete_left,
+                                    color: colors.textPrimary,
+                                    size: 16,
+                                  ),
                                 ),
                               ),
                             ],
@@ -3818,7 +4579,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 }
 
 class _AddEditPeriodSheet extends StatefulWidget {
-
   const _AddEditPeriodSheet({
     this.period,
     required this.onValidate,
@@ -3892,7 +4652,9 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    widget.period != null ? 'ویرایش تاریخ‌های دوره قاعدگی' : 'افزودن دوره قاعدگی جدید',
+                    widget.period != null
+                        ? 'ویرایش تاریخ‌های دوره قاعدگی'
+                        : 'افزودن دوره قاعدگی جدید',
                     style: TextStyle(
                       fontSize: 14,
                       color: isDark ? Colors.white : colors.textPrimary,
@@ -3900,7 +4662,11 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(CupertinoIcons.xmark, color: isDark ? Colors.white54 : colors.textSecondary, size: 20),
+                    icon: Icon(
+                      CupertinoIcons.xmark,
+                      color: isDark ? Colors.white54 : colors.textSecondary,
+                      size: 20,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -3912,16 +4678,25 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                   decoration: BoxDecoration(
                     color: Colors.redAccent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.redAccent.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: Colors.redAccent.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(CupertinoIcons.exclamationmark_circle_fill, color: Colors.redAccent, size: 16),
+                      const Icon(
+                        CupertinoIcons.exclamationmark_circle_fill,
+                        color: Colors.redAccent,
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _errorText!,
-                          style: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ],
@@ -3929,15 +4704,25 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                 ),
                 const SizedBox(height: 16),
               ],
-              Text('تاریخ شروع دوره:', style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary)),
+              Text(
+                'تاریخ شروع دوره:',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white70 : colors.textSecondary,
+                ),
+              ),
               const SizedBox(height: 8),
               InkWell(
                 onTap: () async {
                   final picked = await RitmoDatePicker.showJalali(
                     context: context,
                     initialDate: Jalali.fromDateTime(_startDate),
-                    firstDate: Jalali.fromDateTime(DateTime.now().subtract(const Duration(days: 365))),
-                    lastDate: Jalali.fromDateTime(DateTime.now().add(const Duration(days: 30))),
+                    firstDate: Jalali.fromDateTime(
+                      DateTime.now().subtract(const Duration(days: 365)),
+                    ),
+                    lastDate: Jalali.fromDateTime(
+                      DateTime.now().add(const Duration(days: 30)),
+                    ),
                     builder: (context, child) {
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(24),
@@ -3945,7 +4730,9 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                           child: Theme(
                             data: Theme.of(context).copyWith(
-                              colorScheme: Theme.of(context).brightness == Brightness.dark
+                              colorScheme:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
                                   ? const ColorScheme.dark(
                                       primary: Color(0xffF43F5E),
                                       onPrimary: Colors.white,
@@ -3954,7 +4741,14 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                                   : ColorScheme.light(
                                       primary: const Color(0xffF43F5E),
                                       onSurface: context.colors.textPrimary,
-                                    ), dialogTheme: DialogThemeData(backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xff1A1625) : Colors.white),
+                                    ),
+                              dialogTheme: DialogThemeData(
+                                backgroundColor:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? const Color(0xff1A1625)
+                                    : Colors.white,
+                              ),
                             ),
                             child: child!,
                           ),
@@ -3970,20 +4764,34 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.02),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.04)
+                        : Colors.black.withValues(alpha: 0.02),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: isDark ? Colors.white10 : colors.border),
+                    border: Border.all(
+                      color: isDark ? Colors.white10 : colors.border,
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         _formatJalaliDate(_startDate),
-                        style: TextStyle(color: isDark ? Colors.white : colors.textPrimary, fontSize: 14),
+                        style: TextStyle(
+                          color: isDark ? Colors.white : colors.textPrimary,
+                          fontSize: 14,
+                        ),
                       ),
-                      const Icon(CupertinoIcons.calendar, color: Color(0xffF43F5E), size: 20),
+                      const Icon(
+                        CupertinoIcons.calendar,
+                        color: Color(0xffF43F5E),
+                        size: 20,
+                      ),
                     ],
                   ),
                 ),
@@ -3992,7 +4800,13 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('این دوره پایان یافته است', style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary)),
+                  Text(
+                    'این دوره پایان یافته است',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white70 : colors.textSecondary,
+                    ),
+                  ),
                   CupertinoSwitch(
                     value: _hasEndDate,
                     activeTrackColor: const Color(0xffF43F5E),
@@ -4010,15 +4824,27 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
               ),
               const SizedBox(height: 8),
               if (_hasEndDate) ...[
-                Text('تاریخ پایان دوره:', style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : colors.textSecondary)),
+                Text(
+                  'تاریخ پایان دوره:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? Colors.white70 : colors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 InkWell(
                   onTap: () async {
                     final picked = await RitmoDatePicker.showJalali(
                       context: context,
-                      initialDate: Jalali.fromDateTime((_endDate == null || _endDate!.isBefore(_startDate)) ? _startDate : _endDate!),
+                      initialDate: Jalali.fromDateTime(
+                        (_endDate == null || _endDate!.isBefore(_startDate))
+                            ? _startDate
+                            : _endDate!,
+                      ),
                       firstDate: Jalali.fromDateTime(_startDate),
-                      lastDate: Jalali.fromDateTime(DateTime.now().add(const Duration(days: 30))),
+                      lastDate: Jalali.fromDateTime(
+                        DateTime.now().add(const Duration(days: 30)),
+                      ),
                       builder: (context, child) {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(24),
@@ -4026,7 +4852,9 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                             child: Theme(
                               data: Theme.of(context).copyWith(
-                                colorScheme: Theme.of(context).brightness == Brightness.dark
+                                colorScheme:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? const ColorScheme.dark(
                                         primary: Color(0xffF43F5E),
                                         onPrimary: Colors.white,
@@ -4035,7 +4863,14 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                                     : ColorScheme.light(
                                         primary: const Color(0xffF43F5E),
                                         onSurface: context.colors.textPrimary,
-                                      ), dialogTheme: DialogThemeData(backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xff1A1625) : Colors.white),
+                                      ),
+                                dialogTheme: DialogThemeData(
+                                  backgroundColor:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0xff1A1625)
+                                      : Colors.white,
+                                ),
                               ),
                               child: child!,
                             ),
@@ -4051,20 +4886,36 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                     }
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.02),
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.04)
+                          : Colors.black.withValues(alpha: 0.02),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: isDark ? Colors.white10 : colors.border),
+                      border: Border.all(
+                        color: isDark ? Colors.white10 : colors.border,
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          _endDate != null ? _formatJalaliDate(_endDate!) : 'انتخاب تاریخ',
-                          style: TextStyle(color: isDark ? Colors.white : colors.textPrimary, fontSize: 14),
+                          _endDate != null
+                              ? _formatJalaliDate(_endDate!)
+                              : 'انتخاب تاریخ',
+                          style: TextStyle(
+                            color: isDark ? Colors.white : colors.textPrimary,
+                            fontSize: 14,
+                          ),
                         ),
-                        const Icon(CupertinoIcons.calendar, color: Color(0xffF43F5E), size: 20),
+                        const Icon(
+                          CupertinoIcons.calendar,
+                          color: Color(0xffF43F5E),
+                          size: 20,
+                        ),
                       ],
                     ),
                   ),
@@ -4077,11 +4928,16 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xffF43F5E),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () {
-                    final error = widget.onValidate(_startDate, _hasEndDate ? _endDate : null);
+                    final error = widget.onValidate(
+                      _startDate,
+                      _hasEndDate ? _endDate : null,
+                    );
                     if (error != null) {
                       setState(() {
                         _errorText = error;
@@ -4093,7 +4949,10 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
                   },
                   child: Text(
                     widget.period != null ? 'ذخیره تغییرات' : 'افزودن دوره',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ),
@@ -4107,7 +4966,6 @@ class _AddEditPeriodSheetState extends State<_AddEditPeriodSheet> {
 }
 
 class CycleAnimatedBackground extends StatefulWidget {
-  
   const CycleAnimatedBackground({
     super.key,
     required this.phase,
@@ -4119,10 +4977,12 @@ class CycleAnimatedBackground extends StatefulWidget {
   final bool isPregnancy;
 
   @override
-  State<CycleAnimatedBackground> createState() => _CycleAnimatedBackgroundState();
+  State<CycleAnimatedBackground> createState() =>
+      _CycleAnimatedBackgroundState();
 }
 
-class _CycleAnimatedBackgroundState extends State<CycleAnimatedBackground> with SingleTickerProviderStateMixin {
+class _CycleAnimatedBackgroundState extends State<CycleAnimatedBackground>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -4183,11 +5043,7 @@ class _CycleAnimatedBackgroundState extends State<CycleAnimatedBackground> with 
     return Stack(
       children: [
         // 1. Solid base background
-        Positioned.fill(
-          child: Container(
-            color: baseBgColor,
-          ),
-        ),
+        Positioned.fill(child: Container(color: baseBgColor)),
 
         // 2. Glowing Colored Floating Blobs underneath glass
         // Blob 1 (Top-Left)
@@ -4197,11 +5053,7 @@ class _CycleAnimatedBackgroundState extends State<CycleAnimatedBackground> with 
             final angle = _controller.value * 2 * math.pi;
             final dx = math.sin(angle) * 70;
             final dy = math.cos(angle) * 90;
-            return Positioned(
-              top: 80 + dy,
-              left: -40 + dx,
-              child: child!,
-            );
+            return Positioned(top: 80 + dy, left: -40 + dx, child: child!);
           },
           child: Container(
             width: 280,
@@ -4220,11 +5072,7 @@ class _CycleAnimatedBackgroundState extends State<CycleAnimatedBackground> with 
             final angle = _controller.value * 2 * math.pi + math.pi;
             final dx = math.sin(angle) * 80;
             final dy = math.cos(angle) * 70;
-            return Positioned(
-              bottom: 120 + dy,
-              right: -50 + dx,
-              child: child!,
-            );
+            return Positioned(bottom: 120 + dy, right: -50 + dx, child: child!);
           },
           child: Container(
             width: 320,
@@ -4243,11 +5091,7 @@ class _CycleAnimatedBackgroundState extends State<CycleAnimatedBackground> with 
             final angle = _controller.value * 2 * math.pi;
             final dx = math.cos(angle * 1.2) * 60;
             final dy = math.sin(angle * 1.2) * 50;
-            return Positioned(
-              top: 220 + dy,
-              right: -40 + dx,
-              child: child!,
-            );
+            return Positioned(top: 220 + dy, right: -40 + dx, child: child!);
           },
           child: Container(
             width: 240,
@@ -4266,11 +5110,7 @@ class _CycleAnimatedBackgroundState extends State<CycleAnimatedBackground> with 
             final angle = _controller.value * 2 * math.pi + math.pi / 2;
             final dx = math.cos(angle * 0.8) * 50;
             final dy = math.sin(angle * 0.8) * 80;
-            return Positioned(
-              bottom: 220 + dy,
-              left: -50 + dx,
-              child: child!,
-            );
+            return Positioned(bottom: 220 + dy, left: -50 + dx, child: child!);
           },
           child: Container(
             width: 260,
@@ -4290,8 +5130,12 @@ class _CycleAnimatedBackgroundState extends State<CycleAnimatedBackground> with 
               child: Container(
                 decoration: BoxDecoration(
                   color: widget.isDark
-                      ? const Color(0xff12141C).withValues(alpha: 0.50) // Smoky glass (iOS style)
-                      : Colors.white.withValues(alpha: 0.35), // White glass (iOS style)
+                      ? const Color(0xff12141C).withValues(
+                          alpha: 0.50,
+                        ) // Smoky glass (iOS style)
+                      : Colors.white.withValues(
+                          alpha: 0.35,
+                        ), // White glass (iOS style)
                 ),
               ),
             ),
@@ -4326,19 +5170,29 @@ class RitmoSheetGlassCard extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
             decoration: BoxDecoration(
-              color: isDark ? Colors.black.withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.65),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.35)
+                  : Colors.white.withValues(alpha: 0.65),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
               border: Border(
                 top: BorderSide(
-                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.5),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.white.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
                 left: BorderSide(
-                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.5),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.white.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
                 right: BorderSide(
-                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.5),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.white.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),
@@ -4351,10 +5205,7 @@ class RitmoSheetGlassCard extends StatelessWidget {
   }
 }
 
-
-
 class _CycleProgressRingPainter extends CustomPainter {
-
   _CycleProgressRingPainter({
     required this.percentage,
     required this.activeColor,
@@ -4383,11 +5234,7 @@ class _CycleProgressRingPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: center, radius: radius);
     final paintActive = Paint()
       ..shader = SweepGradient(
-        colors: [
-          activeColor.withValues(alpha: 0.35),
-          activeColor,
-          activeColor,
-        ],
+        colors: [activeColor.withValues(alpha: 0.35), activeColor, activeColor],
         stops: const [0.0, 0.5, 1.0],
         transform: const GradientRotation(-math.pi / 2),
       ).createShader(rect)
@@ -4396,13 +5243,7 @@ class _CycleProgressRingPainter extends CustomPainter {
       ..strokeWidth = strokeWidth;
 
     final sweepAngle = 2 * math.pi * percentage;
-    canvas.drawArc(
-      rect,
-      -math.pi / 2,
-      sweepAngle,
-      false,
-      paintActive,
-    );
+    canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, paintActive);
 
     // Glow indicator at the thumb
     final thumbAngle = -math.pi / 2 + sweepAngle;

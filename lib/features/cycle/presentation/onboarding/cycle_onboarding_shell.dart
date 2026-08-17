@@ -67,7 +67,10 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
     });
 
     try {
-      await CycleOnboardingController.instance.saveOnboarding(_data, isEditMode: widget.isEditMode);
+      await CycleOnboardingController.instance.saveOnboarding(
+        _data,
+        isEditMode: widget.isEditMode,
+      );
       if (mounted) {
         widget.onCompleted();
       }
@@ -108,7 +111,13 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('خروج', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'خروج',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -126,9 +135,7 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
     if (_isLoadingInitial) {
       return Scaffold(
         backgroundColor: Colors.transparent,
-        body: Center(
-          child: CircularProgressIndicator(color: colors.primary),
-        ),
+        body: Center(child: CircularProgressIndicator(color: colors.primary)),
       );
     }
 
@@ -145,7 +152,11 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.orange, size: 48),
+                    const Icon(
+                      CupertinoIcons.exclamationmark_triangle_fill,
+                      color: Colors.orange,
+                      size: 48,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'خطا در ذخیره‌سازی داده‌ها',
@@ -153,7 +164,7 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        ),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -170,12 +181,20 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colors.primary,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                       ),
                       onPressed: _handleSave,
                       icon: const Icon(CupertinoIcons.refresh, size: 18),
-                      label: const Text('تلاش مجدد', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'تلاش مجدد',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ],
                 ),
@@ -248,7 +267,10 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
-              icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.7)),
+              icon: Icon(
+                CupertinoIcons.xmark_circle_fill,
+                color: colors.textSecondary.withValues(alpha: 0.7),
+              ),
               onPressed: () async {
                 final confirm = await _confirmExit();
                 if (confirm && mounted) {
@@ -264,7 +286,7 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
-                ),
+              ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -278,7 +300,7 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                   color: primaryColor,
-                  ),
+                ),
               ),
             ),
           ],
@@ -298,7 +320,9 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
                 decoration: BoxDecoration(
                   color: isCurrent || isCompleted
                       ? primaryColor
-                      : (isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.1)),
+                      : (isDark
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.black.withValues(alpha: 0.1)),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -324,7 +348,8 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
           data: _data,
           onDataChanged: (d) => setState(() => _data = d),
           onNext: () {
-            if (_data.periodStatus == CyclePeriodStatusChoice.currentlyPregnant) {
+            if (_data.periodStatus ==
+                CyclePeriodStatusChoice.currentlyPregnant) {
               widget.onNavigateToPregnancy();
             } else {
               setState(() => _currentStep = 3);

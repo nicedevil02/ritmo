@@ -39,15 +39,12 @@ class Step5Confirmation extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.w900,
               color: colors.textPrimary,
-              ),
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             'لطفاً خلاصه اطلاعات تنظیم‌شده را بررسی کنید. با فشردن دکمه ثبت، راهاندازی کامل می‌شود.',
-            style: TextStyle(
-              fontSize: 12.5,
-              color: colors.textSecondary,
-              ),
+            style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
           ),
           const SizedBox(height: 16),
 
@@ -55,7 +52,9 @@ class Step5Confirmation extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? Colors.black.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.6),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : Colors.white.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: colors.border.withValues(alpha: 0.5)),
             ),
@@ -65,8 +64,10 @@ class Step5Confirmation extends StatelessWidget {
                   label: 'وضعیت اولیه دوره:',
                   value: _formatStatusText(),
                 ),
-                if (data.periodStatus == CyclePeriodStatusChoice.currentlyInPeriod ||
-                    data.periodStatus == CyclePeriodStatusChoice.endedWithKnownStart) ...[
+                if (data.periodStatus ==
+                        CyclePeriodStatusChoice.currentlyInPeriod ||
+                    data.periodStatus ==
+                        CyclePeriodStatusChoice.endedWithKnownStart) ...[
                   const Divider(height: 20),
                   _buildSummaryRow(
                     label: 'تاریخ شروع:',
@@ -81,7 +82,8 @@ class Step5Confirmation extends StatelessWidget {
                 const Divider(height: 20),
                 _buildSummaryRow(
                   label: 'طول خونریزی:',
-                  value: '${_toPersianDigits(data.periodDuration.toString())} روز',
+                  value:
+                      '${_toPersianDigits(data.periodDuration.toString())} روز',
                 ),
                 const Divider(height: 20),
                 _buildSummaryRow(
@@ -107,7 +109,9 @@ class Step5Confirmation extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colors.textPrimary,
                     side: BorderSide(color: colors.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: isSaving ? null : onBack,
@@ -121,7 +125,9 @@ class Step5Confirmation extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     elevation: 0,
                   ),
@@ -130,7 +136,10 @@ class Step5Confirmation extends StatelessWidget {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -139,7 +148,10 @@ class Step5Confirmation extends StatelessWidget {
                             SizedBox(width: 6),
                             Text(
                               'ثبت و شروع',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -159,10 +171,7 @@ class Step5Confirmation extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12.5,
-            color: colors.textSecondary,
-            ),
+          style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -173,7 +182,7 @@ class Step5Confirmation extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
-              ),
+            ),
           ),
         ),
       ],
@@ -218,8 +227,18 @@ class Step5Confirmation extends StatelessWidget {
 
   String _monthNameFa(int m) {
     const months = [
-      'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-      'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+      'فروردین',
+      'اردیبهشت',
+      'خرداد',
+      'تیر',
+      'مرداد',
+      'شهریور',
+      'مهر',
+      'آبان',
+      'آذر',
+      'دی',
+      'بهمن',
+      'اسفند',
     ];
     if (m >= 1 && m <= 12) return months[m - 1];
     return '';

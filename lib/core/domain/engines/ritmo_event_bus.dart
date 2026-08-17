@@ -42,9 +42,11 @@ enum RitmoEventType {
 class RitmoEvent {
   RitmoEvent({
     required this.type,
-    required this.timestamp,
-    required this.payload,
-  });
+    DateTime? timestamp,
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? payload,
+  })  : timestamp = timestamp ?? DateTime.now(),
+        payload = payload ?? data ?? const {};
 
   final String type;
   final DateTime timestamp;
@@ -62,6 +64,8 @@ class RitmoEventBus {
   final _controller = StreamController<RitmoEvent>.broadcast();
 
   Stream<RitmoEvent> get onEvents => _controller.stream;
+
+  void publish(RitmoEvent event) => fire(event);
 
   /// Storm protection (per event type, per second).
   ///

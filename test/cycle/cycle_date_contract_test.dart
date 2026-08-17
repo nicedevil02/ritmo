@@ -22,21 +22,29 @@ void main() {
       expect(result.minute, equals(0));
     });
 
-    test('parseDayKey handles full ISO8601 string with timestamp and timezone', () {
-      final result = CycleDateContract.parseDayKey('2026-06-15T18:45:30.123Z');
-      expect(result, isNotNull);
-      expect(result!.year, equals(2026));
-      expect(result.month, equals(6));
-      expect(result.day, equals(15));
-    });
+    test(
+      'parseDayKey handles full ISO8601 string with timestamp and timezone',
+      () {
+        final result = CycleDateContract.parseDayKey(
+          '2026-06-15T18:45:30.123Z',
+        );
+        expect(result, isNotNull);
+        expect(result!.year, equals(2026));
+        expect(result.month, equals(6));
+        expect(result.day, equals(15));
+      },
+    );
 
-    test('parseDayKey handles edge strings with whitespace and time suffixes', () {
-      final result1 = CycleDateContract.parseDayKey('  2026-01-05   ');
-      expect(result1, equals(DateTime(2026, 1, 5)));
+    test(
+      'parseDayKey handles edge strings with whitespace and time suffixes',
+      () {
+        final result1 = CycleDateContract.parseDayKey('  2026-01-05   ');
+        expect(result1, equals(DateTime(2026, 1, 5)));
 
-      final result2 = CycleDateContract.parseDayKey('2026-01-05T23:59:59');
-      expect(result2, equals(DateTime(2026, 1, 5)));
-    });
+        final result2 = CycleDateContract.parseDayKey('2026-01-05T23:59:59');
+        expect(result2, equals(DateTime(2026, 1, 5)));
+      },
+    );
 
     test('parseDayKey returns null on invalid or empty input', () {
       expect(CycleDateContract.parseDayKey(null), isNull);
@@ -102,11 +110,26 @@ void main() {
       final start = DateTime(2026, 5, 10);
       final end = DateTime(2026, 5, 20);
 
-      expect(CycleDateContract.inWindow(DateTime(2026, 5, 10), start, end), isTrue);
-      expect(CycleDateContract.inWindow(DateTime(2026, 5, 15), start, end), isTrue);
-      expect(CycleDateContract.inWindow(DateTime(2026, 5, 20), start, end), isTrue);
-      expect(CycleDateContract.inWindow(DateTime(2026, 5, 9), start, end), isFalse);
-      expect(CycleDateContract.inWindow(DateTime(2026, 5, 21), start, end), isFalse);
+      expect(
+        CycleDateContract.inWindow(DateTime(2026, 5, 10), start, end),
+        isTrue,
+      );
+      expect(
+        CycleDateContract.inWindow(DateTime(2026, 5, 15), start, end),
+        isTrue,
+      );
+      expect(
+        CycleDateContract.inWindow(DateTime(2026, 5, 20), start, end),
+        isTrue,
+      );
+      expect(
+        CycleDateContract.inWindow(DateTime(2026, 5, 9), start, end),
+        isFalse,
+      );
+      expect(
+        CycleDateContract.inWindow(DateTime(2026, 5, 21), start, end),
+        isFalse,
+      );
     });
   });
 }

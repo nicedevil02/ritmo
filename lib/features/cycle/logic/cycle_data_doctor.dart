@@ -31,13 +31,13 @@ class CycleDataDiagnosis {
   bool get isHealthy => totalIssues == 0;
 
   Map<String, int> toMap() => {
-        'overlappingPeriodsCount': overlappingPeriodsCount,
-        'invalidDateOrderCount': invalidDateOrderCount,
-        'futureEndDateCount': futureEndDateCount,
-        'staleOpenPeriodsCount': staleOpenPeriodsCount,
-        'unmigratedLegacyLogsCount': unmigratedLegacyLogsCount,
-        'outOfSyncSettingsCount': outOfSyncSettingsCount,
-      };
+    'overlappingPeriodsCount': overlappingPeriodsCount,
+    'invalidDateOrderCount': invalidDateOrderCount,
+    'futureEndDateCount': futureEndDateCount,
+    'staleOpenPeriodsCount': staleOpenPeriodsCount,
+    'unmigratedLegacyLogsCount': unmigratedLegacyLogsCount,
+    'outOfSyncSettingsCount': outOfSyncSettingsCount,
+  };
 
   @override
   String toString() =>
@@ -122,7 +122,8 @@ class CycleDataDoctor {
           final p2EndKey = CycleDateContract.toDayKey(p2End);
 
           // Overlap condition: start1 <= end2 AND start2 <= end1
-          if (p1StartKey.compareTo(p2EndKey) <= 0 && p2StartKey.compareTo(p1EndKey) <= 0) {
+          if (p1StartKey.compareTo(p2EndKey) <= 0 &&
+              p2StartKey.compareTo(p1EndKey) <= 0) {
             overlappingPeriodsCount++;
           }
         }
@@ -168,15 +169,20 @@ class CycleDataDoctor {
       final settingsList = await db.query('app_settings');
       final settings = {
         for (final s in settingsList)
-          if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''
+          if (s['key'] != null)
+            s['key'].toString(): s['value']?.toString() ?? '',
       };
 
       // Check cycle length out of sync
       final canonCycle = settings['cycle_avg_length'];
       final legacyCycle1 = settings['cycle_length_days'];
       final legacyCycle2 = settings['user_cycle_length'];
-      if ((legacyCycle1 != null && legacyCycle1.isNotEmpty && legacyCycle1 != canonCycle) ||
-          (legacyCycle2 != null && legacyCycle2.isNotEmpty && legacyCycle2 != canonCycle)) {
+      if ((legacyCycle1 != null &&
+              legacyCycle1.isNotEmpty &&
+              legacyCycle1 != canonCycle) ||
+          (legacyCycle2 != null &&
+              legacyCycle2.isNotEmpty &&
+              legacyCycle2 != canonCycle)) {
         outOfSyncSettingsCount++;
       }
 
@@ -184,15 +190,21 @@ class CycleDataDoctor {
       final canonPeriod = settings['cycle_avg_period'];
       final legacyPeriod1 = settings['period_duration_days'];
       final legacyPeriod2 = settings['user_period_length'];
-      if ((legacyPeriod1 != null && legacyPeriod1.isNotEmpty && legacyPeriod1 != canonPeriod) ||
-          (legacyPeriod2 != null && legacyPeriod2.isNotEmpty && legacyPeriod2 != canonPeriod)) {
+      if ((legacyPeriod1 != null &&
+              legacyPeriod1.isNotEmpty &&
+              legacyPeriod1 != canonPeriod) ||
+          (legacyPeriod2 != null &&
+              legacyPeriod2.isNotEmpty &&
+              legacyPeriod2 != canonPeriod)) {
         outOfSyncSettingsCount++;
       }
 
       // Check pregnancy mode out of sync
       final canonPreg = settings['cycle_pregnancy_mode'];
       final legacyPreg = settings['cycle_is_pregnant'];
-      if (legacyPreg != null && legacyPreg.isNotEmpty && legacyPreg != canonPreg) {
+      if (legacyPreg != null &&
+          legacyPreg.isNotEmpty &&
+          legacyPreg != canonPreg) {
         outOfSyncSettingsCount++;
       }
     }
@@ -213,9 +225,5 @@ class _PeriodInterval {
   final DateTime start;
   final DateTime? end;
 
-  const _PeriodInterval({
-    required this.id,
-    required this.start,
-    this.end,
-  });
+  const _PeriodInterval({required this.id, required this.start, this.end});
 }

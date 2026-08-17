@@ -31,7 +31,8 @@ class CycleOnboardingData {
     this.dashboardConsent = false,
     this.calendarConsent = false,
     this.enableLock = false,
-  }) : startDate = startDate ?? DateTime.now().subtract(const Duration(days: 10));
+  }) : startDate =
+           startDate ?? DateTime.now().subtract(const Duration(days: 10));
 
   CyclePeriodStatusChoice periodStatus;
   int cycleLength;
@@ -75,7 +76,8 @@ class CycleOnboardingData {
 }
 
 class CycleOnboardingController {
-  static final CycleOnboardingController instance = CycleOnboardingController._();
+  static final CycleOnboardingController instance =
+      CycleOnboardingController._();
   CycleOnboardingController._();
 
   /// Loads current onboarding configuration if already present (for Edit Mode),
@@ -86,7 +88,8 @@ class CycleOnboardingController {
       final settingsList = await db.query('app_settings');
       final settingsMap = {
         for (final s in settingsList)
-          if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''
+          if (s['key'] != null)
+            s['key'].toString(): s['value']?.toString() ?? '',
       };
 
       final avgLength = CycleSettings.getCycleLength(settingsMap);
@@ -95,8 +98,10 @@ class CycleOnboardingController {
       final worship = settingsMap[CycleSettings.keyConsentWorship] == 'true';
       final energy = settingsMap[CycleSettings.keyConsentEnergy] == 'true';
       final sleep = settingsMap[CycleSettings.keyConsentSleep] == 'true';
-      final reminders = settingsMap[CycleSettings.keyConsentReminders] == 'true';
-      final dashboard = settingsMap[CycleSettings.keyConsentDashboard] == 'true';
+      final reminders =
+          settingsMap[CycleSettings.keyConsentReminders] == 'true';
+      final dashboard =
+          settingsMap[CycleSettings.keyConsentDashboard] == 'true';
       final calendar = settingsMap['show_cycle_in_calendar'] == 'true';
 
       final lockEnabled = CycleSettings.isLockEnabled(settingsMap);
@@ -104,7 +109,8 @@ class CycleOnboardingController {
       // Query latest period to infer start date if available
       final periods = await CyclePeriodRepository.instance.getAllPeriods(db);
       DateTime startDate = DateTime.now().subtract(const Duration(days: 10));
-      CyclePeriodStatusChoice statusChoice = CyclePeriodStatusChoice.endedWithKnownStart;
+      CyclePeriodStatusChoice statusChoice =
+          CyclePeriodStatusChoice.endedWithKnownStart;
 
       final isPregnant = CycleSettings.isPregnancyMode(settingsMap);
       if (isPregnant) {
@@ -133,7 +139,11 @@ class CycleOnboardingController {
         enableLock: lockEnabled,
       );
     } catch (e, st) {
-      RitmoLogger.error('[CycleOnboardingController] Error loading initial data', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleOnboardingController] Error loading initial data',
+        error: e,
+        stack: st,
+      );
       return CycleOnboardingData();
     }
   }
@@ -141,7 +151,10 @@ class CycleOnboardingController {
   /// Saves onboarding data idempotently into SQLite.
   /// Dual-writes to canonical settings keys, guarantees module enablement,
   /// and calculates exact period end dates without unended period bugs.
-  Future<void> saveOnboarding(CycleOnboardingData data, {bool isEditMode = false}) async {
+  Future<void> saveOnboarding(
+    CycleOnboardingData data, {
+    bool isEditMode = false,
+  }) async {
     final db = await DatabaseHelper.instance.database;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
@@ -168,38 +181,33 @@ class CycleOnboardingController {
       'cycle_onboarding_just_completed': 'true',
     };
 
-    final isPregnant = data.periodStatus == CyclePeriodStatusChoice.currentlyPregnant;
-    settingsToSave[CycleSettings.keyPregnancyMode] = isPregnant ? 'true' : 'false';
+    final isPregnant =
+        data.periodStatus == CyclePeriodStatusChoice.currentlyPregnant;
+    settingsToSave[CycleSettings.keyPregnancyMode] = isPregnant
+        ? 'true'
+        : 'false';
     settingsToSave['pregnancy_mode'] = isPregnant ? 'true' : 'false';
     settingsToSave['cycle_is_pregnant'] = isPregnant ? 'true' : 'false';
 
     for (final entry in settingsToSave.entries) {
-      batch.insert(
-        'app_settings',
-        {'key': entry.key, 'value': entry.value, 'updatedAt': nowMs},
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      batch.insert('app_settings', {
+        'key': entry.key,
+        'value': entry.value,
+        'updatedAt': nowMs,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
 
     // 2. Lock Preference
-    batch.insert(
-      'app_settings',
-      {
-        'key': CycleSettings.keyLockEnabled,
-        'value': data.enableLock ? 'true' : 'false',
-        'updatedAt': nowMs,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-    batch.insert(
-      'app_settings',
-      {
-        'key': 'cycle_biometric_enabled',
-        'value': data.enableLock ? 'true' : 'false',
-        'updatedAt': nowMs,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    batch.insert('app_settings', {
+      'key': CycleSettings.keyLockEnabled,
+      'value': data.enableLock ? 'true' : 'false',
+      'updatedAt': nowMs,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    batch.insert('app_settings', {
+      'key': 'cycle_biometric_enabled',
+      'value': data.enableLock ? 'true' : 'false',
+      'updatedAt': nowMs,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
 
     // 3. Handle Period Insertion / Update idempotently (C-15: stable id = 'period_onboarding_seed')
     final cleanStart = CycleDateContract.cleanDate(data.startDate);
@@ -207,46 +215,43 @@ class CycleOnboardingController {
     final today = CycleDateContract.cleanDate(DateTime.now());
 
     if (data.periodStatus == CyclePeriodStatusChoice.currentlyInPeriod) {
-      batch.insert(
-        'cycle_periods',
-        {
-          'id': 'period_onboarding_seed',
-          'startDate': cleanStartStr,
-          'endDate': null,
-          'flowIntensity': 'MEDIUM',
-          'isPredicted': 0,
-          'note': 'ثبت اولیه در راه‌اندازی',
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    } else if (data.periodStatus == CyclePeriodStatusChoice.endedWithKnownStart) {
+      batch.insert('cycle_periods', {
+        'id': 'period_onboarding_seed',
+        'startDate': cleanStartStr,
+        'endDate': null,
+        'flowIntensity': 'MEDIUM',
+        'isPredicted': 0,
+        'note': 'ثبت اولیه در راه‌اندازی',
+        'createdAt': nowMs,
+        'updatedAt': nowMs,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    } else if (data.periodStatus ==
+        CyclePeriodStatusChoice.endedWithKnownStart) {
       var calcEndDate = cleanStart.add(Duration(days: data.periodDuration - 1));
-      if (CycleDateContract.isSameOrAfter(calcEndDate, today) && !CycleDateContract.isSameDay(calcEndDate, today)) {
+      if (CycleDateContract.isSameOrAfter(calcEndDate, today) &&
+          !CycleDateContract.isSameDay(calcEndDate, today)) {
         calcEndDate = today;
       }
       final cleanEndStr = CycleDateContract.toDayKey(calcEndDate);
 
-      batch.insert(
-        'cycle_periods',
-        {
-          'id': 'period_onboarding_seed',
-          'startDate': cleanStartStr,
-          'endDate': cleanEndStr,
-          'flowIntensity': 'MEDIUM',
-          'isPredicted': 0,
-          'note': 'ثبت اولیه در راه‌اندازی',
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      batch.insert('cycle_periods', {
+        'id': 'period_onboarding_seed',
+        'startDate': cleanStartStr,
+        'endDate': cleanEndStr,
+        'flowIntensity': 'MEDIUM',
+        'isPredicted': 0,
+        'note': 'ثبت اولیه در راه‌اندازی',
+        'createdAt': nowMs,
+        'updatedAt': nowMs,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
 
     await batch.commit(noResult: true);
     try {
-      await ModuleManagementService.instance.setModuleEnabled('module_cycle_enabled', true);
+      await ModuleManagementService.instance.setModuleEnabled(
+        'module_cycle_enabled',
+        true,
+      );
     } catch (_) {}
     try {
       RitmoEvents.notifyRoutineChanged();

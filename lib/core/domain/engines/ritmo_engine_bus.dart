@@ -32,7 +32,9 @@ class EngineRegistry {
 
   void register(CachedEngine engine) {
     if (_registry.containsKey(engine.runtimeType)) {
-      throw StateError('Duplicate engine registration for ${engine.runtimeType}. Each engine type must be registered once.');
+      throw StateError(
+        'Duplicate engine registration for ${engine.runtimeType}. Each engine type must be registered once.',
+      );
     }
     _registry[engine.runtimeType] = engine;
   }
@@ -54,8 +56,9 @@ class EngineCacheStore {
 
   void set(EngineKey k, CacheEntry e) {
     if (_map.length >= _maxEntries) {
-      final oldest = _map.entries
-          .reduce((a, b) => a.value.computedAt.isBefore(b.value.computedAt) ? a : b);
+      final oldest = _map.entries.reduce(
+        (a, b) => a.value.computedAt.isBefore(b.value.computedAt) ? a : b,
+      );
       _map.remove(oldest.key);
     }
     _map[k] = e;
@@ -132,7 +135,10 @@ class RitmoEngineBus {
   static String _todayKey() =>
       DateTime.now().toIso8601String().substring(0, 10);
 
-  Future<Output> execute<Input, Output>(dynamic engineOrType, Input input) {
+  Future<Output> execute<Input, Output>(
+    dynamic engineOrType,
+    Input input,
+  ) async {
     final Type engineType = engineOrType is Type
         ? engineOrType
         : (engineOrType as CachedEngine).runtimeType;
@@ -152,18 +158,26 @@ class RitmoEngineBus {
     final entry = cacheStore.get(key);
     if (entry != null && entry.isFresh(todayKey, now)) {
       diagnostics.recordCacheHit(engineType);
-      return Future.value(entry.data as Output);
+      return entry.data as Output;
     }
 
     // 4) Single-flight deduplication (E-05)
     final pending = _inFlight[key];
-    if (pending != null) return pending.then((v) => v as Output);
+    if (pending != null) return (await pending) as Output;
 
-    final future =
-        _run<Input, Output>(key, engineType, engine, input, todayKey)
-            .whenComplete(() => _inFlight.remove(key));
+    final future = _run<Input, Output>(
+      key,
+      engineType,
+      engine,
+      input,
+      todayKey,
+    );
     _inFlight[key] = future;
-    return future;
+    try {
+      return await future;
+    } finally {
+      _inFlight.remove(key);
+    }
   }
 
   Future<Output> _run<Input, Output>(
@@ -201,7 +215,9 @@ class RitmoEngineBus {
 
   /// Pattern M-2: Return stale immediately, recompute fresh in background
   Stream<Output> observe<Input, Output>(
-      dynamic engineOrType, Input input) async* {
+    dynamic engineOrType,
+    Input input,
+  ) async* {
     final Type engineType = engineOrType is Type
         ? engineOrType
         : (engineOrType as CachedEngine).runtimeType;

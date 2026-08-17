@@ -204,4 +204,13 @@ abstract class AgentTool {
     }
     return buffer.toString();
   }
+
+  /// بازنمایی متنی فشرده برای صرفه‌جویی در توکن‌های پرامپت
+  String toCompactPromptDescription() {
+    final reqs = parameters.where((p) => p.isRequired).map((p) => '${p.name}*').toList();
+    final opts = parameters.where((p) => !p.isRequired).map((p) => p.name).toList();
+    final allParams = [...reqs, ...opts];
+    final paramsSummary = allParams.isNotEmpty ? ' (${allParams.join(', ')})' : '';
+    return '• `$name`$paramsSummary: $descriptionFa';
+  }
 }

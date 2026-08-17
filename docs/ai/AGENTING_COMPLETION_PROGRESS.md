@@ -26,8 +26,8 @@
 | T20 | idempotencyKey | DONE | cb82c24 | پیاده‌سازی محافظ Idempotency برای ابزارهای تغییردهنده در طول هر نشست اجرا |
 | T21 | قابلیت‌سنجی provider | DONE | 5aaed95 | افزودن فلگ و پروپرتی supportsNativeTools به AiProviderPreset و AiConnectionConfig |
 | T22 | عبور tools از AIGateway | DONE | 59152c5 | ارسال آرایه tools و tool_choice در متدهای streaming گیت‌وی به پرووایدرهای پشتیبان |
-| T23 | نرمال‌ساز واحد فراخوانی ابزار + fallback XML | DOING | | |
-| T24 | فشرده‌سازی پرامپت ابزار | TODO | | |
+| T23 | نرمال‌ساز واحد فراخوانی ابزار + fallback XML | DONE | 7cb7a0f | پشتیبانی از پارس ساختارهای XML، function tags، کدبلاک‌های مارک‌داون و JSON خام |
+| T24 | فشرده‌سازی پرامپت ابزار | DOING | | |
 | T25 | حذف مسیر موازی <actions> از شیت | TODO | | |
 | T26 | تولید خودکار ابزار از رجیستری فرمان‌ها | TODO | | |
 | T27 | حذف هر ابزاری که SQL خام می‌نویسد | TODO | | |

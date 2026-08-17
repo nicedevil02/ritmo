@@ -213,6 +213,34 @@ class AgentToolScope {
     return buffer.toString();
   }
 
+  /// راهنمای فشرده و بهینه ابزارهای مجاز پرسونا برای صرفه‌جویی در توکن‌ها
+  String compactPromptFor(String personaId, {bool isNativeToolsActive = false}) {
+    final persona = _persona(personaId);
+    final tools = allowedTools(personaId);
+    final roleName = persona?.displayName ?? 'دستیار سراسری';
+
+    if (isNativeToolsActive) {
+      return 'نقش فعال: $roleName. ابزارهای مجاز به صورت ساخت‌یافته (Function Calling) تعریف شده‌اند.';
+    }
+
+    final buffer = StringBuffer();
+    buffer.writeln('=== [ابزارهای مجاز نقش $roleName] ===');
+    buffer.writeln(
+        'برای فراخوانی هر ابزار، از فرمت <tool_call>{"tool": "نام", "parameters": {...}}</tool_call> استفاده کن.');
+
+    if (tools.isEmpty) {
+      buffer.writeln('\nدر این نقش هیچ ابزاری فعال نیست؛ پاسخ را با داده‌های موجود بده.');
+      return buffer.toString();
+    }
+
+    buffer.writeln('\nفهرست ابزارها (* = پارامتر اجباری):');
+    for (final tool in tools) {
+      buffer.writeln(tool.toCompactPromptDescription());
+    }
+
+    return buffer.toString();
+  }
+
   /// پیام رد فارسی وقتی مدل ابزار خارج از محدوده را صدا می‌زند
   String refusalReasonFa(String personaId, AgentTool tool) {
     final persona = _persona(personaId);

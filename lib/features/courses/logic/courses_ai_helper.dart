@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/ai_response_processor.dart';
@@ -24,8 +24,8 @@ class CoursesAiHelper {
       if (settingsList.isNotEmpty) {
         isKonkurActive = settingsList.first['value'] == 'true';
       }
-    } catch (e) {
-      debugPrint('Error getting user context in CoursesAiHelper: $e');
+    } catch (e, st) {
+      RitmoLog.error('COURSES_AI_HELPER', 'Error getting user context in CoursesAiHelper: $e', e, st);
     }
 
     try {
@@ -159,8 +159,8 @@ Please adapt your suggested total sessions, weekly target sessions, and preferre
           'explanation': explanation,
         };
       }
-    } catch (e) {
-      debugPrint('CoursesAiHelper Exception: $e');
+    } catch (e, st) {
+      RitmoLog.error('COURSES_AI_HELPER', 'CoursesAiHelper Exception: $e', e, st);
     }
     return null;
   }

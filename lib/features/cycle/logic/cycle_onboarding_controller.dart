@@ -99,8 +99,7 @@ class CycleOnboardingController {
       final dashboard = settingsMap[CycleSettings.keyConsentDashboard] == 'true';
       final calendar = settingsMap['show_cycle_in_calendar'] == 'true';
 
-      final hasPin = await CycleLockService.instance.hasCyclePin(db);
-      final lockEnabled = CycleSettings.isLockEnabled(settingsMap) && hasPin;
+      final lockEnabled = CycleSettings.isLockEnabled(settingsMap);
 
       // Query latest period to infer start date if available
       final periods = await CyclePeriodRepository.instance.getAllPeriods(db);
@@ -172,6 +171,7 @@ class CycleOnboardingController {
     final isPregnant = data.periodStatus == CyclePeriodStatusChoice.currentlyPregnant;
     settingsToSave[CycleSettings.keyPregnancyMode] = isPregnant ? 'true' : 'false';
     settingsToSave['pregnancy_mode'] = isPregnant ? 'true' : 'false';
+    settingsToSave['cycle_is_pregnant'] = isPregnant ? 'true' : 'false';
 
     for (final entry in settingsToSave.entries) {
       batch.insert(
@@ -191,80 +191,65 @@ class CycleOnboardingController {
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    batch.insert(
+      'app_settings',
+      {
+        'key': 'cycle_biometric_enabled',
+        'value': data.enableLock ? 'true' : 'false',
+        'updatedAt': nowMs,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
 
-    // 3. Handle Period Insertion / Update idempotently
+    // 3. Handle Period Insertion / Update idempotently (C-15: stable id = 'period_onboarding_seed')
     final cleanStart = CycleDateContract.cleanDate(data.startDate);
     final cleanStartStr = CycleDateContract.toDayKey(cleanStart);
+    final today = CycleDateContract.cleanDate(DateTime.now());
 
     if (data.periodStatus == CyclePeriodStatusChoice.currentlyInPeriod) {
-      final existing = await db.query(
+      batch.insert(
         'cycle_periods',
-        where: 'notes LIKE ? OR startDate = ?',
-        whereArgs: ['%ثبت اولیه%', cleanStartStr],
-      );
-
-      if (existing.isNotEmpty && isEditMode) {
-        batch.update(
-          'cycle_periods',
-          {
-            'startDate': cleanStartStr,
-            'endDate': null,
-            'periodDuration': null,
-            'updatedAt': nowMs,
-          },
-          where: 'id = ?',
-          whereArgs: [existing.first['id']],
-        );
-      } else if (existing.isEmpty) {
-        batch.insert('cycle_periods', {
+        {
+          'id': 'period_onboarding_seed',
           'startDate': cleanStartStr,
           'endDate': null,
-          'periodDuration': null,
-          'notes': 'ثبت اولیه در راه‌اندازی',
-          'suppressedPrayer': 1,
-          'fastDebtCreated': 0,
+          'flowIntensity': 'MEDIUM',
+          'isPredicted': 0,
+          'note': 'ثبت اولیه در راه‌اندازی',
           'createdAt': nowMs,
           'updatedAt': nowMs,
-        });
-      }
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
     } else if (data.periodStatus == CyclePeriodStatusChoice.endedWithKnownStart) {
-      final calcEndDate = cleanStart.add(Duration(days: data.periodDuration - 1));
+      var calcEndDate = cleanStart.add(Duration(days: data.periodDuration - 1));
+      if (CycleDateContract.isSameOrAfter(calcEndDate, today) && !CycleDateContract.isSameDay(calcEndDate, today)) {
+        calcEndDate = today;
+      }
       final cleanEndStr = CycleDateContract.toDayKey(calcEndDate);
 
-      final existing = await db.query(
+      batch.insert(
         'cycle_periods',
-        where: 'notes LIKE ? OR startDate = ?',
-        whereArgs: ['%ثبت اولیه%', cleanStartStr],
-      );
-
-      if (existing.isNotEmpty && isEditMode) {
-        batch.update(
-          'cycle_periods',
-          {
-            'startDate': cleanStartStr,
-            'endDate': cleanEndStr,
-            'periodDuration': data.periodDuration,
-            'updatedAt': nowMs,
-          },
-          where: 'id = ?',
-          whereArgs: [existing.first['id']],
-        );
-      } else if (existing.isEmpty) {
-        batch.insert('cycle_periods', {
+        {
+          'id': 'period_onboarding_seed',
           'startDate': cleanStartStr,
           'endDate': cleanEndStr,
-          'periodDuration': data.periodDuration,
-          'notes': 'ثبت اولیه در راه‌اندازی',
-          'suppressedPrayer': 1,
-          'fastDebtCreated': 0,
+          'flowIntensity': 'MEDIUM',
+          'isPredicted': 0,
+          'note': 'ثبت اولیه در راه‌اندازی',
           'createdAt': nowMs,
           'updatedAt': nowMs,
-        });
-      }
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
     }
 
     await batch.commit(noResult: true);
-    await ModuleManagementService.instance.setModuleEnabled('module_cycle_enabled', true);
-    RitmoEvents.notifyRoutineChanged();
+    try {
+      await ModuleManagementService.instance.setModuleEnabled('module_cycle_enabled', true);
+    } catch (_) {}
+    try {
+      RitmoEvents.notifyRoutineChanged();
+    } catch (_) {}
   }
 }

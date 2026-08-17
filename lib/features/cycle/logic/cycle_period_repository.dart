@@ -2,6 +2,7 @@
 // Manages cycle period persistence, prevents invalid date order (endDate < startDate),
 // prevents future end dates, prevents overlapping periods, and handles automatic stale period closure.
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:sqflite/sqflite.dart';
@@ -162,6 +163,8 @@ class CyclePeriodRepository {
       'updatedAt': nowMs,
     });
 
+    // Invalidate engine cache (C-16)
+    CycleEngine().invalidate();
     return id;
   }
 
@@ -208,11 +211,16 @@ class CyclePeriodRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
+
+    // Invalidate engine cache (C-16)
+    CycleEngine().invalidate();
   }
 
   /// Deletes a period by [id].
   Future<void> deletePeriod(int id, [DatabaseExecutor? dbExecutor]) async {
     final db = dbExecutor ?? await DatabaseHelper.instance.database;
     await db.delete('cycle_periods', where: 'id = ?', whereArgs: [id]);
+    // Invalidate engine cache (C-16)
+    CycleEngine().invalidate();
   }
 }

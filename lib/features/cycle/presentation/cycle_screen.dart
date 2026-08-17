@@ -333,7 +333,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     return RitmoNumber.fa(input);
   }
 
-  String _formatJalaliDate(DateTime dt) {
+  String _formatJalaliDate(DateTime? dt) {
+    if (dt == null) return '—';
     final jal = Jalali.fromDateTime(dt);
     return '${_toPersianDigits(jal.year.toString())}/${_toPersianDigits(jal.month.toString().padLeft(2, '0'))}/${_toPersianDigits(jal.day.toString().padLeft(2, '0'))}';
   }
@@ -2310,7 +2311,14 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         description = 'در فاز فولیکولار سطح انرژی رو به افزایش است. زمان عالی برای ورزش‌های هوازی، دویدن و بالا بردن ضربان قلب است.';
         icon = CupertinoIcons.bolt_fill;
         phaseColor = const Color(0xff10B981);
+      case CyclePhase.pregnancy:
+        title = 'ورزش مناسب بارداری 🤰';
+        description = 'تمرینات تنفسی، پیاده‌روی سبک و حرکات تقویتی مجاز دوران بارداری با نظر پزشک توصیه می‌شود.';
+        icon = CupertinoIcons.heart_circle_fill;
+        phaseColor = const Color(0xff06B6D4);
+      case CyclePhase.dataStale:
       case CyclePhase.noData:
+      default:
         title = 'ورزش متناسب با ریتم بدنی 🌸';
         description = 'با ثبت اطلاعات دوره، برنامه و حرکات پیشنهادی ورزشی شما به طور خودکار متناسب با فاز چرخه بدنتان همگام می‌شود.';
         icon = CupertinoIcons.sparkles;
@@ -2728,6 +2736,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   bool _checkIsPredictedDay(DateTime date) {
     if (_engineOutput == null) return false;
     final nextPeriod = _engineOutput!.nextPeriodPrediction;
+    if (nextPeriod == null) return false;
     final cleanNextPeriod = DateTime(nextPeriod.year, nextPeriod.month, nextPeriod.day);
     final cleanDate = DateTime(date.year, date.month, date.day);
     final pDur = int.tryParse(_settings['cycle_avg_period'] ?? '6') ?? 6;
@@ -2737,24 +2746,32 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
   bool _checkIsOvulationDay(DateTime date) {
     if (_engineOutput == null || !_engineOutput!.hasData) return false;
+    final ovDay = _engineOutput!.ovulationDay;
+    if (ovDay == null) return false;
     final cleanDate = DateTime(date.year, date.month, date.day);
-    final ovulation = DateTime(_engineOutput!.ovulationDay.year, _engineOutput!.ovulationDay.month, _engineOutput!.ovulationDay.day);
+    final ovulation = DateTime(ovDay.year, ovDay.month, ovDay.day);
     return cleanDate.isAtSameMomentAs(ovulation);
   }
 
   bool _checkIsFertileDay(DateTime date) {
     if (_engineOutput == null || !_engineOutput!.hasData) return false;
+    final fStart = _engineOutput!.fertileWindowStart;
+    final fEnd = _engineOutput!.fertileWindowEnd;
+    if (fStart == null || fEnd == null) return false;
     final cleanDate = DateTime(date.year, date.month, date.day);
-    final start = DateTime(_engineOutput!.fertileWindowStart.year, _engineOutput!.fertileWindowStart.month, _engineOutput!.fertileWindowStart.day);
-    final end = DateTime(_engineOutput!.fertileWindowEnd.year, _engineOutput!.fertileWindowEnd.month, _engineOutput!.fertileWindowEnd.day);
+    final start = DateTime(fStart.year, fStart.month, fStart.day);
+    final end = DateTime(fEnd.year, fEnd.month, fEnd.day);
     return !cleanDate.isBefore(start) && !cleanDate.isAfter(end);
   }
 
   bool _checkIsPmsDay(DateTime date) {
     if (_engineOutput == null || !_engineOutput!.hasData) return false;
+    final pStart = _engineOutput!.pmsWindowStart;
+    final pEnd = _engineOutput!.pmsWindowEnd;
+    if (pStart == null || pEnd == null) return false;
     final cleanDate = DateTime(date.year, date.month, date.day);
-    final start = DateTime(_engineOutput!.pmsWindowStart.year, _engineOutput!.pmsWindowStart.month, _engineOutput!.pmsWindowStart.day);
-    final end = DateTime(_engineOutput!.pmsWindowEnd.year, _engineOutput!.pmsWindowEnd.month, _engineOutput!.pmsWindowEnd.day);
+    final start = DateTime(pStart.year, pStart.month, pStart.day);
+    final end = DateTime(pEnd.year, pEnd.month, pEnd.day);
     return !cleanDate.isBefore(start) && !cleanDate.isAfter(end);
   }
 

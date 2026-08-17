@@ -1,6 +1,7 @@
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
@@ -88,6 +89,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
   final TextEditingController _quickReflectionController = TextEditingController();
   bool _isSavingReflection = false;
+  int? _quickReflectionMood;
 
   StreamSubscription? _eventSub;
 
@@ -153,18 +155,21 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       final horizonMs = RitmoDate.startOfDayMillis(now.subtract(Duration(days: _selectedHorizonDays)));
       final horizonKey = RitmoDate.dayKey(now.subtract(Duration(days: _selectedHorizonDays)));
 
+      final dailyLimit = _selectedHorizonDays + 7;
+      final multiLogLimit = math.max(200, _selectedHorizonDays * 8);
+
       final dbResults = await Future.wait([
         Future.value(ModuleGate.instance.isEnabled('module_energy_enabled')),
         Future.value(ModuleGate.instance.isEnabled('module_sleep_enabled')),
         db.query('app_settings', where: "key LIKE 'sleep_target_%'").catchError((_) => <Map<String, dynamic>>[]),
-        db.query('energy_logs', where: 'loggedAt >= ?', whereArgs: [horizonMs], orderBy: 'loggedAt DESC', limit: 200).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('mood_logs', where: 'loggedAt >= ?', whereArgs: [horizonMs], orderBy: 'loggedAt DESC', limit: 200).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('bedtime_diagnostics', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: 45).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('daily_reflections', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: 45).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('daily_checkins', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: 45).catchError((_) => <Map<String, dynamic>>[]),
+        db.query('energy_logs', where: 'loggedAt >= ?', whereArgs: [horizonMs], orderBy: 'loggedAt DESC', limit: multiLogLimit).catchError((_) => <Map<String, dynamic>>[]),
+        db.query('mood_logs', where: 'loggedAt >= ?', whereArgs: [horizonMs], orderBy: 'loggedAt DESC', limit: multiLogLimit).catchError((_) => <Map<String, dynamic>>[]),
+        db.query('bedtime_diagnostics', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: dailyLimit).catchError((_) => <Map<String, dynamic>>[]),
+        db.query('daily_reflections', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: dailyLimit).catchError((_) => <Map<String, dynamic>>[]),
+        db.query('daily_checkins', where: 'date >= ?', whereArgs: [horizonKey], orderBy: 'date DESC', limit: dailyLimit).catchError((_) => <Map<String, dynamic>>[]),
         db.query('routines', where: 'isArchived = 0').catchError((_) => <Map<String, dynamic>>[]),
         db.query('routine_completions', where: 'completionTime >= ?', whereArgs: [horizonMs], limit: 1000).catchError((_) => <Map<String, dynamic>>[]),
-        db.query('daily_rhythm', where: 'date >= ?', whereArgs: [horizonKey], limit: 45).catchError((_) => <Map<String, dynamic>>[]),
+        db.query('daily_rhythm', where: 'date >= ?', whereArgs: [horizonKey], limit: dailyLimit).catchError((_) => <Map<String, dynamic>>[]),
       ]);
 
       if (!mounted || token != _loadToken) return;
@@ -274,20 +279,34 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       _reflectionOutput = engineResults[3] as ReflectionEngineOutput?;
       _lifeBalanceOutput = engineResults[4] as LifeBalanceEngineOutput?;
 
+      final uniqueSleepDays = _rawSleepLogs.map((l) => l.date).toSet().length;
+      final uniqueEnergyDays = _rawEnergyLogs
+          .map((e) => RitmoDate.dayKey(DateTime.fromMillisecondsSinceEpoch(e.loggedAt)))
+          .toSet()
+          .length;
+      final uniqueMoodDays = _rawMoodLogs
+          .map((m) => RitmoDate.dayKey(DateTime.fromMillisecondsSinceEpoch(m.loggedAt)))
+          .toSet()
+          .length;
+      final uniqueReflectionDays = _reflections.map((r) => r.date).toSet().length;
+
       _wellbeing = const WellbeingEngine().compute(
         WellbeingEngineInput(
           now: now,
           horizonDays: _selectedHorizonDays,
-          sleepNights: _rawSleepLogs.length,
+          sleepNights: uniqueSleepDays,
+          avgSleepHours: (_sleepOutput?.avgDurationMinutes ?? 0) > 0
+              ? _sleepOutput!.avgDurationMinutes / 60.0
+              : null,
           targetSleepHours: _sleepTarget.durationMinutes / 60.0,
           avgSleepQuality: _sleepOutput?.avgQuality,
           sleepConsistency: _sleepOutput?.consistencyScore,
-          energySamples: _rawEnergyLogs.length,
+          energySamples: uniqueEnergyDays,
           avgEnergyLevel: _energyOutput?.avgLevel,
           energyIsAiDerived: _energyOutput?.isAiDerived ?? false,
-          moodSamples: _rawMoodLogs.length,
+          moodSamples: uniqueMoodDays,
           avgMoodScore: _moodOutput?.avgScore,
-          reflectionEntries: _reflections.length,
+          reflectionEntries: uniqueReflectionDays,
           avgReflectionMood: _reflectionOutput?.avgMoodScore,
         ),
       );
@@ -420,6 +439,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           'daily_reflections',
           {
             'goodThing': text,
+            'wins': text,
+            if (_quickReflectionMood != null) 'mood_score': _quickReflectionMood,
             'updatedAt': nowMs,
           },
           where: 'date = ?',
@@ -430,12 +451,15 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           'id': 'refl_$nowMs',
           'date': todayStr,
           'goodThing': text,
+          'wins': text,
+          if (_quickReflectionMood != null) 'mood_score': _quickReflectionMood,
           'createdAt': nowMs,
           'updatedAt': nowMs,
         });
       }
 
       _quickReflectionController.clear();
+      setState(() => _quickReflectionMood = null);
       RitmoHapticsPolicy.tap();
       _requestReload();
     } catch (e) {
@@ -737,7 +761,49 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Text('حال امروز (اختیاری):', style: RitmoTextStyles.caption(colors.textSecondary)),
+                        const Spacer(),
+                        for (int score = 1; score <= 5; score++) ...[
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                _quickReflectionMood = _quickReflectionMood == score ? null : score;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _quickReflectionMood == score
+                                    ? colors.primary.withValues(alpha: 0.2)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _quickReflectionMood == score ? colors.primary : colors.border.withValues(alpha: 0.5),
+                                ),
+                              ),
+                              child: Text(
+                                score == 1
+                                    ? '😫'
+                                    : score == 2
+                                        ? '🥱'
+                                        : score == 3
+                                            ? '😐'
+                                            : score == 4
+                                                ? '🙂'
+                                                : '😴',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ),
+                          if (score < 5) const SizedBox(width: 6),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 10),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: ElevatedButton.icon(
@@ -841,11 +907,41 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     );
   }
 
+  String _formatMissingSignals(List<WellbeingMissingSignal> missing) {
+    final hints = <String>[];
+    for (final m in missing) {
+      final remaining = m.need - m.have;
+      if (remaining <= 0) continue;
+      switch (m.signal) {
+        case WellbeingSignal.sleep:
+          hints.add('${RitmoNumber.faInt(remaining)} شب خواب');
+          break;
+        case WellbeingSignal.energy:
+          hints.add('${RitmoNumber.faInt(remaining)} روز انرژی');
+          break;
+        case WellbeingSignal.mood:
+          hints.add('${RitmoNumber.faInt(remaining)} روز حال');
+          break;
+        case WellbeingSignal.reflection:
+          hints.add('${RitmoNumber.faInt(remaining)} روز بازتاب');
+          break;
+      }
+    }
+    if (hints.isEmpty) {
+      return 'ثبت خواب یا دو سیگنال مشخص';
+    }
+    return hints.join(' یا ');
+  }
+
   Widget _buildIndexHeroCard(BuildContext context) {
     final colors = context.colors;
     final w = _wellbeing;
 
     if (w == null || !w.hasValue) {
+      final missingText = (w != null && w.missing.isNotEmpty)
+          ? 'برای محاسبهٔ شاخص، دست‌کم به ${_formatMissingSignals(w.missing)} نیاز است.'
+          : 'برای محاسبه شاخص، دست‌کم به ثبت خواب یا دو سیگنال مشخص نیاز است.';
+
       return Container(
         padding: const EdgeInsets.all(RitmoSpacing.xl),
         decoration: BoxDecoration(
@@ -863,7 +959,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             ),
             const SizedBox(height: 6),
             Text(
-              'برای محاسبه شاخص، دست‌کم به ثبت خواب یا دو سیگنال مشخص نیاز است.',
+              missingText,
               style: RitmoTextStyles.caption(colors.textSecondary),
               textAlign: TextAlign.center,
             ),

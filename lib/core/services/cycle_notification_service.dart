@@ -16,14 +16,14 @@ class CycleNotificationService {
   static const String _idT1 = 'cycle_period_t1';
 
   /// Schedules cycle reminder notifications for the upcoming period window.
-  /// [nextPeriodWindowStart] must be a valid upcoming date.
+  /// If [nextPeriodWindowStart] is null, cancels any pending reminders.
   static Future<void> scheduleReminders({
-    required DateTime nextPeriodWindowStart,
+    required DateTime? nextPeriodWindowStart,
     required bool consentReminders,
     required bool pregnancyMode,
     DateTime? now,
   }) async {
-    if (!consentReminders || pregnancyMode) {
+    if (!consentReminders || pregnancyMode || nextPeriodWindowStart == null) {
       await cancelAll();
       return;
     }

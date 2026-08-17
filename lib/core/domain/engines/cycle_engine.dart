@@ -1,3 +1,4 @@
+// C-16..C-27: CycleEngine Domain Intelligence
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -14,11 +15,42 @@ enum CyclePhase {
   follicular,
   ovulation,
   luteal,
+  dataStale,
+  pregnancy,
   noData,
 }
 
-class CycleEngineInput {
+enum RegularityLevel {
+  regular,
+  moderate,
+  irregular,
+  insufficientData,
+  pregnancy,
+}
 
+enum CycleDisclaimerCode {
+  standardBiologicalEstimate,
+  pregnancyModeActive,
+  insufficientData,
+}
+
+class CycleRegularity {
+  const CycleRegularity({
+    required this.score,
+    required this.level,
+    required this.isIrregular,
+    required this.sampleSize,
+    required this.isComputable,
+  });
+
+  final int? score;
+  final RegularityLevel level;
+  final bool isIrregular;
+  final int sampleSize;
+  final bool isComputable;
+}
+
+class CycleEngineInput {
   CycleEngineInput({
     required this.db,
     required this.appSettings,
@@ -30,77 +62,123 @@ class CycleEngineInput {
 }
 
 class CycleStats {
-
   CycleStats({
     required this.avgCycleLength,
     required this.avgPeriodDuration,
-    required this.totalRecordedCycles,
-  });
+    int? recordedPeriods,
+    int? completedCycles,
+    int? totalRecordedCycles,
+  })  : recordedPeriods = recordedPeriods ?? totalRecordedCycles ?? 0,
+        completedCycles = completedCycles ?? (recordedPeriods ?? totalRecordedCycles ?? 0);
+
   final double avgCycleLength;
   final double avgPeriodDuration;
-  final int totalRecordedCycles;
+  final int recordedPeriods;
+  final int completedCycles;
+
+  int get totalRecordedCycles => recordedPeriods;
 }
 
 class CycleEngineOutput {
-
   CycleEngineOutput({
     required this.currentPhase,
     required this.dayOfCycle,
     required this.dayOfPeriod,
-    required this.nextPeriodPrediction,
-    required this.fertileWindowStart,
-    required this.fertileWindowEnd,
-    required this.ovulationDay,
+    this.nextPeriodPrediction,
+    this.fertileWindowStart,
+    this.fertileWindowEnd,
+    this.ovulationDay,
     required this.isIrregular,
     required this.stats,
     required this.dataMaturity,
     required this.hasData,
-    required this.nextPeriodWindowStart,
-    required this.nextPeriodWindowEnd,
-    required this.pmsWindowStart,
-    required this.pmsWindowEnd,
-    required this.regularityScore,
+    this.nextPeriodWindowStart,
+    this.nextPeriodWindowEnd,
+    this.pmsWindowStart,
+    this.pmsWindowEnd,
+    this.regularityScore,
     required this.trendPoints,
-    required this.regularityLabel,
-    required this.predictionDisclaimer,
-    // Overdue tracking — optional with safe defaults so existing
-    // constructions (tests, legacy adapters) keep compiling.
+    this.regularityLevel = RegularityLevel.insufficientData,
+    this.disclaimerCode = CycleDisclaimerCode.standardBiologicalEstimate,
+    String? regularityLabel,
+    String? predictionDisclaimer,
     this.isOverdue = false,
     this.daysOverdue = 0,
-  });
+    this.missedCycles = 0,
+    this.needsUserAttention = false,
+    this.hasPhaseConflict = false,
+    this.hasImplausiblePeriodData = false,
+    this.isProjected = false,
+    this.discardedOutliers = 0,
+  })  : _regularityLabel = regularityLabel,
+        _predictionDisclaimer = predictionDisclaimer;
+
   final CyclePhase currentPhase;
   final int dayOfCycle;
   final int dayOfPeriod;
-  final DateTime nextPeriodPrediction;
-  final DateTime fertileWindowStart;
-  final DateTime fertileWindowEnd;
-  final DateTime ovulationDay;
+  final DateTime? nextPeriodPrediction;
+  final DateTime? fertileWindowStart;
+  final DateTime? fertileWindowEnd;
+  final DateTime? ovulationDay;
   final bool isIrregular;
   final CycleStats stats;
   final String dataMaturity; // 'LOW', 'MEDIUM', 'HIGH'
   final bool hasData;
 
-  // v2 Upgraded Fields
-  final DateTime nextPeriodWindowStart;
-  final DateTime nextPeriodWindowEnd;
-  final DateTime pmsWindowStart;
-  final DateTime pmsWindowEnd;
-  final int regularityScore;
+  // v2 Upgraded Fields (nullable as per C-25)
+  final DateTime? nextPeriodWindowStart;
+  final DateTime? nextPeriodWindowEnd;
+  final DateTime? pmsWindowStart;
+  final DateTime? pmsWindowEnd;
+  final int? regularityScore;
   final List<CycleTrendPoint> trendPoints;
 
-  // Simplified Engine Fields
-  final String regularityLabel;
-  final String predictionDisclaimer;
+  final RegularityLevel regularityLevel;
+  final CycleDisclaimerCode disclaimerCode;
+  final String? _regularityLabel;
+  final String? _predictionDisclaimer;
 
-  // Overdue tracking: an expected period boundary passed with no log
+  String get regularityLabel {
+    if (_regularityLabel != null) return _regularityLabel!;
+    switch (regularityLevel) {
+      case RegularityLevel.regular:
+        return 'منظم';
+      case RegularityLevel.moderate:
+        return 'نسبتاً منظم';
+      case RegularityLevel.irregular:
+        return 'نامنظم';
+      case RegularityLevel.pregnancy:
+        return 'دوران بارداری';
+      case RegularityLevel.insufficientData:
+        return 'دادهٔ ناکافی';
+    }
+  }
+
+  String get predictionDisclaimer {
+    if (_predictionDisclaimer != null) return _predictionDisclaimer!;
+    switch (disclaimerCode) {
+      case CycleDisclaimerCode.pregnancyModeActive:
+        return 'حالت بارداری فعال است — پیش‌بینی‌های قاعدگی متوقف شده‌اند.';
+      case CycleDisclaimerCode.insufficientData:
+      case CycleDisclaimerCode.standardBiologicalEstimate:
+        return 'توجه: این پیش‌بینی صرفاً یک تخمین بیولوژیک است و جنبه قطعیت پزشکی ندارد. چرخه بدنی شما تحت تأثیر عوامل مختلفی نظیر استرس، بیماری، تغییرات وزن، سفر و داروها قرار می‌گیرد.';
+    }
+  }
+
   final bool isOverdue;
   final int daysOverdue;
+  final int missedCycles;
+  final bool needsUserAttention;
+  final bool hasPhaseConflict;
+  final bool hasImplausiblePeriodData;
+  final bool isProjected;
+  final int discardedOutliers;
 }
 
 class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
-  /// Normalize to a calendar day so mixed stored formats (date-only vs
-  /// date-time) never skew day-difference math.
-  static DateTime _clean(DateTime d) => DateTime(d.year, d.month, d.day);
+  static const int minPlausibleCycle = 21;
+  static const int maxPlausibleCycle = 45;
+  static const int maxPlausiblePeriodDays = 15;
 
   @override
   Future<CycleEngineOutput> calculate(CycleEngineInput input) async {
@@ -123,7 +201,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     // 1. Fetch cycle_periods from database
     final List<Map<String, dynamic>> periodRows = await db.query(
       'cycle_periods',
-      orderBy: 'startDate ASC', // Oldest first to compute differences easily
+      orderBy: 'startDate ASC',
     );
 
     if (periodRows.isEmpty) {
@@ -135,23 +213,27 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     final defaultPeriodDuration = CycleSettings.getPeriodDuration(appSettings);
     final lutealPhaseDays = CycleSettings.getLutealPhase(appSettings);
 
-    // 3. Compute Actual Statistics
+    // 3. Compute Actual Statistics with outlier filtering (C-22)
     var avgCycleLength = defaultCycleLength.toDouble();
     var avgPeriodDuration = defaultPeriodDuration.toDouble();
-    final totalRecordedCycles = periodRows.length;
+    final recordedPeriods = periodRows.length;
+    var discardedOutliers = 0;
 
-    // Average cycle length: difference between consecutive cycle start dates
     final cycleLengths = <int>[];
     for (var i = 0; i < periodRows.length - 1; i++) {
       final start1 = CycleDateContract.parseDayKey(periodRows[i]['startDate']?.toString());
       final start2 = CycleDateContract.parseDayKey(periodRows[i + 1]['startDate']?.toString());
       if (start1 != null && start2 != null) {
         final diffDays = CycleDateContract.daysBetween(start1, start2);
-        if (diffDays >= 15 && diffDays <= 50) { // filter out unrealistic outliers
+        if (diffDays >= minPlausibleCycle && diffDays <= maxPlausibleCycle) {
           cycleLengths.add(diffDays);
+        } else {
+          discardedOutliers++;
         }
       }
     }
+
+    final completedCycles = cycleLengths.length;
 
     if (cycleLengths.isNotEmpty) {
       avgCycleLength = cycleLengths.reduce((a, b) => a + b) / cycleLengths.length;
@@ -164,7 +246,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       final end = CycleDateContract.parseDayKey(row['endDate']?.toString());
       if (start != null && end != null) {
         final duration = CycleDateContract.daysBetween(start, end) + 1;
-        if (duration >= 1 && duration <= 15) {
+        if (duration >= 1 && duration <= maxPlausiblePeriodDays) {
           periodDurations.add(duration);
         }
       }
@@ -175,38 +257,23 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     }
 
     // Safe clamped configurations
-    var L = avgCycleLength.round().clamp(CycleSettings.minCycleLength, CycleSettings.maxCycleLength);
-    var pDuration = avgPeriodDuration.round().clamp(CycleSettings.minPeriodDuration, CycleSettings.maxPeriodDuration);
+    final L = avgCycleLength.round().clamp(CycleSettings.minCycleLength, CycleSettings.maxCycleLength);
+    final pDuration = avgPeriodDuration.round().clamp(CycleSettings.minPeriodDuration, CycleSettings.maxPeriodDuration);
 
-    // 4. Determine irregularity (variability)
-    var isIrregular = false;
-    if (cycleLengths.length >= 3) {
-      final minL = cycleLengths.reduce(math.min);
-      final maxL = cycleLengths.reduce(math.max);
-      if ((maxL - minL) >= 7) {
-        isIrregular = true;
-      }
-    }
+    // 4. Regularity calculation (C-20)
+    final regularity = _computeRegularity(cycleLengths);
 
-    // 5. Data Maturity
-    var dataMaturity = 'LOW';
-    if (totalRecordedCycles >= 3 && totalRecordedCycles <= 6) {
+    // 5. Data Maturity (C-21: calculated on completedCycles)
+    final String dataMaturity;
+    if (completedCycles < 3) {
+      dataMaturity = 'LOW';
+    } else if (completedCycles <= 6) {
       dataMaturity = 'MEDIUM';
-    } else if (totalRecordedCycles > 6) {
+    } else {
       dataMaturity = 'HIGH';
     }
 
-    // 6. Regularity Score & SD calculation (v2 Upgrades)
-    var regularityScore = 100;
-    var sd = 2.0;
-    if (cycleLengths.length >= 3) {
-      final mean = cycleLengths.reduce((a, b) => a + b) / cycleLengths.length;
-      final variance = cycleLengths.map((x) => math.pow(x - mean, 2)).reduce((a, b) => a + b) / cycleLengths.length;
-      sd = math.sqrt(variance);
-      regularityScore = (100 - (sd * 12).round()).clamp(0, 100);
-    }
-
-    // 7. Trend Points (v2 Upgrades)
+    // 6. Trend Points (v2 Upgrades, C-45)
     final trendPoints = <CycleTrendPoint>[];
     for (var i = 0; i < periodRows.length; i++) {
       final start = CycleDateContract.parseDayKey(periodRows[i]['startDate']?.toString()) ?? now;
@@ -217,25 +284,37 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       }
 
       var lenDays = L;
+      var isInProgress = false;
       if (i < periodRows.length - 1) {
         final nextStart = CycleDateContract.parseDayKey(periodRows[i + 1]['startDate']?.toString());
         if (nextStart != null) {
           lenDays = CycleDateContract.daysBetween(start, nextStart);
         }
-      } else if (cycleLengths.isNotEmpty) {
-        lenDays = cycleLengths.last;
+      } else {
+        if (cycleLengths.isNotEmpty) {
+          lenDays = cycleLengths.last;
+        }
+        isInProgress = true;
       }
 
       trendPoints.add(CycleTrendPoint(
         index: i + 1,
         lengthDays: lenDays,
         periodDays: pDays,
+        isInProgress: isInProgress,
       ));
     }
 
     final pmsWindowDays = int.tryParse(appSettings[CycleSettings.keyPmsWindowDays] ?? '4') ?? CycleSettings.defaultPmsWindowDays;
 
-    // 8. Find current status based on target date `now`
+    final stats = CycleStats(
+      avgCycleLength: avgCycleLength,
+      avgPeriodDuration: avgPeriodDuration,
+      recordedPeriods: recordedPeriods,
+      completedCycles: completedCycles,
+    );
+
+    // 7. Find current status based on target date `now`
     Map<String, dynamic>? currentPeriodRow;
     for (var i = periodRows.length - 1; i >= 0; i--) {
       final start = CycleDateContract.parseDayKey(periodRows[i]['startDate']?.toString());
@@ -257,19 +336,15 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
         L,
         pDuration,
         lutealPhaseDays,
-        isIrregular,
-        CycleStats(
-          avgCycleLength: avgCycleLength,
-          avgPeriodDuration: avgPeriodDuration,
-          totalRecordedCycles: totalRecordedCycles,
-        ),
+        regularity,
+        stats,
         dataMaturity,
         null,
         trendPoints,
-        regularityScore,
         pmsWindowDays,
-        sd,
         cycleLengths,
+        isProjected: true,
+        discardedOutliers: discardedOutliers,
       );
     }
 
@@ -282,19 +357,55 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       L,
       pDuration,
       lutealPhaseDays,
-      isIrregular,
-      CycleStats(
-        avgCycleLength: avgCycleLength,
-        avgPeriodDuration: avgPeriodDuration,
-        totalRecordedCycles: totalRecordedCycles,
-      ),
+      regularity,
+      stats,
       dataMaturity,
       currentPeriodEnd,
       trendPoints,
-      regularityScore,
       pmsWindowDays,
-      sd,
       cycleLengths,
+      isProjected: false,
+      discardedOutliers: discardedOutliers,
+    );
+  }
+
+  static CycleRegularity _computeRegularity(List<int> cycleLengths) {
+    if (cycleLengths.length < 3) {
+      return const CycleRegularity(
+        score: null,
+        level: RegularityLevel.insufficientData,
+        isIrregular: false,
+        sampleSize: 0,
+        isComputable: false,
+      );
+    }
+
+    final n = cycleLengths.length;
+    final mean = cycleLengths.reduce((a, b) => a + b) / n;
+    final variance = cycleLengths.map((x) => math.pow(x - mean, 2)).reduce((a, b) => a + b) / n;
+    final sd = math.sqrt(variance);
+    final sdPenalty = (sd * 10).round();
+    final score = (100 - sdPenalty).clamp(0, 100);
+
+    final RegularityLevel level;
+    final bool isIrregular;
+    if (sd <= 2.5) {
+      level = RegularityLevel.regular;
+      isIrregular = false;
+    } else if (sd <= 5.0) {
+      level = RegularityLevel.moderate;
+      isIrregular = false;
+    } else {
+      level = RegularityLevel.irregular;
+      isIrregular = true;
+    }
+
+    return CycleRegularity(
+      score: score,
+      level: level,
+      isIrregular: isIrregular,
+      sampleSize: n,
+      isComputable: true,
     );
   }
 
@@ -303,24 +414,25 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     DateTime now,
     int L,
     int pDuration,
-    int lutealPhaseDays,
-    bool isIrregular,
+    int lutealPhaseSetting,
+    CycleRegularity regularity,
     CycleStats stats,
     String dataMaturity,
     DateTime? endDate,
     List<CycleTrendPoint> trendPoints,
-    int regularityScore,
     int pmsWindowDays,
-    double sd,
-    List<int> cycleLengths,
-  ) {
+    List<int> cycleLengths, {
+    bool isProjected = false,
+    int discardedOutliers = 0,
+  }) {
     final cleanNow = CycleDateContract.cleanDate(now);
     final cleanStart = CycleDateContract.cleanDate(startDate);
     final daysSinceStart = CycleDateContract.daysBetween(cleanStart, cleanNow);
 
-    var dayOfCycle = (daysSinceStart % L) + 1;
+    // C-23: dayOfCycle is measured from cycle start without modulo reset
+    final dayOfCycle = daysSinceStart + 1;
     var dayOfPeriod = 0;
-    var phase = CyclePhase.follicular;
+    var hasImplausiblePeriodData = false;
 
     // Check Menstrual Phase
     var isBleeding = false;
@@ -339,77 +451,89 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       }
     }
 
-    if (isBleeding) {
+    // C-24: dayOfPeriod capped at maxPlausiblePeriodDays
+    if (dayOfPeriod > maxPlausiblePeriodDays) {
+      dayOfPeriod = maxPlausiblePeriodDays;
+      hasImplausiblePeriodData = true;
+    }
+
+    // C-19: Luteal days tailored for short cycles so follicular phase >= 10 days
+    final lutealDays = math.min(lutealPhaseSetting, math.max(1, L - 10));
+
+    // Overdue tracking (C-18)
+    final missedCycles = (daysSinceStart / L).floor();
+    final daysOverdue = (!isBleeding && daysSinceStart >= L) ? (daysSinceStart - L) : 0;
+    final isOverdue = daysOverdue > 0;
+    final needsUserAttention = (!isBleeding && (missedCycles >= 2 || daysOverdue >= 45));
+
+    // Phase determination
+    CyclePhase phase;
+    if (needsUserAttention) {
+      phase = CyclePhase.dataStale;
+    } else if (isBleeding) {
       phase = CyclePhase.menstrual;
     } else {
-      final cyclesElapsed = (daysSinceStart / L).floor();
-      final currentPredictedStart = cleanStart.add(Duration(days: cyclesElapsed * L));
-
-      final currentDayOfCycle = CycleDateContract.daysBetween(currentPredictedStart, cleanNow) + 1;
-      dayOfCycle = currentDayOfCycle;
-
-      final ovulationDayNum = L - lutealPhaseDays;
-      if (currentDayOfCycle < ovulationDayNum - 1) {
+      final currentDayInCycle = (daysSinceStart % L) + 1;
+      final ovulationDayNum = L - lutealDays;
+      if (currentDayInCycle < ovulationDayNum - 1) {
         phase = CyclePhase.follicular;
-      } else if (currentDayOfCycle >= ovulationDayNum - 1 && currentDayOfCycle <= ovulationDayNum + 1) {
+      } else if (currentDayInCycle >= ovulationDayNum - 1 && currentDayInCycle <= ovulationDayNum + 1) {
         phase = CyclePhase.ovulation;
       } else {
         phase = CyclePhase.luteal;
       }
     }
 
-    // Overdue detection
-    final missedBoundaries = (daysSinceStart / L).floor();
-    final rawOverdueDays = daysSinceStart - missedBoundaries * L;
-    final isOverdue = !isBleeding && missedBoundaries >= 1 && rawOverdueDays >= 1;
-    final daysOverdue = isOverdue ? rawOverdueDays : 0;
+    // C-19: Phase conflict check
+    final currentDayInCycle = (daysSinceStart % L) + 1;
+    final hasPhaseConflict = isBleeding && currentDayInCycle >= (L - lutealDays - 1);
 
-    // Prediction Dates
-    var cyclesElapsedForPrediction = (daysSinceStart / L).ceil();
-    if (cyclesElapsedForPrediction < 1) cyclesElapsedForPrediction = 1;
-    final nextPeriodPrediction = cleanStart.add(Duration(days: cyclesElapsedForPrediction * L));
+    // Prediction Dates (C-17, C-25)
+    DateTime? nextPeriodPrediction;
+    DateTime? predictedOvulation;
+    DateTime? fertileStart;
+    DateTime? fertileEnd;
+    DateTime? nextPeriodWindowStart;
+    DateTime? nextPeriodWindowEnd;
+    DateTime? pmsWindowStart;
+    DateTime? pmsWindowEnd;
 
-    final predictedOvulation = nextPeriodPrediction.subtract(Duration(days: lutealPhaseDays));
-    final fertileStart = predictedOvulation.subtract(const Duration(days: 5));
-    final fertileEnd = predictedOvulation.add(const Duration(days: 1));
+    if (!needsUserAttention) {
+      var cyclesElapsedForPrediction = (daysSinceStart / L).ceil();
+      if (cyclesElapsedForPrediction < 1) cyclesElapsedForPrediction = 1;
+      nextPeriodPrediction = cleanStart.add(Duration(days: cyclesElapsedForPrediction * L));
 
-    // Upgraded v2 prediction windows
-    DateTime nextPeriodWindowStart;
-    DateTime nextPeriodWindowEnd;
+      predictedOvulation = nextPeriodPrediction.subtract(Duration(days: lutealDays));
+      fertileStart = predictedOvulation.subtract(const Duration(days: 5));
+      fertileEnd = predictedOvulation.add(const Duration(days: 1));
 
-    if (cycleLengths.isNotEmpty) {
-      final minL = cycleLengths.reduce(math.min);
-      final maxL = cycleLengths.reduce(math.max);
-      final k = cyclesElapsedForPrediction;
-      nextPeriodWindowStart = cleanStart.add(Duration(days: k * minL));
-      nextPeriodWindowEnd = cleanStart.add(Duration(days: k * maxL));
+      // Upgraded v2 prediction windows with capped width (C-17)
+      if (cycleLengths.isNotEmpty) {
+        final minL = cycleLengths.reduce(math.min);
+        final maxL = cycleLengths.reduce(math.max);
+        final k = cyclesElapsedForPrediction;
+        final anchor = cleanStart.add(Duration(days: (k - 1) * L));
+        var winStart = anchor.add(Duration(days: minL));
+        var winEnd = anchor.add(Duration(days: maxL));
 
-      if (nextPeriodWindowEnd.difference(nextPeriodWindowStart).inDays < 2) {
-        nextPeriodWindowStart = nextPeriodPrediction.subtract(const Duration(days: 1));
-        nextPeriodWindowEnd = nextPeriodPrediction.add(const Duration(days: 1));
-      }
-    } else {
-      nextPeriodWindowStart = nextPeriodPrediction.subtract(const Duration(days: 2));
-      nextPeriodWindowEnd = nextPeriodPrediction.add(const Duration(days: 2));
-    }
+        if (winEnd.difference(winStart).inDays > 7) {
+          winStart = nextPeriodPrediction.subtract(const Duration(days: 3));
+          winEnd = nextPeriodPrediction.add(const Duration(days: 3));
+        } else if (winEnd.difference(winStart).inDays < 2) {
+          winStart = nextPeriodPrediction.subtract(const Duration(days: 1));
+          winEnd = nextPeriodPrediction.add(const Duration(days: 1));
+        }
 
-    final pmsWindowStart = nextPeriodPrediction.subtract(Duration(days: pmsWindowDays));
-    final pmsWindowEnd = nextPeriodPrediction.subtract(const Duration(days: 1));
-
-    // Regularity Label
-    var regularityLabel = 'دادهٔ ناکافی';
-    if (stats.totalRecordedCycles >= 2 && cycleLengths.isNotEmpty) {
-      final minL = cycleLengths.reduce(math.min);
-      final maxL = cycleLengths.reduce(math.max);
-      final range = maxL - minL;
-      if (range <= 4) {
-        regularityLabel = 'نسبتاً منظم';
+        nextPeriodWindowStart = winStart;
+        nextPeriodWindowEnd = winEnd;
       } else {
-        regularityLabel = 'نامنظم';
+        nextPeriodWindowStart = nextPeriodPrediction.subtract(const Duration(days: 2));
+        nextPeriodWindowEnd = nextPeriodPrediction.add(const Duration(days: 2));
       }
-    }
 
-    const predictionDisclaimer = 'توجه: این پیش‌بینی صرفاً یک تخمین بیولوژیک است و جنبه قطعیت پزشکی ندارد. چرخه بدنی شما تحت تأثیر عوامل مختلفی نظیر استرس، بیماری، تغییرات وزن، سفر و داروها قرار می‌گیرد.';
+      pmsWindowStart = nextPeriodPrediction.subtract(Duration(days: pmsWindowDays));
+      pmsWindowEnd = nextPeriodPrediction.subtract(const Duration(days: 1));
+    }
 
     return CycleEngineOutput(
       currentPhase: phase,
@@ -419,7 +543,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       fertileWindowStart: fertileStart,
       fertileWindowEnd: fertileEnd,
       ovulationDay: predictedOvulation,
-      isIrregular: isIrregular,
+      isIrregular: regularity.isIrregular,
       stats: stats,
       dataMaturity: dataMaturity,
       hasData: true,
@@ -427,12 +551,18 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       nextPeriodWindowEnd: nextPeriodWindowEnd,
       pmsWindowStart: pmsWindowStart,
       pmsWindowEnd: pmsWindowEnd,
-      regularityScore: regularityScore,
+      regularityScore: regularity.score,
       trendPoints: trendPoints,
-      regularityLabel: regularityLabel,
-      predictionDisclaimer: predictionDisclaimer,
+      regularityLevel: regularity.level,
+      disclaimerCode: CycleDisclaimerCode.standardBiologicalEstimate,
       isOverdue: isOverdue,
       daysOverdue: daysOverdue,
+      missedCycles: missedCycles,
+      needsUserAttention: needsUserAttention,
+      hasPhaseConflict: hasPhaseConflict,
+      hasImplausiblePeriodData: hasImplausiblePeriodData,
+      isProjected: isProjected,
+      discardedOutliers: discardedOutliers,
     );
   }
 
@@ -452,20 +582,19 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     required double sd,
     required List<int> cycleLengths,
   }) {
+    final regularity = _computeRegularity(cycleLengths);
     return _evaluateWithStart(
       startDate,
       now,
       cycleLength,
       periodDuration,
       lutealPhaseDays,
-      isIrregular,
+      regularity,
       stats,
       dataMaturity,
       endDate,
       trendPoints,
-      regularityScore,
       pmsWindowDays,
-      sd,
       cycleLengths,
     );
   }
@@ -473,56 +602,66 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
   CycleEngineOutput pregnancyOutputForTesting(DateTime now) => _pregnancyOutput(now);
 
   CycleEngineOutput _pregnancyOutput(DateTime now) {
-    final cleanNow = CycleDateContract.cleanDate(now);
     return CycleEngineOutput(
-      currentPhase: CyclePhase.ovulation,
+      currentPhase: CyclePhase.pregnancy,
       dayOfCycle: 0,
       dayOfPeriod: 0,
-      nextPeriodPrediction: cleanNow.add(const Duration(days: 280)),
-      fertileWindowStart: cleanNow,
-      fertileWindowEnd: cleanNow,
-      ovulationDay: cleanNow,
+      nextPeriodPrediction: null,
+      fertileWindowStart: null,
+      fertileWindowEnd: null,
+      ovulationDay: null,
       isIrregular: false,
-      stats: CycleStats(avgCycleLength: 28, avgPeriodDuration: 6, totalRecordedCycles: 0),
+      stats: CycleStats(avgCycleLength: 28, avgPeriodDuration: 6, recordedPeriods: 0, completedCycles: 0),
       dataMaturity: 'HIGH',
       hasData: true,
-      nextPeriodWindowStart: cleanNow,
-      nextPeriodWindowEnd: cleanNow,
-      pmsWindowStart: cleanNow,
-      pmsWindowEnd: cleanNow,
-      regularityScore: 100,
-      trendPoints: [],
-      regularityLabel: 'دوران بارداری',
-      predictionDisclaimer: 'حالت بارداری فعال است — پیش‌بینی‌های قاعدگی متوقف شده‌اند.',
+      nextPeriodWindowStart: null,
+      nextPeriodWindowEnd: null,
+      pmsWindowStart: null,
+      pmsWindowEnd: null,
+      regularityScore: null,
+      trendPoints: const [],
+      regularityLevel: RegularityLevel.pregnancy,
+      disclaimerCode: CycleDisclaimerCode.pregnancyModeActive,
       isOverdue: false,
       daysOverdue: 0,
+      missedCycles: 0,
+      needsUserAttention: false,
+      hasPhaseConflict: false,
+      hasImplausiblePeriodData: false,
+      isProjected: false,
+      discardedOutliers: 0,
     );
   }
 
   CycleEngineOutput _emptyOutput(DateTime now) {
-    final defaultNextStart = now.add(const Duration(days: 14));
     return CycleEngineOutput(
       currentPhase: CyclePhase.noData,
       dayOfCycle: 0,
       dayOfPeriod: 0,
-      nextPeriodPrediction: defaultNextStart,
-      fertileWindowStart: defaultNextStart.subtract(const Duration(days: 5)),
-      fertileWindowEnd: defaultNextStart,
-      ovulationDay: defaultNextStart,
+      nextPeriodPrediction: null,
+      fertileWindowStart: null,
+      fertileWindowEnd: null,
+      ovulationDay: null,
       isIrregular: false,
-      stats: CycleStats(avgCycleLength: 28, avgPeriodDuration: 6, totalRecordedCycles: 0),
+      stats: CycleStats(avgCycleLength: 28, avgPeriodDuration: 6, recordedPeriods: 0, completedCycles: 0),
       dataMaturity: 'LOW',
       hasData: false,
-      nextPeriodWindowStart: defaultNextStart.subtract(const Duration(days: 2)),
-      nextPeriodWindowEnd: defaultNextStart.add(const Duration(days: 2)),
-      pmsWindowStart: defaultNextStart.subtract(const Duration(days: 4)),
-      pmsWindowEnd: defaultNextStart.subtract(const Duration(days: 1)),
-      regularityScore: 0,
-      trendPoints: [],
-      regularityLabel: 'دادهٔ ناکافی',
-      predictionDisclaimer: 'توجه: این پیش‌بینی صرفاً یک تخمین بیولوژیک است و جنبه قطعیت پزشکی ندارد. چرخه بدنی شما تحت تأثیر عوامل مختلفی نظیر استرس، بیماری، تغییرات وزن، سفر و داروها قرار می‌گیرد.',
+      nextPeriodWindowStart: null,
+      nextPeriodWindowEnd: null,
+      pmsWindowStart: null,
+      pmsWindowEnd: null,
+      regularityScore: null,
+      trendPoints: const [],
+      regularityLevel: RegularityLevel.insufficientData,
+      disclaimerCode: CycleDisclaimerCode.insufficientData,
       isOverdue: false,
       daysOverdue: 0,
+      missedCycles: 0,
+      needsUserAttention: false,
+      hasPhaseConflict: false,
+      hasImplausiblePeriodData: false,
+      isProjected: false,
+      discardedOutliers: 0,
     );
   }
 
@@ -531,7 +670,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
 
   @override
   String fingerprint(CycleEngineInput input) {
-    final dayStamp = input.now.toIso8601String().substring(0, 10);
+    final dayStamp = CycleDateContract.toDayKey(input.now);
     final avgLen = input.appSettings['cycle_avg_length'] ?? '28';
     final avgPeriod = input.appSettings['cycle_avg_period'] ?? '6';
     final pmsWindow = input.appSettings['cycle_pms_window_days'] ?? '4';
@@ -539,14 +678,14 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
   }
 
   @override
-  void invalidate() {}
+  void invalidate() {
+    try {
+      RitmoEngineBus.instance.invalidate(CycleEngine);
+    } catch (_) {}
+  }
 
   @override
   bool canRun(CycleEngineInput input) {
-    // Same gate as calculate(): privacy guard + module toggle.
-    // (Previously this required a 'cycle_consent' settings key that nothing
-    // in the app ever writes, so every RitmoEngineBus execution threw
-    // EngineCannotRunException and the home dashboard never saw cycle data.)
     final isFemale = CyclePrivacyGuard.isVisible(input.appSettings);
     final cycleEnabled = ModuleGate.instance.isEnabledFrom(input.appSettings, 'module_cycle_enabled');
     return isFemale && cycleEnabled;

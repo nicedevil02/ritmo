@@ -55,7 +55,8 @@ class CycleAgendaSource implements AgendaSource {
     final date = ctx.date;
     final day = DateTime(date.year, date.month, date.day);
 
-    bool inWindow(DateTime start, DateTime end) {
+    bool inWindow(DateTime? start, DateTime? end) {
+      if (start == null || end == null) return false;
       final s = DateTime(start.year, start.month, start.day);
       final e = DateTime(end.year, end.month, end.day);
       return !day.isBefore(s) && !day.isAfter(e);

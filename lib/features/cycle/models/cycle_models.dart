@@ -16,10 +16,12 @@ class CycleTrendPoint {
     required this.index,
     required this.lengthDays,
     required this.periodDays,
+    this.isInProgress = false,
   });
   final int index;
   final int lengthDays;
   final int periodDays;
+  final bool isInProgress;
 }
 
 class CycleCorrelation {

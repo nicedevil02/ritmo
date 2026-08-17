@@ -111,6 +111,8 @@ class HormonalIntelligenceEngine {
             CyclePhase.follicular => HormonalPhase.postCycle,
             CyclePhase.ovulation => HormonalPhase.normal,
             CyclePhase.luteal => HormonalPhase.preCycle,
+            CyclePhase.dataStale => HormonalPhase.noData,
+            CyclePhase.pregnancy => HormonalPhase.normal,
             CyclePhase.noData => HormonalPhase.noData,
           };
 

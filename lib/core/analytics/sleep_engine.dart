@@ -27,7 +27,7 @@ class SleepEngineOutput {
   SleepEngineOutput({
     this.lastNight,
     required this.avgDurationMinutes,
-    required this.avgQuality,
+    this.avgQuality,
     required this.sleepDebtMinutes,
     required this.sleepBalanceHours,
     this.consistencyScore,
@@ -40,7 +40,7 @@ class SleepEngineOutput {
   });
   final SleepLog? lastNight;
   final double avgDurationMinutes;
-  final double avgQuality;
+  final double? avgQuality;
   final int sleepDebtMinutes;
   final double sleepBalanceHours; // T-3.2 / P-7
   final double? consistencyScore; // T-1.4: 0..100 or null
@@ -85,7 +85,7 @@ class SleepEngine implements CachedEngine<SleepEngineInput, SleepEngineOutput> {
       totalQuality += log.quality.score;
     }
     final avgDuration = activeLogs.isNotEmpty ? totalDuration / activeLogs.length : 0.0;
-    final avgQual = activeLogs.isNotEmpty ? totalQuality / activeLogs.length : 0.0;
+    final double? avgQual = activeLogs.isNotEmpty ? totalQuality / activeLogs.length : null;
 
     // 3. sleepDebtMinutes & sleepBalanceHours (T-3.2)
     var debt = 0;

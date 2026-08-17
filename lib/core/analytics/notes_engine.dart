@@ -70,7 +70,7 @@ class NotesEngine extends CachedEngine<NotesEngineInput, NotesEngineOutput> {
 
   @override
   String fingerprint(NotesEngineInput input) {
-    final day = input.dayKey ?? SystemClock().today().value;
+    final day = input.dayKey ?? const SystemClock().today().value;
     return 'notes_engine_$day';
   }
 
@@ -94,7 +94,7 @@ class NotesEngine extends CachedEngine<NotesEngineInput, NotesEngineOutput> {
         return const NotesEngineOutput();
       }
 
-      final now = input.now ?? DateTime.now();
+      final now = input.now ?? DateTime.fromMillisecondsSinceEpoch(0);
       final nowMs = now.millisecondsSinceEpoch;
 
       // Active notes count

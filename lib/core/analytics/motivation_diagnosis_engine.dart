@@ -111,7 +111,7 @@ class MotivationDiagnosisEngine
 
   @override
   Future<MotivationDiagnosisOutput> calculate(MotivationDiagnosisInput input) async {
-    final now = input.now ?? DateTime.now();
+    final now = input.now ?? DateTime.fromMillisecondsSinceEpoch(0);
     final windowStart = now.subtract(const Duration(days: observationWindowDays));
 
     // Filter completions in 28-day window

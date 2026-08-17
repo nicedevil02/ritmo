@@ -58,7 +58,7 @@ class MonthPlanSection extends StatelessWidget {
       themeData['intentionallySkipped'] = skipList;
 
       await PlanningRepository.instance.updateCycleTheme(cycle.id, jsonEncode(themeData));
-      controller.loadHorizon(PlanningHorizon.month);
+      await controller.loadHorizon(PlanningHorizon.month);
       if (context.mounted) RitmoToast.show(context, 'به لیست رهاشده‌ها اضافه شد 🚫');
     }
   }
@@ -72,7 +72,7 @@ class MonthPlanSection extends StatelessWidget {
     themeData['intentionallySkipped'] = skipList;
 
     await PlanningRepository.instance.updateCycleTheme(cycle.id, jsonEncode(themeData));
-    controller.loadHorizon(PlanningHorizon.month);
+    await controller.loadHorizon(PlanningHorizon.month);
     if (context.mounted) RitmoToast.show(context, 'از لیست حذف شد');
   }
 
@@ -473,7 +473,7 @@ class MonthPlanSection extends StatelessWidget {
                       reason: 'حذف از تمرکزهای ماه',
                       nowMs: DateTime.now().millisecondsSinceEpoch,
                     );
-                    controller.loadHorizon(PlanningHorizon.month);
+                    await controller.loadHorizon(PlanningHorizon.month);
                   }
                 },
                 itemBuilder: (ctx) => [

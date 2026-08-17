@@ -206,7 +206,7 @@ class JourneyController extends ChangeNotifier {
       }
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = 'Failed to load schedule: $e';
+      _errorMessage = CalendarMessagesFa.load;
       RitmoLog.error('JourneyController', 'loadForActiveScale failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
@@ -235,7 +235,7 @@ class JourneyController extends ChangeNotifier {
       await refresh();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = 'Failed to complete task: $e';
+      _errorMessage = CalendarMessagesFa.complete;
       RitmoLog.error('JourneyController', 'completeItem failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
@@ -263,7 +263,7 @@ class JourneyController extends ChangeNotifier {
       await refresh();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = 'Failed to postpone task: $e';
+      _errorMessage = CalendarMessagesFa.postpone;
       RitmoLog.error('JourneyController', 'postponeItem failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
@@ -291,7 +291,7 @@ class JourneyController extends ChangeNotifier {
       await refresh();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = 'Failed to skip task: $e';
+      _errorMessage = CalendarMessagesFa.skip;
       RitmoLog.error('JourneyController', 'skipItem failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
@@ -340,7 +340,7 @@ class JourneyController extends ChangeNotifier {
       CommandStack.instance.push(command);
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = 'Failed to move task: $e';
+      _errorMessage = CalendarMessagesFa.move;
       RitmoLog.error('JourneyController', 'commitItemDrag failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
@@ -373,7 +373,7 @@ class JourneyController extends ChangeNotifier {
       CommandStack.instance.push(command);
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = 'Failed to resize task: $e';
+      _errorMessage = CalendarMessagesFa.resize;
       RitmoLog.error('JourneyController', 'commitItemResize failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
@@ -484,7 +484,7 @@ class JourneyController extends ChangeNotifier {
       _errorMessage = null; // clear stale error on successful load
     } catch (e, st) {
       if (_isDisposed) return;
-      _errorMessage = 'خطا در بارگذاری برنامه‌ها: $e';
+      _errorMessage = CalendarMessagesFa.load;
       RitmoLog.error('JourneyController', 'loadAgendaRange failed', e, st);
     } finally {
       if (!_isDisposed) {
@@ -584,7 +584,7 @@ class JourneyController extends ChangeNotifier {
       RitmoHapticsPolicy.success();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = 'Failed to schedule task: $e';
+      _errorMessage = CalendarMessagesFa.schedule;
       RitmoLog.error('JourneyController', 'scheduleItem failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
@@ -612,7 +612,7 @@ class JourneyController extends ChangeNotifier {
       RitmoHapticsPolicy.success();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = 'Failed to unschedule task: $e';
+      _errorMessage = CalendarMessagesFa.unschedule;
       RitmoLog.error('JourneyController', 'unscheduleItem failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {

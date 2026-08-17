@@ -328,7 +328,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
             iconColor: context.colors.success,
           );
         } else if (ChatGptWebBridgeManager.instance.cloudflareNotifier.value) {
-          CloudflareChallengeModal.show(context);
+          unawaited(CloudflareChallengeModal.show(context));
         } else {
           RitmoToast.show(
             context,

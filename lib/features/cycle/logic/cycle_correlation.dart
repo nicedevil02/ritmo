@@ -221,19 +221,19 @@ class CycleCorrelationAnalyzer {
     final energyAnalysis = _analyzeMetric(
       flowForEnergy,
       energyVector,
-      'انرژی بدنی',
+      'energy',
       '⚡',
     );
     final sleepAnalysis = _analyzeMetric(
       flowForSleep,
       sleepVector,
-      'کیفیت خواب',
+      'sleep',
       '🌙',
     );
     final compAnalysis = _analyzeMetric(
       flowForComp,
       compVector,
-      'پایبندی به روتین‌ها',
+      'routines',
       '🌸',
     );
 
@@ -254,8 +254,7 @@ class CycleCorrelationAnalyzer {
         pValue: null,
         sampleSize: n,
         isSignificant: false,
-        insight:
-            'داده‌های کافی برای محاسبه همبستگی معنادار $metricName وجود ندارد (حداقل $minSampleSizeForSignificance روز ثبت تطبیقی نیاز است).',
+        insight: 'insufficient_data',
       );
     }
 
@@ -267,8 +266,7 @@ class CycleCorrelationAnalyzer {
         pValue: null,
         sampleSize: n,
         isSignificant: false,
-        insight:
-            'داده‌های ثبت‌شده برای $metricName تغییرات کافی جهت محاسبه همبستگی ندارند.',
+        insight: 'no_variance',
       );
     }
 
@@ -278,33 +276,13 @@ class CycleCorrelationAnalyzer {
 
     String insight;
     if (!isSignificant) {
-      insight =
-          'همبستگی معناداری بین شدت چرخه و $metricName در داده‌های شما مشاهده نشد. $icon';
+      insight = 'not_significant';
     } else if (corr < -0.3) {
-      if (metricName == 'انرژی بدنی') {
-        insight =
-            'در روزهای با شدت جریان بیشتر، سطح انرژی بدنی شما کاهش نسبی نشان می‌دهد که طبیعی است. استراحت بیشتری را برنامه‌ریزی کنید. ⚡';
-      } else if (metricName == 'کیفیت خواب') {
-        insight =
-            'کیفیت خواب شما در روزهای جریان شدیدتر اندکی افت می‌کند. دمای اتاق خواب را ملایم‌تر نگه دارید. 🌙';
-      } else {
-        insight =
-            'پایبندی به برنامه‌ها در روزهای اوج ریتم بدنی کمی سخت‌تر می‌شود؛ پیشنهاد می‌کنیم روتین‌های سبک‌تر را فعال کنید. 🌸';
-      }
+      insight = 'negative_correlation';
     } else if (corr > 0.3) {
-      if (metricName == 'انرژی بدنی') {
-        insight =
-            'در روزهای جریان شدیدتر، سطح انرژی شما باثبات یا افزایشی گزارش شده است. ⚡';
-      } else if (metricName == 'کیفیت خواب') {
-        insight =
-            'کیفیت خواب شما در روزهای با ریتم بدنی فعال بهبود می‌یابد. 🌙';
-      } else {
-        insight =
-            'تمرکز و تعهد شما به انجام روتین‌ها در این روزها بالا ارزیابی می‌شود. 🌸';
-      }
+      insight = 'positive_correlation';
     } else {
-      insight =
-          'روال $metricName شما نوسان مستقیمی با شدت فیزیکی چرخه نشان نمی‌دهد. $icon';
+      insight = 'neutral';
     }
 
     return CycleCorrelation(

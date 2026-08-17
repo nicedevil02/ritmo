@@ -1,3 +1,4 @@
+// CycleAnomalyDetector (C-32, C-41: Statistical anomalies & code-based contract)
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 
@@ -16,16 +17,24 @@ class CycleAnomaly {
   const CycleAnomaly({
     required this.type,
     required this.severity,
-    required this.titleFa,
-    required this.descriptionFa,
+    this.paramValue = 0,
+    this.referenceValue = 0,
     this.isMild = true,
-  });
+    String? titleFa,
+    String? descriptionFa,
+  })  : _titleFa = titleFa,
+        _descriptionFa = descriptionFa;
 
   final CycleAnomalyType type;
   final CycleAnomalySeverity severity;
-  final String titleFa;
-  final String descriptionFa;
+  final int paramValue;
+  final int referenceValue;
   final bool isMild;
+  final String? _titleFa;
+  final String? _descriptionFa;
+
+  String get titleFa => _titleFa ?? type.name;
+  String get descriptionFa => _descriptionFa ?? type.name;
 }
 
 class CycleAnomalyDetector {
@@ -36,9 +45,8 @@ class CycleAnomalyDetector {
     DateTime? now,
   }) {
     final anomalies = <CycleAnomaly>[];
-    final effectiveNow = CycleDateContract.cleanDate(now ?? DateTime.now());
 
-    // 1. Check for Late or Missed Period (from engine output or current date vs last start)
+    // 1. Check for Late or Missed Period
     if (engineOutput != null) {
       if (engineOutput.daysOverdue >= 7 || engineOutput.missedCycles >= 1) {
         final isSevere =
@@ -49,12 +57,8 @@ class CycleAnomalyDetector {
             severity: isSevere
                 ? CycleAnomalySeverity.consultClinician
                 : CycleAnomalySeverity.watch,
-            titleFa: isSevere
-                ? 'تأخیر قابل توجه در شروع دوره'
-                : 'تأخیر در شروع دوره قاعدگی',
-            descriptionFa: isSevere
-                ? 'بیش از ${engineOutput.daysOverdue} روز از موعد معمول دوره گذشته است. در صورت عدم اطمینان، مشاوره با پزشک متخصص زنان توصیه می‌شود.'
-                : 'شروع دوره حدود ${engineOutput.daysOverdue} روز نسبت به میانگین معمول به تعویق افتاده است. این روند را زیر نظر داشته باشید.',
+            paramValue: engineOutput.daysOverdue,
+            referenceValue: engineOutput.missedCycles,
             isMild: !isSevere,
           ),
         );
@@ -104,7 +108,6 @@ class CycleAnomalyDetector {
     if (cycleLengths.isNotEmpty) {
       final lastCycle = cycleLengths.last;
 
-      // Compute reference from previous cycles (leave-one-out)
       double referenceAvg;
       if (cycleLengths.length > 1) {
         final previousLengths = cycleLengths.sublist(
@@ -126,9 +129,8 @@ class CycleAnomalyDetector {
             severity: isSevere
                 ? CycleAnomalySeverity.consultClinician
                 : CycleAnomalySeverity.watch,
-            titleFa: 'کوتاه بودن طول چرخه اخیر',
-            descriptionFa:
-                'طول چرخه قبلی شما ($lastCycle روز) کوتاه‌تر از بازه معمول فیزیولوژیک (۲۱ روز) بوده است. در صورت تکرار در چرخه‌های متوالی، بررسی با پزشک پیشنهاد می‌شود.',
+            paramValue: lastCycle,
+            referenceValue: referenceAvg.round(),
             isMild: !isSevere,
           ),
         );
@@ -142,9 +144,8 @@ class CycleAnomalyDetector {
             severity: isSevere
                 ? CycleAnomalySeverity.consultClinician
                 : CycleAnomalySeverity.watch,
-            titleFa: 'طولانی بودن چرخه اخیر',
-            descriptionFa:
-                'طول چرخه قبلی شما ($lastCycle روز) طولانی‌تر از بازه استاندارد بوده و با میانگین قبلی (${referenceAvg.round()} روز) تفاوت دارد.',
+            paramValue: lastCycle,
+            referenceValue: referenceAvg.round(),
             isMild: !isSevere,
           ),
         );
@@ -162,9 +163,8 @@ class CycleAnomalyDetector {
             severity: isSevere
                 ? CycleAnomalySeverity.consultClinician
                 : CycleAnomalySeverity.watch,
-            titleFa: 'طولانی بودن مدت خونریزی',
-            descriptionFa:
-                'مدت خونریزی دوره اخیر ($lastDuration روز) بیش از حد معمول (حداکثر ۸ روز) ثبت شده است. در صورت ادامه، مشورت با پزشک زنان توصیه می‌شود.',
+            paramValue: lastDuration,
+            referenceValue: 8,
             isMild: !isSevere,
           ),
         );

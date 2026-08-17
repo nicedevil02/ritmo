@@ -141,29 +141,12 @@ class CycleEngineOutput {
 
   String get regularityLabel {
     if (_regularityLabel != null) return _regularityLabel!;
-    switch (regularityLevel) {
-      case RegularityLevel.regular:
-        return 'منظم';
-      case RegularityLevel.moderate:
-        return 'نسبتاً منظم';
-      case RegularityLevel.irregular:
-        return 'نامنظم';
-      case RegularityLevel.pregnancy:
-        return 'دوران بارداری';
-      case RegularityLevel.insufficientData:
-        return 'دادهٔ ناکافی';
-    }
+    return regularityLevel.name;
   }
 
   String get predictionDisclaimer {
     if (_predictionDisclaimer != null) return _predictionDisclaimer!;
-    switch (disclaimerCode) {
-      case CycleDisclaimerCode.pregnancyModeActive:
-        return 'حالت بارداری فعال است — پیش‌بینی‌های قاعدگی متوقف شده‌اند.';
-      case CycleDisclaimerCode.insufficientData:
-      case CycleDisclaimerCode.standardBiologicalEstimate:
-        return 'توجه: این پیش‌بینی صرفاً یک تخمین بیولوژیک است و جنبه قطعیت پزشکی ندارد. چرخه بدنی شما تحت تأثیر عوامل مختلفی نظیر استرس، بیماری، تغییرات وزن، سفر و داروها قرار می‌گیرد.';
-    }
+    return disclaimerCode.name;
   }
 
   final bool isOverdue;

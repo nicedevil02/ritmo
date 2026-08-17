@@ -1,4 +1,4 @@
-// C-03 & C-33: CycleDataQualityEngine with deterministic date handling and proper observability.
+// C-03 & C-33, C-41: CycleDataQualityEngine with deterministic date handling and code-based contracts
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
@@ -65,23 +65,23 @@ class CycleDataQualityEngine {
     final recentLogsCount = recentLogs.length;
     final hasRecentDailyLogs = recentLogsCount >= 5;
 
-    final warningsFa = <String>[];
+    final warningCodes = <String>[];
     if (periodRows.length < 3) {
-      warningsFa.add('کمتر از ۳ چرخه ثبت شده است');
+      warningCodes.add('insufficient_cycles');
     }
     if (hasForgottenOpenPeriod) {
-      warningsFa.add('یک دوره باز قدیمی تعیین تکلیف نشده است');
+      warningCodes.add('forgotten_open_period');
     }
     if (!hasRecentDailyLogs) {
-      warningsFa.add('در ۳۰ روز اخیر ثبت روزانه کمی دارید');
+      warningCodes.add('insufficient_recent_logs');
     }
 
-    final qualityLabelFa =
+    final qualityLevel =
         periodRows.length >= 5 && hasRecentDailyLogs && !hasForgottenOpenPeriod
-        ? 'عالی'
-        : (periodRows.length >= 2 && !hasForgottenOpenPeriod
-              ? 'متوسط'
-              : 'نیازمند داده بیشتر');
+            ? 'HIGH'
+            : (periodRows.length >= 2 && !hasForgottenOpenPeriod
+                ? 'MEDIUM'
+                : 'LOW');
 
     return DataQualityReport(
       hasEnoughCycles: hasEnoughCycles,
@@ -89,8 +89,8 @@ class CycleDataQualityEngine {
       hasForgottenOpenPeriod: hasForgottenOpenPeriod,
       hasPredictionConfidence: hasEnoughCycles && !hasForgottenOpenPeriod,
       recentLogsCount: recentLogsCount,
-      qualityLabelFa: qualityLabelFa,
-      warningsFa: warningsFa,
+      qualityLevel: qualityLevel,
+      warningCodes: warningCodes,
     );
   }
 }

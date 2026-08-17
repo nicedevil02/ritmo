@@ -1,20 +1,28 @@
+// CycleCheckinOrchestrator (C-35, C-41: Check-in prompt determination without hardcoded strings)
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 
+enum CycleCheckinPromptType {
+  forgottenOpenPeriod,
+  menstrualActive,
+  pmsApproaching,
+  encourageDailyLog,
+}
+
 class CycleCheckinOrchestrator {
-  static String? checkinPromptFa({
+  static CycleCheckinPromptType? determinePrompt({
     required CyclePhase phase,
     required DataQualityReport dataQuality,
     required DateTime? pmsWindowStart,
     required DateTime now,
   }) {
     if (dataQuality.hasForgottenOpenPeriod) {
-      return 'یک دوره باز قدیمی دارید. لطفا تاریخ پایان آن را ثبت یا تعیین تکلیف کنید.';
+      return CycleCheckinPromptType.forgottenOpenPeriod;
     }
 
     if (phase == CyclePhase.menstrual) {
-      return 'امروز روز فعال قاعدگی است. ثبت علائم امروز به تنظیم بهتر برنامه‌ها کمک می‌کند.';
+      return CycleCheckinPromptType.menstrualActive;
     }
 
     if (pmsWindowStart != null) {
@@ -22,14 +30,29 @@ class CycleCheckinOrchestrator {
       final cleanPms = CycleDateContract.cleanDate(pmsWindowStart);
       final daysToPms = CycleDateContract.daysBetween(cleanNow, cleanPms);
       if (daysToPms >= 0 && daysToPms <= 3 && !dataQuality.hasRecentDailyLogs) {
-        return 'نزدیک به پنجره قبل از دوره هستید. ثبت وضعیت بدنی امروز پیشنهادی است.';
+        return CycleCheckinPromptType.pmsApproaching;
       }
     }
 
     if (!dataQuality.hasRecentDailyLogs && dataQuality.hasEnoughCycles) {
-      return 'ثبت وضعیت روزانه به دقت بیشتر پیش‌بینی ریتم بدنی شما کمک می‌کند.';
+      return CycleCheckinPromptType.encourageDailyLog;
     }
 
     return null;
+  }
+
+  static String? checkinPromptFa({
+    required CyclePhase phase,
+    required DataQualityReport dataQuality,
+    required DateTime? pmsWindowStart,
+    required DateTime now,
+  }) {
+    final type = determinePrompt(
+      phase: phase,
+      dataQuality: dataQuality,
+      pmsWindowStart: pmsWindowStart,
+      now: now,
+    );
+    return type?.name;
   }
 }

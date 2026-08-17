@@ -1,3 +1,4 @@
+// CycleBurdenEngine (C-30, C-41: Normalized burden calculation & code-based contract)
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
@@ -24,7 +25,7 @@ class CycleBurdenEngine {
     required double? sleepHours,
   }) {
     var score = CycleBurdenWeights.base;
-    final reasonsFa = <String>[];
+    final reasonCodes = <String>[];
     final factors = <BurdenFactor>[];
 
     // 1. Phase impact
@@ -34,20 +35,18 @@ class CycleBurdenEngine {
         const BurdenFactor(
           code: 'phase_menstrual',
           weight: CycleBurdenWeights.phaseMenstrual,
-          labelFa: 'دوره فعال قاعدگی',
         ),
       );
-      reasonsFa.add('دوره فعال قاعدگی');
+      reasonCodes.add('phase_menstrual');
     } else if (phase == CyclePhase.luteal) {
       score += CycleBurdenWeights.phaseLuteal;
       factors.add(
         const BurdenFactor(
           code: 'phase_luteal',
           weight: CycleBurdenWeights.phaseLuteal,
-          labelFa: 'فاز لوتئال (قبل از دوره)',
         ),
       );
-      reasonsFa.add('فاز لوتئال (قبل از دوره)');
+      reasonCodes.add('phase_luteal');
     }
 
     // 2. Flow intensity impact
@@ -61,20 +60,18 @@ class CycleBurdenEngine {
         const BurdenFactor(
           code: 'flow_heavy',
           weight: CycleBurdenWeights.flowHeavy,
-          labelFa: 'خونریزی شدید',
         ),
       );
-      reasonsFa.add('خونریزی شدید');
+      reasonCodes.add('flow_heavy');
     } else if (flowEnum == CycleFlowLevel.medium) {
       score += CycleBurdenWeights.flowMedium;
       factors.add(
         const BurdenFactor(
           code: 'flow_medium',
           weight: CycleBurdenWeights.flowMedium,
-          labelFa: 'خونریزی متوسط',
         ),
       );
-      reasonsFa.add('خونریزی متوسط');
+      reasonCodes.add('flow_medium');
     }
 
     // 3. Symptoms impact
@@ -87,12 +84,11 @@ class CycleBurdenEngine {
       score += symScore;
       factors.add(
         BurdenFactor(
-          code: 'symptoms',
+          code: 'symptoms_${validSymptoms.length}',
           weight: symScore,
-          labelFa: '${validSymptoms.length} علامت بدنی ثبت شده',
         ),
       );
-      reasonsFa.add('${validSymptoms.length} علامت بدنی ثبت شده');
+      reasonCodes.add('symptoms_${validSymptoms.length}');
     }
 
     // 4. Energy tag impact
@@ -103,10 +99,9 @@ class CycleBurdenEngine {
         const BurdenFactor(
           code: 'energy_low',
           weight: CycleBurdenWeights.lowEnergy,
-          labelFa: 'سطح انرژی پایین',
         ),
       );
-      reasonsFa.add('سطح انرژی پایین');
+      reasonCodes.add('energy_low');
     }
 
     // 5. Sleep hours impact (< 6.0 hrs)
@@ -116,10 +111,9 @@ class CycleBurdenEngine {
         const BurdenFactor(
           code: 'sleep_deficit',
           weight: CycleBurdenWeights.sleepDeficit,
-          labelFa: 'کمبود خواب دیشب',
         ),
       );
-      reasonsFa.add('کمبود خواب دیشب');
+      reasonCodes.add('sleep_deficit');
     }
 
     // Determine data confidence
@@ -144,7 +138,7 @@ class CycleBurdenEngine {
       level: level,
       confidence: confidence,
       factors: factors,
-      reasonsFa: reasonsFa,
+      reasonCodes: reasonCodes,
     );
   }
 }

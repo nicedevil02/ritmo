@@ -204,5 +204,132 @@ void main() {
       expect(output.weeklyDoneSessions, equals(3));
       expect(output.weeklyStudyMinutes, equals(90));
     });
+
+    test('K-34: Empty input (0 courses, 0 sessions) returns clean zeros without throwing', () async {
+      final engine = CoursesEngine();
+      final output = await engine.calculate(
+        CoursesEngineInput(
+          courses: const [],
+          sessions: const [],
+          currentEnergyLevel: 'MEDIUM',
+          today: DateTime(2026, 6, 24),
+        ),
+      );
+
+      expect(output.weeklyDoneSessions, equals(0));
+      expect(output.weeklyTargetSessions, equals(0));
+      expect(output.weeklyStudyMinutes, equals(0));
+      expect(output.studyStreakDays, equals(0));
+      expect(output.todaySessions, isEmpty);
+      expect(output.planningCourses, isEmpty);
+    });
+
+    test('K-31 & K-33: Fallback from null completedAt to updatedAt, and mastery score aggregation', () async {
+      final today = DateTime(2026, 6, 24);
+      final course = Course(
+        id: 'c_mastery',
+        title: 'Mastery Course',
+        totalSessions: 2,
+        sessionDurationMinutes: 40,
+        createdAt: 0,
+        updatedAt: 0,
+        courseType: CourseType.video,
+        preferredDays: [6, 1, 3],
+      );
+
+      final s1 = CourseSession(
+        id: 's_m1',
+        courseId: 'c_mastery',
+        sessionNumber: 1,
+        completionStatus: SessionStatus.completed,
+        completedAt: null, // null completedAt -> should fallback to updatedAt
+        updatedAt: DateTime(2026, 6, 24, 10).millisecondsSinceEpoch,
+        actualDurationMinutes: 40,
+        understandingScore: 4,
+        createdAt: 0,
+      );
+
+      final s2 = CourseSession(
+        id: 's_m2',
+        courseId: 'c_mastery',
+        sessionNumber: 2,
+        completionStatus: SessionStatus.completed,
+        completedAt: DateTime(2026, 6, 24, 12).millisecondsSinceEpoch,
+        actualDurationMinutes: 40,
+        understandingScore: 5,
+        createdAt: 0,
+        updatedAt: 0,
+      );
+
+      final engine = CoursesEngine();
+      final output = await engine.calculate(
+        CoursesEngineInput(
+          courses: [course],
+          sessions: [s1, s2],
+          currentEnergyLevel: 'MEDIUM',
+          today: today,
+        ),
+      );
+
+      expect(output.weeklyDoneSessions, equals(2));
+      expect(output.weeklyStudyMinutes, equals(80));
+      // Average score = (4 + 5) / 2 = 4.5 -> (4.5 / 5.0) * 100 = 90%
+      expect(output.masteryByCourse['c_mastery'], closeTo(90.0, 0.01));
+    });
+
+    test('K-35: Paused & archived courses excluded from weekly targets but completed sessions counted', () async {
+      final today = DateTime(2026, 6, 24);
+      final activeCourse = Course(
+        id: 'c_act',
+        title: 'Active Course',
+        totalSessions: 5,
+        sessionDurationMinutes: 30,
+        weeklyTargetSessions: 3,
+        createdAt: 0,
+        updatedAt: 0,
+        courseType: CourseType.video,
+        preferredDays: [6, 1, 3],
+      );
+
+      final pausedCourse = Course(
+        id: 'c_pau',
+        title: 'Paused Course',
+        totalSessions: 5,
+        sessionDurationMinutes: 30,
+        weeklyTargetSessions: 4,
+        status: CourseStatus.paused,
+        createdAt: 0,
+        updatedAt: 0,
+        courseType: CourseType.video,
+        preferredDays: [6, 1, 3],
+      );
+
+      final sDone = CourseSession(
+        id: 's_pau_done',
+        courseId: 'c_pau',
+        sessionNumber: 1,
+        completionStatus: SessionStatus.completed,
+        completedAt: DateTime(2026, 6, 22, 10).millisecondsSinceEpoch,
+        actualDurationMinutes: 30,
+        createdAt: 0,
+        updatedAt: 0,
+      );
+
+      final engine = CoursesEngine();
+      final output = await engine.calculate(
+        CoursesEngineInput(
+          courses: [activeCourse, pausedCourse],
+          sessions: [sDone],
+          currentEnergyLevel: 'MEDIUM',
+          today: today,
+        ),
+      );
+
+      // Only active course target (3) should be in weeklyTargetSessions
+      expect(output.weeklyTargetSessions, equals(3));
+      // But completed session from paused course this week is counted in done & minutes
+      expect(output.weeklyDoneSessions, equals(1));
+      expect(output.weeklyStudyMinutes, equals(30));
+    });
   });
 }

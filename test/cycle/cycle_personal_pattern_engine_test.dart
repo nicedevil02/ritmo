@@ -34,81 +34,92 @@ void main() {
       await db.close();
     });
 
-    test('C-34: Symptom occurring only 2 times is NOT published as forecast (requires minOccurrences = 3)', () async {
-      final periodRows = [
-        {'id': 'p1', 'startDate': '2026-05-01'},
-        {'id': 'p2', 'startDate': '2026-05-29'},
-        {'id': 'p3', 'startDate': '2026-06-26'},
-        {'id': 'p4', 'startDate': '2026-07-24'},
-      ];
+    test(
+      'C-34: Symptom occurring only 2 times is NOT published as forecast (requires minOccurrences = 3)',
+      () async {
+        final periodRows = [
+          {'id': 'p1', 'startDate': '2026-05-01'},
+          {'id': 'p2', 'startDate': '2026-05-29'},
+          {'id': 'p3', 'startDate': '2026-06-26'},
+          {'id': 'p4', 'startDate': '2026-07-24'},
+        ];
 
-      // Symptom on Day 14 of Cycle 1 and Cycle 2 (only 2 times)
-      await db.insert('cycle_day_logs', {
-        'id': 'l1',
-        'logDate': '2026-05-14',
-        'symptomsJson': '["headache"]',
-        'createdAt': 1000,
-        'updatedAt': 1000,
-      });
-      await db.insert('cycle_day_logs', {
-        'id': 'l2',
-        'logDate': '2026-06-11',
-        'symptomsJson': '["headache"]',
-        'createdAt': 1000,
-        'updatedAt': 1000,
-      });
+        // Symptom on Day 14 of Cycle 1 and Cycle 2 (only 2 times)
+        await db.insert('cycle_day_logs', {
+          'id': 'l1',
+          'logDate': '2026-05-14',
+          'symptomsJson': '["headache"]',
+          'createdAt': 1000,
+          'updatedAt': 1000,
+        });
+        await db.insert('cycle_day_logs', {
+          'id': 'l2',
+          'logDate': '2026-06-11',
+          'symptomsJson': '["headache"]',
+          'createdAt': 1000,
+          'updatedAt': 1000,
+        });
 
-      final forecasts = await CyclePersonalPatternEngine.computePersonalForecasts(
-        db: db,
-        periodRows: periodRows,
-        avgCycleLength: 28,
-      );
+        final forecasts =
+            await CyclePersonalPatternEngine.computePersonalForecasts(
+              db: db,
+              periodRows: periodRows,
+              avgCycleLength: 28,
+            );
 
-      expect(forecasts.isEmpty, isTrue);
-    });
+        expect(forecasts.isEmpty, isTrue);
+      },
+    );
 
-    test('C-34: Symptom occurring 3 times across 3 completed cycles is published with valid confidence', () async {
-      final periodRows = [
-        {'id': 'p1', 'startDate': '2026-05-01'},
-        {'id': 'p2', 'startDate': '2026-05-29'},
-        {'id': 'p3', 'startDate': '2026-06-26'},
-        {'id': 'p4', 'startDate': '2026-07-24'},
-      ];
+    test(
+      'C-34: Symptom occurring 3 times across 3 completed cycles is published with valid confidence',
+      () async {
+        final periodRows = [
+          {'id': 'p1', 'startDate': '2026-05-01'},
+          {'id': 'p2', 'startDate': '2026-05-29'},
+          {'id': 'p3', 'startDate': '2026-06-26'},
+          {'id': 'p4', 'startDate': '2026-07-24'},
+        ];
 
-      // Headache on Day 14 in 3 cycles
-      await db.insert('cycle_day_logs', {
-        'id': 'l1',
-        'logDate': '2026-05-14',
-        'symptomsJson': '["headache"]',
-        'createdAt': 1000,
-        'updatedAt': 1000,
-      });
-      await db.insert('cycle_day_logs', {
-        'id': 'l2',
-        'logDate': '2026-06-11',
-        'symptomsJson': '["headache"]',
-        'createdAt': 1000,
-        'updatedAt': 1000,
-      });
-      await db.insert('cycle_day_logs', {
-        'id': 'l3',
-        'logDate': '2026-07-09',
-        'symptomsJson': '["headache"]',
-        'createdAt': 1000,
-        'updatedAt': 1000,
-      });
+        // Headache on Day 14 in 3 cycles
+        await db.insert('cycle_day_logs', {
+          'id': 'l1',
+          'logDate': '2026-05-14',
+          'symptomsJson': '["headache"]',
+          'createdAt': 1000,
+          'updatedAt': 1000,
+        });
+        await db.insert('cycle_day_logs', {
+          'id': 'l2',
+          'logDate': '2026-06-11',
+          'symptomsJson': '["headache"]',
+          'createdAt': 1000,
+          'updatedAt': 1000,
+        });
+        await db.insert('cycle_day_logs', {
+          'id': 'l3',
+          'logDate': '2026-07-09',
+          'symptomsJson': '["headache"]',
+          'createdAt': 1000,
+          'updatedAt': 1000,
+        });
 
-      final forecasts = await CyclePersonalPatternEngine.computePersonalForecasts(
-        db: db,
-        periodRows: periodRows,
-        avgCycleLength: 28,
-      );
+        final forecasts =
+            await CyclePersonalPatternEngine.computePersonalForecasts(
+              db: db,
+              periodRows: periodRows,
+              avgCycleLength: 28,
+            );
 
-      expect(forecasts.length, equals(1));
-      final f = forecasts.first;
-      expect(f.symptomKey, equals('headache'));
-      expect(f.likelyCycleDay, equals(14));
-      expect(f.confidence, equals(1.0)); // 3 occurrences / 3 completed cycles = 1.0
-    });
+        expect(forecasts.length, equals(1));
+        final f = forecasts.first;
+        expect(f.symptomKey, equals('headache'));
+        expect(f.likelyCycleDay, equals(14));
+        expect(
+          f.confidence,
+          equals(1.0),
+        ); // 3 occurrences / 3 completed cycles = 1.0
+      },
+    );
   });
 }

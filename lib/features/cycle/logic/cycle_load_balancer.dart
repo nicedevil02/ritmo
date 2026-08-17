@@ -26,7 +26,8 @@ class CycleLoadBalancer {
         mode: CycleLoadMode.lighter,
         energyDelta: CycleLoadBalanceConstants.highBurdenEnergyDelta,
         sessionLengthMultiplier: CycleLoadBalanceConstants.highBurdenMultiplier,
-        extraBreakMinutesEveryHour: CycleLoadBalanceConstants.highBurdenExtraBreaks,
+        extraBreakMinutesEveryHour:
+            CycleLoadBalanceConstants.highBurdenExtraBreaks,
         recommendationsFa: [
           'برنامه‌های سنگین امروز را کاهش دهید یا به روزهای دیگر منتقل کنید.',
           'جلسات تمرکز یا مطالعه را به بازه‌های کوتاه‌تر ۳۰ دقیقه‌ای تقسیم کنید.',
@@ -39,8 +40,10 @@ class CycleLoadBalancer {
         loadMode: 'balanced',
         mode: CycleLoadMode.balanced,
         energyDelta: CycleLoadBalanceConstants.moderateBurdenEnergyDelta,
-        sessionLengthMultiplier: CycleLoadBalanceConstants.moderateBurdenMultiplier,
-        extraBreakMinutesEveryHour: CycleLoadBalanceConstants.moderateBurdenExtraBreaks,
+        sessionLengthMultiplier:
+            CycleLoadBalanceConstants.moderateBurdenMultiplier,
+        extraBreakMinutesEveryHour:
+            CycleLoadBalanceConstants.moderateBurdenExtraBreaks,
         recommendationsFa: [
           'برنامه امروز متوازن است؛ ریتم متناسب و بدون فشار حفظ شود.',
           'در صورت احساس خستگی، ۵ دقیقه استراحت اضافه در ساعت بگیرید.',
@@ -55,7 +58,8 @@ class CycleLoadBalancer {
           mode: CycleLoadMode.balanced,
           energyDelta: CycleLoadBalanceConstants.normalEnergyDelta,
           sessionLengthMultiplier: CycleLoadBalanceConstants.normalMultiplier,
-          extraBreakMinutesEveryHour: CycleLoadBalanceConstants.normalExtraBreaks,
+          extraBreakMinutesEveryHour:
+              CycleLoadBalanceConstants.normalExtraBreaks,
           recommendationsFa: [
             'وضعیت بدنی در طول دوره قاعدگی آرام و متوازن ارزیابی شده است.',
             'ریتم عادی و بدون تحمیل فشار مضاعف را حفظ کنید.',
@@ -77,4 +81,3 @@ class CycleLoadBalancer {
     }
   }
 }
-

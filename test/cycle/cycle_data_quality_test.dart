@@ -33,26 +33,39 @@ void main() {
       await db.close();
     });
 
-    test('C-33: evaluateDataQuality with injected now is completely deterministic', () async {
-      final mockedNow = DateTime(2026, 8, 17);
+    test(
+      'C-33: evaluateDataQuality with injected now is completely deterministic',
+      () async {
+        final mockedNow = DateTime(2026, 8, 17);
 
-      // Period started 15 days ago with no endDate (exceeds threshold 12 days)
-      final periodRows = [
-        {'id': 'p1', 'startDate': '2026-06-01', 'endDate': '2026-06-06'},
-        {'id': 'p2', 'startDate': '2026-07-01', 'endDate': '2026-07-06'},
-        {'id': 'p3', 'startDate': '2026-08-02', 'endDate': null}, // 15 days open relative to mockedNow
-      ];
+        // Period started 15 days ago with no endDate (exceeds threshold 12 days)
+        final periodRows = [
+          {'id': 'p1', 'startDate': '2026-06-01', 'endDate': '2026-06-06'},
+          {'id': 'p2', 'startDate': '2026-07-01', 'endDate': '2026-07-06'},
+          {
+            'id': 'p3',
+            'startDate': '2026-08-02',
+            'endDate': null,
+          }, // 15 days open relative to mockedNow
+        ];
 
-      final report = await CycleDataQualityEngine.evaluateDataQuality(
-        db: db,
-        periodRows: periodRows,
-        now: mockedNow,
-      );
+        final report = await CycleDataQualityEngine.evaluateDataQuality(
+          db: db,
+          periodRows: periodRows,
+          now: mockedNow,
+        );
 
-      expect(report.hasEnoughCycles, isTrue);
-      expect(report.hasForgottenOpenPeriod, isTrue);
-      expect(report.hasPredictionConfidence, isFalse); // Suppressed by forgotten open period
-      expect(report.warningsFa.any((w) => w.contains('دوره باز قدیمی')), isTrue);
-    });
+        expect(report.hasEnoughCycles, isTrue);
+        expect(report.hasForgottenOpenPeriod, isTrue);
+        expect(
+          report.hasPredictionConfidence,
+          isFalse,
+        ); // Suppressed by forgotten open period
+        expect(
+          report.warningsFa.any((w) => w.contains('دوره باز قدیمی')),
+          isTrue,
+        );
+      },
+    );
   });
 }

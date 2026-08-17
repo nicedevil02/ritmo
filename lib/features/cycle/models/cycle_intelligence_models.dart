@@ -83,11 +83,11 @@ enum CycleLoadMode {
   higherFocus;
 
   String get code => switch (this) {
-        CycleLoadMode.rest => 'rest',
-        CycleLoadMode.lighter => 'lighter',
-        CycleLoadMode.balanced => 'balanced',
-        CycleLoadMode.higherFocus => 'higher-focus',
-      };
+    CycleLoadMode.rest => 'rest',
+    CycleLoadMode.lighter => 'lighter',
+    CycleLoadMode.balanced => 'balanced',
+    CycleLoadMode.higherFocus => 'higher-focus',
+  };
 }
 
 class CycleAdaptiveAdvice {

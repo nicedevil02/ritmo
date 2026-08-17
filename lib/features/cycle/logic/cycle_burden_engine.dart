@@ -30,19 +30,23 @@ class CycleBurdenEngine {
     // 1. Phase impact
     if (phase == CyclePhase.menstrual) {
       score += CycleBurdenWeights.phaseMenstrual;
-      factors.add(const BurdenFactor(
-        code: 'phase_menstrual',
-        weight: CycleBurdenWeights.phaseMenstrual,
-        labelFa: 'دوره فعال قاعدگی',
-      ));
+      factors.add(
+        const BurdenFactor(
+          code: 'phase_menstrual',
+          weight: CycleBurdenWeights.phaseMenstrual,
+          labelFa: 'دوره فعال قاعدگی',
+        ),
+      );
       reasonsFa.add('دوره فعال قاعدگی');
     } else if (phase == CyclePhase.luteal) {
       score += CycleBurdenWeights.phaseLuteal;
-      factors.add(const BurdenFactor(
-        code: 'phase_luteal',
-        weight: CycleBurdenWeights.phaseLuteal,
-        labelFa: 'فاز لوتئال (قبل از دوره)',
-      ));
+      factors.add(
+        const BurdenFactor(
+          code: 'phase_luteal',
+          weight: CycleBurdenWeights.phaseLuteal,
+          labelFa: 'فاز لوتئال (قبل از دوره)',
+        ),
+      );
       reasonsFa.add('فاز لوتئال (قبل از دوره)');
     }
 
@@ -53,33 +57,41 @@ class CycleBurdenEngine {
 
     if (flowEnum == CycleFlowLevel.heavy) {
       score += CycleBurdenWeights.flowHeavy;
-      factors.add(const BurdenFactor(
-        code: 'flow_heavy',
-        weight: CycleBurdenWeights.flowHeavy,
-        labelFa: 'خونریزی شدید',
-      ));
+      factors.add(
+        const BurdenFactor(
+          code: 'flow_heavy',
+          weight: CycleBurdenWeights.flowHeavy,
+          labelFa: 'خونریزی شدید',
+        ),
+      );
       reasonsFa.add('خونریزی شدید');
     } else if (flowEnum == CycleFlowLevel.medium) {
       score += CycleBurdenWeights.flowMedium;
-      factors.add(const BurdenFactor(
-        code: 'flow_medium',
-        weight: CycleBurdenWeights.flowMedium,
-        labelFa: 'خونریزی متوسط',
-      ));
+      factors.add(
+        const BurdenFactor(
+          code: 'flow_medium',
+          weight: CycleBurdenWeights.flowMedium,
+          labelFa: 'خونریزی متوسط',
+        ),
+      );
       reasonsFa.add('خونریزی متوسط');
     }
 
     // 3. Symptoms impact
-    final validSymptoms = loggedSymptoms.where((s) => s.trim().isNotEmpty).toList();
+    final validSymptoms = loggedSymptoms
+        .where((s) => s.trim().isNotEmpty)
+        .toList();
     if (validSymptoms.isNotEmpty) {
       final symScore = (validSymptoms.length * CycleBurdenWeights.perSymptom)
           .clamp(0.0, CycleBurdenWeights.maxSymptoms);
       score += symScore;
-      factors.add(BurdenFactor(
-        code: 'symptoms',
-        weight: symScore,
-        labelFa: '${validSymptoms.length} علامت بدنی ثبت شده',
-      ));
+      factors.add(
+        BurdenFactor(
+          code: 'symptoms',
+          weight: symScore,
+          labelFa: '${validSymptoms.length} علامت بدنی ثبت شده',
+        ),
+      );
       reasonsFa.add('${validSymptoms.length} علامت بدنی ثبت شده');
     }
 
@@ -87,27 +99,34 @@ class CycleBurdenEngine {
     final normalizedEnergy = energyTag?.trim().toUpperCase();
     if (normalizedEnergy == 'LOW') {
       score += CycleBurdenWeights.lowEnergy;
-      factors.add(const BurdenFactor(
-        code: 'energy_low',
-        weight: CycleBurdenWeights.lowEnergy,
-        labelFa: 'سطح انرژی پایین',
-      ));
+      factors.add(
+        const BurdenFactor(
+          code: 'energy_low',
+          weight: CycleBurdenWeights.lowEnergy,
+          labelFa: 'سطح انرژی پایین',
+        ),
+      );
       reasonsFa.add('سطح انرژی پایین');
     }
 
     // 5. Sleep hours impact (< 6.0 hrs)
     if (sleepHours != null && sleepHours < 6.0) {
       score += CycleBurdenWeights.sleepDeficit;
-      factors.add(const BurdenFactor(
-        code: 'sleep_deficit',
-        weight: CycleBurdenWeights.sleepDeficit,
-        labelFa: 'کمبود خواب دیشب',
-      ));
+      factors.add(
+        const BurdenFactor(
+          code: 'sleep_deficit',
+          weight: CycleBurdenWeights.sleepDeficit,
+          labelFa: 'کمبود خواب دیشب',
+        ),
+      );
       reasonsFa.add('کمبود خواب دیشب');
     }
 
     // Determine data confidence
-    final hasContextData = validSymptoms.isNotEmpty || normalizedEnergy != null || sleepHours != null;
+    final hasContextData =
+        validSymptoms.isNotEmpty ||
+        normalizedEnergy != null ||
+        sleepHours != null;
     final confidence = hasContextData ? 'HIGH' : 'LOW';
 
     // Without user-reported symptom/energy/sleep context, cap at MODERATE

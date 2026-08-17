@@ -33,7 +33,9 @@ class CycleCorrelationAnalyzer {
 
     // 2. Fetch energy logs
     final windowStartMs = windowStartDate.millisecondsSinceEpoch;
-    final windowEndMs = effectiveNow.add(const Duration(days: 1)).millisecondsSinceEpoch;
+    final windowEndMs = effectiveNow
+        .add(const Duration(days: 1))
+        .millisecondsSinceEpoch;
     final List<Map<String, dynamic>> energyLogs = await db.query(
       'energy_logs',
       where: 'loggedAt >= ? AND loggedAt <= ?',
@@ -42,7 +44,9 @@ class CycleCorrelationAnalyzer {
     );
 
     // 3. Fetch sleep logs (bedtime_diagnostics ordered by date)
-    final sleepStartKey = CycleDateContract.toDayKey(windowStartDate.subtract(const Duration(days: 2)));
+    final sleepStartKey = CycleDateContract.toDayKey(
+      windowStartDate.subtract(const Duration(days: 2)),
+    );
     final List<Map<String, dynamic>> sleepLogs = await db.query(
       'bedtime_diagnostics',
       where: 'date >= ? AND date <= ?',
@@ -65,7 +69,9 @@ class CycleCorrelationAnalyzer {
       final rawDate = log['logDate']?.toString();
       final parsedDate = CycleDateContract.parseDayKey(rawDate);
       if (parsedDate == null) {
-        RitmoLogger.warning('[CycleCorrelation] skipping dayLog with invalid date: $rawDate');
+        RitmoLogger.warning(
+          '[CycleCorrelation] skipping dayLog with invalid date: $rawDate',
+        );
         continue;
       }
       final date = CycleDateContract.toDayKey(parsedDate);
@@ -132,7 +138,9 @@ class CycleCorrelationAnalyzer {
       if (parsedDate == null) continue;
 
       // Night of date D applies to Day D + sleepAttributionOffsetDays
-      final attributedDate = parsedDate.add(const Duration(days: sleepAttributionOffsetDays));
+      final attributedDate = parsedDate.add(
+        const Duration(days: sleepAttributionOffsetDays),
+      );
       final attributedDateStr = CycleDateContract.toDayKey(attributedDate);
 
       if (!mergedData.containsKey(attributedDateStr)) {
@@ -147,7 +155,9 @@ class CycleCorrelationAnalyzer {
       }
 
       final quality = (log['quality'] as num?)?.toDouble() ?? 3.0; // 1..5
-      (mergedData[attributedDateStr]!['sleepQuality'] as List<double>).add(quality);
+      (mergedData[attributedDateStr]!['sleepQuality'] as List<double>).add(
+        quality,
+      );
     }
 
     // Map completions to dates
@@ -191,7 +201,9 @@ class CycleCorrelationAnalyzer {
 
       if (energyList.isNotEmpty) {
         flowForEnergy.add(flow);
-        energyVector.add(energyList.reduce((a, b) => a + b) / energyList.length);
+        energyVector.add(
+          energyList.reduce((a, b) => a + b) / energyList.length,
+        );
       }
 
       if (sleepList.isNotEmpty) {
@@ -206,15 +218,26 @@ class CycleCorrelationAnalyzer {
     });
 
     // Compute Spearman rank correlations & p-values
-    final energyAnalysis = _analyzeMetric(flowForEnergy, energyVector, 'انرژی بدنی', '⚡');
-    final sleepAnalysis = _analyzeMetric(flowForSleep, sleepVector, 'کیفیت خواب', '🌙');
-    final compAnalysis = _analyzeMetric(flowForComp, compVector, 'پایبندی به روتین‌ها', '🌸');
+    final energyAnalysis = _analyzeMetric(
+      flowForEnergy,
+      energyVector,
+      'انرژی بدنی',
+      '⚡',
+    );
+    final sleepAnalysis = _analyzeMetric(
+      flowForSleep,
+      sleepVector,
+      'کیفیت خواب',
+      '🌙',
+    );
+    final compAnalysis = _analyzeMetric(
+      flowForComp,
+      compVector,
+      'پایبندی به روتین‌ها',
+      '🌸',
+    );
 
-    return [
-      energyAnalysis,
-      sleepAnalysis,
-      compAnalysis,
-    ];
+    return [energyAnalysis, sleepAnalysis, compAnalysis];
   }
 
   static CycleCorrelation _analyzeMetric(
@@ -244,16 +267,19 @@ class CycleCorrelationAnalyzer {
         pValue: null,
         sampleSize: n,
         isSignificant: false,
-        insight: 'داده‌های ثبت‌شده برای $metricName تغییرات کافی جهت محاسبه همبستگی ندارند.',
+        insight:
+            'داده‌های ثبت‌شده برای $metricName تغییرات کافی جهت محاسبه همبستگی ندارند.',
       );
     }
 
     final pValue = _computePValue(corr, n);
-    final isSignificant = (pValue != null && pValue < 0.05 && corr.abs() >= 0.25);
+    final isSignificant =
+        (pValue != null && pValue < 0.05 && corr.abs() >= 0.25);
 
     String insight;
     if (!isSignificant) {
-      insight = 'همبستگی معناداری بین شدت چرخه و $metricName در داده‌های شما مشاهده نشد. $icon';
+      insight =
+          'همبستگی معناداری بین شدت چرخه و $metricName در داده‌های شما مشاهده نشد. $icon';
     } else if (corr < -0.3) {
       if (metricName == 'انرژی بدنی') {
         insight =
@@ -267,14 +293,18 @@ class CycleCorrelationAnalyzer {
       }
     } else if (corr > 0.3) {
       if (metricName == 'انرژی بدنی') {
-        insight = 'در روزهای جریان شدیدتر، سطح انرژی شما باثبات یا افزایشی گزارش شده است. ⚡';
+        insight =
+            'در روزهای جریان شدیدتر، سطح انرژی شما باثبات یا افزایشی گزارش شده است. ⚡';
       } else if (metricName == 'کیفیت خواب') {
-        insight = 'کیفیت خواب شما در روزهای با ریتم بدنی فعال بهبود می‌یابد. 🌙';
+        insight =
+            'کیفیت خواب شما در روزهای با ریتم بدنی فعال بهبود می‌یابد. 🌙';
       } else {
-        insight = 'تمرکز و تعهد شما به انجام روتین‌ها در این روزها بالا ارزیابی می‌شود. 🌸';
+        insight =
+            'تمرکز و تعهد شما به انجام روتین‌ها در این روزها بالا ارزیابی می‌شود. 🌸';
       }
     } else {
-      insight = 'روال $metricName شما نوسان مستقیمی با شدت فیزیکی چرخه نشان نمی‌دهد. $icon';
+      insight =
+          'روال $metricName شما نوسان مستقیمی با شدت فیزیکی چرخه نشان نمی‌دهد. $icon';
     }
 
     return CycleCorrelation(
@@ -367,7 +397,11 @@ class CycleCorrelationAnalyzer {
     final sign = x < 0 ? -1 : 1;
     final absX = x.abs();
     final t = 1.0 / (1.0 + p * absX);
-    final y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * math.exp(-absX * absX);
+    final y =
+        1.0 -
+        (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) *
+            t *
+            math.exp(-absX * absX);
     return sign * y;
   }
 
@@ -392,7 +426,9 @@ class CycleCorrelationAnalyzer {
       final dateStr = log['logDate']?.toString();
       final logDate = CycleDateContract.parseDayKey(dateStr);
       if (logDate == null) {
-        RitmoLogger.warning('[CycleCorrelation] invalid logDate in analyzeSymptomStats: $dateStr');
+        RitmoLogger.warning(
+          '[CycleCorrelation] invalid logDate in analyzeSymptomStats: $dateStr',
+        );
         continue;
       }
 
@@ -426,7 +462,9 @@ class CycleCorrelationAnalyzer {
       }
 
       if (activePeriod == null) continue;
-      final start = CycleDateContract.parseDayKey(activePeriod['startDate']?.toString());
+      final start = CycleDateContract.parseDayKey(
+        activePeriod['startDate']?.toString(),
+      );
       if (start == null) continue;
 
       final cycleDay = CycleDateContract.daysBetween(start, logDate) + 1;
@@ -460,4 +498,3 @@ class CycleCorrelationAnalyzer {
     return stats;
   }
 }
-

@@ -77,5 +77,38 @@ void main() {
       expect(scan.calls.first.toolName, 'get_sleep_diagnostics');
       expect(scan.calls.first.parameters['days'], 30);
     });
+
+    test('parses multiple tool calls in a single response', () {
+      const raw = '''
+<tool_call>{"tool": "get_routines_overview", "parameters": {"days": 7}}</tool_call>
+<tool_call>{"tool": "get_sports_history", "parameters": {"days": 14}}</tool_call>
+''';
+      final scan = AgentToolCallParser.scan(raw);
+      expect(scan.hasCalls, isTrue);
+      expect(scan.calls.length, 2);
+      expect(scan.calls[0].toolName, 'get_routines_overview');
+      expect(scan.calls[1].toolName, 'get_sports_history');
+    });
+
+    test('handles Persian unicode characters inside tool parameters correctly', () {
+      const raw = '<tool_call>{"tool": "create_routine", "parameters": {"title": "ورزش صبحگاهی", "category": "ورزش"}}</tool_call>';
+      final scan = AgentToolCallParser.scan(raw);
+      expect(scan.hasCalls, isTrue);
+      expect(scan.calls.first.parameters['title'], 'ورزش صبحگاهی');
+      expect(scan.calls.first.parameters['category'], 'ورزش');
+    });
+
+    test('handles corrupted JSON inside tool_call tag gracefully', () {
+      const raw = '<tool_call>{tool: broken, "parameters": </tool_call>';
+      final scan = AgentToolCallParser.scan(raw);
+      // Corrupt JSON without name/tool produces no valid calls
+      expect(scan.calls, isEmpty);
+    });
+
+    test('stableArgs produces deterministic string independent of key insertion order', () {
+      final args1 = {'b': '2', 'a': '1', 'c': '3'};
+      final args2 = {'a': '1', 'c': '3', 'b': '2'};
+      expect(AgentToolCallParser.stableArgs(args1), equals(AgentToolCallParser.stableArgs(args2)));
+    });
   });
 }

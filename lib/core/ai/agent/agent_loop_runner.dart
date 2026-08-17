@@ -16,6 +16,7 @@ import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_connection_repository.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/ai_prompt_engine.dart';
+import 'package:ritmo/core/ai/personas/persona_inference_profile.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 
 /// حلقه واقعی ReAct ایجنت ریتمو (فاز ۱) + دروازه سیاست و تایید (فاز ۳)
@@ -43,7 +44,11 @@ class AgentLoopRunner {
     String? contextSummary,
     List<String>? recentHistory,
     AiSlot slot = AiSlot.assistant,
+    PersonaInferenceProfile? inferenceProfile,
   }) async* {
+    final effectiveSlot = inferenceProfile?.slot ?? slot;
+    final effectiveTemperature = inferenceProfile?.temperature ?? 0.2;
+    final effectiveMaxTokens = inferenceProfile?.maxTokens;
     final budget = AgentBudget();
     final steps = <AgentStep>[];
     final allResults = <AgentToolResult>[];
@@ -63,7 +68,7 @@ class AgentLoopRunner {
     /// تعداد تغییرات واقعی انجام‌شده در این پیام (سقف در گیت)
     var writesUsed = 0;
 
-    yield AgentStatusChangedEvent(
+    yield const AgentStatusChangedEvent(
       statusTextFa: 'در حال تحلیل نیت و بررسی ابزارهای موردنیاز...',
       isWorking: true,
     );
@@ -163,7 +168,9 @@ class AgentLoopRunner {
       } else {
         stream = AIGateway.instance.sendCustomChatStream(
           messages: transcript.toMessages(),
-          slot: slot,
+          slot: effectiveSlot,
+          temperature: effectiveTemperature,
+          maxTokens: effectiveMaxTokens,
         );
       }
 
@@ -471,7 +478,7 @@ class AgentLoopRunner {
 
     interactiveAction ??= _parseFirstAction(finalRaw);
 
-    yield AgentStatusChangedEvent(
+    yield const AgentStatusChangedEvent(
       statusTextFa: 'پاسخ آماده است.',
       isWorking: false,
     );

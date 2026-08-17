@@ -9,8 +9,8 @@
 | T03 | نشتی اشتراک و broker در dispose | DONE | 79701aa | لغو اشتراک ایجنت و پاکسازی تمام تاییدهای معلق در dispose |
 | T04 | استفاده از rawAnswer به‌جای متن تمیزشده | DONE | a692322 | پارس اکشن‌ها و اعمال memory_ops از روی rawAnswer در شیت دستیار |
 | T05 | هندل کردن همه‌ی رویدادها در چت اصلی | DONE | 56967fa | ارسال AgentStreamEvent و نصب AgentConfirmationHost در چت اصلی |
-| T06 | اصلاح «تاریخچه اخیر» معکوس | DOING | | |
-| T07 | اعمال یا حذف PersonaInferenceProfile | TODO | | |
+| T06 | اصلاح «تاریخچه اخیر» معکوس | DONE | 344ce6f | ارسال ۴ پیام اخیر با حفظ ترتیب زمانی صحیح و افزودن تست یونیت |
+| T07 | اعمال یا حذف PersonaInferenceProfile | DOING | | |
 | T08 | بودجه‌ی نوشتن نباید با شکست مصرف شود | TODO | | |
 | T09 | trimToBudget نباید سؤال کاربر را حذف کند | TODO | | |
 | T10 | بریدن نادرست متن نهایی | TODO | | |

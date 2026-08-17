@@ -620,6 +620,7 @@ class AIGateway {
     required List<Map<String, dynamic>> messages,
     double temperature = 0.3,
     AiSlot slot = AiSlot.assistant,
+    int? maxTokens,
   }) async {
     final chain = await _configChain(slot: slot);
     var errorTag = 'HTTP Error unknown';
@@ -671,6 +672,7 @@ class AIGateway {
           'model': model,
           'messages': messages,
           'temperature': temperature,
+          'max_tokens': ?maxTokens,
           'stream': true,
         };
 
@@ -1047,6 +1049,8 @@ class AIGateway {
   Stream<String> sendCustomChatStream({
     required List<Map<String, String>> messages,
     AiSlot slot = AiSlot.assistant,
+    double? temperature,
+    int? maxTokens,
   }) async* {
     if (AIRateLimiter.instance.isRateLimited()) {
       yield 'error:سرعت ارسال درخواست‌ها بیش از حد مجاز است. لطفاً کمی صبر کنید.';
@@ -1073,6 +1077,8 @@ class AIGateway {
     final open = await _openStream(
       messages: messages,
       slot: slot,
+      temperature: temperature ?? 0.3,
+      maxTokens: maxTokens,
     );
 
     if (!open.ok) {

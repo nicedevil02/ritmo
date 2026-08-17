@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
@@ -331,7 +330,8 @@ class _AssistantSheetState extends State<AssistantSheet> {
         personaSystemPrompt: systemPrompt,
         contextSummary: briefJson,
         recentHistory: recentHistory.isNotEmpty ? recentHistory : null,
-        slot: AiSlot.assistant,
+        slot: profile.slot,
+        inferenceProfile: profile,
       );
 
       final assistantMsgId = 'msg_${DateTime.now().millisecondsSinceEpoch}_a';

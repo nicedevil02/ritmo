@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/progression_engine.dart';
+import 'package:ritmo/core/domain/engines/routine_occurrence_generator.dart';
+import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
 import 'package:ritmo/core/domain/models/reminder_state.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_request.dart';
@@ -108,167 +111,196 @@ class AlarmSchedulerService {
       }
     }
 
-    // Schedule next reminders based on routine_occurrences for today and tomorrow
-    final todayStr = now.toIso8601String().substring(0, 10);
-    final tomorrowStr = now.add(const Duration(days: 1)).toIso8601String().substring(0, 10);
+    // Schedule next reminders for today and tomorrow (supports multi-dose routines)
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final dates = [today, tomorrow];
 
-    // Query pending/snoozed occurrences for today and tomorrow
-    final occurrences = await db.query(
-      'routine_occurrences',
-      where: "(status = 'pending' OR status = 'snoozed') AND (date = ? OR date = ?)",
-      whereArgs: [todayStr, tomorrowStr],
-    );
+    for (final targetDate in dates) {
+      final dateStr = targetDate.toIso8601String().substring(0, 10);
+      final year = targetDate.year;
+      final month = targetDate.month;
+      final day = targetDate.day;
 
-    for (final occ in occurrences) {
-      final rId = occ['routine_id']! as String;
-      final dateStr = occ['date']! as String;
-      final rawTime = occ['scheduled_time'] as String?;
-      if (rawTime == null || rawTime.trim().isEmpty) {
-        // Skip scheduling arbitrary alarm for routines without a scheduled time
-        continue;
-      }
-      final timeStr = rawTime.trim();
-      final status = occ['status']! as String;
+      for (final r in routines) {
+        final rId = r['id']! as String;
+        final title = r['title']! as String;
+        final isEssential = r['isEssential'] == 1;
+        final categoryStr = r['category'] as String? ?? '';
+        final isMedical = categoryStr == 'medical' || categoryStr == 'health';
 
-      final rMap = routinesMap[rId];
-      if (rMap == null) continue;
+        final sched = schedules.firstWhere(
+          (s) => s['routineId'] == rId,
+          orElse: () => <String, dynamic>{},
+        );
+        if (sched.isEmpty) continue;
+        final scheduleId = sched['id']! as String;
 
-      final title = rMap['title']! as String;
-      final isEssential = rMap['isEssential'] == 1;
-
-      final sched = schedules.firstWhere((s) => s['routineId'] == rId, orElse: () => <String, dynamic>{});
-      if (sched.isEmpty) continue;
-      final scheduleId = sched['id']! as String;
-
-      // Parse schedule/reminder time
-      final timeParts = timeStr.split(':');
-      final hour = int.tryParse(timeParts[0]);
-      final minute = int.tryParse(timeParts[1]);
-      if (hour == null || minute == null) continue;
-
-      final dateParts = dateStr.split('-');
-      final year = int.tryParse(dateParts[0]) ?? now.year;
-      final month = int.tryParse(dateParts[1]) ?? now.month;
-      final day = int.tryParse(dateParts[2]) ?? now.day;
-
-      final reminderOffset = rMap['reminderOffsetMinutes'] as int? ?? 0;
-      final targetTime = DateTime(year, month, day, hour, minute);
-      var scheduledMs = targetTime.subtract(Duration(minutes: reminderOffset)).millisecondsSinceEpoch;
-
-      if (scheduledMs <= nowMs && status == 'pending') {
-        // If it's in the past and pending, it was missed/expired
-        continue;
-      }
-
-      // Unique ID keying to prevent duplicates (Idempotency)
-      final reminderId = 'rem_${rId}_${scheduleId}_${dateStr}_${timeStr.replaceAll(':', '')}';
-
-      // Check if reminder already exists
-      final existingReminder = await db.query(
-        'pending_reminders',
-        where: 'id = ?',
-        whereArgs: [reminderId],
-      );
-
-      if (existingReminder.isNotEmpty) {
-        final remState = existingReminder.first['state']! as String;
-        final snoozeTime = existingReminder.first['snoozeUntil'] as int?;
-
-        // If it was snoozed/delayed, make sure it is scheduled for the snooze time or reset if expired
-        if (remState == 'delayed' && snoozeTime != null) {
-          if (snoozeTime > nowMs) {
-            scheduledMs = snoozeTime;
-            final channel = _channelForCategory(rMap['category'] as String?);
-            final ok = await NotificationGateway.schedule(
-              NotificationRequest(
-                id: reminderId,
-                channel: channel,
-                scheduledAt: DateTime.fromMillisecondsSinceEpoch(scheduledMs),
-                title: title,
-                privacy: isEssential ? NotificationPrivacy.redacted : NotificationPrivacy.none,
-                redactedTitle: isEssential ? 'ریتمو: یک یادآوری روتین دارید 🌸' : null,
-                sourceSystem: 'routines',
-                entityId: rId,
-              ),
+        // Parse RecurrenceRule
+        RecurrenceRule rule;
+        final ruleStr = sched['recurrenceRule'] as String?;
+        if (ruleStr != null && ruleStr.isNotEmpty) {
+          try {
+            rule = RecurrenceRule.fromMap(jsonDecode(ruleStr) as Map<String, dynamic>);
+          } catch (_) {
+            rule = RecurrenceRule(
+              weekdays: const [6, 7, 1, 2, 3, 4, 5],
+              reminderTimes: sched['timeOfDay'] != null ? [sched['timeOfDay'] as String] : const ['08:00'],
             );
-            await db.update('pending_reminders', {'nativeScheduled': ok ? 1 : 0}, where: 'id = ?', whereArgs: [reminderId]);
-          } else {
-            // Expired snooze: reset state to unknown so sweep can pick it up
-            await db.update('pending_reminders', {'state': 'unknown'}, where: 'id = ?', whereArgs: [reminderId]);
           }
+        } else {
+          final daysStr = sched['daysOfWeek'] as String? ?? '6,7,1,2,3,4,5';
+          final days = daysStr.split(',').map((d) => int.tryParse(d.trim())).whereType<int>().toList();
+          rule = RecurrenceRule(
+            weekdays: days,
+            reminderTimes: sched['timeOfDay'] != null ? [sched['timeOfDay'] as String] : const ['08:00'],
+          );
         }
-        continue;
-      }
 
-      // Apply calendar behavior filter
-      final behavior = exceptionsMap[dateStr] ?? 'NORMAL';
-      if (behavior == 'SILENCE_ALL' || (behavior == 'ESSENTIAL_ONLY' && !isEssential)) {
-        continue;
-      }
+        // Check if routine occurs on this date
+        if (!RoutineOccurrenceGenerator.shouldOccurOnDate(targetDate, rule)) {
+          continue;
+        }
 
-      // Check quiet hours: if routine is not essential and not medical/health, postpone after quiet hours
-      final categoryStr = rMap['category'] as String? ?? '';
-      final isMedical = categoryStr == 'medical' || categoryStr == 'health';
-      if (quietEnabled && !isEssential && !isMedical) {
-        final schedDateTime = DateTime.fromMillisecondsSinceEpoch(scheduledMs);
-        if (isTimeInQuietHours(schedDateTime, quietStart, quietEnd)) {
-          final adjustedTime = adjustTimeForQuietHours(schedDateTime, quietEnd);
-          scheduledMs = adjustedTime.millisecondsSinceEpoch;
+        // Extract all reminder times (multi-dose support)
+        final times = rule.reminderTimes.isNotEmpty
+            ? rule.reminderTimes
+            : (sched['timeOfDay'] != null ? [sched['timeOfDay'] as String] : const ['08:00']);
+
+        for (final rawTime in times) {
+          final timeStr = rawTime.trim();
+          final timeParts = timeStr.split(':');
+          final hour = int.tryParse(timeParts[0]);
+          final minute = int.tryParse(timeParts[1]);
+          if (hour == null || minute == null) continue;
+
+          final reminderOffset = r['reminderOffsetMinutes'] as int? ?? 0;
+          final targetTime = DateTime(year, month, day, hour, minute);
+          var scheduledMs = targetTime.subtract(Duration(minutes: reminderOffset)).millisecondsSinceEpoch;
+
+          final reminderId = 'rem_${rId}_${scheduleId}_${dateStr}_${timeStr.replaceAll(':', '')}';
+
+          // Check if already completed / logged for this slot
+          if (isMedical) {
+            final logs = await db.query(
+              'medication_logs',
+              where: 'routineId = ? AND scheduledTime = ?',
+              whereArgs: [rId, targetTime.millisecondsSinceEpoch],
+            );
+            if (logs.isNotEmpty) continue;
+          }
+
+          // Check existing reminder in pending_reminders
+          final existingReminder = await db.query(
+            'pending_reminders',
+            where: 'id = ?',
+            whereArgs: [reminderId],
+          );
+
+          if (existingReminder.isNotEmpty) {
+            final remState = existingReminder.first['state']! as String;
+            final snoozeTime = existingReminder.first['snoozeUntil'] as int?;
+
+            if (remState == 'delayed' && snoozeTime != null) {
+              if (snoozeTime > nowMs) {
+                scheduledMs = snoozeTime;
+                final channel = _channelForCategory(categoryStr);
+                final ok = await NotificationGateway.schedule(
+                  NotificationRequest(
+                    id: reminderId,
+                    channel: channel,
+                    scheduledAt: DateTime.fromMillisecondsSinceEpoch(scheduledMs),
+                    title: title,
+                    privacy: isEssential ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+                    redactedTitle: isEssential ? (isMedical ? 'ریتمو: زمان مصرف دارو 🌸' : 'ریتمو: یک یادآوری روتین دارید 🌸') : null,
+                    sourceSystem: 'routines',
+                    entityId: rId,
+                  ),
+                );
+                await db.update('pending_reminders', {'nativeScheduled': ok ? 1 : 0}, where: 'id = ?', whereArgs: [reminderId]);
+              } else {
+                await db.update('pending_reminders', {'state': 'unknown'}, where: 'id = ?', whereArgs: [reminderId]);
+              }
+            } else if (remState == 'completed' || remState == 'CANCELLED') {
+              continue;
+            }
+            continue;
+          }
+
+          if (scheduledMs <= nowMs) {
+            // In the past
+            continue;
+          }
+
+          // Apply calendar behavior filter
+          final behavior = exceptionsMap[dateStr] ?? 'NORMAL';
+          if (behavior == 'SILENCE_ALL' || (behavior == 'ESSENTIAL_ONLY' && !isEssential)) {
+            continue;
+          }
+
+          // Check quiet hours: if routine is not essential and not medical/health, postpone after quiet hours
+          if (quietEnabled && !isEssential && !isMedical) {
+            final schedDateTime = DateTime.fromMillisecondsSinceEpoch(scheduledMs);
+            if (isTimeInQuietHours(schedDateTime, quietStart, quietEnd)) {
+              final adjustedTime = adjustTimeForQuietHours(schedDateTime, quietEnd);
+              scheduledMs = adjustedTime.millisecondsSinceEpoch;
+            }
+          }
+
+          // Register physical Alarm with NotificationGateway
+          final channel = _channelForCategory(categoryStr);
+          final ok = await NotificationGateway.schedule(
+            NotificationRequest(
+              id: reminderId,
+              channel: channel,
+              scheduledAt: DateTime.fromMillisecondsSinceEpoch(scheduledMs),
+              title: title,
+              privacy: isEssential ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+              redactedTitle: isEssential ? (isMedical ? 'ریتمو: زمان مصرف دارو 🌸' : 'ریتمو: یک یادآوری روتین دارید 🌸') : null,
+              sourceSystem: 'routines',
+              entityId: rId,
+            ),
+          );
+
+          // Insert new reminder with 'unknown' state
+          await db.insert(
+            'pending_reminders',
+            {
+              'id': reminderId,
+              'routineId': rId,
+              'scheduleId': scheduleId,
+              'originalTime': targetTime.millisecondsSinceEpoch,
+              'scheduledTime': scheduledMs,
+              'state': 'unknown',
+              'deferCount': 0,
+              'nativeScheduled': ok ? 1 : 0,
+              'createdAt': nowMs,
+              'updatedAt': nowMs,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+
+          await DatabaseHelper.instance.logNotificationEvent(
+            routineId: rId,
+            actionTaken: 'sent',
+            notificationType: isMedical ? 'MEDICINE' : 'ROUTINE',
+          );
+
+          await CentralInboxService.push(
+            category: InboxCategory.REMINDER,
+            sourceSystem: 'routines',
+            entityId: rId,
+            eventType: 'reminder',
+            title: title,
+            body: isMedical ? 'زمان مصرف داروی شما فرا رسیده است' : 'زمان انجام روتین فرا رسیده است',
+            priority: isEssential ? 2 : 0,
+            linkModule: isMedical ? 'health' : 'routines',
+            linkEntityId: rId,
+            linkAction: 'open_detail',
+            dateBucket: dateStr,
+          );
         }
       }
-
-      // Register physical Alarm with NotificationGateway
-      final channel = _channelForCategory(categoryStr);
-      final ok = await NotificationGateway.schedule(
-        NotificationRequest(
-          id: reminderId,
-          channel: channel,
-          scheduledAt: DateTime.fromMillisecondsSinceEpoch(scheduledMs),
-          title: title,
-          privacy: isEssential ? NotificationPrivacy.redacted : NotificationPrivacy.none,
-          redactedTitle: isEssential ? 'ریتمو: یک یادآوری روتین دارید 🌸' : null,
-          sourceSystem: 'routines',
-          entityId: rId,
-        ),
-      );
-
-      // Insert new reminder with 'unknown' state
-      await db.insert(
-        'pending_reminders',
-        {
-          'id': reminderId,
-          'routineId': rId,
-          'scheduleId': scheduleId,
-          'originalTime': targetTime.millisecondsSinceEpoch,
-          'scheduledTime': scheduledMs,
-          'state': 'unknown',
-          'deferCount': 0,
-          'nativeScheduled': ok ? 1 : 0,
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-
-      await DatabaseHelper.instance.logNotificationEvent(
-        routineId: rId,
-        actionTaken: 'sent',
-        notificationType: 'ROUTINE',
-      );
-
-      await CentralInboxService.push(
-        category: InboxCategory.REMINDER,
-        sourceSystem: 'routines',
-        entityId: rId,
-        eventType: 'reminder',
-        title: title,
-        body: 'زمان انجام روتین فرا رسیده است',
-        priority: isEssential ? 2 : 0,
-        linkModule: 'routines',
-        linkEntityId: rId,
-        linkAction: 'open_detail',
-        dateBucket: dateStr,
-      );
     }
 
     // Schedule private cycle reminders if gender is FEMALE and consent is granted

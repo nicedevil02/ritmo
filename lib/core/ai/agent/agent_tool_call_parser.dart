@@ -119,7 +119,7 @@ class AgentToolCallParser {
     return text;
   }
 
-  static final RegExp _authorPrefixRegex = RegExp(
+  static final RegExp _noisePrefixRe = RegExp(
     r'^[•\-\*\s:]*(ChatGPT\s*said:?|:ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|:You\s*said:?|Assistant\s*said:?)[\s:]*',
     caseSensitive: false,
     multiLine: true,
@@ -132,7 +132,12 @@ class AgentToolCallParser {
     text = text.replaceAll(_memOpsRe, '');
     text = text.replaceAll(_danglingTagRe, '');
     text = text.replaceAll(_partialTagRe, '');
-    text = text.replaceAll(_authorPrefixRegex, '');
+    while (true) {
+      final before = text;
+      text = text.replaceFirst(_noisePrefixRe, '').trimLeft();
+      text = text.replaceFirst(RegExp(r'^[•\-\*:\s]+'), '').trimLeft();
+      if (text == before) break;
+    }
     return text.trim();
   }
 

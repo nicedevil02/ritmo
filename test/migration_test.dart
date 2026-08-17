@@ -253,5 +253,26 @@ void main() {
       expect(allExecutedSql, contains('update course_sessions'));
       expect(allExecutedSql, contains('idx_course_sessions_planned'));
     });
+
+    test('onUpgrade from v110 to v111 backfills legacy medication rows to itemType MEDICINE', () async {
+      final mockDb = MockDatabase();
+      await DatabaseHelper.instance.onUpgrade(mockDb, 110, 111);
+      final allExecutedSql = mockDb.executedStatements.join('\n').toLowerCase();
+
+      expect(allExecutedSql, contains('update routines'));
+      expect(allExecutedSql, contains("set itemtype = 'medicine'"));
+      expect(allExecutedSql, contains("id like 'routine_med_%'"));
+    });
+
+    test('onUpgrade from v111 to v112 creates medication_profiles and backfills existing medications', () async {
+      final mockDb = MockDatabase();
+      await DatabaseHelper.instance.onUpgrade(mockDb, 111, 112);
+      final allExecutedSql = mockDb.executedStatements.join('\n').toLowerCase();
+
+      expect(allExecutedSql, contains('create table if not exists medication_profiles'));
+      expect(allExecutedSql, contains('idx_medication_profiles_routineid'));
+      expect(allExecutedSql, contains('idx_medication_profiles_form'));
+      expect(allExecutedSql, contains('insert or ignore into medication_profiles'));
+    });
   });
 }

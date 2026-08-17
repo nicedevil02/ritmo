@@ -139,7 +139,7 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
           where: 'id = ?',
           whereArgs: [doc.id],
         );
-        _loadData();
+        await _loadData();
       } catch (e) {
         debugPrint('Error updating userNotes: $e');
       }

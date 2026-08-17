@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 
 Future<void> showCycleAiConsentSheet(
   BuildContext context, {
@@ -117,7 +118,13 @@ Future<void> showCycleAiConsentSheet(
                         if (settings != null) {
                           settings['cycle_consent_ai'] = 'true';
                         }
-                      } catch (_) {}
+                      } catch (e, st) {
+                        RitmoLogger.error(
+                          '[CycleAiConsentSheet] error saving AI consent setting',
+                          error: e,
+                          stack: st,
+                        );
+                      }
                       if (ctx.mounted) Navigator.pop(ctx, true);
                     },
                     child: const Text(

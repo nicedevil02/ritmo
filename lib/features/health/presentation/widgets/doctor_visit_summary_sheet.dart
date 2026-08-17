@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/analytics/health_engine.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/health/data/medication_repository.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -33,16 +34,24 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
       final hasDiabetes = settingsMap['patient_has_diabetes'] == 'true';
       final hasHypertension = settingsMap['patient_has_hypertension'] == 'true';
 
-      // 2. Fetch active routines
-      final routines = await db.query('routines', where: "category = 'medical' AND isArchived = 0");
+      // 2. Fetch active medications via MedicationRepository
+      final activeMeds = await MedicationRepository.instance.listActive();
       final medsList = <String>[];
-      for (final r in routines) {
-        final title = r['title']! as String;
-        final dosage = r['description'] as String? ?? '';
-        final type = r['routineType']! as String;
-        final stock = r['medStockCount'] as int? ?? 0;
-        final typeStr = type == 'asNeeded' ? 'PRN (در صورت نیاز)' : 'روزانه/زمان‌بندی‌شده';
-        medsList.add('• $title ${dosage.isNotEmpty ? "(دوز: $dosage)" : ""} - $typeStr [موجودی: $stock]');
+      for (final m in activeMeds) {
+        final formLabel = m.profile.form.labelFa;
+        final doseLabel = m.profile.formattedDose;
+        final routeLabel = m.profile.route?.labelFa ?? m.profile.form.defaultRoute.labelFa;
+        final foodInfo = m.profile.foodRelation != FoodRelation.NONE
+            ? ' [ارتباط با غذا: ${m.profile.foodRelation.labelFa}]'
+            : '';
+        final instructions = m.profile.instructions != null && m.profile.instructions!.isNotEmpty
+            ? ' - دستور: ${m.profile.instructions}'
+            : '';
+        final typeStr = m.isPRN ? 'PRN (در صورت نیاز)' : 'برنامه منظم';
+        final stockStr = m.profile.hasStockTracking && m.profile.remainingAmount != null
+            ? ' [موجودی: ${m.profile.remainingAmount!.toInt()} ${m.profile.doseUnit?.shortLabelFa ?? 'عدد'}]'
+            : '';
+        medsList.add('• ${m.name} ($formLabel - $doseLabel - $routeLabel) - $typeStr$foodInfo$stockStr$instructions');
       }
 
       // 3. Fetch logs for HealthEngine
@@ -169,8 +178,8 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
       } else {
         allergiesList.forEach(buffer.writeln);
       }
-      buffer.writeln();
       buffer.writeln('---------------------------------');
+      buffer.writeln('⚠️ سلب مسئولیت بالینی: این گزارش بر اساس اطلاعات خودپایشی ثبت‌شده توسط بیمار تهیه گردیده و صرفاً جهت تسهیل تصمیم‌گیری پزشک معالج می‌باشد. هرگونه تغییر در دوز یا رژیم درمانی باید با نظر مستقیم پزشک انجام شود.');
       buffer.writeln('تهیه شده توسط برنامه خودمراقبتی و هوشمند ریتمو');
 
       if (mounted) {

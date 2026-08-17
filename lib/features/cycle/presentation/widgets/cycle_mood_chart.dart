@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 class CycleMoodChart extends StatefulWidget {
@@ -203,7 +204,12 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
           _loading = false;
         });
       }
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleMoodChart] error loading mood chart data',
+        error: e,
+        stack: st,
+      );
       if (mounted) {
         setState(() {
           _loading = false;

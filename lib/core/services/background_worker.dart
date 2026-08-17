@@ -3,10 +3,12 @@ import 'package:flutter/widgets.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_ids.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/services/backup_passcode_manager.dart';
-import 'package:ritmo/core/services/cycle_notification_service.dart';
 import 'package:ritmo/core/services/google_drive_backup_service.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -73,10 +75,16 @@ Future<bool> _runWeeklyBackup() async {
     final passcodeManager = BackupPasscodeManager();
     final hasCode = await passcodeManager.hasPasscode();
     if (!hasCode) {
-      await CycleNotificationService.showImmediateNotification(
-        id: NotificationIds.weeklyBackup,
-        title: 'پشتیبان‌گیری خودکار ریتمو ☁️',
-        body: 'برای فعالسازی بکاپ خودکار، یک رمز عبور (passcode) در تنظیمات پروفایل خود تنظیم کنید.',
+      await NotificationGateway.schedule(
+        NotificationRequest(
+          id: 'immediate_backup_${NotificationIds.weeklyBackup}',
+          channel: NotificationChannelId.planning,
+          scheduledAt: DateTime.now(),
+          title: 'پشتیبان‌گیری خودکار ریتمو ☁️',
+          body: 'برای فعالسازی بکاپ خودکار، یک رمز عبور (passcode) در تنظیمات پروفایل خود تنظیم کنید.',
+          sourceSystem: 'backup',
+          entityId: 'backup_immediate',
+        ),
       );
       RitmoLog.warning('BgWorker', 'Weekly backup task aborted: passcode not set.');
       return true; // Handled, return true to avoid infinite retry loop

@@ -1,0 +1,56 @@
+# پیشرفت تکمیل ایجنتینگ
+
+وضعیت‌های مجاز: TODO | DOING | DONE | SKIPPED | BLOCKED
+
+| ID | عنوان | وضعیت | کامیت | یادداشت |
+|----|-------|-------|-------|---------|
+| T01 | پاس دادن personaId به حلقه | TODO | | |
+| T02 | نصب AgentConfirmationHost | TODO | | |
+| T03 | نشتی اشتراک و broker در dispose | TODO | | |
+| T04 | استفاده از rawAnswer به‌جای متن تمیزشده | TODO | | |
+| T05 | هندل کردن همه‌ی رویدادها در چت اصلی | TODO | | |
+| T06 | اصلاح «تاریخچه اخیر» معکوس | TODO | | |
+| T07 | اعمال یا حذف PersonaInferenceProfile | TODO | | |
+| T08 | بودجه‌ی نوشتن نباید با شکست مصرف شود | TODO | | |
+| T09 | trimToBudget نباید سؤال کاربر را حذف کند | TODO | | |
+| T10 | بریدن نادرست متن نهایی | TODO | | |
+| T11 | تقارن fallback بین چت اصلی و شیت | TODO | | |
+| T12 | حذف catch (_) {} و بررسی جدول assistant_plans | TODO | | |
+| T13 | وصل کردن AgentIntentRouter و حذف AgentIntentPrefetcher | TODO | | |
+| T14 | اصلاح نام ابزار عبادی در همه‌جا | TODO | | |
+| T15 | یکی کردن کش prefetch و ثبت در بودجه | TODO | | |
+| T16 | تست یکپارچگی نقشه‌ی اسکوپ (نگهبان CI) | TODO | | |
+| T17 | اسکیمای واقعی JSON Schema | TODO | | |
+| T18 | اعتبارسنج مرکزی آرگومان‌ها | TODO | | |
+| T19 | حذف پارسرهای دستی تکراری | TODO | | |
+| T20 | idempotencyKey | TODO | | |
+| T21 | قابلیت‌سنجی provider | TODO | | |
+| T22 | عبور tools از AIGateway | TODO | | |
+| T23 | نرمال‌ساز واحد فراخوانی ابزار + fallback XML | TODO | | |
+| T24 | فشرده‌سازی پرامپت ابزار | TODO | | |
+| T25 | حذف مسیر موازی <actions> از شیت | TODO | | |
+| T26 | تولید خودکار ابزار از رجیستری فرمان‌ها | TODO | | |
+| T27 | حذف هر ابزاری که SQL خام می‌نویسد | TODO | | |
+| T28 | Undo یکپارچه روی AgentJournal | TODO | | |
+| T29 | یک broker برای تایید و پرسش | TODO | | |
+| T30 | AskUserTool که واقعاً حلقه را متوقف می‌کند | TODO | | |
+| T31 | تأیید خودکار و اجباری حالت پس از نوشتن | TODO | | |
+| T32 | NavigateToAppScreenTool که واقعاً جابه‌جا می‌کند | TODO | | |
+| T33 | ابزار simulate_plan (حالت «فقط نشانم بده») | TODO | | |
+| T34 | برنامه‌ی چندمرحله‌ای با یک تایید | TODO | | |
+| T35 | مرور شبانه‌ی فعال | TODO | | |
+| T36 | تحویل بین پرسوناها به‌عنوان ابزار | TODO | | |
+| T37 | حافظه به‌عنوان شهروند درجه‌یک | TODO | | |
+| T38 | کش نتیجه‌ی ابزار بین نوبتی | TODO | | |
+| T39 | تلمتری هر ابزار | TODO | | |
+| T40 | شفافیت «چه کاری کردم» | TODO | | |
+| T41 | سخت‌سازی گارد تزریق پرامپت | TODO | | |
+| T42 | پاکسازی زبانی + تست ترمینولوژی | TODO | | |
+| T43 | قابل تنظیم کردن سقف نوشتن | TODO | | |
+| T44 | پاکسازی کوئری‌های ابزارها | TODO | | |
+| T45 | test/agent/agent_tool_call_parser_test.dart | TODO | | |
+| T46 | test/agent/agent_tool_validator_test.dart | TODO | | |
+| T47 | test/agent/agent_loop_fake_model_test.dart | TODO | | |
+| T48 | test/agent/kernel_command_tool_test.dart | TODO | | |
+| T49 | test/agent/agent_policy_gate_test.dart | TODO | | |
+| T50 | test/agent/agent_journal_undo_test.dart | TODO | | |

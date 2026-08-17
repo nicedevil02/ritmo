@@ -6,7 +6,6 @@ import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
@@ -459,9 +458,9 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
         _isTimingContraction = false;
         _contractionStart = null;
       });
-      DatabaseHelper.instance.database.then((db) {
+      unawaited(DatabaseHelper.instance.database.then((db) {
         db.delete('app_settings', where: "key = 'preg_contraction_start'");
-      });
+      }));
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('انقباض زیر ۱۰ ثانیه ذخیره نشد')),
       );

@@ -2071,6 +2071,120 @@ abstract class AppLocalizations {
   /// In fa, this message translates to:
   /// **'این برنامه یک ابزار پزشکی نیست و جایگزین نظر پزشک متخصص نمی‌شود. در هر وضعیت نگران‌کننده با پزشک یا ماما تماس بگیرید.'**
   String get pregnancyMedicalDisclaimer;
+
+  /// No description provided for @medicationFormLabel.
+  ///
+  /// In fa, this message translates to:
+  /// **'شکل دارویی'**
+  String get medicationFormLabel;
+
+  /// No description provided for @medicationRouteLabel.
+  ///
+  /// In fa, this message translates to:
+  /// **'مسیر مصرف'**
+  String get medicationRouteLabel;
+
+  /// No description provided for @medicationDoseLabel.
+  ///
+  /// In fa, this message translates to:
+  /// **'مقدار دوز مصرفی'**
+  String get medicationDoseLabel;
+
+  /// No description provided for @medicationUnitLabel.
+  ///
+  /// In fa, this message translates to:
+  /// **'واحد دوز'**
+  String get medicationUnitLabel;
+
+  /// No description provided for @medicationFoodRelationLabel.
+  ///
+  /// In fa, this message translates to:
+  /// **'ارتباط با غذا'**
+  String get medicationFoodRelationLabel;
+
+  /// No description provided for @medicationCourseLabel.
+  ///
+  /// In fa, this message translates to:
+  /// **'دوره درمان'**
+  String get medicationCourseLabel;
+
+  /// No description provided for @medicationChronic.
+  ///
+  /// In fa, this message translates to:
+  /// **'مزمن / دائمی'**
+  String get medicationChronic;
+
+  /// No description provided for @medicationLimitedCourse.
+  ///
+  /// In fa, this message translates to:
+  /// **'دوره محدود'**
+  String get medicationLimitedCourse;
+
+  /// No description provided for @medicationStockTracking.
+  ///
+  /// In fa, this message translates to:
+  /// **'پیگیری موجودی'**
+  String get medicationStockTracking;
+
+  /// No description provided for @medicationPackageSize.
+  ///
+  /// In fa, this message translates to:
+  /// **'اندازه بسته'**
+  String get medicationPackageSize;
+
+  /// No description provided for @medicationRemainingStock.
+  ///
+  /// In fa, this message translates to:
+  /// **'موجودی فعلی'**
+  String get medicationRemainingStock;
+
+  /// No description provided for @medicationRefillWarning.
+  ///
+  /// In fa, this message translates to:
+  /// **'آستانه هشدار تمدید'**
+  String get medicationRefillWarning;
+
+  /// No description provided for @medicationPrescriber.
+  ///
+  /// In fa, this message translates to:
+  /// **'پزشک تجویزکننده'**
+  String get medicationPrescriber;
+
+  /// No description provided for @medicationInstructions.
+  ///
+  /// In fa, this message translates to:
+  /// **'دستور مصرف / توضیحات'**
+  String get medicationInstructions;
+
+  /// No description provided for @medicationCriticalityLabel.
+  ///
+  /// In fa, this message translates to:
+  /// **'اهمیت بالینی'**
+  String get medicationCriticalityLabel;
+
+  /// No description provided for @medicationSiteRotation.
+  ///
+  /// In fa, this message translates to:
+  /// **'چرخش محل تزریق'**
+  String get medicationSiteRotation;
+
+  /// No description provided for @medicationActiveIngredient.
+  ///
+  /// In fa, this message translates to:
+  /// **'ماده موثره / ژنریک'**
+  String get medicationActiveIngredient;
+
+  /// No description provided for @medicationStrength.
+  ///
+  /// In fa, this message translates to:
+  /// **'قدرت / غلظت دارو'**
+  String get medicationStrength;
+
+  /// No description provided for @medicationDisclaimers.
+  ///
+  /// In fa, this message translates to:
+  /// **'همواره طبق تجویز و صلاحدید پزشک خود دارو را مصرف کنید.'**
+  String get medicationDisclaimers;
 }
 
 class _AppLocalizationsDelegate

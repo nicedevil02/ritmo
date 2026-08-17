@@ -1,5 +1,6 @@
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 
@@ -55,7 +56,9 @@ class CycleConsentBridge {
           }
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.error('[CycleConsentBridge] error querying cycle_periods', error: e, stack: st);
+    }
 
     // 2. Check cycle_day_logs for targetStr
     try {
@@ -71,7 +74,9 @@ class CycleConsentBridge {
           return true;
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.error('[CycleConsentBridge] error querying cycle_day_logs', error: e, stack: st);
+    }
 
     // 3. Check legacy cycle_logs
     try {
@@ -104,7 +109,9 @@ class CycleConsentBridge {
           }
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.error('[CycleConsentBridge] error querying cycle_logs', error: e, stack: st);
+    }
 
     return false;
   }
@@ -160,7 +167,9 @@ class CycleConsentBridge {
           }
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.error('[CycleConsentBridge] error in getActivePeriod', error: e, stack: st);
+    }
 
     return null;
   }

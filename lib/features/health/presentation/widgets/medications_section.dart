@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/medical_engine.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
-import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
+import 'package:ritmo/core/domain/medication/medication_identity.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/features/health/data/medication_repository.dart';
 import 'package:ritmo/features/health/presentation/widgets/medication_form_sheet.dart';
 
 class MedicationsSection extends StatefulWidget {
@@ -68,11 +69,26 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
       final db = await DatabaseHelper.instance.database;
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
 
-      // Load all active medical routines
-      final routines = await db.query(
-        'routines',
-        where: "category = 'medical' AND isArchived = 0",
-      );
+      // Load all active medications from repository
+      final activeMeds = await MedicationRepository.instance.listActive();
+      final routines = activeMeds.map((m) => {
+        'id': m.id,
+        'title': m.name,
+        'description': m.description,
+        'category': m.category,
+        'routineType': m.routineType,
+        'isEssential': m.isEssential ? 1 : 0,
+        'isArchived': m.isArchived ? 1 : 0,
+        'minIntervalHours': m.minIntervalHours,
+        'maxDosesPerDay': m.maxDosesPerDay,
+        'medStockCount': m.profile.remainingAmount?.toInt() ?? 0,
+        'medRefillThreshold': m.profile.refillThresholdAmount?.toInt() ?? 0,
+        'createdAt': m.createdAt,
+        'updatedAt': m.updatedAt,
+        'itemType': MedicationIdentity.itemType,
+        'profile': m.profile,
+        'medication': m,
+      }).toList();
 
       // Load today's occurrences
       final occurrences = await db.query(
@@ -128,10 +144,25 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
     try {
       final db = await DatabaseHelper.instance.database;
 
-      final archived = await db.query(
-        'routines',
-        where: "category = 'medical' AND isArchived = 1",
-      );
+      final archivedMeds = await MedicationRepository.instance.listArchived();
+      final archived = archivedMeds.map((m) => {
+        'id': m.id,
+        'title': m.name,
+        'description': m.description,
+        'category': m.category,
+        'routineType': m.routineType,
+        'isEssential': m.isEssential ? 1 : 0,
+        'isArchived': 1,
+        'minIntervalHours': m.minIntervalHours,
+        'maxDosesPerDay': m.maxDosesPerDay,
+        'medStockCount': m.profile.remainingAmount?.toInt() ?? 0,
+        'medRefillThreshold': m.profile.refillThresholdAmount?.toInt() ?? 0,
+        'createdAt': m.createdAt,
+        'updatedAt': m.updatedAt,
+        'itemType': MedicationIdentity.itemType,
+        'profile': m.profile,
+        'medication': m,
+      }).toList();
 
       final prnHistory = await db.rawQuery('''
         SELECT p.takenAt as timestamp, r.title, r.description as dosage, 'PRN' as type
@@ -185,19 +216,61 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
     final colors = context.colors;
     final rId = routine['id'] as String;
     final title = routine['title'] as String;
-    final now = DateTime.now().millisecondsSinceEpoch;
 
     // Get timeLabel from occurrence to calculate scheduled time
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
     final occ = _occurrencesToday.firstWhere((o) => o['routine_id'] == rId, orElse: () => {});
     final timeStr = occ.isNotEmpty ? occ['scheduled_time'] as String? : null;
     final scheduledTime = getScheduledDateTime(timeStr);
 
+    if (status == 'TAKEN') {
+      final safety = await MedicationRepository.instance.checkSafety(
+        routineId: rId,
+        scheduledTime: scheduledTime,
+      );
+      if (!mounted) return;
+      if (!safety.isSafe) {
+        if (safety.isDuplicate) {
+          final proceed = await showDialog<bool>(
+            context: context,
+            builder: (dialogCtx) => Directionality(
+              textDirection: TextDirection.rtl,
+              child: AlertDialog(
+                backgroundColor: colors.card,
+                title: const Text('هشدار دوز تکراری', style: TextStyle(fontWeight: FontWeight.bold)),
+                content: Text(safety.warningMessage ?? '', style: const TextStyle()),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogCtx, false),
+                    child: const Text('انصراف'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(dialogCtx, true),
+                    style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
+                    child: const Text('ثبت مجدد', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            ),
+          );
+          if (proceed != true) return;
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(safety.warningMessage ?? '', style: const TextStyle()),
+              backgroundColor: colors.medicalRed,
+            ),
+          );
+          return;
+        }
+      }
+    }
+
+    if (!mounted) return;
     // Confirm dialog
     final actionText = status == 'TAKEN' ? 'مصرف' : 'رد کردن';
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => Directionality(
+      builder: (dialogCtx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: colors.card,
@@ -205,11 +278,11 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
           content: Text('آیا $actionText دارو «$title» را تایید می‌کنید؟', style: const TextStyle()),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(dialogCtx, false),
               child: const Text('لغو', style: TextStyle()),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () => Navigator.pop(dialogCtx, true),
               style: ElevatedButton.styleFrom(backgroundColor: status == 'TAKEN' ? colors.primary : colors.textSecondary),
               child: const Text('تایید', style: TextStyle(color: Colors.white)),
             ),
@@ -221,49 +294,11 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
     if (confirmed != true) return;
 
     try {
-      final db = await DatabaseHelper.instance.database;
-
-      // 1. Insert to medication_logs
-      await db.insert('medication_logs', {
-        'id': 'medlog_${rId}_$now',
-        'routineId': rId,
-        'scheduledTime': scheduledTime,
-        'takenTime': status == 'TAKEN' ? now : null,
-        'status': status,
-        'note': null,
-        'createdAt': now,
-      });
-
-      // 2. Decrement stock count ONLY if status is TAKEN
-      if (status == 'TAKEN') {
-        final currentStock = routine['medStockCount'] as int? ?? 0;
-        if (currentStock > 0) {
-          await db.update(
-            'routines',
-            {'medStockCount': currentStock - 1},
-            where: 'id = ?',
-            whereArgs: [rId],
-          );
-        }
-      }
-
-      // 3. Complete/Skip occurrence
-      await RitmoExecutionKernel.instance.execute(
-        CompleteOccurrenceCommand(
-          routineId: rId,
-          dateStr: todayStr,
-          resultType: status == 'TAKEN' ? 'FULL' : 'SKIPPED',
-          durationMinutes: routine['targetDurationMinutes'] as int? ?? 5,
-        ),
+      await MedicationRepository.instance.recordIntake(
+        routineId: rId,
+        status: status,
+        scheduledTime: scheduledTime,
       );
-
-      // Emit event
-      RitmoEventBus().fire(RitmoEvent(
-        type: status == 'TAKEN' ? 'medication_consumed' : 'medication_skipped',
-        timestamp: DateTime.now(),
-        payload: {'routineId': rId, 'takenAt': now},
-      ));
-      RitmoEvents.notifyRoutineChanged();
 
       await _loadData();
       if (_tabController.index == 2) {
@@ -278,27 +313,43 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
     final colors = context.colors;
     final rId = routine['id'] as String;
     final title = routine['title'] as String;
-    final dosage = routine['description'] as String? ?? '';
-    final isPrn = routine['routineType'] == 'asNeeded';
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    // Double check overdose if PRN
-    if (isPrn) {
-      final prnLogs = _prnLogs24hMap[rId] ?? [];
-      final minInterval = routine['minIntervalHours'] as int? ?? 0;
-      final maxDoses = routine['maxDosesPerDay'] as int? ?? 0;
+    final safety = await MedicationRepository.instance.checkSafety(
+      routineId: rId,
+      nowMs: now,
+    );
 
-      final check = MedicalEngine.checkOverdoseStatus(
-        now: now,
-        prnLogs24h: prnLogs,
-        minIntervalHours: minInterval,
-        maxDosesPerDay: maxDoses,
-      );
-
-      if (check != OverdoseResult.safe) {
+    if (!mounted) return;
+    if (!safety.isSafe) {
+      if (safety.isDuplicate) {
+        final proceed = await showDialog<bool>(
+          context: context,
+          builder: (dialogCtx) => Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              backgroundColor: colors.card,
+              title: const Text('هشدار مصرف مجدد', style: TextStyle(fontWeight: FontWeight.bold)),
+              content: Text(safety.warningMessage ?? '', style: const TextStyle()),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx, false),
+                  child: const Text('انصراف'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(dialogCtx, true),
+                  style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
+                  child: const Text('ثبت مصرف', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          ),
+        );
+        if (proceed != true) return;
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('امکان مصرف دارو به علت ریسک اوردوز وجود ندارد.', style: TextStyle()),
+            content: Text(safety.warningMessage ?? 'امکان مصرف دارو وجود ندارد.', style: const TextStyle()),
             backgroundColor: colors.medicalRed,
           ),
         );
@@ -306,10 +357,11 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
       }
     }
 
+    if (!mounted) return;
     // Confirm dialog
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => Directionality(
+      builder: (dialogCtx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: colors.card,
@@ -317,11 +369,11 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
           content: Text('آیا مصرف دارو «$title» را تایید می‌کنید؟', style: const TextStyle()),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(dialogCtx, false),
               child: const Text('لغو', style: TextStyle()),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () => Navigator.pop(dialogCtx, true),
               style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
               child: const Text('تایید', style: TextStyle(color: Colors.white)),
             ),
@@ -333,48 +385,11 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
     if (confirmed != true) return;
 
     try {
-      final db = await DatabaseHelper.instance.database;
-
-      if (isPrn) {
-        // Insert into prn_logs
-        await db.insert('prn_logs', {
-          'id': 'prn_${rId}_$now',
-          'routineId': rId,
-          'takenAt': now,
-          'dosage': dosage,
-          'createdAt': now,
-        });
-
-        // Decrement stock count
-        final currentStock = routine['medStockCount'] as int? ?? 0;
-        if (currentStock > 0) {
-          await db.update(
-            'routines',
-            {'medStockCount': currentStock - 1},
-            where: 'id = ?',
-            whereArgs: [rId],
-          );
-        }
-      } else {
-        // Scheduled: Complete via command
-        final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-        await RitmoExecutionKernel.instance.execute(
-          CompleteOccurrenceCommand(
-            routineId: rId,
-            dateStr: todayStr,
-            resultType: 'FULL',
-            durationMinutes: routine['targetDurationMinutes'] as int? ?? 5,
-          ),
-        );
-      }
-
-      // Emit event
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'medication_consumed',
-        timestamp: DateTime.now(),
-        payload: {'routineId': rId, 'takenAt': now},
-      ));
-      RitmoEvents.notifyRoutineChanged();
+      await MedicationRepository.instance.recordIntake(
+        routineId: rId,
+        status: 'TAKEN',
+        takenTime: now,
+      );
 
       await _loadData();
       if (_tabController.index == 2) {
@@ -387,13 +402,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
 
   Future<void> _archiveMedication(String id) async {
     try {
-      final db = await DatabaseHelper.instance.database;
-      await db.update(
-        'routines',
-        {'isArchived': 1},
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      await MedicationRepository.instance.archive(id);
       RitmoEvents.notifyRoutineChanged();
       await _loadData();
     } catch (e) {
@@ -407,12 +416,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
       final res = await db.query('routines', columns: ['title'], where: 'id = ?', whereArgs: [id]);
       final title = res.isNotEmpty ? res.first['title']! as String : '';
 
-      await db.update(
-        'routines',
-        {'isArchived': 0},
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      await MedicationRepository.instance.unarchive(id);
       RitmoEvents.notifyRoutineChanged();
       await _loadData();
       await _loadHistory();
@@ -432,9 +436,7 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
 
   Future<void> _deleteMedication(String id) async {
     try {
-      await RitmoExecutionKernel.instance.execute(
-        DeleteRoutineCommand(routineId: id),
-      );
+      await MedicationRepository.instance.delete(id);
 
       RitmoEventBus().fire(RitmoEvent(
         type: 'RoutineDeleted',

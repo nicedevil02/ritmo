@@ -1120,4 +1120,62 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pregnancyMedicalDisclaimer =>
       'This application is not a medical tool and does not replace professional medical advice. In any concerning situation, contact a doctor or midwife.';
+
+  @override
+  String get medicationFormLabel => 'Medication Form';
+
+  @override
+  String get medicationRouteLabel => 'Route of Administration';
+
+  @override
+  String get medicationDoseLabel => 'Dose Amount';
+
+  @override
+  String get medicationUnitLabel => 'Dose Unit';
+
+  @override
+  String get medicationFoodRelationLabel => 'Food Relation';
+
+  @override
+  String get medicationCourseLabel => 'Course of Treatment';
+
+  @override
+  String get medicationChronic => 'Chronic / Ongoing';
+
+  @override
+  String get medicationLimitedCourse => 'Limited Course';
+
+  @override
+  String get medicationStockTracking => 'Track Inventory';
+
+  @override
+  String get medicationPackageSize => 'Package Size';
+
+  @override
+  String get medicationRemainingStock => 'Current Remaining Stock';
+
+  @override
+  String get medicationRefillWarning => 'Refill Warning Threshold';
+
+  @override
+  String get medicationPrescriber => 'Prescribing Doctor';
+
+  @override
+  String get medicationInstructions => 'Instructions / Notes';
+
+  @override
+  String get medicationCriticalityLabel => 'Clinical Importance';
+
+  @override
+  String get medicationSiteRotation => 'Injection Site Rotation';
+
+  @override
+  String get medicationActiveIngredient => 'Active Ingredient';
+
+  @override
+  String get medicationStrength => 'Strength / Concentration';
+
+  @override
+  String get medicationDisclaimers =>
+      'Always take medication as prescribed by your doctor.';
 }

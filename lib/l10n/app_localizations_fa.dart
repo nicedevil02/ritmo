@@ -1119,4 +1119,62 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get pregnancyMedicalDisclaimer =>
       'این برنامه یک ابزار پزشکی نیست و جایگزین نظر پزشک متخصص نمی‌شود. در هر وضعیت نگران‌کننده با پزشک یا ماما تماس بگیرید.';
+
+  @override
+  String get medicationFormLabel => 'شکل دارویی';
+
+  @override
+  String get medicationRouteLabel => 'مسیر مصرف';
+
+  @override
+  String get medicationDoseLabel => 'مقدار دوز مصرفی';
+
+  @override
+  String get medicationUnitLabel => 'واحد دوز';
+
+  @override
+  String get medicationFoodRelationLabel => 'ارتباط با غذا';
+
+  @override
+  String get medicationCourseLabel => 'دوره درمان';
+
+  @override
+  String get medicationChronic => 'مزمن / دائمی';
+
+  @override
+  String get medicationLimitedCourse => 'دوره محدود';
+
+  @override
+  String get medicationStockTracking => 'پیگیری موجودی';
+
+  @override
+  String get medicationPackageSize => 'اندازه بسته';
+
+  @override
+  String get medicationRemainingStock => 'موجودی فعلی';
+
+  @override
+  String get medicationRefillWarning => 'آستانه هشدار تمدید';
+
+  @override
+  String get medicationPrescriber => 'پزشک تجویزکننده';
+
+  @override
+  String get medicationInstructions => 'دستور مصرف / توضیحات';
+
+  @override
+  String get medicationCriticalityLabel => 'اهمیت بالینی';
+
+  @override
+  String get medicationSiteRotation => 'چرخش محل تزریق';
+
+  @override
+  String get medicationActiveIngredient => 'ماده موثره / ژنریک';
+
+  @override
+  String get medicationStrength => 'قدرت / غلظت دارو';
+
+  @override
+  String get medicationDisclaimers =>
+      'همواره طبق تجویز و صلاحدید پزشک خود دارو را مصرف کنید.';
 }

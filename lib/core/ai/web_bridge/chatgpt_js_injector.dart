@@ -45,12 +45,20 @@ $userPrompt
   console.log('[Ritmo] Initializing ChatGPT Web Bridge...');
 
   // Safe PostMessage to Flutter JavascriptChannel 'RitmoChatBridge'.
-  // NOTE: the payload is SPREAD into the envelope, so every field lands at the
-  // top level. The Dart side reads it from there.
   function notifyFlutter(type, payload) {
     try {
+      var data = {};
+      data.type = type;
+      if (payload && typeof payload === 'object') {
+        for (var k in payload) {
+          if (Object.prototype.hasOwnProperty.call(payload, k)) {
+            data[k] = payload[k];
+          }
+        }
+      }
+      var jsonStr = JSON.stringify(data);
       if (window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
-        window.RitmoChatBridge.postMessage(JSON.stringify({ type: type, ...payload }));
+        window.RitmoChatBridge.postMessage(jsonStr);
       }
     } catch(e) {
       console.error('[Ritmo] Error posting to Flutter:', e);
@@ -229,86 +237,65 @@ $userPrompt
     }
   }
 
-  // --- 4. Pure Content Extractor Directly from Markdown/Prose Body ---
-  function isUserPromptText(text) {
-    if (!text) return true;
-    if (text.indexOf('[دستورالعمل سیستم ریتمو]') !== -1 ||
-        text.indexOf('[درخواست جدید کاربر]') !== -1 ||
-        text.indexOf('[تاریخچه آخرین پیام') !== -1 ||
-        text.indexOf('[داده‌های بازیابی‌شده]') !== -1 ||
-        text.indexOf('نام کاربر مخاطب شما:') !== -1 ||
-        text.indexOf('قوانین قطعی:') !== -1) {
-      return true;
-    }
-    return false;
-  }
-
+  // --- 4. Robust Live Assistant Text Extractor ---
   function extractCleanText(el) {
     if (!el) return '';
     
-    // Quick rejection if element is explicitly marked as user
-    if (el.getAttribute && el.getAttribute('data-message-author-role') === 'user') return '';
-    if (el.querySelector && (el.querySelector('[data-message-author-role="user"]') || el.querySelector('button[aria-label*="Edit"], button[aria-label*="ویرایش"]'))) return '';
+    // 1. Try finding inner markdown/prose/body container
+    var target = el.querySelector('.markdown, .prose, [class*="markdown"], [class*="prose"], [data-conversation-part="body"], [data-assistant-writing-block-body], div.whitespace-pre-wrap') || el;
+    
+    // 2. Read live innerText (which is attached to DOM and has full native Chromium linebreaks)
+    var rawText = (target.innerText || target.textContent || '').trim();
+    
+    // 3. Fallback to parent el if target was empty
+    if (!rawText && el !== target) {
+      rawText = (el.innerText || el.textContent || '').trim();
+    }
+    
+    if (!rawText) return '';
 
-    // Directly target the pure markdown/content element inside the assistant container
-    var contentEl = (el.matches && (el.matches('.markdown, .prose, [data-conversation-part="body"], [data-assistant-writing-block-body]') || el.matches('div[class*="markdown"], div[class*="prose"]')))
-        ? el
-        : (el.querySelector('[data-conversation-part="body"], [data-assistant-writing-block-body], .markdown, .prose, div[class*="markdown"], div[class*="prose"], div.whitespace-pre-wrap') || el);
-
-    // Read native innerText directly from the live connected DOM element
-    var rawText = (contentEl.innerText || contentEl.textContent || '').trim();
-
-    // Reject if this text contains the user's prompt or system instructions
-    if (isUserPromptText(rawText)) return '';
-
-    // Strip CSS artifacts if any
+    // 4. Strip ChatGPT said / You said headers and leading bullet artifacts
+    rawText = rawText.replace(/^[•\-\*\s:]*(ChatGPT\s*said:?|:ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|:You\s*said:?|Assistant\s*said:?)[\s:]*/gmi, '');
+    rawText = rawText.replace(/^[•\-\*\s:]+/g, '');
+    
+    // 5. Strip any raw CSS variables or data attributes
     if (rawText.indexOf('[data-conversation-') !== -1 || rawText.indexOf('--component-') !== -1) {
       rawText = rawText.replace(/\[data-[^\]]+\]\s*\{[^}]*\}/g, '');
       rawText = rawText.replace(/--[a-zA-Z0-9_-]+:[^;]+;?/g, '');
     }
-
-    // Strip any leading author header (e.g. ChatGPT said:)
-    rawText = rawText.replace(/^[•\-\*\s:]*(ChatGPT\s*said:?|:ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|:You\s*said:?|Assistant\s*said:?)[\s:]*/gmi, '');
     return rawText.trim();
   }
 
   function findLatestAssistantText() {
     try {
-      // 1. Direct Markdown/Prose blocks inside assistant messages (highest priority)
-      var markdowns = document.querySelectorAll('[data-message-author-role="assistant"] .markdown, [data-message-author-role="assistant"] .prose, [data-message-author-role="assistant"] [data-conversation-part="body"], [data-message-author-role="assistant"] [data-assistant-writing-block-body]');
-      for (var m = markdowns.length - 1; m >= 0; m--) {
-        var t = extractCleanText(markdowns[m]);
-        if (t && !isUserPromptText(t)) return t;
-      }
-
-      // 2. Explicit assistant role container
+      // 1. Explicit assistant role
       var assistants = document.querySelectorAll('[data-message-author-role="assistant"]');
-      for (var a = assistants.length - 1; a >= 0; a--) {
-        var t = extractCleanText(assistants[a]);
-        if (t && !isUserPromptText(t)) return t;
+      if (assistants && assistants.length > 0) {
+        var lastAssistant = assistants[assistants.length - 1];
+        var t = extractCleanText(lastAssistant);
+        if (t) return t;
       }
 
-      // 3. Assistant action bar (Copy / Share / Thumbs buttons)
-      var copyBtns = document.querySelectorAll('button[aria-label*="Copy"], button[aria-label*="کپی"], button[data-testid*="copy"], button[aria-label*="Read aloud"], button[aria-label*="Good response"]');
-      for (var c = copyBtns.length - 1; c >= 0; c--) {
-        var btn = copyBtns[c];
-        var parentTurn = btn.closest('article, [data-testid*="conversation-turn"], div[class*="agent-turn"], div[class*="text-base"]');
-        if (parentTurn) {
-          var t = extractCleanText(parentTurn);
-          if (t && !isUserPromptText(t)) return t;
+      // 2. Markdown / Prose blocks (excluding user messages)
+      var markdowns = document.querySelectorAll('div.markdown, div.prose, [class*="markdown"], [class*="prose"]');
+      for (var j = markdowns.length - 1; j >= 0; j--) {
+        var md = markdowns[j];
+        var isUser = !!md.closest('[data-message-author-role="user"], [data-testid*="user"], div.font-user-message');
+        if (!isUser) {
+          var t = extractCleanText(md);
+          if (t) return t;
         }
       }
 
-      // 4. Articles from bottom up excluding user
+      // 3. Articles / turns from bottom up (excluding user)
       var articles = document.querySelectorAll('article, [data-testid*="conversation-turn-"]');
       for (var i = articles.length - 1; i >= 0; i--) {
         var art = articles[i];
-        var isUser = (art.getAttribute('data-message-author-role') === 'user') ||
-                     !!art.querySelector('[data-message-author-role="user"]') ||
-                     !!art.querySelector('button[aria-label*="Edit"], button[aria-label*="ویرایش"]');
+        var isUser = !!art.querySelector('[data-message-author-role="user"]') ||
+                     (art.getAttribute('data-testid') || '').indexOf('user') !== -1;
         if (!isUser) {
           var t = extractCleanText(art);
-          if (t && !isUserPromptText(t)) return t;
+          if (t) return t;
         }
       }
     } catch (e) {
@@ -338,7 +325,7 @@ $userPrompt
 
       // If no new text yet, check for timeout
       if (!currentText || currentText === previousBaselineText) {
-        if (totalDuration > 30000) {
+        if (totalDuration > 35000) {
           clearInterval(streamCheckTimer);
           streamCheckTimer = null;
           notifyFlutter('error', { message: 'پاسخی از ChatGPT دریافت نشد.' });
@@ -349,7 +336,7 @@ $userPrompt
       // New/growing assistant text detected!
       if (currentText !== lastText && currentText.length > 0) {
         var delta = '';
-        if (currentText.length > lastLength) {
+        if (currentText.length > lastLength && currentText.indexOf(lastText) === 0) {
           delta = currentText.substring(lastLength);
         } else {
           delta = currentText;
@@ -361,17 +348,25 @@ $userPrompt
       }
 
       var stopButton = document.querySelector(
-        'button[data-testid="stop-button"], button[aria-label="Stop generating"], button[aria-label="توقف تولید"], button[data-testid="fruitjuice-stop-button"]'
+        'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button'
       );
-      var isStreamingClass = document.querySelector('.result-streaming');
+      var isStreamingClass = document.querySelector('.result-streaming, .streaming');
       var timeSinceLastChange = Date.now() - lastChangeTimestamp;
 
-      if (!stopButton && !isStreamingClass && lastLength > 0 && timeSinceLastChange > 800) {
+      var isGenerating = !!stopButton || !!isStreamingClass;
+
+      if (!isGenerating && lastLength > 0 && timeSinceLastChange > 500) {
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
         notifyFlutter('done', { fullText: finalFullText });
         console.log('[Ritmo] Stream completed with ' + finalFullText.length + ' characters');
+      } else if (lastLength > 0 && timeSinceLastChange > 3000) {
+        var finalFullText = findLatestAssistantText() || currentText;
+        clearInterval(streamCheckTimer);
+        streamCheckTimer = null;
+        notifyFlutter('done', { fullText: finalFullText });
+        console.log('[Ritmo] Stream fallback completed after 3s idle');
       } else if (totalDuration > 70000) {
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
@@ -518,6 +513,20 @@ $userPrompt
   /// Generates the call to send a specific formatted prompt
   static String buildSendPromptScript(String prompt) {
     final encoded = jsonEncode(prompt);
-    return 'if (window.__ritmo_sendPrompt) { window.__ritmo_sendPrompt($encoded); } else { console.error("Ritmo bridge not ready"); }';
+    return '''
+(() => {
+  if (typeof window.__ritmo_sendPrompt === 'function') {
+    window.__ritmo_sendPrompt($encoded);
+  } else {
+    console.warn("[Ritmo] __ritmo_sendPrompt missing, injecting setupBridgeScript...");
+    ${ChatGptJsInjector.setupBridgeScript}
+    setTimeout(function() {
+      if (typeof window.__ritmo_sendPrompt === 'function') {
+        window.__ritmo_sendPrompt($encoded);
+      }
+    }, 500);
+  }
+})();
+''';
   }
 }

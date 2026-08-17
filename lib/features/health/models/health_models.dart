@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+export 'medication_models.dart';
 
 class DoctorVisit {
 

@@ -74,30 +74,31 @@ class MedicationIdentity {
 
   /// SQL fragment for a `WHERE` clause on the `routines` table.
   ///
-  /// Must stay the exact twin of [isMedicationRoutine]. `COALESCE` wraps the
-  /// `NOT IN` test because a NULL `itemType` would otherwise evaluate the whole
-  /// conjunction to NULL and silently drop legacy medication rows.
+  /// Must stay the exact twin of [isMedicationRoutine].
+  /// Matches explicit itemType = 'MEDICINE', or legacy rows (itemType is NULL or empty)
+  /// that have the routine_med_ prefix or positive medication columns.
   static const String sqlPredicate =
       "(itemType = '$itemType'"
-      " OR id LIKE '$routineIdPrefix%'"
-      " OR (COALESCE(itemType, '') NOT IN ('EVENT', 'TASK', 'REMINDER', 'REFLECT')"
-      " AND (COALESCE(medStockCount, 0) > 0"
+      " OR ((itemType IS NULL OR itemType = '')"
+      " AND (id LIKE '$routineIdPrefix%'"
+      " OR COALESCE(medStockCount, 0) > 0"
       " OR COALESCE(medRefillThreshold, 0) > 0"
       " OR COALESCE(minIntervalHours, 0) > 0"
       " OR COALESCE(maxDosesPerDay, 0) > 0)))";
 
   /// In-memory twin of [sqlPredicate] for rows that are already loaded.
+  ///
+  /// Legacy-only heuristic: if [itemType] has a non-null, non-empty value,
+  /// the explicit itemType is definitive and column heuristics are never evaluated.
   static bool isMedicationRoutine(Map<String, dynamic> routine) {
-    if (routine['itemType'] == itemType) return true;
+    final rawItemType = routine['itemType']?.toString().trim().toUpperCase();
+    if (rawItemType != null && rawItemType.isNotEmpty) {
+      return rawItemType == itemType;
+    }
 
+    // Legacy-only path (itemType is null or empty):
     final id = routine['id'];
     if (id is String && id.startsWith(routineIdPrefix)) return true;
-
-    // نیت صریح کاربر بر حدسِ ستونی مقدم است (B-FIX-EVENT-6).
-    final rawItemType = routine['itemType']?.toString().trim().toUpperCase();
-    if (rawItemType != null && nonMedicationItemTypes.contains(rawItemType)) {
-      return false;
-    }
 
     for (final column in medicationColumns) {
       if (_isPositive(routine[column])) return true;

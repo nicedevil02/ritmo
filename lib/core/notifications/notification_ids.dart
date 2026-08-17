@@ -7,7 +7,9 @@ abstract final class NotificationIds {
   // 2000-2999: Cycle & Reproductive Health
   static const int cyclePill = 2001;
   static const int cyclePeriod = 2002;
+  static const int cyclePeriodT2 = 2002;
   static const int cycleOvulation = 2003;
+  static const int cyclePeriodT1 = 2004;
 
   // 3000-3999: Sleep, Recovery & Backups
   static const int sleepWinddown = 3001;
@@ -27,6 +29,7 @@ abstract final class NotificationIds {
     masterService,
     cyclePill,
     cyclePeriod,
+    cyclePeriodT1,
     cycleOvulation,
     sleepWinddown,
     weeklyBackup,

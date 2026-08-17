@@ -233,13 +233,13 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   );
 
   static String _sanitizeResponseText(String text) {
-    if (text.contains('[دستورالعمل سیستم ریتمو]') ||
-        text.contains('[درخواست جدید کاربر]') ||
-        text.contains('نام کاربر مخاطب شما:') ||
-        text.contains('قوانین قطعی:')) {
-      return '';
+    var cleaned = text;
+    while (true) {
+      final before = cleaned;
+      cleaned = cleaned.replaceFirst(_noisePrefixRegex, '').trimLeft();
+      cleaned = cleaned.replaceFirst(RegExp(r'^[•\-\*:\s]+'), '').trimLeft();
+      if (cleaned == before) break;
     }
-    var cleaned = text.replaceAll(_noisePrefixRegex, '').trimLeft();
     if (cleaned.contains('[data-conversation-') || cleaned.contains('--component-')) {
       cleaned = cleaned.replaceAll(_cssBlockRegex, '').trim();
     }

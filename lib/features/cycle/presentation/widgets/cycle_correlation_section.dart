@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
@@ -32,7 +33,12 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
           _loading = false;
         });
       }
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleCorrelationSection] error loading correlations',
+        error: e,
+        stack: st,
+      );
       if (mounted) {
         setState(() {
           _loading = false;

@@ -49,8 +49,9 @@ void main() {
 
     test('isRefillNeeded - correctly identifies low stock', () {
       expect(MedicalEngine.isRefillNeeded(stockCount: 3, warningThreshold: 5), isTrue);
-      expect(MedicalEngine.isRefillNeeded(stockCount: 0, warningThreshold: 5), isFalse);
+      expect(MedicalEngine.isRefillNeeded(stockCount: 0, warningThreshold: 5), isTrue);
       expect(MedicalEngine.isRefillNeeded(stockCount: 10, warningThreshold: 5), isFalse);
+      expect(MedicalEngine.isRefillNeeded(stockCount: 3, warningThreshold: 0), isFalse);
     });
   });
 

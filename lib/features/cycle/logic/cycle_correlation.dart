@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -43,7 +44,13 @@ class CycleCorrelationAnalyzer {
         try {
           final decoded = jsonDecode(symptomsJson);
           if (decoded is List) symptomCount = decoded.length;
-        } catch (_) {}
+        } catch (e, st) {
+          RitmoLogger.error(
+            '[CycleCorrelation] error decoding symptomsJson',
+            error: e,
+            stack: st,
+          );
+        }
       }
       mergedData[date] = {
         'flowLevel': flowLevel,
@@ -214,7 +221,13 @@ class CycleCorrelationAnalyzer {
       var symptoms = <dynamic>[];
       try {
         symptoms = jsonDecode(symptomsJson) as List;
-      } catch (_) {}
+      } catch (e, st) {
+        RitmoLogger.error(
+          '[CycleCorrelation] error decoding symptomsJson in analyzeSymptomStats',
+          error: e,
+          stack: st,
+        );
+      }
 
       if (symptoms.isEmpty) continue;
 

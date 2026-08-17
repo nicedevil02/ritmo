@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
+import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
@@ -81,6 +85,44 @@ class _VaccinationsSectionState extends State<VaccinationsSection> {
         vac.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
+
+      final alarmId = 'vac_${vac.id}';
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final nextDue = vac.nextDoseDue;
+      if (nextDue != null && nextDue > nowMs) {
+        await db.insert(
+          'pending_reminders',
+          {
+            'id': alarmId,
+            'sourceSystem': 'health',
+            'entityId': vac.id,
+            'originalTime': nextDue,
+            'scheduledTime': nextDue,
+            'state': 'unknown',
+            'deferCount': 0,
+            'createdAt': nowMs,
+            'updatedAt': nowMs,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        await NotificationGateway.schedule(
+          NotificationRequest(
+            id: alarmId,
+            channel: NotificationChannelId.critical,
+            scheduledAt: DateTime.fromMillisecondsSinceEpoch(nextDue),
+            title: 'یادآوری نوبت بعدی واکسن: ${vac.vaccineName}',
+            privacy: NotificationPrivacy.redacted,
+            redactedTitle: 'ریتمو: یادآوری واکسیناسیون',
+            sourceSystem: 'health',
+            entityId: vac.id,
+          ),
+        );
+        await SnapshotSyncService.syncAll();
+      } else {
+        await NotificationGateway.cancel(alarmId);
+        await db.delete('pending_reminders', where: 'id = ?', whereArgs: [alarmId]);
+      }
+
       await _loadData();
     } catch (e) {
       debugPrint('Error saving vaccination: $e');
@@ -91,6 +133,9 @@ class _VaccinationsSectionState extends State<VaccinationsSection> {
     try {
       final db = await DatabaseHelper.instance.database;
       await db.delete('vaccinations', where: 'id = ?', whereArgs: [id]);
+      await NotificationGateway.cancel('vac_$id');
+      await db.delete('pending_reminders', where: 'id = ?', whereArgs: ['vac_$id']);
+      await SnapshotSyncService.syncAll();
       await _loadData();
     } catch (e) {
       debugPrint('Error deleting vaccination: $e');

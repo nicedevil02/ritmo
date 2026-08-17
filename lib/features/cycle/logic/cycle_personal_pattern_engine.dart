@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -57,7 +58,12 @@ class CyclePersonalPatternEngine {
           final decoded = jsonDecode(symptomsRaw);
           if (decoded is! List) continue;
           symptoms = decoded.map((e) => e.toString()).toList();
-        } catch (_) {
+        } catch (e, st) {
+          RitmoLogger.error(
+            '[CyclePersonalPatternEngine] error decoding symptomsJson',
+            error: e,
+            stack: st,
+          );
           continue;
         }
 
@@ -96,7 +102,12 @@ class CyclePersonalPatternEngine {
 
       forecasts.sort((a, b) => b.confidence.compareTo(a.confidence));
       return forecasts.take(3).toList();
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CyclePersonalPatternEngine] error in computePersonalForecasts',
+        error: e,
+        stack: st,
+      );
       return [];
     }
   }

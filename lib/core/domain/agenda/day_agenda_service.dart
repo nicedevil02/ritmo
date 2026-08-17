@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/agenda_load_status.dart';
 import 'package:ritmo/core/domain/agenda/agenda_source_registry.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
@@ -21,6 +20,7 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 
 /// 🔑 The single source of truth for "what is on a day".
 ///
@@ -178,14 +178,13 @@ class DayAgendaService {
   /// Drop a single date's cached agenda.
   void invalidateDate(String dateStr) => _cache.remove(dateStr);
 
-  static String _dateStr(DateTime dt) => dt.toIso8601String().substring(0, 10);
-
   Future<DayAgenda> agendaForDate(
     DateTime date, {
     AgendaQueryOptions? options,
   }) async {
+    final ds = DateKey.of(date);
     final map = await agendaForRange(date, date, options: options);
-    return map[_dateStr(date)] ?? DayAgenda.empty(_dateStr(date));
+    return map[ds] ?? DayAgenda.empty(ds);
   }
 
   Future<Map<String, DayAgenda>> agendaForRange(
@@ -197,11 +196,11 @@ class DayAgendaService {
     final result = <String, DayAgenda>{};
 
     final dates = <DateTime>[];
-    var d = DateTime(start.year, start.month, start.day);
-    final endD = DateTime(end.year, end.month, end.day);
+    var d = DateKey.dayOf(start);
+    final endD = DateKey.dayOf(end);
     while (!d.isAfter(endD)) {
       dates.add(d);
-      d = d.add(const Duration(days: 1));
+      d = DateKey.addDays(d, 1);
     }
 
     final failures = <String>[];
@@ -213,9 +212,10 @@ class DayAgendaService {
       if (!failures.contains('context')) failures.add('context');
       _lastStatus = AgendaLoadStatus(failedSources: failures, fatal: true);
       for (final date in dates) {
+        final ds = DateKey.of(date);
         result.putIfAbsent(
-          _dateStr(date),
-          () => DayAgenda.empty(_dateStr(date)),
+          ds,
+          () => DayAgenda.empty(ds),
         );
       }
       return result;
@@ -223,9 +223,9 @@ class DayAgendaService {
 
     DateTime? appStartDate;
     if (ctx.settingsMap['app_start_date'] != null) {
-      final parsed = DateTime.tryParse(ctx.settingsMap['app_start_date']!);
+      final parsed = DateKey.parse(ctx.settingsMap['app_start_date']!) ?? DateTime.tryParse(ctx.settingsMap['app_start_date']!);
       if (parsed != null) {
-        appStartDate = DateTime(parsed.year, parsed.month, parsed.day);
+        appStartDate = DateKey.dayOf(parsed);
       }
     }
 
@@ -233,7 +233,7 @@ class DayAgendaService {
     var servedFromCache = 0;
 
     for (final date in dates) {
-      final ds = _dateStr(date);
+      final ds = DateKey.of(date);
 
       // ROOT FIX: Avoid generating routines/prayers for days before the app was installed.
       if (appStartDate != null && date.isBefore(appStartDate)) {
@@ -251,17 +251,6 @@ class DayAgendaService {
         final agenda = await _assembleDay(date, ds, ctx, opts, failures);
 
         // C-FIX-4: NEVER cache an empty day.
-        //
-        // This cache is only consulted by default-option callers, which in
-        // practice means the Calendar; Home always passes an explicit `domains`
-        // set and therefore recomputes every time. So a single early assembly
-        // (e.g. a startup/widget/alarm path running while onboarding had not
-        // yet inserted the starter routines) used to pin an empty DayAgenda in
-        // here, and the Calendar kept serving that empty day for the rest of
-        // the session: no exception, no failedSources, no degraded banner, just
-        // a permanently blank agenda while Home and the routine vault looked
-        // perfectly fine. Empty days are cheap to rebuild, so we only memoize
-        // days that actually produced items. Emptiness must never be sticky.
         if (cacheEligible && agenda.items.isNotEmpty) {
           _cache[ds] = agenda;
         }
@@ -279,8 +268,9 @@ class DayAgendaService {
     for (final agenda in result.values) {
       totalItems += agenda.items.length;
     }
-    debugPrint(
-      '[DayAgendaService] range ${_dateStr(start)}..${_dateStr(end)} '
+    RitmoLog.info(
+      'DayAgendaService',
+      'range ${DateKey.of(start)}..${DateKey.of(end)} '
       'days=${result.length} items=$totalItems cached=$servedFromCache '
       'routines=${ctx.routineSource.routines.length} '
       'schedules=${ctx.routineSource.schedules.length} '
@@ -363,9 +353,9 @@ class DayAgendaService {
         cycleSetupDone &&
         showCycleInCalendar;
 
-    final startStr = _dateStr(start);
-    final endStr = _dateStr(end);
-    final todayStr = _dateStr(DateTime.now());
+    final startStr = DateKey.of(start);
+    final endStr = DateKey.of(end);
+    final todayStr = DateKey.today();
 
     final loadCtx = AgendaSourceLoadContext(
       db: db,
@@ -549,7 +539,7 @@ class DayAgendaService {
     AgendaQueryOptions opts,
     List<String> failures,
   ) async {
-    final todayStr = _dateStr(DateTime.now());
+    final todayStr = DateKey.today();
     final isToday = dateStr == todayStr;
     final prayerTimes = await ctx.prayerTimesFor(date);
     var items = <AgendaItem>[];
@@ -855,7 +845,7 @@ class _AgendaContext {
         settingsMap['prayer_city_id'] ??
         settingsMap['home_city_id'] ??
         'TEHRAN_TEHRAN';
-    final ds = date.toIso8601String().substring(0, 10);
+    final ds = DateKey.of(date);
     final key = '$cityId|$ds';
     final cached = _prayerCache[key];
     if (cached != null) return cached;

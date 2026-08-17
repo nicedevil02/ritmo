@@ -7,6 +7,7 @@ import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/engines/routine_occurrence_generator.dart';
 import 'package:ritmo/core/domain/medication/medication_identity.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// AgendaSource for the Medicine domain.
@@ -119,13 +120,15 @@ class MedicineAgendaSource implements AgendaSource {
         if (routineId == null) continue;
         final ts = _logMs(log);
         if (ts == null) continue;
+        final dayKey = (log['date'] as String?) ??
+          DateKey.of(DateTime.fromMillisecondsSinceEpoch(ts));
         logsByRoutineAndDate
             .putIfAbsent(
               routineId,
               () => <String, List<Map<String, dynamic>>>{},
             )
             .putIfAbsent(
-              _dateStr(DateTime.fromMillisecondsSinceEpoch(ts)),
+              dayKey,
               () => <Map<String, dynamic>>[],
             )
             .add(log);
@@ -409,9 +412,6 @@ class MedicineAgendaSource implements AgendaSource {
       (log['scheduledTime'] as int?) ??
       (log['takenTime'] as int?) ??
       (log['createdAt'] as int?);
-
-  static String _dateStr(DateTime dt) =>
-      '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 
   static String? _normalizeTime(String? raw) {
     if (raw == null) return null;

@@ -1,6 +1,7 @@
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Agenda source for planning commitments and allocations (`planning_commitments` & `planning_allocations`).
@@ -26,8 +27,8 @@ class CommitmentAgendaSource implements AgendaSource {
     DateTime start,
     DateTime end,
   ) async {
-    final startStr = start.toIso8601String().substring(0, 10);
-    final endStr = end.toIso8601String().substring(0, 10);
+    final startStr = DateKey.of(start);
+    final endStr = DateKey.of(end);
     final allocationsByDate = <String, List<Map<String, dynamic>>>{};
 
     try {

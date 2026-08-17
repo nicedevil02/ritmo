@@ -7,6 +7,7 @@ import 'package:ritmo/core/domain/agenda/event_agenda_renderer.dart';
 import 'package:ritmo/core/domain/agenda/quran_dhikr_agenda_renderer.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
@@ -98,7 +99,7 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
     var isExpired = false;
     var isExpiringSoon = false;
 
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    final todayStr = DateKey.today();
     final isToday = item.dateStr == todayStr;
 
     if (isToday && item.windowEnd != null && !isDone && !isSkipped) {
@@ -455,10 +456,7 @@ class RoutineAgendaRenderer extends AgendaTileRenderer {
             context: context,
             routine: routine,
             onStartTimer: (selectedMode) async {
-              final todayStr = DateTime.now().toIso8601String().substring(
-                0,
-                10,
-              );
+              final todayStr = DateKey.today();
               final isToday = item.dateStr == todayStr;
               if (isToday) {
                 unawaited(

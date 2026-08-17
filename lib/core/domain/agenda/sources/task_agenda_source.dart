@@ -3,6 +3,7 @@ import 'package:shamsi_date/shamsi_date.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 
@@ -45,8 +46,8 @@ class TaskAgendaSource implements AgendaSource {
     int lookbackDays = 14,
   ]) async {
     try {
-      final startStr = start.toIso8601String().substring(0, 10);
-      final endStr = end.toIso8601String().substring(0, 10);
+      final startStr = DateKey.of(start);
+      final endStr = DateKey.of(end);
 
       // 1) All tasks scheduled within range (dueDate >= startStr AND dueDate <= endStr)
       final rangeRows = await db.query(
@@ -77,11 +78,12 @@ class TaskAgendaSource implements AgendaSource {
       }
 
       // 3) Overdue tasks with configurable lookback window (M2-7)
-      final parsedToday = DateTime.tryParse(todayStr) ?? DateTime.now();
-      final lookbackDate = parsedToday.subtract(
-        Duration(days: lookbackDays > 0 ? lookbackDays : 14),
+      final parsedToday = DateKey.parse(todayStr) ?? DateTime.tryParse(todayStr) ?? DateTime.now();
+      final lookbackDate = DateKey.addDays(
+        parsedToday,
+        -(lookbackDays > 0 ? lookbackDays : 14),
       );
-      final lookbackStartStr = lookbackDate.toIso8601String().substring(0, 10);
+      final lookbackStartStr = DateKey.of(lookbackDate);
 
       String effectiveStartDate = lookbackStartStr;
       if (appStartDateStr != null &&

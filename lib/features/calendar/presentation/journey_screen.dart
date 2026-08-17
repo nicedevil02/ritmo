@@ -10,6 +10,7 @@ import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
@@ -306,7 +307,7 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
         return 'روز ${jalali.formatter.wN}';
       case JourneyScale.week:
         final sat = CourseScheduler.getSaturdayOfWeek(date);
-        final fri = sat.add(const Duration(days: 6));
+        final fri = DateKey.addDays(sat, 6);
         final satJalali = Jalali.fromDateTime(sat);
         final friJalali = Jalali.fromDateTime(fri);
         return 'هفته ${toPersianDigits(satJalali.day.toString())} ${satJalali.formatter.mN} – ${toPersianDigits(friJalali.day.toString())} ${friJalali.formatter.mN}';

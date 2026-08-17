@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -126,13 +127,30 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
   Future<void> _loadActiveGoals() async {
     try {
       final goals = await CoursesRepository.instance.getActiveGoalsList();
+      final goalList = List<Map<String, dynamic>>.from(goals);
+      if (_linkedGoalId != null && _linkedGoalId!.isNotEmpty) {
+        final alreadyPresent = goalList.any((g) => g['id'] == _linkedGoalId);
+        if (!alreadyPresent) {
+          final info = await CoursesRepository.instance.getLinkedGoalInfo(_linkedGoalId!);
+          if (info != null) {
+            final title = (info['title'] as String?) ?? 'هدف متصل';
+            goalList.add({
+              'id': _linkedGoalId,
+              'title': '$title (آرشیوشده یا خصوصی)',
+              'isDisabled': true,
+            });
+          } else {
+            _linkedGoalId = null;
+          }
+        }
+      }
       if (mounted) {
         setState(() {
-          _activeGoals = goals;
+          _activeGoals = goalList;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading active goals: $e');
+    } catch (e, st) {
+      RitmoLog.error('COURSES', 'Error loading active goals in CreateCourseSheet', e, st);
     }
   }
 
@@ -319,8 +337,8 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
           iconColor: Colors.amber,
         );
       }
-    } catch (e) {
-      debugPrint('Error saving course: $e');
+    } catch (e, st) {
+      RitmoLog.error('COURSES', 'Error saving course', e, st);
       if (mounted) {
         RitmoToast.show(
           context,
@@ -464,8 +482,13 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                               icon: CupertinoIcons.number,
                             ),
                             validator: (value) {
-                              if (value == null || int.tryParse(value) == null || (int.tryParse(value) ?? 0) <= 0) {
-                                return 'عدد بزرگتر از ۰ وارد کنید';
+                              if (value == null || value.trim().isEmpty) {
+                                return 'لطفاً تعداد کل جلسات را وارد کنید';
+                              }
+                              final enVal = RitmoNumber.toEn(value.trim());
+                              final numVal = int.tryParse(enVal);
+                              if (numVal == null || numVal < CourseLimits.minTotalSessions || numVal > CourseLimits.maxTotalSessions) {
+                                return 'عددی بین ${CourseLimits.minTotalSessions} تا ${CourseLimits.maxTotalSessions} وارد کنید';
                               }
                               return null;
                             },
@@ -483,8 +506,13 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                               icon: CupertinoIcons.time,
                             ),
                             validator: (value) {
-                              if (value == null || int.tryParse(value) == null || (int.tryParse(value) ?? 0) <= 0) {
-                                return 'عدد بزرگتر از ۰ وارد کنید';
+                              if (value == null || value.trim().isEmpty) {
+                                return 'لطفاً مدت هر جلسه را وارد کنید';
+                              }
+                              final enVal = RitmoNumber.toEn(value.trim());
+                              final numVal = int.tryParse(enVal);
+                              if (numVal == null || numVal < CourseLimits.minSessionDurationMinutes || numVal > CourseLimits.maxSessionDurationMinutes) {
+                                return 'عددی بین ${CourseLimits.minSessionDurationMinutes} تا ${CourseLimits.maxSessionDurationMinutes} دقیقه وارد کنید';
                               }
                               return null;
                             },
@@ -667,17 +695,23 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                                 dropdownColor: isDarkMode ? const Color(0xff1A1D29) : Colors.white,
                                 items: [
                                   DropdownMenuItem<String?>(
+                                    value: null,
                                     child: Text(
                                       'بدون اتصال به هدف',
                                       style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
                                     ),
                                   ),
                                   ..._activeGoals.map((goal) {
+                                    final isDis = goal['isDisabled'] == true;
                                     return DropdownMenuItem<String?>(
                                       value: goal['id'] as String,
+                                      enabled: !isDis,
                                       child: Text(
                                         goal['title'] as String,
-                                        style: TextStyle(fontSize: 12.5, color: colors.textPrimary),
+                                        style: TextStyle(
+                                          fontSize: 12.5,
+                                          color: isDis ? colors.textSecondary : colors.textPrimary,
+                                        ),
                                       ),
                                     );
                                   }),

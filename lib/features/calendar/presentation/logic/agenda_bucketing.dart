@@ -1,5 +1,7 @@
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -66,17 +68,17 @@ Map<AgendaBucket, List<AgendaItem>> bucketRange(
   Map<String, DayAgendaSnapshot> snapshots, {
   required DateTime now,
 }) {
-  final today = DateTime(now.year, now.month, now.day);
-  final tomorrow = today.add(const Duration(days: 1));
+  final today = DateKey.dayOf(now);
+  final tomorrow = DateKey.addDays(today, 1);
 
   // Shamsi-week boundaries
   final thisSat = CourseScheduler.getSaturdayOfWeek(today);
-  final thisFri = thisSat.add(const Duration(days: 6));
-  final nextSat = thisFri.add(const Duration(days: 1));
-  final nextFri = nextSat.add(const Duration(days: 6));
+  final thisFri = DateKey.addDays(thisSat, 6);
+  final nextSat = DateKey.addDays(thisFri, 1);
+  final nextFri = DateKey.addDays(nextSat, 6);
 
   // Post-tomorrow start of thisWeek: day after tomorrow up to end of this week
-  final thisWeekStart = tomorrow.add(const Duration(days: 1));
+  final thisWeekStart = DateKey.addDays(tomorrow, 1);
 
   final result = <AgendaBucket, List<AgendaItem>>{
     AgendaBucket.overdue: [],
@@ -93,13 +95,12 @@ Map<AgendaBucket, List<AgendaItem>> bucketRange(
 
   for (final entry in sortedEntries) {
     final dateStr = entry.key;
-    DateTime date;
-    try {
-      date = DateTime.parse(dateStr);
-    } catch (_) {
+    final date = DateKey.parse(dateStr);
+    if (date == null) {
+      RitmoLog.error('AgendaBucketing', 'Invalid dateKey in snapshots: $dateStr');
       continue;
     }
-    final dateOnly = DateTime(date.year, date.month, date.day);
+    final dateOnly = DateKey.dayOf(date);
 
     for (final item in entry.value.items) {
       final isDone = item.completion == AgendaCompletion.done ||
@@ -141,11 +142,11 @@ int calculateDaysInBucket(
     case AgendaBucket.tomorrow:
       return 1;
     case AgendaBucket.thisWeek:
-      final today = DateTime(now.year, now.month, now.day);
-      final tomorrow = today.add(const Duration(days: 1));
+      final today = DateKey.dayOf(now);
+      final tomorrow = DateKey.addDays(today, 1);
       final thisSat = CourseScheduler.getSaturdayOfWeek(today);
-      final thisFri = thisSat.add(const Duration(days: 6));
-      final thisWeekStart = tomorrow.add(const Duration(days: 1));
+      final thisFri = DateKey.addDays(thisSat, 6);
+      final thisWeekStart = DateKey.addDays(tomorrow, 1);
       if (thisWeekStart.isAfter(thisFri)) return 1;
       return thisFri.difference(thisWeekStart).inDays + 1;
     case AgendaBucket.nextWeek:
@@ -154,14 +155,17 @@ int calculateDaysInBucket(
       if (items.isEmpty) return 7;
       final dates = <DateTime>[];
       for (final item in items) {
-        try {
-          dates.add(DateTime.parse(item.dateStr));
-        } catch (_) {}
+        final d = DateKey.parse(item.dateStr);
+        if (d != null) {
+          dates.add(DateKey.dayOf(d));
+        } else {
+          RitmoLog.error('AgendaBucketing', 'Invalid item dateStr: ${item.dateStr}');
+        }
       }
       if (dates.isEmpty) return 7;
       dates.sort();
-      final minDate = DateTime(dates.first.year, dates.first.month, dates.first.day);
-      final maxDate = DateTime(dates.last.year, dates.last.month, dates.last.day);
+      final minDate = dates.first;
+      final maxDate = dates.last;
       final diff = maxDate.difference(minDate).inDays + 1;
       return diff > 0 ? diff : 1;
   }
@@ -236,9 +240,12 @@ List<AgendaEntry> collapseRecurringSeries(
 
       final dates = <DateTime>[];
       for (final inst in instances) {
-        try {
-          dates.add(DateTime.parse(inst.dateStr));
-        } catch (_) {}
+        final d = DateKey.parse(inst.dateStr);
+        if (d != null) {
+          dates.add(DateKey.dayOf(d));
+        } else {
+          RitmoLog.error('AgendaBucketing', 'Invalid dateKey in series instance: ${inst.dateStr}');
+        }
       }
 
       final label = calculateRecurrenceLabel(dates, daysInBucket);
@@ -296,15 +303,15 @@ Map<String, List<AgendaItem>> groupByDate(List<AgendaItem> items) {
 
 /// Persian label for a date, used as sub-group heading inside thisWeek/nextWeek/later.
 String daySubGroupLabel(String dateStr) {
-  try {
-    final date = DateTime.parse(dateStr);
-    final j = Jalali.fromDateTime(date);
-    const weekdays = ['شنبه', 'یک‌شنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
-    // Jalali weekday: 1=Saturday, 7=Friday
-    final wdLabel = weekdays[(j.weekDay - 1).clamp(0, 6)];
-    return '$wdLabel ${j.day} ${j.formatter.mN}';
-  } catch (_) {
+  final date = DateKey.parse(dateStr);
+  if (date == null) {
+    RitmoLog.error('AgendaBucketing', 'Invalid dateStr for subGroup label: $dateStr');
     return dateStr;
   }
+  final j = Jalali.fromDateTime(date);
+  const weekdays = ['شنبه', 'یک‌شنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+  // Jalali weekday: 1=Saturday, 7=Friday
+  final wdLabel = weekdays[(j.weekDay - 1).clamp(0, 6)];
+  return '$wdLabel ${j.day} ${j.formatter.mN}';
 }
 

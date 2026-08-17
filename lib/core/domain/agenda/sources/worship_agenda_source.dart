@@ -4,6 +4,7 @@ import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart'
@@ -99,8 +100,8 @@ class WorshipAgendaSource implements AgendaSource {
     // Worship debts are loaded only when setting is enabled
     const worshipDebts = <Map<String, dynamic>>[];
 
-    final startStr = _dateStr(start);
-    final endStr = _dateStr(end);
+    final startStr = DateKey.of(start);
+    final endStr = DateKey.of(end);
 
     // Fetch worship day exceptions (M2-10)
     final exceptionsByDate = <String, Map<String, dynamic>>{};
@@ -140,11 +141,11 @@ class WorshipAgendaSource implements AgendaSource {
     final contextsByDate = <String, WorshipDayContext>{};
     final cachedHijriDates = <String, HijriDate>{};
 
-    var current = start;
+    var current = DateKey.dayOf(start);
     // add an extra day for checking the last day of month in mustahab
-    final fetchEnd = end.add(const Duration(days: 1));
+    final fetchEnd = DateKey.addDays(DateKey.dayOf(end), 1);
     while (!current.isAfter(fetchEnd)) {
-      final dateStr = _dateStr(current);
+      final dateStr = DateKey.of(current);
       // Prefetch contexts (and maybe other things)
       if (!current.isAfter(end)) {
         contextsByDate[dateStr] = await WorshipEngine.instance.dayContext(
@@ -160,7 +161,7 @@ class WorshipAgendaSource implements AgendaSource {
       final hDate = await HijriDate.getOrFetch(current, db);
       cachedHijriDates[key] = hDate;
 
-      current = current.add(const Duration(days: 1));
+      current = DateKey.addDays(current, 1);
     }
 
     return WorshipAgendaSource(
@@ -241,8 +242,6 @@ class WorshipAgendaSource implements AgendaSource {
     return items;
   }
 
-  static String _dateStr(DateTime dt) => dt.toIso8601String().substring(0, 10);
-
   static DateTime? _parseDateTime(
     String dateStr,
     String? timeOfDay, {
@@ -255,13 +254,13 @@ class WorshipAgendaSource implements AgendaSource {
 
     final h = int.tryParse(match.group(1)!) ?? 0;
     final m = int.tryParse(match.group(2)!) ?? 0;
-    var dt = DateTime.parse(dateStr);
-    dt = DateTime(dt.year, dt.month, dt.day, h, m);
+    final parsedDate = DateKey.parse(dateStr) ?? DateTime.parse(dateStr);
+    var dt = DateTime(parsedDate.year, parsedDate.month, parsedDate.day, h, m);
 
     if (nextDayIfBefore &&
         referenceTime != null &&
         dt.isBefore(referenceTime)) {
-      dt = dt.add(const Duration(days: 1));
+      dt = DateKey.addDays(dt, 1);
     }
     return dt;
   }
@@ -528,7 +527,7 @@ class WorshipAgendaSource implements AgendaSource {
   }
 
   bool _isLastDayOfHijriMonthSync(DateTime date) {
-    final tomorrow = date.add(const Duration(days: 1));
+    final tomorrow = DateKey.addDays(date, 1);
     final tomorrowHijri = _getHijriDateSync(tomorrow);
     return tomorrowHijri != null && tomorrowHijri.day == 1;
   }

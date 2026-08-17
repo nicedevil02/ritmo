@@ -9,6 +9,7 @@ import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/medication/medication_identity.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Shared source of truth for "which routines are active on a given date".
@@ -179,8 +180,6 @@ class RoutineAgendaSource implements AgendaSource {
     );
   }
 
-  static String _dateStr(DateTime dt) => dt.toIso8601String().substring(0, 10);
-
   /// Returns an empty, non-functional source (used as fallback on load failure).
   static RoutineAgendaSource disabled() => const RoutineAgendaSource(
     routines: [],
@@ -222,7 +221,7 @@ class RoutineAgendaSource implements AgendaSource {
   /// Calendar keeps the same output when it switches to this source.
   List<Map<String, dynamic>> activeForDate(DateTime date) {
     final active = <Map<String, dynamic>>[];
-    final dateStr = _dateStr(date);
+    final dateStr = DateKey.of(date);
 
     for (final r in routines) {
       final routineId = r['id']?.toString() ?? '';

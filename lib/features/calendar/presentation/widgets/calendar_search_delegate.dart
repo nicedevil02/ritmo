@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/features/calendar/data/calendar_search_repository.dart';
@@ -83,7 +84,7 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
           );
         }
 
-        final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+        final todayStr = DateKey.today();
         final todayHits = hits.where((h) => h.dateStr == todayStr).toList();
         final recurringHits = hits.where((h) => h.isRecurring).toList();
         final otherHits = hits.where((h) => !h.isRecurring && h.dateStr != todayStr).toList();
@@ -208,7 +209,7 @@ class _HitTile extends StatelessWidget {
           domain: hit.domain,
           sourceId: hit.sourceId,
           title: hit.title,
-          dateStr: hit.dateStr ?? DateTime.now().toIso8601String().substring(0, 10),
+          dateStr: hit.dateStr ?? DateKey.today(),
           category: Category.personal,
           deepLink: AgendaDeepLink(domain: hit.domain, targetId: hit.sourceId),
         );

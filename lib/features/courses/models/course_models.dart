@@ -1,9 +1,120 @@
 import 'package:flutter/material.dart';
 
+abstract final class CourseLimits {
+  static const int minTotalSessions = 1;
+  static const int maxTotalSessions = 500;
+  static const int minSessionDurationMinutes = 5;
+  static const int maxSessionDurationMinutes = 600;
+  static const int minWeeklyTarget = 1;
+  static const int maxWeeklyTarget = 21;
+  static const int maxSessionsPerDay = 3;
+  static const int maxScheduleHorizonDays = 730;
+  static const int maxTimerSeconds = 28800; // 8 hours
+}
+
+abstract final class CourseDefaults {
+  static const int sessionDurationMinutes = 45;
+  static const String activityType = 'STUDY';
+}
+
+enum CourseMutationStatus {
+  applied,
+  notFound,
+  noOp,
+}
+
+class CourseMutationResult {
+  const CourseMutationResult({
+    required this.status,
+    this.message,
+    this.entityId,
+  });
+
+  final CourseMutationStatus status;
+  final String? message;
+  final String? entityId;
+
+  bool get isApplied => status == CourseMutationStatus.applied;
+  bool get isNotFound => status == CourseMutationStatus.notFound;
+  bool get isNoOp => status == CourseMutationStatus.noOp;
+
+  static const CourseMutationResult applied = CourseMutationResult(status: CourseMutationStatus.applied);
+  static const CourseMutationResult notFound = CourseMutationResult(status: CourseMutationStatus.notFound, message: 'Entity not found');
+  static const CourseMutationResult noOp = CourseMutationResult(status: CourseMutationStatus.noOp, message: 'No operation needed');
+}
+
+enum CourseEnergyLevel {
+  high,
+  medium,
+  low,
+}
+
+extension CourseEnergyLevelExtension on CourseEnergyLevel {
+  String get dbValue {
+    switch (this) {
+      case CourseEnergyLevel.high:
+        return 'HIGH';
+      case CourseEnergyLevel.medium:
+        return 'MEDIUM';
+      case CourseEnergyLevel.low:
+        return 'LOW';
+    }
+  }
+
+  static CourseEnergyLevel fromString(String? value) {
+    switch (value?.toUpperCase()) {
+      case 'HIGH':
+        return CourseEnergyLevel.high;
+      case 'LOW':
+        return CourseEnergyLevel.low;
+      case 'MEDIUM':
+      default:
+        return CourseEnergyLevel.medium;
+    }
+  }
+}
+
+enum CourseEnergyRule {
+  all,
+  mediumOrHigh,
+  highOnly,
+  skipLow,
+}
+
+extension CourseEnergyRuleExtension on CourseEnergyRule {
+  String get dbValue {
+    switch (this) {
+      case CourseEnergyRule.all:
+        return 'ALL';
+      case CourseEnergyRule.mediumOrHigh:
+        return 'MEDIUM_OR_HIGH';
+      case CourseEnergyRule.highOnly:
+        return 'HIGH_ONLY';
+      case CourseEnergyRule.skipLow:
+        return 'SKIP_LOW';
+    }
+  }
+
+  static CourseEnergyRule fromString(String? value) {
+    switch (value?.toUpperCase()) {
+      case 'MEDIUM_OR_HIGH':
+        return CourseEnergyRule.mediumOrHigh;
+      case 'HIGH_ONLY':
+        return CourseEnergyRule.highOnly;
+      case 'SKIP_LOW':
+        return CourseEnergyRule.skipLow;
+      case 'ALL':
+      case 'NONE':
+      default:
+        return CourseEnergyRule.all;
+    }
+  }
+}
+
 enum CourseType { video, book, skill, custom }
 
 extension CourseTypeExtension on CourseType {
-  String get name {
+  String get dbValue {
     switch (this) {
       case CourseType.video:
         return 'VIDEO';
@@ -15,6 +126,8 @@ extension CourseTypeExtension on CourseType {
         return 'CUSTOM';
     }
   }
+
+  String get name => dbValue;
 
   String get label {
     switch (this) {

@@ -1,15 +1,17 @@
+import 'package:ritmo/core/utils/date_key.dart';
+
 /// Navigation and scroll position anchor calculation utilities for calendar view.
 class CalendarNavigationHelper {
   const CalendarNavigationHelper._();
 
   /// Returns the DateTime for the previous day.
   static DateTime previousDay(DateTime date) {
-    return date.subtract(const Duration(days: 1));
+    return DateKey.addDays(date, -1);
   }
 
   /// Returns the DateTime for the next day.
   static DateTime nextDay(DateTime date) {
-    return date.add(const Duration(days: 1));
+    return DateKey.addDays(date, 1);
   }
 
   /// Checks if [date] is the same calendar day as [now] (or DateTime.now()).

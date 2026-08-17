@@ -17,7 +17,8 @@ class CourseRegistrySource implements RegistrySource {
   @override
   Future<int> count({bool includeArchived = false}) async {
     final db = await DatabaseHelper.instance.database;
-    final res = await db.rawQuery('SELECT COUNT(*) as cnt FROM courses');
+    final whereClause = includeArchived ? '' : ' WHERE isArchived = 0';
+    final res = await db.rawQuery('SELECT COUNT(*) as cnt FROM courses$whereClause');
     return Sqflite.firstIntValue(res) ?? 0;
   }
 
@@ -30,10 +31,29 @@ class CourseRegistrySource implements RegistrySource {
     final db = await DatabaseHelper.instance.database;
     final rows = await db.query(
       'courses',
+      where: includeArchived ? null : 'isArchived = 0',
       orderBy: 'createdAt DESC',
       limit: limit,
       offset: offset,
     );
+
+    if (rows.isEmpty) return const [];
+
+    final courseIds = rows.map((r) => r['id'] as String).toList();
+    final placeholders = List.filled(courseIds.length, '?').join(',');
+    final doneRes = await db.rawQuery(
+      "SELECT courseId, COUNT(*) as cnt FROM course_sessions WHERE completionStatus = 'COMPLETED' AND courseId IN ($placeholders) GROUP BY courseId",
+      courseIds,
+    );
+
+    final doneCounts = <String, int>{};
+    for (final row in doneRes) {
+      final cId = row['courseId'] as String?;
+      final cnt = row['cnt'] as int? ?? 0;
+      if (cId != null) {
+        doneCounts[cId] = cnt;
+      }
+    }
 
     final todayStr = CourseDate.toDayKey(DateTime.now());
 
@@ -41,21 +61,15 @@ class CourseRegistrySource implements RegistrySource {
     for (final r in rows) {
       final id = r['id'] as String;
       final title = r['title'] as String? ?? '';
-      final instructor = r['instructor'] as String?;
+      final provider = r['provider'] as String?;
       final prefTime = r['preferredTime'] as String?;
       final sessionDur = r['sessionDurationMinutes'] as int?;
       final totalSessions = r['totalSessions'] as int? ?? 0;
-
-      // Count completed sessions
-      final doneRes = await db.rawQuery(
-        "SELECT COUNT(*) as cnt FROM course_sessions WHERE courseId = ? AND isCompleted = 1",
-        [id],
-      );
-      final doneCount = Sqflite.firstIntValue(doneRes) ?? 0;
+      final doneCount = doneCounts[id] ?? 0;
 
       final summary = ScheduleSummaryFormatter.format(timeOfDay: prefTime);
-      final subtitle = instructor != null && instructor.isNotEmpty
-          ? '$instructor · $doneCount از $totalSessions جلسه'
+      final subtitle = provider != null && provider.isNotEmpty
+          ? '$provider · $doneCount از $totalSessions جلسه'
           : '$doneCount از $totalSessions جلسه';
 
       entries.add(RegistryEntry(

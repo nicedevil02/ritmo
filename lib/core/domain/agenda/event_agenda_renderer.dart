@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/agenda_renderer_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -55,8 +54,8 @@ class EventAgendaRenderer extends AgendaTileRenderer {
     final subtitle = item.subtitle;
 
     final details = <String>[
-      if (timeRange != null) timeRange,
-      if (duration != null) duration,
+      ?timeRange,
+      ?duration,
       if (subtitle != null && subtitle.isNotEmpty) subtitle,
     ];
 

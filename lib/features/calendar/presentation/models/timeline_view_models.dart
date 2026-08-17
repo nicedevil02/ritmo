@@ -1,5 +1,6 @@
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sleep_window_resolver.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 
 /// Presentation view model representing a single day's timeline state.
 class DailyTimelineViewModel {
@@ -18,10 +19,10 @@ class DailyTimelineViewModel {
   final int? currentTimeMinutes;
 
   /// Builds a [DailyTimelineViewModel] directly from a [DayAgenda].
-  factory DailyTimelineViewModel.fromAgenda(
+  factory DailyTimelineViewModel.fromDayAgenda(
     DayAgenda dayAgenda, {
-    SleepWindowBlock? sleepWindow,
     DateTime? now,
+    SleepWindowBlock? sleepWindow,
   }) {
     final timed = <AgendaItem>[];
     final untimed = <AgendaItem>[];
@@ -36,7 +37,7 @@ class DailyTimelineViewModel {
 
     int? nowMinutes;
     if (now != null) {
-      final ds = now.toIso8601String().substring(0, 10);
+      final ds = DateKey.of(now);
       if (ds == dayAgenda.dateStr) {
         nowMinutes = (now.hour * 60) + now.minute;
       }

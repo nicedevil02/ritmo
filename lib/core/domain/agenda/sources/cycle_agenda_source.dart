@@ -2,7 +2,6 @@
 // Generates agenda items for both past/recorded periods and future prediction windows.
 // Respects female gender, cycle module enablement, dashboard consent, and pregnancy mode.
 // Uses RitmoEngineBus for cached engine evaluation and supports multiple simultaneous agenda items.
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';

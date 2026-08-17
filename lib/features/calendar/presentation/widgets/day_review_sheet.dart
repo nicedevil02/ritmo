@@ -3,6 +3,7 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/calendar/presentation/logic/today_calendar_convergence_helper.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
@@ -396,7 +397,7 @@ class _ReviewTile extends StatelessWidget {
                   color: colors.primary,
                   onTap: () async {
                     if (item.domain == AgendaDomain.task) {
-                      final tomStr = DateTime.now().add(const Duration(days: 1)).toIso8601String().substring(0, 10);
+                      final tomStr = DateKey.of(DateKey.addDays(DateTime.now(), 1));
                       final task = await SimpleTaskRepository.instance.getById(item.sourceId);
                       if (task != null) {
                         await SimpleTaskRepository.instance.updateTask(task.copyWith(dueDate: tomStr));

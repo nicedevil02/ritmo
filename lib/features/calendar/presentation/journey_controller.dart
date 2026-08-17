@@ -18,6 +18,7 @@ import 'package:ritmo/core/domain/agenda/occurrence_override_repository.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 /// Calendar view scale. `agenda` is the primary view ("what's next?").
@@ -135,13 +136,13 @@ class JourneyController extends ChangeNotifier {
     switch (_activeScale) {
       case JourneyScale.agenda:
         // Agenda navigates in 7-day blocks (same as week)
-        _selectedDate = _selectedDate.add(Duration(days: 7 * offset));
+        _selectedDate = DateKey.addDays(_selectedDate, 7 * offset);
         break;
       case JourneyScale.day:
-        _selectedDate = _selectedDate.add(Duration(days: offset));
+        _selectedDate = DateKey.addDays(_selectedDate, offset);
         break;
       case JourneyScale.week:
-        _selectedDate = _selectedDate.add(Duration(days: 7 * offset));
+        _selectedDate = DateKey.addDays(_selectedDate, 7 * offset);
         break;
       case JourneyScale.month:
         final j = Jalali.fromDateTime(_selectedDate);
@@ -185,7 +186,7 @@ class JourneyController extends ChangeNotifier {
       }
 
       _rangeSnapshots = newSnapshots;
-      final selectedKey = _formatDateKey(_selectedDate);
+      final selectedKey = DateKey.of(_selectedDate);
       _snapshot = _rangeSnapshots[selectedKey];
 
       // Cleanup stale highlights or manipulation state if item no longer exists
@@ -474,7 +475,7 @@ class JourneyController extends ChangeNotifier {
         newSnapshots[entry.key] = _snapshotBuilder.buildSnapshot(entry.value);
       }
       _rangeSnapshots = newSnapshots;
-      final selectedKey = _formatDateKey(_selectedDate);
+      final selectedKey = DateKey.of(_selectedDate);
       _snapshot = _rangeSnapshots[selectedKey] ??
           _snapshotBuilder.buildSnapshot(DayAgenda(dateStr: selectedKey, items: const []));
       sw.stop();
@@ -540,17 +541,17 @@ class JourneyController extends ChangeNotifier {
   }
 
   static ({DateTime start, DateTime end}) _calculateDateRangeForScale(JourneyScale scale, DateTime date) {
-    final dateOnly = DateTime(date.year, date.month, date.day);
+    final dateOnly = DateKey.dayOf(date);
     final j = Jalali.fromDateTime(dateOnly);
     switch (scale) {
       case JourneyScale.agenda:
         // Agenda loads a 60-day forward window from selected date
-        return (start: dateOnly, end: dateOnly.add(const Duration(days: 59)));
+        return (start: dateOnly, end: DateKey.addDays(dateOnly, 59));
       case JourneyScale.day:
         return (start: dateOnly, end: dateOnly);
       case JourneyScale.week:
         final sat = CourseScheduler.getSaturdayOfWeek(dateOnly);
-        final fri = sat.add(const Duration(days: 6));
+        final fri = DateKey.addDays(sat, 6);
         return (start: sat, end: fri);
       case JourneyScale.month:
         final startJ = Jalali(j.year, j.month, 1);
@@ -634,10 +635,6 @@ class JourneyController extends ChangeNotifier {
     if (_isDisposed || _previewDurationMinutes == durationMinutes) return;
     _previewDurationMinutes = durationMinutes;
     notifyListeners();
-  }
-
-  static String _formatDateKey(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
   }
 }
 

@@ -8,16 +8,16 @@ import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/routine_agenda_source.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 
 /// Walks every layer between the database and the calendar agenda and reports
 /// where items are lost with full per-source observability.
 Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
   final out = StringBuffer();
   final now = targetDate ?? DateTime.now();
-  String ds(DateTime d) => d.toIso8601String().substring(0, 10);
 
-  final todayStr = ds(now);
-  final endStr = ds(now.add(const Duration(days: 30)));
+  final todayStr = DateKey.of(now);
+  final endStr = DateKey.of(DateKey.addDays(now, 30));
 
   // Verdict inputs (-1 = step never produced a value).
   var dbRoutines = -1;
@@ -215,7 +215,7 @@ Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
 
       final range = await DayAgendaService.instance.agendaForRange(
         now,
-        now.add(const Duration(days: 7)),
+        DateKey.addDays(now, 7),
       );
       var total = 0;
       for (final agenda in range.values) {

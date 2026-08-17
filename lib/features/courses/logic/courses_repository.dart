@@ -998,21 +998,44 @@ class CoursesRepository {
     return await db.query('goals', columns: ['id', 'title'], where: "status = 'ACTIVE' AND isPrivate = 0");
   }
 
-  /// Remove raw SQL from UI: fetch current energy level safely
+  /// Fetch info for a specific linked goal even if archived or private (Fixes K-07)
+  Future<Map<String, dynamic>?> getLinkedGoalInfo(String goalId) async {
+    final db = await _database;
+    final res = await db.query(
+      'goals',
+      columns: ['id', 'title', 'status', 'isPrivate'],
+      where: 'id = ?',
+      whereArgs: [goalId],
+      limit: 1,
+    );
+    return res.isNotEmpty ? res.first : null;
+  }
+
+  /// Fetch current energy level safely with today filter and correct column name (Fixes K-09)
   Future<String> getCurrentEnergyLevel() async {
     final db = await _database;
-    final logs = await db.query('energy_logs', orderBy: 'loggedAt DESC', limit: 1);
+    final now = DateTime.now();
+    final startOfTodayMs = DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
+
+    final logs = await db.query(
+      'energy_logs',
+      where: 'loggedAt >= ?',
+      whereArgs: [startOfTodayMs],
+      orderBy: 'loggedAt DESC',
+      limit: 1,
+    );
     if (logs.isNotEmpty) {
-      final lvl = logs.first['level'] as String?;
+      final lvl = (logs.first['energyLevel'] ?? logs.first['level']) as String?;
       if (lvl != null && lvl.isNotEmpty) {
-        return lvl.toUpperCase();
+        return CourseEnergyLevelExtension.fromString(lvl).dbValue;
       }
     }
     final settings = await db.query('app_settings', where: "key = 'default_energy_level'");
     if (settings.isNotEmpty) {
-      return (settings.first['value'] as String? ?? 'MEDIUM').toUpperCase();
+      final val = settings.first['value'] as String?;
+      return CourseEnergyLevelExtension.fromString(val).dbValue;
     }
-    return 'MEDIUM';
+    return CourseEnergyLevel.medium.dbValue;
   }
 
   /// Remove raw SQL from UI: fetch course settings safely

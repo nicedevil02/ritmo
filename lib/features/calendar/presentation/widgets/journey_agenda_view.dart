@@ -75,7 +75,7 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
     if (activeBuckets.isEmpty) {
       if (hasFailure) {
         return _AgendaFailureCard(
-          failedSources: status!.failedSources,
+          failedSources: status.failedSources,
           isFatal: status.fatal,
           onRetry: widget.onRetry,
         );

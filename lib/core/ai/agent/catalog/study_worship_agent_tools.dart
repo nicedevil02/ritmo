@@ -149,12 +149,10 @@ class CreateWorshipPracticeTool extends AgentTool {
 
   @override
   Future<AgentToolResult> execute(Map<String, dynamic> args) async {
-    final title = args['title']?.toString() ?? 'تلاوت قرآن کریم';
-    final practiceType = args['practiceType']?.toString().toUpperCase() ??
+    final title = (args['title'] as String?) ?? 'تلاوت قرآن کریم';
+    final practiceType = (args['practiceType'] as String?)?.toUpperCase() ??
         (title.contains('قرآن') ? 'QURAN' : 'MUSTAHAB');
-    final dailyTarget = (args['dailyTarget'] is int)
-        ? args['dailyTarget'] as int
-        : (int.tryParse(args['dailyTarget']?.toString() ?? '4') ?? 4);
+    final dailyTarget = (args['dailyTarget'] as int?) ?? 4;
 
     var reminderTime = args['reminderTime']?.toString() ?? '05:00';
     // Normalize Persian digits

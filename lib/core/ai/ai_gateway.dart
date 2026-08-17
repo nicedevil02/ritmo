@@ -20,17 +20,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 
 class AIGatewayConfig {
-
   const AIGatewayConfig({
     required this.baseUrl,
     required this.apiKey,
     required this.model,
     required this.timeoutMs,
+    this.supportsNativeTools = true,
   });
   final String baseUrl;
   final String apiKey;
   final String model;
   final int timeoutMs;
+  final bool supportsNativeTools;
 }
 
 /// Outcome of a non-streaming chat completion attempt (across the whole
@@ -216,6 +217,7 @@ class AIGateway {
         apiKey: defaultCloudflareApiKey,
         model: defaultCloudflareModel,
         timeoutMs: defaultRitmoServerTimeoutMs,
+        supportsNativeTools: false,
       ));
 
       // Priority 3: OpenCode fallback (30s)
@@ -621,6 +623,8 @@ class AIGateway {
     double temperature = 0.3,
     AiSlot slot = AiSlot.assistant,
     int? maxTokens,
+    List<Map<String, dynamic>>? tools,
+    dynamic toolChoice,
   }) async {
     final chain = await _configChain(slot: slot);
     var errorTag = 'HTTP Error unknown';
@@ -668,12 +672,16 @@ class AIGateway {
           break;
         }
 
-        final requestBody = {
+        final requestBody = <String, dynamic>{
           'model': model,
           'messages': messages,
           'temperature': temperature,
           'max_tokens': ?maxTokens,
           'stream': true,
+          if (tools != null && tools.isNotEmpty && config.supportsNativeTools) ...{
+            'tools': tools,
+            'tool_choice': toolChoice ?? 'auto',
+          },
         };
 
         final headers = {
@@ -1051,6 +1059,8 @@ class AIGateway {
     AiSlot slot = AiSlot.assistant,
     double? temperature,
     int? maxTokens,
+    List<Map<String, dynamic>>? tools,
+    dynamic toolChoice,
   }) async* {
     if (AIRateLimiter.instance.isRateLimited()) {
       yield 'error:سرعت ارسال درخواست‌ها بیش از حد مجاز است. لطفاً کمی صبر کنید.';
@@ -1079,6 +1089,8 @@ class AIGateway {
       slot: slot,
       temperature: temperature ?? 0.3,
       maxTokens: maxTokens,
+      tools: tools,
+      toolChoice: toolChoice,
     );
 
     if (!open.ok) {
@@ -1144,6 +1156,9 @@ class AIGateway {
     required List<Map<String, String>> messages,
     double temperature = 0.4,
     AiSlot slot = AiSlot.assistant,
+    int? maxTokens,
+    List<Map<String, dynamic>>? tools,
+    dynamic toolChoice,
   }) async* {
     if (AIRateLimiter.instance.isRateLimited()) {
       yield 'error:rate_limited';
@@ -1171,6 +1186,9 @@ class AIGateway {
       messages: messages,
       temperature: temperature,
       slot: slot,
+      maxTokens: maxTokens,
+      tools: tools,
+      toolChoice: toolChoice,
     );
     if (!open.ok) { yield 'error:${open.errorTag}'; return; }
     final client = open.client!;

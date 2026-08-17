@@ -24,8 +24,8 @@
 | T18 | اعتبارسنج مرکزی آرگومان‌ها | DONE | daf34cd | پیاده‌سازی AgentToolArgumentValidator، اعمال type coercion و مقادیر پیش‌فرض |
 | T19 | حذف پارسرهای دستی تکراری | DONE | bea2680 | پاکسازی تبدیل‌های نوع تکراری در کاتالوگ ابزارها به اتکای اعتبارسنج مرکزی |
 | T20 | idempotencyKey | DONE | cb82c24 | پیاده‌سازی محافظ Idempotency برای ابزارهای تغییردهنده در طول هر نشست اجرا |
-| T21 | قابلیت‌سنجی provider | DOING | | |
-| T22 | عبور tools از AIGateway | TODO | | |
+| T21 | قابلیت‌سنجی provider | DONE | 5aaed95 | افزودن فلگ و پروپرتی supportsNativeTools به AiProviderPreset و AiConnectionConfig |
+| T22 | عبور tools از AIGateway | DOING | | |
 | T23 | نرمال‌ساز واحد فراخوانی ابزار + fallback XML | TODO | | |
 | T24 | فشرده‌سازی پرامپت ابزار | TODO | | |
 | T25 | حذف مسیر موازی <actions> از شیت | TODO | | |

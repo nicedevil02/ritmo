@@ -38,6 +38,71 @@ class ToolParameter {
   }
 }
 
+/// نتیجه اعتبارسنجی آرگومان‌های ابزار
+class ToolValidationResult {
+  const ToolValidationResult._({
+    required this.isValid,
+    this.errorMessageFa,
+    required this.validatedArgs,
+  });
+
+  final bool isValid;
+  final String? errorMessageFa;
+  final Map<String, dynamic> validatedArgs;
+
+  factory ToolValidationResult.valid(Map<String, dynamic> args) =>
+      ToolValidationResult._(isValid: true, validatedArgs: args);
+
+  factory ToolValidationResult.invalid(String reasonFa) =>
+      ToolValidationResult._(
+        isValid: false,
+        errorMessageFa: reasonFa,
+        validatedArgs: const {},
+      );
+}
+
+/// اعتبارسنج پارامترهای ورودی ابزارها
+class AgentToolValidator {
+  static ToolValidationResult validate(
+      AgentTool tool, Map<String, dynamic> rawArgs) {
+    final resultArgs = Map<String, dynamic>.from(rawArgs);
+
+    for (final param in tool.parameters) {
+      final value = resultArgs[param.name];
+
+      // بررسی پارامتر الزامی
+      if (param.isRequired &&
+          (value == null || (value is String && value.trim().isEmpty))) {
+        return ToolValidationResult.invalid(
+          'پارامتر الزامی «${param.name}» (${param.descriptionFa}) ارسال نشده است.',
+        );
+      }
+
+      // مقداردهی پیش‌فرض
+      if (value == null && param.defaultValue != null) {
+        resultArgs[param.name] = param.defaultValue;
+      }
+
+      // بررسی مقادیر مجاز (allowedValues)
+      final effectiveValue = resultArgs[param.name];
+      if (effectiveValue != null &&
+          param.allowedValues != null &&
+          param.allowedValues!.isNotEmpty) {
+        final strVal = effectiveValue.toString();
+        final matches =
+            param.allowedValues!.any((allowed) => allowed.toString() == strVal);
+        if (!matches) {
+          return ToolValidationResult.invalid(
+            'مقدار «$effectiveValue» برای «${param.name}» مجاز نیست. مقادیر مجاز: ${param.allowedValues!.join(', ')}',
+          );
+        }
+      }
+    }
+
+    return ToolValidationResult.valid(resultArgs);
+  }
+}
+
 /// ساختار درخواست اجرای ابزار توسط مدل
 class AgentToolCall {
   final String toolName;
@@ -140,6 +205,10 @@ abstract class AgentTool {
 
   /// اجرای منطق ابزار به صورت ناهمگام
   Future<AgentToolResult> execute(Map<String, dynamic> args);
+
+  /// اعتبارسنجی آرگومان‌های ورودی براساس مشخصات پارامترها
+  ToolValidationResult validateArgs(Map<String, dynamic> args) =>
+      AgentToolValidator.validate(this, args);
 
   /// تولید خروجی اسکیمای استاندارد برای پرامپت هوش مصنوعی
   Map<String, dynamic> toSchema() {

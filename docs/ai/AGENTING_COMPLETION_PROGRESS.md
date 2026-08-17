@@ -48,8 +48,8 @@
 | T42 | پاکسازی زبانی + تست ترمینولوژی | DONE | 2a56528 | پاکسازی کامل غلط‌های املایی فارسی در سرتاسر ماژول‌های AI و ایجاد تست خودکار جامع agent_terminology_test |
 | T43 | قابل تنظیم کردن سقف نوشتن | DONE | ce3d248 | قابلیت تنظیم پویای سقف نوشتن در هر اجرا از طریق AgentBudget و AgentPolicyGate |
 | T44 | پاکسازی کوئری‌های ابزارها | DONE | f96fa06 | بازبینی و تضمین استفاده از پارامتریزاسیون کامل در کوئری‌های ابزارهای دیتابیس |
-| T45 | test/agent/agent_tool_call_parser_test.dart | DOING | | |
-| T46 | test/agent/agent_tool_validator_test.dart | TODO | | |
+| T45 | test/agent/agent_tool_call_parser_test.dart | DONE | 41ca46b | تست‌های جامع پارسر ابزار (فرمت‌های JSON، XML، چندگانه، یونیکد فارسی، stableArgs) |
+| T46 | test/agent/agent_tool_validator_test.dart | DOING | | |
 | T47 | test/agent/agent_loop_fake_model_test.dart | TODO | | |
 | T48 | test/agent/kernel_command_tool_test.dart | TODO | | |
 | T49 | test/agent/agent_policy_gate_test.dart | TODO | | |

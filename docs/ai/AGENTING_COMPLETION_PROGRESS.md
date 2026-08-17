@@ -5,8 +5,8 @@
 | ID | عنوان | وضعیت | کامیت | یادداشت |
 |----|-------|-------|-------|---------|
 | T01 | پاس دادن personaId به حلقه | DONE | 3b65554 | personaId اجباری شد و به PersonaGate و AgentLoop منتقل شد |
-| T02 | نصب AgentConfirmationHost | DOING | | |
-| T03 | نشتی اشتراک و broker در dispose | TODO | | |
+| T02 | نصب AgentConfirmationHost | DONE | 00b01e0 | نصب در شیت دستیار، تایم‌اوت ۹۰ ثانیه و رویداد AgentConfirmationTimedOutEvent |
+| T03 | نشتی اشتراک و broker در dispose | DOING | | |
 | T04 | استفاده از rawAnswer به‌جای متن تمیزشده | TODO | | |
 | T05 | هندل کردن همه‌ی رویدادها در چت اصلی | TODO | | |
 | T06 | اصلاح «تاریخچه اخیر» معکوس | TODO | | |

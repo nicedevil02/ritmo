@@ -32,6 +32,7 @@ import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
 import 'package:ritmo/features/assistant/models/assistant_models.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_loop_runner.dart';
+import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
 import 'package:ritmo/core/ai/agent/ui/agent_confirmation_card.dart';
 import 'package:ritmo/features/chat/presentation/widgets/agent_timeline_visualizer.dart';
 import 'package:ritmo/features/chat/presentation/widgets/streaming_message_bubble.dart';
@@ -117,6 +118,8 @@ class _AssistantSheetState extends State<AssistantSheet> {
   @override
   void dispose() {
     _streamSubscription?.cancel();
+    _agentSubscription?.cancel();
+    AgentConfirmationBroker.instance.cancelAll();
     ChatGptWebBridgeManager.instance.cloudflareNotifier.removeListener(_handleCloudflarePrompt);
     for (final timer in _pendingDeleteTimers.values) {
       timer.cancel();

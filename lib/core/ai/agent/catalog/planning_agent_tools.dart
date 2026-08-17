@@ -4,6 +4,7 @@ import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/commands/command_plan.dart';
+import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/domain/commands/ritmo_command_bus.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 
@@ -319,6 +320,114 @@ class SimulatePlanTool extends AgentTool {
       return AgentToolResult.failure(
         toolName: name,
         errorMessage: 'خطا در اجرای شبیه‌سازی طرح: $e',
+      );
+    }
+  }
+}
+
+/// ابزار اجرای اتمیک برنامه چندمرحله‌ای با یک تأیید واحد (T34)
+class ExecutePlanTool extends AgentTool {
+  const ExecutePlanTool()
+      : super(
+          name: 'execute_plan',
+          categoryFa: 'برنامه‌ریزی روز',
+          titleFa: 'اجرای برنامه چندمرحله‌ای',
+          descriptionFa:
+              'مجموعه‌ای از گام‌های برنامه‌ریزی‌شده را به صورت یکپارچه، اتمیک و در قالب یک تراکنش واحد در دیتابیس اجرا می‌کند (نیازمند تایید کاربر).',
+          policy: ToolPolicy.actionInteractive,
+          parameters: const [
+            ToolParameter(
+              name: 'title',
+              descriptionFa: 'عنوان کلی برنامه پیشنهادی به فارسی',
+              type: 'string',
+              defaultValue: 'برنامه پیشنهادی دستیار',
+            ),
+            ToolParameter(
+              name: 'steps',
+              descriptionFa:
+                  'لیست مراحل؛ هر مرحله شامل commandId و payload است',
+              type: 'list',
+              isRequired: true,
+            ),
+          ],
+        );
+
+  @override
+  Future<AgentToolResult> execute(Map<String, dynamic> args) async {
+    final rawSteps = args['steps'];
+    if (rawSteps is! List || rawSteps.isEmpty) {
+      return AgentToolResult.failure(
+        toolName: name,
+        errorMessage: 'لیست مراحل (steps) الزامی است و نباید خالی باشد.',
+      );
+    }
+
+    final title = args['title']?.toString().trim();
+    final titleFa = (title != null && title.isNotEmpty)
+        ? title
+        : 'برنامه پیشنهادی دستیار';
+
+    final planSteps = <PlanStep>[];
+    for (final s in rawSteps) {
+      if (s is Map) {
+        final commandId = s['commandId']?.toString() ?? '';
+        final payloadRaw = s['payload'];
+        final payload = payloadRaw is Map
+            ? payloadRaw.cast<String, dynamic>()
+            : <String, dynamic>{};
+        if (commandId.isNotEmpty) {
+          planSteps.add(PlanStep(
+            commandId: commandId,
+            payload: payload,
+            note: 'اجرا از طریق بسته چندمرحله‌ای دستیار',
+          ));
+        }
+      }
+    }
+
+    if (planSteps.isEmpty) {
+      return AgentToolResult.failure(
+        toolName: name,
+        errorMessage: 'هیچ مرحلهٔ معتبری در لیست مراحل یافت نشد.',
+      );
+    }
+
+    final planId = 'plan_${DateTime.now().microsecondsSinceEpoch}';
+    final plan = CommandPlan(
+      id: planId,
+      titleFa: titleFa,
+      steps: planSteps,
+    );
+
+    try {
+      final res = await RitmoCommandBus.instance.execute(
+        plan,
+        personaId: AgentToolScope.instance.activePersonaId,
+        source: CommandSource.assistant,
+      );
+
+      if (!res.success) {
+        return AgentToolResult.failure(
+          toolName: name,
+          errorMessage: res.errorMessage ?? 'اجرای مراحل برنامه با خطا متوقف شد.',
+        );
+      }
+
+      return AgentToolResult.success(
+        toolName: name,
+        data: {
+          'planId': planId,
+          'stepsCount': planSteps.length,
+          'isUndoable': true,
+        },
+        summaryFa:
+            'برنامه «$titleFa» با ${planSteps.length} مرحله با موفقیت و به صورت یکپارچه اجرا و ثبت شد.',
+      );
+    } catch (e, st) {
+      RitmoLog.error('ExecutePlanTool', 'execute plan failed', e, st);
+      return AgentToolResult.failure(
+        toolName: name,
+        errorMessage: 'خطای سیستمی در اجرای بسته مراحل: $e',
       );
     }
   }

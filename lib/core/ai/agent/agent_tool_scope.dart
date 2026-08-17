@@ -74,6 +74,7 @@ class AgentToolScope {
     // برنامه روز
     'get_day_agenda': ToolScopeRequirement.read(DataDomain.routines),
     'simulate_plan': ToolScopeRequirement.read(DataDomain.routines),
+    'execute_plan': ToolScopeRequirement.command('routine.create'),
 
     // خواب و انرژی
     'get_sleep_diagnostics': ToolScopeRequirement.read(DataDomain.sleep),

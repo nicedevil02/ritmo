@@ -46,6 +46,7 @@ void initializeAllAgentTools() {
     // ۳. برنامه‌ریزی روز
     const GetDayAgendaTool(),
     const SimulatePlanTool(),
+    const ExecutePlanTool(),
 
     // ۴. خواب و انرژی
     const GetSleepDiagnosticsTool(),

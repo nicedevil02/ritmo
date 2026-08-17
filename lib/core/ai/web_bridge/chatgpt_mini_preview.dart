@@ -32,7 +32,6 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
     return ValueListenableBuilder<ChatGptBridgeStatus>(
       valueListenable: ChatGptWebBridgeManager.instance.statusNotifier,
       builder: (context, status, _) {
-        final isChallenge = status == ChatGptBridgeStatus.cloudflareChallenge;
         final isError = status == ChatGptBridgeStatus.error;
         return Material(
           type: MaterialType.transparency,

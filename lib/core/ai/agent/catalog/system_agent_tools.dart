@@ -137,7 +137,7 @@ class NavigateToAppScreenTool extends AgentTool {
   }
 }
 
-/// قاعدهٔ اعتبارسنجی هر کلید مجاز تنطیمات.
+/// قاعدهٔ اعتبارسنجی هر کلید مجاز تنظیمات.
 class _PrefRule {
   const _PrefRule(this.kind, this.labelFa, {this.min, this.max});
 
@@ -148,7 +148,7 @@ class _PrefRule {
   final int? max;
 }
 
-/// اجازه‌نامهٔ صریح تنطیمات قابل تغییر توسط دستیار.
+/// اجازه‌نامهٔ صریح تنظیمات قابل تغییر توسط دستیار.
 ///
 /// قاعده: deny-by-default. هر کلیدی که اینجا نباشد قابل تغییر نیست.
 /// مخصوصاً کلیدهای module_* (خاموش/روشن کردن کلِ بخش‌های برنامه)، ai_* و
@@ -181,12 +181,12 @@ class UpdateAppPreferenceTool extends AgentTool {
           categoryFa: 'سیستم و ناوبری',
           titleFa: 'تغییر ترجیحات برنامه',
           descriptionFa:
-              'یک ترجیح بی‌خطر کاربری را تغییر می‌دهد (ساعت هدف خواب، نمایش رویداد/کار در تقویم، تنطیمات اعلان، تصحیح تقویم قمری، نام کاربر). خاموش/روشن کردن ماژول‌ها، تنطیمات هوش مصنوعی و رضایت‌ها عمداً ممنوع است و باید خود کاربر از تنطیمات انجام دهد.',
+              'یک ترجیح بی‌خطر کاربری را تغییر می‌دهد (ساعت هدف خواب، نمایش رویداد/کار در تقویم، تنظیمات اعلان، تصحیح تقویم قمری، نام کاربر). خاموش/روشن کردن ماژول‌ها، تنظیمات هوش مصنوعی و رضایت‌ها عمداً ممنوع است و باید خود کاربر از تنظیمات انجام دهد.',
           policy: ToolPolicy.actionDirect,
           parameters: const [
             ToolParameter(
               name: 'key',
-              descriptionFa: 'کلید تنطیمات از فهرست مجاز',
+              descriptionFa: 'کلید تنظیمات از فهرست مجاز',
               type: 'string',
               isRequired: true,
               allowedValues: [
@@ -233,7 +233,7 @@ class UpdateAppPreferenceTool extends AgentTool {
       return AgentToolResult.failure(
         toolName: name,
         errorMessage:
-            'هم key و هم value الزامی هستند و هیچ تنطیمی تغییر نکرد.',
+            'هم key و هم value الزامی هستند و هیچ تنظیمی تغییر نکرد.',
       );
     }
 
@@ -245,7 +245,7 @@ class UpdateAppPreferenceTool extends AgentTool {
       return AgentToolResult.failure(
         toolName: name,
         errorMessage:
-            'تغییر «$key» از طریق دستیار ممنوع است (روشن/خاموش کردن ماژول‌ها، تنطیمات هوش مصنوعی و رضایت‌ها فقط دست خود کاربر است). از کاربر بخواه خودش از بخش تنطیمات این کار را انجام دهد.',
+            'تغییر «$key» از طریق دستیار ممنوع است (روشن/خاموش کردن ماژول‌ها، تنظیمات هوش مصنوعی و رضایت‌ها فقط دست خود کاربر است). از کاربر بخواه خودش از بخش تنظیمات این کار را انجام دهد.',
       );
     }
 
@@ -254,7 +254,7 @@ class UpdateAppPreferenceTool extends AgentTool {
       return AgentToolResult.failure(
         toolName: name,
         errorMessage:
-            'کلید «$key» در فهرست تنطیمات مجاز دستیار نیست و هیچ چیزی تغییر نکرد. کلیدهای مجاز: ${_allowedPrefs.keys.join(', ')}',
+            'کلید «$key» در فهرست تنظیمات مجاز دستیار نیست و هیچ چیزی تغییر نکرد. کلیدهای مجاز: ${_allowedPrefs.keys.join(', ')}',
       );
     }
 

@@ -2,9 +2,6 @@ import 'package:ritmo/core/ai/brief/domain_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/sleep_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/goals_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/worship_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/study_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/courses_brief.dart';
-import 'package:ritmo/core/ai/brief/briefs/sports_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/wellbeing_brief.dart';
 
 class PersonaSkill {

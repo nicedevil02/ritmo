@@ -27,7 +27,7 @@ class VerifyStateTool extends AgentTool {
             ToolParameter(
               name: 'check',
               descriptionFa:
-                  'نوع بازرسی: routine_in_day (روتین در برنامهٔ یک روز دیده می‌شود؟) یا routine_exists (روتین و زمان‌بندی‌اش وجود دارد؟) یا setting_value (مقدار فعلی یک تنطیم) یا agenda_count (شمارش موارد یک روز)',
+                  'نوع بازرسی: routine_in_day (روتین در برنامهٔ یک روز دیده می‌شود؟) یا routine_exists (روتین و زمان‌بندی‌اش وجود دارد؟) یا setting_value (مقدار فعلی یک تنظیم) یا agenda_count (شمارش موارد یک روز)',
               type: 'string',
               isRequired: true,
               allowedValues: [
@@ -50,7 +50,7 @@ class VerifyStateTool extends AgentTool {
             ),
             ToolParameter(
               name: 'key',
-              descriptionFa: 'کلید تنطیمات (فقط برای setting_value)',
+              descriptionFa: 'کلید تنظیمات (فقط برای setting_value)',
               type: 'string',
             ),
           ],
@@ -234,7 +234,7 @@ class VerifyStateTool extends AgentTool {
     if (key == null) {
       return AgentToolResult.failure(
         toolName: name,
-        errorMessage: 'برای این بازرسی، کلید تنطیمات (key) الزامی است.',
+        errorMessage: 'برای این بازرسی، کلید تنظیمات (key) الزامی است.',
       );
     }
 
@@ -250,7 +250,7 @@ class VerifyStateTool extends AgentTool {
           toolName: name,
           data: {'check': 'setting_value', 'key': key, 'exists': false},
           summaryFa:
-              'تنطیم «$key» در دیتابیس مقداری ندارد (مقدار پیش‌فرض برنامه استفاده می‌شود).',
+              'تنظیم «$key» در دیتابیس مقداری ندارد (مقدار پیش‌فرض برنامه استفاده می‌شود).',
         );
       }
 
@@ -264,13 +264,13 @@ class VerifyStateTool extends AgentTool {
           'value': row['value'],
           'updatedAt': row['updatedAt'],
         },
-        summaryFa: 'مقدار فعلی تنطیم «$key» برابر «${row['value']}» است.',
+        summaryFa: 'مقدار فعلی تنظیم «$key» برابر «${row['value']}» است.',
       );
     } catch (e, st) {
       RitmoLog.error('VerifyStateTool', 'setting_value failed', e, st);
       return AgentToolResult.failure(
         toolName: name,
-        errorMessage: 'خواندن تنطیم «$key» ممکن نشد: $e',
+        errorMessage: 'خواندن تنظیم «$key» ممکن نشد: $e',
       );
     }
   }

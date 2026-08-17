@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/ai/brief/domain_brief.dart';
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
 
@@ -45,7 +46,7 @@ class PersonaResponseValidator {
     required DomainBrief brief,
     required List<String> manifestCommandIds,
   }) {
-    String reply = res.reply ?? '';
+    final reply = res.reply ?? '';
 
     // 1. Missing field in usedFields
     if (res.usedFields != null) {
@@ -54,7 +55,7 @@ class PersonaResponseValidator {
           return ValidationResult(
             isValid: false,
             reason: 'missing_field_in_brief',
-            retryMessage: 'فیلد \$f در داده‌های ارسال‌شده وجود ندارد. فقط از فیلدهای موجود استفاده کن.',
+            retryMessage: 'فیلد $f در داده‌های ارسال‌شده وجود ندارد. فقط از فیلدهای موجود استفاده کن.',
           );
         }
       }
@@ -68,7 +69,7 @@ class PersonaResponseValidator {
           validCommands.add(cmd);
         } else {
           // Log out-of-manifest command
-          print('Warning: Assistant attempted to use unmanifested command \${cmd.id}');
+          debugPrint('Warning: Assistant attempted to use unmanifested command ${cmd.id}');
         }
       }
     }

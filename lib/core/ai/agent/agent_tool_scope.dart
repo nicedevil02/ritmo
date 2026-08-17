@@ -46,7 +46,7 @@ class AgentToolScope {
 
   static final AgentToolScope instance = AgentToolScope._();
 
-  /// پرسونای فعال این گفتگو. حلقه ایجنت قبل از شروع آن را تنطیم می‌کند
+  /// پرسونای فعال این گفتگو. حلقه ایجنت قبل از شروع آن را تنظیم می‌کند
   /// تا لایه‌هایی مثل پیش‌واکشی هم بدون تغییر امضای توابع بدانند محدوده کدام است.
   String activePersonaId = 'global';
 

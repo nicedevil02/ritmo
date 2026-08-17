@@ -101,7 +101,7 @@ class ConversationContext {
 class ConversationContextBuilder {
   /// Builds a [ConversationContext] for a given [sessionId] and [userText].
   ///
-  /// [memoryDomain] دامنهٔ حافطهٔ مورد استفاده است؛ پیش‌فرض `core`. دستیارهای
+  /// [memoryDomain] دامنهٔ حافظهٔ مورد استفاده است؛ پیش‌فرض `core`. دستیارهای
   /// تخصصی می‌توانند دامنهٔ خودشان را پاس بدهند (مانند `sports` یا `goals`).
   Future<ConversationContext> build({
     required String sessionId,

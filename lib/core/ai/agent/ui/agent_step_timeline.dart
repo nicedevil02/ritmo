@@ -3,7 +3,7 @@ import 'package:ritmo/core/ai/agent/agent_event.dart';
 
 /// تایم‌لاین گام‌های ایجنت (فاز ۶ · P6-1)
 ///
-/// ورودی همان List<AgentStep> است که از AgentStepStartedEvent و
+/// ورودی همان `List<AgentStep>` است که از AgentStepStartedEvent و
 /// AgentStepCompletedEvent در شیت جمع می‌شود؛ هیچ داده ساختگی ندارد.
 class AgentStepTimeline extends StatelessWidget {
   const AgentStepTimeline({

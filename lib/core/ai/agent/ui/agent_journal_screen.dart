@@ -3,7 +3,7 @@ import 'package:ritmo/core/ai/agent/agent_journal.dart';
 
 /// نمایشگر ژورنال ایجنت (فاز ۶ · P6-2)
 ///
-/// باز کردن از تنطیمات دیباگ یا هر جای دیگر:
+/// باز کردن از تنظیمات دیباگ یا هر جای دیگر:
 /// Navigator.of(context).push(MaterialPageRoute(
 ///   builder: (_) => const AgentJournalScreen()));
 class AgentJournalScreen extends StatefulWidget {
@@ -81,7 +81,7 @@ class _AgentJournalScreenState extends State<AgentJournalScreen> {
             return ListView.separated(
               padding: const EdgeInsets.all(12),
               itemCount: entries.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (context, index) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final entry = entries[index];
                 final subtitle = StringBuffer()

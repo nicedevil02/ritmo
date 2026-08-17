@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:ritmo/core/ai/chat/chat_models.dart';
-import 'package:ritmo/features/assistant/models/assistant_models.dart';
 
 class ParsedResponse {
   const ParsedResponse(this.cleanText, this.actions, {this.memoryOps});

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,8 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
+import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
+import 'package:ritmo/core/ai/memory/memory_models.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
@@ -382,6 +385,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
               _scrollToBottom();
             }
           } else if (event is AgentCompletedEvent) {
+            final rawAnswer = event.rawAnswer;
             if (mounted) {
               setState(() {
                 _messages[_messages.length - 1] = ChatMessage(
@@ -396,8 +400,10 @@ class _AssistantSheetState extends State<AssistantSheet> {
                 _isAgentWorking = false;
               });
             }
-            if (fullResponse.isNotEmpty && !fullResponse.startsWith('error:')) {
-              _validateAndExecute(fullResponse);
+            final textToParse = rawAnswer.trim().isNotEmpty ? rawAnswer : fullResponse;
+            if (textToParse.isNotEmpty && !textToParse.startsWith('error:')) {
+              _validateAndExecute(textToParse);
+              _processMemoryOps(textToParse);
             }
           } else if (event is AgentErrorEvent) {
             if (mounted) {
@@ -492,6 +498,28 @@ class _AssistantSheetState extends State<AssistantSheet> {
     }
 
     unawaited(_parseAndExecuteActions(fullResponse));
+  }
+
+  void _processMemoryOps(String rawAnswer) {
+    final parsed = ChatActionParser.parse(rawAnswer);
+    if (parsed.memoryOps != null && parsed.memoryOps!.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(parsed.memoryOps!);
+        if (decoded is List) {
+          final ops = <MemoryOp>[];
+          for (final item in decoded) {
+            if (item is Map) {
+              ops.add(MemoryOp.fromJson(item.cast<String, dynamic>()));
+            }
+          }
+          if (ops.isNotEmpty) {
+            unawaited(AiMemoryService.instance.applyOperations(ops));
+          }
+        }
+      } catch (e) {
+        debugPrint('[MEMORY] Error processing assistant memory_ops JSON: $e');
+      }
+    }
   }
 
   String? _mapActionTypeToNewCommandId(AssistantActionType type) {

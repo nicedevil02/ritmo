@@ -268,7 +268,13 @@ class AgentPolicyGate {
   static const int maxWritesPerRun = 3;
 
   static final RegExp _injectionSignals = RegExp(
-    r'<\s*/?\s*(tool_call|user_content|system)\s*>|ignore\s+(all\s+)?previous\s+instructions',
+    r'<\s*/?\s*(tool_call|user_content|system|assistant|actions|memory_ops|function|im_start|im_end)\b[^>]*>'
+    r'|ignore\s+(all\s+)?previous\s+instructions'
+    r'|disregard\s+all\s+(prior|previous)\s+instructions'
+    r'|system\s+override'
+    r'|you\s+are\s+now\s+in\s+(developer|god)\s+mode'
+    r'|دستورات\s+(قبلی|پیشین)\s+را\s+(نادیده|فراموش)\s+بگیر'
+    r'|از\s+این\s+لحظه\s+دستورات\s+سیستم\s+را\s+لغو\s+کن',
     caseSensitive: false,
   );
 
@@ -289,7 +295,7 @@ class AgentPolicyGate {
     final suspicious = _suspiciousArgKey(args);
     if (suspicious != null) {
       return AgentGateDecision.deny(
-          'مقدار پارامتر "$suspicious" شبیه دستور تزریق‌شده است، پس این تغییر انجام نشد.');
+          'مقدار پارامتر "$suspicious" شامل عبارات یا تگ‌های تزریق سیستمی است، پس این تغییر رد شد.');
     }
 
     if (tool.policy == ToolPolicy.actionInteractive) {
@@ -355,10 +361,22 @@ class AgentPolicyGate {
         summaryFa: reasonFa,
       );
 
+  bool _isSuspicious(dynamic value) {
+    if (value is String) {
+      return _injectionSignals.hasMatch(value);
+    }
+    if (value is Map) {
+      return value.values.any(_isSuspicious);
+    }
+    if (value is List) {
+      return value.any(_isSuspicious);
+    }
+    return false;
+  }
+
   String? _suspiciousArgKey(Map<String, dynamic> args) {
     for (final entry in args.entries) {
-      final value = entry.value;
-      if (value is String && _injectionSignals.hasMatch(value)) {
+      if (_isSuspicious(entry.value)) {
         return entry.key;
       }
     }

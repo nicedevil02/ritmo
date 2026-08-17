@@ -1,12 +1,46 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
 
+/// آمار و تلمتری اجرای هر ابزار
+class AgentToolMetrics {
+  AgentToolMetrics({
+    required this.toolName,
+    this.callCount = 0,
+    this.successCount = 0,
+    this.failureCount = 0,
+    this.totalDurationMs = 0,
+  });
+
+  final String toolName;
+  int callCount;
+  int successCount;
+  int failureCount;
+  int totalDurationMs;
+
+  double get averageDurationMs =>
+      callCount == 0 ? 0 : totalDurationMs / callCount;
+
+  double get successRate =>
+      callCount == 0 ? 1.0 : successCount / callCount;
+
+  Map<String, dynamic> toJson() => {
+        'toolName': toolName,
+        'callCount': callCount,
+        'successCount': successCount,
+        'failureCount': failureCount,
+        'totalDurationMs': totalDurationMs,
+        'averageDurationMs': averageDurationMs,
+        'successRate': successRate,
+      };
+}
+
 /// رجیستری مرکزی و مدیریت ابزارهای هوش مصنوعی ریتمو
 class AgentToolRegistry {
   AgentToolRegistry._();
   static final AgentToolRegistry instance = AgentToolRegistry._();
 
   final Map<String, AgentTool> _tools = {};
+  final Map<String, AgentToolMetrics> _metrics = {};
 
   /// ثبت یک ابزار در سیستم
   void register(AgentTool tool) {
@@ -35,7 +69,17 @@ class AgentToolRegistry {
   /// بررسی وجود ابزار
   bool hasTool(String name) => _tools.containsKey(name);
 
-  /// اجرای امن یک ابزار
+  /// دریافت تلمتری یک ابزار
+  AgentToolMetrics getMetrics(String toolName) =>
+      _metrics.putIfAbsent(toolName, () => AgentToolMetrics(toolName: toolName));
+
+  /// دریافت تمامی متریک‌های ثبت‌شده
+  Map<String, AgentToolMetrics> get allMetrics => Map.unmodifiable(_metrics);
+
+  /// ریست کردن آمارها
+  void resetMetrics() => _metrics.clear();
+
+  /// اجرای امن یک ابزار به همراه ثبت تلمتری
   Future<AgentToolResult> executeTool(String name, Map<String, dynamic> args) async {
     final tool = _tools[name];
     if (tool == null) {
@@ -45,11 +89,25 @@ class AgentToolRegistry {
       );
     }
 
+    final stopwatch = Stopwatch()..start();
+    final metric = getMetrics(name);
+    metric.callCount++;
+
     try {
       debugPrint('[AgentToolRegistry] Executing tool: $name with args: $args');
       final result = await tool.execute(args);
+      stopwatch.stop();
+      metric.totalDurationMs += stopwatch.elapsedMilliseconds;
+      if (result.isSuccess) {
+        metric.successCount++;
+      } else {
+        metric.failureCount++;
+      }
       return result;
     } catch (e, st) {
+      stopwatch.stop();
+      metric.totalDurationMs += stopwatch.elapsedMilliseconds;
+      metric.failureCount++;
       debugPrint('[AgentToolRegistry] Error executing tool $name: $e\n$st');
       return AgentToolResult.failure(
         toolName: name,

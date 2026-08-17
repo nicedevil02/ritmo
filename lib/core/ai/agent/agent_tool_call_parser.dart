@@ -50,13 +50,18 @@ class AgentToolCallParser {
   const AgentToolCallParser._();
 
   static final RegExp _blockRe = RegExp(r'<tool_call>([\s\S]*?)<\/tool_call>');
+  static final RegExp _functionTagRe = RegExp(
+      r'<(?:function|tool)=([a-zA-Z0-9_\-]+)>([\s\S]*?)<\/(?:function|tool)>',
+      caseSensitive: false);
+  static final RegExp _codeBlockJsonRe =
+      RegExp(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', caseSensitive: false);
   static final RegExp _danglingToolRe = RegExp(r'<tool_call>[\s\S]*$');
   static final RegExp _actionsRe = RegExp(r'<actions>[\s\S]*?<\/actions>', caseSensitive: false);
   static final RegExp _memOpsRe = RegExp(r'<memory_ops>[\s\S]*?<\/memory_ops>', caseSensitive: false);
   static final RegExp _danglingTagRe =
-      RegExp(r'<(actions|memory_ops|memory|tool_call)[^>]*>[\s\S]*$', caseSensitive: false);
+      RegExp(r'<(actions|memory_ops|memory|tool_call|function|tool)[^>]*>[\s\S]*$', caseSensitive: false);
   static final RegExp _partialTagRe =
-      RegExp(r'<\/?(action|tool|memory|actions|tool_call|memory_ops)[^>]*$', caseSensitive: false);
+      RegExp(r'<\/?(action|tool|memory|actions|tool_call|memory_ops|function)[^>]*$', caseSensitive: false);
   static final RegExp _fenceOpenRe = RegExp(r'^\s*```[a-zA-Z0-9_-]*\s*');
   static final RegExp _fenceCloseRe = RegExp(r'\s*```\s*$');
 
@@ -71,11 +76,39 @@ class AgentToolCallParser {
     final errors = <String>[];
     final seen = <String>{};
 
+    // ۱. تگ استاندارد <tool_call>
     for (final match in _blockRe.allMatches(raw)) {
       for (final call in _decodeCalls(match.group(1) ?? '', errors)) {
         final signature = '${call.toolName}|${stableArgs(call.parameters)}';
         if (seen.add(signature)) {
           calls.add(call);
+        }
+      }
+    }
+
+    // ۲. تگ <function=name> یا <tool=name>
+    for (final match in _functionTagRe.allMatches(raw)) {
+      final name = match.group(1) ?? '';
+      final body = match.group(2) ?? '';
+      final parsedCalls = _decodeFunctionTagCall(name, body, errors);
+      for (final call in parsedCalls) {
+        final signature = '${call.toolName}|${stableArgs(call.parameters)}';
+        if (seen.add(signature)) {
+          calls.add(call);
+        }
+      }
+    }
+
+    // ۳. بلوک کد مارک‌داون شامل JSON ابزار
+    if (calls.isEmpty) {
+      for (final match in _codeBlockJsonRe.allMatches(raw)) {
+        final jsonText = match.group(1) ?? '';
+        final bare = _decodeBareJsonCall(jsonText);
+        if (bare != null) {
+          final signature = '${bare.toolName}|${stableArgs(bare.parameters)}';
+          if (seen.add(signature)) {
+            calls.add(bare);
+          }
         }
       }
     }
@@ -87,7 +120,7 @@ class AgentToolCallParser {
     final lastOpen = raw.lastIndexOf(_openTag);
     final hasOpenTag = lastOpen >= 0 && lastOpen > lastClose;
 
-    // حالت لبه: مدل بدون تگ، تنها یک JSON با کلید tool فرستاده است
+    // ۴. حالت لبه: مدل بدون تگ، تنها یک JSON با کلید tool فرستاده است
     if (calls.isEmpty && !hasOpenTag) {
       final bare = _decodeBareJsonCall(raw);
       if (bare != null) {
@@ -115,6 +148,7 @@ class AgentToolCallParser {
   /// JSON خام در پیام ذخیره‌شدهٔ چت برای کاربر ظاهر می‌شود.
   static String stripToolCalls(String raw) {
     var text = raw.replaceAll(_blockRe, '');
+    text = text.replaceAll(_functionTagRe, '');
     text = text.replaceAll(_danglingToolRe, '');
     return text;
   }
@@ -172,14 +206,19 @@ class AgentToolCallParser {
       decoded = jsonDecode(text);
     } catch (_) {
       final extracted = _extractFirstJsonObject(text);
-      if (extracted == null) {
-        errors.add('بدنهٔ tool_call قابل پارس نبود: ${_short(text)}');
-        return out;
+      if (extracted != null) {
+        try {
+          decoded = jsonDecode(extracted);
+        } catch (_) {
+          decoded = null;
+        }
       }
-      try {
-        decoded = jsonDecode(extracted);
-      } catch (_) {
-        errors.add('JSON نامعتبر در tool_call: ${_short(text)}');
+      if (decoded == null) {
+        final xmlCall = _parseXmlToolCall(text);
+        if (xmlCall != null) {
+          return [xmlCall];
+        }
+        errors.add('بدنهٔ tool_call قابل پارس نبود: ${_short(text)}');
         return out;
       }
     }
@@ -324,6 +363,104 @@ class AgentToolCallParser {
       return null;
     }
     return null;
+  }
+
+  static List<AgentToolCall> _decodeFunctionTagCall(
+    String name,
+    String body,
+    List<String> errors,
+  ) {
+    final cleanBody = body
+        .replaceFirst(_fenceOpenRe, '')
+        .replaceFirst(_fenceCloseRe, '')
+        .trim();
+    if (cleanBody.isEmpty) {
+      return [AgentToolCall(toolName: name, parameters: const {})];
+    }
+    try {
+      final decoded = jsonDecode(cleanBody);
+      if (decoded is Map) {
+        return [
+          AgentToolCall(
+            toolName: name,
+            parameters: decoded.cast<String, dynamic>(),
+          )
+        ];
+      }
+    } catch (_) {
+      final extracted = _extractFirstJsonObject(cleanBody);
+      if (extracted != null) {
+        try {
+          final decoded = jsonDecode(extracted);
+          if (decoded is Map) {
+            return [
+              AgentToolCall(
+                toolName: name,
+                parameters: decoded.cast<String, dynamic>(),
+              )
+            ];
+          }
+        } catch (_) {}
+      }
+      final xmlParams = _extractXmlTags(cleanBody);
+      return [AgentToolCall(toolName: name, parameters: xmlParams)];
+    }
+    return [AgentToolCall(toolName: name, parameters: const {})];
+  }
+
+  static AgentToolCall? _parseXmlToolCall(String text) {
+    final nameMatch = RegExp(
+      r'<(?:name|tool)>([a-zA-Z0-9_\-]+)<\/(?:name|tool)>',
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (nameMatch == null) return null;
+    final toolName = nameMatch.group(1)!.trim();
+
+    final paramsMatch = RegExp(
+      r'<(?:parameters|arguments|args)>([\s\S]*?)<\/(?:parameters|arguments|args)>',
+      caseSensitive: false,
+    ).firstMatch(text);
+
+    Map<String, dynamic> params = {};
+    if (paramsMatch != null) {
+      final pText = paramsMatch.group(1)!.trim();
+      try {
+        final decoded = jsonDecode(pText);
+        if (decoded is Map) {
+          params = decoded.cast<String, dynamic>();
+        }
+      } catch (_) {
+        params = _extractXmlTags(pText);
+      }
+    } else {
+      params = _extractXmlTags(text, ignoreTags: {'name', 'tool'});
+    }
+
+    return AgentToolCall(toolName: toolName, parameters: params);
+  }
+
+  static Map<String, dynamic> _extractXmlTags(
+    String text, {
+    Set<String> ignoreTags = const {},
+  }) {
+    final result = <String, dynamic>{};
+    final tagRe = RegExp(r'<([a-zA-Z0-9_\-]+)>([\s\S]*?)<\/\1>');
+    for (final match in tagRe.allMatches(text)) {
+      final tagName = match.group(1)!.trim();
+      if (ignoreTags.contains(tagName.toLowerCase())) continue;
+      final val = match.group(2)!.trim();
+      final numVal = num.tryParse(val);
+      if (numVal != null) {
+        result[tagName] = numVal is int ? numVal.toInt() : numVal;
+      } else if (val.toLowerCase() == 'true') {
+        result[tagName] = true;
+      } else if (val.toLowerCase() == 'false') {
+        result[tagName] = false;
+      } else {
+        result[tagName] = val;
+      }
+    }
+    return result;
   }
 
   static String _short(String text) =>

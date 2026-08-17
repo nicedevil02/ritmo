@@ -33,4 +33,49 @@ void main() {
       expect(cleaned, 'برنامه شما تنظیم شد. روز خوبی داشته باشید!');
     });
   });
+
+  group('AgentToolCallParser Multi-Format & XML Fallback Tests (T23)', () {
+    test('parses standard JSON in tool_call tag', () {
+      const raw = '<tool_call>{"tool": "get_routines_overview", "parameters": {"days": 7}}</tool_call>';
+      final scan = AgentToolCallParser.scan(raw);
+      expect(scan.hasCalls, isTrue);
+      expect(scan.calls.length, 1);
+      expect(scan.calls.first.toolName, 'get_routines_overview');
+      expect(scan.calls.first.parameters['days'], 7);
+    });
+
+    test('parses XML-style elements inside tool_call tag', () {
+      const raw = '<tool_call><name>get_sports_history</name><days>14</days></tool_call>';
+      final scan = AgentToolCallParser.scan(raw);
+      expect(scan.hasCalls, isTrue);
+      expect(scan.calls.length, 1);
+      expect(scan.calls.first.toolName, 'get_sports_history');
+      expect(scan.calls.first.parameters['days'], 14);
+    });
+
+    test('parses function tag format <function=name>...', () {
+      const raw = '<function=get_study_progress_summary>{"subject": "Math"}</function>';
+      final scan = AgentToolCallParser.scan(raw);
+      expect(scan.hasCalls, isTrue);
+      expect(scan.calls.length, 1);
+      expect(scan.calls.first.toolName, 'get_study_progress_summary');
+      expect(scan.calls.first.parameters['subject'], 'Math');
+    });
+
+    test('parses markdown code block with tool JSON', () {
+      const raw = '```json\n{"tool": "get_worship_practices", "parameters": {}}\n```';
+      final scan = AgentToolCallParser.scan(raw);
+      expect(scan.hasCalls, isTrue);
+      expect(scan.calls.length, 1);
+      expect(scan.calls.first.toolName, 'get_worship_practices');
+    });
+
+    test('parses bare JSON tool call without tags', () {
+      const raw = '{"tool": "get_sleep_diagnostics", "parameters": {"days": 30}}';
+      final scan = AgentToolCallParser.scan(raw);
+      expect(scan.hasCalls, isTrue);
+      expect(scan.calls.first.toolName, 'get_sleep_diagnostics');
+      expect(scan.calls.first.parameters['days'], 30);
+    });
+  });
 }

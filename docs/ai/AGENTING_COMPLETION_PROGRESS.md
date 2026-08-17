@@ -45,8 +45,8 @@
 | T39 | تلمتری هر ابزار | DONE | 8ca2d61 | افزودن سیستم تلمتری زمان اجرا، نرخ موفقیت و تعداد فراخوانی به AgentToolRegistry |
 | T40 | شفافیت «چه کاری کردم» | DONE | 21d7253 | افزودن امکان استخراج و نمایش خلاصه شفاف اقدامات (actionsSummaryFa) در AgentCompletedEvent |
 | T41 | سخت‌سازی گارد تزریق پرامپت | DONE | fa3a6d0 | سخت‌سازی تشخیص عبارات تزریق پرامپت تودرتو و خنثی‌سازی تگ‌های سیستمی در AgentPolicyGate و AgentToolProtocol |
-| T42 | پاکسازی زبانی + تست ترمینولوژی | DOING | | |
-| T43 | قابل تنظیم کردن سقف نوشتن | TODO | | |
+| T42 | پاکسازی زبانی + تست ترمینولوژی | DONE | 2a56528 | پاکسازی کامل غلط‌های املایی فارسی در سرتاسر ماژول‌های AI و ایجاد تست خودکار جامع agent_terminology_test |
+| T43 | قابل تنظیم کردن سقف نوشتن | DOING | | |
 | T44 | پاکسازی کوئری‌های ابزارها | TODO | | |
 | T45 | test/agent/agent_tool_call_parser_test.dart | TODO | | |
 | T46 | test/agent/agent_tool_validator_test.dart | TODO | | |

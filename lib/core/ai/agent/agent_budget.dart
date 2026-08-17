@@ -24,6 +24,7 @@ class AgentBudget {
     this.maxTurns = 4,
     this.maxToolCalls = 8,
     this.maxToolCallsPerTurn = 3,
+    this.maxWrites = 3,
     this.maxTranscriptChars = 24000,
     this.wallClock = const Duration(seconds: 100),
   });
@@ -36,6 +37,9 @@ class AgentBudget {
 
   /// حداکثر فراخوانی ابزار در یک نوبت
   final int maxToolCallsPerTurn;
+
+  /// حداکثر تعداد تغییر واقعی و نوشتن در دیتابیس در کل اجرا
+  final int maxWrites;
 
   /// سقف کاراکتر مکالمه پیش از کوتاه‌سازی
   final int maxTranscriptChars;

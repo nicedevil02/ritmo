@@ -282,14 +282,16 @@ class AgentPolicyGate {
     required AgentTool tool,
     required Map<String, dynamic> args,
     required int writesUsedThisRun,
+    int? maxWrites,
   }) {
     if (tool.policy == ToolPolicy.readOnly) {
       return AgentGateDecision.allow(isWrite: false);
     }
 
-    if (writesUsedThisRun >= maxWritesPerRun) {
+    final limit = maxWrites ?? maxWritesPerRun;
+    if (writesUsedThisRun >= limit) {
       return AgentGateDecision.deny(
-          'در یک پیام حداکثر $maxWritesPerRun تغییر مجاز است؛ این مورد اجرا نشد.');
+          'در یک پیام حداکثر $limit تغییر مجاز است؛ این مورد اجرا نشد.');
     }
 
     final suspicious = _suspiciousArgKey(args);

@@ -354,6 +354,7 @@ class AgentLoopRunner {
           tool: tool,
           args: validatedArgs,
           writesUsedThisRun: writesUsed,
+          maxWrites: budget.maxWrites,
         );
         if (decision.isDenied) {
           final reason = decision.reasonFa ?? 'اجرای این ابزار مجاز نبود.';

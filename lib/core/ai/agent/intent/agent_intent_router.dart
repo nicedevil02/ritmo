@@ -252,7 +252,7 @@ class AgentIntentRouter {
       'عبادت',
       'زیارت',
     ])) {
-      toolsToRun['get_worship_routines'] = <String, dynamic>{};
+      toolsToRun['get_worship_practices'] = <String, dynamic>{};
     }
 
     if (toolsToRun.isEmpty) return PrefetchResult.empty;

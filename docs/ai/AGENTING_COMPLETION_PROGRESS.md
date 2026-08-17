@@ -16,8 +16,8 @@
 | T10 | بریدن نادرست متن نهایی | DONE | c5588a7 | حفظ پیشوند و پسوند هنگام تمیزسازی tool_call برای پاسخ نهایی و افزودن تست‌های جامع |
 | T11 | تقارن fallback بین چت اصلی و شیت | DONE | dc2d43d | افزودن مسیر fallback گیت‌وی به شیت دستیار در صورت خطای ایجنت با پاسخ خالی |
 | T12 | حذف catch (_) {} و بررسی جدول assistant_plans | DONE | 114c012 | حذف catch خالی، لاگ دقیق خطاها و همگام‌سازی ساختار جدول assistant_plans |
-| T13 | وصل کردن AgentIntentRouter و حذف AgentIntentPrefetcher | DOING | | |
-| T14 | اصلاح نام ابزار عبادی در همه‌جا | TODO | | |
+| T13 | وصل کردن AgentIntentRouter و حذف AgentIntentPrefetcher | DONE | 3bff700 | اتصال AgentIntentRouter به حلقه، حذف کامل agent_intent_prefetcher و افزودن تست‌های واحد |
+| T14 | اصلاح نام ابزار عبادی در همه‌جا | DOING | | |
 | T15 | یکی کردن کش prefetch و ثبت در بودجه | TODO | | |
 | T16 | تست یکپارچگی نقشه‌ی اسکوپ (نگهبان CI) | TODO | | |
 | T17 | اسکیمای واقعی JSON Schema | TODO | | |

@@ -89,7 +89,8 @@ class AgentToolScope {
 
     // مطالعه و عبادت
     'get_study_progress_summary': ToolScopeRequirement.read(DataDomain.konkur),
-    'get_worship_routines': ToolScopeRequirement.read(DataDomain.worship),
+    'get_worship_practices': ToolScopeRequirement.read(DataDomain.worship),
+    'create_worship_practice': ToolScopeRequirement.read(DataDomain.worship),
 
     // سیستم
     'navigate_to_app_screen': ToolScopeRequirement.command('app.openPage'),

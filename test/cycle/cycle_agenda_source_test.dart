@@ -73,7 +73,7 @@ void main() {
         dateStr: '2026-08-03',
         isToday: false,
         prayerTimes: const {},
-        options: const AgendaQueryOptions.all(),
+        options: const AgendaQueryOptions(),
       );
 
       final items = source.itemsForDate(ctx);
@@ -113,7 +113,7 @@ void main() {
         dateStr: '2026-08-18',
         isToday: false,
         prayerTimes: const {},
-        options: const AgendaQueryOptions.all(),
+        options: const AgendaQueryOptions(),
       );
 
       final items = populatedSource.itemsForDate(ctx);
@@ -149,7 +149,7 @@ void main() {
         dateStr: '2026-08-20',
         isToday: false,
         prayerTimes: const {},
-        options: const AgendaQueryOptions.all(),
+        options: const AgendaQueryOptions(),
       );
 
       final items = source.itemsForDate(ctx);

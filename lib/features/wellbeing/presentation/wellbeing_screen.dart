@@ -1738,8 +1738,18 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 ),
               ),
               ListTile(
+                leading: Icon(Icons.sentiment_satisfied_alt, color: colors.accent),
+                title: Text(
+                  day.moodScore != null ? 'حال: ${RitmoNumber.fa(day.moodScore!.toStringAsFixed(1))} از ۵' : 'حال ثبت نشده است',
+                  style: RitmoTextStyles.body(colors.textPrimary),
+                ),
+              ),
+              ListTile(
                 leading: Icon(Icons.edit_note, color: colors.primary),
-                title: Text(day.hasReflection ? 'بازتاب ثبت شده است ✅' : 'بازتاب ثبت نشده است', style: const TextStyle()),
+                title: Text(
+                  day.hasReflection ? 'بازتاب ثبت شده است ✅' : 'بازتاب ثبت نشده است',
+                  style: RitmoTextStyles.body(colors.textPrimary),
+                ),
                 trailing: TextButton(
                   onPressed: () {
                     Navigator.pop(ctx);
@@ -1749,7 +1759,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       onSaved: _requestReload,
                     );
                   },
-                  child: const Text('ثبت بازتاب', style: TextStyle()),
+                  child: Text('ثبت بازتاب', style: RitmoTextStyles.label(colors.primary)),
                 ),
               ),
             ],

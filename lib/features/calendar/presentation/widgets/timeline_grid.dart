@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -169,7 +170,7 @@ class _TimelineGridState extends State<TimelineGrid> {
                 TimelineLayoutItem? draggingLayoutItem;
                 final effectiveDragItemId = widget.previewDraggingItemId ?? _activeDragItemId;
                 final effectiveDragStartMinutes = widget.previewStartMinutes ?? _dragStartMinutes;
-                final effectiveDragDurationMinutes = widget.previewDurationMinutes ?? 30;
+                final effectiveDragDurationMinutes = widget.previewDurationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
 
                 if (effectiveDragItemId != null) {
                   for (final item in layoutItems) {

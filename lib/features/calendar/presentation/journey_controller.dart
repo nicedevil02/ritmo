@@ -226,7 +226,7 @@ class JourneyController extends ChangeNotifier {
           routineId: item.sourceId,
           dateStr: item.dateStr,
           resultType: OccurrenceResultType.full,
-          durationMinutes: item.durationMinutes ?? 30,
+          durationMinutes: item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes,
         ));
       } else {
         await _actionHandler.toggleAgendaItem(item: item, isDone: true);
@@ -325,7 +325,7 @@ class JourneyController extends ChangeNotifier {
     _isExecutingAction = true;
     notifyListeners();
 
-    final oldTimeOfDay = item.timeOfDay ?? '08:00';
+    final oldTimeOfDay = item.timeOfDay ?? CalendarDefaults.fallbackTimeOfDay;
     try {
       final command = _MoveItemCommand(
         actionHandler: _actionHandler,
@@ -627,7 +627,7 @@ class JourneyController extends ChangeNotifier {
     _isDragging = false;
     _isResizing = true;
     _previewTimeOfDay = item.timeOfDay;
-    _previewDurationMinutes = item.durationMinutes ?? 30;
+    _previewDurationMinutes = item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
     notifyListeners();
   }
 

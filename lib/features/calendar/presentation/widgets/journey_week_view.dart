@@ -3,6 +3,8 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
 import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -218,9 +220,8 @@ class JourneyWeekView extends StatelessWidget {
 
   Widget _buildMiniItemBlock(BuildContext context, AgendaItem item) {
     final colors = context.colors;
-    final parts = item.timeOfDay!.split(':');
-    final startM = (int.parse(parts[0]) * 60) + int.parse(parts[1]);
-    final durM = item.durationMinutes ?? 30;
+    final startM = TimeOfDayMinutes.tryParse(item.timeOfDay) ?? 0;
+    final durM = item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
 
     final top = startM * miniPxPerMin;
     final height = (durM * miniPxPerMin).clamp(4.0, 1440 * miniPxPerMin);

@@ -59,7 +59,7 @@ class AgentTranscript {
     _messages.add(<String, String>{'role': role, 'content': text});
   }
 
-  /// کپی قابل ارسال به گیت‌وی (همان قالب List<Map<String, String>>)
+  /// کپی قابل ارسال به گیت‌وی (همان قالب `List<Map<String, String>>`)
   List<Map<String, String>> toMessages() => _messages
       .map((message) => Map<String, String>.from(message))
       .toList(growable: false);
@@ -71,13 +71,12 @@ class AgentTranscript {
         (sum, message) => sum + (message['content']?.length ?? 0),
       );
 
-  /// اگر مکالمه از سقف کاراکتر عبور کرد، قدیمی‌ترین پیام‌های میانی حذف
-  /// می‌شوند. پیام سیستمی (اول) و [keepTail] پیام آخر هرگز حذف نمی‌شوند، چون
-  /// نتیجهٔ آخرین ابزار و خواستهٔ کاربر حیاتی‌ترین بخش پرامپت است.
+  /// اگر مکالمه از سقف کاراکتر عبور کرد، پیام‌های میانی حذف می‌شوند.
+  /// پیام سیستمی (ایندکس ۰) و سؤال اولیه کاربر (ایندکس ۱) غیرقابل‌حذف (pinned) هستند.
   bool trimToBudget(int maxChars, {int keepTail = 4}) {
     var trimmed = false;
-    while (charCount > maxChars && _messages.length > keepTail + 1) {
-      _messages.removeAt(1);
+    while (charCount > maxChars && _messages.length > (2 + keepTail)) {
+      _messages.removeAt(2);
       trimmed = true;
     }
     return trimmed;

@@ -1,8 +1,10 @@
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
+import 'package:ritmo/core/ai/agent/agent_tool_scope.dart';
 import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/commands/command_plan.dart';
+import 'package:ritmo/core/domain/commands/ritmo_command_bus.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 /// نام فارسی هر دامنهٔ اجندا برای گزارش به مدل.
@@ -225,5 +227,99 @@ class MaterializeDayPlanTool extends KernelCommandTool {
       return 'برای ${AgentDateResolver.label(date)} هیچ تخصیص برنامه‌ریزی‌شده‌ای وجود نداشت، پس چیزی به کارهای روز اضافه نشد.';
     }
     return '$count تخصیص برنامه‌ریزی‌شدهٔ ${AgentDateResolver.label(date)} به کار واقعی تبدیل شد.';
+  }
+}
+
+/// ابزار شبیه‌سازی و پیش‌نمایش طرح پیشنهادی بدون ذخیره در دیتابیس (T33)
+class SimulatePlanTool extends AgentTool {
+  const SimulatePlanTool()
+      : super(
+          name: 'simulate_plan',
+          categoryFa: 'برنامه‌ریزی روز',
+          titleFa: 'شبیه‌سازی و پیش‌نمایش طرح پیشنهادی',
+          descriptionFa:
+              'مجموعه‌ای از گام‌ها/فرمان‌های پیشنهادی را بدون دست زدن به دیتابیس شبیه‌سازی می‌کند تا تداخل‌ها، تغییرات و موانع اجرای آن مشخص شود (Dry Run).',
+          policy: ToolPolicy.readOnly,
+          parameters: const [
+            ToolParameter(
+              name: 'steps',
+              descriptionFa:
+                  'لیست مراحل پیشنهادی؛ هر مرحله شامل commandId و payload است',
+              type: 'list',
+              isRequired: true,
+            ),
+          ],
+        );
+
+  @override
+  Future<AgentToolResult> execute(Map<String, dynamic> args) async {
+    final rawSteps = args['steps'];
+    if (rawSteps is! List || rawSteps.isEmpty) {
+      return AgentToolResult.failure(
+        toolName: name,
+        errorMessage: 'لیست مراحل پیشنهادی (steps) الزامی است و نباید خالی باشد.',
+      );
+    }
+
+    final planSteps = <PlanStep>[];
+    for (final s in rawSteps) {
+      if (s is Map) {
+        final commandId = s['commandId']?.toString() ?? '';
+        final payloadRaw = s['payload'];
+        final payload = payloadRaw is Map
+            ? payloadRaw.cast<String, dynamic>()
+            : <String, dynamic>{};
+        if (commandId.isNotEmpty) {
+          planSteps.add(PlanStep(
+            commandId: commandId,
+            payload: payload,
+            note: 'شبیه‌سازی توسط ایجنت',
+          ));
+        }
+      }
+    }
+
+    if (planSteps.isEmpty) {
+      return AgentToolResult.failure(
+        toolName: name,
+        errorMessage: 'هیچ مرحلهٔ معتبری با commandId یافت نشد.',
+      );
+    }
+
+    final plan = CommandPlan(
+      id: 'sim_${DateTime.now().microsecondsSinceEpoch}',
+      titleFa: 'پیش‌نمایش برنامه پیشنهادی',
+      steps: planSteps,
+    );
+
+    try {
+      final preview = await RitmoCommandBus.instance.preview(
+        plan,
+        personaId: AgentToolScope.instance.activePersonaId,
+      );
+
+      final diffSummaries = preview.diffs.map((d) => d.toJson()).toList();
+      final canExecute = preview.blockers.isEmpty;
+      final summaryFa = canExecute
+          ? 'شبیه‌سازی با موفقیت انجام شد: ${preview.diffs.length} تغییر بدون مانع پیش‌بینی شد.'
+          : 'شبیه‌سازی دارای موانع اجرایی است: ${preview.blockers.join('، ')}';
+
+      return AgentToolResult.success(
+        toolName: name,
+        data: {
+          'canExecute': canExecute,
+          'blockers': preview.blockers,
+          'needsBiometric': preview.needsBiometric,
+          'diffs': diffSummaries,
+        },
+        summaryFa: summaryFa,
+      );
+    } catch (e, st) {
+      RitmoLog.error('SimulatePlanTool', 'preview failed', e, st);
+      return AgentToolResult.failure(
+        toolName: name,
+        errorMessage: 'خطا در اجرای شبیه‌سازی طرح: $e',
+      );
+    }
   }
 }

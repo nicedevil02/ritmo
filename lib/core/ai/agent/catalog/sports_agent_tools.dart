@@ -1,6 +1,7 @@
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
 import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/commands/command_plan.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 /// تشخیص تاریخ از مقداری که فرمتش تأیید نشده است.
@@ -205,13 +206,15 @@ class GetSportsPlanTool extends AgentTool {
 /// هنوز مستقیم می‌نویسد (بدون عبور از RitmoCommandBus)، پس نه audit دارد و نه undo.
 /// انتقالش به فرمان‌های ورزش به فاز بعد موکول شد؛ ولی دروغ گفتنش همین الان
 /// متوقف شد.
-class LogSportsSessionTool extends AgentTool {
+/// ۴. ابزار ثبت فعالیت ورزشی از طریق RitmoCommandBus
+class LogSportsSessionTool extends KernelCommandTool {
   const LogSportsSessionTool()
       : super(
           name: 'log_sports_session',
           categoryFa: 'ورزش و تحرک',
           titleFa: 'ثبت فعالیت ورزشی',
-          descriptionFa: 'یک جلسهٔ ورزشی انجام‌شده را در سوابق کاربر ثبت می‌کند.',
+          descriptionFa: 'یک جلسهٔ ورزشی یا فعالیت حرکتی انجام‌شده را در سوابق کاربر ثبت می‌کند.',
+          commandId: 'sports.log_movement',
           policy: ToolPolicy.actionDirect,
           parameters: const [
             ToolParameter(
@@ -236,76 +239,31 @@ class LogSportsSessionTool extends AgentTool {
         );
 
   @override
-  Future<AgentToolResult> execute(Map<String, dynamic> args) async {
+  Future<List<PlanStep>> buildSteps(Map<String, dynamic> args) async {
     final title = KernelCommandTool.optionalString(args['title']);
-    if (title == null) {
-      return AgentToolResult.failure(
-        toolName: name,
-        errorMessage: 'عنوان تمرین (title) الزامی است و چیزی ثبت نشد.',
-      );
+    if (title == null || title.isEmpty) {
+      throw const ToolArgumentError('عنوان تمرین (title) الزامی است و چیزی ثبت نشد.');
     }
 
     final duration = KernelCommandTool.clampedInt(args['durationMinutes'], 30, 1, 600);
-    final type = KernelCommandTool.optionalString(args['type']) ?? 'عمومی';
+    final type = KernelCommandTool.optionalString(args['type']) ?? 'GENERAL';
 
-    final db = await DatabaseHelper.instance.database;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final id = 'sports_$now';
-
-    String? primaryError;
-    try {
-      await db.insert('sports_sessions', {
-        'id': id,
-        'title': title,
-        'durationMinutes': duration,
-        'type': type,
-        'status': 'completed',
-        'createdAt': now,
-        'completedAt': now,
-      });
-      return AgentToolResult.success(
-        toolName: name,
-        data: {
-          'id': id,
-          'title': title,
+    return [
+      PlanStep(
+        commandId: commandId,
+        payload: {
+          'kindCode': type.toUpperCase(),
           'durationMinutes': duration,
-          'type': type,
-          'table': 'sports_sessions',
+          'note': title,
         },
-        summaryFa: 'فعالیت ورزشی «$title» به مدت $duration دقیقه ثبت شد.',
-      );
-    } catch (e, st) {
-      RitmoLog.error('LogSportsSessionTool', 'insert into sports_sessions failed', e, st);
-      primaryError = e.toString();
-    }
+      ),
+    ];
+  }
 
-    // منبع دوم. اگر این هم شکست بخورد، دیگر سکوت نمی‌کنیم.
-    try {
-      await db.insert('movement_logs', {
-        'id': id,
-        'activityName': title,
-        'durationMinutes': duration,
-        'timestamp': now,
-      });
-      return AgentToolResult.success(
-        toolName: name,
-        data: {
-          'id': id,
-          'title': title,
-          'durationMinutes': duration,
-          'table': 'movement_logs',
-          'primaryTableError': primaryError,
-        },
-        summaryFa:
-            'فعالیت ورزشی «$title» به مدت $duration دقیقه در دفتر تحرک ثبت شد (جدول اصلی جلسات قابل نوشتن نبود).',
-      );
-    } catch (e, st) {
-      RitmoLog.error('LogSportsSessionTool', 'insert into movement_logs failed', e, st);
-      return AgentToolResult.failure(
-        toolName: name,
-        errorMessage:
-            'ثبت فعالیت ورزشی انجام نشد و هیچ ردیفی ذخیره نشد. به کاربر بگو ثبت نشد. خطای جدول اول: $primaryError | خطای جدول دوم: $e',
-      );
-    }
+  @override
+  String buildSummaryFa(Map<String, dynamic> args, Map<String, dynamic> output) {
+    final title = args['title'] ?? 'تمرین';
+    final duration = args['durationMinutes'] ?? 30;
+    return 'فعالیت ورزشی «$title» به مدت $duration دقیقه با موفقیت ثبت شد.';
   }
 }

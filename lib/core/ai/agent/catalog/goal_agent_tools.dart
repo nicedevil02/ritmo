@@ -1,5 +1,7 @@
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
+import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/commands/command_plan.dart';
 
 /// ۱. ابزار دریافت اهداف فعال و پیشرفت
 class GetActiveGoalsSummaryTool extends AgentTool {
@@ -50,13 +52,14 @@ class GetActiveGoalsSummaryTool extends AgentTool {
 }
 
 /// ۲. ابزار ایجاد هدف جدید
-class CreateGoalWithMilestonesTool extends AgentTool {
+class CreateGoalWithMilestonesTool extends KernelCommandTool {
   const CreateGoalWithMilestonesTool()
       : super(
           name: 'create_goal_with_milestones',
           categoryFa: 'اهداف و گام‌ها',
           titleFa: 'ایجاد هدف جدید با گام‌ها',
           descriptionFa: 'یک هدف جدید به همراه گام‌های عملیاتی برای کاربر تعریف می‌کند.',
+          commandId: 'goal.create',
           policy: ToolPolicy.actionDirect,
           parameters: const [
             ToolParameter(
@@ -75,26 +78,25 @@ class CreateGoalWithMilestonesTool extends AgentTool {
         );
 
   @override
-  Future<AgentToolResult> execute(Map<String, dynamic> args) async {
-    final title = args['title']?.toString() ?? 'هدف جدید';
-    final category = args['category']?.toString() ?? 'عمومی';
+  Future<List<PlanStep>> buildSteps(Map<String, dynamic> args) async {
+    final title = KernelCommandTool.optionalString(args['title']);
+    if (title == null || title.isEmpty) {
+      throw const ToolArgumentError('عنوان هدف (title) الزامی است.');
+    }
+    return [
+      PlanStep(
+        commandId: commandId,
+        payload: {
+          'title': title,
+          'goalType': 'HABIT',
+        },
+      ),
+    ];
+  }
 
-    final db = await DatabaseHelper.instance.database;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final id = 'goal_${now}';
-
-    await db.insert('goals', {
-      'id': id,
-      'title': title,
-      'category': category,
-      'status': 'active',
-      'createdAt': now,
-    });
-
-    return AgentToolResult.success(
-      toolName: name,
-      data: {'id': id, 'title': title, 'category': category},
-      summaryFa: 'هدف جدید «$title» با موفقیت در سیستم ایجاد شد.',
-    );
+  @override
+  String buildSummaryFa(Map<String, dynamic> args, Map<String, dynamic> output) {
+    final title = args['title'] ?? 'هدف جدید';
+    return 'هدف جدید «$title» با موفقیت در سیستم ایجاد شد.';
   }
 }

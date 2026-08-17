@@ -209,7 +209,7 @@ class GetEnergyTrendsTool extends AgentTool {
                   'loggedAt': r['loggedAt'],
                 })
             .toList(),
-        if (moodError != null) 'moodError': moodError,
+        'moodError': ?moodError,
       },
       summaryFa: summary.toString(),
     );
@@ -322,7 +322,7 @@ class LogEnergyMoodLevelTool extends KernelCommandTool {
         commandId: commandId,
         payload: <String, dynamic>{
           'energyLevel': level,
-          if (note != null) 'note': note,
+          'note': ?note,
         },
         note: 'ثبت‌شده در گفت‌وگو با دستیار',
       ),

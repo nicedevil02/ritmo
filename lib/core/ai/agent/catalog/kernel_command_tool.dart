@@ -43,22 +43,15 @@ class ToolArgumentError implements Exception {
 ///    رویدادی fire نمی‌کند، تقویم بدون این کار می‌توانست کهنه بماند.)
 abstract class KernelCommandTool extends AgentTool {
   const KernelCommandTool({
-    required String name,
-    required String categoryFa,
-    required String titleFa,
-    required String descriptionFa,
+    required super.name,
+    required super.categoryFa,
+    required super.titleFa,
+    required super.descriptionFa,
     required this.commandId,
-    ToolPolicy policy = ToolPolicy.actionDirect,
-    List<ToolParameter> parameters = const [],
+    super.policy = ToolPolicy.actionDirect,
+    super.parameters = const [],
     this.personaId = 'global',
-  }) : super(
-          name: name,
-          categoryFa: categoryFa,
-          titleFa: titleFa,
-          descriptionFa: descriptionFa,
-          policy: policy,
-          parameters: parameters,
-        );
+  });
 
   /// شناسهٔ فرمان اصلی روی باس (مثل `routine.create`).
   final String commandId;

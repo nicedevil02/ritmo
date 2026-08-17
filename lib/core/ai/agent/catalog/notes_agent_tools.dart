@@ -1,5 +1,7 @@
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
+import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/commands/command_plan.dart';
 
 /// ۱. ابزار جستجوی متنی در یادداشت‌ها
 class SearchUserNotesTool extends AgentTool {
@@ -48,13 +50,14 @@ class SearchUserNotesTool extends AgentTool {
 }
 
 /// ۲. ابزار ایجاد یادداشت سریع
-class CreateQuickNoteTool extends AgentTool {
+class CreateQuickNoteTool extends KernelCommandTool {
   const CreateQuickNoteTool()
       : super(
           name: 'create_quick_note',
           categoryFa: 'یادداشت‌ها و تجارب',
           titleFa: 'ثبت یادداشت سریع',
           descriptionFa: 'یک یادداشت جدید در دفترچه یادداشت‌های کاربر ذخیره می‌کند.',
+          commandId: 'note.create',
           policy: ToolPolicy.actionDirect,
           parameters: const [
             ToolParameter(
@@ -78,28 +81,33 @@ class CreateQuickNoteTool extends AgentTool {
         );
 
   @override
-  Future<AgentToolResult> execute(Map<String, dynamic> args) async {
-    final title = args['title']?.toString() ?? 'یادداشت جدید';
-    final content = args['content']?.toString() ?? '';
-    final tags = args['tags']?.toString() ?? '';
+  Future<List<PlanStep>> buildSteps(Map<String, dynamic> args) async {
+    final title = KernelCommandTool.optionalString(args['title']);
+    final content = KernelCommandTool.optionalString(args['content']);
+    if (content == null || content.isEmpty) {
+      throw const ToolArgumentError('متن یادداشت (content) الزامی است.');
+    }
+    final tagsStr = KernelCommandTool.optionalString(args['tags']);
+    final tagsList = tagsStr != null && tagsStr.isNotEmpty
+        ? tagsStr.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList()
+        : <String>[];
 
-    final db = await DatabaseHelper.instance.database;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final id = 'note_${now}';
+    return [
+      PlanStep(
+        commandId: commandId,
+        payload: {
+          'title': title ?? 'یادداشت جدید',
+          'body': content,
+          'kind': 'NOTE',
+          if (tagsList.isNotEmpty) 'tags': tagsList,
+        },
+      ),
+    ];
+  }
 
-    await db.insert('notes', {
-      'id': id,
-      'title': title,
-      'content': content,
-      'tags': tags,
-      'createdAt': now,
-      'updatedAt': now,
-    });
-
-    return AgentToolResult.success(
-      toolName: name,
-      data: {'id': id, 'title': title},
-      summaryFa: 'یادداشت «$title» با موفقیت در سیستم ذخیره گردید.',
-    );
+  @override
+  String buildSummaryFa(Map<String, dynamic> args, Map<String, dynamic> output) {
+    final title = args['title'] ?? 'یادداشت جدید';
+    return 'یادداشت «$title» با موفقیت در سیستم ذخیره گردید.';
   }
 }

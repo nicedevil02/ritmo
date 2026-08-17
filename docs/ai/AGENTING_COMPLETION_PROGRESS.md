@@ -29,8 +29,8 @@
 | T23 | نرمال‌ساز واحد فراخوانی ابزار + fallback XML | DONE | 7cb7a0f | پشتیبانی از پارس ساختارهای XML، function tags، کدبلاک‌های مارک‌داون و JSON خام |
 | T24 | فشرده‌سازی پرامپت ابزار | DONE | 7d24497 | پیاده‌سازی toCompactPromptDescription و compactPromptFor جهت کاهش مصرف توکن |
 | T25 | حذف مسیر موازی <actions> از شیت | DONE | 8866523 | حذف اجرای موازی اکشن‌های متنی در مسیر AgentCompletedEvent شیت دستیار |
-| T26 | تولید خودکار ابزار از رجیستری فرمان‌ها | DOING | | |
-| T27 | حذف هر ابزاری که SQL خام می‌نویسد | TODO | | |
+| T26 | تولید خودکار ابزار از رجیستری فرمان‌ها | DONE | dcd6573 | پیاده‌سازی CommandToolBridge برای ساخت خودکار AgentTool از روی هر RitmoCommand |
+| T27 | حذف هر ابزاری که SQL خام می‌نویسد | DOING | | |
 | T28 | Undo یکپارچه روی AgentJournal | TODO | | |
 | T29 | یک broker برای تایید و پرسش | TODO | | |
 | T30 | AskUserTool که واقعاً حلقه را متوقف می‌کند | TODO | | |

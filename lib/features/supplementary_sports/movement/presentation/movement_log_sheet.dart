@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/core/analytics/movement_load_calculator.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -16,6 +15,8 @@ import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kin
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/movement_datetime_field.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/movement_kind_selector.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/movement_metric_field.dart';
+
+// ─── تابع عمومی ─────────────────────────────────────────────────────────────────────────
 
 Future<void> showMovementLogSheet(
   BuildContext context, {
@@ -39,6 +40,8 @@ Future<void> showMovementLogSheet(
   );
 }
 
+// ─── Widget ────────────────────────────────────────────────────────────────────────────
+
 class MovementLogSheet extends StatefulWidget {
   const MovementLogSheet({
     super.key,
@@ -60,72 +63,57 @@ class MovementLogSheet extends StatefulWidget {
 }
 
 class _MovementLogSheetState extends State<MovementLogSheet> {
+  // ── انتخاب‌ها
   MovementKind? _selectedKind;
-  bool _kindSelectorExpanded = true;
+  DateTime _selectedDateTime = DateTime.now();
 
-  late DateTime _selectedDateTime;
-
-  /// null یعنی کاربر هنوز مدت زمان را وارد نکرده؛ بدون آن ذخیره ممکن نیست.
-  int? _durationMinutes;
-
+  // ── معیارها — همه null شروع می‌شوند («واردنشده»)
+  int? _durationMinutes; // null = وارد نشده
+  double? _primaryMetricValue; // null = وارد نشده
+  double? _secondaryMetricValue; // null = وارد نشده
   MovementIntensity _intensity = MovementIntensity.medium;
-  String? _feeling;
+  String? _feeling; // null = انتخاب نشده
 
-  // مقادیر اختیاری؛ null یعنی «وارد نشده» و اصلاً ذخیره نمی‌شود.
-  double? _distanceKm;
-  double? _laps;
-  double? _elevationMeters;
-  double? _steps;
-
+  // ── فیلدهای متنی
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _venueController = TextEditingController();
   final TextEditingController _companionsController = TextEditingController();
-
-  bool _isSaving = false;
-  bool _allowPop = false;
   bool _textDirty = false;
 
+  // ── وضعیت
+  bool _isSaving = false;
   double _userWeightKg = 70.0;
-
-  /// هدف واقعی هفته از پروفایل کاربر؛ null یعنی هنوز خوانده نشده یا خطا داشته.
-  double? _weeklyTarget;
-  double _weeklyAchieved = 0.0;
+  MovementBudgetSnapshot? _budgetSnapshot;
 
   static const List<String> _feelings = [
-    '🔥 عالی',
-    '👍 خوب',
-    '😓 خسته',
-    '💪 سخت بود',
+    'شعله‌ور عالی فوق‌العاده',
+    'خوب',
+    'خسته',
+    'سخت بود',
   ];
 
   @override
   void initState() {
     super.initState();
     _selectedKind = widget.presetKind;
-    _kindSelectorExpanded = widget.presetKind == null;
-    _durationMinutes = widget.presetDurationMinutes;
-
-    // اگر تاریخِ از پیش‌تعیین‌شده ساعت ندارد (روزِ برنامه)، ساعت فعلی را روی آن می‌گذاریم
-    // تا کاربر با ۰۰:۰۰ روبه‌رو نشود.
-    final preset = widget.presetDate;
-    final now = DateTime.now();
-    if (preset == null) {
-      _selectedDateTime = now;
-    } else if (preset.hour == 0 && preset.minute == 0) {
-      _selectedDateTime = DateTime(preset.year, preset.month, preset.day, now.hour, now.minute);
-    } else {
-      _selectedDateTime = preset;
+    _selectedDateTime = widget.presetDate ?? DateTime.now();
+    if (widget.presetDurationMinutes != null) {
+      _durationMinutes = widget.presetDurationMinutes;
     }
-
     if (widget.presetVenue != null) {
       _venueController.text = widget.presetVenue!;
     }
-
-    _noteController.addListener(_markTextDirty);
-    _venueController.addListener(_markTextDirty);
-    _companionsController.addListener(_markTextDirty);
-
+    _setupDirtyListeners();
     _loadInitialData();
+  }
+
+  void _setupDirtyListeners() {
+    void markDirty() {
+      if (!_textDirty && mounted) setState(() => _textDirty = true);
+    }
+    _noteController.addListener(markDirty);
+    _venueController.addListener(markDirty);
+    _companionsController.addListener(markDirty);
   }
 
   @override
@@ -136,222 +124,201 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
     super.dispose();
   }
 
-  void _markTextDirty() {
-    // فقط یک بار setState لازم است تا PopScope مقدار تازه را ببیند.
-    if (!_textDirty && mounted) setState(() => _textDirty = true);
-  }
-
   Future<void> _loadInitialData() async {
     try {
       final db = await DatabaseHelper.instance.database;
       final weight = await MovementLoadCalculator.getUserWeightKg(db);
       if (mounted) setState(() => _userWeightKg = weight);
-    } catch (e) {
-      debugPrint('[MovementLogSheet] وزن کاربر خوانده نشد: $e');
-    }
+    } catch (_) {}
 
     try {
-      final snapshot = await MovementBudgetService.instance.getCurrentWeekSnapshot();
-      if (mounted) {
-        setState(() {
-          _weeklyTarget = snapshot.weeklyMetMinutesTarget;
-          _weeklyAchieved = snapshot.achievedMetMinutes;
-        });
-      }
-    } catch (e) {
-      // بدون هدف واقعی، درصد بودجه را نشان نمی‌دهیم — عدد ساختگی بدتر از نبودن است.
-      debugPrint('[MovementLogSheet] بودجه هفته خوانده نشد: $e');
+      final snapshot =
+          await MovementBudgetService.instance.getCurrentWeekSnapshot();
+      if (mounted) setState(() => _budgetSnapshot = snapshot);
+    } catch (_) {
+      // عدد اشتباه بدتر از نبود عدد — نشان نده
     }
   }
 
-  // ── محاسبه‌ها ───────────────────────────────────────────────
-
-  int get _effectiveDuration => _durationMinutes ?? 0;
+  // ── محاسبات ───────────────────────────────────────────────────────────────────────
 
   double get _calculatedMet {
-    final kind = _selectedKind;
-    if (kind == null) return 4.0;
+    if (_selectedKind == null) return 4.0;
     return MovementLoadCalculator.metFor(
-      baseMet: kind.baseMet,
-      metLow: kind.metLow,
-      metHigh: kind.metHigh,
+      baseMet: _selectedKind!.baseMet,
+      metLow: _selectedKind!.metLow,
+      metHigh: _selectedKind!.metHigh,
       intensity: _intensity,
     );
   }
 
-  double get _calculatedMetMinutes => MovementLoadCalculator.metMinutes(
-        met: _calculatedMet,
-        durationMinutes: _effectiveDuration,
-      );
-
-  double get _calculatedCalories => MovementLoadCalculator.calories(
-        met: _calculatedMet,
-        weightKg: _userWeightKg,
-        durationMinutes: _effectiveDuration,
-      );
-
-  int? get _budgetBeforePercent {
-    final target = _weeklyTarget;
-    if (target == null || target <= 0) return null;
-    return ((_weeklyAchieved / target) * 100).round();
+  double get _calculatedMetMinutes {
+    if (_durationMinutes == null || _durationMinutes! <= 0) return 0;
+    return MovementLoadCalculator.metMinutes(
+      met: _calculatedMet,
+      durationMinutes: _durationMinutes!,
+    );
   }
 
-  int? get _budgetAfterPercent {
-    final target = _weeklyTarget;
-    if (target == null || target <= 0) return null;
-    return (((_weeklyAchieved + _calculatedMetMinutes) / target) * 100).round();
+  double get _calculatedCalories {
+    if (_durationMinutes == null || _durationMinutes! <= 0) return 0;
+    return MovementLoadCalculator.calories(
+      met: _calculatedMet,
+      weightKg: _userWeightKg,
+      durationMinutes: _durationMinutes!,
+    );
   }
 
-  bool get _isFutureTime =>
-      _selectedDateTime.isAfter(DateTime.now().add(const Duration(minutes: 2)));
-
-  /// معیارهایی که برای این نوع ورزش معنا دارند (اصلی + فرعی).
-  List<MovementMetric> get _activeMetrics {
-    final kind = _selectedKind;
-    if (kind == null) return const [];
-    final out = <MovementMetric>[];
-    for (final metric in [kind.primaryMetric, kind.secondaryMetric]) {
-      if (metric == MovementMetric.duration ||
-          metric == MovementMetric.none ||
-          metric == MovementMetric.sets) {
-        continue;
-      }
-      if (!out.contains(metric)) out.add(metric);
-    }
-    return out;
-  }
+  // ── بلاککنندهٔ دکمه ────────────────────────────────────────────────────────────
 
   String? get _blockingReason {
-    if (_selectedKind == null) return 'اول نوع فعالیت را انتخاب کن';
-    if (_effectiveDuration <= 0) return 'مدت زمان فعالیت را وارد کن';
-    if (_isFutureTime) return 'زمان انتخابی در آینده است';
+    if (_selectedKind == null) return 'نوع ورزش را انتخاب کن';
+    if (_durationMinutes == null || _durationMinutes! <= 0) {
+      return 'مدت زمان فعالیت را وارد کن';
+    }
+    final now = DateTime.now().add(const Duration(minutes: 2));
+    if (_selectedDateTime.isAfter(now)) return 'زمان آینده مجاز نیست';
     return null;
   }
 
-  bool get _canSave => _blockingReason == null && !_isSaving;
+  bool get _hasData =>
+      _textDirty ||
+      _selectedKind != null ||
+      _durationMinutes != null ||
+      _primaryMetricValue != null ||
+      _feeling != null;
 
-  bool get _hasUnsavedInput {
-    if (_selectedKind?.code != widget.presetKind?.code) return true;
-    if (_durationMinutes != widget.presetDurationMinutes) return true;
-    if (_distanceKm != null || _laps != null || _elevationMeters != null || _steps != null) {
-      return true;
-    }
-    if (_feeling != null) return true;
-    if (_intensity != MovementIntensity.medium) return true;
-    if (_noteController.text.trim().isNotEmpty) return true;
-    if (_companionsController.text.trim().isNotEmpty) return true;
-    if (_venueController.text.trim() != (widget.presetVenue ?? '').trim()) return true;
-    return false;
-  }
+  // ── اقدام‌ها ───────────────────────────────────────────────────────────────────────
 
-  // ── کنش‌ها ─────────────────────────────────────────────────
-
-  void _onKindSelected(MovementKind kind) {
-    final changed = _selectedKind?.code != kind.code;
-    HapticFeedback.selectionClick();
-    setState(() {
-      _selectedKind = kind;
-      _kindSelectorExpanded = false;
-      // مقادیر ورزش قبلی برای ورزش جدید بی‌معنا هستند (۳ کیلومتر دوچرخه ≠ شنا).
-      if (changed) {
-        _distanceKm = null;
-        _laps = null;
-        _elevationMeters = null;
-        _steps = null;
-      }
-    });
-  }
-
-  /// setState را اعمال می‌کند و بعد از بازسازی (که PopScope مقدار تازه را می‌بیند) خارج می‌شود.
-  void _popAfterRebuild() {
-    setState(() => _allowPop = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).pop();
-    });
-  }
-
-  Future<void> _confirmDiscard() async {
-    final colors = context.colors;
-    final shouldDiscard = await showDialog<bool>(
+  Future<bool> _confirmDiscard() async {
+    if (!_hasData) return true;
+    final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: colors.surfaceElevated,
+          backgroundColor: context.colors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(RitmoRadius.card),
           ),
           title: Text(
-            'ثبت نشده رها شود؟',
+            'اطلاعات خارج می‌شود',
             style: TextStyle(
               fontFamily: 'Vazirmatn',
               fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: colors.textPrimary,
+              color: context.colors.textPrimary,
             ),
           ),
           content: Text(
-            'اطلاعاتی که وارد کرده‌ای ذخیره نشده و از بین می‌رود.',
+            'اطلاعات واردشده ذخیره نمی‌شود. آیا می‌خواهی خارج شوی؟',
             style: TextStyle(
               fontFamily: 'Vazirmatn',
-              fontSize: 13.5,
-              color: colors.textSecondary,
+              fontSize: 13,
+              color: context.colors.textSecondary,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
               child: Text(
-                'ادامهٔ ثبت',
+                'بمان',
                 style: TextStyle(
                   fontFamily: 'Vazirmatn',
-                  fontWeight: FontWeight.bold,
-                  color: context.modules.sports,
+                  color: context.colors.textSecondary,
                 ),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
               child: Text(
-                'رها کن',
-                style: TextStyle(fontFamily: 'Vazirmatn', color: colors.error),
+                'خارج',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.error,
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+    return result ?? false;
+  }
 
-    if (shouldDiscard == true && mounted) _popAfterRebuild();
+  void _popAfterRebuild() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
   }
 
   Future<void> _saveLog() async {
-    final kind = _selectedKind;
-    if (kind == null || !_canSave) return;
+    if (_selectedKind == null || _durationMinutes == null || _isSaving) return;
+    if (_blockingReason != null) return;
 
     setState(() => _isSaving = true);
 
-    final metrics = _activeMetrics;
+    final kind = _selectedKind!;
+    final dur = _durationMinutes!;
+
+    double? distMeters;
+    double? elevMeters;
+    int? laps;
+    int? steps;
+    double? secValue;
+
+    // معیار اصلی
+    if (_primaryMetricValue != null) {
+      switch (kind.primaryMetric) {
+        case MovementMetric.distance:
+          distMeters = _primaryMetricValue! * 1000; // km → m
+          break;
+        case MovementMetric.elevation:
+          elevMeters = _primaryMetricValue;
+          break;
+        case MovementMetric.laps:
+          laps = _primaryMetricValue!.round();
+          break;
+        case MovementMetric.steps:
+          steps = _primaryMetricValue!.round();
+          break;
+        default:
+          break;
+      }
+    }
+
+    // معیار ثانوی
+    if (_secondaryMetricValue != null && kind.secondaryMetric != null) {
+      secValue = _secondaryMetricValue;
+      switch (kind.secondaryMetric) {
+        case MovementMetric.elevation:
+          if (elevMeters == null) elevMeters = secValue;
+          break;
+        case MovementMetric.distance:
+          if (distMeters == null) distMeters = secValue! * 1000;
+          break;
+        default:
+          break;
+      }
+    }
+
     final event = MovementEvent(
       id: RitmoIdFactory.movementLog(),
       kindCode: kind.code,
-      durationMinutes: _effectiveDuration,
+      durationMinutes: dur,
       intensity: _intensity,
-      note: _noteController.text.trim().isNotEmpty ? _noteController.text.trim() : null,
+      note: _noteController.text.trim().isNotEmpty
+          ? _noteController.text.trim()
+          : null,
       loggedAt: _selectedDateTime.millisecondsSinceEpoch,
       feeling: _feeling,
-      distanceMeters: metrics.contains(MovementMetric.distance) && _distanceKm != null
-          ? _distanceKm! * 1000
+      distanceMeters: distMeters,
+      elevationMeters: elevMeters,
+      laps: laps,
+      steps: steps,
+      venue: _venueController.text.trim().isNotEmpty
+          ? _venueController.text.trim()
           : null,
-      elevationMeters:
-          metrics.contains(MovementMetric.elevation) ? _elevationMeters : null,
-      laps: metrics.contains(MovementMetric.laps) && _laps != null
-          ? _laps!.round()
-          : null,
-      steps: metrics.contains(MovementMetric.steps) && _steps != null
-          ? _steps!.round()
-          : null,
-      venue: _venueController.text.trim().isNotEmpty ? _venueController.text.trim() : null,
       companions: _companionsController.text.trim().isNotEmpty
           ? _companionsController.text.trim()
           : null,
@@ -360,31 +327,29 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
 
     try {
       final res = await MovementRepository.instance.logEvent(event);
-      unawaited(HapticFeedback.mediumImpact());
-
-      if (!mounted) return;
-
-      final isPr = res['isPr'] as bool? ?? false;
-      final colors = context.colors;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isPr
-                ? '🎉 رکورد جدید ثبت شد! عهدی که بستی محکم‌تر شد 🔥'
-                : 'فعالیت «${kind.titleFa}» برای ${movementRelativeDayLabel(_selectedDateTime)} ثبت شد ✨',
-            style: const TextStyle(fontFamily: 'Vazirmatn'),
+      if (mounted) {
+        final isPr = res['isPr'] as bool? ?? false;
+        final accent = context.modules.sports;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isPr
+                  ? 'رکورد جدید ثبت شد! عهدی که بستی محکم‌تر شد '
+                  : 'فعالیت با موفقیت ثبت شد ✨',
+              style: const TextStyle(fontFamily: 'Vazirmatn'),
+            ),
+            backgroundColor: isPr ? accent : null,
           ),
-          backgroundColor: isPr ? colors.success : null,
-        ),
-      );
-      widget.onLogged?.call();
-      _popAfterRebuild();
+        );
+        widget.onLogged?.call();
+        _popAfterRebuild();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'ثبت نشد: $e',
+              'خطا در ثبت فعالیت: $e',
               style: const TextStyle(fontFamily: 'Vazirmatn'),
             ),
             backgroundColor: context.colors.error,
@@ -396,19 +361,21 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
     }
   }
 
-  // ── ساخت رابط ───────────────────────────────────────────────
+  // ── Build ───────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final accent = context.modules.sports;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final blocking = _blockingReason;
+    final canSave = blocking == null && !_isSaving;
 
     return PopScope(
-      canPop: _allowPop || !_hasUnsavedInput,
-      onPopInvokedWithResult: (didPop, result) {
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        _confirmDiscard();
+        if (await _confirmDiscard()) _popAfterRebuild();
       },
       child: Directionality(
         textDirection: TextDirection.rtl,
@@ -419,111 +386,181 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(RitmoRadius.sheet),
             ),
-            border: Border.all(color: colors.border),
+            border: Border.all(color: colors.border.withValues(alpha: 0.3)),
           ),
           child: Column(
             children: [
-              const SizedBox(height: RitmoSpacing.md),
+              // ── هدر ──────────────────────────────────────────────────────────────
+              const SizedBox(height: RitmoSpacing.sm),
               Container(
-                width: 36,
+                width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: colors.textTertiary,
+                  color: colors.divider,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: RitmoSpacing.md),
-
-              // سرصفحه
+              const SizedBox(height: RitmoSpacing.sm),
               Padding(
-                padding: const EdgeInsets.only(right: RitmoSpacing.lg, left: RitmoSpacing.sm),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: RitmoSpacing.lg,
+                ),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(
-                        'ثبت فعالیت انجام‌شده',
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
+                    Text(
+                      'ثبت فعالیت حرکتی',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
                       ),
                     ),
                     IconButton(
                       tooltip: 'بستن',
-                      icon: Icon(CupertinoIcons.xmark, size: 20, color: colors.textSecondary),
-                      onPressed: () => Navigator.maybePop(context),
+                      icon: Icon(
+                        CupertinoIcons.xmark_circle_fill,
+                        color: colors.textSecondary,
+                      ),
+                      onPressed: () async {
+                        if (await _confirmDiscard()) _popAfterRebuild();
+                      },
                     ),
                   ],
                 ),
               ),
               Divider(height: 1, color: colors.divider),
 
+              // ── فرم ──────────────────────────────────────────────────────────────
               Expanded(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.only(
                     left: RitmoSpacing.lg,
                     right: RitmoSpacing.lg,
                     top: RitmoSpacing.lg,
-                    bottom: RitmoSpacing.lg + bottomInset,
+                    bottom: RitmoSpacing.xl + bottomInset,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // ۱) نوع فعالیت
-                      _buildKindSection(colors, accent),
+                      // ۱. انتخاب نوع ورزش
+                      _SectionLabel('نوع ورزش', colors),
+                      const SizedBox(height: RitmoSpacing.sm),
+                      MovementKindSelector(
+                        selectedKind: _selectedKind,
+                        onKindSelected: (k) => setState(() {
+                          if (_selectedKind?.code != k.code) {
+                            // مقادیر با تغییر نوع پاک می‌شوند
+                            _primaryMetricValue = null;
+                            _secondaryMetricValue = null;
+                          }
+                          _selectedKind = k;
+                        }),
+                      ),
+                      const SizedBox(height: RitmoSpacing.xl),
+                      Divider(color: colors.divider),
                       const SizedBox(height: RitmoSpacing.lg),
 
-                      // ۲) زمان — قبلاً هیچ راهی برای تغییرش نبود
+                      // ۲. زمان فعالیت (P0: قبلاً پرونده بود)
+                      _SectionLabel('زمان فعالیت', colors),
+                      const SizedBox(height: RitmoSpacing.sm),
                       MovementDateTimeField(
                         value: _selectedDateTime,
+                        onChanged: (dt) =>
+                            setState(() => _selectedDateTime = dt),
                         accent: accent,
-                        onChanged: (dt) => setState(() => _selectedDateTime = dt),
                       ),
                       const SizedBox(height: RitmoSpacing.lg),
-                      Divider(height: 1, color: colors.divider),
-                      const SizedBox(height: RitmoSpacing.lg),
 
-                      // ۳) مدت زمان (لازم)
+                      // ۳. مدت — MovementMetricField جای اسلایدر را گرفت
+                      _SectionLabel('مدت', colors),
+                      const SizedBox(height: RitmoSpacing.sm),
                       MovementMetricField(
-                        label: 'مدت زمان',
+                        label: 'مدت فعالیت',
                         unit: 'دقیقه',
-                        icon: CupertinoIcons.timer,
                         value: _durationMinutes?.toDouble(),
-                        isRequired: true,
-                        step: 5,
+                        onChanged: (v) => setState(
+                          () => _durationMinutes = v?.round(),
+                        ),
+                        icon: CupertinoIcons.timer,
+                        step: 1,
                         min: 1,
-                        max: 600,
+                        max: 480,
+                        decimals: 0,
                         quickValues: const [15, 30, 45, 60, 90],
                         accent: accent,
-                        onChanged: (v) => setState(
-                          () => _durationMinutes = v == null ? null : v.round(),
-                        ),
+                        isRequired: true,
                       ),
-
-                      // ۴) معیارهای مخصوص همین ورزش
-                      ..._buildMetricFields(accent),
-
                       const SizedBox(height: RitmoSpacing.lg),
 
-                      // ۵) شدت
-                      _buildSectionLabel('شدت تمرین', colors),
+                      // ۴. معیارهای نوع‌ویژه
+                      if (_selectedKind != null) ...[
+                        Divider(color: colors.divider),
+                        const SizedBox(height: RitmoSpacing.lg),
+                        Text(
+                          'جزئیات: ${_selectedKind!.emoji} ${_selectedKind!.titleFa}',
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: accent,
+                          ),
+                        ),
+                        const SizedBox(height: RitmoSpacing.md),
+                        _buildPrimaryMetricField(colors, accent),
+                        if (_selectedKind!.secondaryMetric != null) ...[
+                          const SizedBox(height: RitmoSpacing.md),
+                          _buildSecondaryMetricField(colors, accent),
+                        ],
+                      ],
+
+                      // ۵. شدت
+                      const SizedBox(height: RitmoSpacing.xl),
+                      Divider(color: colors.divider),
+                      const SizedBox(height: RitmoSpacing.lg),
+                      _SectionLabel('شدت تمرین', colors),
                       const SizedBox(height: RitmoSpacing.sm),
                       Row(
                         children: MovementIntensity.values.map((i) {
                           final isSelected = i == _intensity;
                           return Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.only(left: RitmoSpacing.sm),
-                              child: _SelectableTile(
-                                label: i.titleFa,
-                                isSelected: isSelected,
-                                accent: accent,
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  setState(() => _intensity = i);
-                                },
+                              padding: const EdgeInsets.symmetric(horizontal: 3),
+                              child: GestureDetector(
+                                onTap: () => setState(() => _intensity = i),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 150),
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? accent.withValues(alpha: 0.18)
+                                        : colors.surfaceSunken,
+                                    borderRadius: BorderRadius.circular(
+                                      RitmoRadius.field,
+                                    ),
+                                    border: Border.all(
+                                      color:
+                                          isSelected ? accent : colors.border,
+                                      width: isSelected ? 1.5 : 1,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      i.titleFa,
+                                      style: TextStyle(
+                                        fontFamily: 'Vazirmatn',
+                                        fontSize: 12.5,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.w500,
+                                        color: isSelected
+                                            ? accent
+                                            : colors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           );
@@ -531,88 +568,229 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                       ),
                       const SizedBox(height: RitmoSpacing.lg),
 
-                      // ۶) احساس (اختیاری و قابل لغو)
-                      Row(
-                        children: [
-                          _buildSectionLabel('حس‌وحال تمرین', colors),
-                          const SizedBox(width: RitmoSpacing.xs),
-                          Text(
-                            '(اختیاری)',
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontSize: 11,
-                              color: colors.textTertiary,
-                            ),
-                          ),
-                        ],
-                      ),
+                      // ۶. حس — بدون پیش‌انتخاب، لمس دوباره = لغو
+                      _SectionLabel('حس و احساس تمرین (اختیاری)', colors),
                       const SizedBox(height: RitmoSpacing.sm),
                       Wrap(
                         spacing: RitmoSpacing.sm,
                         runSpacing: RitmoSpacing.sm,
                         children: _feelings.map((f) {
                           final isSelected = f == _feeling;
-                          return _SelectableTile(
-                            label: f,
-                            isSelected: isSelected,
-                            accent: accent,
-                            expand: false,
-                            // دوباره زدن، انتخاب را برمی‌دارد.
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              setState(() => _feeling = isSelected ? null : f);
-                            },
+                          return GestureDetector(
+                            onTap: () => setState(
+                              () => _feeling = isSelected ? null : f,
+                            ),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              height: 44,
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? accent.withValues(alpha: 0.18)
+                                    : colors.surfaceSunken,
+                                borderRadius:
+                                    BorderRadius.circular(RitmoRadius.pill),
+                                border: Border.all(
+                                  color: isSelected ? accent : colors.border,
+                                  width: isSelected ? 1.5 : 1,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  f,
+                                  style: TextStyle(
+                                    fontFamily: 'Vazirmatn',
+                                    fontSize: 13,
+                                    color: isSelected
+                                        ? accent
+                                        : colors.textSecondary,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
                           );
                         }).toList(),
                       ),
-                      const SizedBox(height: RitmoSpacing.lg),
 
-                      if (_selectedKind?.needsVenue ?? false) ...[
-                        TextField(
+                      // ۷. مکان (اهذامی)
+                      if (_selectedKind?.needsVenue == true) ...[
+                        const SizedBox(height: RitmoSpacing.lg),
+                        TextFormField(
                           controller: _venueController,
-                          style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
-                          decoration: _inputDecoration(
-                            colors,
-                            accent,
-                            'نام مکان یا سالن',
-                            CupertinoIcons.location_solid,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'نام مکان / سالن (اختیاری)',
+                            prefixIcon: const Icon(
+                              CupertinoIcons.location_solid,
+                              size: 20,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(RitmoRadius.field),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: RitmoSpacing.md),
                       ],
 
-                      if (_selectedKind?.isSocial ?? false) ...[
-                        TextField(
+                      // ۸. همراهان (اجتماعی)
+                      if (_selectedKind?.isSocial == true) ...[
+                        const SizedBox(height: RitmoSpacing.lg),
+                        TextFormField(
                           controller: _companionsController,
-                          style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
-                          decoration: _inputDecoration(
-                            colors,
-                            accent,
-                            'همراهان',
-                            CupertinoIcons.person_2_fill,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'همراهان (اختیاری)',
+                            prefixIcon: const Icon(
+                              CupertinoIcons.person_2_fill,
+                              size: 20,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(RitmoRadius.field),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: RitmoSpacing.md),
                       ],
 
-                      TextField(
+                      // ۹. یادداشت
+                      const SizedBox(height: RitmoSpacing.lg),
+                      TextFormField(
                         controller: _noteController,
-                        maxLines: 2,
-                        style: TextStyle(fontFamily: 'Vazirmatn', color: colors.textPrimary),
-                        decoration: _inputDecoration(
-                          colors,
-                          accent,
-                          'یادداشت (اختیاری)',
-                          CupertinoIcons.doc_text,
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontFamily: 'Vazirmatn',
+                        ),
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          labelText: 'یادداشت تمرین (اختیاری)',
+                          alignLabelWithHint: true,
+                          prefixIcon: const Icon(
+                            CupertinoIcons.doc_text,
+                            size: 20,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(RitmoRadius.field),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: RitmoSpacing.md),
+                      const SizedBox(height: RitmoSpacing.xl),
                     ],
                   ),
                 ),
               ),
 
-              _buildBottomBar(colors, accent),
+              // ── نوار پایین ──────────────────────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.all(RitmoSpacing.lg),
+                decoration: BoxDecoration(
+                  color: colors.surfaceElevated,
+                  border: Border(top: BorderSide(color: colors.divider)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // نمایشگر زنده — فقط وقتی دادهی وجود دارد
+                    if (_durationMinutes != null && _durationMinutes! > 0) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '≈ ${_calculatedCalories.round().toPersianDigits()} کالری',
+                            style: TextStyle(
+                              fontFamily: 'Vazirmatn',
+                              fontWeight: FontWeight.bold,
+                              color: accent,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              '·',
+                              style: TextStyle(color: colors.textTertiary),
+                            ),
+                          ),
+                          Text(
+                            '${_calculatedMetMinutes.round().toPersianDigits()} بار',
+                            style: TextStyle(
+                              fontFamily: 'Vazirmatn',
+                              fontWeight: FontWeight.bold,
+                              color: colors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                          if (_budgetSnapshot != null) ...[
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              child: Text(
+                                '·',
+                                style: TextStyle(color: colors.textTertiary),
+                              ),
+                            ),
+                            Text(
+                              _buildBudgetShiftText(_budgetSnapshot!),
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontWeight: FontWeight.bold,
+                                color: colors.success,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: RitmoSpacing.md),
+                    ],
+
+                    // دکمهٔ ذخیره
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: canSave ? accent : colors.disabled,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: colors.disabled,
+                          disabledForegroundColor:
+                              colors.textTertiary,
+                          elevation: canSave ? 0 : 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(RitmoRadius.card),
+                          ),
+                        ),
+                        onPressed: canSave ? _saveLog : null,
+                        child: _isSaving
+                            ? const CupertinoActivityIndicator(
+                                color: Colors.white,
+                              )
+                            : Text(
+                                blocking ?? 'ثبت و ذخیره فعالیت',
+                                style: TextStyle(
+                                  fontFamily: 'Vazirmatn',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: canSave
+                                      ? Colors.white
+                                      : colors.textTertiary,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -620,362 +798,136 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
     );
   }
 
-  Widget _buildSectionLabel(String text, RitmoColors colors) {
+  // ── هلپرها ───────────────────────────────────────────────────────────────────────
+
+  Widget _buildPrimaryMetricField(dynamic colors, Color accent) {
+    final kind = _selectedKind!;
+    switch (kind.primaryMetric) {
+      case MovementMetric.distance:
+        return MovementMetricField(
+          label: 'مسافت',
+          unit: 'کیلومتر',
+          value: _primaryMetricValue,
+          onChanged: (v) => setState(() => _primaryMetricValue = v),
+          icon: CupertinoIcons.arrow_right_arrow_left,
+          step: 0.5,
+          min: 0.1,
+          max: 200,
+          decimals: 1,
+          quickValues: const [1, 3, 5, 10, 21.1],
+          accent: accent,
+        );
+      case MovementMetric.laps:
+        return MovementMetricField(
+          label: 'تعداد طول (استخر ۲۵ متری)',
+          unit: 'طول',
+          value: _primaryMetricValue,
+          onChanged: (v) => setState(() => _primaryMetricValue = v),
+          icon: CupertinoIcons.repeat,
+          step: 1,
+          min: 1,
+          max: 200,
+          decimals: 0,
+          quickValues: const [10, 20, 30, 40, 50],
+          accent: accent,
+        );
+      case MovementMetric.elevation:
+        return MovementMetricField(
+          label: 'ارتفاع گرفته‌شده',
+          unit: 'متر',
+          value: _primaryMetricValue,
+          onChanged: (v) => setState(() => _primaryMetricValue = v),
+          icon: CupertinoIcons.arrow_up_right,
+          step: 10,
+          min: 10,
+          max: 5000,
+          decimals: 0,
+          quickValues: const [100, 300, 500, 1000],
+          accent: accent,
+        );
+      case MovementMetric.steps:
+        return MovementMetricField(
+          label: 'تعداد گام',
+          unit: 'گام',
+          value: _primaryMetricValue,
+          onChanged: (v) => setState(() => _primaryMetricValue = v),
+          icon: CupertinoIcons.arrow_right,
+          step: 100,
+          min: 100,
+          max: 50000,
+          decimals: 0,
+          quickValues: const [2000, 5000, 8000, 10000],
+          accent: accent,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildSecondaryMetricField(dynamic colors, Color accent) {
+    final kind = _selectedKind!;
+    switch (kind.secondaryMetric) {
+      case MovementMetric.elevation:
+        return MovementMetricField(
+          label: 'ارتفاع (ثانوی)',
+          unit: 'متر',
+          value: _secondaryMetricValue,
+          onChanged: (v) => setState(() => _secondaryMetricValue = v),
+          icon: CupertinoIcons.arrow_up_right,
+          step: 10,
+          min: 0,
+          max: 5000,
+          decimals: 0,
+          quickValues: const [50, 100, 300, 500],
+          accent: accent,
+        );
+      case MovementMetric.distance:
+        return MovementMetricField(
+          label: 'مسافت (ثانوی)',
+          unit: 'کیلومتر',
+          value: _secondaryMetricValue,
+          onChanged: (v) => setState(() => _secondaryMetricValue = v),
+          icon: CupertinoIcons.arrow_right_arrow_left,
+          step: 0.5,
+          min: 0.1,
+          max: 100,
+          decimals: 1,
+          quickValues: const [1, 3, 5, 10],
+          accent: accent,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  String _buildBudgetShiftText(MovementBudgetSnapshot snapshot) {
+    final target = snapshot.weeklyMetMinutesTarget;
+    if (target <= 0) return '';
+    final before =
+        (snapshot.achievedMetMinutes / target * 100).round();
+    final after =
+        ((snapshot.achievedMetMinutes + _calculatedMetMinutes) / target * 100)
+            .round();
+    return 'بودجه: ${before.toPersianDigits()}٪ ← ${after.toPersianDigits()}٪';
+  }
+}
+
+// ─── هلپر هدر بخش ───────────────────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text, this.colors);
+  final String text;
+  final dynamic colors;
+
+  @override
+  Widget build(BuildContext context) {
     return Text(
       text,
       style: TextStyle(
         fontFamily: 'Vazirmatn',
         fontWeight: FontWeight.bold,
-        fontSize: 13.5,
-        color: colors.textPrimary,
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration(
-    RitmoColors colors,
-    Color accent,
-    String label,
-    IconData icon,
-  ) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(
-        fontFamily: 'Vazirmatn',
-        fontSize: 13,
-        color: colors.textSecondary,
-      ),
-      prefixIcon: Icon(icon, size: 18, color: colors.textSecondary),
-      filled: true,
-      fillColor: colors.surfaceSunken,
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(RitmoRadius.field),
-        borderSide: BorderSide(color: colors.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(RitmoRadius.field),
-        borderSide: BorderSide(color: accent, width: 1.5),
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(RitmoRadius.field),
-      ),
-    );
-  }
-
-  /// وقتی نوع انتخاب شد، انتخاب‌گر جمع می‌شود تا فرم زیرش دیده شود.
-  Widget _buildKindSection(RitmoColors colors, Color accent) {
-    final kind = _selectedKind;
-
-    if (kind == null || _kindSelectorExpanded) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildSectionLabel('چه فعالیتی انجام دادی؟', colors),
-          const SizedBox(height: RitmoSpacing.md),
-          MovementKindSelector(
-            selectedKind: kind,
-            onKindSelected: _onKindSelected,
-          ),
-        ],
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: RitmoSpacing.md,
-        vertical: RitmoSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(RitmoRadius.field),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        children: [
-          Text(kind.emoji, style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: RitmoSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  kind.titleFa,
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                Text(
-                  kind.family.titleFa,
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 11.5,
-                    color: colors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () => setState(() => _kindSelectorExpanded = true),
-            style: TextButton.styleFrom(
-              minimumSize: const Size(64, 44),
-              foregroundColor: accent,
-            ),
-            child: const Text(
-              'تغییر',
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildMetricFields(Color accent) {
-    final widgets = <Widget>[];
-
-    for (final metric in _activeMetrics) {
-      widgets.add(const SizedBox(height: RitmoSpacing.lg));
-
-      switch (metric) {
-        case MovementMetric.distance:
-          final distance = _distanceKm;
-          final duration = _durationMinutes;
-          String? pace;
-          if (distance != null && distance > 0 && duration != null && duration > 0) {
-            pace = 'سرعت متوسط: '
-                '${(duration / distance).toStringAsFixed(1).toPersianDigits()}'
-                ' دقیقه برای هر کیلومتر';
-          }
-          widgets.add(
-            MovementMetricField(
-              label: 'مسافت',
-              unit: metric.unitFa,
-              icon: CupertinoIcons.map,
-              value: distance,
-              step: 0.5,
-              min: 0,
-              max: 300,
-              decimals: 1,
-              quickValues: const [1, 3, 5, 10],
-              helper: pace,
-              accent: accent,
-              onChanged: (v) => setState(() => _distanceKm = v),
-            ),
-          );
-          break;
-
-        case MovementMetric.laps:
-          final laps = _laps;
-          widgets.add(
-            MovementMetricField(
-              label: 'تعداد طول',
-              unit: metric.unitFa,
-              icon: CupertinoIcons.repeat,
-              value: laps,
-              step: 1,
-              min: 0,
-              max: 400,
-              quickValues: const [10, 20, 30, 40],
-              helper: (laps != null && laps > 0)
-                  ? 'با استخر ۲۵ متری ≈ ${(laps * 25).round().toPersianDigits()} متر'
-                  : null,
-              accent: accent,
-              onChanged: (v) => setState(() => _laps = v),
-            ),
-          );
-          break;
-
-        case MovementMetric.elevation:
-          widgets.add(
-            MovementMetricField(
-              label: 'اختلاف ارتفاع',
-              unit: 'متر',
-              icon: CupertinoIcons.arrow_up_right,
-              value: _elevationMeters,
-              step: 50,
-              min: 0,
-              max: 6000,
-              quickValues: const [100, 300, 500, 1000],
-              accent: accent,
-              onChanged: (v) => setState(() => _elevationMeters = v),
-            ),
-          );
-          break;
-
-        case MovementMetric.steps:
-          widgets.add(
-            MovementMetricField(
-              label: 'تعداد گام',
-              unit: metric.unitFa,
-              icon: CupertinoIcons.figure_walk,
-              value: _steps,
-              step: 500,
-              min: 0,
-              max: 100000,
-              quickValues: const [2000, 5000, 8000, 10000],
-              accent: accent,
-              onChanged: (v) => setState(() => _steps = v),
-            ),
-          );
-          break;
-
-        case MovementMetric.duration:
-        case MovementMetric.sets:
-        case MovementMetric.none:
-          widgets.removeLast();
-          break;
-      }
-    }
-
-    return widgets;
-  }
-
-  Widget _buildBottomBar(RitmoColors colors, Color accent) {
-    final reason = _blockingReason;
-    final before = _budgetBeforePercent;
-    final after = _budgetAfterPercent;
-    final hasLoad = _effectiveDuration > 0 && _selectedKind != null;
-
-    return Container(
-      padding: const EdgeInsets.all(RitmoSpacing.lg),
-      decoration: BoxDecoration(
-        color: colors.surfaceElevated,
-        border: Border(top: BorderSide(color: colors.divider)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // پیش‌نمایش زنده: فقط وقتی عددی واقعی برای نشان دادن هست.
-            if (hasLoad)
-              Padding(
-                padding: const EdgeInsets.only(bottom: RitmoSpacing.md),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '≈ ${_calculatedCalories.round().toPersianDigits()} کالری',
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: accent,
-                      ),
-                    ),
-                    if (before != null && after != null) ...[
-                      Text(
-                        '  ·  ',
-                        style: TextStyle(color: colors.textTertiary),
-                      ),
-                      Text(
-                        'بودجهٔ هفته: ${before.toPersianDigits()}٪ ← ${after.toPersianDigits()}٪',
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accent,
-                  disabledBackgroundColor: colors.disabled,
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: colors.textTertiary,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(RitmoRadius.card),
-                  ),
-                ),
-                onPressed: _canSave ? _saveLog : null,
-                child: _isSaving
-                    ? const CupertinoActivityIndicator(color: Colors.white)
-                    : Text(
-                        reason ?? 'ثبت فعالیت',
-                        style: const TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15.5,
-                        ),
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// کاشی انتخابی یکدست برای شدت و حس‌وحال (به‌جای ChoiceChip با رنگ‌های ناهمگون).
-class _SelectableTile extends StatelessWidget {
-  const _SelectableTile({
-    required this.label,
-    required this.isSelected,
-    required this.accent,
-    required this.onTap,
-    this.expand = true,
-  });
-
-  final String label;
-  final bool isSelected;
-  final Color accent;
-  final VoidCallback onTap;
-  final bool expand;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Semantics(
-      button: true,
-      selected: isSelected,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(RitmoRadius.chip),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 44),
-          width: expand ? double.infinity : null,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(
-            horizontal: RitmoSpacing.md,
-            vertical: RitmoSpacing.sm,
-          ),
-          decoration: BoxDecoration(
-            color: isSelected ? accent.withValues(alpha: 0.18) : colors.surfaceSunken,
-            borderRadius: BorderRadius.circular(RitmoRadius.chip),
-            border: Border.all(
-              color: isSelected ? accent : colors.border,
-              width: isSelected ? 1.5 : 1,
-            ),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontSize: 13,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? accent : colors.textPrimary,
-            ),
-          ),
-        ),
+        fontSize: 14,
+        color: colors.textSecondary as Color,
       ),
     );
   }

@@ -48,6 +48,7 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
         name: 'weekly_card_week${widget.gestationalAge.weeks}.png',
       );
 
+      // ignore: deprecated_member_use
       await Share.shareXFiles(
         [xFile],
         text:

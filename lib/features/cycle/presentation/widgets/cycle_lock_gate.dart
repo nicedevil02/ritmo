@@ -90,7 +90,7 @@ class _CycleLockGateState extends State<CycleLockGate>
 
       // If PIN is configured and not locked out, offer biometric prompt
       if (hasPin && lockoutSecs == 0 && !kIsWeb) {
-        Future.delayed(const Duration(milliseconds: 300), () {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && _isLocked) {
             _authenticateBiometrics();
           }

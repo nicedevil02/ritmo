@@ -53,19 +53,37 @@ class CyclePeriod {
   factory CyclePeriod.fromMap(Map<String, dynamic> map) {
     final startRaw = map['startDate'] ?? map['cycleStartDate'];
     final endRaw = map['endDate'] ?? map['cycleEndDate'];
+    final rawId = map['id'];
+    final int? id = rawId is int
+        ? rawId
+        : int.tryParse(rawId?.toString() ?? '');
 
     return CyclePeriod(
-      id: map['id'] as int?,
+      id: id,
       startDate:
           CycleDateContract.parseDayKey(startRaw?.toString()) ?? DateTime.now(),
       endDate: CycleDateContract.parseDayKey(endRaw?.toString()),
-      cycleLength: map['cycleLength'] as int?,
-      periodDuration: map['periodDuration'] as int?,
+      cycleLength: map['cycleLength'] is int
+          ? map['cycleLength'] as int
+          : int.tryParse(map['cycleLength']?.toString() ?? ''),
+      periodDuration: map['periodDuration'] is int
+          ? map['periodDuration'] as int
+          : int.tryParse(map['periodDuration']?.toString() ?? ''),
       notes: map['notes'] as String?,
-      suppressedPrayer: (map['suppressedPrayer'] as int? ?? 1) == 1,
-      fastDebtCreated: (map['fastDebtCreated'] as int? ?? 0) == 1,
-      createdAt: map['createdAt'] as int? ?? 0,
-      updatedAt: map['updatedAt'] as int? ?? 0,
+      suppressedPrayer:
+          (map['suppressedPrayer'] == 1 ||
+          map['suppressedPrayer'] == '1' ||
+          map['suppressedPrayer'] == true),
+      fastDebtCreated:
+          (map['fastDebtCreated'] == 1 ||
+          map['fastDebtCreated'] == '1' ||
+          map['fastDebtCreated'] == true),
+      createdAt: map['createdAt'] is int
+          ? map['createdAt'] as int
+          : int.tryParse(map['createdAt']?.toString() ?? '') ?? 0,
+      updatedAt: map['updatedAt'] is int
+          ? map['updatedAt'] as int
+          : int.tryParse(map['updatedAt']?.toString() ?? '') ?? 0,
     );
   }
 }

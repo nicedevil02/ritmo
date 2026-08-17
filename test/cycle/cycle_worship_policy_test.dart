@@ -7,6 +7,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
 
   group('CycleWorshipPolicy Tests (C-37)', () {
     late Database db;

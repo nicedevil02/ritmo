@@ -142,7 +142,7 @@ void main() {
         expect(energyCorr.coefficient, isNotNull);
         // Bleeding = Heavy (flow=3) -> Energy Low (1), Non-bleeding = None (flow=0) -> Energy High (3)
         // Strong negative correlation expected
-        expect(energyCorr.coefficient!, lessThan(-0.5));
+        expect(energyCorr.coefficient, lessThan(-0.5));
       },
     );
 

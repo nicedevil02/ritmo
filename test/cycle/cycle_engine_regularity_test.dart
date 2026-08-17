@@ -132,7 +132,7 @@ void main() {
         expect(output.isIrregular, isFalse);
         expect(output.regularityLevel, equals(RegularityLevel.regular));
         expect(output.regularityScore, isNotNull);
-        expect(output.regularityScore!, greaterThanOrEqualTo(90));
+        expect(output.regularityScore, greaterThanOrEqualTo(90));
         expect(output.dataMaturity, equals('MEDIUM'));
       },
     );

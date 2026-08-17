@@ -300,8 +300,15 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
     final all511 = status['all511'] == true;
     final colors = context.colors;
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final canPop = await _onWillPop();
+        if (canPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
       child: Scaffold(
         backgroundColor: colors.surface,
         appBar: AppBar(

@@ -86,7 +86,10 @@ class AgentLoopRunner {
     allResults.addAll(prefetch.toolResults);
     for (final r in prefetch.toolResults) {
       if (r.isSuccess) {
-        toolCache['${r.toolName}|prefetch'] = r;
+        final args = prefetch.toolArgs[r.toolName] ?? const <String, dynamic>{};
+        final cacheKey = _cacheKey(r.toolName, args);
+        toolCache[cacheKey] = r;
+        budget.admit(r.toolName, args);
       }
     }
 

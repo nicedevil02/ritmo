@@ -16,17 +16,22 @@ class PrefetchResult {
   /// ابزارهایی که روتر تشخیص داد و اجرا کرد (برای لاگ و تست)
   final List<String> executedCalls;
 
+  /// آرگومان‌های هر ابزار اجرا شده برای تطبیق دقیق کلید کش
+  final Map<String, Map<String, dynamic>> toolArgs;
+
   const PrefetchResult({
     required this.initialSteps,
     required this.formattedContextBlock,
     required this.toolResults,
     this.executedCalls = const <String>[],
+    this.toolArgs = const <String, Map<String, dynamic>>{},
   });
 
   static const empty = PrefetchResult(
     initialSteps: <AgentStep>[],
     formattedContextBlock: '',
     toolResults: <AgentToolResult>[],
+    toolArgs: <String, Map<String, dynamic>>{},
   );
 }
 
@@ -334,11 +339,19 @@ class AgentIntentRouter {
     debugPrint(
         '[AgentIntent] tokens=${tokens.length} | persona=$activePersona | tools=${executed.join(', ')} | date=${dateRange.matched ? dateRange.startIso : 'none'}');
 
+    final executedArgs = <String, Map<String, dynamic>>{};
+    for (final entry in entries) {
+      if (executed.contains(entry.key)) {
+        executedArgs[entry.key] = entry.value;
+      }
+    }
+
     return PrefetchResult(
       initialSteps: steps,
       formattedContextBlock: context.toString(),
       toolResults: results,
       executedCalls: executed,
+      toolArgs: executedArgs,
     );
   }
 

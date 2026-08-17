@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/domain/engines/hormonal_intelligence_engine.dart';
 import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
 import 'package:ritmo/features/cycle/logic/cycle_worship_policy.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {

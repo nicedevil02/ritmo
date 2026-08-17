@@ -104,20 +104,20 @@ class CycleDayLogsRepository {
   CycleDayLogsRepository._();
   static final CycleDayLogsRepository instance = CycleDayLogsRepository._();
 
-  // Canonical Symptom taxonomy with Persian labels
+  // Canonical Symptom taxonomy with standard labels
   static const Map<String, String> symptomTaxonomy = {
-    'cramps': 'دل‌پیچه و درد شکمی',
-    'headache': 'سردرد',
-    'backache': 'کمردرد',
-    'breast_tenderness': 'حساسیت سینه‌ها',
-    'acne': 'جوش و آکنه',
-    'bloating': 'نفخ و ورم',
-    'fatigue': 'خستگی و بی‌حالی',
-    'nausea': 'تهوع',
-    'cravings': 'تمایل شدید به غذا / شیرینی',
-    'insomnia': 'بی‌خوابی',
-    'mood_swings': 'نوسانات خلقی',
-    'joint_pain': 'درد مفاصل و عضلات',
+    'cramps': 'Abdominal Cramps',
+    'headache': 'Headache',
+    'backache': 'Backache',
+    'breast_tenderness': 'Breast Tenderness',
+    'acne': 'Acne',
+    'bloating': 'Bloating',
+    'fatigue': 'Fatigue',
+    'nausea': 'Nausea',
+    'cravings': 'Food Cravings',
+    'insomnia': 'Insomnia',
+    'mood_swings': 'Mood Swings',
+    'joint_pain': 'Joint Pain',
   };
 
   /// Gets log for a specific calendar date.

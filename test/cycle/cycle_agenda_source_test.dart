@@ -3,8 +3,6 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/cycle_agenda_source.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
-import 'package:ritmo/core/domain/models.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -81,7 +79,8 @@ void main() {
         final items = source.itemsForDate(ctx);
         expect(items.length, equals(1));
         expect(
-          items.first.title.contains('3') || items.first.title.contains('۳'),
+          items.first.title.contains('Day 3') ||
+              items.first.title.contains('3'),
           isTrue,
         );
         expect(items.first.domain, equals(AgendaDomain.cycle));
@@ -127,7 +126,7 @@ void main() {
         final items = populatedSource.itemsForDate(ctx);
         expect(items.length, equals(2));
         expect(
-          items.any((i) => i.title.contains('پیش‌بینی شروع دوره')),
+          items.any((i) => i.title.contains('Period Prediction Window')),
           isTrue,
         );
         expect(items.any((i) => i.title.contains('PMS')), isTrue);

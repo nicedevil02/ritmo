@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
-import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
@@ -158,17 +157,17 @@ class Step2CycleStatus extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xffEC4899).withValues(alpha: 0.1),
+                color: colors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: const Color(0xffEC4899).withValues(alpha: 0.3),
+                  color: colors.primary.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     CupertinoIcons.sparkles,
-                    color: Color(0xffEC4899),
+                    color: colors.primary,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -178,18 +177,14 @@ class Step2CycleStatus extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: isDark
-                            ? const Color(0xffF472B6)
-                            : const Color(0xffDB2777),
+                        color: colors.primary,
                       ),
                     ),
                   ),
                   Icon(
                     CupertinoIcons.chevron_left,
                     size: 16,
-                    color: isDark
-                        ? const Color(0xffF472B6)
-                        : const Color(0xffDB2777),
+                    color: colors.primary,
                   ),
                 ],
               ),

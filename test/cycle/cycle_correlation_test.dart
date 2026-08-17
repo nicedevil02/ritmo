@@ -1,7 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
-import 'package:ritmo/features/cycle/models/cycle_models.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -137,7 +135,7 @@ void main() {
           db,
           now: now,
         );
-        final energyCorr = results.firstWhere((r) => r.metric == 'انرژی بدنی');
+        final energyCorr = results.firstWhere((r) => r.metric == 'energy');
 
         expect(energyCorr.sampleSize, equals(15));
         expect(energyCorr.isSignificant, isTrue);

@@ -1,9 +1,12 @@
+// C-41, C-43, C-45: CycleTrendsSection
+// Theme tokens, Persian digits, in-progress ongoing cycle handling, and uncertainty indicators.
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_mood_chart.dart';
@@ -50,16 +53,6 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
     }
   }
 
-  String _toPersianDigits(String input) {
-    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    var result = input;
-    for (var i = 0; i < english.length; i++) {
-      result = result.replaceAll(english[i], persian[i]);
-    }
-    return result;
-  }
-
   String _translateSymptom(String key) {
     final lowerKey = key.toLowerCase();
     switch (lowerKey) {
@@ -95,11 +88,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Icon(
-                CupertinoIcons.sparkles,
-                color: Color(0xffEC4899),
-                size: 36,
-              ),
+              Icon(CupertinoIcons.sparkles, color: colors.primary, size: 36),
               const SizedBox(height: 12),
               Text(
                 'هنوز در حالِ یادگیریِ الگوی بدنتم 🌸',
@@ -122,9 +111,53 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
       );
     }
 
+    final regularityLabelFa = switch (widget.engineOutput.regularityLevel) {
+      RegularityLevel.regular => 'کاملاً منظم',
+      RegularityLevel.moderate => 'نسبتاً منظم',
+      RegularityLevel.irregular => 'نامنظم',
+      RegularityLevel.insufficientData => 'داده ناکافی',
+      RegularityLevel.pregnancy => 'دوران بارداری',
+    };
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Uncertainty & Outlier Notice (C-45)
+        if (widget.engineOutput.discardedOutliers > 0 ||
+            widget.engineOutput.isProjected)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: RitmoTheme.glassCardLight(
+              color: colors.warning.withValues(alpha: isDark ? 0.12 : 0.06),
+              border: Border.all(color: colors.warning.withValues(alpha: 0.2)),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.info_circle_fill,
+                      color: colors.warning,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        widget.engineOutput.isProjected
+                            ? 'پیش‌بینی‌ها بر مبنای تنظیمات اولیه است.'
+                            : '${PersianDigits.toFa(widget.engineOutput.discardedOutliers.toString())} دوره غیرمعمول برای دقت بیشتر از محاسبات آماری کنار گذاشته شدند.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
         // 1. Regularity Score Card
         RitmoTheme.glassCardLight(
           child: Padding(
@@ -140,19 +173,22 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white70 : colors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        widget.engineOutput.regularityLabel == 'نامنظم'
+                        widget.engineOutput.regularityLevel ==
+                                RegularityLevel.irregular
                             ? 'بر اساس تحلیل داده‌های شما، طول چرخه‌ها دارای پراکندگی است. این یک تشخیص پزشکی نیست، اما روتین منظم‌تر به پایداری ریتم بدنی کمک می‌کند.'
-                            : widget.engineOutput.regularityLabel ==
-                                  'نسبتاً منظم'
+                            : widget.engineOutput.regularityLevel ==
+                                      RegularityLevel.moderate ||
+                                  widget.engineOutput.regularityLevel ==
+                                      RegularityLevel.regular
                             ? 'بر اساس تحلیل داده‌های شما، طول چرخه‌های اخیر به هم نزدیک بوده و ریتم بدنی منظم است 🌸'
                             : 'برای محاسبه وضعیت نظم چرخه، نیاز به ثبت دوره‌های بیشتری است.',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           color: colors.textSecondary,
                           height: 1.5,
                         ),
@@ -168,18 +204,15 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xffEC4899),
-                      width: 1.2,
-                    ),
-                    color: const Color(0xffEC4899).withValues(alpha: 0.1),
+                    border: Border.all(color: colors.primary, width: 1.2),
+                    color: colors.primary.withValues(alpha: 0.1),
                   ),
                   child: Text(
-                    widget.engineOutput.regularityLabel,
+                    regularityLabelFa,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xffEC4899),
+                      color: colors.primary,
                     ),
                   ),
                 ),
@@ -201,7 +234,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                   style: TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white70 : colors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -210,6 +243,10 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                   child: CustomPaint(
                     painter: _CycleTrendPainter(
                       trendPoints: trendPoints,
+                      primaryColor: colors.primary,
+                      periodColor: colors.error,
+                      textColor: colors.textSecondary,
+                      gridColor: colors.border.withValues(alpha: 0.15),
                       isDark: isDark,
                     ),
                     child: Container(),
@@ -220,11 +257,12 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _buildLegendDot(
-                      const Color(0xffEC4899),
+                      colors.primary,
                       'طول چرخه بدنی (روز)',
+                      colors,
                     ),
                     const SizedBox(width: 24),
-                    _buildLegendDot(const Color(0xffF43F5E), 'طول دوره (روز)'),
+                    _buildLegendDot(colors.error, 'طول دوره (روز)', colors),
                   ],
                 ),
               ],
@@ -233,7 +271,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
         ),
         const SizedBox(height: 16),
 
-        CycleMoodChart(
+        CycleMoodChartSection(
           averageCycleLength: widget.engineOutput.stats.avgCycleLength.round(),
         ),
         const SizedBox(height: 16),
@@ -250,13 +288,13 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                   style: TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white70 : colors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
                 if (_loading)
-                  const Center(
-                    child: CircularProgressIndicator(color: Color(0xffEC4899)),
+                  Center(
+                    child: CircularProgressIndicator(color: colors.primary),
                   )
                 else
                   _symptomStats.isEmpty
@@ -296,39 +334,37 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                                     Text(
                                       _translateSymptom(item.key),
                                       style: TextStyle(
-                                        fontSize: 14,
+                                        fontSize: 13,
                                         fontWeight: FontWeight.bold,
-                                        color: isDark
-                                            ? Colors.white
-                                            : colors.textPrimary,
+                                        color: colors.textPrimary,
                                       ),
                                     ),
                                     // Right: Badge / stats
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
+                                        horizontal: 8,
+                                        vertical: 3,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(
-                                          0xffEC4899,
-                                        ).withValues(alpha: 0.08),
+                                        color: colors.primary.withValues(
+                                          alpha: 0.08,
+                                        ),
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
-                                          color: const Color(
-                                            0xffEC4899,
-                                          ).withValues(alpha: 0.2),
+                                          color: colors.primary.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           width: 0.5,
                                         ),
                                       ),
                                       child: Text(
-                                        _toPersianDigits(
+                                        PersianDigits.toFa(
                                           'روزِ شایع: ${item.typicalCycleDay} · ${item.count} بار',
                                         ),
-                                        style: const TextStyle(
-                                          fontSize: 11.5,
+                                        style: TextStyle(
+                                          fontSize: 11,
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xffEC4899),
+                                          color: colors.primary,
                                         ),
                                       ),
                                     ),
@@ -340,13 +376,10 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                                   borderRadius: BorderRadius.circular(4),
                                   child: LinearProgressIndicator(
                                     value: pct,
-                                    backgroundColor: isDark
-                                        ? Colors.white.withValues(alpha: 0.05)
-                                        : Colors.black.withValues(alpha: 0.04),
-                                    valueColor:
-                                        const AlwaysStoppedAnimation<Color>(
-                                          Color(0xffEC4899),
-                                        ),
+                                    backgroundColor: colors.surface,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      colors.primary,
+                                    ),
                                     minHeight: 6,
                                   ),
                                 ),
@@ -358,64 +391,11 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
             ),
           ),
         ),
-
-        // 4. Symptom Timeline Card
-        if (!_loading && _symptomStats.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          RitmoTheme.glassCardLight(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'نقشه زمانی توزیع علائم در طول چرخه',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white70 : colors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'روزهای شایع بروز هر یک از علائم شما بر روی خط زمان دوره:',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.white60 : colors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 48),
-                  SizedBox(
-                    height: 110,
-                    width: double.infinity,
-                    child: CustomPaint(
-                      painter: _SymptomTimelinePainter(
-                        stats: _symptomStats,
-                        cycleLength: widget.engineOutput.stats.avgCycleLength
-                            .round(),
-                        textColor: isDark
-                            ? Colors.white38
-                            : colors.textSecondary.withValues(alpha: 0.7),
-                        trackColor: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : colors.border.withValues(alpha: 0.2),
-                        translator: _translateSymptom,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }
 
-  Widget _buildLegendDot(Color color, String label) {
-    final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildLegendDot(Color color, String label, RitmoColors colors) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -427,10 +407,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
-            color: isDark ? Colors.white60 : colors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 11, color: colors.textSecondary),
         ),
       ],
     );
@@ -438,245 +415,145 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
 }
 
 class _CycleTrendPainter extends CustomPainter {
-  _CycleTrendPainter({required this.trendPoints, required this.isDark});
+  _CycleTrendPainter({
+    required this.trendPoints,
+    required this.primaryColor,
+    required this.periodColor,
+    required this.textColor,
+    required this.gridColor,
+    required this.isDark,
+  });
+
   final List<CycleTrendPoint> trendPoints;
+  final Color primaryColor;
+  final Color periodColor;
+  final Color textColor;
+  final Color gridColor;
   final bool isDark;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paintLine1 = Paint()
-      ..color = const Color(0xffEC4899)
-      ..strokeWidth = 3.0
+    if (trendPoints.isEmpty) return;
+
+    const paddingLeft = 32.0;
+    const paddingRight = 16.0;
+    const paddingTop = 16.0;
+    const paddingBottom = 24.0;
+
+    final chartWidth = size.width - paddingLeft - paddingRight;
+    final chartHeight = size.height - paddingTop - paddingBottom;
+
+    final cycleLinePaint = Paint()
+      ..color = primaryColor
+      ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    final paintLine2 = Paint()
-      ..color = const Color(0xffF43F5E)
+    final periodLinePaint = Paint()
+      ..color = periodColor
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    final paintDot1 = Paint()
-      ..color = const Color(0xffEC4899)
+    final cycleDotPaint = Paint()
+      ..color = primaryColor
       ..style = PaintingStyle.fill;
 
-    final paintDot2 = Paint()
-      ..color = const Color(0xffF43F5E)
+    final periodDotPaint = Paint()
+      ..color = periodColor
       ..style = PaintingStyle.fill;
 
-    final textPainter = TextPainter(textDirection: TextDirection.rtl);
-
-    final count = trendPoints.length;
-    final stepX = size.width / (count - 1).clamp(1, count);
-
-    // Draw Grid Lines
     final gridPaint = Paint()
-      ..color = isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.06)
+      ..color = gridColor
       ..strokeWidth = 1.0;
-
-    for (double y = 0; y <= size.height; y += size.height / 3) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    final pathCycle = Path();
-    final pathPeriod = Path();
-
-    // Map Y: Cycle length max 45, min 15
-    // Map Y: Period duration max 12, min 0
-    double mapCycleY(int val) {
-      final ratio = (val - 15) / (45 - 15);
-      return size.height - (ratio.clamp(0.0, 1.0) * size.height);
-    }
-
-    double mapPeriodY(int val) {
-      final ratio = val / 12;
-      return size.height - (ratio.clamp(0.0, 1.0) * size.height);
-    }
-
-    for (var i = 0; i < count; i++) {
-      final x = i * stepX;
-      final yCycle = mapCycleY(trendPoints[i].lengthDays);
-      final yPeriod = mapPeriodY(trendPoints[i].periodDays);
-
-      if (i == 0) {
-        pathCycle.moveTo(x, yCycle);
-        pathPeriod.moveTo(x, yPeriod);
-      } else {
-        pathCycle.lineTo(x, yCycle);
-        pathPeriod.lineTo(x, yPeriod);
-      }
-
-      // Draw Dots
-      canvas.drawCircle(Offset(x, yCycle), 5, paintDot1);
-      canvas.drawCircle(Offset(x, yPeriod), 4, paintDot2);
-
-      // Draw value text
-      textPainter.text = TextSpan(
-        text: _toPersianDigits(trendPoints[i].lengthDays.toString()),
-        style: TextStyle(
-          fontSize: 9,
-          color: isDark ? Colors.white : Colors.black87,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(x - 6, yCycle - 16));
-    }
-
-    canvas.drawPath(pathCycle, paintLine1);
-    canvas.drawPath(pathPeriod, paintLine2);
-  }
-
-  String _toPersianDigits(String input) {
-    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    var result = input;
-    for (var i = 0; i < english.length; i++) {
-      result = result.replaceAll(english[i], persian[i]);
-    }
-    return result;
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-class _SymptomTimelinePainter extends CustomPainter {
-  _SymptomTimelinePainter({
-    required this.stats,
-    required this.cycleLength,
-    required this.textColor,
-    required this.trackColor,
-    required this.translator,
-  });
-  final List<SymptomStat> stats;
-  final int cycleLength;
-  final Color textColor;
-  final Color trackColor;
-  final Function(String) translator;
-
-  String _toPersianDigits(String input) {
-    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    var result = input;
-    for (var i = 0; i < english.length; i++) {
-      result = result.replaceAll(english[i], persian[i]);
-    }
-    return result;
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const paddingLeft = 24.0;
-    const paddingRight = 24.0;
-    final chartWidth = size.width - paddingLeft - paddingRight;
-    final centerY = size.height / 2;
-
-    // Draw main timeline track
-    final trackPaint = Paint()
-      ..color = trackColor
-      ..strokeWidth = 4.0
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(paddingLeft, centerY),
-      Offset(size.width - paddingRight, centerY),
-      trackPaint,
-    );
 
     final textPainter = TextPainter(textDirection: TextDirection.rtl);
 
-    // Draw start and end day ticks
-    final tickPaint = Paint()
-      ..color = textColor.withValues(alpha: 0.5)
-      ..strokeWidth = 1.0;
-
-    // Tick at Day 1 (On the right in RTL)
-    final startX = size.width - paddingRight;
-    canvas.drawLine(
-      Offset(startX, centerY - 6),
-      Offset(startX, centerY + 6),
-      tickPaint,
-    );
-    textPainter.text = const TextSpan(
-      text: 'روز ۱',
-      style: TextStyle(fontSize: 8.5, color: Colors.grey),
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset(startX - textPainter.width / 2, centerY + 10),
-    );
-
-    // Tick at Day L (On the left in RTL)
-    const endX = paddingLeft;
-    canvas.drawLine(
-      Offset(endX, centerY - 6),
-      Offset(endX, centerY + 6),
-      tickPaint,
-    );
-    textPainter.text = TextSpan(
-      text: _toPersianDigits('روز $cycleLength'),
-      style: TextStyle(fontSize: 8.5, color: textColor),
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset(endX - textPainter.width / 2, centerY + 10),
-    );
-
-    // Plot symptoms (Alternating top and bottom offsets, starting from right)
-    final visibleStats = stats.take(4).toList();
-    for (var i = 0; i < visibleStats.length; i++) {
-      final stat = visibleStats[i];
-      final day = stat.typicalCycleDay;
-      if (day < 1 || day > cycleLength) continue;
-
-      // Calculate x starting from the right (startX) towards the left
-      final x = startX - ((day - 1) / (cycleLength - 1)) * chartWidth;
-      final isTop = i % 2 == 0;
-      final lineLen = isTop ? -35.0 : 35.0;
-      final targetY = centerY + lineLen;
-
-      final dashPaint = Paint()
-        ..color = const Color(0xffEC4899).withValues(alpha: 0.4)
-        ..strokeWidth = 1.0;
-      canvas.drawLine(Offset(x, centerY), Offset(x, targetY), dashPaint);
-
-      final dotPaint = Paint()
-        ..color = const Color(0xffEC4899)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(x, centerY), 4.5, dotPaint);
-
-      final String farsiName = translator(stat.key);
-      final labelSpan = TextSpan(
-        text: _toPersianDigits('$farsiName (روز $day)'),
-        style: const TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
+    // Grid horizontal lines (e.g. 20, 28, 35 days)
+    final yValues = [10, 20, 28, 35, 45];
+    for (final yVal in yValues) {
+      final y = paddingTop + chartHeight - (yVal / 50.0) * chartHeight;
+      canvas.drawLine(
+        Offset(paddingLeft, y),
+        Offset(size.width - paddingRight, y),
+        gridPaint,
       );
 
-      textPainter.text = labelSpan;
+      textPainter.text = TextSpan(
+        text: PersianDigits.toFa(yVal.toString()),
+        style: TextStyle(fontSize: 9, color: textColor),
+      );
       textPainter.layout();
-
-      final badgeWidth = textPainter.width + 12;
-      final badgeHeight = textPainter.height + 6;
-      final badgeX = x - badgeWidth / 2;
-      final badgeY = isTop ? targetY - badgeHeight : targetY;
-
-      // Clamp badgeX to keep badge within view bounds
-      final clampedBadgeX = badgeX.clamp(4.0, size.width - badgeWidth - 4.0);
-
-      final badgePaint = Paint()
-        ..color = const Color(0xffEC4899).withValues(alpha: 0.95)
-        ..style = PaintingStyle.fill;
-      final rrect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(clampedBadgeX, badgeY, badgeWidth, badgeHeight),
-        const Radius.circular(8),
+      textPainter.paint(
+        canvas,
+        Offset(paddingLeft - textPainter.width - 6, y - 5),
       );
-      canvas.drawRRect(rrect, badgePaint);
+    }
 
-      textPainter.paint(canvas, Offset(clampedBadgeX + 6, badgeY + 3));
+    final cyclePoints = <Offset>[];
+    final periodPoints = <Offset>[];
+
+    final n = trendPoints.length;
+    for (var i = 0; i < n; i++) {
+      final p = trendPoints[i];
+      final x = n == 1
+          ? paddingLeft + chartWidth / 2
+          : paddingLeft + (i / (n - 1)) * chartWidth;
+
+      final cyY =
+          paddingTop + chartHeight - (p.lengthDays / 50.0) * chartHeight;
+      final perY =
+          paddingTop + chartHeight - (p.periodDays / 50.0) * chartHeight;
+
+      cyclePoints.add(Offset(x, cyY));
+      periodPoints.add(Offset(x, perY));
+
+      // X label
+      textPainter.text = TextSpan(
+        text: PersianDigits.toFa(p.index.toString()),
+        style: TextStyle(fontSize: 9, color: textColor),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(x - textPainter.width / 2, paddingTop + chartHeight + 6),
+      );
+    }
+
+    // Draw lines
+    if (cyclePoints.length > 1) {
+      final cyclePath = Path()
+        ..moveTo(cyclePoints.first.dx, cyclePoints.first.dy);
+      for (var i = 1; i < cyclePoints.length; i++) {
+        cyclePath.lineTo(cyclePoints[i].dx, cyclePoints[i].dy);
+      }
+      canvas.drawPath(cyclePath, cycleLinePaint);
+
+      final periodPath = Path()
+        ..moveTo(periodPoints.first.dx, periodPoints.first.dy);
+      for (var i = 1; i < periodPoints.length; i++) {
+        periodPath.lineTo(periodPoints[i].dx, periodPoints[i].dy);
+      }
+      canvas.drawPath(periodPath, periodLinePaint);
+    }
+
+    // Draw dots
+    for (var i = 0; i < cyclePoints.length; i++) {
+      final p = trendPoints[i];
+      if (p.isInProgress) {
+        // Hollow / semi-transparent dot for in-progress cycle
+        canvas.drawCircle(
+          cyclePoints[i],
+          4.5,
+          Paint()
+            ..color = primaryColor.withValues(alpha: 0.5)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.0,
+        );
+      } else {
+        canvas.drawCircle(cyclePoints[i], 3.5, cycleDotPaint);
+      }
+      canvas.drawCircle(periodPoints[i], 3.0, periodDotPaint);
     }
   }
 

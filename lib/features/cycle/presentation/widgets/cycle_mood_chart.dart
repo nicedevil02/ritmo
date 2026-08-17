@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 
-class CycleMoodChart extends StatefulWidget {
-  const CycleMoodChart({super.key, required this.averageCycleLength});
+class CycleMoodChartSection extends StatefulWidget {
+  const CycleMoodChartSection({super.key, required this.averageCycleLength});
   final int averageCycleLength;
 
   @override
-  State<CycleMoodChart> createState() => _CycleMoodChartState();
+  State<CycleMoodChartSection> createState() => _CycleMoodChartSectionState();
 }
 
-class _CycleMoodChartState extends State<CycleMoodChart> {
+class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
   bool _loading = true;
   List<Map<String, dynamic>> _logs = [];
   Map<int, double> _dayMoodAverages = {};
@@ -22,209 +23,145 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadMoodData();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadMoodData() async {
     try {
       final db = await DatabaseHelper.instance.database;
 
-      // 1. Fetch periods to calculate dayOfCycle
-      final List<Map<String, dynamic>> periods = await db.query(
+      // 1. Get recent cycle periods to map dates to cycle days
+      final periods = await db.query(
         'cycle_periods',
-        orderBy: 'startDate ASC',
+        where: 'isPredicted = 0',
+        orderBy: 'startDate DESC',
+        limit: 6,
       );
 
-      // 2. Fetch day logs
-      final List<Map<String, dynamic>> logsRows = await db.query(
-        'cycle_day_logs',
-        orderBy: 'logDate ASC',
-      );
-
-      if (logsRows.isEmpty || periods.isEmpty) {
-        if (mounted) {
-          setState(() {
-            _loading = false;
-            _logs = [];
-          });
-        }
+      if (periods.isEmpty) {
+        if (mounted) setState(() => _loading = false);
         return;
       }
 
-      final L = widget.averageCycleLength;
-      final moodValuesByDay = <int, List<double>>{};
-      final energyValuesByDay = <int, List<double>>{};
+      // 2. Fetch day logs that have mood or symptoms
+      final logs = await db.query('cycle_day_logs', orderBy: 'dateIso DESC');
+      _logs = logs;
 
-      final anxietyCounts = <int, int>{};
-      final highEnergyCounts = <int, int>{};
+      // 3. Map logs to cycle day (Day 1 to CycleLength)
+      final Map<int, List<double>> moodBuckets = {};
+      final Map<int, int> anxietyBuckets = {};
+      final Map<int, int> energyBuckets = {};
 
-      for (final row in logsRows) {
-        final logDateStr = row['logDate'] as String;
-        final logDate = DateTime.parse(logDateStr);
+      for (final log in logs) {
+        final dateIso = log['dateIso'] as String?;
+        if (dateIso == null) continue;
+        final logDate = DateTime.tryParse(dateIso);
+        if (logDate == null) continue;
 
-        // Find the latest period that started on or before logDate
-        Map<String, dynamic>? currentPeriod;
-        for (var i = 0; i < periods.length; i++) {
-          final start = DateTime.parse(periods[i]['startDate'] as String);
-          if (!start.isAfter(logDate)) {
-            currentPeriod = periods[i];
+        // Find which period this log belongs to
+        DateTime? matchingPeriodStart;
+        for (final p in periods) {
+          final startStr = p['startDate'] as String?;
+          if (startStr == null) continue;
+          final pStart = DateTime.tryParse(startStr);
+          if (pStart == null) continue;
+
+          // A period governs up to widget.averageCycleLength days forward
+          final diff = logDate.difference(pStart).inDays;
+          if (diff >= 0 && diff < (widget.averageCycleLength + 5)) {
+            matchingPeriodStart = pStart;
+            break;
           }
         }
 
-        if (currentPeriod == null) continue;
-
-        final periodStart = DateTime.parse(
-          currentPeriod['startDate'] as String,
-        );
-        final diff = logDate.difference(periodStart).inDays;
-
-        final dayOfCycle = diff + 1;
-        if (dayOfCycle < 1 || dayOfCycle > L) continue;
-
-        // Extract Mood
-        final mood = row['mood'] as String?;
-        if (mood != null) {
-          var score = 3.0; // NEUTRAL default
-          if (mood == 'HAPPY') score = 4.0;
-          if (mood == 'NEUTRAL') score = 3.0;
-          if (mood == 'SAD') score = 2.0;
-          if (mood == 'ANXIOUS') score = 1.0;
-          if (mood == 'IRRITABLE') score = 0.0;
-
-          moodValuesByDay.putIfAbsent(dayOfCycle, () => []).add(score);
-
-          if (mood == 'ANXIOUS' || mood == 'IRRITABLE') {
-            anxietyCounts[dayOfCycle] = (anxietyCounts[dayOfCycle] ?? 0) + 1;
-          }
-        }
-
-        // Extract Energy
-        final energy = row['energyTag'] as String?;
-        if (energy != null) {
-          var score = 2.0; // MEDIUM default
-          if (energy == 'HIGH') score = 3.0;
-          if (energy == 'MEDIUM') score = 2.0;
-          if (energy == 'LOW') score = 1.0;
-
-          energyValuesByDay.putIfAbsent(dayOfCycle, () => []).add(score);
-
-          if (energy == 'HIGH') {
-            highEnergyCounts[dayOfCycle] =
-                (highEnergyCounts[dayOfCycle] ?? 0) + 1;
+        if (matchingPeriodStart != null) {
+          final cycleDay = logDate.difference(matchingPeriodStart).inDays + 1;
+          if (cycleDay >= 1 && cycleDay <= widget.averageCycleLength) {
+            // Extract Mood Value (0 to 4 scale)
+            final mood = log['mood'] as String?;
+            if (mood != null) {
+              final val = _moodToScore(mood);
+              if (val != null) {
+                moodBuckets.putIfAbsent(cycleDay, () => []).add(val);
+                if (mood == 'anxious' || mood == 'sad' || mood == 'tired') {
+                  anxietyBuckets[cycleDay] =
+                      (anxietyBuckets[cycleDay] ?? 0) + 1;
+                } else if (mood == 'energetic' || mood == 'happy') {
+                  energyBuckets[cycleDay] = (energyBuckets[cycleDay] ?? 0) + 1;
+                }
+              }
+            }
           }
         }
       }
 
       // Compute Averages
-      final moodAverages = <int, double>{};
-      final energyAverages = <int, double>{};
-
-      moodValuesByDay.forEach((day, list) {
-        moodAverages[day] = list.reduce((a, b) => a + b) / list.length;
+      final Map<int, double> averages = {};
+      moodBuckets.forEach((day, scores) {
+        if (scores.isNotEmpty) {
+          final avg = scores.reduce((a, b) => a + b) / scores.length;
+          averages[day] = avg;
+        }
       });
 
-      energyValuesByDay.forEach((day, list) {
-        energyAverages[day] = list.reduce((a, b) => a + b) / list.length;
-      });
-
-      // Find Critical Anxiety Day
-      var maxAnxietyDay = -1;
+      // Find critical points
+      int maxAnxietyD = -1;
       var maxAnxietyCount = 0;
-      anxietyCounts.forEach((day, count) {
+      anxietyBuckets.forEach((day, count) {
         if (count > maxAnxietyCount) {
           maxAnxietyCount = count;
-          maxAnxietyDay = day;
+          maxAnxietyD = day;
         }
       });
 
-      if (maxAnxietyDay == -1) {
-        var lowestAvgMood = 5.0;
-        var minMoodDay = -1;
-        moodAverages.forEach((day, avg) {
-          if (avg < lowestAvgMood) {
-            lowestAvgMood = avg;
-            minMoodDay = day;
-          }
-        });
-        if (lowestAvgMood < 3.0) {
-          maxAnxietyDay = minMoodDay;
-        }
-      }
-
-      // Find Critical Energy Day
-      var maxEnergyDay = -1;
+      int maxEnergyD = -1;
       var maxEnergyCount = 0;
-      highEnergyCounts.forEach((day, count) {
+      energyBuckets.forEach((day, count) {
         if (count > maxEnergyCount) {
           maxEnergyCount = count;
-          maxEnergyDay = day;
+          maxEnergyD = day;
         }
       });
-
-      if (maxEnergyDay == -1) {
-        var highestAvgEnergy = 0.0;
-        var bestEnergyDay = -1;
-        energyAverages.forEach((day, avg) {
-          if (avg > highestAvgEnergy) {
-            highestAvgEnergy = avg;
-            bestEnergyDay = day;
-          }
-        });
-        if (highestAvgEnergy > 2.0) {
-          maxEnergyDay = bestEnergyDay;
-        }
-      }
-
-      // Check for variations to prevent fake peaks on flat lines
-      var hasMoodVariation = false;
-      if (moodAverages.isNotEmpty) {
-        final firstVal = moodAverages.values.first;
-        hasMoodVariation = moodAverages.values.any((v) => v != firstVal);
-      }
-      if (!hasMoodVariation) {
-        maxAnxietyDay = -1;
-      }
-
-      var hasEnergyVariation = false;
-      if (energyAverages.isNotEmpty) {
-        final firstVal = energyAverages.values.first;
-        hasEnergyVariation = energyAverages.values.any((v) => v != firstVal);
-      }
-      if (!hasEnergyVariation) {
-        maxEnergyDay = -1;
-      }
 
       if (mounted) {
         setState(() {
-          _dayMoodAverages = moodAverages;
-          _maxAnxietyDay = maxAnxietyDay;
-          _maxEnergyDay = maxEnergyDay;
-          _logs = logsRows;
+          _dayMoodAverages = averages;
+          _maxAnxietyDay = maxAnxietyD;
+          _maxEnergyDay = maxEnergyD;
           _loading = false;
         });
       }
     } catch (e, st) {
       RitmoLogger.error(
-        '[CycleMoodChart] error loading mood chart data',
+        '[CycleMoodChartSection] error loading data',
         error: e,
         stack: st,
       );
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  String _toPersianDigits(String input) {
-    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    var result = input;
-    for (var i = 0; i < english.length; i++) {
-      result = result.replaceAll(english[i], persian[i]);
+  double? _moodToScore(String mood) {
+    switch (mood.toLowerCase()) {
+      case 'energetic':
+      case 'happy':
+      case 'calm':
+        return 4.0;
+      case 'normal':
+      case 'fine':
+        return 3.0;
+      case 'tired':
+      case 'moody':
+        return 2.0;
+      case 'anxious':
+      case 'sad':
+        return 1.0;
+      case 'angry':
+      case 'irritated':
+        return 0.0;
+      default:
+        return null;
     }
-    return result;
   }
 
   @override
@@ -233,10 +170,10 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
 
     if (_loading) {
       return RitmoTheme.glassCardLight(
-        child: const Padding(
-          padding: EdgeInsets.all(24),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
           child: Center(
-            child: CircularProgressIndicator(color: Color(0xffEC4899)),
+            child: CircularProgressIndicator(color: colors.primary),
           ),
         ),
       );
@@ -248,9 +185,9 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              const Icon(
+              Icon(
                 CupertinoIcons.heart_circle,
-                color: Color(0xffEC4899),
+                color: colors.primary,
                 size: 36,
               ),
               const SizedBox(height: 12),
@@ -265,7 +202,7 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
               ),
               const SizedBox(height: 8),
               Text(
-                'با ثبتِ روزانهی احوال، نمودار دقیقتر میشود.',
+                'با ثبتِ روزانه احوال، نمودار دقیق‌تر می‌شود.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
               ),
@@ -288,7 +225,7 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
               style: TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white70 : colors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
@@ -296,7 +233,7 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
               'این نمودار نوسانات خلق‌وخوی شما را در روزهای چرخه نشان می‌دهد (محور افقی روزهای دوره و محور عمودی سطح احوال است).',
               style: TextStyle(
                 fontSize: 11.5,
-                color: isDark ? Colors.white60 : colors.textSecondary,
+                color: colors.textSecondary,
                 height: 1.4,
               ),
             ),
@@ -310,15 +247,12 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
                     cycleLength: widget.averageCycleLength,
                     maxAnxietyDay: _maxAnxietyDay,
                     maxEnergyDay: _maxEnergyDay,
-                    textColor: isDark
-                        ? Colors.white38
-                        : colors.textSecondary.withValues(alpha: 0.7),
-                    gridColor: isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : colors.border.withValues(alpha: 0.1),
-                    criticalTextColor: isDark
-                        ? Colors.white70
-                        : colors.textPrimary,
+                    primaryColor: colors.primary,
+                    anxietyColor: colors.error,
+                    energyColor: colors.success,
+                    textColor: colors.textSecondary,
+                    gridColor: colors.border.withValues(alpha: 0.15),
+                    criticalTextColor: colors.textPrimary,
                   ),
                 ),
               ),
@@ -330,22 +264,22 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
               alignment: WrapAlignment.center,
               children: [
                 _buildLegendDot(
-                  const Color(0xffEC4899),
+                  colors.primary,
                   'میانگین خلق‌وخو (عالی تا کلافه)',
                   isDark,
                   colors,
                 ),
                 if (_maxAnxietyDay != -1)
                   _buildLegendDot(
-                    const Color(0xffF43F5E),
-                    'نقطه اوج اضطراب/بی‌حوصلگی (روز ${_toPersianDigits(_maxAnxietyDay.toString())})',
+                    colors.error,
+                    'نقطه اوج اضطراب/بی‌حوصلگی (روز ${PersianDigits.toFa(_maxAnxietyDay.toString())})',
                     isDark,
                     colors,
                   ),
                 if (_maxEnergyDay != -1)
                   _buildLegendDot(
-                    const Color(0xff4ADE80),
-                    'نقطه اوج انرژی بالا (روز ${_toPersianDigits(_maxEnergyDay.toString())})',
+                    colors.success,
+                    'نقطه اوج انرژی بالا (روز ${PersianDigits.toFa(_maxEnergyDay.toString())})',
                     isDark,
                     colors,
                   ),
@@ -358,7 +292,7 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
   }
 
   Widget _buildLegendDot(
-    Color color,
+    Color dotColor,
     String label,
     bool isDark,
     RitmoColors colors,
@@ -369,15 +303,12 @@ class _CycleMoodChartState extends State<CycleMoodChart> {
         Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 10.5,
-            color: isDark ? Colors.white60 : colors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
         ),
       ],
     );
@@ -390,6 +321,9 @@ class _MoodChartPainter extends CustomPainter {
     required this.cycleLength,
     required this.maxAnxietyDay,
     required this.maxEnergyDay,
+    required this.primaryColor,
+    required this.anxietyColor,
+    required this.energyColor,
     required this.textColor,
     required this.gridColor,
     required this.criticalTextColor,
@@ -398,24 +332,16 @@ class _MoodChartPainter extends CustomPainter {
   final int cycleLength;
   final int maxAnxietyDay;
   final int maxEnergyDay;
+  final Color primaryColor;
+  final Color anxietyColor;
+  final Color energyColor;
   final Color textColor;
   final Color gridColor;
   final Color criticalTextColor;
 
-  String _toPersianDigits(String input) {
-    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    var result = input;
-    for (var i = 0; i < english.length; i++) {
-      result = result.replaceAll(english[i], persian[i]);
-    }
-    return result;
-  }
-
   @override
   void paint(Canvas canvas, Size size) {
-    const paddingLeft =
-        60.0; // Increased padding to prevent clipping of Farsi/Emoji labels
+    const paddingLeft = 60.0;
     const paddingBottom = 20.0;
     const paddingTop = 12.0;
     const paddingRight = 12.0;
@@ -428,18 +354,15 @@ class _MoodChartPainter extends CustomPainter {
       ..strokeWidth = 1.0;
 
     final linePaint = Paint()
-      ..color = const Color(0xffEC4899)
+      ..color = primaryColor
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
     final fillPaint = Paint()..style = PaintingStyle.fill;
-
     final dotPaint = Paint()..style = PaintingStyle.fill;
-
     final textPainter = TextPainter(textDirection: TextDirection.rtl);
 
-    // Emojis and labels for mood values
     final yLabels = {
       4.0: '😃 عالی',
       3.0: '🙂 خوب',
@@ -450,14 +373,12 @@ class _MoodChartPainter extends CustomPainter {
 
     yLabels.forEach((val, label) {
       final y = paddingTop + chartHeight - (val / 4.0) * chartHeight;
-      // Draw grid line
       canvas.drawLine(
         Offset(paddingLeft, y),
         Offset(size.width - paddingRight, y),
         gridPaint,
       );
 
-      // Draw label on the left space
       textPainter.text = TextSpan(
         text: label,
         style: TextStyle(fontSize: 8.5, color: textColor),
@@ -469,7 +390,6 @@ class _MoodChartPainter extends CustomPainter {
       );
     });
 
-    // Draw X-axis labels (Days)
     final xDays = [
       1,
       (cycleLength / 4).round(),
@@ -479,16 +399,14 @@ class _MoodChartPainter extends CustomPainter {
     ];
     for (final day in xDays) {
       final x = paddingLeft + ((day - 1) / (cycleLength - 1)) * chartWidth;
-      // Draw vertical tick
       canvas.drawLine(
         Offset(x, paddingTop),
         Offset(x, paddingTop + chartHeight),
         gridPaint,
       );
 
-      // Label
       textPainter.text = TextSpan(
-        text: _toPersianDigits('روز $day'),
+        text: PersianDigits.toFa('روز $day'),
         style: TextStyle(fontSize: 8.5, color: textColor),
       );
       textPainter.layout();
@@ -498,7 +416,6 @@ class _MoodChartPainter extends CustomPainter {
       );
     }
 
-    // Prepare line points
     final points = <Offset>[];
     final sortedAverages = moodAverages.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
@@ -514,7 +431,6 @@ class _MoodChartPainter extends CustomPainter {
     }
 
     if (points.isNotEmpty) {
-      // Draw filled area underneath the curve
       final fillPath = Path();
       fillPath.moveTo(points.first.dx, paddingTop + chartHeight);
       for (final pt in points) {
@@ -527,8 +443,8 @@ class _MoodChartPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          const Color(0xffEC4899).withValues(alpha: 0.18),
-          const Color(0xffEC4899).withValues(alpha: 0),
+          primaryColor.withValues(alpha: 0.18),
+          primaryColor.withValues(alpha: 0),
         ],
       );
       fillPaint.shader = gradient.createShader(
@@ -536,7 +452,6 @@ class _MoodChartPainter extends CustomPainter {
       );
       canvas.drawPath(fillPath, fillPaint);
 
-      // Draw the line
       final linePath = Path();
       linePath.moveTo(points.first.dx, points.first.dy);
       for (var i = 1; i < points.length; i++) {
@@ -544,14 +459,11 @@ class _MoodChartPainter extends CustomPainter {
       }
       canvas.drawPath(linePath, linePaint);
 
-      // Draw dots for each data point
       for (final pt in points) {
-        dotPaint.color = const Color(0xffEC4899);
+        dotPaint.color = primaryColor;
         canvas.drawCircle(pt, 3.5, dotPaint);
       }
 
-      // Highlight Critical Points
-      // 1. Max Anxiety Point
       if (maxAnxietyDay != -1 && moodAverages.containsKey(maxAnxietyDay)) {
         final val = moodAverages[maxAnxietyDay]!;
         final x =
@@ -559,18 +471,16 @@ class _MoodChartPainter extends CustomPainter {
             ((maxAnxietyDay - 1) / (cycleLength - 1)) * chartWidth;
         final y = paddingTop + chartHeight - (val / 4.0) * chartHeight;
 
-        // Draw Highlight Outer Ring
-        dotPaint.color = const Color(0xffF43F5E).withValues(alpha: 0.25);
+        dotPaint.color = anxietyColor.withValues(alpha: 0.25);
         canvas.drawCircle(Offset(x, y), 8, dotPaint);
-        dotPaint.color = const Color(0xffF43F5E);
+        dotPaint.color = anxietyColor;
         canvas.drawCircle(Offset(x, y), 4.5, dotPaint);
 
-        // Draw Label text above
-        textPainter.text = const TextSpan(
+        textPainter.text = TextSpan(
           text: 'اوج بی‌حوصلگی 😰',
           style: TextStyle(
             fontSize: 8.5,
-            color: Color(0xffF43F5E),
+            color: anxietyColor,
             fontWeight: FontWeight.bold,
           ),
         );
@@ -587,31 +497,28 @@ class _MoodChartPainter extends CustomPainter {
         textPainter.paint(canvas, Offset(textX.clamp(minX, maxX), labelY));
       }
 
-      // 2. Max Energy Point
       if (maxEnergyDay != -1 && moodAverages.containsKey(maxEnergyDay)) {
         final val = moodAverages[maxEnergyDay]!;
         final x =
             paddingLeft + ((maxEnergyDay - 1) / (cycleLength - 1)) * chartWidth;
         final y = paddingTop + chartHeight - (val / 4.0) * chartHeight;
 
-        // Draw Highlight Outer Ring
-        dotPaint.color = const Color(0xff4ADE80).withValues(alpha: 0.25);
+        dotPaint.color = energyColor.withValues(alpha: 0.25);
         canvas.drawCircle(Offset(x, y), 8, dotPaint);
-        dotPaint.color = const Color(0xff4ADE80);
+        dotPaint.color = energyColor;
         canvas.drawCircle(Offset(x, y), 4.5, dotPaint);
 
-        // Draw Label text above or below (avoid overlap if same day)
         final isOverlap = (maxAnxietyDay == maxEnergyDay);
         var labelY = isOverlap ? y + 10.0 : y - 18;
         if (labelY < 2.0) {
           labelY = y + 8.0;
         }
 
-        textPainter.text = const TextSpan(
+        textPainter.text = TextSpan(
           text: 'اوج انرژی ⚡',
           style: TextStyle(
             fontSize: 8.5,
-            color: Color(0xff4ADE80),
+            color: energyColor,
             fontWeight: FontWeight.bold,
           ),
         );

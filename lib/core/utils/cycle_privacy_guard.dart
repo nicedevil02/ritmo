@@ -1,4 +1,4 @@
-// C-11: CyclePrivacyGuard with explicit CycleAudience enum and canonical user_gender matching.
+// C-11, C-41: CyclePrivacyGuard with explicit CycleAudience enum and canonical user_gender matching.
 enum CycleAudience { eligible, notEligible, unknown }
 
 class CyclePrivacyGuard {
@@ -8,16 +8,16 @@ class CyclePrivacyGuard {
     'FEMALE',
     'WOMAN',
     'ZAN',
-    'زن',
-    'خانم',
+    '\u0632\u0646',
+    '\u062E\u0627\u0646\u0645',
   };
 
   static const Set<String> _notEligibleGenders = {
     'MALE',
     'MAN',
     'MARD',
-    'مرد',
-    'آقا',
+    '\u0645\u0631\u062F',
+    '\u0622\u0642\u0627',
   };
 
   /// Evaluates cycle audience eligibility strictly against canonical key `user_gender`.

@@ -10,6 +10,7 @@ class PersianDigits {
   }
 
   static String toPersian(Object? input) => convert(input?.toString() ?? '');
+  static String toFa(Object? input) => convert(input?.toString() ?? '');
 }
 
 String toPersianDigits(Object? input) =>

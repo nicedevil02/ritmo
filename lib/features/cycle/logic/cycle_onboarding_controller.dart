@@ -1,12 +1,10 @@
 // C-13, C-15: CycleOnboardingController
 // Clean onboarding coordinator using CycleSettings façade, CycleDateContract, and schema-compliant period records.
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
-import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:sqflite/sqflite.dart';
@@ -221,7 +219,7 @@ class CycleOnboardingController {
         'endDate': null,
         'flowIntensity': 'MEDIUM',
         'isPredicted': 0,
-        'note': 'ثبت اولیه در راه‌اندازی',
+        'note': 'onboarding_seed',
         'createdAt': nowMs,
         'updatedAt': nowMs,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
@@ -240,7 +238,7 @@ class CycleOnboardingController {
         'endDate': cleanEndStr,
         'flowIntensity': 'MEDIUM',
         'isPredicted': 0,
-        'note': 'ثبت اولیه در راه‌اندازی',
+        'note': 'onboarding_seed',
         'createdAt': nowMs,
         'updatedAt': nowMs,
       }, conflictAlgorithm: ConflictAlgorithm.replace);

@@ -212,7 +212,7 @@ class CycleLockService {
 
   /// Authenticates using biometrics. Returns true ONLY on successful authentication.
   Future<bool> authenticateBiometric({
-    String localizedReason = 'احراز هویت جهت دسترسی به بخش چرخه بدن',
+    String localizedReason = 'Cycle Vault Authentication',
   }) async {
     if (kIsWeb) return false;
 

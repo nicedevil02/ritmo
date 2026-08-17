@@ -30,12 +30,8 @@ class PhaseDesignTheme {
         return const PhaseDesignTheme(
           title: 'فاز قاعدگی',
           description: 'زمان استراحت، تغذیه گرم و مراقبت ملایم از خود.',
-          baseColor: Color(0xFFE57373),
-          gradientColors: [
-            Color(0xFFFF8A80),
-            Color(0xFFFF5252),
-            Color(0xFFD32F2F),
-          ],
+          baseColor: Colors.pink,
+          gradientColors: [Colors.pinkAccent, Colors.pink, Colors.redAccent],
           icon: Icons.water_drop,
         );
       case CyclePhase.follicular:
@@ -43,12 +39,8 @@ class PhaseDesignTheme {
           title: 'فاز فولیکولار',
           description:
               'افزایش سطح انرژی! زمان ایده‌آل برای برنامه‌ریزی و یادگیری.',
-          baseColor: Color(0xFF81C784),
-          gradientColors: [
-            Color(0xFFA5D6A7),
-            Color(0xFF66BB6A),
-            Color(0xFF388E3C),
-          ],
+          baseColor: Colors.teal,
+          gradientColors: [Colors.tealAccent, Colors.teal, Colors.green],
           icon: Icons.wb_sunny_outlined,
         );
       case CyclePhase.ovulatory:
@@ -56,11 +48,11 @@ class PhaseDesignTheme {
           title: 'فاز تخمک‌گذاری',
           description:
               'اوج درخشش و ارتباطات اجتماعی. کارهای گروهی عالی پیش می‌روند.',
-          baseColor: Color(0xFFBA68C8),
+          baseColor: Colors.purple,
           gradientColors: [
-            Color(0xFFE1BEE7),
-            Color(0xFFBA68C8),
-            Color(0xFF7B1FA2),
+            Colors.purpleAccent,
+            Colors.purple,
+            Colors.deepPurple,
           ],
           icon: Icons.auto_awesome,
         );
@@ -69,12 +61,8 @@ class PhaseDesignTheme {
           title: 'فاز لوتئال',
           description:
               'کاهش تدریجی انرژی. به سمت کارهای انفرادی و آرامش حرکت کنید.',
-          baseColor: Color(0xFFFFB74D),
-          gradientColors: [
-            Color(0xFFFFCC80),
-            Color(0xFFFFB74D),
-            Color(0xFFF57C00),
-          ],
+          baseColor: Colors.amber,
+          gradientColors: [Colors.amberAccent, Colors.amber, Colors.orange],
           icon: Icons.nights_stay_outlined,
         );
     }

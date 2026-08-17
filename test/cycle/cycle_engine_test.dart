@@ -1,9 +1,6 @@
 // Unit tests for CycleEngine (C-16, C-19)
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
-import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
-import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
-import 'package:ritmo/features/cycle/models/cycle_models.dart';
 
 void main() {
   group('CycleEngine Output Calculations (C-16, C-19)', () {
@@ -116,7 +113,7 @@ void main() {
         final output = engine.pregnancyOutputForTesting(now);
 
         expect(output.hasData, true);
-        expect(output.regularityLabel, 'دوران بارداری');
+        expect(output.regularityLevel, RegularityLevel.pregnancy);
         expect(output.dayOfPeriod, 0);
         expect(output.dayOfCycle, 0);
       },

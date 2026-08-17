@@ -16,8 +16,8 @@ class CycleBurdenCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final badgeColor = burden.level == 'HIGH'
-        ? const Color(0xFFEC4899)
-        : (burden.level == 'MODERATE' ? Colors.amber.shade700 : Colors.teal);
+        ? colors.primary
+        : (burden.level == 'MODERATE' ? colors.warning : colors.success);
 
     final badgeTitleFa = burden.level == 'HIGH'
         ? 'بار بدنی بالا'
@@ -73,7 +73,7 @@ class CycleBurdenCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          ...advice.recommendationsFa.map(
+          ...(advice.recommendationsFa ?? advice.recommendationCodes).map(
             (rec) => Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Row(

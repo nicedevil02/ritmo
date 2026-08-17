@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 Future<void> showCycleAiConsentSheet(
   BuildContext context, {
@@ -16,6 +17,8 @@ Future<void> showCycleAiConsentSheet(
     return;
   }
 
+  final colors = context.colors;
+
   // Show privacy & AI assistant consent sheet
   final granted = await showModalBottomSheet<bool>(
     context: context,
@@ -23,10 +26,10 @@ Future<void> showCycleAiConsentSheet(
     isScrollControlled: true,
     builder: (ctx) {
       return Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF1E293B),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border(top: BorderSide(color: Color(0xFF334155), width: 1.5)),
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border(top: BorderSide(color: colors.border, width: 1.5)),
         ),
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -38,7 +41,7 @@ Future<void> showCycleAiConsentSheet(
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: colors.textTertiary.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -50,12 +53,12 @@ Future<void> showCycleAiConsentSheet(
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEC4899).withValues(alpha: 0.15),
+                    color: colors.primary.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.psychology_rounded,
-                    color: Color(0xFFEC4899),
+                    color: colors.primary,
                     size: 28,
                   ),
                 ),
@@ -65,10 +68,10 @@ Future<void> showCycleAiConsentSheet(
                     isPregnancyMode
                         ? 'دستیار هوشمند بارداری'
                         : 'دستیار هوشمند سیکل بانوان',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: colors.textPrimary,
                     ),
                     textDirection: TextDirection.rtl,
                   ),
@@ -76,11 +79,11 @@ Future<void> showCycleAiConsentSheet(
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'دستیار هوشمند برای ارائه توصیه‌های دقیق فیزیولوژیک، علائم و تحلیل الگوی دوره‌ای شما را بررسی می‌کند. تمام داده‌ها طبق استانداردهای حفظ حریم خصوصی به صورت امن پردازش می‌شوند.',
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.white70,
+                color: colors.textSecondary,
                 height: 1.6,
               ),
               textDirection: TextDirection.rtl,
@@ -91,8 +94,8 @@ Future<void> showCycleAiConsentSheet(
                 Expanded(
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white70,
-                      side: const BorderSide(color: Color(0xFF334155)),
+                      foregroundColor: colors.textSecondary,
+                      side: BorderSide(color: colors.border),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -107,8 +110,8 @@ Future<void> showCycleAiConsentSheet(
                   flex: 2,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFEC4899),
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -117,7 +120,7 @@ Future<void> showCycleAiConsentSheet(
                     onPressed: () async {
                       try {
                         final db = await DatabaseHelper.instance.database;
-                        await db.insert('settings', {
+                        await db.insert('app_settings', {
                           'key': 'cycle_consent_ai',
                           'value': 'true',
                           'updatedAt': DateTime.now().millisecondsSinceEpoch,
@@ -132,17 +135,19 @@ Future<void> showCycleAiConsentSheet(
                           stack: st,
                         );
                       }
-                      if (ctx.mounted) Navigator.pop(ctx, true);
+                      if (ctx.mounted) {
+                        Navigator.pop(ctx, true);
+                      }
                     },
                     child: const Text(
-                      'تایید و ورود به گفتگو',
+                      'موافقم و شروع',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
           ],
         ),
       );

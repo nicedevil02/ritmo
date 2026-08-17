@@ -48,18 +48,18 @@ enum CycleFlowLevel {
   }
 
   String toDb() => switch (this) {
-        CycleFlowLevel.none => 'NONE',
-        CycleFlowLevel.light => 'LIGHT',
-        CycleFlowLevel.medium => 'MEDIUM',
-        CycleFlowLevel.heavy => 'HEAVY',
-      };
+    CycleFlowLevel.none => 'NONE',
+    CycleFlowLevel.light => 'LIGHT',
+    CycleFlowLevel.medium => 'MEDIUM',
+    CycleFlowLevel.heavy => 'HEAVY',
+  };
 
   double get score => switch (this) {
-        CycleFlowLevel.none => 0.0,
-        CycleFlowLevel.light => 1.0,
-        CycleFlowLevel.medium => 2.0,
-        CycleFlowLevel.heavy => 3.0,
-      };
+    CycleFlowLevel.none => 0.0,
+    CycleFlowLevel.light => 1.0,
+    CycleFlowLevel.medium => 2.0,
+    CycleFlowLevel.heavy => 3.0,
+  };
 
   String get labelFa => name;
 }

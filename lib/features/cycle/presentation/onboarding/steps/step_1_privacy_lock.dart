@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/features/cycle/logic/cycle_onboarding_controller.dart';
 

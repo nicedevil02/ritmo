@@ -202,7 +202,7 @@ class CycleConsentBridge {
       return BodyRhythmInfluence(
         energyDelta: -15,
         indirectMessage:
-            'بر اساس ریتم طبیعی بدنتان در این روزها، سطح انرژی شما تحت تأثیر نوسانات زیستی قرار دارد و استراحت بیشتری پیشنهاد می‌شود.',
+            'Natural biological rhythm influence: consider extra rest and lighter tasks.',
       );
     }
 
@@ -212,7 +212,7 @@ class CycleConsentBridge {
       return BodyRhythmInfluence(
         energyDelta: -10,
         indirectMessage:
-            'بر اساس ریتم طبیعی بدنتان، کیفیت خواب ممکن است با تغییرات زیستی مواجه شود. تلاش کنید خواب منظم‌تری داشته باشید.',
+            'Natural biological rhythm influence: maintain regular sleep routines.',
       );
     }
 

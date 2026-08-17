@@ -1,5 +1,5 @@
 // C-05, C-06, C-07, C-42: CycleRemindersScreen
-// Null-safe settings, integrated with CycleLockGate, secure lock management, and localized display.
+// Null-safe settings, integrated with CycleLockGate, secure lock management, and localized Jalali display.
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/analytics/data_maturity_engine.dart';
@@ -7,7 +7,10 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/hormonal_intelligence_engine.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_lock_gate.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -20,7 +23,7 @@ class CycleRemindersScreen extends StatefulWidget {
 
 class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
   bool _isLoading = true;
-  late HormonalEngineOutput _output;
+  HormonalEngineOutput? _output;
   List<Map<String, dynamic>> _cycleLogs = [];
   Map<String, String> _settings = {};
 
@@ -36,7 +39,8 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
       final settingsList = await db.query('app_settings');
       _settings = {
         for (final s in settingsList)
-          if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? '',
+          if (s['key'] != null)
+            s['key'].toString(): s['value']?.toString() ?? '',
       };
 
       _output = await HormonalIntelligenceEngine.evaluate(
@@ -47,7 +51,11 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
 
       _cycleLogs = await DatabaseHelper.instance.getCycleLogs();
     } catch (e, st) {
-      RitmoLogger.error('[CycleRemindersScreen] failed to load data', error: e, stack: st);
+      RitmoLogger.error(
+        '[CycleRemindersScreen] failed to load data',
+        error: e,
+        stack: st,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -83,9 +91,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: isDark
-                        ? [colors.bgPrimary, colors.bgSecondary]
-                        : [colors.bgPrimary, colors.bgSecondary],
+                    colors: [colors.bgPrimary, colors.bgSecondary],
                   ),
                 ),
               ),
@@ -99,12 +105,18 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                     children: [
                       // AppBar
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             IconButton(
-                              icon: RitmoIcons.back(context, color: colors.textPrimary),
+                              icon: RitmoIcons.back(
+                                context,
+                                color: colors.textPrimary,
+                              ),
                               onPressed: () => Navigator.pop(context),
                             ),
                             Text(
@@ -140,14 +152,21 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
   }
 
   Widget _buildPrivateContentScreen(RitmoColors colors, bool isDark) {
-    final nextCycleDate = _output.nextCycleStartDate;
+    final output = _output;
+    final nextCycleDate = output?.nextCycleStartDate ?? DateTime.now();
     final jalali = Jalali.fromDateTime(nextCycleDate);
     final monthName = jalali.formatter.mN;
     final weekdayLabel = jalali.formatter.wN;
-    final dateStr = '$weekdayLabel ${jalali.day} $monthName';
+    final dateStr =
+        '$weekdayLabel ${PersianDigits.toFa(jalali.day.toString())} $monthName';
     final daysToNext = nextCycleDate.difference(DateTime.now()).inDays;
 
-    final hasEnoughData = DataMaturityEngine.hasEnoughDataForCyclePrediction(_cycleLogs.length);
+    final hasEnoughData = DataMaturityEngine.hasEnoughDataForCyclePrediction(
+      _cycleLogs.length,
+    );
+
+    final avgCycleLength = CycleSettings.getCycleLength(_settings);
+    final avgPeriodDuration = CycleSettings.getPeriodDuration(_settings);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
@@ -167,7 +186,11 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                       color: colors.primary.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(CupertinoIcons.calendar, color: colors.primary, size: 24),
+                    child: Icon(
+                      CupertinoIcons.calendar,
+                      color: colors.primary,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -177,7 +200,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                         Text(
                           'پیش‌بینی زمان شروع دوره بعدی',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: colors.textSecondary,
                           ),
                         ),
@@ -185,7 +208,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                         Text(
                           hasEnoughData ? dateStr : 'در حال شناخت ریتم شما',
                           style: TextStyle(
-                            fontSize: 17,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
                           ),
@@ -193,10 +216,10 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                         const SizedBox(height: 4),
                         Text(
                           hasEnoughData
-                              ? 'تقریباً در $daysToNext روز آینده'
+                              ? 'تقریباً در ${PersianDigits.toFa(daysToNext.toString())} روز آینده'
                               : 'نیاز به ثبت چرخه‌های بیشتر برای پیش‌بینی',
                           style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 12,
                             color: colors.primary,
                             fontWeight: FontWeight.bold,
                           ),
@@ -211,7 +234,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
           const SizedBox(height: 24),
 
           // Private Reminders List
-          if (_output.privateReminderQueue.isNotEmpty) ...[
+          if (output != null && output.privateReminderQueue.isNotEmpty) ...[
             Text(
               'یادآوری‌های محرمانه',
               style: TextStyle(
@@ -225,7 +248,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  children: _output.privateReminderQueue.map((rem) {
+                  children: output.privateReminderQueue.map((rem) {
                     final isT0 = rem.level == 'T0';
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -233,15 +256,20 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: isT0 ? colors.primary : colors.textPrimary.withValues(alpha: 0.06),
+                              color: isT0
+                                  ? colors.primary
+                                  : colors.textPrimary.withValues(alpha: 0.06),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               rem.level,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 color: isT0 ? Colors.white : colors.textPrimary,
                               ),
@@ -252,7 +280,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                             child: Text(
                               rem.message,
                               style: TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 13,
                                 color: colors.textPrimary,
                                 height: 1.4,
                               ),
@@ -288,52 +316,81 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'میانگین طول چرخه: ${_settings['cycle_length_days'] ?? _settings['user_cycle_length'] ?? '۲۸'} روز',
-                        style: TextStyle(fontSize: 11, color: colors.textPrimary, fontWeight: FontWeight.bold),
+                        'میانگین طول چرخه: ${PersianDigits.toFa(avgCycleLength.toString())} روز',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
-                        'طول دوره خونریزی: ${_settings['period_duration_days'] ?? _settings['user_period_duration'] ?? '۶'} روز',
-                        style: TextStyle(fontSize: 11, color: colors.textPrimary, fontWeight: FontWeight.bold),
+                        'طول دوره: ${PersianDigits.toFa(avgPeriodDuration.toString())} روز',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                   const Divider(height: 20),
                   Text(
                     'تاریخچه‌ی دوره‌های ثبت شده:',
-                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
                   ),
                   const SizedBox(height: 8),
                   if (_cycleLogs.isEmpty)
                     Text(
                       'تاکنون هیچ دوره‌ای ثبت نشده است. اطلاعات چرخه به مرور زمان و با ورود دوره‌ها در اینجا نمایش داده می‌شود.',
-                      style: TextStyle(fontSize: 11, color: colors.textSecondary, height: 1.5),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.textSecondary,
+                        height: 1.5,
+                      ),
                     )
                   else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _cycleLogs.length,
-                      itemBuilder: (context, index) {
-                        final log = _cycleLogs[index];
-                        final startStr = (log['cycleStartDate'] ?? log['startDate'])?.toString() ?? '-';
-                        final endStr = (log['cycleEndDate'] ?? log['endDate'])?.toString() ?? 'درحال انجام';
+                    Column(
+                      children: _cycleLogs.take(10).map((log) {
+                        final rawStart =
+                            (log['cycleStartDate'] ?? log['startDate'])
+                                ?.toString();
+                        final rawEnd =
+                            (log['cycleEndDate'] ?? log['endDate'])?.toString();
+
+                        final parsedStart =
+                            CycleDateContract.parseDayKey(rawStart);
+                        final parsedEnd = CycleDateContract.parseDayKey(rawEnd);
+
+                        final startStr = parsedStart != null
+                            ? Jalali.fromDateTime(parsedStart).formatCompactDate()
+                            : (rawStart ?? '-');
+                        final endStr = parsedEnd != null
+                            ? Jalali.fromDateTime(parsedEnd).formatCompactDate()
+                            : 'درحال انجام';
+
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'شروع: $startStr',
-                                style: TextStyle(fontSize: 11, color: colors.textPrimary),
+                                'شروع: ${PersianDigits.toFa(startStr)}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colors.textPrimary,
+                                ),
                               ),
                               Text(
-                                'پایان: $endStr',
-                                style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                                'پایان: ${PersianDigits.toFa(endStr)}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colors.textSecondary,
+                                ),
                               ),
                             ],
                           ),
                         );
-                      },
+                      }).toList(),
                     ),
                 ],
               ),
@@ -343,8 +400,10 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
 
           // Privacy Card
           RitmoTheme.glassCardLight(
-            color: Colors.green.withValues(alpha: isDark ? 0.08 : 0.04),
-            border: Border.all(color: Colors.green.withValues(alpha: 0.18)),
+            color: colors.success.withValues(alpha: isDark ? 0.08 : 0.04),
+            border: Border.all(
+              color: colors.success.withValues(alpha: 0.18),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -352,7 +411,11 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(CupertinoIcons.checkmark_seal_fill, color: Colors.green, size: 20),
+                      Icon(
+                        CupertinoIcons.checkmark_seal_fill,
+                        color: colors.success,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'حریم خصوصی شما برای ما مهم است',
@@ -365,9 +428,18 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _buildPrivacyPoint('اطلاعات فقط روی دستگاه شما ذخیره می‌شود و کاملاً محلی است.', colors),
-                  _buildPrivacyPoint('برای هیچ سرور یا سرویس خارجی ارسال نمی‌گردد.', colors),
-                  _buildPrivacyPoint('صرفاً جهت بهبود و انطباق تجربه شخصی شما در ریتمو استفاده می‌شود.', colors),
+                  _buildPrivacyPoint(
+                    'اطلاعات فقط روی دستگاه شما ذخیره می‌شود و کاملاً محلی است.',
+                    colors,
+                  ),
+                  _buildPrivacyPoint(
+                    'برای هیچ سرور یا سرویس خارجی ارسال نمی‌گردد.',
+                    colors,
+                  ),
+                  _buildPrivacyPoint(
+                    'صرفاً جهت بهبود و انطباق تجربه شخصی شما در ریتمو استفاده می‌شود.',
+                    colors,
+                  ),
                 ],
               ),
             ),
@@ -383,13 +455,13 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(CupertinoIcons.check_mark, color: Colors.green, size: 12),
+          Icon(CupertinoIcons.check_mark, color: colors.success, size: 14),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 12,
                 color: colors.textPrimary.withValues(alpha: 0.8),
               ),
             ),

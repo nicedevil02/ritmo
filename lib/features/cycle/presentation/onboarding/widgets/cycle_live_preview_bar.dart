@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 

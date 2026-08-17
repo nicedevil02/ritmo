@@ -1,3 +1,4 @@
+// CycleLoadBalancer (C-31, C-41: Adaptive workload advice & code-based contract)
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 
@@ -28,11 +29,11 @@ class CycleLoadBalancer {
         sessionLengthMultiplier: CycleLoadBalanceConstants.highBurdenMultiplier,
         extraBreakMinutesEveryHour:
             CycleLoadBalanceConstants.highBurdenExtraBreaks,
-        recommendationsFa: [
-          'برنامه‌های سنگین امروز را کاهش دهید یا به روزهای دیگر منتقل کنید.',
-          'جلسات تمرکز یا مطالعه را به بازه‌های کوتاه‌تر ۳۰ دقیقه‌ای تقسیم کنید.',
-          'استراحت‌های کوتاه‌مدت بیشتری در طول روز برنامه‌ریزی کنید.',
-          'مصرف آب، چای گرم و مراقبت‌های آرامش‌بخش را اولویت دهید.',
+        recommendationCodes: [
+          'reduce_heavy_workload',
+          'split_focus_sessions',
+          'plan_more_frequent_breaks',
+          'prioritize_comfort_hydration',
         ],
       );
     } else if (burden.level == 'MODERATE') {
@@ -44,10 +45,10 @@ class CycleLoadBalancer {
             CycleLoadBalanceConstants.moderateBurdenMultiplier,
         extraBreakMinutesEveryHour:
             CycleLoadBalanceConstants.moderateBurdenExtraBreaks,
-        recommendationsFa: [
-          'برنامه امروز متوازن است؛ ریتم متناسب و بدون فشار حفظ شود.',
-          'در صورت احساس خستگی، ۵ دقیقه استراحت اضافه در ساعت بگیرید.',
-          'کارهای فکری مهم‌تر را در ساعات اولیه روز انجام دهید.',
+        recommendationCodes: [
+          'maintain_balanced_rhythm',
+          'take_extra_five_min_break',
+          'do_deep_work_early',
         ],
       );
     } else {
@@ -60,9 +61,9 @@ class CycleLoadBalancer {
           sessionLengthMultiplier: CycleLoadBalanceConstants.normalMultiplier,
           extraBreakMinutesEveryHour:
               CycleLoadBalanceConstants.normalExtraBreaks,
-          recommendationsFa: [
-            'وضعیت بدنی در طول دوره قاعدگی آرام و متوازن ارزیابی شده است.',
-            'ریتم عادی و بدون تحمیل فشار مضاعف را حفظ کنید.',
+          recommendationCodes: [
+            'gentle_menstrual_rhythm',
+            'avoid_unnecessary_pressure',
           ],
         );
       }
@@ -73,9 +74,9 @@ class CycleLoadBalancer {
         energyDelta: CycleLoadBalanceConstants.normalEnergyDelta,
         sessionLengthMultiplier: CycleLoadBalanceConstants.normalMultiplier,
         extraBreakMinutesEveryHour: CycleLoadBalanceConstants.normalExtraBreaks,
-        recommendationsFa: [
-          'وضعیت بدنی در ریتم مطلوب قرار دارد.',
-          'زمان مناسبی برای پیشبرد اهداف مهم و برنامه‌های پرانرژی است.',
+        recommendationCodes: [
+          'optimal_physical_rhythm',
+          'ideal_for_demanding_tasks',
         ],
       );
     }

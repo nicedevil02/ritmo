@@ -120,14 +120,11 @@ class CyclePersonalPatternEngine {
         if (maxCount >= minSymptomOccurrences) {
           final confidence = maxCount / completedCycles;
           if (confidence >= minConfidenceThreshold) {
-            final labelFa = _getSymptomFarsiLabel(symptomKey);
             forecasts.add(
               SymptomForecast(
                 symptomKey: symptomKey,
                 likelyCycleDay: maxDay,
                 confidence: confidence.clamp(0.0, 1.0),
-                insightFa:
-                    'در داده‌های ثبت‌شده شما، $labelFa معمولاً حوالی روز $maxDay چرخه تکرار شده است.',
               ),
             );
           }
@@ -144,18 +141,5 @@ class CyclePersonalPatternEngine {
       );
       return [];
     }
-  }
-
-  static String _getSymptomFarsiLabel(String key) {
-    return switch (key.toLowerCase()) {
-      'cramps' => 'گرفتگی و درد شکمی',
-      'headache' => 'سردرد',
-      'bloating' => 'نفخ',
-      'backache' => 'کمردرد',
-      'mood_swings' => 'نوسانات خلقی',
-      'fatigue' => 'خستگی',
-      'acne' => 'جوش پوستی',
-      _ => key,
-    };
   }
 }

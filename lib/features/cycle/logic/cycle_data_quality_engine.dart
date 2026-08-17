@@ -78,10 +78,10 @@ class CycleDataQualityEngine {
 
     final qualityLevel =
         periodRows.length >= 5 && hasRecentDailyLogs && !hasForgottenOpenPeriod
-            ? 'HIGH'
-            : (periodRows.length >= 2 && !hasForgottenOpenPeriod
-                ? 'MEDIUM'
-                : 'LOW');
+        ? 'HIGH'
+        : (periodRows.length >= 2 && !hasForgottenOpenPeriod
+              ? 'MEDIUM'
+              : 'LOW');
 
     return DataQualityReport(
       hasEnoughCycles: hasEnoughCycles,

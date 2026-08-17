@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/features/cycle/logic/cycle_data_quality_engine.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -61,10 +60,7 @@ void main() {
           report.hasPredictionConfidence,
           isFalse,
         ); // Suppressed by forgotten open period
-        expect(
-          report.warningsFa.any((w) => w.contains('دوره باز قدیمی')),
-          isTrue,
-        );
+        expect(report.warningCodes.contains('forgotten_open_period'), isTrue);
       },
     );
   });

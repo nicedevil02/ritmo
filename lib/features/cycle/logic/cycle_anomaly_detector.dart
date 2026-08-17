@@ -20,21 +20,17 @@ class CycleAnomaly {
     this.paramValue = 0,
     this.referenceValue = 0,
     this.isMild = true,
-    String? titleFa,
-    String? descriptionFa,
-  })  : _titleFa = titleFa,
-        _descriptionFa = descriptionFa;
+    this.titleFa,
+    this.descriptionFa,
+  });
 
   final CycleAnomalyType type;
   final CycleAnomalySeverity severity;
   final int paramValue;
   final int referenceValue;
   final bool isMild;
-  final String? _titleFa;
-  final String? _descriptionFa;
-
-  String get titleFa => _titleFa ?? type.name;
-  String get descriptionFa => _descriptionFa ?? type.name;
+  final String? titleFa;
+  final String? descriptionFa;
 }
 
 class CycleAnomalyDetector {

@@ -30,14 +30,13 @@ class PregnancyTodayCard extends StatelessWidget {
     final trimester = gestationalAge.trimester;
     final week = gestationalAge.weeks;
     final weekInfo = pregnancyWeekData[week];
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2C2C3E) : Colors.pink.shade50,
+        color: context.colors.surfaceElevated,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: context.colors.primary.withValues(alpha: 0.3),

@@ -114,10 +114,7 @@ void main() {
         final longAnomaly = anomalies.firstWhere(
           (a) => a.type == CycleAnomalyType.abnormallyLongCycle,
         );
-        expect(
-          longAnomaly.descriptionFa.contains('28 روز'),
-          isTrue,
-        ); // Reference avg of previous cycles is 28
+        expect(longAnomaly.referenceValue, equals(28));
       },
     );
   });

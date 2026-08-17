@@ -298,25 +298,27 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
   Widget build(BuildContext context) {
     final status = _evaluate511Status();
     final all511 = status['all511'] == true;
+    final colors = context.colors;
 
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        backgroundColor: const Color(0xFF121218),
+        backgroundColor: colors.surface,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(CupertinoIcons.xmark, color: Colors.white),
+            icon: Icon(CupertinoIcons.xmark, color: colors.textPrimary),
             onPressed: () async {
-              if (await _onWillPop()) {
-                if (mounted) Navigator.of(context).pop();
+              final canPop = await _onWillPop();
+              if (canPop && context.mounted) {
+                Navigator.of(context).pop();
               }
             },
           ),
-          title: const Text(
+          title: Text(
             'حالت زایمان (سنجش انقباضات)',
-            style: TextStyle(fontSize: 18, color: Colors.white),
+            style: TextStyle(fontSize: 18, color: colors.textPrimary),
           ),
           centerTitle: true,
         ),
@@ -399,7 +401,7 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                 style: TextStyle(
                   fontSize: 54,
                   fontWeight: FontWeight.bold,
-                  color: _isContracting ? Colors.pinkAccent : Colors.white70,
+                  color: _isContracting ? colors.primary : colors.textSecondary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -417,13 +419,13 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: _isContracting
-                          ? Colors.pinkAccent
-                          : const Color(0xFF2C2C3E),
+                          ? colors.primary
+                          : colors.surfaceElevated,
                       boxShadow: [
                         BoxShadow(
                           color: _isContracting
-                              ? Colors.pinkAccent.withValues(alpha: 0.5)
-                              : Colors.black45,
+                              ? colors.primary.withValues(alpha: 0.5)
+                              : Colors.black26,
                           blurRadius: _isContracting ? 30 : 10,
                           spreadRadius: _isContracting ? 8 : 2,
                         ),
@@ -464,18 +466,20 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
               Container(
                 height: 160,
                 padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF1E1E28),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                decoration: BoxDecoration(
+                  color: colors.surfaceElevated,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'تاریخچه انقباضات اخیر',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.white70,
+                        color: colors.textSecondary,
                         fontSize: 13,
                       ),
                     ),

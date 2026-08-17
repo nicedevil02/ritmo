@@ -26,11 +26,7 @@ class CyclePersonalForecastCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.psychology_outlined,
-                size: 18,
-                color: Color(0xFFEC4899),
-              ),
+              Icon(Icons.psychology_outlined, size: 18, color: colors.primary),
               const SizedBox(width: 8),
               Text(
                 'پیش‌بینی الگوهای شخصی',
@@ -49,15 +45,11 @@ class CyclePersonalForecastCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.auto_awesome,
-                    size: 14,
-                    color: Color(0xFFEC4899),
-                  ),
+                  Icon(Icons.auto_awesome, size: 14, color: colors.primary),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      f.insightFa,
+                      f.insightFa ?? f.symptomKey,
                       style: TextStyle(
                         fontSize: 12,
                         color: colors.textSecondary,

@@ -1,9 +1,10 @@
-// C-17, C-18: CycleStateNotifier & Unified Riverpod State Provider
-// Single unified state coordinator for Cycle screen, home widget, and profile integrations.
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+// C-17, C-18: CycleStateNotifier (ChangeNotifier & ValueNotifier architecture)
+// Unified state coordinator for Cycle screen, home widget, and profile integrations.
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
-import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
@@ -72,14 +73,16 @@ class CycleState {
   }
 }
 
-class CycleStateNotifier extends StateNotifier<CycleState> {
+class CycleStateNotifier extends ValueNotifier<CycleState> {
   CycleStateNotifier() : super(const CycleState()) {
     loadState();
   }
 
+  static final CycleStateNotifier instance = CycleStateNotifier();
+
   /// Loads full cycle state from database, settings, and calculation engine.
   Future<void> loadState() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    value = value.copyWith(isLoading: true, errorMessage: null);
     try {
       final db = await DatabaseHelper.instance.database;
       final settingsList = await db.query('app_settings');
@@ -118,12 +121,12 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
                 cycleInput,
               );
         } catch (_) {
-          const fallbackEngine = CycleEngine();
+          final fallbackEngine = CycleEngine();
           engineOutput = await fallbackEngine.calculate(cycleInput);
         }
       }
 
-      state = CycleState(
+      value = CycleState(
         isLoading: false,
         isEligible: isEligible,
         isModuleEnabled: isModuleEnabled,
@@ -141,9 +144,9 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
         error: e,
         stack: st,
       );
-      state = state.copyWith(
+      value = value.copyWith(
         isLoading: false,
-        errorMessage: 'خطا در بارگذاری اطلاعات چرخه',
+        errorMessage: 'error_loading_cycle_state',
       );
     }
   }
@@ -157,7 +160,12 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
         targetDate,
         dbExecutor: db,
       );
-      RitmoEvents.notifyRoutineChanged();
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'CycleStarted',
+          payload: {'date': targetDate.toIso8601String()},
+        ),
+      );
       await loadState();
     } catch (e, st) {
       RitmoLogger.error(
@@ -173,7 +181,7 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
     try {
       final db = await DatabaseHelper.instance.database;
       final active =
-          state.activePeriod ??
+          value.activePeriod ??
           await CyclePeriodRepository.instance.getActivePeriod(db);
       if (active != null && active.id != null) {
         final targetDate = endDate ?? DateTime.now();
@@ -182,7 +190,12 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
           targetDate,
           dbExecutor: db,
         );
-        RitmoEvents.notifyRoutineChanged();
+        RitmoEventBus().fire(
+          RitmoEvent(
+            type: 'CycleEnded',
+            payload: {'date': targetDate.toIso8601String()},
+          ),
+        );
         await loadState();
       }
     } catch (e, st) {
@@ -198,7 +211,9 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
   Future<void> deletePeriod(int id) async {
     try {
       await CyclePeriodRepository.instance.deletePeriod(id);
-      RitmoEvents.notifyRoutineChanged();
+      RitmoEventBus().fire(
+        RitmoEvent(type: 'CycleUpdated', payload: {'deletedId': id}),
+      );
       await loadState();
     } catch (e, st) {
       RitmoLogger.error(
@@ -218,7 +233,7 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
         where: 'key = ?',
         whereArgs: ['cycle_onboarding_just_completed'],
       );
-      state = state.copyWith(justFinishedOnboarding: false);
+      value = value.copyWith(justFinishedOnboarding: false);
     } catch (e, st) {
       RitmoLogger.error(
         '[CycleStateNotifier] dismissOnboardingBanner error',
@@ -235,7 +250,12 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
         'module_cycle_enabled',
         enabled,
       );
-      RitmoEvents.notifyRoutineChanged();
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'SettingsChanged',
+          payload: {'module_cycle_enabled': enabled},
+        ),
+      );
       await loadState();
     } catch (e, st) {
       RitmoLogger.error(
@@ -246,8 +266,3 @@ class CycleStateNotifier extends StateNotifier<CycleState> {
     }
   }
 }
-
-final cycleStateProvider =
-    StateNotifierProvider<CycleStateNotifier, CycleState>((ref) {
-      return CycleStateNotifier();
-    });

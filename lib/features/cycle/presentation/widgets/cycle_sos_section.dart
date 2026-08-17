@@ -28,25 +28,25 @@ class CycleSosSection extends StatelessWidget {
     var emoji = '🆘';
     var title = 'کمک فوری تسکین درد (SOS)';
     var subtitle = 'راهکارها و پوزیشن‌های فیزیکی برای تسکین سریع دردهای قاعدگی';
-    var themeColor = const Color(0xffEC4899);
+    var themeColor = colors.primary;
 
     if (phase == CyclePhase.ovulation) {
       emoji = '✨';
       title = 'سلامت و شادابی در فاز باروری';
       subtitle =
           'راهکارها و رژیم‌های غذایی برای استفاده حداکثری از اوج شادابی بدنی';
-      themeColor = const Color(0xff06B6D4);
+      themeColor = colors.accent;
     } else if (phase == CyclePhase.luteal) {
       emoji = '💆';
       title = 'مدیریت علائم پیش‌قاعدگی (PMS)';
       subtitle = 'راهکارهای خانگی برای بهبود خلق‌وخو و تسکین اسپاسم‌های اولیه';
-      themeColor = const Color(0xffEC4899);
+      themeColor = colors.primary;
     } else if (phase == CyclePhase.follicular) {
       emoji = '⚡';
       title = 'تقویت انرژی و روتین فاز فولیکولار';
       subtitle =
           'راهکارهای مناسب برای برنامه‌ریزی فعالیت‌ها و ارتقای توان فیزیکی';
-      themeColor = const Color(0xff8B5CF6);
+      themeColor = colors.accent;
     }
 
     return SizedBox(
@@ -396,17 +396,15 @@ class CycleSosSection extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xffEC4899).withValues(alpha: 0.05),
+            color: colors.primary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: const Color(0xffEC4899).withValues(alpha: 0.15),
-            ),
+            border: Border.all(color: colors.primary.withValues(alpha: 0.15)),
           ),
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 CupertinoIcons.info_circle_fill,
-                color: Color(0xffEC4899),
+                color: colors.primary,
                 size: 20,
               ),
               const SizedBox(width: 12),
@@ -447,11 +445,11 @@ class CycleSosSection extends StatelessWidget {
     IconData? icon,
   }) {
     final colors = context.colors;
-    var themeColor = const Color(0xffEC4899);
+    var themeColor = colors.primary;
     if (phase == CyclePhase.ovulation) {
-      themeColor = const Color(0xff06B6D4);
+      themeColor = colors.accent;
     } else if (phase == CyclePhase.follicular) {
-      themeColor = const Color(0xff8B5CF6);
+      themeColor = colors.accent;
     }
 
     return Container(
@@ -533,7 +531,7 @@ class CycleSosSection extends StatelessWidget {
             Row(
               children: [
                 if (icon != null) ...[
-                  Icon(icon, color: const Color(0xffEC4899), size: 16),
+                  Icon(icon, color: colors.primary, size: 16),
                   const SizedBox(width: 8),
                 ],
                 Expanded(
@@ -564,14 +562,15 @@ class CycleSosSection extends StatelessWidget {
   }
 
   Widget _buildAiAssistantCard(BuildContext context) {
-    var startColor = const Color(0xffEC4899);
-    var endColor = const Color(0xffF472B6);
+    final colors = context.colors;
+    var startColor = colors.primary;
+    var endColor = colors.accent;
     if (phase == CyclePhase.ovulation) {
-      startColor = const Color(0xff06B6D4);
-      endColor = const Color(0xff22D3EE);
+      startColor = colors.accent;
+      endColor = colors.primary;
     } else if (phase == CyclePhase.follicular) {
-      startColor = const Color(0xff8B5CF6);
-      endColor = const Color(0xffA78BFA);
+      startColor = colors.accent;
+      endColor = colors.primary;
     }
 
     return Container(

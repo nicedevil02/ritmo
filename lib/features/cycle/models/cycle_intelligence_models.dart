@@ -7,16 +7,15 @@ class PredictionConfidence {
     required this.level,
     required this.score,
     this.reasonCodes = const [],
-    List<String>? reasonsFa,
-  }) : _reasonsFa = reasonsFa;
+    this.reasonsFa,
+  });
 
   final PredictionConfidenceLevel level;
   final double score; // 0..1
   final List<String> reasonCodes;
-  final List<String>? _reasonsFa;
+  final List<String>? reasonsFa;
 
-  List<String> get reasonsFa => _reasonsFa ?? reasonCodes;
-  List<String> get reasons => reasonCodes;
+  List<String> get reasons => reasonsFa ?? reasonCodes;
 }
 
 class SymptomForecast {
@@ -24,32 +23,25 @@ class SymptomForecast {
     required this.symptomKey,
     required this.likelyCycleDay,
     required this.confidence,
-    String? insightFa,
-  }) : _insightFa = insightFa;
+    this.insightFa,
+  });
 
   final String symptomKey;
   final int likelyCycleDay;
   final double confidence; // 0..1
-  final String? _insightFa;
-
-  String get insightFa => _insightFa ?? symptomKey;
+  final String? insightFa;
 }
 
 enum BurdenConfidence { low, medium, high }
 
 class BurdenFactor {
-  const BurdenFactor({
-    required this.code,
-    required this.weight,
-    String? labelFa,
-  }) : _labelFa = labelFa;
+  const BurdenFactor({required this.code, required this.weight, this.labelFa});
 
   final String code;
   final double weight;
-  final String? _labelFa;
+  final String? labelFa;
 
-  String get labelFa => _labelFa ?? code;
-  String get label => _labelFa ?? code;
+  String get label => labelFa ?? code;
 }
 
 class BodyBurdenScore {
@@ -59,18 +51,17 @@ class BodyBurdenScore {
     this.confidence = 'MEDIUM',
     this.factors = const [],
     this.reasonCodes = const [],
-    List<String>? reasonsFa,
-  }) : _reasonsFa = reasonsFa;
+    this.reasonsFa,
+  });
 
   final double score; // 0..100
   final String level; // LOW / MODERATE / HIGH
   final String confidence; // LOW / MEDIUM / HIGH
   final List<BurdenFactor> factors;
   final List<String> reasonCodes;
-  final List<String>? _reasonsFa;
+  final List<String>? reasonsFa;
 
-  List<String> get reasonsFa => _reasonsFa ?? reasonCodes;
-  List<String> get reasons => reasonCodes;
+  List<String> get reasons => reasonsFa ?? reasonCodes;
 }
 
 class DataQualityReport {
@@ -82,10 +73,9 @@ class DataQualityReport {
     required this.recentLogsCount,
     this.qualityLevel = 'HIGH',
     this.warningCodes = const [],
-    String? qualityLabelFa,
-    List<String>? warningsFa,
-  })  : _qualityLabelFa = qualityLabelFa,
-        _warningsFa = warningsFa;
+    this.qualityLabelFa,
+    this.warningsFa,
+  });
 
   final bool hasEnoughCycles;
   final bool hasRecentDailyLogs;
@@ -94,11 +84,8 @@ class DataQualityReport {
   final int recentLogsCount;
   final String qualityLevel;
   final List<String> warningCodes;
-  final String? _qualityLabelFa;
-  final List<String>? _warningsFa;
-
-  String get qualityLabelFa => _qualityLabelFa ?? qualityLevel;
-  List<String> get warningsFa => _warningsFa ?? warningCodes;
+  final String? qualityLabelFa;
+  final List<String>? warningsFa;
 }
 
 enum CycleLoadMode {
@@ -108,11 +95,11 @@ enum CycleLoadMode {
   higherFocus;
 
   String get code => switch (this) {
-        CycleLoadMode.rest => 'rest',
-        CycleLoadMode.lighter => 'lighter',
-        CycleLoadMode.balanced => 'balanced',
-        CycleLoadMode.higherFocus => 'higher-focus',
-      };
+    CycleLoadMode.rest => 'rest',
+    CycleLoadMode.lighter => 'lighter',
+    CycleLoadMode.balanced => 'balanced',
+    CycleLoadMode.higherFocus => 'higher-focus',
+  };
 }
 
 class CycleAdaptiveAdvice {
@@ -123,8 +110,8 @@ class CycleAdaptiveAdvice {
     required this.sessionLengthMultiplier,
     required this.extraBreakMinutesEveryHour,
     this.recommendationCodes = const [],
-    List<String>? recommendationsFa,
-  }) : _recommendationsFa = recommendationsFa;
+    this.recommendationsFa,
+  });
 
   final String loadMode; // lighter / balanced / higher-focus
   final CycleLoadMode mode;
@@ -132,7 +119,5 @@ class CycleAdaptiveAdvice {
   final double sessionLengthMultiplier;
   final int extraBreakMinutesEveryHour;
   final List<String> recommendationCodes;
-  final List<String>? _recommendationsFa;
-
-  List<String> get recommendationsFa => _recommendationsFa ?? recommendationCodes;
+  final List<String>? recommendationsFa;
 }

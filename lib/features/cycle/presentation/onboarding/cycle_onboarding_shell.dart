@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/cycle/logic/cycle_onboarding_controller.dart';
@@ -93,9 +92,7 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xff1A1D29)
-              : Colors.white,
+          backgroundColor: context.colors.surface,
           title: const Text(
             'خروج از راه‌اندازی',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

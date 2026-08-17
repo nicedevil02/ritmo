@@ -1,10 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/domain/engines/hormonal_intelligence_engine.dart';
-import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/services/cycle_notification_service.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_reminder_scheduler.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {

@@ -221,23 +221,13 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                TextStyle(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.7,
-                                          ),
-                                          fontSize: 12,
-                                        ) ==
-                                        null
-                                    ? const SizedBox()
-                                    : Text(
-                                        'پیشرفت بارداری',
-                                        style: TextStyle(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.7,
-                                          ),
-                                          fontSize: 12,
-                                        ),
-                                      ),
+                                Text(
+                                  'پیشرفت بارداری',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                    fontSize: 12,
+                                  ),
+                                ),
                                 Text(
                                   '${(progressFraction * 100).toInt()}%',
                                   style: const TextStyle(

@@ -64,9 +64,7 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xffEC4899)),
-      );
+      return Center(child: CircularProgressIndicator(color: colors.primary));
     }
 
     return Column(
@@ -109,7 +107,7 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
           var strengthText = 'داده کافی نیست';
           if (hasCoeff) {
             if (coeff.abs() > 0.6) {
-              indicatorColor = const Color(0xffEC4899);
+              indicatorColor = colors.primary;
               strengthText = coeff > 0
                   ? 'همبستگی مستقیم قوی'
                   : 'همبستگی معکوس قوی';

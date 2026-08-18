@@ -44,6 +44,12 @@ class DayAgendaService {
   /// C-FIX-4: only *non-empty* days are ever stored here. See [agendaForRange].
   final Map<String, DayAgenda> _cache = {};
 
+  int _dataRevision = 0;
+  static const int _maxEmptyDaysCache = 400;
+  final Map<String, int> _emptyDays = {};
+
+  int get dataRevision => _dataRevision;
+
   AgendaLoadStatus _lastStatus = const AgendaLoadStatus.ok();
   AgendaLoadStatus get lastLoadStatus => _lastStatus;
 
@@ -174,10 +180,18 @@ class DayAgendaService {
   }
 
   /// Drop the whole cache (e.g. on broad data changes).
-  void invalidateAll() => _cache.clear();
+  void invalidateAll() {
+    _cache.clear();
+    _emptyDays.clear();
+    _dataRevision++;
+  }
 
   /// Drop a single date's cached agenda.
-  void invalidateDate(String dateStr) => _cache.remove(dateStr);
+  void invalidateDate(String dateStr) {
+    _cache.remove(dateStr);
+    _emptyDays.remove(dateStr);
+    _dataRevision++;
+  }
 
   Future<DayAgenda> agendaForDate(
     DateTime date, {
@@ -248,12 +262,29 @@ class DayAgendaService {
         servedFromCache++;
         continue;
       }
+
+      // Negative cache with data revision timestamp (CAL-40):
+      // Empty days are remembered within the current data revision. Any data
+      // mutation increments _dataRevision, invalidating all negative cache entries,
+      // which preserves the C-FIX-4 invariant (never making empty days permanently sticky).
+      if (cacheEligible && _emptyDays[ds] == _dataRevision) {
+        result[ds] = DayAgenda.empty(ds);
+        servedFromCache++;
+        continue;
+      }
+
       try {
         final agenda = await _assembleDay(date, ds, ctx, opts, failures);
 
-        // C-FIX-4: NEVER cache an empty day.
-        if (cacheEligible && agenda.items.isNotEmpty) {
-          _cache[ds] = agenda;
+        if (cacheEligible) {
+          if (agenda.items.isNotEmpty) {
+            _cache[ds] = agenda;
+          } else {
+            if (_emptyDays.length >= _maxEmptyDaysCache) {
+              _emptyDays.clear();
+            }
+            _emptyDays[ds] = _dataRevision;
+          }
         }
         result[ds] = agenda;
       } catch (e, st) {

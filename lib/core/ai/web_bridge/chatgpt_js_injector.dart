@@ -449,16 +449,17 @@ $_bridgeScriptBody''';
 
   function findLatestAssistantText() {
     try {
-      var assistants = document.querySelectorAll('[data-message-author-role="assistant"]');
-      if (assistants && assistants.length > 0) {
-        var lastAssistant = assistants[assistants.length - 1];
-        var t = extractCleanText(lastAssistant);
+      // 1. Prioritize newly generated assistant elements not present before this turn
+      var unseenAssistants = queryAllSafe('[data-message-author-role="assistant"]:not([data-ritmo-seen="true"])');
+      if (unseenAssistants.length > 0) {
+        var lastUnseen = unseenAssistants[unseenAssistants.length - 1];
+        var t = extractCleanText(lastUnseen);
         if (t) return t;
       }
 
-      var markdowns = document.querySelectorAll('div.markdown, div.prose, [class*="markdown"], [class*="prose"]');
-      for (var j = markdowns.length - 1; j >= 0; j--) {
-        var md = markdowns[j];
+      var unseenMarkdowns = queryAllSafe('div.markdown:not([data-ritmo-seen="true"]), div.prose:not([data-ritmo-seen="true"]), [class*="markdown"]:not([data-ritmo-seen="true"]), [class*="prose"]:not([data-ritmo-seen="true"])');
+      for (var j = unseenMarkdowns.length - 1; j >= 0; j--) {
+        var md = unseenMarkdowns[j];
         var isUser = !!md.closest('[data-message-author-role="user"], [data-testid*="user"], div.font-user-message');
         if (!isUser) {
           var t = extractCleanText(md);
@@ -466,14 +467,43 @@ $_bridgeScriptBody''';
         }
       }
 
-      var articles = document.querySelectorAll('article, [data-testid*="conversation-turn-"]');
-      for (var i = articles.length - 1; i >= 0; i--) {
-        var art = articles[i];
+      var unseenArticles = queryAllSafe('article:not([data-ritmo-seen="true"]), [data-testid*="conversation-turn-"]:not([data-ritmo-seen="true"])');
+      for (var i = unseenArticles.length - 1; i >= 0; i--) {
+        var art = unseenArticles[i];
         var isUser = !!art.querySelector('[data-message-author-role="user"]') ||
                      (art.getAttribute('data-testid') || '').indexOf('user') !== -1;
         if (!isUser) {
           var t = extractCleanText(art);
           if (t) return t;
+        }
+      }
+
+      // 2. Fallback to all assistant elements if no unseen flag match found
+      var assistants = queryAllSafe('[data-message-author-role="assistant"]');
+      if (assistants.length > 0) {
+        var lastAssistant = assistants[assistants.length - 1];
+        var tAll = extractCleanText(lastAssistant);
+        if (tAll) return tAll;
+      }
+
+      var markdowns = queryAllSafe('div.markdown, div.prose, [class*="markdown"], [class*="prose"]');
+      for (var k = markdowns.length - 1; k >= 0; k--) {
+        var mdAll = markdowns[k];
+        var isUserMd = !!mdAll.closest('[data-message-author-role="user"], [data-testid*="user"], div.font-user-message');
+        if (!isUserMd) {
+          var tAllMd = extractCleanText(mdAll);
+          if (tAllMd) return tAllMd;
+        }
+      }
+
+      var articles = queryAllSafe('article, [data-testid*="conversation-turn-"]');
+      for (var m = articles.length - 1; m >= 0; m--) {
+        var artAll = articles[m];
+        var isUserArt = !!artAll.querySelector('[data-message-author-role="user"]') ||
+                        (artAll.getAttribute('data-testid') || '').indexOf('user') !== -1;
+        if (!isUserArt) {
+          var tAllArt = extractCleanText(artAll);
+          if (tAllArt) return tAllArt;
         }
       }
     } catch (e) {
@@ -615,6 +645,11 @@ $_bridgeScriptBody''';
       function injectAndTriggerSend(editor, text, currentReqId) {
         autoCloseSidebar();
         autoDismissCookiesAndModals();
+
+        // WEB-18: Anchor existing messages so only the new incoming turn is tracked
+        queryAllSafe('article, [data-message-author-role], [data-testid*="conversation-turn"], div.markdown, div.prose').forEach(function(el) {
+          el.setAttribute('data-ritmo-seen', 'true');
+        });
 
         var previousBaselineText = findLatestAssistantText();
 

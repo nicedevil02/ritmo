@@ -3,6 +3,7 @@ import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -13,11 +14,18 @@ import 'package:shamsi_date/shamsi_date.dart';
 enum AgendaBucket { overdue, today, tomorrow, thisWeek, nextWeek, later }
 
 /// Represents an entry in a compressed agenda view (either a single item or a recurring series group).
-sealed class AgendaEntry {}
+sealed class AgendaEntry {
+  AgendaItem get anchor;
+  String get sortDate => anchor.dateStr;
+  int? get sortMinutes => TimeOfDayMinutes.tryParse(anchor.timeOfDay);
+}
 
 class AgendaSingle extends AgendaEntry {
   AgendaSingle(this.item);
   final AgendaItem item;
+
+  @override
+  AgendaItem get anchor => item;
 }
 
 class AgendaSeries extends AgendaEntry {
@@ -30,6 +38,9 @@ class AgendaSeries extends AgendaEntry {
   final AgendaItem representative;
   final List<AgendaItem> instances;
   final String recurrenceLabel; // «هر روز» / «۵ روز از ۷» / «روزهای کاری» / «شنبه‌ها»
+
+  @override
+  AgendaItem get anchor => representative;
 
   int get completedCount => instances.where((i) => i.isCompleted).length;
   int get totalCount => instances.length;
@@ -274,28 +285,26 @@ List<AgendaEntry> collapseRecurringSeries(
     }
   }
 
-  // Sort singles chronologically, then by time/priority
-  singles.sort((a, b) {
-    final dateCmp = a.item.dateStr.compareTo(b.item.dateStr);
-    if (dateCmp != 0) return dateCmp;
-    if (a.item.isTimed && b.item.isTimed) {
-      return (a.item.timeOfDay ?? '').compareTo(b.item.timeOfDay ?? '');
-    } else if (a.item.isTimed) {
+  // ادغام و مرتب‌سازی زمانی یکپارچه تک‌آیتم‌ها و سری‌ها مطابق ترتیب زمانی استاندارد کل برنامه
+  final all = <AgendaEntry>[...singles, ...seriesList];
+  all.sort((a, b) {
+    final d = a.sortDate.compareTo(b.sortDate);
+    if (d != 0) return d;
+    final am = a.sortMinutes, bm = b.sortMinutes;
+    if (am != null && bm != null) {
+      final t = am.compareTo(bm);
+      if (t != 0) return t;
+    } else if (am != null) {
       return -1;
-    } else if (b.item.isTimed) {
+    } else if (bm != null) {
       return 1;
     }
-    return b.item.priority.compareTo(a.item.priority);
+    final p = b.anchor.priority.compareTo(a.anchor.priority);
+    if (p != 0) return p;
+    return a.anchor.id.compareTo(b.anchor.id); // tie-break قطعی
   });
 
-  // Sort series chronologically by representative dateStr / timeOfDay
-  seriesList.sort((a, b) {
-    final dateCmp = a.representative.dateStr.compareTo(b.representative.dateStr);
-    if (dateCmp != 0) return dateCmp;
-    return (a.representative.timeOfDay ?? '').compareTo(b.representative.timeOfDay ?? '');
-  });
-
-  return [...singles, ...seriesList];
+  return all;
 }
 
 /// Groups items within a bucket by their dateStr for sub-day headings.

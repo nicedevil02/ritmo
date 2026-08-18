@@ -130,6 +130,9 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   bool _hasActiveSseStream = false;
   bool get hasActiveSseStream => _hasActiveSseStream;
 
+  bool _isAuthenticated = true;
+  bool get isAuthenticated => _isAuthenticated;
+
   PendingWebBridgeRequest? _pendingRequest;
   PendingWebBridgeRequest? get pendingRequest => _pendingRequest;
 
@@ -146,6 +149,11 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   @visibleForTesting
   void setTestLastChunkSource(String? source) {
     _lastChunkSource = source;
+  }
+
+  @visibleForTesting
+  void setTestAuthenticated(bool auth) {
+    _isAuthenticated = auth;
   }
 
   String _generateRequestId() {
@@ -459,11 +467,23 @@ if (typeof window.__ritmo_resume === 'function') {
 
       switch (type) {
         case 'ready':
+          _isAuthenticated = true;
           if (_status != ChatGptBridgeStatus.ready) {
             _setStatus(ChatGptBridgeStatus.ready);
           }
           if (_cloudflareNotifier.value) {
             _cloudflareNotifier.value = false;
+          }
+          break;
+
+        case 'auth_required':
+          _isAuthenticated = false;
+          RitmoLog.warn(
+            'ChatGptWebBridge',
+            'Auth required detected on page: path=${readString('currentPath')}',
+          );
+          if (_status == ChatGptBridgeStatus.generating) {
+            _failGeneration('برای استفاده از مدل ChatGPT، لطفاً وارد حساب کاربری خود شوید.');
           }
           break;
 

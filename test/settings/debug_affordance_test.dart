@@ -124,6 +124,9 @@ void main() {
           await tester.pump(const Duration(milliseconds: 100));
         }
 
+        await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
+        await tester.pump(const Duration(milliseconds: 100));
+
         // Now SettingsInspectorScreen is opened in debug mode
         expect(find.byType(SettingsInspectorScreen), findsOneWidget);
       } finally {

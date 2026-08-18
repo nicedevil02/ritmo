@@ -27,6 +27,7 @@ class SettingsModeSwitcher extends StatelessWidget {
               Expanded(
                 child: GestureDetector(
                   key: const ValueKey('mode_switch_simple'),
+                  behavior: HitTestBehavior.opaque,
                   onTap: () async {
                     if (showAdvanced) {
                       await SettingsService.instance.set('show_advanced_settings', false);
@@ -57,6 +58,7 @@ class SettingsModeSwitcher extends StatelessWidget {
               Expanded(
                 child: GestureDetector(
                   key: const ValueKey('mode_switch_advanced'),
+                  behavior: HitTestBehavior.opaque,
                   onTap: () async {
                     if (!showAdvanced) {
                       await SettingsService.instance.set('show_advanced_settings', true);

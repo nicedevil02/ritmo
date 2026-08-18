@@ -275,7 +275,9 @@ $_bridgeScriptBody''';
     unseenConversationTurns: 'article:not([data-ritmo-seen="true"]), [data-testid*="conversation-turn-"]:not([data-ritmo-seen="true"])',
     streamingIndicator: '.result-streaming, .streaming, [data-is-streaming="true"]',
     cloudflare: 'iframe[src*="cloudflare"], iframe[src*="challenges.cloudflare.com"], #cf-turnstile, #challenge-stage, #challenge-running, .cf-turnstile-wrapper',
-    sidebarClose: 'button[aria-label*="Close sidebar" i], button[aria-label*="بستن نوار" i], button[data-testid*="close-sidebar" i]'
+    sidebarClose: 'button[aria-label*="Close sidebar" i], button[aria-label*="بستن نوار" i], button[data-testid*="close-sidebar" i]',
+    loginButton: 'button[data-testid="login-button"], a[href*="/login"], button[data-testid="signup-button"], a[href*="/signup"]',
+    userProfile: 'img[alt*="User" i], button[data-testid*="user-menu" i], div[data-testid*="profile" i], [data-testid="accounts-profile-button"]'
   };
 
   function querySafe(selector) {
@@ -872,9 +874,34 @@ $_bridgeScriptBody''';
     }
   };
 
+  // --- 9. Page Auth State Detection ---
+  function checkAuthState() {
+    try {
+      var hasLogin = !!querySafe(RITMO_SELECTORS.loginButton);
+      var hasComposer = !!querySafe(RITMO_SELECTORS.composer);
+      var hasProfile = !!querySafe(RITMO_SELECTORS.userProfile);
+
+      var isAuth = hasProfile || (hasComposer && !hasLogin);
+
+      if (hasLogin && !hasComposer) {
+        notifyFlutter('auth_required', {
+          hasLoginButton: true,
+          currentPath: window.location.pathname || '',
+          source: 'lifecycle'
+        });
+      }
+      return isAuth;
+    } catch (e) {
+      console.warn('[Ritmo] checkAuthState error:', e);
+      return false;
+    }
+  }
+  window.__ritmo_checkAuthState = checkAuthState;
+
   var challengedAtBoot = checkCloudflareStatus();
   autoDismissCookiesAndModals();
   autoCloseSidebar();
+  checkAuthState();
   cfCheckTimer = setInterval(checkCloudflareStatus, 2000);
 
   console.log('[Ritmo] Bridge setup complete.');

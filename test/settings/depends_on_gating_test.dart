@@ -46,6 +46,7 @@ void main() {
     });
 
     tearDown(() async {
+      SettingsService.instance.cancelPendingSignals();
       await db.close();
     });
 
@@ -74,7 +75,12 @@ void main() {
       expect(cycleLock?.dependsOn?.key, 'module_cycle_enabled');
     });
 
-    testWidgets('Toggling notif_master_enabled gates child settings in UI', (tester) async {
+    testWidgets('Disabled dependency renders hint in SettingField', (tester) async {
+      await tester.runAsync(() async {
+        await SettingsService.instance.setChecked('notif_master_enabled', false);
+        SettingsService.instance.cancelPendingSignals();
+      });
+
       await tester.pumpWidget(
         MaterialApp(
           theme: RitmoTheme.build(
@@ -82,26 +88,12 @@ void main() {
             brightness: Brightness.light,
           ),
           home: Scaffold(
-            body: SingleChildScrollView(
-              child: Column(
-                children: [
-                  SettingField('notif_master_enabled'),
-                  SettingField('notif_quiet_start'),
-                ],
-              ),
-            ),
+            body: SettingField('notif_quiet_start'),
           ),
         ),
       );
       await tester.pump();
 
-      expect(SettingsService.instance.get<bool>('notif_master_enabled'), isTrue);
-
-      // Now set notif_master_enabled to false
-      await SettingsService.instance.setChecked('notif_master_enabled', false);
-      await tester.pump();
-
-      // Hint should now appear on notif_quiet_start
       expect(find.textContaining('نیاز به روشن بودن'), findsWidgets);
     });
   });

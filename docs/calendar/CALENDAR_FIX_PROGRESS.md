@@ -61,4 +61,4 @@
 | CAL-57 | تست ریپازیتوری اورراید (occurrence_override_repository_test.dart) | H | DONE | 1f0832d | ایجاد تست‌های ادغام upsert، ثبات createdAt، اسنپ‌شات readAllFuture/restoreAll، تفکیک کلیدهای task/routine و ریکاوری خودکار جدول |
 | CAL-58 | تست مرزهای وابستگی و معماری (calendar_dependency_test.dart) | H | DONE | e6f0ddc | ایجاد تست‌های گارد معماری ثابت برای تضمین عدم وجود debugPrint، catch خاموش، کوئری مستقیم app_settings، خطاهای انگلیسی و وابستگی غیرمجاز |
 | CAL-59 | تست کلید تاریخ و تبدیل زمان (date_key_test / time_of_day_minutes_test) | H | DONE | 6b56f2a | ایجاد تست‌های جامع تبدیل کلید تاریخ UTC/Local، پارس امن، محاسبات مرز ماه/سال و پارس ارقام فارسی/عربی و کلمپینگ زمان |
-| CAL-60 | تست طلایی RTL و رگرسیون سرتاسری (calendar_golden_and_e2e_test.dart) | H | DONE | pending | ایجاد تست‌های رندر و اورفلو RTL با اسکیل‌های 1.0 و 1.3 و 1.6 و سناریوی E2E چندمرحله‌ای درگ، تغییر سایز، رد کردن، تعویق و بازگردانی ۳ مرحله‌ای |
+| CAL-60 | تست طلایی RTL و رگرسیون سرتاسری (calendar_golden_and_e2e_test.dart) | H | DONE | 123e0a4 | ایجاد تست‌های رندر و اورفلو RTL با اسکیل‌های 1.0 و 1.3 و 1.6 و سناریوی E2E چندمرحله‌ای درگ، تغییر سایز، رد کردن، تعویق و بازگردانی ۳ مرحله‌ای |

@@ -365,7 +365,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             'سقف $limit هدف فعال پر شده. برای افزودن اهداف بیشتر به ریتمو پلاس ارتقا دهید.',
             icon: Icons.lock_outline,
           );
-          unawaited(PremiumUpgradeSheet.show(context));
+          PremiumUpgradeSheet.show(context);
         }
         return;
       }

@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/commands/catalog/planning_commands.dart';
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/features/assistant/models/day_plan_models.dart';

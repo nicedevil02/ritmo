@@ -50,7 +50,8 @@ class JourneyController extends ChangeNotifier {
   StreamSubscription<RitmoEvent>? _subscription;
 
   bool _isDisposed = false;
-  DateTime _selectedDate = DateTime.now();
+  /// همیشه نیمه‌شب محلی. هیچ‌وقت ساعت را در _selectedDate نگه نداریم.
+  DateTime _selectedDate = DateKey.dayOf(DateTime.now());
   JourneyScale _activeScale = JourneyScale.agenda; // overridden by loadDefaultScale()
   bool _isLoading = false;
   bool _isExecutingAction = false;
@@ -125,7 +126,7 @@ class JourneyController extends ChangeNotifier {
 
   void selectDate(DateTime date, {JourneyScale? scaleToSet}) {
     if (_isDisposed) return;
-    _selectedDate = date;
+    _selectedDate = DateKey.dayOf(date);
     if (scaleToSet != null) {
       _activeScale = scaleToSet;
     }
@@ -148,14 +149,14 @@ class JourneyController extends ChangeNotifier {
       case JourneyScale.month:
         final j = Jalali.fromDateTime(_selectedDate);
         final nextJ = j.addMonths(offset);
-        _selectedDate = nextJ.toDateTime();
+        _selectedDate = DateKey.dayOf(nextJ.toDateTime());
         break;
       case JourneyScale.year:
         final j = Jalali.fromDateTime(_selectedDate);
         final targetYear = j.year + offset;
         final maxDay = Jalali(targetYear, j.month, 1).monthLength;
         final nextJ = Jalali(targetYear, j.month, j.day.clamp(1, maxDay));
-        _selectedDate = nextJ.toDateTime();
+        _selectedDate = DateKey.dayOf(nextJ.toDateTime());
         break;
     }
     loadForActiveScale();
@@ -463,9 +464,9 @@ class JourneyController extends ChangeNotifier {
 
     try {
       final sw = Stopwatch()..start();
-      final anchor = anchorDate ?? _selectedDate;
-      final start = anchor.subtract(Duration(days: daysBack));
-      final end = anchor.add(Duration(days: daysForward));
+      final anchor = DateKey.dayOf(anchorDate ?? _selectedDate);
+      final start = DateKey.addDays(anchor, -daysBack);
+      final end = DateKey.addDays(anchor, daysForward);
 
       // Single range call — never N-per-day calls
       final daysMap = await _agendaService.agendaForRange(start, end);

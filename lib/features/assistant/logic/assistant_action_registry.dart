@@ -313,7 +313,6 @@ class AssistantActionRegistry {
         }
 
         // Fallback برای مسیرهای ناشناخته (رفتار قبلی)
-        if (!context.mounted) return;
         if (titleLower.contains('پریود') || titleLower.contains('چرخه') || titleLower.contains('قاعدگی')) {
           unawaited(Navigator.push(
             context,

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -372,13 +371,13 @@ class _PlanningScreenState extends State<PlanningScreen> {
                       InkWell(
                         borderRadius: BorderRadius.circular(12),
                         onTap: () async {
-                          unawaited(HapticFeedback.lightImpact());
+                          HapticFeedback.lightImpact();
                           final updated = c.copyWith(
                             status: isDone ? CommitmentStatus.accepted : CommitmentStatus.done,
                             updatedAt: DateTime.now().millisecondsSinceEpoch,
                           );
                           await PlanningRepository.instance.upsertCommitment(updated);
-                          await _controller.loadHorizon(PlanningHorizon.day);
+                          _controller.loadHorizon(PlanningHorizon.day);
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(4),
@@ -422,11 +421,11 @@ class _PlanningScreenState extends State<PlanningScreen> {
                               reason: 'حذف دستی از امروز',
                               nowMs: DateTime.now().millisecondsSinceEpoch,
                             );
-                            await _controller.loadHorizon(PlanningHorizon.day);
+                            _controller.loadHorizon(PlanningHorizon.day);
                           } else if (val == 'shrink') {
                             final half = (c.effortMinutes * 0.5).round().clamp(15, 240);
                             await PlanningRepository.instance.upsertCommitment(c.copyWith(effortMinutes: half));
-                            await _controller.loadHorizon(PlanningHorizon.day);
+                            _controller.loadHorizon(PlanningHorizon.day);
                           }
                         },
                         itemBuilder: (ctx) => [
@@ -712,9 +711,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                       color: dLoad.userMarkedLight ? Colors.indigoAccent : colors.textSecondary,
                                     ),
                                     onPressed: () async {
-                                      unawaited(HapticFeedback.selectionClick());
+                                      HapticFeedback.selectionClick();
                                       await PlanningRepository.instance.setDayLight(dLoad.dayKey, !dLoad.userMarkedLight);
-                                      await _controller.loadHorizon(PlanningHorizon.week);
+                                      _controller.loadHorizon(PlanningHorizon.week);
                                     },
                                   ),
                                   Icon(
@@ -770,12 +769,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                           children: [
                                             InkWell(
                                               onTap: () async {
-                                                unawaited(HapticFeedback.lightImpact());
+                                                HapticFeedback.lightImpact();
                                                 final newStatus = isDone ? AllocationStatus.planned : AllocationStatus.done;
                                                 await PlanningRepository.instance.insertAllocation(
                                                   alloc.copyWith(status: newStatus, updatedAt: DateTime.now().millisecondsSinceEpoch),
                                                 );
-                                                await _controller.loadHorizon(PlanningHorizon.week);
+                                                _controller.loadHorizon(PlanningHorizon.week);
                                               },
                                               child: Icon(
                                                 isDone ? Icons.check_circle : Icons.radio_button_unchecked,
@@ -838,7 +837,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                           context,
                                           initialHorizon: PlanningHorizon.week,
                                           initialDayKey: dLoad.dayKey,
-                                          onSaved: () async => await _controller.loadHorizon(PlanningHorizon.week),
+                                          onSaved: () => _controller.loadHorizon(PlanningHorizon.week),
                                         );
                                       },
                                       icon: const Icon(Icons.add, size: 14),
@@ -923,7 +922,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                     onPressed: () async {
                                       final half = (unp.commitment.effortMinutes * 0.5).round().clamp(15, 240);
                                       await PlanningRepository.instance.upsertCommitment(unp.commitment.copyWith(effortMinutes: half));
-                                      await _controller.loadHorizon(PlanningHorizon.week);
+                                      _controller.loadHorizon(PlanningHorizon.week);
                                       if (mounted) RitmoToast.show(context, 'زمان تعهد به $half دقیقه کاهش یافت.');
                                     },
                                     child: const Text('نصف کردن', style: TextStyle(fontSize: 11)),
@@ -936,7 +935,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                          reason: 'حذف به علت عدم گنجایش',
                                          nowMs: DateTime.now().millisecondsSinceEpoch,
                                        );
-                                      await _controller.loadHorizon(PlanningHorizon.week);
+                                      _controller.loadHorizon(PlanningHorizon.week);
                                     },
                                   ),
                                 ],
@@ -1052,7 +1051,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
           );
           if (picked != null && picked != dayKey) {
             await repo.moveAllocation(firstAlloc.id, picked, nowMs: nowMs);
-            await _controller.loadHorizon(PlanningHorizon.week);
+            _controller.loadHorizon(PlanningHorizon.week);
             if (mounted) RitmoToast.show(context, 'تخصیص به ${_getDayNameFa(picked)} منتقل شد.');
           }
           break;
@@ -1061,7 +1060,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
           final halfMin = (firstAlloc.plannedMinutes / 2).round().clamp(15, 120);
           final updatedComm = commitment.copyWith(effortMinutes: halfMin);
           await repo.upsertCommitment(updatedComm);
-          await _controller.loadHorizon(PlanningHorizon.week);
+          _controller.loadHorizon(PlanningHorizon.week);
           if (mounted) RitmoToast.show(context, 'تعهد به دو بخش $halfMin دقیقه‌ای تقسیم شد.');
           break;
 
@@ -1069,20 +1068,20 @@ class _PlanningScreenState extends State<PlanningScreen> {
           final shrunkMin = (commitment.effortMinutes * 0.5).round().clamp(15, 240);
           final updatedComm = commitment.copyWith(effortMinutes: shrunkMin);
           await repo.upsertCommitment(updatedComm);
-          await _controller.loadHorizon(PlanningHorizon.week);
+          _controller.loadHorizon(PlanningHorizon.week);
           if (mounted) RitmoToast.show(context, 'زمان تعهد به $shrunkMin دقیقه کاهش یافت.');
           break;
 
         case 'lock':
           final lockedComm = commitment.copyWith(isUserLocked: true);
           await repo.upsertCommitment(lockedComm);
-          await _controller.loadHorizon(PlanningHorizon.week);
+          _controller.loadHorizon(PlanningHorizon.week);
           if (mounted) RitmoToast.show(context, 'تعهد در این روز قفل شد 🔒');
           break;
 
         case 'drop':
           await repo.dropCommitment(commitment.id, reason: 'حذف دستی از هفته', nowMs: nowMs);
-          await _controller.loadHorizon(PlanningHorizon.week);
+          _controller.loadHorizon(PlanningHorizon.week);
           if (mounted) RitmoToast.show(context, 'تعهد از برنامهٔ این هفته حذف شد.');
           break;
       }

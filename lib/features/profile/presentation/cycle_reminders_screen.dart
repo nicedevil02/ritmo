@@ -33,11 +33,6 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
     _loadData();
   }
 
-  String _formatJalali(DateTime dt) {
-    final j = Jalali.fromDateTime(dt);
-    return '${j.year}/${j.month.toString().padLeft(2, '0')}/${j.day.toString().padLeft(2, '0')}'.toPersianDigits();
-  }
-
   Future<void> _loadData() async {
     try {
       final db = await DatabaseHelper.instance.database;
@@ -74,7 +69,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: context.colors.background,
+        backgroundColor: context.colors.bgPrimary,
         body: Center(
           child: CircularProgressIndicator(color: context.colors.primary),
         ),
@@ -85,7 +80,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
     final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: colors.background,
+      backgroundColor: colors.bgPrimary,
       body: CycleLockGate(
         child: Stack(
           children: [
@@ -96,7 +91,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [colors.background, colors.surface],
+                    colors: [colors.bgPrimary, colors.bgSecondary],
                   ),
                 ),
               ),
@@ -367,10 +362,10 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                         final parsedEnd = CycleDateContract.parseDayKey(rawEnd);
 
                         final startStr = parsedStart != null
-                            ? _formatJalali(parsedStart)
+                            ? Jalali.fromDateTime(parsedStart).formatCompactDate()
                             : (rawStart ?? '-');
                         final endStr = parsedEnd != null
-                            ? _formatJalali(parsedEnd)
+                            ? Jalali.fromDateTime(parsedEnd).formatCompactDate()
                             : 'درحال انجام';
 
                         return Padding(

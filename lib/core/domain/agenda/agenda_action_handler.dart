@@ -85,7 +85,7 @@ class AgendaActionHandler {
     final ids = await _practiceIdsForGroup(db, group);
 
     if (ids.isEmpty) {
-      RitmoLog.warning(
+      RitmoLog.warn(
         'AgendaActionHandler',
         'Unknown or unconfigured prayer group: $group',
       );

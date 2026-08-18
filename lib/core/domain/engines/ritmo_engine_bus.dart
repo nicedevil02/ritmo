@@ -176,7 +176,7 @@ class RitmoEngineBus {
     try {
       return await future;
     } finally {
-      final _ = _inFlight.remove(key);
+      _inFlight.remove(key);
     }
   }
 

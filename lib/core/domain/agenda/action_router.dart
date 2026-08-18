@@ -333,7 +333,7 @@ class ActionRouter {
           message: 'اطلاعات این برنامه در دسترس نیست',
         );
       }
-      RitmoLog.warning(
+      RitmoLog.warn(
         'ActionRouter',
         'routine meta and DB fallback missing for item ${item.id}',
       );

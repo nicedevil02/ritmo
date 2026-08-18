@@ -212,10 +212,10 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
       backgroundColor: Colors.transparent,
       builder: (bottomSheetContext) {
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (modalCtx, setModalState) {
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
+                bottom: MediaQuery.of(modalCtx).viewInsets.bottom,
               ),
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -378,8 +378,10 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
                                   setState(() => _userName = text);
                                   await SettingsService.instance.set('user_name', text);
                                   RitmoHapticsPolicy.success();
-                                  if (mounted) {
+                                  if (bottomSheetContext.mounted) {
                                     Navigator.pop(bottomSheetContext);
+                                  }
+                                  if (mounted) {
                                     RitmoToast.show(
                                       context,
                                       'نام با موفقیت ذخیره شد ✨',

@@ -47,7 +47,7 @@ class SettingsSection extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               padding: EdgeInsets.zero,
               itemCount: children.length,
-              separatorBuilder: (_, __) => Divider(
+              separatorBuilder: (context, index) => Divider(
                 height: 1,
                 thickness: 1,
                 color: colors.border.withValues(alpha: 0.6),

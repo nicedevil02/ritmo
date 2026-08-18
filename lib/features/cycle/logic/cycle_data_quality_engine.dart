@@ -1,5 +1,6 @@
 // C-03 & C-33, C-41: CycleDataQualityEngine with deterministic date handling and code-based contracts
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:sqflite/sqflite.dart';
@@ -17,7 +18,7 @@ class CycleDataQualityEngine {
     final effectiveNow =
         now ??
         (todayIso != null ? CycleDateContract.parseDayKey(todayIso) : null) ??
-        DateTime.now();
+        CycleClock.now;
     final cleanNow = CycleDateContract.cleanDate(effectiveNow);
     final hasEnoughCycles = periodRows.length >= 3;
 

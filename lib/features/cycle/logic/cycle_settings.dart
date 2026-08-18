@@ -2,6 +2,7 @@
 // Single authoritative source of truth for Cycle configuration, canonical keys, defaults, and ranges.
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CycleSettings {
@@ -224,7 +225,7 @@ class CycleSettings {
   ]) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
-      final now = DateTime.now().millisecondsSinceEpoch;
+      final now = CycleClock.nowMillisecondsSinceEpoch;
       await db.insert('app_settings', {
         'key': key,
         'value': value,

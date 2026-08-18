@@ -6,7 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 
 /// UX-05 Fullscreen Labor Mode Screen with wakelock_plus, big central pulse button (>=200px),
 /// mm:ss timer, 5-1-1 3-light indicator, contraction_timer DB persistence, and hospital call trigger.
@@ -58,13 +60,22 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
   Future<void> _enableWakelock() async {
     try {
       await WakelockPlus.enable();
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error('LaborModeScreen', 'Failed to enable wakelock: $e', e, st);
+    }
   }
 
   Future<void> _disableWakelock() async {
     try {
       await WakelockPlus.disable();
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error(
+        'LaborModeScreen',
+        'Failed to disable wakelock: $e',
+        e,
+        st,
+      );
+    }
   }
 
   Future<void> _loadHospitalPhone() async {
@@ -81,7 +92,14 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
           _hospitalPhone = rows.first['value'] as String?;
         });
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error(
+        'LaborModeScreen',
+        'Failed to load hospital phone: $e',
+        e,
+        st,
+      );
+    }
   }
 
   Future<void> _loadRecentContractions() async {
@@ -100,12 +118,19 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
           _contractions.addAll(rows);
         });
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error(
+        'LaborModeScreen',
+        'Failed to load contractions: $e',
+        e,
+        st,
+      );
+    }
   }
 
   void _toggleContraction() {
     HapticFeedback.mediumImpact();
-    final now = DateTime.now();
+    final now = CycleClock.now;
 
     if (!_isContracting) {
       // Start contraction
@@ -153,9 +178,9 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
           (start.millisecondsSinceEpoch - prevStartMs) ~/ 1000;
     }
 
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final nowMs = CycleClock.nowMillisecondsSinceEpoch;
     final row = {
-      'id': 'cnt_${DateTime.now().microsecondsSinceEpoch}',
+      'id': 'cnt_${CycleClock.now.microsecondsSinceEpoch}',
       'pregnancyId': widget.pregnancyId,
       'startTime': start.millisecondsSinceEpoch,
       'endTime': end.millisecondsSinceEpoch,
@@ -168,7 +193,14 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
       final db = await DatabaseHelper.instance.database;
       await db.insert('contraction_timer', row);
       await _loadRecentContractions();
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error(
+        'LaborModeScreen',
+        'Failed to insert contraction: $e',
+        e,
+        st,
+      );
+    }
   }
 
   String _formatMmSs(int totalSeconds) {
@@ -184,7 +216,7 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
     }
 
     // Filter recent contractions within last 1 hour
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final nowMs = CycleClock.nowMillisecondsSinceEpoch;
     final oneHourAgoMs = nowMs - (3600 * 1000);
     final recent = _contractions
         .where((c) => (c['startTime'] as int) >= oneHourAgoMs)
@@ -232,7 +264,14 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
           'key': 'preg_hospital_phone',
           'value': _hospitalPhone,
         }, conflictAlgorithm: ConflictAlgorithm.replace);
-      } catch (_) {}
+      } catch (e, st) {
+        RitmoLog.error(
+          'LaborModeScreen',
+          'Failed to save hospital phone: $e',
+          e,
+          st,
+        );
+      }
     }
 
     final url = Uri.parse('tel:${_hospitalPhone!}');

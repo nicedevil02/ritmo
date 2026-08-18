@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -52,7 +53,12 @@ class CycleDayLog {
         if (decoded is List) {
           parsedSymptoms = decoded.map((e) => e.toString()).toList();
         }
-      } catch (_) {
+      } catch (e, st) {
+        RitmoLogger.error(
+          '[CycleDayLog] Error decoding symptoms JSON',
+          error: e,
+          stack: st,
+        );
         parsedSymptoms = [];
       }
     } else if (rawSymptoms is List) {
@@ -60,7 +66,7 @@ class CycleDayLog {
     }
 
     final dateStr = map['logDate']?.toString() ?? map['date']?.toString();
-    final parsedDate = CycleDateContract.parseDayKey(dateStr) ?? DateTime.now();
+    final parsedDate = CycleDateContract.parseDayKey(dateStr) ?? CycleClock.now;
 
     return CycleDayLog(
       id: map['id']?.toString() ?? 'cdl_${parsedDate.millisecondsSinceEpoch}',
@@ -178,7 +184,7 @@ class CycleDayLogsRepository {
   Future<void> saveLog(CycleDayLog log, [DatabaseExecutor? dbExecutor]) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final nowMs = CycleClock.nowMillisecondsSinceEpoch;
       final map = log.toMap();
       if (map['createdAt'] == 0) {
         map['createdAt'] = nowMs;

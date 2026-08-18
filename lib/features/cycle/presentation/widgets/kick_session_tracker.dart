@@ -1,5 +1,7 @@
-import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:sqflite/sqflite.dart';
 
 /// UX-04 KickSessionTracker logic with 2-minute burst gap, 2-hour auto-end,
 /// app_settings persistence, and 7-session personal baseline comparison.
@@ -24,10 +26,16 @@ class KickSessionTracker {
     return count >= targetCount;
   }
 
-  /// Checks whether the 2-hour session limit has expired at time [now].
+  /// Returns total active elapsed duration.
+  Duration get elapsed {
+    if (start == null) return Duration.zero;
+    return (lastTap ?? start!).difference(start!);
+  }
+
+  /// Checks if session has expired (> 2 hours without completion).
   bool isExpired(DateTime now) {
     if (start == null) return false;
-    return now.difference(start!) >= sessionLimit;
+    return now.difference(start!) > sessionLimit;
   }
 
   /// Restores session state from database `app_settings`.
@@ -69,10 +77,19 @@ class KickSessionTracker {
         start: startDt,
         lastTap: lastTapDt,
       );
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[KickSessionTracker] error restoring from settings: $e',
+        error: e,
+        stack: st,
+      );
       return null;
     }
   }
+
+  /// Loads persisted session state from `app_settings` table.
+  static Future<KickSessionTracker?> loadFromSettings() =>
+      restoreFromSettings(CycleClock.now);
 
   /// Persists session state into `app_settings`.
   Future<void> saveToSettings() async {
@@ -93,7 +110,13 @@ class KickSessionTracker {
           'value': lastTap!.millisecondsSinceEpoch.toString(),
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[KickSessionTracker] Failed to save to settings: $e',
+        error: e,
+        stack: st,
+      );
+    }
   }
 
   /// Clears session keys from `app_settings`.
@@ -105,7 +128,13 @@ class KickSessionTracker {
         where:
             "key IN ('preg_kick_session_start', 'preg_kick_session_count', 'preg_kick_session_last_tap')",
       );
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[KickSessionTracker] Failed to clear settings: $e',
+        error: e,
+        stack: st,
+      );
+    }
   }
 
   /// Saves finished kick session record into `kick_counts` table.
@@ -113,9 +142,9 @@ class KickSessionTracker {
     if (start == null) return;
     try {
       final db = await DatabaseHelper.instance.database;
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final nowMs = CycleClock.nowMillisecondsSinceEpoch;
       await db.insert('kick_counts', {
-        'id': 'kick_${DateTime.now().microsecondsSinceEpoch}',
+        'id': 'kick_${CycleClock.now.microsecondsSinceEpoch}',
         'pregnancyId': pregnancyId,
         'startTime': start!.millisecondsSinceEpoch,
         'endTime': (lastTap ?? start!).millisecondsSinceEpoch,
@@ -124,7 +153,13 @@ class KickSessionTracker {
         'createdAt': nowMs,
       });
       await clearSettings();
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[KickSessionTracker] Failed to save record to DB: $e',
+        error: e,
+        stack: st,
+      );
+    }
   }
 
   /// Calculates personal baseline average duration (in seconds) over last 7 complete sessions.
@@ -151,7 +186,12 @@ class KickSessionTracker {
         totalSecs += (et - st) / 1000;
       }
       return totalSecs / rows.length;
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[KickSessionTracker] Failed to get personal baseline: $e',
+        error: e,
+        stack: st,
+      );
       return null;
     }
   }

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_animated_background.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -34,14 +36,18 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
   void initState() {
     super.initState();
     if (widget.period != null) {
-      _startDate = DateTime.parse(widget.period!['startDate'] as String);
+      _startDate =
+          CycleDateContract.parseDayKey(
+            widget.period!['startDate']?.toString(),
+          ) ??
+          CycleClock.now;
       final endStr = widget.period!['endDate'] as String?;
       if (endStr != null) {
-        _endDate = DateTime.parse(endStr);
-        _hasEndDate = true;
+        _endDate = CycleDateContract.parseDayKey(endStr);
+        _hasEndDate = _endDate != null;
       }
     } else {
-      _startDate = DateTime.now();
+      _startDate = CycleClock.now;
       _endDate = null;
       _hasEndDate = false;
     }
@@ -135,10 +141,10 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
                     context: context,
                     initialDate: Jalali.fromDateTime(_startDate),
                     firstDate: Jalali.fromDateTime(
-                      DateTime.now().subtract(const Duration(days: 365)),
+                      CycleClock.now.subtract(const Duration(days: 365)),
                     ),
                     lastDate: Jalali.fromDateTime(
-                      DateTime.now().add(const Duration(days: 30)),
+                      CycleClock.now.add(const Duration(days: 30)),
                     ),
                     builder: (context, child) {
                       return ClipRRect(
@@ -241,7 +247,7 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
                       ),
                       firstDate: Jalali.fromDateTime(_startDate),
                       lastDate: Jalali.fromDateTime(
-                        DateTime.now().add(const Duration(days: 30)),
+                        CycleClock.now.add(const Duration(days: 30)),
                       ),
                       builder: (context, child) {
                         return ClipRRect(

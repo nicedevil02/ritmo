@@ -9,6 +9,7 @@ import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
@@ -112,7 +113,7 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
         final cycleInput = CycleEngineInput(
           db: db,
           appSettings: settingsMap,
-          now: DateTime.now(),
+          now: CycleClock.now,
         );
         try {
           engineOutput = await RitmoEngineBus.instance
@@ -120,7 +121,12 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
                 CycleEngine,
                 cycleInput,
               );
-        } catch (_) {
+        } catch (e, st) {
+          RitmoLogger.error(
+            '[CycleStateNotifier] Engine bus execution failed, falling back to direct calculation: $e',
+            error: e,
+            stack: st,
+          );
           final fallbackEngine = CycleEngine();
           engineOutput = await fallbackEngine.calculate(cycleInput);
         }
@@ -155,7 +161,7 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
   Future<void> startPeriod({DateTime? startDate}) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final targetDate = startDate ?? DateTime.now();
+      final targetDate = startDate ?? CycleClock.now;
       await CyclePeriodRepository.instance.startPeriod(
         targetDate,
         dbExecutor: db,
@@ -184,7 +190,7 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
           value.activePeriod ??
           await CyclePeriodRepository.instance.getActivePeriod(db);
       if (active != null && active.id != null) {
-        final targetDate = endDate ?? DateTime.now();
+        final targetDate = endDate ?? CycleClock.now;
         await CyclePeriodRepository.instance.endPeriod(
           active.id!,
           targetDate,

@@ -49,7 +49,11 @@ void main() {
       'saveOnboarding with past endedWithKnownStart (20 days ago, 6 duration) calculates correct closed endDate',
       () async {
         final now = DateTime.now();
-        final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 20));
+        final startDate = DateTime(
+          now.year,
+          now.month,
+          now.day,
+        ).subtract(const Duration(days: 20));
         final expectedEnd = startDate.add(const Duration(days: 5));
         final data = CycleOnboardingData(
           periodStatus: CyclePeriodStatusChoice.endedWithKnownStart,
@@ -76,8 +80,14 @@ void main() {
 
         final periods = await db.query('cycle_periods');
         expect(periods.length, equals(1));
-        expect(periods.first['startDate'], equals(CycleDateContract.toDayKey(startDate)));
-        expect(periods.first['endDate'], equals(CycleDateContract.toDayKey(expectedEnd)));
+        expect(
+          periods.first['startDate'],
+          equals(CycleDateContract.toDayKey(startDate)),
+        );
+        expect(
+          periods.first['endDate'],
+          equals(CycleDateContract.toDayKey(expectedEnd)),
+        );
       },
     );
 
@@ -85,7 +95,11 @@ void main() {
       'saveOnboarding with ongoing start date (3 days ago, 6 duration) keeps period OPEN (endDate == null)',
       () async {
         final now = DateTime.now();
-        final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 2)); // Day 3 of bleeding
+        final startDate = DateTime(
+          now.year,
+          now.month,
+          now.day,
+        ).subtract(const Duration(days: 2)); // Day 3 of bleeding
         final data = CycleOnboardingData(
           periodStatus: CyclePeriodStatusChoice.endedWithKnownStart,
           cycleLength: 28,
@@ -98,8 +112,14 @@ void main() {
 
         final periods = await db.query('cycle_periods');
         expect(periods.length, equals(1));
-        expect(periods.first['startDate'], equals(CycleDateContract.toDayKey(startDate)));
-        expect(periods.first['endDate'], isNull); // Must NOT be prematurely clamped to today
+        expect(
+          periods.first['startDate'],
+          equals(CycleDateContract.toDayKey(startDate)),
+        );
+        expect(
+          periods.first['endDate'],
+          isNull,
+        ); // Must NOT be prematurely clamped to today
       },
     );
 
@@ -107,7 +127,11 @@ void main() {
       'saveOnboarding with currentlyInPeriod keeps period OPEN (endDate == null)',
       () async {
         final now = DateTime.now();
-        final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 1));
+        final startDate = DateTime(
+          now.year,
+          now.month,
+          now.day,
+        ).subtract(const Duration(days: 1));
         final data = CycleOnboardingData(
           periodStatus: CyclePeriodStatusChoice.currentlyInPeriod,
           cycleLength: 28,
@@ -119,7 +143,10 @@ void main() {
 
         final periods = await db.query('cycle_periods');
         expect(periods.length, equals(1));
-        expect(periods.first['startDate'], equals(CycleDateContract.toDayKey(startDate)));
+        expect(
+          periods.first['startDate'],
+          equals(CycleDateContract.toDayKey(startDate)),
+        );
         expect(periods.first['endDate'], isNull);
       },
     );

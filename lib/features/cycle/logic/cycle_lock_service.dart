@@ -9,6 +9,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CycleLockService {
@@ -81,7 +82,7 @@ class CycleLockService {
   ]) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
-      final now = DateTime.now().millisecondsSinceEpoch;
+      final now = CycleClock.nowMillisecondsSinceEpoch;
       await db.insert('app_settings', {
         'key': 'cycle_lock_enabled',
         'value': enabled ? 'true' : 'false',
@@ -134,7 +135,7 @@ class CycleLockService {
     if (lockoutMsStr == null || lockoutMsStr.isEmpty) return 0;
 
     final lockoutMs = int.tryParse(lockoutMsStr) ?? 0;
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final nowMs = CycleClock.nowMillisecondsSinceEpoch;
     final diffMs = lockoutMs - nowMs;
 
     if (diffMs <= 0) return 0;
@@ -198,7 +199,7 @@ class CycleLockService {
 
       if (lockoutSecs > 0) {
         final lockoutUntilMs =
-            DateTime.now().millisecondsSinceEpoch + (lockoutSecs * 1000);
+            CycleClock.nowMillisecondsSinceEpoch + (lockoutSecs * 1000);
         await SecureKeyStore.setKey(
           _keyLockoutUntilMs,
           lockoutUntilMs.toString(),

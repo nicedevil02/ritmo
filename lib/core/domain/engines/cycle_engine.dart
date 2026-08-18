@@ -3,10 +3,12 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
+import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -41,6 +43,7 @@ class CycleRegularity {
     required this.isIrregular,
     required this.sampleSize,
     required this.isComputable,
+    this.sdDays,
   });
 
   final int? score;
@@ -48,6 +51,7 @@ class CycleRegularity {
   final bool isIrregular;
   final int sampleSize;
   final bool isComputable;
+  final double? sdDays;
 }
 
 class CycleEngineInput {
@@ -55,10 +59,12 @@ class CycleEngineInput {
     required this.db,
     required this.appSettings,
     required this.now,
+    this.horizonCycles = 12,
   });
   final Database db;
   final Map<String, String> appSettings;
   final DateTime now;
+  final int horizonCycles;
 }
 
 class CycleStats {
@@ -111,7 +117,12 @@ class CycleEngineOutput {
     this.hasImplausiblePeriodData = false,
     this.isProjected = false,
     this.discardedOutliers = 0,
+    this.cycleLengthSd,
+    this.forecastAnchor,
+    this.forecast = const [],
+    // ignore: prefer_initializing_formals
   }) : _regularityLabel = regularityLabel,
+       // ignore: prefer_initializing_formals
        _predictionDisclaimer = predictionDisclaimer;
 
   final CyclePhase currentPhase;
@@ -139,15 +150,10 @@ class CycleEngineOutput {
   final String? _regularityLabel;
   final String? _predictionDisclaimer;
 
-  String get regularityLabel {
-    if (_regularityLabel != null) return _regularityLabel!;
-    return regularityLevel.name;
-  }
+  String get regularityLabel => _regularityLabel ?? regularityLevel.name;
 
-  String get predictionDisclaimer {
-    if (_predictionDisclaimer != null) return _predictionDisclaimer!;
-    return disclaimerCode.name;
-  }
+  String get predictionDisclaimer =>
+      _predictionDisclaimer ?? disclaimerCode.name;
 
   final bool isOverdue;
   final int daysOverdue;
@@ -157,6 +163,10 @@ class CycleEngineOutput {
   final bool hasImplausiblePeriodData;
   final bool isProjected;
   final int discardedOutliers;
+
+  final double? cycleLengthSd;
+  final DateTime? forecastAnchor;
+  final List<PredictedCycle> forecast;
 }
 
 class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
@@ -433,6 +443,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       isIrregular: isIrregular,
       sampleSize: n,
       isComputable: true,
+      sdDays: sd,
     );
   }
 
@@ -603,6 +614,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       hasImplausiblePeriodData: hasImplausiblePeriodData,
       isProjected: isProjected,
       discardedOutliers: discardedOutliers,
+      cycleLengthSd: regularity.sdDays,
+      forecastAnchor: startDate,
+      forecast: const [],
     );
   }
 
@@ -676,6 +690,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       hasImplausiblePeriodData: false,
       isProjected: false,
       discardedOutliers: 0,
+      cycleLengthSd: null,
+      forecastAnchor: null,
+      forecast: const [],
     );
   }
 
@@ -713,6 +730,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       hasImplausiblePeriodData: false,
       isProjected: false,
       discardedOutliers: 0,
+      cycleLengthSd: null,
+      forecastAnchor: null,
+      forecast: const [],
     );
   }
 
@@ -722,17 +742,26 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
   @override
   String fingerprint(CycleEngineInput input) {
     final dayStamp = CycleDateContract.toDayKey(input.now);
-    final avgLen = input.appSettings['cycle_avg_length'] ?? '28';
-    final avgPeriod = input.appSettings['cycle_avg_period'] ?? '6';
-    final pmsWindow = input.appSettings['cycle_pms_window_days'] ?? '4';
-    return '$dayStamp|$avgLen|$avgPeriod|$pmsWindow';
+    final cycleLen = CycleSettings.getCycleLength(input.appSettings);
+    final periodDur = CycleSettings.getPeriodDuration(input.appSettings);
+    final luteal = CycleSettings.getLutealPhase(input.appSettings);
+    final pmsWindow =
+        input.appSettings[CycleSettings.keyPmsWindowDays] ??
+        CycleSettings.defaultPmsWindowDays.toString();
+    final isPregnancy = CycleSettings.isPregnancyMode(input.appSettings);
+    final fertilityVisible =
+        input.appSettings[CycleSettings.keyFertilityVisible] ?? 'true';
+    final horizon = input.horizonCycles;
+    return '$dayStamp|$cycleLen|$periodDur|$luteal|$pmsWindow|$isPregnancy|$fertilityVisible|$horizon';
   }
 
   @override
   void invalidate() {
     try {
       RitmoEngineBus.instance.invalidate(CycleEngine);
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error('CycleEngine', 'Failed to invalidate cache: $e', e, st);
+    }
   }
 
   @override

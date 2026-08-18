@@ -8,6 +8,7 @@ import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/services/cycle_notification_service.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -23,13 +24,15 @@ class CycleReminderScheduler {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
 
-      Map<String, String> settings = appSettings ?? {};
-      if (appSettings == null) {
-        final rows = await db.query('app_settings');
+      late final Map<String, String> settings;
+      if (appSettings != null) {
+        settings = appSettings;
+      } else {
+        final list = await db.query('app_settings');
         settings = {
-          for (final r in rows)
-            if (r['key'] != null)
-              r['key'].toString(): r['value']?.toString() ?? '',
+          for (final s in list)
+            if (s['key'] != null)
+              s['key'].toString(): s['value']?.toString() ?? '',
         };
       }
 
@@ -46,7 +49,7 @@ class CycleReminderScheduler {
         return;
       }
 
-      final effectiveNow = now ?? DateTime.now();
+      final effectiveNow = now ?? CycleClock.now;
       final engineOutput = await RitmoEngineBus.instance
           .execute<CycleEngineInput, CycleEngineOutput>(
             CycleEngine,

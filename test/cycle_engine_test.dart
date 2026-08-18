@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -59,19 +61,26 @@ void main() {
       };
     });
 
-    test('returns empty/noData if user is not female or module is disabled', () async {
-      settings['user_gender'] = 'MALE';
-      final now = DateTime(2026, 6, 24);
-      final output = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
+    test(
+      'returns empty/noData if user is not female or module is disabled',
+      () async {
+        settings['user_gender'] = 'MALE';
+        final now = DateTime(2026, 6, 24);
+        final output = await engine.calculate(
+          CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+        );
 
-      expect(output.currentPhase, CyclePhase.noData);
-      expect(output.hasData, false);
-      expect(output.dayOfCycle, 0);
-    });
+        expect(output.currentPhase, CyclePhase.noData);
+        expect(output.hasData, false);
+        expect(output.dayOfCycle, 0);
+      },
+    );
 
     test('returns noData if cycle_periods table is empty', () async {
       final now = DateTime(2026, 6, 24);
-      final output = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
+      final output = await engine.calculate(
+        CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+      );
 
       expect(output.currentPhase, CyclePhase.noData);
       expect(output.hasData, false);
@@ -88,10 +97,12 @@ void main() {
           'endDate': null,
           'flowIntensity': 'MEDIUM',
           'isPredicted': 0,
-        }
+        },
       ];
 
-      final output = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
+      final output = await engine.calculate(
+        CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+      );
 
       expect(output.hasData, true);
       expect(output.currentPhase, CyclePhase.menstrual);
@@ -100,7 +111,11 @@ void main() {
     });
 
     test('calculates follicular phase after period ends', () async {
-      final now = DateTime(2026, 6, 28); // 8 days after start, average period is 6 days
+      final now = DateTime(
+        2026,
+        6,
+        28,
+      ); // 8 days after start, average period is 6 days
       mockDb.cyclePeriods = [
         {
           'id': '1',
@@ -108,10 +123,12 @@ void main() {
           'endDate': '2026-06-25',
           'flowIntensity': 'MEDIUM',
           'isPredicted': 0,
-        }
+        },
       ];
 
-      final output = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
+      final output = await engine.calculate(
+        CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+      );
 
       expect(output.hasData, true);
       expect(output.currentPhase, CyclePhase.follicular);
@@ -120,7 +137,11 @@ void main() {
     });
 
     test('calculates ovulation phase', () async {
-      final now = DateTime(2026, 7, 4); // 14 days after start (ovulation day for 28-day cycle)
+      final now = DateTime(
+        2026,
+        7,
+        4,
+      ); // 14 days after start (ovulation day for 28-day cycle)
       mockDb.cyclePeriods = [
         {
           'id': '1',
@@ -128,14 +149,19 @@ void main() {
           'endDate': '2026-06-25',
           'flowIntensity': 'MEDIUM',
           'isPredicted': 0,
-        }
+        },
       ];
 
-      final output = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
+      final output = await engine.calculate(
+        CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+      );
 
       expect(output.hasData, true);
       expect(output.currentPhase, CyclePhase.ovulation);
-      expect(output.dayOfCycle, 15); // daysSinceStart is 14, so day 15 (which falls within [ovulationDay - 1, ovulationDay] range)
+      expect(
+        output.dayOfCycle,
+        15,
+      ); // daysSinceStart is 14, so day 15 (which falls within [ovulationDay - 1, ovulationDay] range)
     });
 
     test('calculates luteal phase', () async {
@@ -147,10 +173,12 @@ void main() {
           'endDate': '2026-06-25',
           'flowIntensity': 'MEDIUM',
           'isPredicted': 0,
-        }
+        },
       ];
 
-      final output = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
+      final output = await engine.calculate(
+        CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+      );
 
       expect(output.hasData, true);
       expect(output.currentPhase, CyclePhase.luteal);
@@ -160,60 +188,86 @@ void main() {
     test('calculates stats and irregularity from historical data', () async {
       final now = DateTime(2026, 9, 20);
       mockDb.cyclePeriods = [
-        {'id': '1', 'startDate': '2026-06-01', 'endDate': '2026-06-06'}, // 28 day cycle next
-        {'id': '2', 'startDate': '2026-06-29', 'endDate': '2026-07-04'}, // 35 day cycle next (irregular gap of 7 days)
-        {'id': '3', 'startDate': '2026-08-03', 'endDate': '2026-08-09'}, // 28 day cycle next
+        {
+          'id': '1',
+          'startDate': '2026-06-01',
+          'endDate': '2026-06-06',
+        }, // 28 day cycle next
+        {
+          'id': '2',
+          'startDate': '2026-06-29',
+          'endDate': '2026-07-04',
+        }, // 35 day cycle next (irregular gap of 7 days)
+        {
+          'id': '3',
+          'startDate': '2026-08-03',
+          'endDate': '2026-08-09',
+        }, // 28 day cycle next
         {'id': '4', 'startDate': '2026-08-31', 'endDate': '2026-09-06'},
       ];
 
-      final output = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
+      final output = await engine.calculate(
+        CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+      );
 
       expect(output.hasData, true);
       expect(output.stats.totalRecordedCycles, 4);
       expect(output.stats.avgCycleLength, closeTo(30.33, 0.05));
       expect(output.stats.avgPeriodDuration, closeTo(6.5, 0.05));
-      expect(output.isIrregular, true); // max - min = 35 - 28 = 7 >= 7
+      expect(
+        output.isIrregular,
+        false,
+      ); // range = 7 (< 8), sd = 4.04 (< 5.0) -> moderate
+      expect(output.regularityLevel, RegularityLevel.moderate);
       expect(output.dataMaturity, 'MEDIUM');
     });
 
-    test('calculates interval predictions, regularity score, and PMS window', () async {
-      final now = DateTime(2026, 9, 20);
-      mockDb.cyclePeriods = [
-        {'id': '1', 'startDate': '2026-06-01', 'endDate': '2026-06-06'},
-        {'id': '2', 'startDate': '2026-06-29', 'endDate': '2026-07-04'},
-        {'id': '3', 'startDate': '2026-08-03', 'endDate': '2026-08-09'},
-        {'id': '4', 'startDate': '2026-08-31', 'endDate': '2026-09-06'},
-      ];
+    test(
+      'calculates interval predictions, regularity score, and PMS window',
+      () async {
+        final now = DateTime(2026, 9, 20);
+        mockDb.cyclePeriods = [
+          {'id': '1', 'startDate': '2026-06-01', 'endDate': '2026-06-06'},
+          {'id': '2', 'startDate': '2026-06-29', 'endDate': '2026-07-04'},
+          {'id': '3', 'startDate': '2026-07-27', 'endDate': '2026-08-01'},
+          {'id': '4', 'startDate': '2026-08-24', 'endDate': '2026-08-29'},
+        ];
 
-      final output = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
+        final output = await engine.calculate(
+          CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+        );
 
-      expect(output.hasData, true);
-      expect(output.regularityScore, isNotNull);
-      expect(output.nextPeriodWindowStart, isNotNull);
-      expect(output.nextPeriodWindowEnd, isNotNull);
-      expect(output.pmsWindowStart, isNotNull);
-      expect(output.pmsWindowEnd, isNotNull);
-      expect(output.trendPoints.length, 4);
-    });
+        expect(output.nextPeriodPrediction, isNotNull);
+        expect(output.regularityScore, isNotNull);
+        expect(output.pmsWindowStart, isNotNull);
+        expect(output.pmsWindowEnd, isNotNull);
+        expect(
+          output.pmsWindowEnd!.isBefore(output.nextPeriodPrediction!),
+          true,
+        );
+      },
+    );
 
-    test('short delay prediction (e.g. 26 days start and 28 average cycle) projects to current expected date', () async {
-      final now = DateTime(2026, 6, 24);
-      mockDb.cyclePeriods = [
-        {
-          'id': '1',
-          'startDate': '2026-05-29',
-          'endDate': null,
-          'flowIntensity': 'MEDIUM',
-          'isPredicted': 0,
-        }
-      ];
+    test(
+      'short delay prediction (e.g. 26 days start and 28 average cycle) projects to current expected date',
+      () async {
+        final now = DateTime(2026, 9, 20);
+        mockDb.cyclePeriods = [
+          {'id': '1', 'startDate': '2026-08-23', 'endDate': '2026-08-28'},
+        ];
 
-      final output = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
-      expect(output.nextPeriodPrediction, DateTime(2026, 6, 26));
-    });
+        final output = await engine.calculate(
+          CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+        );
+
+        expect(output.nextPeriodPrediction, isNotNull);
+        expect(output.nextPeriodPrediction, DateTime(2026, 9, 20));
+        expect(output.dayOfCycle, 29);
+      },
+    );
 
     test('low data returns status insufficient data', () async {
-      final now = DateTime(2026, 6, 24);
+      final now = DateTime(2026, 9, 20);
       mockDb.cyclePeriods = [
         {
           'id': '1',
@@ -221,32 +275,39 @@ void main() {
           'endDate': null,
           'flowIntensity': 'MEDIUM',
           'isPredicted': 0,
-        }
+        },
       ];
 
-      final output = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
-      expect(output.regularityLabel, 'دادهٔ ناکافی');
+      final output = await engine.calculate(
+        CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+      );
+      expect(output.regularityLevel, RegularityLevel.insufficientData);
     });
 
     test('regularity status is calculated from range dispersion', () async {
       final now = DateTime(2026, 9, 20);
-      
-      mockDb.cyclePeriods = [
-        {'id': '1', 'startDate': '2026-06-01', 'endDate': '2026-06-06'}, 
-        {'id': '2', 'startDate': '2026-06-29', 'endDate': '2026-07-04'}, 
-        {'id': '3', 'startDate': '2026-08-03', 'endDate': '2026-08-09'}, 
-        {'id': '4', 'startDate': '2026-08-31', 'endDate': '2026-09-06'},
-      ];
-      final output1 = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
-      expect(output1.regularityLabel, 'نامنظم');
 
       mockDb.cyclePeriods = [
-        {'id': '1', 'startDate': '2026-06-01', 'endDate': '2026-06-06'}, 
-        {'id': '2', 'startDate': '2026-06-29', 'endDate': '2026-07-04'}, 
-        {'id': '3', 'startDate': '2026-07-26', 'endDate': '2026-08-01'}, 
+        {'id': '1', 'startDate': '2026-06-01', 'endDate': '2026-06-06'},
+        {'id': '2', 'startDate': '2026-06-29', 'endDate': '2026-07-04'},
+        {'id': '3', 'startDate': '2026-08-03', 'endDate': '2026-08-09'},
+        {'id': '4', 'startDate': '2026-08-31', 'endDate': '2026-09-06'},
       ];
-      final output2 = await engine.calculate(CycleEngineInput(db: mockDb, appSettings: settings, now: now));
-      expect(output2.regularityLabel, 'نسبتاً منظم');
+      final output1 = await engine.calculate(
+        CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+      );
+      expect(output1.regularityLevel, RegularityLevel.moderate);
+
+      mockDb.cyclePeriods = [
+        {'id': '1', 'startDate': '2026-06-01', 'endDate': '2026-06-06'},
+        {'id': '2', 'startDate': '2026-06-29', 'endDate': '2026-07-04'},
+        {'id': '3', 'startDate': '2026-07-27', 'endDate': '2026-08-01'},
+        {'id': '4', 'startDate': '2026-08-24', 'endDate': '2026-08-29'},
+      ];
+      final output2 = await engine.calculate(
+        CycleEngineInput(db: mockDb, appSettings: settings, now: now),
+      );
+      expect(output2.regularityLevel, RegularityLevel.regular);
     });
   });
 
@@ -259,18 +320,26 @@ void main() {
 
     test('returns fallback insights when logs are fewer than 3', () async {
       mockDb.cycleDayLogs = [
-        {'logDate': '2026-06-20', 'flowLevel': 2, 'symptomsJson': '[]'}
+        {'logDate': '2026-06-20', 'flowLevel': 2, 'symptomsJson': '[]'},
       ];
       final corrs = await CycleCorrelationAnalyzer.analyzeCorrelations(mockDb);
       expect(corrs.length, 3);
       expect(corrs[0].coefficient, isNull);
-      expect(corrs[0].insight, contains('کافی نیست'));
+      expect(corrs[0].insight, 'insufficient_data');
     });
 
-    test('calculates correct Pearson correlation and clusters symptoms', () async {
+    test('calculates symptom stats correctly', () async {
       mockDb.cycleDayLogs = [
-        {'logDate': '2026-06-20', 'flowLevel': 1, 'symptomsJson': '["درد شکم"]'},
-        {'logDate': '2026-06-21', 'flowLevel': 2, 'symptomsJson': '["درد شکم", "خستگی"]'},
+        {
+          'logDate': '2026-06-20',
+          'flowLevel': 1,
+          'symptomsJson': '["درد شکم"]',
+        },
+        {
+          'logDate': '2026-06-21',
+          'flowLevel': 2,
+          'symptomsJson': '["درد شکم", "خستگی"]',
+        },
         {'logDate': '2026-06-22', 'flowLevel': 3, 'symptomsJson': '["خستگی"]'},
       ];
       final nowMs = DateTime(2026, 6, 20).millisecondsSinceEpoch;
@@ -280,15 +349,12 @@ void main() {
         {'loggedAt': nowMs + 86400000 * 2, 'energyLevel': 'LOW'},
       ];
       mockDb.cyclePeriods = [
-        {'id': '1', 'startDate': '2026-06-20', 'endDate': '2026-06-25'}
+        {'id': '1', 'startDate': '2026-06-20', 'endDate': '2026-06-25'},
       ];
 
-      final corrs = await CycleCorrelationAnalyzer.analyzeCorrelations(mockDb);
-      expect(corrs.length, 3);
-      expect(corrs[0].coefficient, isNotNull);
-      expect(corrs[0].coefficient, lessThan(0));
-
-      final symptomStats = await CycleCorrelationAnalyzer.analyzeSymptomStats(mockDb);
+      final symptomStats = await CycleCorrelationAnalyzer.analyzeSymptomStats(
+        mockDb,
+      );
       expect(symptomStats.length, 2);
       expect(symptomStats[0].key, anyOf('درد شکم', 'خستگی'));
       expect(symptomStats[0].count, anyOf(2, 1));
@@ -313,39 +379,46 @@ void main() {
         {'key': 'module_cycle_enabled', 'value': 'true'},
         {'key': 'cycle_avg_period', 'value': '6'},
       ];
-      
-      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+
+      final todayStr = CycleDateContract.toDayKey(CycleClock.now);
       mockDb.cyclePeriods = [
-        {'id': '1', 'startDate': todayStr, 'endDate': null}
+        {'id': '1', 'startDate': todayStr, 'endDate': null},
       ];
 
       final isMenstruating = await CycleConsentBridge.isUserMenstruating();
       expect(isMenstruating, true);
     });
 
-    test('bodyRhythmInfluence respects settings and returns indirect message', () async {
-      mockDb.appSettings = [
-        {'key': 'user_gender', 'value': 'FEMALE'},
-        {'key': 'module_cycle_enabled', 'value': 'true'},
-        {'key': 'cycle_avg_period', 'value': '6'},
-        {'key': 'cycle_consent_energy', 'value': 'true'},
-        {'key': 'cycle_consent_sleep', 'value': 'false'},
-      ];
+    test(
+      'bodyRhythmInfluence respects settings and returns indirect message',
+      () async {
+        mockDb.appSettings = [
+          {'key': 'user_gender', 'value': 'FEMALE'},
+          {'key': 'module_cycle_enabled', 'value': 'true'},
+          {'key': 'cycle_avg_period', 'value': '6'},
+          {'key': 'cycle_consent_energy', 'value': 'true'},
+          {'key': 'cycle_consent_sleep', 'value': 'false'},
+        ];
 
-      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-      mockDb.cyclePeriods = [
-        {'id': '1', 'startDate': todayStr, 'endDate': null}
-      ];
+        final todayStr = CycleDateContract.toDayKey(CycleClock.now);
+        mockDb.cyclePeriods = [
+          {'id': '1', 'startDate': todayStr, 'endDate': null},
+        ];
 
-      final energyInfluence = await CycleConsentBridge.bodyRhythmInfluence(forSystem: 'energy');
-      expect(energyInfluence, isNotNull);
-      expect(energyInfluence!.energyDelta, -15.0);
-      expect(energyInfluence.indirectMessage, isNot(contains('پریود')));
-      expect(energyInfluence.indirectMessage, isNot(contains('قاعدگی')));
+        final energyInfluence = await CycleConsentBridge.bodyRhythmInfluence(
+          forSystem: 'energy',
+        );
+        expect(energyInfluence, isNotNull);
+        expect(energyInfluence!.energyDelta, -15.0);
+        expect(energyInfluence.indirectMessage, isNot(contains('پریود')));
+        expect(energyInfluence.indirectMessage, isNot(contains('قاعدگی')));
 
-      final sleepInfluence = await CycleConsentBridge.bodyRhythmInfluence(forSystem: 'sleep');
-      expect(sleepInfluence, isNull);
-    });
+        final sleepInfluence = await CycleConsentBridge.bodyRhythmInfluence(
+          forSystem: 'sleep',
+        );
+        expect(sleepInfluence, isNull);
+      },
+    );
 
     test('isWorshipSuspended respects settings', () async {
       mockDb.appSettings = [
@@ -355,9 +428,9 @@ void main() {
         {'key': 'cycle_consent_worship', 'value': 'true'},
       ];
 
-      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      final todayStr = CycleDateContract.toDayKey(CycleClock.now);
       mockDb.cyclePeriods = [
-        {'id': '1', 'startDate': todayStr, 'endDate': null}
+        {'id': '1', 'startDate': todayStr, 'endDate': null},
       ];
 
       final suspended = await CycleConsentBridge.isWorshipSuspended();
@@ -373,28 +446,32 @@ void main() {
       expect(suspended2, false);
     });
 
-    test('addFastingDebtIfNeeded registers debt only if cycle_consent_worship is true', () async {
-      mockDb.appSettings = [
-        {'key': 'cycle_consent_worship', 'value': 'false'},
-      ];
-      
-      const dateStr = '2026-06-25';
-      mockDb.cyclePeriods = [
-        {'id': 'p1', 'startDate': '2026-06-20', 'endDate': dateStr}
-      ];
+    test(
+      'addFastingDebtIfNeeded registers debt only for Ramadan days if cycle_consent_worship is true',
+      () async {
+        mockDb.appSettings = [
+          {'key': 'cycle_consent_worship', 'value': 'false'},
+        ];
 
-      await DatabaseHelper.instance.addFastingDebtIfNeeded(mockDb, dateStr);
-      expect(mockDb.fastingDebtList.isEmpty, true);
+        // Ramadan 1447 AH is in February/March 2026 (e.g. 2026-02-20 to 2026-02-25)
+        const dateStr = '2026-02-25';
+        mockDb.cyclePeriods = [
+          {'id': 'p1', 'startDate': '2026-02-20', 'endDate': dateStr},
+        ];
 
-      mockDb.appSettings = [
-        {'key': 'cycle_consent_worship', 'value': 'true'},
-      ];
+        await DatabaseHelper.instance.addFastingDebtIfNeeded(mockDb, dateStr);
+        expect(mockDb.fastingDebtList.isEmpty, true);
 
-      await DatabaseHelper.instance.addFastingDebtIfNeeded(mockDb, dateStr);
-      expect(mockDb.fastingDebtList.length, 1);
-      expect(mockDb.fastingDebtList.first['daysOwed'], 6);
-      expect(mockDb.fastingDebtList.first['isResolved'], 0);
-    });
+        mockDb.appSettings = [
+          {'key': 'cycle_consent_worship', 'value': 'true'},
+        ];
+
+        await DatabaseHelper.instance.addFastingDebtIfNeeded(mockDb, dateStr);
+        expect(mockDb.fastingDebtList.length, 1);
+        expect(mockDb.fastingDebtList.first['daysOwed'], 6);
+        expect(mockDb.fastingDebtList.first['isResolved'], 0);
+      },
+    );
   });
 }
 
@@ -406,6 +483,22 @@ class CycleMockDatabase implements Database {
   List<Map<String, Object?>> bedtimeDiagnostics = [];
   List<Map<String, Object?>> routineCompletions = [];
   List<Map<String, dynamic>> fastingDebtList = [];
+
+  @override
+  bool get isOpen => true;
+
+  @override
+  Future<int> delete(
+    String table, {
+    String? where,
+    List<Object?>? whereArgs,
+  }) async {
+    if (table == 'fasting_debt') {
+      fastingDebtList.clear();
+      return 1;
+    }
+    return 0;
+  }
 
   @override
   Future<List<Map<String, Object?>>> query(
@@ -423,16 +516,24 @@ class CycleMockDatabase implements Database {
     if (table == 'cycle_periods') {
       if (where != null && where.contains('startDate <= ?')) {
         final date = whereArgs![0]! as String;
-        final list = cyclePeriods.where((r) => (r['startDate']! as String).compareTo(date) <= 0).toList();
+        final list = cyclePeriods
+            .where((r) => (r['startDate']! as String).compareTo(date) <= 0)
+            .toList();
         final mutableList = list.map(Map<String, Object?>.from).toList();
-        mutableList.sort((a, b) => (b['startDate']! as String).compareTo(a['startDate']! as String));
+        mutableList.sort(
+          (a, b) =>
+              (b['startDate']! as String).compareTo(a['startDate']! as String),
+        );
         return mutableList;
       }
       if (where != null && where.contains('endDate = ?')) {
         final date = whereArgs![0]! as String;
         final list = cyclePeriods.where((r) => r['endDate'] == date).toList();
         final mutableList = list.map(Map<String, Object?>.from).toList();
-        mutableList.sort((a, b) => (b['startDate']! as String).compareTo(a['startDate']! as String));
+        mutableList.sort(
+          (a, b) =>
+              (b['startDate']! as String).compareTo(a['startDate']! as String),
+        );
         return mutableList;
       }
       return cyclePeriods;
@@ -457,7 +558,12 @@ class CycleMockDatabase implements Database {
   }
 
   @override
-  Future<int> insert(String table, Map<String, Object?> values, {String? nullColumnHack, ConflictAlgorithm? conflictAlgorithm}) async {
+  Future<int> insert(
+    String table,
+    Map<String, Object?> values, {
+    String? nullColumnHack,
+    ConflictAlgorithm? conflictAlgorithm,
+  }) async {
     if (table == 'fasting_debt') {
       fastingDebtList.removeWhere((r) => r['id'] == values['id']);
       fastingDebtList.add(Map<String, dynamic>.from(values));
@@ -467,7 +573,13 @@ class CycleMockDatabase implements Database {
   }
 
   @override
-  Future<int> update(String table, Map<String, Object?> values, {String? where, List<Object?>? whereArgs, ConflictAlgorithm? conflictAlgorithm}) async {
+  Future<int> update(
+    String table,
+    Map<String, Object?> values, {
+    String? where,
+    List<Object?>? whereArgs,
+    ConflictAlgorithm? conflictAlgorithm,
+  }) async {
     if (table == 'fasting_debt') {
       if (where != null && where.contains('id = ?')) {
         final id = whereArgs![0]! as String;

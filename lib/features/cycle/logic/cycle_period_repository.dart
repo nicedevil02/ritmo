@@ -4,6 +4,7 @@
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_reminder_scheduler.dart';
 import 'package:sqflite/sqflite.dart';
@@ -61,7 +62,7 @@ class CyclePeriod {
     return CyclePeriod(
       id: id,
       startDate:
-          CycleDateContract.parseDayKey(startRaw?.toString()) ?? DateTime.now(),
+          CycleDateContract.parseDayKey(startRaw?.toString()) ?? CycleClock.now,
       endDate: CycleDateContract.parseDayKey(endRaw?.toString()),
       cycleLength: map['cycleLength'] is int
           ? map['cycleLength'] as int
@@ -149,7 +150,7 @@ class CyclePeriodRepository {
     DateTime? now,
   }) async {
     final db = dbExecutor ?? await DatabaseHelper.instance.database;
-    final effectiveNow = now ?? DateTime.now();
+    final effectiveNow = now ?? CycleClock.now;
     final cleanStart = CycleDateContract.cleanDate(startDate);
     final startKey = CycleDateContract.toDayKey(cleanStart);
 
@@ -219,7 +220,7 @@ class CyclePeriodRepository {
     DateTime? now,
   }) async {
     final db = dbExecutor ?? await DatabaseHelper.instance.database;
-    final effectiveNow = now ?? DateTime.now();
+    final effectiveNow = now ?? CycleClock.now;
     final cleanToday = CycleDateContract.cleanDate(effectiveNow);
     var cleanEnd = CycleDateContract.cleanDate(endDate);
 

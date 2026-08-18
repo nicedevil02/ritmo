@@ -1,10 +1,10 @@
-// C-43, C-44: CycleFastingDebtView
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -23,13 +23,10 @@ class CycleFastingDebtView extends StatelessWidget {
   final VoidCallback onReloadData;
 
   String _formatIsoToJalali(String iso) {
-    try {
-      final dt = DateTime.parse(iso);
-      final jal = Jalali.fromDateTime(dt);
-      return '${PersianDigits.toFa(jal.year.toString())}/${PersianDigits.toFa(jal.month.toString())}/${PersianDigits.toFa(jal.day.toString())}';
-    } catch (_) {
-      return iso;
-    }
+    final dt = CycleDateContract.parseDayKey(iso);
+    if (dt == null) return iso;
+    final jal = Jalali.fromDateTime(dt);
+    return '${PersianDigits.toFa(jal.year.toString())}/${PersianDigits.toFa(jal.month.toString())}/${PersianDigits.toFa(jal.day.toString())}';
   }
 
   @override

@@ -6,7 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_animated_background.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -81,7 +83,14 @@ class _CycleLogTodaySheetState extends State<CycleLogTodaySheet> {
             jsonDecode(widget.todayLog!['symptomsJson'] as String)
                 as List<dynamic>;
         symptoms = parsed.map((e) => e.toString()).toList();
-      } catch (_) {}
+      } catch (e, st) {
+        RitmoLog.error(
+          'CycleLogTodaySheet',
+          'Failed to parse symptomsJson: $e',
+          e,
+          st,
+        );
+      }
     }
   }
 
@@ -478,7 +487,7 @@ class _CycleLogTodaySheetState extends State<CycleLogTodaySheet> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: () async {
-                      final nowMs = DateTime.now().millisecondsSinceEpoch;
+                      final nowMs = CycleClock.nowMillisecondsSinceEpoch;
                       final logId = widget.todayLog != null
                           ? widget.todayLog!['id'] as String
                           : 'daylog_$nowMs';

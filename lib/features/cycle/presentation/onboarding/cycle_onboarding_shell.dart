@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/cycle/logic/cycle_onboarding_controller.dart';
@@ -47,7 +48,12 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
 
     try {
       _data = await CycleOnboardingController.instance.loadInitialData();
-    } catch (e) {
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleOnboardingShell] Error loading initial data',
+        error: e,
+        stack: st,
+      );
       _errorMessage = 'خطا در بارگذاری اولیه: $e';
     } finally {
       if (mounted) {
@@ -73,7 +79,12 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
       if (mounted) {
         widget.onCompleted();
       }
-    } catch (e) {
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleOnboardingShell] Error saving onboarding',
+        error: e,
+        stack: st,
+      );
       // Dedicated Error State (Bug چ-۲ resolution)
       if (mounted) {
         setState(() {

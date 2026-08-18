@@ -324,10 +324,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
 
               // Weekday Headers Bar
               Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 9,
-                  horizontal: 4,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
                 decoration: BoxDecoration(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.05)
@@ -370,10 +367,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                   ).animate(animation);
                   return FadeTransition(
                     opacity: animation,
-                    child: SlideTransition(
-                      position: offsetAnim,
-                      child: child,
-                    ),
+                    child: SlideTransition(position: offsetAnim, child: child),
                   );
                 },
                 child: KeyedSubtree(
@@ -469,10 +463,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
         }
 
         if (isToday) {
-          cellBorder = Border.all(
-            color: widget.activePhaseColor,
-            width: 2.2,
-          );
+          cellBorder = Border.all(color: widget.activePhaseColor, width: 2.2);
           textWeight = FontWeight.w900;
         }
 
@@ -502,9 +493,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
               boxShadow: (isPeriodDay || isOvulationDay)
                   ? [
                       BoxShadow(
-                        color: (isPeriodDay
-                                ? colors.error
-                                : colors.accent)
+                        color: (isPeriodDay ? colors.error : colors.accent)
                             .withValues(alpha: 0.15),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
@@ -532,7 +521,9 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                       height: 5,
                       width: 5,
                       decoration: BoxDecoration(
-                        color: isPeriodDay ? colors.textPrimary : widget.activePhaseColor,
+                        color: isPeriodDay
+                            ? colors.textPrimary
+                            : widget.activePhaseColor,
                         shape: BoxShape.circle,
                       ),
                     ),

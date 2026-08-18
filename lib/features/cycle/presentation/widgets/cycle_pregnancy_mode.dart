@@ -9,9 +9,11 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/kick_session_tracker.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_header.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_progress_tab.dart';
@@ -103,7 +105,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
 
       // Restore active kick session
       final restored = await KickSessionTracker.restoreFromSettings(
-        DateTime.now(),
+        CycleClock.now,
       );
       if (restored != null) {
         _kickTracker = restored;
@@ -118,7 +120,14 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
           );
 
       if (mounted) setState(() {});
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error(
+        'CyclePregnancyMode',
+        'Error restoring settings: $e',
+        e,
+        st,
+      );
+    }
   }
 
   Future<void> _loadHospitalBag() async {
@@ -153,7 +162,14 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
       }
 
       if (mounted) setState(() {});
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error(
+        'CyclePregnancyMode',
+        'Error loading hospital bag: $e',
+        e,
+        st,
+      );
+    }
   }
 
   Future<void> _saveHospitalBag() async {
@@ -164,15 +180,22 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
         'key': 'preg_hospital_bag',
         'value': jsonStr,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error(
+        'CyclePregnancyMode',
+        'Error saving hospital bag: $e',
+        e,
+        st,
+      );
+    }
   }
 
   void _calculateValues() {
-    _startDate = DateTime.tryParse(widget.pregnancyStartDate) ?? DateTime.now();
+    _startDate = DateTime.tryParse(widget.pregnancyStartDate) ?? CycleClock.now;
     _dueDate =
         DateTime.tryParse(widget.pregnancyDueDate) ??
         _startDate.add(const Duration(days: 280));
-    final today = DateTime.now();
+    final today = CycleClock.now;
     final todayTruncated = DateTime(today.year, today.month, today.day);
     final startTruncated = DateTime(
       _startDate.year,
@@ -210,7 +233,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
   }
 
   Future<void> _registerKickTap() async {
-    final now = DateTime.now();
+    final now = CycleClock.now;
     final reached10 = _kickTracker.registerTap(now);
     await _kickTracker.saveToSettings();
     unawaited(HapticFeedback.lightImpact());
@@ -363,7 +386,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
                 onPressed: () async {
                   Navigator.of(ctx).pop();
                   final db = await DatabaseHelper.instance.database;
-                  final remindMs = DateTime.now()
+                  final remindMs = CycleClock.now
                       .add(const Duration(days: 40))
                       .millisecondsSinceEpoch;
                   await db.insert('app_settings', {
@@ -436,7 +459,14 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
       await db.delete('kick_counts');
       await db.delete('contraction_timer');
       await KickSessionTracker.clearSettings();
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error(
+        'CyclePregnancyMode',
+        'Error purging pregnancy tables: $e',
+        e,
+        st,
+      );
+    }
   }
 
   // UX-15 Privacy Badge Sheet

@@ -6,6 +6,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:sqflite/sqflite.dart';
@@ -59,7 +60,7 @@ class CycleWorshipPolicy {
 
       // 4. Check active bleeding on target date
       final effectiveDate = CycleDateContract.cleanDate(
-        targetDate ?? DateTime.now(),
+        targetDate ?? CycleClock.now,
       );
       final periods = await db.query('cycle_periods', orderBy: 'startDate ASC');
 
@@ -104,7 +105,7 @@ class CycleWorshipPolicy {
     Database? dbExecutor,
   }) async {
     final db = dbExecutor ?? await DatabaseHelper.instance.database;
-    final now = DateTime.now().millisecondsSinceEpoch;
+    final now = CycleClock.nowMillisecondsSinceEpoch;
 
     await db.transaction((txn) async {
       await txn.update(

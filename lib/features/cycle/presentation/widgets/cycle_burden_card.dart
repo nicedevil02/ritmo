@@ -105,28 +105,31 @@ class CycleBurdenCard extends StatelessWidget {
           ...(advice.recommendationsFa ??
                   advice.recommendationCodes.map(_translateRecommendation))
               .map(
-            (rec) => Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '• ',
-                    style: TextStyle(
-                      color: badgeColor,
-                      fontWeight: FontWeight.bold,
-                    ),
+                (rec) => Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '• ',
+                        style: TextStyle(
+                          color: badgeColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          rec,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  Expanded(
-                    child: Text(
-                      rec,
-                      style: TextStyle(fontSize: 12, color: colors.textPrimary),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
         ],
       ),
     );

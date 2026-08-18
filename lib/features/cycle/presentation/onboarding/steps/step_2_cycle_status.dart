@@ -4,6 +4,7 @@ import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_onboarding_controller.dart';
 
 class Step2CycleStatus extends StatelessWidget {
@@ -321,7 +322,7 @@ class Step2CycleStatus extends StatelessWidget {
   }
 
   Future<void> _pickStartDate(BuildContext context) async {
-    final today = DateTime.now();
+    final today = CycleClock.now;
     // Allow up to 90 days ago for realistic irregularity/postpartum window (Bug چ-۶)
     final ninetyDaysAgo = today.subtract(const Duration(days: 90));
 
@@ -334,7 +335,11 @@ class Step2CycleStatus extends StatelessWidget {
 
     if (picked != null) {
       final pickedDate = picked.toDateTime();
-      final cleanPicked = DateTime(pickedDate.year, pickedDate.month, pickedDate.day);
+      final cleanPicked = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+      );
       final cleanToday = DateTime(today.year, today.month, today.day);
       final daysDiff = cleanToday.difference(cleanPicked).inDays;
       final autoStatus = daysDiff < data.periodDuration
@@ -344,7 +349,8 @@ class Step2CycleStatus extends StatelessWidget {
       onDataChanged(
         data.copyWith(
           startDate: pickedDate,
-          periodStatus: data.periodStatus == CyclePeriodStatusChoice.dontKnow ||
+          periodStatus:
+              data.periodStatus == CyclePeriodStatusChoice.dontKnow ||
                   data.periodStatus == CyclePeriodStatusChoice.currentlyPregnant
               ? data.periodStatus
               : autoStatus,

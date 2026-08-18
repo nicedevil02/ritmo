@@ -4,6 +4,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
@@ -30,7 +31,7 @@ class CycleOnboardingData {
     this.calendarConsent = false,
     this.enableLock = false,
   }) : startDate =
-           startDate ?? DateTime.now().subtract(const Duration(days: 10));
+           startDate ?? CycleClock.now.subtract(const Duration(days: 10));
 
   CyclePeriodStatusChoice periodStatus;
   int cycleLength;
@@ -106,7 +107,7 @@ class CycleOnboardingController {
 
       // Query latest period to infer start date if available
       final periods = await CyclePeriodRepository.instance.getAllPeriods(db);
-      DateTime startDate = DateTime.now().subtract(const Duration(days: 10));
+      DateTime startDate = CycleClock.now.subtract(const Duration(days: 10));
       CyclePeriodStatusChoice statusChoice =
           CyclePeriodStatusChoice.endedWithKnownStart;
 
@@ -154,7 +155,7 @@ class CycleOnboardingController {
     bool isEditMode = false,
   }) async {
     final db = await DatabaseHelper.instance.database;
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final nowMs = CycleClock.nowMillisecondsSinceEpoch;
 
     final batch = db.batch();
 
@@ -210,7 +211,7 @@ class CycleOnboardingController {
     // 3. Handle Period Insertion / Update idempotently (C-15: stable id = 'period_onboarding_seed')
     final cleanStart = CycleDateContract.cleanDate(data.startDate);
     final cleanStartStr = CycleDateContract.toDayKey(cleanStart);
-    final today = CycleDateContract.cleanDate(DateTime.now());
+    final today = CycleDateContract.cleanDate(CycleClock.now);
 
     final expectedEnd = cleanStart.add(Duration(days: data.periodDuration - 1));
     final isPeriodActive = CycleDateContract.isSameOrAfter(expectedEnd, today);
@@ -252,9 +253,21 @@ class CycleOnboardingController {
         'module_cycle_enabled',
         true,
       );
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleOnboarding] Failed to enable cycle module: $e',
+        error: e,
+        stack: st,
+      );
+    }
     try {
       RitmoEvents.notifyRoutineChanged();
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleOnboarding] Failed to notify routine change: $e',
+        error: e,
+        stack: st,
+      );
+    }
   }
 }

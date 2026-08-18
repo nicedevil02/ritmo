@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:ritmo/features/health/data/pregnancy_repository.dart';
 import 'package:ritmo/features/health/data/pregnancy_week_data.dart';
@@ -54,8 +55,8 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
         text:
             'کارت رشد هفته ${widget.gestationalAge.weeks} بارداری من با اپلیکیشن ریتمو',
       );
-    } catch (e) {
-      debugPrint('[WeeklyShareCard] Export error: $e');
+    } catch (e, st) {
+      RitmoLogger.error('[WeeklyShareCard] Export error', error: e, stack: st);
     }
   }
 

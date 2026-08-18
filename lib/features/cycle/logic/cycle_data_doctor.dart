@@ -1,7 +1,8 @@
 // C-04: CycleDataDoctor diagnostic tool.
 // Inspects cycle data integrity across cycle_periods, cycle_day_logs, legacy cycle_logs, and app_settings.
-import 'package:sqflite/sqflite.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:sqflite/sqflite.dart';
 
 class CycleDataDiagnosis {
   final int overlappingPeriodsCount;
@@ -48,12 +49,12 @@ class CycleDataDoctor {
   const CycleDataDoctor._();
 
   /// Inspects [db] and returns a detailed data diagnosis.
-  /// [now] can be injected for deterministic testing (defaults to DateTime.now()).
+  /// [now] can be injected for deterministic testing (defaults to CycleClock.now).
   static Future<CycleDataDiagnosis> diagnose(
     DatabaseExecutor db, {
     DateTime? now,
   }) async {
-    final effectiveNow = now ?? DateTime.now();
+    final effectiveNow = now ?? CycleClock.now;
     final todayStr = CycleDateContract.toDayKey(effectiveNow);
     final cleanToday = CycleDateContract.cleanDate(effectiveNow);
 

@@ -1,4 +1,3 @@
-// C-43, C-44: CycleSettingsPanel
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -6,6 +5,8 @@ import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:sqflite/sqflite.dart';
@@ -125,7 +126,7 @@ class CycleSettingsPanel extends StatelessWidget {
               await db.insert('app_settings', {
                 'key': 'cycle_biometric_enabled',
                 'value': v.toString(),
-                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
               }, conflictAlgorithm: ConflictAlgorithm.replace);
               onDataReloadNeeded();
             },
@@ -140,7 +141,7 @@ class CycleSettingsPanel extends StatelessWidget {
               await db.insert('app_settings', {
                 'key': 'cycle_lock_enabled',
                 'value': v.toString(),
-                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
               }, conflictAlgorithm: ConflictAlgorithm.replace);
               onDataReloadNeeded();
             },
@@ -192,18 +193,15 @@ class CycleSettingsPanel extends StatelessWidget {
               await db.insert('app_settings', {
                 'key': 'cycle_consent_worship',
                 'value': v.toString(),
-                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
               }, conflictAlgorithm: ConflictAlgorithm.replace);
               WorshipEngine.instance.invalidate();
-              final todayStr = DateTime.now().toIso8601String().substring(
-                0,
-                10,
-              );
+              final todayStr = CycleDateContract.toDayKey(CycleClock.now);
               DayAgendaService.instance.invalidateDate(todayStr);
               RitmoEventBus().fire(
                 RitmoEvent(
                   type: 'WorshipUpdated',
-                  timestamp: DateTime.now(),
+                  timestamp: CycleClock.now,
                   payload: {'date': todayStr},
                 ),
               );
@@ -220,7 +218,7 @@ class CycleSettingsPanel extends StatelessWidget {
               await db.insert('app_settings', {
                 'key': 'cycle_consent_energy',
                 'value': v.toString(),
-                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
               }, conflictAlgorithm: ConflictAlgorithm.replace);
               onDataReloadNeeded();
             },
@@ -235,7 +233,7 @@ class CycleSettingsPanel extends StatelessWidget {
               await db.insert('app_settings', {
                 'key': 'cycle_consent_sleep',
                 'value': v.toString(),
-                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
               }, conflictAlgorithm: ConflictAlgorithm.replace);
               onDataReloadNeeded();
             },
@@ -250,7 +248,7 @@ class CycleSettingsPanel extends StatelessWidget {
               await db.insert('app_settings', {
                 'key': 'cycle_consent_reminders',
                 'value': v.toString(),
-                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
               }, conflictAlgorithm: ConflictAlgorithm.replace);
               onDataReloadNeeded();
             },
@@ -265,7 +263,7 @@ class CycleSettingsPanel extends StatelessWidget {
               await db.insert('app_settings', {
                 'key': 'cycle_consent_dashboard',
                 'value': v.toString(),
-                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
               }, conflictAlgorithm: ConflictAlgorithm.replace);
               onDataReloadNeeded();
             },
@@ -280,7 +278,7 @@ class CycleSettingsPanel extends StatelessWidget {
               await db.insert('app_settings', {
                 'key': 'show_cycle_in_calendar',
                 'value': v.toString(),
-                'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
               }, conflictAlgorithm: ConflictAlgorithm.replace);
               onDataReloadNeeded();
             },

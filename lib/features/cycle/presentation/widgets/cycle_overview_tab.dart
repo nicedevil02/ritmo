@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_orb_card.dart';
@@ -43,19 +45,17 @@ class CycleOverviewTab extends StatelessWidget {
   }
 
   String _formatIsoToJalali(String iso) {
-    try {
-      final dt = DateTime.parse(iso);
-      final jal = Jalali.fromDateTime(dt);
-      return '${PersianDigits.toFa(jal.year.toString())}/${PersianDigits.toFa(jal.month.toString().padLeft(2, '0'))}/${PersianDigits.toFa(jal.day.toString().padLeft(2, '0'))}';
-    } catch (_) {
-      return iso;
-    }
+    final dt = CycleDateContract.parseDayKey(iso);
+    if (dt == null) return iso;
+    final jal = Jalali.fromDateTime(dt);
+    return '${PersianDigits.toFa(jal.year.toString())}/${PersianDigits.toFa(jal.month.toString().padLeft(2, '0'))}/${PersianDigits.toFa(jal.day.toString().padLeft(2, '0'))}';
   }
 
   bool _isPeriodForgotten(Map<String, dynamic> p) {
     if (p['endDate'] != null) return false;
-    final start = DateTime.parse(p['startDate'] as String);
-    return DateTime.now().difference(start).inDays > 12;
+    final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
+    if (start == null) return false;
+    return CycleDateContract.daysBetween(start, CycleClock.now) > 12;
   }
 
   bool _checkIsPeriodDay(DateTime date) {
@@ -113,7 +113,7 @@ class CycleOverviewTab extends StatelessWidget {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final today = DateTime.now();
+    final today = CycleClock.now;
     final isTodayPeriod = _checkIsPeriodDay(today);
     final activePeriodDay = _calculateActivePeriodDay(today);
     final phase = engineOutput?.currentPhase ?? CyclePhase.menstrual;
@@ -131,7 +131,8 @@ class CycleOverviewTab extends StatelessWidget {
           activePeriodDay: activePeriodDay,
           dayOfCycle: engineOutput?.dayOfCycle ?? 1,
           totalCycleLength: engineOutput?.stats.avgCycleLength ?? 28.0,
-          avgPeriodDuration: engineOutput?.stats.avgPeriodDuration ??
+          avgPeriodDuration:
+              engineOutput?.stats.avgPeriodDuration ??
               CycleSettings.getPeriodDuration(settings).toDouble(),
         ),
         const SizedBox(height: 16),

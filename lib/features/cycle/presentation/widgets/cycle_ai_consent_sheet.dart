@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 
 Future<void> showCycleAiConsentSheet(
   BuildContext context, {
@@ -123,7 +124,7 @@ Future<void> showCycleAiConsentSheet(
                         await db.insert('app_settings', {
                           'key': 'cycle_consent_ai',
                           'value': 'true',
-                          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                          'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
                         });
                         if (settings != null) {
                           settings['cycle_consent_ai'] = 'true';

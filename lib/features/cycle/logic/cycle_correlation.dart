@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:sqflite/sqflite.dart';
@@ -18,7 +19,7 @@ class CycleCorrelationAnalyzer {
     DateTime? now,
     int windowDays = 90,
   }) async {
-    final effectiveNow = CycleDateContract.cleanDate(now ?? DateTime.now());
+    final effectiveNow = CycleDateContract.cleanDate(now ?? CycleClock.now);
     final windowStartDate = effectiveNow.subtract(Duration(days: windowDays));
     final windowStartKey = CycleDateContract.toDayKey(windowStartDate);
     final windowEndKey = CycleDateContract.toDayKey(effectiveNow);

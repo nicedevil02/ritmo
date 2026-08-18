@@ -1,6 +1,3 @@
-// C-06, C-07, C-08, C-09, C-43: CycleLockGate
-// Privacy gate protecting cycle content with zero background leakage,
-// strict biometric verification, SecureKeyStore hashed PIN, lockout display, and accessible Persian keypad.
 import 'dart:async';
 import 'dart:ui';
 
@@ -8,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
 
@@ -96,7 +94,12 @@ class _CycleLockGateState extends State<CycleLockGate>
           }
         });
       }
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleLockGate] error checking lock state: $e',
+        error: e,
+        stack: st,
+      );
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -138,7 +141,13 @@ class _CycleLockGateState extends State<CycleLockGate>
           _pinErrorMessage = '';
         });
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleLockGate] Biometric auth error: $e',
+        error: e,
+        stack: st,
+      );
+    }
   }
 
   void _onPinKeyTapped(String key) {

@@ -6,8 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
-import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/services/cycle_notification_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -15,8 +16,10 @@ import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
 import 'package:ritmo/core/ux/ritmo_empty_state.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/cycle/logic/cycle_burden_engine.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
 import 'package:ritmo/features/cycle/logic/cycle_data_quality_engine.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_load_balancer.dart';
 import 'package:ritmo/features/cycle/logic/cycle_personal_pattern_engine.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
@@ -100,8 +103,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       _forgottenPeriod = null;
       for (final p in _periods) {
         if (p['endDate'] == null) {
-          final start = DateTime.tryParse(p['startDate'] as String);
-          if (start != null && DateTime.now().difference(start).inDays >= 12) {
+          final start = CycleDateContract.parseDayKey(
+            p['startDate']?.toString(),
+          );
+          if (start != null &&
+              CycleDateContract.daysBetween(start, CycleClock.now) >= 12) {
             _forgottenPeriod = p;
             break;
           }
@@ -113,7 +119,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
       final engine = CycleEngine();
       _engineOutput = await engine.calculate(
-        CycleEngineInput(db: db, appSettings: _settings, now: DateTime.now()),
+        CycleEngineInput(db: db, appSettings: _settings, now: CycleClock.now),
       );
 
       if (_engineOutput != null) {
@@ -125,7 +131,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           pregnancyMode: pregnancyMode,
         );
 
-        final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+        final todayStr = CycleDateContract.toDayKey(CycleClock.now);
         _dataQualityReport = await CycleDataQualityEngine.evaluateDataQuality(
           db: db,
           periodRows: _periods,
@@ -180,8 +186,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       }
 
       _symptomStats = await CycleCorrelationAnalyzer.analyzeSymptomStats(db);
-    } catch (e) {
-      debugPrint('Error loading cycle data: $e');
+    } catch (e, st) {
+      RitmoLog.error('CycleScreen', 'Error loading cycle data: $e', e, st);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -226,17 +232,15 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   Future<void> _togglePeriodToday() async {
     if (_engineOutput == null) return;
     final db = await DatabaseHelper.instance.database;
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final todayStr = CycleDateContract.toDayKey(CycleClock.now);
+    final nowMs = CycleClock.nowMillisecondsSinceEpoch;
 
-    final hasActivePeriod = _periods.any(
-      (p) =>
-          p['endDate'] == null &&
-          DateTime.now()
-                  .difference(DateTime.parse(p['startDate'] as String))
-                  .inDays <
-              12,
-    );
+    final hasActivePeriod = _periods.any((p) {
+      final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
+      return p['endDate'] == null &&
+          start != null &&
+          CycleDateContract.daysBetween(start, CycleClock.now) < 12;
+    });
 
     if (!hasActivePeriod) {
       if (_forgottenPeriod != null) {
@@ -276,14 +280,12 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         await DatabaseHelper.instance.addFastingDebtIfNeeded(db, todayStr);
       }
     } else {
-      final active = _periods.firstWhere(
-        (p) =>
-            p['endDate'] == null &&
-            DateTime.now()
-                    .difference(DateTime.parse(p['startDate'] as String))
-                    .inDays <
-                12,
-      );
+      final active = _periods.firstWhere((p) {
+        final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
+        return p['endDate'] == null &&
+            start != null &&
+            CycleDateContract.daysBetween(start, CycleClock.now) < 12;
+      });
       await db.update(
         'cycle_periods',
         {'endDate': todayStr, 'updatedAt': nowMs},
@@ -302,8 +304,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   }
 
   void _openLogTodaySheet([DateTime? targetDate]) {
-    final effectiveDate = targetDate ?? DateTime.now();
-    final dateStr = effectiveDate.toIso8601String().substring(0, 10);
+    final effectiveDate = targetDate ?? CycleClock.now;
+    final dateStr = CycleDateContract.toDayKey(effectiveDate);
     final dayLog = _dayLogs.cast<Map<String, dynamic>?>().firstWhere(
       (l) => l?['logDate'] == dateStr || l?['dateIso'] == dateStr,
       orElse: () => null,
@@ -333,9 +335,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         },
         onSave: (start, end) async {
           final db = await DatabaseHelper.instance.database;
-          final startStr = start.toIso8601String().substring(0, 10);
-          final endStr = end?.toIso8601String().substring(0, 10);
-          final nowMs = DateTime.now().millisecondsSinceEpoch;
+          final startStr = CycleDateContract.toDayKey(start);
+          final endStr = end != null ? CycleDateContract.toDayKey(end) : null;
+          final nowMs = CycleClock.nowMillisecondsSinceEpoch;
 
           if (period != null) {
             await db.update(
@@ -369,14 +371,17 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
   Future<void> _closeForgottenPeriod(Map<String, dynamic> period) async {
     final db = await DatabaseHelper.instance.database;
-    final start = DateTime.parse(period['startDate'] as String);
+    final start = CycleDateContract.parseDayKey(
+      period['startDate']?.toString(),
+    );
+    if (start == null) return;
     final pDur = CycleSettings.getPeriodDuration(_settings);
     final end = start.add(Duration(days: pDur - 1));
-    final endStr = end.toIso8601String().substring(0, 10);
+    final endStr = CycleDateContract.toDayKey(end);
 
     await db.update(
       'cycle_periods',
-      {'endDate': endStr, 'updatedAt': DateTime.now().millisecondsSinceEpoch},
+      {'endDate': endStr, 'updatedAt': CycleClock.nowMillisecondsSinceEpoch},
       where: 'id = ?',
       whereArgs: [period['id']],
     );
@@ -406,7 +411,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 await db.insert('app_settings', {
                   'key': 'cycle_pregnancy_mode',
                   'value': (!isActive).toString(),
-                  'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                  'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
                 }, conflictAlgorithm: ConflictAlgorithm.replace);
                 await _loadData();
               },
@@ -512,10 +517,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   ? CyclePregnancyModeView(
                       pregnancyStartDate:
                           _settings['preg_start_date'] ??
-                          DateTime.now().toIso8601String(),
+                          CycleClock.now.toIso8601String(),
                       pregnancyDueDate:
                           _settings['preg_due_date'] ??
-                          DateTime.now()
+                          CycleClock.now
                               .add(const Duration(days: 280))
                               .toIso8601String(),
                       onDeactivated: () async {
@@ -617,7 +622,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                     'key': 'cycle_send_fasting_debt_to_worship',
                                     'value': enabled.toString(),
                                     'updatedAt':
-                                        DateTime.now().millisecondsSinceEpoch,
+                                        CycleClock.nowMillisecondsSinceEpoch,
                                   },
                                   conflictAlgorithm: ConflictAlgorithm.replace,
                                 );

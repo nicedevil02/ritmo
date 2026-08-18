@@ -23,8 +23,8 @@
 | CAL-19 | پنجرهٔ بارگذاری صریح و عبور isBackgroundRefresh | C | DONE | 8f6c3ad | ذخیرهٔ windowStart/End و عبور کامل پرچم isBackgroundRefresh برای جلوگیری از پرش لودینگ |
 | CAL-20 | تعویض مقیاس: دادهٔ مقیاس قبلی پاک شود | C | DONE | 41f68ee | ریست فوری اسنپ‌شات‌ها و فعال‌سازی isLoading در setScale و selectDate با مقیاس جدید |
 | CAL-21 | یک fallback واحد برای snapshot تهی | C | DONE | e394cf6 | ایجاد _snapshotForSelectedDate و تضمین بازگشت اسنپ‌شات خالی معتبر در تمام مقیاس‌ها |
-| CAL-22 | loadDefaultScale: خواندن تنظیمات از SettingsService | C | DONE | pending | خواندن مقیاس از SettingsService، بارگذاری واقعی داده‌ها، و اولویت‌بخشی به scale صریح |
-| CAL-23 | setScale: ذخیره مقیاس در تنظیمات | C | TODO | - | - |
+| CAL-22 | loadDefaultScale: خواندن تنظیمات از SettingsService | C | DONE | 52df4f2 | خواندن مقیاس از SettingsService، بارگذاری واقعی داده‌ها، و اولویت‌بخشی به scale صریح |
+| CAL-23 | setScale: ذخیره مقیاس در تنظیمات | C | DONE | pending | ذخیرهٔ ناهمگام مقیاس انتخابی در SettingsService با نگاشت 1-به-1 نام enum |
 | CAL-24 | طوفان رفرش: ادغام دو منبع رویداد و اعمال debounce | C | TODO | - | - |
 | CAL-25 | نشتی حافظه: مدیریت اشتراک CommandStack | C | TODO | - | - |
 | CAL-26 | درگ و ریسایز: اعتبارسنجی و تشخیص تداخل | D | TODO | - | - |

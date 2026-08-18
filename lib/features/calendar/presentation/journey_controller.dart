@@ -134,7 +134,9 @@ class JourneyController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setScale(JourneyScale scale) {
+  static String scaleToString(JourneyScale s) => s.name;
+
+  void setScale(JourneyScale scale, {SettingsService? settingsService}) {
     if (_isDisposed || _activeScale == scale) return;
     _activeScale = scale;
     // دادهٔ مقیاس قبلی برای مقیاس جدید معنا ندارد؛ نگه‌داشتنش نمای غلط می‌سازد.
@@ -144,6 +146,12 @@ class JourneyController extends ChangeNotifier {
     _windowEnd = null;
     _isLoading = true;
     notifyListeners();
+    (settingsService ?? SettingsService.instance)
+        .setString('calendar_default_scale', scale.name)
+        .catchError((e, st) {
+      RitmoLog.error('JourneyController', 'persist scale failed', e, st);
+      return false;
+    });
     loadForActiveScale();
   }
 

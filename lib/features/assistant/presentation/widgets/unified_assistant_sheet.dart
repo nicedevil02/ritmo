@@ -8,6 +8,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:ritmo/core/ai/ai_connection_models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
@@ -38,6 +39,8 @@ import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_loop_runner.dart';
 import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
 import 'package:ritmo/core/ai/agent/ui/agent_confirmation_card.dart';
+import 'package:ritmo/core/ai/agent/ui/agent_stream_presenter.dart';
+import 'package:ritmo/core/ai/web_bridge/bridge_status_chip.dart';
 import 'package:ritmo/features/chat/presentation/widgets/agent_timeline_visualizer.dart';
 import 'package:ritmo/features/chat/presentation/widgets/streaming_message_bubble.dart';
 
@@ -75,6 +78,7 @@ class AssistantSheet extends StatefulWidget {
 }
 
 class _AssistantSheetState extends State<AssistantSheet> {
+  final AgentStreamPresenter _presenter = AgentStreamPresenter();
   final TextEditingController _chatController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
@@ -86,11 +90,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
   final List<AgentStep> _agentSteps = [];
   String _agentStatusText = '';
   bool _isAgentWorking = false;
-
-  /// بافر نمایش این نوبت سرکوب می‌شود تا نوبت ابزاری به کاربر نشان داده نشود.
-  /// وقتی AgentDisplayResetEvent با toolCallTurn رسید، true می‌شود؛
-  /// وقتی AgentDisplayResetEvent با finalAnswerTurn رسید، false می‌شود.
-  bool _suppressUntilTurnEnd = false;
 
   bool _canUndoLast = false;
   String? _lastPlanId;
@@ -366,93 +365,40 @@ class _AssistantSheetState extends State<AssistantSheet> {
         _isStreaming = true;
       });
 
-      var fullResponse = '';
+      _presenter.reset();
       await _agentSubscription?.cancel();
       _agentSubscription = agentStream.listen(
         (event) {
-          if (event is AgentStatusChangedEvent) {
-            if (mounted) {
-              setState(() {
-                _agentStatusText = event.statusTextFa;
-                _isAgentWorking = event.isWorking;
-              });
-            }
-          } else if (event is AgentStepStartedEvent || event is AgentStepCompletedEvent) {
-            if (mounted) {
-              final step = (event is AgentStepStartedEvent) ? event.step : (event as AgentStepCompletedEvent).step;
-              setState(() {
-                final idx = _agentSteps.indexWhere((s) => s.id == step.id);
-                if (idx != -1) {
-                  _agentSteps[idx] = step;
-                } else {
-                  _agentSteps.add(step);
-                }
-              });
-            }
-          } else if (event is AgentDisplayResetEvent) {
-            // WEB-34: بازنشانی نمایش بین نوبت‌ها
-            if (event.turnKind == AgentTurnKind.toolCallTurn) {
-              // نوبت ابزاری پایان یافت — بافر نمایش دور ریخته می‌شود
-              fullResponse = '';
-              _suppressUntilTurnEnd = true;
-              if (mounted) {
-                setState(() {
-                  _agentStatusText = 'در حال تحلیل نتیجه ابزارها...';
-                  _isAgentWorking = true;
-                  // پیام استریم را خالی می‌کنیم تا کاربر JSON ابزار را نبیند
-                  _messages[_messages.length - 1] = ChatMessage(
-                    id: assistantMsgId,
-                    sessionId: widget.persona.id,
-                    role: ChatRole.assistant,
-                    content: '',
-                    timestamp: DateTime.now(),
-                    isStreaming: true,
-                  );
-                });
-              }
-            } else {
-              // نوبت پاسخ نهایی — سرکوب را بردار
-              _suppressUntilTurnEnd = false;
-              if (mounted) {
-                setState(() {
-                  _agentStatusText = 'در حال نگارش پاسخ نهایی...';
-                });
-              }
-            }
-          } else if (event is AgentTokenStreamEvent) {
-            if (_suppressUntilTurnEnd) return; // سرکوب — نوبت ابزاری
-            fullResponse = event.accumulated;
-            if (mounted) {
-              setState(() {
+          _presenter.apply(event);
+          if (mounted) {
+            setState(() {
+              _agentStatusText = _presenter.statusTextFa;
+              _isAgentWorking = _presenter.isWorking;
+              _agentSteps
+                ..clear()
+                ..addAll(_presenter.steps);
+              if (_messages.isNotEmpty && _messages.last.id == assistantMsgId) {
                 _messages[_messages.length - 1] = ChatMessage(
                   id: assistantMsgId,
                   sessionId: widget.persona.id,
                   role: ChatRole.assistant,
-                  content: fullResponse,
+                  content: _presenter.visibleText,
                   timestamp: DateTime.now(),
-                  isStreaming: true,
+                  isStreaming: _isStreaming,
                 );
-              });
-              _scrollToBottom();
-            }
-          } else if (event is AgentCompletedEvent) {
-            if (mounted) {
-              setState(() {
-                _messages[_messages.length - 1] = ChatMessage(
-                  id: assistantMsgId,
-                  sessionId: widget.persona.id,
-                  role: ChatRole.assistant,
-                  content: event.finalAnswer.isNotEmpty ? event.finalAnswer : fullResponse,
-                  timestamp: DateTime.now(),
-                  isStreaming: false,
-                );
-                _isStreaming = false;
-                _isAgentWorking = false;
-              });
-            }
+              }
+            });
+            _scrollToBottom();
+          }
+
+          if (event is AgentCompletedEvent && mounted) {
+            setState(() {
+              _isStreaming = false;
+              _isAgentWorking = false;
+            });
           } else if (event is AgentErrorEvent) {
-            if (fullResponse.isEmpty) {
-              debugPrint('[AssistantSheet] Agent error with empty response -> fallback to gateway stream. Reason: ${event.errorMessageFa}');
+            if (_presenter.visibleText.isEmpty) {
+              RitmoLog.warning('AssistantSheet', 'Agent error with empty response -> fallback to gateway stream. Reason: ${event.errorMessageFa}');
               unawaited(_runGatewayFallback(
                 assistantMsgId: assistantMsgId,
                 systemPrompt: systemPrompt,
@@ -467,29 +413,29 @@ class _AssistantSheetState extends State<AssistantSheet> {
               setState(() {
                 _isStreaming = false;
                 _isAgentWorking = false;
-                _messages[_messages.length - 1] = ChatMessage(
-                  id: assistantMsgId,
-                  sessionId: widget.persona.id,
-                  role: ChatRole.assistant,
-                  content: '$fullResponse\n\n⚠️ [خطا]: ${event.errorMessageFa}',
-                  timestamp: DateTime.now(),
-                  isStreaming: false,
-                );
+                if (_messages.isNotEmpty && _messages.last.id == assistantMsgId) {
+                  _messages[_messages.length - 1] = ChatMessage(
+                    id: assistantMsgId,
+                    sessionId: widget.persona.id,
+                    role: ChatRole.assistant,
+                    content: '${_presenter.visibleText}\n\n⚠️ [خطا]: ${event.errorMessageFa}',
+                    timestamp: DateTime.now(),
+                    isStreaming: false,
+                  );
+                }
               });
             }
-          } else if (event is AgentConfirmationTimedOutEvent) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    event.messageFa,
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  backgroundColor: Colors.orange.shade800,
-                  duration: const Duration(seconds: 4),
+          } else if (event is AgentConfirmationTimedOutEvent && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  event.messageFa,
+                  style: const TextStyle(color: Colors.white),
                 ),
-              );
-            }
+                backgroundColor: Colors.orange.shade800,
+                duration: const Duration(seconds: 4),
+              ),
+            );
           }
         },
         onDone: () {
@@ -501,8 +447,8 @@ class _AssistantSheetState extends State<AssistantSheet> {
           }
         },
         onError: (err) {
-          if (fullResponse.isEmpty) {
-            debugPrint('[AssistantSheet] Agent stream onError with empty response -> fallback to gateway stream. Reason: $err');
+          if (_presenter.visibleText.isEmpty) {
+            RitmoLog.warning('AssistantSheet', 'Agent stream onError with empty response -> fallback to gateway stream. Reason: $err');
             unawaited(_runGatewayFallback(
               assistantMsgId: assistantMsgId,
               systemPrompt: systemPrompt,
@@ -1069,6 +1015,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
                       ),
                     ),
                     const Spacer(),
+                    const BridgeStatusChip(),
                     if (_canUndoLast)
                       TextButton.icon(
                         style: TextButton.styleFrom(

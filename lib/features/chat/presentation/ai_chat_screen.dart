@@ -36,6 +36,8 @@ import 'package:ritmo/features/chat/presentation/chat_session_list_screen.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
 import 'package:ritmo/core/ai/agent/ui/agent_confirmation_card.dart';
+import 'package:ritmo/core/ai/agent/ui/agent_stream_presenter.dart';
+import 'package:ritmo/core/ai/web_bridge/bridge_status_chip.dart';
 import 'package:ritmo/features/chat/presentation/widgets/agent_timeline_visualizer.dart';
 import 'package:ritmo/features/chat/presentation/widgets/streaming_message_bubble.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -52,6 +54,7 @@ class AiChatScreen extends StatefulWidget {
 }
 
 class _AiChatScreenState extends State<AiChatScreen> {
+  final AgentStreamPresenter _presenter = AgentStreamPresenter();
   String? _sessionId;
   List<ChatMessage> _messages = [];
   bool _isLoading = false;
@@ -941,6 +944,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _textController.clear();
     final consent = await ConsentProfile.loadFromDb();
 
+    _presenter.reset();
     setState(() {
       _agentSteps.clear();
       _agentStatusText = 'در حال تحلیل هوشمند و بررسی ابزارها...';
@@ -993,36 +997,26 @@ class _AiChatScreenState extends State<AiChatScreen> {
       _scrollToBottom();
     } else if (e is AgentStreamEvent) {
       final event = e.agentEvent;
-      if (event is AgentStatusChangedEvent) {
-        setState(() {
-          _agentStatusText = event.statusTextFa;
-          _isAgentWorking = event.isWorking;
-        });
-      } else if (event is AgentStepStartedEvent || event is AgentStepCompletedEvent) {
-        final step = (event is AgentStepStartedEvent)
-            ? event.step
-            : (event as AgentStepCompletedEvent).step;
-        setState(() {
-          final idx = _agentSteps.indexWhere((s) => s.id == step.id);
-          if (idx != -1) {
-            _agentSteps[idx] = step;
-          } else {
-            _agentSteps.add(step);
-          }
-        });
-      } else if (event is AgentConfirmationTimedOutEvent) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                event.messageFa,
-                style: const TextStyle(color: Colors.white),
-              ),
-              backgroundColor: Colors.orange.shade800,
-              duration: const Duration(seconds: 4),
+      _presenter.apply(event);
+      setState(() {
+        _agentStatusText = _presenter.statusTextFa;
+        _isAgentWorking = _presenter.isWorking;
+        _agentSteps
+          ..clear()
+          ..addAll(_presenter.steps);
+      });
+
+      if (event is AgentConfirmationTimedOutEvent && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              event.messageFa,
+              style: const TextStyle(color: Colors.white),
             ),
-          );
-        }
+            backgroundColor: Colors.orange.shade800,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     } else if (e is ChatComplete) {
       final idx = _messages.indexWhere((m) => m.id == e.messageId);
@@ -1277,6 +1271,7 @@ $friendlySummary
             ),
             centerTitle: true,
             actions: [
+              const BridgeStatusChip(),
               IconButton(
                 icon: const Icon(CupertinoIcons.clock, size: 20),
                 tooltip: 'تغییرات اخیر',

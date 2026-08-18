@@ -984,29 +984,44 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     _resetInactivityTimer();
   }
 
-  /// Cancels the current stream if active and stops generation in the WebView
+  /// Cancels the current stream if active and stops generation in the WebView (A-26)
   void cancelCurrentStream() {
+    // 1. Cancel timers
     _generationTimer?.cancel();
     _generationTimer = null;
-    final controller = _currentStreamController;
-    _currentStreamController = null;
-    _accumulator.reset();
-    _navigationReloadCount = 0;
-    _currentRequestId = null;
-    _pendingRequest = null;
-    _lastChunkSource = null;
-    _lockedSource = null;
-    _hasActiveSseStream = false;
-    _setStatus(ChatGptBridgeStatus.ready);
 
+    // 2. Instruct JS bridge to cancel active generation with error logging
     try {
       _controller?.runJavaScript(ChatGptJsInjector.cancelScript);
     } catch (e, st) {
       RitmoLog.error('ChatGptWebBridge', 'Error sending cancel script to WebView: $e', e, st);
     }
 
+    // 3. Reset internal tracking state
+    _lockedSource = null;
+    _accumulator.reset();
+    _navigationReloadCount = 0;
+    _currentRequestId = null;
+    _pendingRequest = null;
+    _lastChunkSource = null;
+    _hasActiveSseStream = false;
+
+    // 4. Close and clear stream controller
+    final controller = _currentStreamController;
+    _currentStreamController = null;
     controller?.close();
+
+    // 5. Restore status to ready so next prompt can be sent immediately
+    _setStatus(ChatGptBridgeStatus.ready);
     _resetInactivityTimer();
+  }
+
+  @visibleForTesting
+  void cancelTimersForTesting() {
+    _inactivityTimer?.cancel();
+    _inactivityTimer = null;
+    _generationTimer?.cancel();
+    _generationTimer = null;
   }
 
   /// Sends a prompt and streams the assistant response back.
@@ -1017,12 +1032,6 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     String? contextSummary,
     List<String>? recentHistory,
   }) async* {
-    _resetInactivityTimer();
-    _navigationReloadCount = 0;
-    _lastChunkSource = null;
-    _lockedSource = null;
-    _hasActiveSseStream = false;
-
     // A-13: In-flight guard — refuse concurrent sendPrompt and yield Persian error
     if (_status == ChatGptBridgeStatus.generating &&
         _currentStreamController != null &&
@@ -1041,6 +1050,12 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       yield 'error:یک پاسخ در حال دریافت است. لطفاً تا پایان آن صبر کنید یا انصراف بدهید.';
       return;
     }
+
+    _resetInactivityTimer();
+    _navigationReloadCount = 0;
+    _lastChunkSource = null;
+    _lockedSource = null;
+    _hasActiveSseStream = false;
 
     final booted = await ensureBooted();
     if (!booted && _status == ChatGptBridgeStatus.cloudflareChallenge) {

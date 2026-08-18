@@ -1,0 +1,161 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
+import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
+
+/// تراشهٔ وضعیت پل وب چت‌جی‌پی‌تی در سربرگ دستیار (A-23 و A-24).
+class BridgeStatusChip extends StatelessWidget {
+  const BridgeStatusChip({
+    super.key,
+    this.forceVisible = false,
+  });
+
+  final bool forceVisible;
+
+  void _showMiniPreviewModal(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ChatGptMiniPreview(
+                onClose: () => Navigator.of(ctx).pop(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return ValueListenableBuilder<ChatGptBridgeStatus>(
+      valueListenable: ChatGptWebBridgeManager.instance.statusNotifier,
+      builder: (context, status, _) {
+        if (status == ChatGptBridgeStatus.idle && !forceVisible) {
+          return const SizedBox.shrink();
+        }
+
+        final (label, iconData, chipColor, isClickable) = switch (status) {
+          ChatGptBridgeStatus.booting => (
+              'در حال اتصال…',
+              CupertinoIcons.arrow_2_circlepath,
+              colors.primary,
+              false,
+            ),
+          ChatGptBridgeStatus.ready => (
+              'متصل',
+              CupertinoIcons.checkmark_circle_fill,
+              Colors.green,
+              false,
+            ),
+          ChatGptBridgeStatus.generating => (
+              'در حال دریافت…',
+              CupertinoIcons.sparkles,
+              colors.primary,
+              true,
+            ),
+          ChatGptBridgeStatus.cloudflareChallenge => (
+              'نیاز به تأیید امنیتی',
+              CupertinoIcons.shield_fill,
+              Colors.amber.shade700,
+              true,
+            ),
+          ChatGptBridgeStatus.error => (
+              'اتصال قطع است',
+              CupertinoIcons.exclamationmark_triangle_fill,
+              colors.error,
+              true,
+            ),
+          ChatGptBridgeStatus.idle => (
+              'غیرفعال',
+              CupertinoIcons.circle,
+              colors.textSecondary,
+              false,
+            ),
+        };
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          child: Material(
+            color: chipColor.withValues(alpha: 0.12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: chipColor.withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            child: InkWell(
+              onTap: isClickable
+                  ? () {
+                      if (status == ChatGptBridgeStatus.cloudflareChallenge) {
+                        CloudflareChallengeModal.show(context);
+                      } else if (status == ChatGptBridgeStatus.generating) {
+                        _showMiniPreviewModal(context);
+                      } else if (status == ChatGptBridgeStatus.error) {
+                        final reason = ChatGptWebBridgeManager.instance.describeEmptyResponseReason();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              reason.messageFa,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            backgroundColor: colors.error,
+                          ),
+                        );
+                      }
+                    }
+                  : null,
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      iconData,
+                      size: 13,
+                      color: chipColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: chipColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

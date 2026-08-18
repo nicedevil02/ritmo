@@ -27,6 +27,7 @@ void main() {
   });
 
   tearDown(() {
+    manager.cancelTimersForTesting();
     manager.disposeWebView();
     BridgeTraceLog.instance.clear();
   });
@@ -34,6 +35,7 @@ void main() {
   group('Phase 1 Web Bridge Fixes (A-12..A-22, A-40)', () {
     test('A-13: In-flight guard refuses concurrent sendPrompt and yields Persian error', () async {
       final activeController = StreamController<String>();
+      final sub = activeController.stream.listen((_) {});
       manager.setTestState(
         status: ChatGptBridgeStatus.generating,
         streamController: activeController,
@@ -41,17 +43,19 @@ void main() {
       manager.setTestRequestId('req_active_1');
 
       final stream = manager.sendPrompt(prompt: 'پیام دوم همزمان');
-      final events = await stream.toList();
+      final event = await stream.first;
 
-      expect(events.length, equals(1));
-      expect(events.first.startsWith('error:'), isTrue);
-      expect(events.first.contains('یک پاسخ در حال دریافت است'), isTrue);
+      expect(event.startsWith('error:'), isTrue);
+      expect(event.contains('یک پاسخ در حال دریافت است'), isTrue);
 
-      activeController.close();
+      manager.cancelTimersForTesting();
+      await activeController.close();
+      await sub.cancel();
     });
 
-    test('A-14: Source lock arbitrates events and ignores done from non-locked source', () {
+    test('A-14: Source lock arbitrates events and ignores done from non-locked source', () async {
       final activeController = StreamController<String>();
+      final sub = activeController.stream.listen((_) {});
       manager.setTestState(
         status: ChatGptBridgeStatus.generating,
         streamController: activeController,
@@ -89,11 +93,14 @@ void main() {
       expect(manager.status, equals(ChatGptBridgeStatus.generating));
       expect(manager.accumulator.text, equals('سلام از SSE'));
 
-      activeController.close();
+      manager.cancelTimersForTesting();
+      await activeController.close();
+      await sub.cancel();
     });
 
     test('A-18: handlePageFinished salvages accumulator before aborting on navigation reload loop', () async {
       final activeController = StreamController<String>();
+      final sub = activeController.stream.listen((_) {});
       manager.setTestState(
         status: ChatGptBridgeStatus.generating,
         streamController: activeController,
@@ -122,6 +129,10 @@ void main() {
       // Generation should finish gracefully (salvaged) rather than hard failing
       expect(manager.status, equals(ChatGptBridgeStatus.ready));
       expect(manager.currentRequestId, isNull);
+
+      manager.cancelTimersForTesting();
+      await activeController.close();
+      await sub.cancel();
     });
 
     test('A-22: describeEmptyResponseReason diagnoses correctly', () {

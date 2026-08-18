@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/widgets.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_connection_repository.dart';
@@ -22,6 +23,9 @@ import 'package:ritmo/core/ai/agent/agent_loop_runner.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 
 class StreamingChatService {
+  /// A-25: سقف مجاز برای طول پاسخ دستیار به کاراکتر/گرافم (۳۲۰۰۰ کاراکتر)
+  static const int maxAssistantResponseChars = 32000;
+
   Stream<StreamingChatEvent> send({
     required String sessionId,
     required String userText,
@@ -84,17 +88,13 @@ class StreamingChatService {
     var accumulated = '';
     // متن خام مدل برای استخراج actions و memory_ops (P0-3)
     var rawAnswer = '';
-    // P0-7: سقف قبلی ۲۰۰۰ بود که حدود ۷۰۰ توکن فارسی است و پاسخ‌های بلند
-    // (مانند برنامه هفتگی) را وسط جمله قطع می‌کرد.
-    const cap = 8000;
     var hasError = false;
     var errorCode = '';
 
     final config = await AiConnectionRepository.instance.load(slot: AiSlot.assistant);
     final isChatGptWeb = config.providerPresetId == 'chatgpt_web' || config.baseUrl.contains('chatgpt.com');
 
-    // P0-4: مسیر ایجنت برای تمام ارائه‌دهنده‌ها فعال است. پیش‌از این فقط داخل
-    // شرط isChatGptWeb صدا زده می‌شد و کاربران کلید API هیچ ابزاری نداشتند.
+    // P0-4: مسیر ایجنت برای تمام ارائه‌دهنده‌ها فعال است.
     try {
       final contextLines = <String>[];
       if (rag.data.isNotEmpty) {
@@ -104,8 +104,6 @@ class StreamingChatService {
       }
 
       final nonSystem = messages.where((msg) => msg['role'] != 'system').toList();
-      // آخرین پیام کاربر همان userText جاری است و جداگانه به عنوان prompt ارسال
-      // می‌شود؛ اگر در تاریخچه هم بماند دوبار به مدل می‌رسد.
       if (nonSystem.isNotEmpty &&
           nonSystem.last['role'] == 'user' &&
           (nonSystem.last['content'] ?? '') == userText) {
@@ -133,30 +131,22 @@ class StreamingChatService {
       await for (final event in agentStream) {
         if (event is AgentTokenStreamEvent) {
           accumulated = event.accumulated;
-          if (accumulated.length > cap) {
-            accumulated = accumulated.substring(0, cap);
+          if (accumulated.characters.length > maxAssistantResponseChars) {
+            accumulated = accumulated.characters.take(maxAssistantResponseChars).toString();
             if (isChatGptWeb) {
               ChatGptWebBridgeManager.instance.cancelCurrentStream();
             }
-            yield ChatChunk('', accumulated);
+            yield ChatChunk('\n\n[پاسخ بیش از حد طولانی بود و کوتاه شد.]', accumulated);
             break;
           }
           yield ChatChunk(event.delta, accumulated);
-        } else if (event is AgentStatusChangedEvent ||
-            event is AgentStepStartedEvent ||
-            event is AgentStepCompletedEvent ||
-            event is AgentTurnStartedEvent ||
-            event is AgentAwaitingConfirmationEvent ||
-            event is AgentConfirmationResolvedEvent ||
-            event is AgentConfirmationTimedOutEvent) {
-          yield AgentStreamEvent(event);
         } else if (event is AgentCompletedEvent) {
-          // P0-3: متن خام را نگه می‌داریم تا تگ‌های actions و memory_ops از دست نروند.
           rawAnswer = event.rawAnswer;
           final finalText = event.finalAnswer;
           if (finalText.isNotEmpty) {
-            final capped =
-                finalText.length > cap ? finalText.substring(0, cap) : finalText;
+            final capped = finalText.characters.length > maxAssistantResponseChars
+                ? finalText.characters.take(maxAssistantResponseChars).toString()
+                : finalText;
             if (capped != accumulated) {
               accumulated = capped;
               yield ChatChunk('', accumulated);
@@ -168,15 +158,19 @@ class StreamingChatService {
           errorCode = event.errorMessageFa;
           yield AgentStreamEvent(event);
           break;
+        } else {
+          // A-19: پیش‌فرض — هر رویداد دیگری (AgentDisplayResetEvent، AgentAwaitingQuestionEvent،
+          // AgentQuestionResolvedEvent، و هر زیرکلاس جدید AgentEvent) به UI عبور داده می‌شود.
+          yield AgentStreamEvent(event);
         }
       }
-    } catch (e) {
+    } catch (e, st) {
       hasError = true;
       errorCode = e.toString();
+      RitmoLog.error('StreamingChatService', 'Error in agent execution stream: $e', e, st);
     }
 
     // Fallback: فقط وقتی ایجنت خطا داد و هیچ متنی تولید نشد و ارائه‌دهنده پل وب نیست، مسیر مستقیم گیت‌وی.
-    // (برای ChatGPT Web، پل وب مستقیماً صدا زده شده و تکرار آن باعث ارسال پیام تکراری به مرورگر می‌شد)
     if (hasError && accumulated.isEmpty && !isChatGptWeb) {
       RitmoLog.warning('StreamingChatService', 'Falling back to plain gateway stream. Reason: $errorCode');
       hasError = false;
@@ -192,16 +186,17 @@ class StreamingChatService {
             break;
           }
           accumulated += chunk;
-          if (accumulated.length > cap) {
-            accumulated = accumulated.substring(0, cap);
-            yield ChatChunk('', accumulated);
+          if (accumulated.characters.length > maxAssistantResponseChars) {
+            accumulated = accumulated.characters.take(maxAssistantResponseChars).toString();
+            yield ChatChunk('\n\n[پاسخ بیش از حد طولانی بود و کوتاه شد.]', accumulated);
             break;
           }
           yield ChatChunk(chunk, accumulated);
         }
-      } catch (e) {
+      } catch (e, st) {
         hasError = true;
         errorCode = e.toString();
+        RitmoLog.error('StreamingChatService', 'Error in gateway fallback stream: $e', e, st);
       }
     }
 
@@ -210,8 +205,11 @@ class StreamingChatService {
       return;
     }
 
+    // A-22: علت تشخیصی در صورت خالی بودن پاسخ
     if (accumulated.trim().isEmpty) {
-      yield ChatErrorEvent('هیچ پاسخی از هوش مصنوعی دریافت نشد.', '');
+      final reason = ChatGptWebBridgeManager.instance.describeEmptyResponseReason();
+      RitmoLog.error('StreamingChatService', 'empty response: ${reason.technicalDetail}');
+      yield ChatErrorEvent(reason.messageFa, reason.technicalDetail);
       return;
     }
 
@@ -242,8 +240,8 @@ class StreamingChatService {
 
     var finalText =
         parsed.cleanText.trim().isNotEmpty ? parsed.cleanText : accumulated;
-    if (finalText.length > cap) {
-      finalText = finalText.substring(0, cap);
+    if (finalText.characters.length > maxAssistantResponseChars) {
+      finalText = finalText.characters.take(maxAssistantResponseChars).toString();
     }
 
     // Run explicit remember safety net

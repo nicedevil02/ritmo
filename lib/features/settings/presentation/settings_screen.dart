@@ -27,6 +27,7 @@ import 'package:ritmo/features/settings/presentation/groups/security_group_scree
 import 'package:ritmo/features/settings/presentation/settings_search_delegate.dart';
 import 'package:ritmo/features/settings/presentation/widgets/identity_header.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_degraded_banner.dart';
+import 'package:ritmo/features/settings/presentation/widgets/settings_health_card.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_ready_gate.dart';
 
 /// صفحه اصلی تنظیمات اپلیکیشن با طراحی اختصاصی iOS 26 Inset Grouped
@@ -442,6 +443,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SettingsDegradedBanner(),
+              const SettingsHealthCard(),
               // ─── هدر هویتی اختصاصی پرمیوم iOS 26 ───
               IdentityHeader(
                 onTap: () {

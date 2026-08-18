@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/utils/snapshot_helper.dart';
@@ -32,8 +33,8 @@ class SettingsService {
       SharedPreferences? prefs;
       try {
         prefs = await SharedPreferences.getInstance();
-      } catch (e) {
-        debugPrint('[SettingsService] SharedPreferences init error: $e');
+      } catch (e, st) {
+        RitmoLog.error('Settings', 'SharedPreferences init error', e, st);
       }
 
       for (final desc in SettingsRegistry.all) {
@@ -53,15 +54,24 @@ class SettingsService {
             _cache[desc.key] = prefs.getString(desc.key) ?? desc.defaultValue;
           }
         } else if (desc.scope == SettingScope.secure) {
-          // Lazy loaded or defaults in cache
-          _cache[desc.key] = desc.defaultValue;
+          try {
+            final secVal = await SecureKeyStore.getKey(desc.key);
+            if (secVal != null && secVal.isNotEmpty) {
+              _cache[desc.key] = secVal;
+            } else {
+              _cache[desc.key] = desc.defaultValue;
+            }
+          } catch (e, st) {
+            RitmoLog.error('Settings', 'خطا در بارگذاری کلید امن ${desc.key}', e, st);
+            _cache[desc.key] = desc.defaultValue;
+          }
         }
       }
 
       _initialized = true;
       revision.value++;
     } catch (e, st) {
-      debugPrint('[SettingsService] init error: $e\n$st');
+      RitmoLog.error('Settings', 'init error', e, st);
       // Fallback populate all defaults
       for (final desc in SettingsRegistry.all) {
         _cache[desc.key] = desc.defaultValue;
@@ -139,7 +149,7 @@ class SettingsService {
   Future<bool> set(String key, Object value) async {
     final desc = SettingsRegistry.find(key);
     if (desc == null) {
-      debugPrint('[SettingsService] Rejected set for unknown key: $key');
+      RitmoLog.warning('Settings', 'رد ذخیره‌سازی برای کلید نامشخص: $key');
       return false;
     }
 
@@ -158,7 +168,7 @@ class SettingsService {
           orElse: () => '',
         );
         if (match.isEmpty) {
-          debugPrint('[SettingsService] Rejected set for key $key: "$strVal" not in allowed ${desc.allowed}');
+          RitmoLog.warning('Settings', 'رد ذخیره‌سازی برای کلید $key: مقدار در فهرست مجاز نیست');
           return false;
         }
       }
@@ -219,7 +229,7 @@ class SettingsService {
 
       return true;
     } catch (e, st) {
-      debugPrint('[SettingsService] set error for $key: $e\n$st');
+      RitmoLog.error('Settings', 'خطا در ذخیره‌سازی کلید $key', e, st);
       return false;
     }
   }

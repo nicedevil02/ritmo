@@ -58,7 +58,7 @@ class SettingsTile extends StatelessWidget {
             onLongPress: onLongPress,
             borderRadius: BorderRadius.circular(14),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   if (leading != null) ...[

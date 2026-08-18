@@ -660,7 +660,7 @@ class _Ios26SettingsTileState extends State<_Ios26SettingsTile> {
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsetsDirectional.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: _isPressed
               ? colors.primary.withValues(alpha: 0.07)
@@ -727,7 +727,7 @@ class _Ios26SettingsTileState extends State<_Ios26SettingsTile> {
 
             // ─── بج تعداد تنظیمات و شورون ───
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
                 color: widget.gradient.first.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
@@ -747,7 +747,7 @@ class _Ios26SettingsTileState extends State<_Ios26SettingsTile> {
             ),
             const SizedBox(width: 6),
             Icon(
-              CupertinoIcons.chevron_left,
+              CupertinoIcons.chevron_back, // RTL forward navigation chevron pointing left
               size: 16,
               color: colors.textTertiary,
             ),

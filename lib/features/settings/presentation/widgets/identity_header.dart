@@ -399,7 +399,7 @@ class _IdentityHeaderState extends State<IdentityHeader>
                               ),
                               const SizedBox(width: 4),
                               Icon(
-                                CupertinoIcons.arrow_left,
+                                CupertinoIcons.chevron_back,
                                 size: 12,
                                 color: colors.textTertiary,
                               ),

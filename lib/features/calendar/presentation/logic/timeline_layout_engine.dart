@@ -109,63 +109,71 @@ class TimelineLayoutEngine {
       return b.durationMinutes.compareTo(a.durationMinutes);
     });
 
-    // Assign lanes
-    final lanes = <List<_RawEntry>>[];
-    for (final entry in rawEntries) {
-      var placed = false;
-      for (var i = 0; i < lanes.length; i++) {
-        final lane = lanes[i];
-        final hasOverlap = lane.any((other) =>
-            entry.visibleStart < other.visibleEnd && entry.visibleEnd > other.visibleStart);
-        if (!hasOverlap) {
-          lane.add(entry);
-          entry.laneIndex = i;
-          placed = true;
-          break;
-        }
-      }
-      if (!placed) {
-        lanes.add([entry]);
-        entry.laneIndex = lanes.length - 1;
+    // Build connected components (clusters) on overlap graph
+    /// هم‌پوشانی تراگذر نیست؛ عرض ستون باید از مؤلفهٔ همبند بیاید نه از هم‌پوشانی مستقیم.
+    final clusters = <List<_RawEntry>>[];
+    var current = <_RawEntry>[];
+    var clusterEnd = -1;
+    for (final e in rawEntries) {
+      if (current.isEmpty || e.visibleStart < clusterEnd) {
+        current.add(e);
+        clusterEnd = max(clusterEnd, e.visibleEnd);
+      } else {
+        clusters.add(current);
+        current = [e];
+        clusterEnd = e.visibleEnd;
       }
     }
+    if (current.isNotEmpty) clusters.add(current);
 
     final result = <TimelineLayoutItem>[];
-    final processedOverflowEntries = <_RawEntry>{};
 
-    for (final entry in rawEntries) {
-      if (processedOverflowEntries.contains(entry)) continue;
+    for (final cluster in clusters) {
+      // Assign lanes inside the cluster
+      final lanes = <List<_RawEntry>>[];
+      for (final entry in cluster) {
+        var placed = false;
+        for (var i = 0; i < lanes.length; i++) {
+          final lane = lanes[i];
+          final hasOverlap = lane.any((other) =>
+              entry.visibleStart < other.visibleEnd && entry.visibleEnd > other.visibleStart);
+          if (!hasOverlap) {
+            lane.add(entry);
+            entry.laneIndex = i;
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          lanes.add([entry]);
+          entry.laneIndex = lanes.length - 1;
+        }
+      }
 
-      final overlappingEntries = rawEntries.where((other) =>
-          entry.visibleStart < other.visibleEnd && entry.visibleEnd > other.visibleStart).toList();
-
-      final maxLaneInGroup = overlappingEntries.fold<int>(
-        entry.laneIndex,
-        (maxIdx, other) => max(maxIdx, other.laneIndex),
-      );
-      var totalLanes = maxLaneInGroup + 1;
+      final clusterLanesCount = lanes.length;
 
       // Handle maxLanes capping if set
-      if (maxLanes != null && totalLanes > maxLanes!) {
-        totalLanes = maxLanes!;
+      if (maxLanes != null && clusterLanesCount > maxLanes!) {
+        final totalLanes = maxLanes!;
 
-        // Sort overlapping entries by essential/priority
-        overlappingEntries.sort((a, b) {
-          if (a.item.isEssential != b.item.isEssential) {
-            return a.item.isEssential ? -1 : 1;
-          }
-          if (a.item.priority != b.item.priority) {
-            return b.item.priority.compareTo(a.item.priority);
-          }
-          return a.visibleStart.compareTo(b.visibleStart);
-        });
+        // Sort cluster entries by essential/priority
+        final sortedCluster = List<_RawEntry>.from(cluster)
+          ..sort((a, b) {
+            if (a.item.isEssential != b.item.isEssential) {
+              return a.item.isEssential ? -1 : 1;
+            }
+            if (a.item.priority != b.item.priority) {
+              return b.item.priority.compareTo(a.item.priority);
+            }
+            return a.visibleStart.compareTo(b.visibleStart);
+          });
 
         final primaryCount = maxLanes! - 1;
-        final primaryEntries = overlappingEntries.take(primaryCount).toList();
-        final overflowEntries = overlappingEntries.skip(primaryCount).toList();
+        final primaryEntries = sortedCluster.take(primaryCount).toList();
+        final overflowEntries = sortedCluster.skip(primaryCount).toList();
 
-        if (primaryEntries.contains(entry)) {
-          final laneIdx = primaryEntries.indexOf(entry);
+        for (var laneIdx = 0; laneIdx < primaryEntries.length; laneIdx++) {
+          final entry = primaryEntries[laneIdx];
           final top = (entry.visibleStart - rangeStartMinutes) * pxPerMinute;
           final rawHeight = entry.renderDurationMinutes * pxPerMinute;
           final maxHeight = totalTimelineHeight - top;
@@ -184,57 +192,54 @@ class TimelineLayoutEngine {
             isClippedAtStart: entry.isClippedAtStart,
             isClippedAtEnd: entry.isClippedAtEnd,
           ));
-        } else {
-          // Entry is in the overflow group. Create overflow item once for the group.
-          if (!overflowEntries.every((e) => processedOverflowEntries.contains(e))) {
-            for (final overflowEntry in overflowEntries) {
-              processedOverflowEntries.add(overflowEntry);
-            }
+        }
 
-            final overflowItemsList = overflowEntries.map((e) => e.item).toList();
-            final minStart = overflowEntries.map((e) => e.visibleStart).reduce(min);
-            final maxEnd = overflowEntries.map((e) => e.visibleEnd).reduce(max);
+        if (overflowEntries.isNotEmpty) {
+          final overflowItemsList = overflowEntries.map((e) => e.item).toList();
+          final minStart = overflowEntries.map((e) => e.visibleStart).reduce(min);
+          final maxEnd = overflowEntries.map((e) => e.visibleEnd).reduce(max);
 
-            final top = (minStart - rangeStartMinutes) * pxPerMinute;
-            final rawHeight = (maxEnd - minStart) * pxPerMinute;
-            final maxHeight = totalTimelineHeight - top;
-            final height = max(rawHeight, minItemHeight).clamp(minItemHeight, maxHeight);
+          final top = (minStart - rangeStartMinutes) * pxPerMinute;
+          final rawHeight = (maxEnd - minStart) * pxPerMinute;
+          final maxHeight = totalTimelineHeight - top;
+          final height = max(rawHeight, minItemHeight).clamp(minItemHeight, maxHeight);
 
-            result.add(TimelineLayoutItem(
-              item: overflowEntries.first.item,
-              top: top,
-              height: height,
-              laneIndex: maxLanes! - 1,
-              totalLanes: totalLanes,
-              startMinutes: minStart,
-              durationMinutes: maxEnd - minStart,
-              renderDurationMinutes: maxEnd - minStart,
-              isTruncated: false,
-              overflowCount: overflowEntries.length,
-              overflowItems: overflowItemsList,
-            ));
-          }
+          result.add(TimelineLayoutItem(
+            item: overflowEntries.first.item,
+            top: top,
+            height: height,
+            laneIndex: maxLanes! - 1,
+            totalLanes: totalLanes,
+            startMinutes: minStart,
+            durationMinutes: maxEnd - minStart,
+            renderDurationMinutes: maxEnd - minStart,
+            isTruncated: false,
+            overflowCount: overflowEntries.length,
+            overflowItems: overflowItemsList,
+          ));
         }
       } else {
-        // Normal rendering when totalLanes <= maxLanes (or maxLanes == null)
-        final top = (entry.visibleStart - rangeStartMinutes) * pxPerMinute;
-        final rawHeight = entry.renderDurationMinutes * pxPerMinute;
-        final maxHeight = totalTimelineHeight - top;
-        final height = max(rawHeight, minItemHeight).clamp(minItemHeight, maxHeight);
+        final totalLanes = clusterLanesCount;
+        for (final entry in cluster) {
+          final top = (entry.visibleStart - rangeStartMinutes) * pxPerMinute;
+          final rawHeight = entry.renderDurationMinutes * pxPerMinute;
+          final maxHeight = totalTimelineHeight - top;
+          final height = max(rawHeight, minItemHeight).clamp(minItemHeight, maxHeight);
 
-        result.add(TimelineLayoutItem(
-          item: entry.item,
-          top: top,
-          height: height,
-          laneIndex: entry.laneIndex,
-          totalLanes: totalLanes,
-          startMinutes: entry.startMinutes,
-          durationMinutes: entry.durationMinutes,
-          renderDurationMinutes: entry.renderDurationMinutes,
-          isTruncated: entry.isTruncated,
-          isClippedAtStart: entry.isClippedAtStart,
-          isClippedAtEnd: entry.isClippedAtEnd,
-        ));
+          result.add(TimelineLayoutItem(
+            item: entry.item,
+            top: top,
+            height: height,
+            laneIndex: entry.laneIndex,
+            totalLanes: totalLanes,
+            startMinutes: entry.startMinutes,
+            durationMinutes: entry.durationMinutes,
+            renderDurationMinutes: entry.renderDurationMinutes,
+            isTruncated: entry.isTruncated,
+            isClippedAtStart: entry.isClippedAtStart,
+            isClippedAtEnd: entry.isClippedAtEnd,
+          ));
+        }
       }
     }
 

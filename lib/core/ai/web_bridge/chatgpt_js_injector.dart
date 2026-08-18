@@ -135,6 +135,81 @@ $_bridgeScriptBody''';
     };
   }
 
+  // --- 0.1 SSE Stream Parser & Reader ---
+  function parseSSELine(line, state, reqId) {
+    if (!line || typeof line !== 'string' || line.indexOf('data: ') !== 0) return null;
+    var rawData = line.substring(6).trim();
+    if (rawData === '[DONE]') {
+      return { type: 'done', fullText: (state && state.accumulatedText) || '', requestId: reqId, source: 'sse' };
+    }
+    try {
+      var json = JSON.parse(rawData);
+      var text = '';
+      if (json.message && json.message.content && json.message.content.parts && json.message.content.parts.length > 0) {
+        text = json.message.content.parts.join('');
+      } else if (json.delta && json.delta.content) {
+        text = ((state && state.accumulatedText) || '') + json.delta.content;
+      } else if (json.v && json.v.message && json.v.message.content && json.v.message.content.parts) {
+        text = json.v.message.content.parts.join('');
+      }
+
+      if (text && text !== (state && state.accumulatedText)) {
+        var prev = (state && state.accumulatedText) || '';
+        var delta = '';
+        if (text.length > prev.length && text.indexOf(prev) === 0) {
+          delta = text.substring(prev.length);
+        } else {
+          delta = text;
+        }
+        if (state) state.accumulatedText = text;
+        return { type: 'chunk', delta: delta, fullText: text, requestId: reqId, source: 'sse' };
+      }
+    } catch (e) {
+      // Non-JSON SSE line or commentary
+    }
+    return null;
+  }
+  window.__ritmo_parseSSELine = parseSSELine;
+
+  function readSSEStream(reader, reqId) {
+    var state = { accumulatedText: '' };
+    var decoder = typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8') : null;
+    var buffer = '';
+
+    function pump() {
+      return reader.read().then(function(result) {
+        if (result.done) {
+          if (state.accumulatedText.length > 0) {
+            notifyFlutter('done', { fullText: state.accumulatedText, requestId: reqId, source: 'sse' });
+          }
+          return;
+        }
+
+        var chunkStr = decoder ? decoder.decode(result.value, { stream: true }) : String.fromCharCode.apply(null, result.value);
+        buffer += chunkStr;
+        var lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (var i = 0; i < lines.length; i++) {
+          var trimmed = lines[i].trim();
+          if (trimmed.length > 0) {
+            var event = parseSSELine(trimmed, state, reqId);
+            if (event) {
+              notifyFlutter(event.type, event);
+            }
+          }
+        }
+
+        return pump();
+      }).catch(function(err) {
+        console.warn('[Ritmo] SSE stream read error:', err);
+      });
+    }
+
+    return pump();
+  }
+  window.__ritmo_readSSEStream = readSSEStream;
+
   // A selector that the current WebView cannot parse makes querySelectorAll
   // throw for the ENTIRE list, taking the caller down with it. Never query raw.
   function queryAllSafe(selector) {

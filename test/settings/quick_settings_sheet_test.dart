@@ -75,8 +75,8 @@ void main() {
       expect(find.byKey(const ValueKey('quick_haptic_tile')), findsOneWidget);
 
       // Tap quiet tile inside tester.runAsync
-      await tester.tap(find.byKey(const ValueKey('quick_quiet_tile')));
       await tester.runAsync(() async {
+        await tester.tap(find.byKey(const ValueKey('quick_quiet_tile')));
         await Future.delayed(const Duration(milliseconds: 150));
       });
       await tester.pump();
@@ -84,8 +84,8 @@ void main() {
       expect(SettingsService.instance.get<bool>('notif_quiet_enabled'), isTrue);
 
       // Tap theme tile inside tester.runAsync
-      await tester.tap(find.byKey(const ValueKey('quick_theme_tile')));
       await tester.runAsync(() async {
+        await tester.tap(find.byKey(const ValueKey('quick_theme_tile')));
         await Future.delayed(const Duration(milliseconds: 150));
       });
       await tester.pump();

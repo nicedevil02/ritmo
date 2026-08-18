@@ -223,7 +223,11 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _setStatus(ChatGptBridgeStatus.booting);
 
     try {
+      final oldController = _controller;
       _controller = null;
+      if (oldController != null) {
+        unawaited(_safeDisposeController(oldController));
+      }
       controllerCreationCount++;
 
       final controller = testControllerFactory?.call() ?? WebViewController();
@@ -242,16 +246,20 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       await controller.setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
+            if (_controller != null && _controller != controller) return;
             RitmoLog.debug('ChatGptWebBridge', 'Page loading started: $url');
           },
           onPageFinished: (url) async {
+            if (_controller != null && _controller != controller) return;
             RitmoLog.debug('ChatGptWebBridge', 'Page loading finished: $url');
             await handlePageFinished(url, controller);
           },
           onWebResourceError: (error) {
+            if (_controller != null && _controller != controller) return;
             RitmoLog.warning('ChatGptWebBridge', 'Web resource error: ${error.description}');
           },
           onHttpError: (error) {
+            if (_controller != null && _controller != controller) return;
             RitmoLog.warning('ChatGptWebBridge', 'HTTP error: ${error.response?.statusCode}');
           },
         ),
@@ -285,6 +293,10 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   /// and if a generation is pending, attempts to re-attach the watcher or abort if looped.
   @visibleForTesting
   Future<void> handlePageFinished(String url, WebViewController controller) async {
+    if (_controller != null && _controller != controller) {
+      RitmoLog.debug('ChatGptWebBridge', 'Ignoring handlePageFinished on stale controller.');
+      return;
+    }
     await controller.runJavaScript(ChatGptJsInjector.setupBridgeScript);
 
     if (hasPendingRequest || _status == ChatGptBridgeStatus.generating) {
@@ -389,9 +401,14 @@ if (typeof window.__ritmo_resume === 'function') {
     }
 
     _bootCompleter = null;
+    final oldController = _controller;
     _controller = null;
     _cloudflareNotifier.value = false;
     _setStatus(ChatGptBridgeStatus.idle);
+
+    if (oldController != null) {
+      await _safeDisposeController(oldController);
+    }
 
     return ensureBooted();
   }
@@ -919,7 +936,7 @@ if (typeof window.__ritmo_resume === 'function') {
     });
   }
 
-  /// Drops this side's references to the WebView.
+  /// Drops this side's references to the WebView after safely halting native background activity.
   void disposeWebView() {
     _inactivityTimer?.cancel();
     _inactivityTimer = null;
@@ -937,10 +954,30 @@ if (typeof window.__ritmo_resume === 'function') {
     controller?.close();
 
     _bootCompleter = null;
+    final oldController = _controller;
     _controller = null;
+    if (oldController != null) {
+      unawaited(_safeDisposeController(oldController));
+    }
     _cloudflareNotifier.value = false;
     _setStatus(ChatGptBridgeStatus.idle);
     RitmoLog.debug('ChatGptWebBridge', 'WebView reference released.');
+  }
+
+  /// Safely halts any ongoing native operations (network/JS/Chromium looper) on [controllerToDispose]
+  /// before releasing references, preventing Android WebChromeClient/WebViewClient
+  /// `IllegalStateException: Could not find identifier for WebChromeClient` crashes in InstanceManager.
+  Future<void> _safeDisposeController(WebViewController? controllerToDispose) async {
+    if (controllerToDispose == null) return;
+    try {
+      // 1. Remove JS channel to avoid callback delivery
+      await controllerToDispose.removeJavaScriptChannel('RitmoChatBridge');
+    } catch (_) {}
+
+    try {
+      // 2. Load blank page to abort in-flight resource loads in native Chromium immediately
+      await controllerToDispose.loadRequest(Uri.parse('about:blank'));
+    } catch (_) {}
   }
 
   /// Reloads the current WebView page if available.

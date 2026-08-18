@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
@@ -9,9 +8,9 @@ import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
-import 'package:ritmo/features/sleep/data/sleep_program_debug_helper.dart';
 import 'package:ritmo/core/utils/ios26_page_route.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
@@ -51,9 +50,10 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  String _version = '۱.۰.۰';
-  String _buildNumber = '۱';
+  String _version = 'نامشخص';
+  String _buildNumber = '';
   int _tapCount = 0;
+  DateTime? _lastVersionTapTime;
 
   @override
   void initState() {
@@ -251,8 +251,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _onVersionTapped() {
+    final now = DateTime.now();
+    if (_lastVersionTapTime != null && now.difference(_lastVersionTapTime!).inMilliseconds > 2000) {
+      _tapCount = 0;
+    }
+    _lastVersionTapTime = now;
     _tapCount++;
-    if (_tapCount >= 7) {
+
+    if (_tapCount >= 4 && _tapCount < 7) {
+      final remaining = 7 - _tapCount;
+      RitmoToast.show(
+        context,
+        '${toPersianDigits(remaining.toString())} لمس تا فعال‌سازی پنل فنی و گزارش خرابی',
+      );
+    } else if (_tapCount >= 7) {
       _tapCount = 0;
       Navigator.push(
         context,
@@ -564,26 +576,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                 },
               ),
-              if (kDebugMode) ...[
-                const SizedBox(height: 16),
-                Center(
-                  child: TextButton.icon(
-                    onPressed: () async {
-                      await SleepProgramDebugHelper.seedSevenNights();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('۷ شب لاگ خواب نمونه ثبت شد (دیباگ)', style: TextStyle()),
-                            backgroundColor: Color(0xff8B5CF6),
-                          ),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.bug_report, size: 18, color: Color(0xff8B5CF6)),
-                    label: const Text('تولید ۷ شب لاگ خواب تستی (دیباگ)', style: TextStyle(fontSize: 12, color: Color(0xff8B5CF6))),
-                  ),
-                ),
-              ],
               const SizedBox(height: 28),
 
               // ─── بخش نسخه و کپی‌رایت ───

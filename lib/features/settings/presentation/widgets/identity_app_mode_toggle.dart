@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
 /// سگمنت کنترل دو گزینه‌ای انتخاب حالت اپلیکیشن (ساده / کامل) در هدر هویت
 class IdentityAppModeToggle extends StatefulWidget {
@@ -37,6 +36,26 @@ class _IdentityAppModeToggleState extends State<IdentityAppModeToggle> {
     }
   }
 
+  Future<void> _switchToSimple() async {
+    if (_isSimpleMode) return;
+    RitmoHapticsPolicy.selection();
+    await AppModeService.instance.set(AppMode.simple);
+    if (!mounted) return;
+    setState(() => _isSimpleMode = true);
+    widget.onModeChanged(true);
+    RitmoToast.show(context, 'حالت اپلیکیشن به «حالت ساده» تغییر یافت.');
+  }
+
+  Future<void> _switchToFull() async {
+    if (!_isSimpleMode) return;
+    RitmoHapticsPolicy.selection();
+    await AppModeService.instance.set(AppMode.full);
+    if (!mounted) return;
+    setState(() => _isSimpleMode = false);
+    widget.onModeChanged(false);
+    RitmoToast.show(context, 'حالت اپلیکیشن به «حالت کامل» تغییر یافت.');
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -57,14 +76,7 @@ class _IdentityAppModeToggleState extends State<IdentityAppModeToggle> {
           // ─── حالت ساده (سمت راست در RTL) ───
           Expanded(
             child: GestureDetector(
-              onTap: () async {
-                if (_isSimpleMode) return;
-                RitmoHapticsPolicy.selection();
-                await AppModeService.instance.set(AppMode.simple);
-                setState(() => _isSimpleMode = true);
-                widget.onModeChanged(true);
-                if (mounted) RitmoToast.show(context, 'حالت اپلیکیشن به «حالت ساده» تغییر یافت.');
-              },
+              onTap: _switchToSimple,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeInOut,
@@ -107,14 +119,7 @@ class _IdentityAppModeToggleState extends State<IdentityAppModeToggle> {
           // ─── حالت کامل (سمت چپ در RTL) ───
           Expanded(
             child: GestureDetector(
-              onTap: () async {
-                if (!_isSimpleMode) return;
-                RitmoHapticsPolicy.selection();
-                await AppModeService.instance.set(AppMode.full);
-                setState(() => _isSimpleMode = false);
-                widget.onModeChanged(false);
-                if (mounted) RitmoToast.show(context, 'حالت اپلیکیشن به «حالت کامل» تغییر یافت.');
-              },
+              onTap: _switchToFull,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeInOut,

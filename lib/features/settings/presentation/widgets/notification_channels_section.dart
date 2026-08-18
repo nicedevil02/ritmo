@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';

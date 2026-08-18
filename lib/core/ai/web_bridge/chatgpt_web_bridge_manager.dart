@@ -124,6 +124,12 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   String? _currentRequestId;
   String? get currentRequestId => _currentRequestId;
 
+  String? _lastChunkSource;
+  String? get lastChunkSource => _lastChunkSource;
+
+  bool _hasActiveSseStream = false;
+  bool get hasActiveSseStream => _hasActiveSseStream;
+
   PendingWebBridgeRequest? _pendingRequest;
   PendingWebBridgeRequest? get pendingRequest => _pendingRequest;
 
@@ -135,6 +141,11 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   @visibleForTesting
   void setTestRequestId(String? reqId) {
     _currentRequestId = reqId;
+  }
+
+  @visibleForTesting
+  void setTestLastChunkSource(String? source) {
+    _lastChunkSource = source;
   }
 
   String _generateRequestId() {
@@ -156,10 +167,12 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     ChatGptBridgeStatus? status,
     WebViewController? controller,
     Completer<bool>? bootCompleter,
+    StreamController<String>? streamController,
   }) {
     if (status != null) _setStatus(status);
     if (controller != null) _controller = controller;
     if (bootCompleter != null) _bootCompleter = bootCompleter;
+    if (streamController != null) _currentStreamController = streamController;
   }
 
   void _setStatus(ChatGptBridgeStatus newStatus) {
@@ -499,7 +512,7 @@ if (typeof window.__ritmo_resume === 'function') {
         case 'chunk':
           final full = readString('fullText');
           final delta = readString('delta');
-          _emitChunk(full, delta);
+          _emitChunk(full, delta, source: source);
           _resetInactivityTimer();
           break;
 
@@ -623,9 +636,19 @@ if (typeof window.__ritmo_resume === 'function') {
     return cleaned;
   }
 
-  void _emitChunk(String? full, String? delta) {
+  void _emitChunk(String? full, String? delta, {String source = 'dom'}) {
+    if (source == 'sse') {
+      _hasActiveSseStream = true;
+    }
+    _lastChunkSource = source;
+
     final controller = _currentStreamController;
     if (controller == null || controller.isClosed) return;
+
+    RitmoLog.debug(
+      'ChatGptWebBridge',
+      'Chunk received from [$source] (deltaLen: ${delta?.length ?? 0}, fullLen: ${full?.length ?? 0}, currentEmitted: ${_emittedText.length})',
+    );
 
     if (full != null && full.isNotEmpty) {
       final cleanFull = _sanitizeResponseText(full);
@@ -639,6 +662,8 @@ if (typeof window.__ritmo_resume === 'function') {
           controller.add(cleanFull);
         }
       }
+      _pendingRequest?.stage = PendingRequestStage.streaming;
+      _pendingRequest?.receivedLength = _emittedText.length;
       return;
     }
 
@@ -679,6 +704,8 @@ if (typeof window.__ritmo_resume === 'function') {
     _navigationReloadCount = 0;
     _currentRequestId = null;
     _pendingRequest = null;
+    _lastChunkSource = null;
+    _hasActiveSseStream = false;
     controller?.close();
     _resetInactivityTimer();
   }
@@ -693,6 +720,8 @@ if (typeof window.__ritmo_resume === 'function') {
     _navigationReloadCount = 0;
     _currentRequestId = null;
     _pendingRequest = null;
+    _lastChunkSource = null;
+    _hasActiveSseStream = false;
 
     _setStatus(ChatGptBridgeStatus.ready);
     if (controller != null && !controller.isClosed) {
@@ -712,6 +741,8 @@ if (typeof window.__ritmo_resume === 'function') {
     _navigationReloadCount = 0;
     _currentRequestId = null;
     _pendingRequest = null;
+    _lastChunkSource = null;
+    _hasActiveSseStream = false;
     _setStatus(ChatGptBridgeStatus.ready);
 
     try {
@@ -734,6 +765,8 @@ if (typeof window.__ritmo_resume === 'function') {
   }) async* {
     _resetInactivityTimer();
     _navigationReloadCount = 0;
+    _lastChunkSource = null;
+    _hasActiveSseStream = false;
 
     final booted = await ensureBooted();
     if (!booted && _status == ChatGptBridgeStatus.cloudflareChallenge) {
@@ -855,6 +888,8 @@ if (typeof window.__ritmo_resume === 'function') {
     _navigationReloadCount = 0;
     _currentRequestId = null;
     _pendingRequest = null;
+    _lastChunkSource = null;
+    _hasActiveSseStream = false;
     controller?.close();
 
     _bootCompleter = null;

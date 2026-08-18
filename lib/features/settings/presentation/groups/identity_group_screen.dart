@@ -1,11 +1,8 @@
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
-import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
@@ -55,24 +52,7 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
     super.dispose();
   }
 
-  bool _isAvatarFileValid(String path) {
-    if (path.isEmpty) return false;
-    if (path.startsWith('http://') ||
-        path.startsWith('https://') ||
-        path.startsWith('blob:') ||
-        path.startsWith('data:')) {
-      return true;
-    }
-    if (!kIsWeb) {
-      try {
-        return File(path).existsSync();
-      } catch (e, st) {
-        RitmoLog.error('Settings', 'Failed to check avatar file exists', e, st);
-        return false;
-      }
-    }
-    return false;
-  }
+
 
   Future<void> _pickAvatar() async {
     RitmoHapticsPolicy.selection();

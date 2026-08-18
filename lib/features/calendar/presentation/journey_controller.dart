@@ -50,6 +50,7 @@ class JourneyController extends ChangeNotifier {
   StreamSubscription<RitmoEvent>? _subscription;
 
   bool _isDisposed = false;
+  int _loadGeneration = 0;
   /// همیشه نیمه‌شب محلی. هیچ‌وقت ساعت را در _selectedDate نگه نداریم.
   DateTime _selectedDate = DateKey.dayOf(DateTime.now());
   JourneyScale _activeScale = JourneyScale.agenda; // overridden by loadDefaultScale()
@@ -81,6 +82,8 @@ class JourneyController extends ChangeNotifier {
   String? get previewTimeOfDay => _previewTimeOfDay;
   int? get previewDurationMinutes => _previewDurationMinutes;
   bool get isDisposed => _isDisposed;
+  @visibleForTesting
+  int get loadGeneration => _loadGeneration;
   AgendaLoadStatus get agendaLoadStatus => _agendaService.lastLoadStatus;
   Set<AgendaDomain> get activeDegradedSources {
     if (_snapshot != null && _snapshot!.degradedSources.isNotEmpty) {
@@ -171,6 +174,8 @@ class JourneyController extends ChangeNotifier {
       return;
     }
 
+    final gen = ++_loadGeneration;
+
     if (!isBackgroundRefresh && _snapshot == null) {
       _isLoading = true;
     }
@@ -180,7 +185,7 @@ class JourneyController extends ChangeNotifier {
     try {
       final range = _calculateDateRangeForScale(_activeScale, _selectedDate);
       final daysMap = await _agendaService.agendaForRange(range.start, range.end);
-      if (_isDisposed) return;
+      if (_isDisposed || gen != _loadGeneration) return;
 
       final newSnapshots = <String, DayAgendaSnapshot>{};
       for (final entry in daysMap.entries) {
@@ -206,11 +211,11 @@ class JourneyController extends ChangeNotifier {
         }
       }
     } catch (e, stackTrace) {
-      if (_isDisposed) return;
+      if (_isDisposed || gen != _loadGeneration) return;
       _errorMessage = CalendarMessagesFa.load;
       RitmoLog.error('JourneyController', 'loadForActiveScale failed', e, stackTrace);
     } finally {
-      if (!_isDisposed) {
+      if (!_isDisposed && gen == _loadGeneration) {
         _isLoading = false;
         notifyListeners();
       }
@@ -471,6 +476,8 @@ class JourneyController extends ChangeNotifier {
     int daysForward = 45,
   }) async {
     if (_isDisposed) return;
+    final gen = ++_loadGeneration;
+
     if (_snapshot == null) {
       _isLoading = true;
     }
@@ -485,7 +492,7 @@ class JourneyController extends ChangeNotifier {
 
       // Single range call — never N-per-day calls
       final daysMap = await _agendaService.agendaForRange(start, end);
-      if (_isDisposed) return;
+      if (_isDisposed || gen != _loadGeneration) return;
 
       final newSnapshots = <String, DayAgendaSnapshot>{};
       for (final entry in daysMap.entries) {
@@ -499,11 +506,11 @@ class JourneyController extends ChangeNotifier {
       RitmoLog.debug('JourneyController', 'loadAgendaRange: ${sw.elapsedMilliseconds}ms');
       _errorMessage = null; // clear stale error on successful load
     } catch (e, st) {
-      if (_isDisposed) return;
+      if (_isDisposed || gen != _loadGeneration) return;
       _errorMessage = CalendarMessagesFa.load;
       RitmoLog.error('JourneyController', 'loadAgendaRange failed', e, st);
     } finally {
-      if (!_isDisposed) {
+      if (!_isDisposed && gen == _loadGeneration) {
         _isLoading = false;
         notifyListeners();
       }

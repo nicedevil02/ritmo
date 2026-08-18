@@ -1120,6 +1120,8 @@ class SettingsRegistry {
 
   static SettingDescriptor? find(String key) => _byKey[key];
 
+  static List<SettingDescriptor> byGroup(SettingsGroup g) => _byGroup[g] ?? const [];
+
   static List<SettingDescriptor> userVisibleByGroup(SettingsGroup g, {bool includeAdvanced = true}) {
     final list = _byGroup[g] ?? const [];
     return list.where((d) {

@@ -293,6 +293,16 @@ class SettingsRegistry {
       searchTerms: ['ساده', 'کامل', 'حالت', 'سبک'],
     ),
     SettingDescriptor(
+      key: 'show_advanced_settings',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: false,
+      labelFa: 'نمایش تنظیمات پیشرفته',
+      group: SettingsGroup.identity,
+      descriptionFa: 'نمایش کلیدها و گزینه‌های تخصصی و پیشرفته در صفحات تنظیمات',
+      searchTerms: ['پیشرفته', 'ساده', 'حالت پیشرفته'],
+    ),
+    SettingDescriptor(
       key: 'identity_gender_asked',
       type: SettingType.boolean,
       scope: SettingScope.db,

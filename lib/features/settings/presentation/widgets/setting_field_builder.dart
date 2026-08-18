@@ -147,6 +147,11 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
     return AnimatedBuilder(
       animation: SettingsService.instance.revision,
       builder: (context, _) {
+        final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
+        if (desc.visibility == SettingVisibility.advanced && !showAdvanced) {
+          return const SizedBox.shrink();
+        }
+
         // بررسی وابستگی شرطی و وضعیت بارگذاری
         bool isEnabled = true;
         String? dependencyHint;

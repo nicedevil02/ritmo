@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/features/sleep/data/sleep_program_debug_helper.dart';
@@ -147,6 +148,89 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildModeSwitcher(BuildContext context) {
+    final colors = context.colors;
+
+    return AnimatedBuilder(
+      animation: SettingsService.instance.revision,
+      builder: (context, _) {
+        final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
+
+        return Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.border),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  key: const ValueKey('mode_switch_simple'),
+                  onTap: () async {
+                    if (showAdvanced) {
+                      await SettingsService.instance.set('show_advanced_settings', false);
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: !showAdvanced ? colors.primary.withValues(alpha: 0.12) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: !showAdvanced ? Border.all(color: colors.primary.withValues(alpha: 0.3)) : null,
+                    ),
+                    child: Center(
+                      child: Text(
+                        'حالت ساده',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: !showAdvanced ? FontWeight.bold : FontWeight.w500,
+                          color: !showAdvanced ? colors.primary : colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: GestureDetector(
+                  key: const ValueKey('mode_switch_advanced'),
+                  onTap: () async {
+                    if (!showAdvanced) {
+                      await SettingsService.instance.set('show_advanced_settings', true);
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: showAdvanced ? colors.primary.withValues(alpha: 0.12) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: showAdvanced ? Border.all(color: colors.primary.withValues(alpha: 0.3)) : null,
+                    ),
+                    child: Center(
+                      child: Text(
+                        'حالت پیشرفته',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: showAdvanced ? FontWeight.bold : FontWeight.w500,
+                          color: showAdvanced ? colors.primary : colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -371,6 +455,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               // ─── کارت وضعیت اشتراک ریتمو پلاس ───
               _buildPremiumStatusCard(context),
+              const SizedBox(height: 16),
+
+              // ─── جابجایی حالت ساده / پیشرفته ───
+              _buildModeSwitcher(context),
               const SizedBox(height: 24),
 
               // ─── عنوان بخش دسته‌بندی‌ها ───
@@ -401,56 +489,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 12),
 
               // ─── فهرست گروه‌های تنظیمات به سبک iOS 26 Inset Grouped ───
-              Container(
-                decoration: BoxDecoration(
-                  color: colors.card,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: colors.border,
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.04),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  children: [
-                    for (int i = 0; i < groups.length; i++) ...[
-                      if (i > 0)
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: colors.border.withValues(alpha: 0.6),
-                          indent: 64,
-                          endIndent: 16,
+              AnimatedBuilder(
+                animation: SettingsService.instance.revision,
+                builder: (context, _) {
+                  final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
+
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: colors.border,
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.shadow.withValues(alpha: 0.04),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
-                      Builder(
-                        builder: (context) {
-                          final g = groups[i];
-                          final count = SettingsRegistry.userVisibleByGroup(g.group).length;
-                          return _Ios26SettingsTile(
-                            title: g.title,
-                            subtitle: g.subtitle,
-                            icon: g.icon,
-                            gradient: g.gradient,
-                            count: count,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                Ios26PageRoute(builder: (_) => g.pageBuilder()),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        for (int i = 0; i < groups.length; i++) ...[
+                          if (i > 0)
+                            Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: colors.border.withValues(alpha: 0.6),
+                              indent: 64,
+                              endIndent: 16,
+                            ),
+                          Builder(
+                            builder: (context) {
+                              final g = groups[i];
+                              final count = SettingsRegistry.userVisibleByGroup(
+                                g.group,
+                                includeAdvanced: showAdvanced,
+                              ).length;
+                              return _Ios26SettingsTile(
+                                title: g.title,
+                                subtitle: g.subtitle,
+                                icon: g.icon,
+                                gradient: g.gradient,
+                                count: count,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    Ios26PageRoute(builder: (_) => g.pageBuilder()),
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-                      ),
-                    ],
-                  ],
-                ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
               ),
               if (kDebugMode) ...[
                 const SizedBox(height: 16),

@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 
 class PsychLayerSettingsSheet extends StatefulWidget {
   const PsychLayerSettingsSheet({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showModalBottomSheet(
+    return RitmoSheetScaffold.present(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: context.colors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      title: 'لایهٔ عادت و اجرا',
+      subtitle: 'تنظیمات روان‌شناختی رفتاری و کنترل ویژگی‌های هوشمند',
       builder: (_) => const PsychLayerSettingsSheet(),
     );
   }
@@ -57,57 +57,81 @@ class _PsychLayerSettingsSheetState extends State<PsychLayerSettingsSheet> {
     final colors = context.colors;
 
     final labels = [
-      {'key': 'motivation_diagnosis_enabled', 'title': 'عارضه‌یابی انگیزشی (شیت چرا نشد؟)', 'desc': 'شناسایی علت انجام نشدن روتین‌ها و پیشنهاد راهکار'},
-      {'key': 'daily_budget_warning_enabled', 'title': 'هشدار بودجهٔ روزانه', 'desc': 'کارت هشدار ظرفیت بیش از حد در داشبورد امروز'},
-      {'key': 'wip_limit_enabled', 'title': 'سقف کار در جریان اهداف (WIP)', 'desc': 'مدیریت اهداف فعال همزمان و پیشنهاد پارک'},
-      {'key': 'cognitive_routing_enabled', 'title': 'مسیریابی بار شناختی', 'desc': 'تطبیق روتین‌های تحلیلی/اداری با سطح انرژی روزانه'},
-      {'key': 'fresh_start_enabled', 'title': 'نقاط شروع تازه', 'desc': 'شناسایی نشانه‌های شروع مجدد در اول ماه، فصل یا تولد'},
-      {'key': 'capture_inbox_enabled', 'title': 'صندوق ثبت سریع (Open-Loop)', 'desc': 'صندوق دریافت افکار و تصمیم‌گیری سه‌گانه'},
-      {'key': 'mastery_pleasure_sampling_enabled', 'title': 'نمونه‌گیری تسلط و لذت', 'desc': 'پرسش درباره اثر روتین روی حس تسلط و لذت'},
-      {'key': 'mastery_decay_enabled', 'title': 'افت افتراقی تسلط', 'desc': 'محاسبه زمان مرور بر اساس تاریخچه تمرین و مرور'},
+      {
+        'key': 'motivation_diagnosis_enabled',
+        'title': 'عارضه‌یابی انگیزشی (شیت چرا نشد؟)',
+        'desc': 'شناسایی علت انجام نشدن روتین‌ها و پیشنهاد راهکار'
+      },
+      {
+        'key': 'daily_budget_warning_enabled',
+        'title': 'هشدار بودجهٔ روزانه',
+        'desc': 'کارت هشدار ظرفیت بیش از حد در داشبورد امروز'
+      },
+      {
+        'key': 'wip_limit_enabled',
+        'title': 'سقف کار در جریان اهداف (WIP)',
+        'desc': 'مدیریت اهداف فعال همزمان و پیشنهاد پارک'
+      },
+      {
+        'key': 'cognitive_routing_enabled',
+        'title': 'مسیریابی بار شناختی',
+        'desc': 'تطبیق روتین‌های تحلیلی/اداری با سطح انرژی روزانه'
+      },
+      {
+        'key': 'fresh_start_enabled',
+        'title': 'نقاط شروع تازه',
+        'desc': 'شناسایی نشانه‌های شروع مجدد در اول ماه، فصل یا تولد'
+      },
+      {
+        'key': 'capture_inbox_enabled',
+        'title': 'صندوق ثبت سریع (Open-Loop)',
+        'desc': 'صندوق دریافت افکار و تصمیم‌گیری سه‌گانه'
+      },
+      {
+        'key': 'mastery_pleasure_sampling_enabled',
+        'title': 'نمونه‌گیری تسلط و لذت',
+        'desc': 'پرسش درباره اثر روتین روی حس تسلط و لذت'
+      },
+      {
+        'key': 'mastery_decay_enabled',
+        'title': 'افت افتراقی تسلط',
+        'desc': 'محاسبه زمان مرور بر اساس تاریخچه تمرین و مرور'
+      },
     ];
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 20, right: 20, top: 20,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+    if (_isLoading) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(RitmoSpacing.xl),
+          child: CircularProgressIndicator(color: colors.primary),
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('لایهٔ عادت و اجرا', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (_isLoading)
-                Center(child: CircularProgressIndicator(color: colors.primary))
-              else
-                ...labels.map((item) {
-                  final key = item['key']!;
-                  final title = item['title']!;
-                  final desc = item['desc']!;
-                  final isChecked = _settings[key] ?? false;
+      );
+    }
 
-                  return SwitchListTile(
-                    value: isChecked,
-                    activeThumbColor: colors.primary,
-                    title: Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                    subtitle: Text(desc, style: TextStyle(fontSize: 12, color: colors.textSecondary)),
-                    onChanged: (val) => _toggleSetting(key, val),
-                  );
-                }),
-            ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: labels.map((item) {
+        final key = item['key']!;
+        final title = item['title']!;
+        final desc = item['desc']!;
+        final isChecked = _settings[key] ?? false;
+
+        return SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: isChecked,
+          activeThumbColor: colors.primary,
+          title: Text(
+            title,
+            style: RitmoTextStyles.titleMedium(colors.textPrimary),
           ),
-        ),
-      ),
+          subtitle: Text(
+            desc,
+            style: RitmoTextStyles.caption(colors.textSecondary),
+          ),
+          onChanged: (val) => _toggleSetting(key, val),
+        );
+      }).toList(),
     );
   }
 }

@@ -87,6 +87,11 @@ class _AssistantSheetState extends State<AssistantSheet> {
   String _agentStatusText = '';
   bool _isAgentWorking = false;
 
+  /// بافر نمایش این نوبت سرکوب می‌شود تا نوبت ابزاری به کاربر نشان داده نشود.
+  /// وقتی AgentDisplayResetEvent با toolCallTurn رسید، true می‌شود؛
+  /// وقتی AgentDisplayResetEvent با finalAnswerTurn رسید، false می‌شود.
+  bool _suppressUntilTurnEnd = false;
+
   bool _canUndoLast = false;
   String? _lastPlanId;
 
@@ -384,7 +389,38 @@ class _AssistantSheetState extends State<AssistantSheet> {
                 }
               });
             }
+          } else if (event is AgentDisplayResetEvent) {
+            // WEB-34: بازنشانی نمایش بین نوبت‌ها
+            if (event.turnKind == AgentTurnKind.toolCallTurn) {
+              // نوبت ابزاری پایان یافت — بافر نمایش دور ریخته می‌شود
+              fullResponse = '';
+              _suppressUntilTurnEnd = true;
+              if (mounted) {
+                setState(() {
+                  _agentStatusText = 'در حال تحلیل نتیجه ابزارها...';
+                  _isAgentWorking = true;
+                  // پیام استریم را خالی می‌کنیم تا کاربر JSON ابزار را نبیند
+                  _messages[_messages.length - 1] = ChatMessage(
+                    id: assistantMsgId,
+                    sessionId: widget.persona.id,
+                    role: ChatRole.assistant,
+                    content: '',
+                    timestamp: DateTime.now(),
+                    isStreaming: true,
+                  );
+                });
+              }
+            } else {
+              // نوبت پاسخ نهایی — سرکوب را بردار
+              _suppressUntilTurnEnd = false;
+              if (mounted) {
+                setState(() {
+                  _agentStatusText = 'در حال نگارش پاسخ نهایی...';
+                });
+              }
+            }
           } else if (event is AgentTokenStreamEvent) {
+            if (_suppressUntilTurnEnd) return; // سرکوب — نوبت ابزاری
             fullResponse = event.accumulated;
             if (mounted) {
               setState(() {

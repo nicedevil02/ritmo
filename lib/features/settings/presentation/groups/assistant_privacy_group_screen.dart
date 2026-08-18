@@ -151,12 +151,7 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
                   subtitle: 'پالایش انگیزشی، اثر شروع تازه و مهار شکست',
                   leading: Icon(CupertinoIcons.heart_fill, color: colors.primary),
                   onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.transparent,
-                      isScrollControlled: true,
-                      builder: (_) => const PsychLayerSettingsSheet(),
-                    );
+                    PsychLayerSettingsSheet.show(context);
                   },
                 ),
               ],

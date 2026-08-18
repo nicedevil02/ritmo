@@ -113,5 +113,54 @@ void main() {
       read = await repo.readOne('routine', 'routine-202', '2026-08-18');
       expect(read, isNull);
     });
+
+    test('readAllFuture and restoreAll snapshot & restore correctly (CAL-10)', () async {
+      const o1 = OccurrenceOverride(
+        sourceType: 'routine',
+        sourceId: 'routine-303',
+        dateStr: '2026-08-15',
+        timeOfDay: '08:00',
+        createdAt: '2026-08-01T00:00:00Z',
+        updatedAt: '2026-08-01T00:00:00Z',
+      );
+      const o2 = OccurrenceOverride(
+        sourceType: 'routine',
+        sourceId: 'routine-303',
+        dateStr: '2026-08-18',
+        timeOfDay: '09:00',
+        createdAt: '2026-08-01T00:00:00Z',
+        updatedAt: '2026-08-01T00:00:00Z',
+      );
+      const o3 = OccurrenceOverride(
+        sourceType: 'routine',
+        sourceId: 'routine-303',
+        dateStr: '2026-08-20',
+        timeOfDay: '10:00',
+        createdAt: '2026-08-01T00:00:00Z',
+        updatedAt: '2026-08-01T00:00:00Z',
+      );
+
+      await repo.upsert(o1);
+      await repo.upsert(o2);
+      await repo.upsert(o3);
+
+      // readAllFuture from 2026-08-18 forward should return o2 and o3, not o1
+      final futureOverrides = await repo.readAllFuture('routine', 'routine-303', '2026-08-18');
+      expect(futureOverrides.length, equals(2));
+      expect(futureOverrides[0].dateStr, equals('2026-08-18'));
+      expect(futureOverrides[1].dateStr, equals('2026-08-20'));
+
+      // Wipe future overrides
+      await repo.removeAllFuture('routine', 'routine-303', '2026-08-18');
+      final afterRemove = await repo.readAllFuture('routine', 'routine-303', '2026-08-18');
+      expect(afterRemove, isEmpty);
+
+      // Restore snapshot
+      await repo.restoreAll(futureOverrides);
+      final afterRestore = await repo.readAllFuture('routine', 'routine-303', '2026-08-18');
+      expect(afterRestore.length, equals(2));
+      expect(afterRestore[0].timeOfDay, equals('09:00'));
+      expect(afterRestore[1].timeOfDay, equals('10:00'));
+    });
   });
 }

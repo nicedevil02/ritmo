@@ -108,6 +108,14 @@ abstract class OccurrenceOverrideRepository {
     String sourceId,
     String dateStr,
   );
+  /// همهٔ overrideهای این منبع از [dateStr] به بعد — برای snapshot قبل از removeAllFuture.
+  Future<List<OccurrenceOverride>> readAllFuture(
+    String sourceType,
+    String sourceId,
+    String dateStr,
+  );
+  /// درج دسته‌ای بدون ادغام — فقط برای بازگردانی snapshot. داخل یک transaction.
+  Future<void> restoreAll(List<OccurrenceOverride> overrides);
 }
 
 class SqliteOccurrenceOverrideRepository
@@ -371,6 +379,57 @@ class SqliteOccurrenceOverrideRepository
       if (e is DatabaseException && e.toString().contains('no such table')) {
         await ensureTable(db);
       } else {
+        rethrow;
+      }
+    }
+  }
+
+  @override
+  Future<List<OccurrenceOverride>> readAllFuture(
+    String sourceType,
+    String sourceId,
+    String dateStr,
+  ) async {
+    final db = await DatabaseHelper.instance.database;
+    try {
+      final rows = await db.query(
+        'occurrence_overrides',
+        where: 'sourceType = ? AND sourceId = ? AND dateStr >= ?',
+        whereArgs: [sourceType, sourceId, dateStr],
+        orderBy: 'dateStr ASC',
+      );
+      return rows.map(OccurrenceOverride.fromMap).toList();
+    } catch (e, st) {
+      if (e is DatabaseException && e.toString().contains('no such table')) {
+        await ensureTable(db);
+        return const [];
+      }
+      RitmoLog.error('OccurrenceOverrideRepo', 'readAllFuture failed', e, st);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> restoreAll(List<OccurrenceOverride> overrides) async {
+    if (overrides.isEmpty) return;
+    final db = await DatabaseHelper.instance.database;
+    Future<void> run() => db.transaction((txn) async {
+      for (final override in overrides) {
+        await txn.insert(
+          'occurrence_overrides',
+          override.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+    try {
+      await run();
+    } catch (e, st) {
+      if (e is DatabaseException && e.toString().contains('no such table')) {
+        await ensureTable(db);
+        await run();
+      } else {
+        RitmoLog.error('OccurrenceOverrideRepo', 'restoreAll failed', e, st);
         rethrow;
       }
     }

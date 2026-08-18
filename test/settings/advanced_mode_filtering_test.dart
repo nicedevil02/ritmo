@@ -66,6 +66,26 @@ void main() {
             CREATE TABLE routines (
               id INTEGER PRIMARY KEY,
               title TEXT,
+              isArchived INTEGER DEFAULT 0,
+              is_archived INTEGER DEFAULT 0
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE agenda_items (
+              id INTEGER PRIMARY KEY,
+              isCompleted INTEGER DEFAULT 0,
+              dateStr TEXT
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE tasks (
+              id INTEGER PRIMARY KEY,
+              isArchived INTEGER DEFAULT 0
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE habits (
+              id INTEGER PRIMARY KEY,
               isArchived INTEGER DEFAULT 0
             )
           ''');
@@ -88,7 +108,9 @@ void main() {
       );
 
       if (advancedDesc.visibility == SettingVisibility.advanced) {
-        await SettingsService.instance.set('show_advanced_settings', false);
+        await tester.runAsync(() async {
+          await SettingsService.instance.set('show_advanced_settings', false);
+        });
 
         await tester.pumpWidget(
           MaterialApp(
@@ -101,21 +123,26 @@ void main() {
             ),
           ),
         );
+        await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
         await tester.pump();
 
         expect(find.text(advancedDesc.labelFa), findsNothing);
 
-        // Turn advanced mode ON inside tester.runAsync
         await tester.runAsync(() async {
           await SettingsService.instance.set('show_advanced_settings', true);
         });
         await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
 
         expect(find.text(advancedDesc.labelFa), findsOneWidget);
       }
     });
 
     testWidgets('Mode switcher in SettingsScreen toggles show_advanced_settings', (tester) async {
+      await tester.runAsync(() async {
+        await SettingsService.instance.set('show_advanced_settings', false);
+      });
+
       await tester.pumpWidget(
         MaterialApp(
           theme: RitmoTheme.build(
@@ -129,6 +156,7 @@ void main() {
           ),
         ),
       );
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 

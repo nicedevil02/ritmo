@@ -24,8 +24,8 @@
 | WEB-20 | تشخیص پایان با رای چندسیگنالی | D | DONE | 9323667 | پیاده‌سازی evaluateStreamCompletion با ترکیب سیگنال‌های دکمه Stop/Send، کلاس‌های استریم و مکث زمانی |
 | WEB-21 | جدول مرکزی selector و پرس‌وجوی محافظت‌شده | D | DONE | c73fe22 | ایجاد جدول ثابت RITMO_SELECTORS و توابع querySafe و queryAllSafe برای حذف تکرار و مقاومت در برابر تغییرات DOM |
 | WEB-22 | زمان‌بندی تثبیت و رویداد اولین توکن | D | DONE | 5975d8d | ارسال رویداد first_token و ثبت میزان تاخیر TTFT در SSE و DOM و ارتقای مرحله به streaming |
-| WEB-23 | تشخیص وضعیت احراز هویت از روی صفحه | D | DONE | pending | پیاده‌سازی checkAuthState و ارسال رویداد auth_required و ذخیره وضعیت در فیلد isAuthenticated |
-| WEB-24 | منبع واحد مهلت‌های پل | E | TODO | - | - |
+| WEB-23 | تشخیص وضعیت احراز هویت از روی صفحه | D | DONE | 243dbb6 | پیاده‌سازی checkAuthState و ارسال رویداد auth_required و ذخیره وضعیت در فیلد isAuthenticated |
+| WEB-24 | منبع واحد مهلت‌های پل | E | DONE | pending | ایجاد کلاس ChatGptBridgeTimeouts و ارجاع تمام ثوابت زمانی منیجر به این منبع واحد |
 | WEB-25 | خطای نوع‌دار با پیام و اقدام فارسی | E | TODO | - | - |
 | WEB-26 | پنجرهٔ ورود به حساب درون برنامه | E | TODO | - | - |
 | WEB-27 | حذف تایم‌اوت‌های رقیب و تبدیل تایمر Dart به تور ایمنی | E | TODO | - | - |

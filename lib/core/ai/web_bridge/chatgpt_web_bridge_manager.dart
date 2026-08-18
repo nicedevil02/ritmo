@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_bridge_timeouts.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_js_injector.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
@@ -97,10 +98,10 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   }
 
   static const String targetUrl = 'https://chatgpt.com/';
-  static const Duration inactivityTimeout = Duration(minutes: 5);
+  static const Duration inactivityTimeout = ChatGptBridgeTimeouts.inactivityTimeout;
 
   /// Hard ceiling for a single generation.
-  static const Duration generationTimeout = Duration(seconds: 120);
+  static const Duration generationTimeout = ChatGptBridgeTimeouts.generationTimeout;
 
   WebViewController? _controller;
   WebViewController? get controller => _controller;
@@ -257,7 +258,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
 
       await controller.loadRequest(Uri.parse(targetUrl));
 
-      final isReady = await _waitForReady(timeout: const Duration(seconds: 20));
+      final isReady = await _waitForReady(timeout: ChatGptBridgeTimeouts.bootTimeout);
       if (!bootCompleter.isCompleted) {
         bootCompleter.complete(isReady);
       }
@@ -396,7 +397,7 @@ if (typeof window.__ritmo_resume === 'function') {
 
   /// Waits until the page composer textarea is present, enabled, and ChatGPT is not generating.
   @visibleForTesting
-  Future<bool> waitForComposerReady({Duration timeout = const Duration(seconds: 8)}) async {
+  Future<bool> waitForComposerReady({Duration timeout = ChatGptBridgeTimeouts.composerReadyTimeout}) async {
     final start = DateTime.now();
     while (DateTime.now().difference(start) < timeout) {
       try {
@@ -411,7 +412,7 @@ if (typeof window.__ritmo_resume === 'function') {
       } catch (e) {
         RitmoLog.debug('ChatGptWebBridge', 'waitForComposerReady retry after: $e');
       }
-      await Future.delayed(const Duration(milliseconds: 200));
+      await Future.delayed(ChatGptBridgeTimeouts.pollFastInterval);
     }
     return false;
   }
@@ -597,7 +598,7 @@ if (typeof window.__ritmo_resume === 'function') {
 
     final hasNoTokens = req.receivedLength == 0 && req.stage != PendingRequestStage.streaming;
     final isFirstAttempt = req.resendAttempts == 0;
-    final isWithinWindow = DateTime.now().difference(req.sentAt).inSeconds < 15;
+    final isWithinWindow = DateTime.now().difference(req.sentAt) < ChatGptBridgeTimeouts.resendMaxWindow;
 
     if (hasNoTokens && isFirstAttempt && isWithinWindow) {
       req.resendAttempts++;

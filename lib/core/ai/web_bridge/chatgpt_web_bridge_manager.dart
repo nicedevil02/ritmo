@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_js_injector.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 enum ChatGptBridgeStatus {
@@ -28,11 +29,6 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   static const Duration inactivityTimeout = Duration(minutes: 5);
 
   /// Hard ceiling for a single generation.
-  ///
-  /// Without this nothing on the Dart side is able to end a stream: the JS
-  /// watcher only reported completion when it had already seen some text, so a
-  /// page that stayed silent (login wall, selector drift, rate limit) left the
-  /// chat screen waiting on a stream that never closed.
   static const Duration generationTimeout = Duration(seconds: 120);
 
   WebViewController? _controller;
@@ -54,28 +50,55 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   Completer<bool>? _bootCompleter;
 
   /// Text already forwarded downstream for the CURRENT generation.
-  ///
-  /// The web page is authoritative: every `chunk` and the final `done` carry the
-  /// complete visible answer, and we only push the part the chat screen has not
-  /// rendered yet. Reconciling here rather than in JS means a missed delta can
-  /// still be recovered at the end instead of silently disappearing.
   String _emittedText = '';
+
+  @visibleForTesting
+  static WebViewController Function()? testControllerFactory;
+
+  @visibleForTesting
+  static int controllerCreationCount = 0;
+
+  @visibleForTesting
+  void setTestState({
+    ChatGptBridgeStatus? status,
+    WebViewController? controller,
+    Completer<bool>? bootCompleter,
+  }) {
+    if (status != null) _setStatus(status);
+    if (controller != null) _controller = controller;
+    if (bootCompleter != null) _bootCompleter = bootCompleter;
+  }
 
   void _setStatus(ChatGptBridgeStatus newStatus) {
     _status = newStatus;
     _statusNotifier.value = newStatus;
-    debugPrint('[ChatGptWebBridgeManager] Status changed to: $newStatus');
+    RitmoLog.debug('ChatGptWebBridgeManager', 'Status changed to: $newStatus');
   }
 
   /// Ensures the WebView is booted and ready to receive prompts.
   Future<bool> ensureBooted() async {
     _resetInactivityTimer();
 
+    // WEB-01: Never reboot or destroy controller while actively generating
+    if (_status == ChatGptBridgeStatus.generating) {
+      RitmoLog.debug('ChatGptWebBridgeManager', 'ensureBooted skipped: already generating (controller exists: ${_controller != null})');
+      return _controller != null;
+    }
+
+    // WEB-01: Protect cloudflare challenge in progress
+    if (_status == ChatGptBridgeStatus.cloudflareChallenge) {
+      RitmoLog.debug('ChatGptWebBridgeManager', 'ensureBooted skipped: cloudflare challenge in progress (controller exists: ${_controller != null})');
+      return _controller != null;
+    }
+
     if (_controller != null && _status == ChatGptBridgeStatus.ready) {
+      RitmoLog.debug('ChatGptWebBridgeManager', 'ensureBooted skipped: already ready');
       return true;
     }
 
+    // WEB-01: Attach to existing boot future if booting is already in flight
     if (_bootCompleter != null && !_bootCompleter!.isCompleted) {
+      RitmoLog.debug('ChatGptWebBridgeManager', 'ensureBooted attached to existing bootCompleter');
       return _bootCompleter!.future;
     }
 
@@ -84,13 +107,10 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _setStatus(ChatGptBridgeStatus.booting);
 
     try {
-      // webview_flutter 4.x exposes no WebViewController.dispose(); the platform
-      // view is released by GC once nothing references it. Dropping the previous
-      // reference BEFORE allocating a new one keeps failed boots from stacking
-      // native WebViews, which is a fast route back to the OOM we already fought.
       _controller = null;
+      controllerCreationCount++;
 
-      final controller = WebViewController();
+      final controller = testControllerFactory?.call() ?? WebViewController();
       _controller = controller;
 
       await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
@@ -106,14 +126,14 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       await controller.setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            debugPrint('[ChatGptWebBridge] Page loading started: $url');
+            RitmoLog.debug('ChatGptWebBridge', 'Page loading started: $url');
           },
           onPageFinished: (url) async {
-            debugPrint('[ChatGptWebBridge] Page loading finished: $url');
+            RitmoLog.debug('ChatGptWebBridge', 'Page loading finished: $url');
             await controller.runJavaScript(ChatGptJsInjector.setupBridgeScript);
           },
           onWebResourceError: (error) {
-            debugPrint('[ChatGptWebBridge] Resource Error (${error.errorCode}): ${error.description}');
+            RitmoLog.error('ChatGptWebBridge', 'Resource Error (${error.errorCode}): ${error.description}');
           },
         ),
       );
@@ -126,13 +146,35 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       }
       return isReady;
     } catch (e, st) {
-      debugPrint('[ChatGptWebBridge] Boot error: $e\n$st');
+      RitmoLog.error('ChatGptWebBridge', 'Boot error: $e', e, st);
       _setStatus(ChatGptBridgeStatus.error);
       if (!bootCompleter.isCompleted) {
         bootCompleter.complete(false);
       }
       return false;
     }
+  }
+
+  /// Sole authorized path for a forced reboot. Closes any in-flight stream with [reasonFa].
+  Future<bool> forceReboot({required String reasonFa}) async {
+    RitmoLog.debug('ChatGptWebBridgeManager', 'forceReboot requested. reason: $reasonFa');
+    _generationTimer?.cancel();
+    _generationTimer = null;
+
+    final controller = _currentStreamController;
+    _currentStreamController = null;
+    _emittedText = '';
+    if (controller != null && !controller.isClosed) {
+      controller.addError(Exception(reasonFa));
+      await controller.close();
+    }
+
+    _bootCompleter = null;
+    _controller = null;
+    _cloudflareNotifier.value = false;
+    _setStatus(ChatGptBridgeStatus.idle);
+
+    return ensureBooted();
   }
 
   Future<bool> _waitForReady({required Duration timeout}) async {
@@ -150,11 +192,6 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       final data = jsonDecode(message.message) as Map<String, dynamic>;
       final type = data['type'] as String?;
 
-      // The injector spreads the payload into the envelope -- it posts
-      // `{ type, ...payload }` -- so every field lives at the TOP level.
-      // data['payload'] was therefore always absent and the nested reads below
-      // were dead code kept alive only by their fallbacks. Top level wins now;
-      // the nested lookup survives only for a stale script in a warm WebView.
       final nested = (data['payload'] is Map<String, dynamic>)
           ? data['payload'] as Map<String, dynamic>
           : const <String, dynamic>{};
@@ -166,10 +203,8 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
         return null;
       }
 
-      // Chunks arrive several times per second while streaming; logging each one
-      // is the kind of log volume this app has been burned by before.
       if (type != 'chunk') {
-        debugPrint('[ChatGptWebBridge] JS event received: type=$type');
+        RitmoLog.debug('ChatGptWebBridge', 'JS event received: type=$type');
       }
 
       switch (type) {
@@ -186,7 +221,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
           if (_status != ChatGptBridgeStatus.cloudflareChallenge) {
             _setStatus(ChatGptBridgeStatus.cloudflareChallenge);
             _cloudflareNotifier.value = true;
-            debugPrint('[ChatGptWebBridge] Cloudflare challenge detected.');
+            RitmoLog.debug('ChatGptWebBridge', 'Cloudflare challenge detected.');
           }
           break;
 
@@ -194,7 +229,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
           if (_status == ChatGptBridgeStatus.cloudflareChallenge) {
             _setStatus(ChatGptBridgeStatus.ready);
             _cloudflareNotifier.value = false;
-            debugPrint('[ChatGptWebBridge] Cloudflare challenge resolved.');
+            RitmoLog.debug('ChatGptWebBridge', 'Cloudflare challenge resolved.');
           }
           break;
 
@@ -214,10 +249,10 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
           break;
 
         default:
-          debugPrint('[ChatGptWebBridge] Unhandled JS message: ${message.message}');
+          RitmoLog.debug('ChatGptWebBridge', 'Unhandled JS message: ${message.message}');
       }
-    } catch (e) {
-      debugPrint('[ChatGptWebBridge] Error parsing JS message: $e');
+    } catch (e, st) {
+      RitmoLog.error('ChatGptWebBridge', 'Error parsing JS message: $e', e, st);
     }
   }
 
@@ -340,9 +375,6 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
 
     final booted = await ensureBooted();
     if (!booted && _status == ChatGptBridgeStatus.cloudflareChallenge) {
-      // Emitted as an error so StreamingChatService treats it as a failure and
-      // can fall back to the API slot. Without the prefix this warning was
-      // stored in ChatRepository as if ChatGPT had actually said it.
       yield 'error:برای ادامه گفتگو، لطفاً تایید امنیتی کلودفلر را در پنجره باز شده کامل کنید.';
       return;
     }
@@ -364,12 +396,10 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       if (rows.isNotEmpty) {
         userName = rows.first['value'] as String?;
       }
-    } catch (e) {
-      debugPrint('[ChatGptWebBridge] Error fetching user_name: $e');
+    } catch (e, st) {
+      RitmoLog.error('ChatGptWebBridge', 'Error fetching user_name: $e', e, st);
     }
 
-    // A second send must never orphan the first stream: its listener would wait
-    // forever and the incoming chunks would be routed to the wrong conversation.
     final previous = _currentStreamController;
     _currentStreamController = null;
     if (previous != null && !previous.isClosed) {
@@ -397,7 +427,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _generationTimer?.cancel();
     _generationTimer = Timer(generationTimeout, () {
       if (!identical(_currentStreamController, streamController)) return;
-      debugPrint('[ChatGptWebBridge] Generation timed out after ${generationTimeout.inSeconds}s.');
+      RitmoLog.debug('ChatGptWebBridge', 'Generation timed out after ${generationTimeout.inSeconds}s.');
       if (_emittedText.isEmpty) {
         _failGeneration('پاسخی از صفحهٔ ChatGPT دریافت نشد. لطفاً پنجرهٔ مرورگر را باز کنید و وضعیت ورود یا تایید امنیتی را بررسی کنید.');
       } else {
@@ -412,24 +442,17 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   void _resetInactivityTimer() {
     _inactivityTimer?.cancel();
     _inactivityTimer = Timer(inactivityTimeout, () {
-      // Never tear down a live generation. This used to close the stream
-      // mid-answer, which ended the await-for with an empty string and no error
-      // -- persisting a blank assistant message to the chat history.
       if (_status == ChatGptBridgeStatus.generating ||
           _currentStreamController != null) {
         _resetInactivityTimer();
         return;
       }
-      debugPrint('[ChatGptWebBridge] Inactivity timeout reached. Releasing WebView reference.');
+      RitmoLog.debug('ChatGptWebBridge', 'Inactivity timeout reached. Releasing WebView reference.');
       disposeWebView();
     });
   }
 
   /// Drops this side's references to the WebView.
-  ///
-  /// NOTE: webview_flutter 4.x has no WebViewController.dispose(). The native
-  /// WebView is only reclaimed by GC once no WebViewWidget references it either,
-  /// so this is a hint, not a guaranteed free. Do not rely on it for memory.
   void disposeWebView() {
     _inactivityTimer?.cancel();
     _inactivityTimer = null;
@@ -445,14 +468,14 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _controller = null;
     _cloudflareNotifier.value = false;
     _setStatus(ChatGptBridgeStatus.idle);
-    debugPrint('[ChatGptWebBridge] WebView reference released.');
+    RitmoLog.debug('ChatGptWebBridge', 'WebView reference released.');
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
       if (_status != ChatGptBridgeStatus.generating) {
-        debugPrint('[ChatGptWebBridge] App paused/detached, releasing WebView.');
+        RitmoLog.debug('ChatGptWebBridge', 'App paused/detached, releasing WebView.');
         disposeWebView();
       }
     }

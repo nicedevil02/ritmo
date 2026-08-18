@@ -898,3 +898,102 @@ flutter test
 - در هر تسک، اول فایل‌های لیست‌شده را کامل بخوان، بعد دست به کد ببر.
 
 موفق باشی. از WEB-00 شروع کن.
+
+---
+
+## بخش ۷ — گزارش هم‌ترازی با مخزن و اصلاحیه‌های الزامی
+
+**این بخش بعد از سینک شدن آخرین تغییرات لوکال با گیتهاب نوشته شده است و در هر تعارضی بر متن بخش‌های قبلی اولویت دارد. پیش از شروع WEB-00 این بخش را کامل بخوان.**
+
+- مخزن: `nicedevil02/ritmo`
+- کامیت مرجع اعتبارسنجی: `e5562cfd28fc45ed511f4c1347af53c3ef9cc851`
+- آخرین کامیت‌های مخزن روی مسیر تنظیمات (SET-44، SET-45، SET-46) و تقویم (CAL-59، CAL-60) هستند. هیچ کامیتی به `lib/core/ai/web_bridge/` یا `lib/core/ai/agent/` دست نزده است.
+
+### ۷٫۱ — تاییدیهٔ ریشه‌های باگ
+
+همهٔ فایل‌های هدف در کامیت مرجع دقیقاً همان محتوایی را دارند که تحلیل بخش ۱ روی آن انجام شده است:
+
+| فایل | وضعیت |
+|---|---|
+| `lib/core/ai/web_bridge/chatgpt_js_injector.dart` | بدون تغییر |
+| `lib/core/ai/web_bridge/chatgpt_web_bridge_manager.dart` | بدون تغییر |
+| `lib/core/ai/web_bridge/chatgpt_mini_preview.dart` | بدون تغییر |
+| `lib/core/ai/web_bridge/cloudflare_challenge_modal.dart` | بدون تغییر |
+| `lib/core/ai/agent/agent_loop_runner.dart` | بدون تغییر |
+| `lib/core/ai/agent/agent_tool_call_parser.dart` | بدون تغییر |
+| `lib/core/ai/agent/agent_tool_protocol.dart` | بدون تغییر |
+| `lib/core/ai/agent/agent_event.dart` | بدون تغییر |
+| `lib/core/ai/chat/streaming_chat_service.dart` | بدون تغییر |
+| `lib/core/logging/ritmo_logger.dart` | موجود است، قانون ۷ معتبر است |
+| `docs/ai/WEB_BRIDGE_FIX_PROGRESS.md` | هنوز وجود ندارد، WEB-00 معتبر است |
+
+نتیجه: R1 تا R10 همگی هنوز معتبرند و هیچ تسکی به‌خاطر تغییر کد باطل نشده است، به‌جز یک مورد که در بند ۷٫۳ آمده.
+
+### ۷٫۲ — اصلاحیهٔ الزامی مسیر تست‌ها
+
+**این بند مسیر تست همهٔ تسک‌های فاز A تا G و بخش ۵ را بازنویسی می‌کند.**
+
+پوشهٔ `test/agent/` در مخزن وجود ندارد و هرگز ساخته نشده است. قرارداد واقعی مخزن این است که تست‌های لایهٔ هوش مصنوعی در `test/core/ai/` قرار می‌گیرند. هم‌اکنون این فایل‌ها آنجا هستند: `agent_tool_call_parser_test.dart`، `agent_tool_argument_validator_test.dart`، `agent_tool_validator_test.dart`، `agent_policy_gate_test.dart`، `agent_journal_undo_test.dart`، `agent_loop_fake_model_test.dart`، `kernel_command_tool_test.dart`، `agent_prompt_injection_guard_test.dart`، `agent_terminology_test.dart`، `agent_tool_scope_test.dart`، `agent_transcript_test.dart`، `agent_budget_writes_test.dart`، `agent_intent_router_test.dart`، `agent_interactive_brokers_test.dart`، `agent_tool_metrics_test.dart`، `agent_nightly_review_test.dart`، `agent_sql_queries_test.dart`، `chat_action_parser_test.dart`، `command_tool_bridge_test.dart`، `execute_plan_tool_test.dart`، `handoff_to_persona_tool_test.dart`، `memory_agent_tools_test.dart`، `simulate_plan_tool_test.dart`.
+
+نگاشت اجباری:
+
+- هر جا در این پرامپت نوشته شده `test/web_bridge/<نام فایل>`، مسیر واقعی `test/core/ai/web_bridge/<نام فایل>` است.
+- هر جا نوشته شده `test/agent/<نام فایل>`، مسیر واقعی `test/core/ai/<نام فایل>` است.
+- **قانون ۱۱ بخش ۰ اصلاح می‌شود:** فقط یک پوشهٔ جدید بساز، `test/core/ai/web_bridge/`. پوشهٔ `test/agent/` را نساز.
+- نام خود فایل‌های تست دقیقاً همان است که در هر تسک آمده. فقط پیشوند مسیر عوض می‌شود.
+- `agent_tool_call_parser_test.dart` موجود را حذف یا بازنویسی نکن. اگر پس از WEB-28 یا WEB-29 یکی از تست‌های آن با رفتار جدید سه‌شکلی می‌شکند، فقط همان مورد را به‌روزرسانی کن و دلیلش را در لجر بنویس.
+
+### ۷٫۳ — تغییر وضعیت WEB-06: از پیش انجام شده است
+
+خواندن کامل `chatgpt_web_bridge_manager.dart` در کامیت مرجع نشان می‌دهد محافظی که WEB-06 می‌خواست هم‌اکنون در کد هست:
+
+- در `_resetInactivityTimer`: اگر وضعیت `generating` باشد یا `_currentStreamController` تهی نباشد، تایمر دوباره تنظیم می‌شود و `disposeWebView` صدا زده نمی‌شود.
+- در `didChangeAppLifecycleState`: هنگام `paused` یا `detached`، اگر وضعیت `generating` باشد وب‌ویو آزاد نمی‌شود.
+
+دستور اصلاح‌شدهٔ WEB-06:
+
+- کد `chatgpt_web_bridge_manager.dart` را برای این مورد تغییر نده.
+- فقط تست رگرسیون `test/core/ai/web_bridge/no_dispose_while_generating_test.dart` را بنویس که هر دو محافظ بالا را تثبیت کند.
+- ردیف WEB-06 را در لجر `DONE` بگذار با یادداشت «محافظ از قبل در کد بود؛ فقط تست تثبیت اضافه شد».
+- همان پیام commit مشخص‌شده در تسک را استفاده کن.
+- **هشدار:** هنگام اصلاح `ensureBooted` در WEB-01 و هنگام کار روی WEB-24 و WEB-27، مراقب باش این دو محافظ موجود را خراب نکنی. تست بالا باید تا آخر کار سبز بماند.
+
+### ۷٫۴ — تغییر فایل هدف WEB-34
+
+فایل `lib/features/assistant/presentation/widgets/unified_assistant_sheet.dart` از زمان تحلیل تغییر کرده و بزرگ‌تر شده است (اکنون حدود ۵۱ کیلوبایت). پیش از هر ویرایش، کل فایل را از ابتدا بخوان و هیچ فرضی از متن این پرامپت دربارهٔ ساختار داخلی آن نساز. اگر نام رشته‌های وضعیت یا ساختار نوار پیشرفت با آنچه در WEB-34 توصیف شده فرق دارد، رفتار خواسته‌شده را روی ساختار واقعی پیاده کن و تفاوت را در بخش «واگرایی از پرامپت» لجر ثبت کن. این تفاوت دلیل `BLOCKED` شدن نیست.
+
+### ۷٫۵ — کارهای ایجنتینگ که قبلاً تمام شده‌اند
+
+فایل `docs/ai/AGENTING_COMPLETION_PROGRESS.md` نشان می‌دهد T01 تا T50 همگی `DONE` هستند. دو اثر روی این پرامپت دارد:
+
+**WEB-30:** بند «اصلاح غلط‌های املایی فارسی» احتمالاً با T42 انجام شده و `test/core/ai/agent_terminology_test.dart` نگهبان آن است. اول این را اجرا کن:
+
+```bash
+rg -n "تنطیم|منتطر|حافطه|لحطه" lib/core/ai
+```
+
+اگر خروجی خالی بود، این بند را انجام‌شده در نظر بگیر و فقط بقیهٔ WEB-30 را پیاده کن. اگر خروجی داشت، همان موارد را اصلاح کن.
+
+**WEB-31:** گارد تزریق پرامپت در T41 سخت‌سازی شده است. کار تو در WEB-31 جایگزینی یا حذف آن نیست؛ فقط گسترش الگوی تگ‌های کنترلی به دو نشانهٔ جدید، افزودن بررسی گرهٔ دستیار، و پاکسازی متن کاربر است. تست موجود `agent_prompt_injection_guard_test.dart` باید تا آخر کار سبز بماند.
+
+### ۷٫۶ — هماهنگی با کار در جریان
+
+مسیر تنظیمات هم‌اکنون تا SET-46 پیش رفته و مسیر تقویم تا CAL-60 تمام شده است. این پرامپت با آن‌ها هیچ فایل مشترکی ندارد، اما:
+
+- پیش از WEB-00 یک بار `git pull` بزن.
+- اگر روی شاخهٔ جداگانه کار می‌کنی، نام شاخه `fix/web-bridge-web-01-35` باشد.
+- به هیچ فایلی در `lib/features/settings/` یا `lib/features/calendar/` دست نزن.
+- پوشه‌های `test/settings/` و `test/calendar/` هم‌اکنون وجود دارند. آن‌ها به تو ربطی ندارند.
+
+### ۷٫۷ — چک‌لیست هم‌ترازی پیش از اعلام اتمام
+
+```bash
+test -d test/core/ai/web_bridge && echo OK_WEBBRIDGE_TESTS
+test ! -d test/agent && echo OK_NO_ORPHAN_DIR
+rg -n "WEB-06" docs/ai/WEB_BRIDGE_FIX_PROGRESS.md
+rg -n "no_dispose_while_generating" test/core/ai/web_bridge
+```
+
+هر سهٔ اول باید خروجی بدهند و چهارمی باید فایل تست را پیدا کند.
+
+موفق باشی. حالا از WEB-00 شروع کن.

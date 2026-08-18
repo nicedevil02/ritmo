@@ -611,6 +611,30 @@ class SettingsService {
     return setMany(filtered);
   }
 
+  /// بررسی آیا این تنظیم نسبت به مقدار پیش‌فرض تغییر کرده است
+  bool isModifiedFromDefault(String key) {
+    final desc = SettingsRegistry.find(key);
+    if (desc == null) return false;
+    final current = get<Object?>(key);
+    return current != desc.defaultValue;
+  }
+
+  /// بازگردانی یک تنظیم به مقدار پیش‌فرض خود
+  Future<void> resetToDefault(String key) async {
+    final desc = SettingsRegistry.find(key);
+    if (desc == null) return;
+    await set(key, desc.defaultValue);
+  }
+
+  /// دریافت لیست کلیدهای تغییریافته نسبت به پیش‌فرض
+  List<String> getModifiedKeys({SettingsGroup? group}) {
+    return SettingsRegistry.all
+        .where((d) => group == null || d.group == group)
+        .where((d) => isModifiedFromDefault(d.key))
+        .map((d) => d.key)
+        .toList();
+  }
+
   /// Emits at most one `notifyRoutineChanged()` per [agendaSignalDebounce]
   /// window, coalescing repeated writes into a single refresh.
   void _scheduleAgendaRefreshSignal() {

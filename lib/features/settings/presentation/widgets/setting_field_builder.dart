@@ -107,6 +107,36 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
     super.dispose();
   }
 
+  void _showResetSheet(BuildContext context, SettingDescriptor desc) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (modalCtx) => CupertinoActionSheet(
+        title: const Text(
+          'بازنشانی به مقدار پیش‌فرض',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        message: Text('آیا می‌خواهید «${desc.labelFa}» به مقدار پیش‌فرض بازگردد؟'),
+        actions: [
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              Navigator.pop(modalCtx);
+              await SettingsService.instance.resetToDefault(desc.key);
+              if (context.mounted) {
+                RitmoToast.show(context, 'تنظیم به حالت پیش‌فرض بازگشت');
+              }
+            },
+            child: const Text('بازنشانی به پیش‌فرض'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(modalCtx),
+          child: const Text('انصراف'),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final desc = widget.descriptor;
@@ -195,6 +225,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
   ) {
     final colors = context.colors;
     final value = SettingsService.instance.get<bool>(desc.key);
+    final isModified = SettingsService.instance.isModifiedFromDefault(desc.key);
 
     return SettingsTile(
       title: desc.labelFa,
@@ -203,6 +234,8 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           ? Icon(desc.icon, color: colors.primary, size: 22)
           : null,
       highlighted: widget.highlighted,
+      isModified: isModified,
+      onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: CupertinoSwitch(
         value: value,
         activeTrackColor: colors.primary,
@@ -229,6 +262,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
     final colors = context.colors;
     final currentVal = SettingsService.instance.get<String>(desc.key);
     final allowed = desc.allowed ?? const [];
+    final isModified = SettingsService.instance.isModifiedFromDefault(desc.key);
 
     String displayVal = currentVal;
     if (desc.optionLabelsFa != null && desc.optionLabelsFa!.containsKey(currentVal)) {
@@ -242,6 +276,8 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           ? Icon(desc.icon, color: colors.primary, size: 22)
           : null,
       highlighted: widget.highlighted,
+      isModified: isModified,
+      onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -310,6 +346,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
     final min = desc.min ?? 0;
     final max = desc.max ?? 100;
     final unit = desc.unitFa != null ? ' ${desc.unitFa}' : '';
+    final isModified = SettingsService.instance.isModifiedFromDefault(desc.key);
 
     return SettingsTile(
       title: desc.labelFa,
@@ -318,6 +355,8 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           ? Icon(desc.icon, color: colors.primary, size: 22)
           : null,
       highlighted: widget.highlighted,
+      isModified: isModified,
+      onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -363,6 +402,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
   ) {
     final colors = context.colors;
     final value = SettingsService.instance.get<String>(desc.key);
+    final isModified = SettingsService.instance.isModifiedFromDefault(desc.key);
 
     return SettingsTile(
       title: desc.labelFa,
@@ -371,6 +411,8 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           ? Icon(desc.icon, color: colors.primary, size: 22)
           : null,
       highlighted: widget.highlighted,
+      isModified: isModified,
+      onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -440,6 +482,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
     final parts = value.split(':');
     final hour = parts.isNotEmpty ? int.tryParse(parts[0]) ?? 0 : 0;
     final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
+    final isModified = SettingsService.instance.isModifiedFromDefault(desc.key);
 
     return SettingsTile(
       title: desc.labelFa,
@@ -448,6 +491,8 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           ? Icon(desc.icon, color: colors.primary, size: 22)
           : null,
       highlighted: widget.highlighted,
+      isModified: isModified,
+      onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

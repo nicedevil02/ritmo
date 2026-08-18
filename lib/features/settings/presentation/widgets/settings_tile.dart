@@ -10,8 +10,10 @@ class SettingsTile extends StatelessWidget {
     this.leading,
     this.trailing,
     this.onTap,
+    this.onLongPress,
     this.isDanger = false,
     this.highlighted = false,
+    this.isModified = false,
   });
 
   final String title;
@@ -19,8 +21,10 @@ class SettingsTile extends StatelessWidget {
   final Widget? leading;
   final Widget? trailing;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final bool isDanger;
   final bool highlighted;
+  final bool isModified;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +42,7 @@ class SettingsTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
+          onLongPress: onLongPress,
           borderRadius: BorderRadius.circular(14),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -52,13 +57,32 @@ class SettingsTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: isDanger ? colors.medicalRed : colors.textPrimary,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: isDanger ? colors.medicalRed : colors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (isModified) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              key: const ValueKey('setting_modified_dot'),
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: colors.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       if (subtitle != null && subtitle!.isNotEmpty) ...[
                         const SizedBox(height: 4),

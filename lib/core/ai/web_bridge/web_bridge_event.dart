@@ -66,10 +66,16 @@ sealed class WebBridgeEvent {
         case 'ready':
           return BridgeReadyEvent(
             source: src,
-            isAuthed: readBool('isAuthed') ?? false,
+            isAuthed: readBool('isAuthed') ?? readBool('hasComposer') ?? true,
             email: readString('email'),
             version: readInt('version') ?? 0,
             payload: payload,
+          );
+        case 'network_conversation_started':
+          return BridgeNetworkConversationStartedEvent(
+            source: src,
+            requestId: readString('requestId'),
+            url: readString('url'),
           );
         case 'chunk':
           return BridgeChunkEvent(
@@ -287,6 +293,17 @@ class BridgeHarvestResultEvent extends WebBridgeEvent {
   final String? error;
   final String? requestId;
   final String? strategy;
+}
+
+class BridgeNetworkConversationStartedEvent extends WebBridgeEvent {
+  const BridgeNetworkConversationStartedEvent({
+    required super.source,
+    this.requestId,
+    this.url,
+  });
+
+  final String? requestId;
+  final String? url;
 }
 
 class BridgeUnknownEvent extends WebBridgeEvent {

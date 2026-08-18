@@ -46,22 +46,15 @@ void main() {
       expect(controller.executedScripts.any((s) => s.contains('__ritmo_resume')), isTrue);
     });
 
-    test('handlePageFinished aborts stream if reload count exceeds 3 (infinite reload loop guard)', () async {
+    test('handlePageFinished aborts stream if reload count exceeds maxNavigationReloads (infinite reload loop guard)', () async {
       manager.setTestState(status: ChatGptBridgeStatus.generating);
 
-      // 1st reload
-      await manager.handlePageFinished('https://chatgpt.com/c/123', controller);
-      expect(manager.navigationReloadCount, equals(1));
+      for (var i = 1; i <= ChatGptWebBridgeManager.maxNavigationReloads; i++) {
+        await manager.handlePageFinished('https://chatgpt.com/c/123', controller);
+        expect(manager.navigationReloadCount, equals(i));
+      }
 
-      // 2nd reload
-      await manager.handlePageFinished('https://chatgpt.com/c/123', controller);
-      expect(manager.navigationReloadCount, equals(2));
-
-      // 3rd reload
-      await manager.handlePageFinished('https://chatgpt.com/c/123', controller);
-      expect(manager.navigationReloadCount, equals(3));
-
-      // 4th reload (exceeds threshold of 3)
+      // Reload exceeding threshold
       await manager.handlePageFinished('https://chatgpt.com/c/123', controller);
 
       // Status transitioned to ready (failGeneration called) and count reset

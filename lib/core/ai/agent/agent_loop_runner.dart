@@ -18,6 +18,7 @@ import 'package:ritmo/core/ai/ai_connection_repository.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/ai_prompt_engine.dart';
 import 'package:ritmo/core/ai/personas/persona_inference_profile.dart';
+import 'package:ritmo/core/ai/web_bridge/bridge_trace_log.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 
@@ -37,6 +38,13 @@ class AgentLoopRunner {
   /// اگر مدل پس از بستن tool_call بیش از این مقدار نوشت، استریم قطع می‌شود
   /// تا نتیجه خیالی ابزار را نسازد.
   static const int _tailCutoffAfterToolCall = 220;
+
+  /// اگر پس از باز شدن یک تگ، بیش از این تعداد کاراکتر بدون بسته شدن آمد،
+  /// تگ را متن عادی تلقی کن و رندر را آزاد کن (A-09).
+  static const int _maxSuppressedChars = 600;
+
+  /// سقف زمانی سرکوب — مستقل از طول متن (A-09).
+  static const Duration _maxSuppressionWindow = Duration(seconds: 6);
 
   Stream<AgentEvent> runAgent({
     required String prompt,
@@ -189,6 +197,9 @@ class AgentLoopRunner {
       final turnRaw = StringBuffer();
       var streamErrorFa = '';
       var cutEarly = false;
+      var suppressedSince = 0;
+      DateTime? suppressedAt;
+      var watchdogReleasedThisTurn = false;
 
       try {
         await for (final chunk in stream) {
@@ -196,28 +207,66 @@ class AgentLoopRunner {
             streamErrorFa = chunk.substring(6);
             break;
           }
-          turnRaw.write(chunk);
+
+          // A-12: Handle rewrite sentinel from web bridge accumulator
+          if (chunk.startsWith(ChatGptWebBridgeManager.rewriteSentinel)) {
+            final clean = chunk.substring(ChatGptWebBridgeManager.rewriteSentinel.length);
+            turnRaw.clear();
+            turnRaw.write(clean);
+            displayed = '';
+          } else {
+            turnRaw.write(chunk);
+          }
           final soFar = turnRaw.toString();
 
-          // Stage 1: بررسی وضعیت partial token
-          final live = (soFar.contains('<') || soFar.contains('[') || soFar.contains('`'))
+          // Stage 1: بررسی وضعیت partial token فقط در صورت وجود نشانهٔ واقعی (A-10)
+          final live = AgentToolCallParser.shouldScanForToolCalls(soFar)
               ? AgentToolCallParser.scan(soFar)
               : AgentToolCallScan.empty;
 
-          // Stage 2: رندر فقط در صورتی که تگ باز نداریم
-          if (!live.hasOpenTag) {
+          // Stage 2: رندر با واچ‌داگ سرکوب (A-09)
+          var renderAllowed = !live.hasOpenTag || watchdogReleasedThisTurn;
+
+          if (live.hasOpenTag && !watchdogReleasedThisTurn) {
+            suppressedAt ??= DateTime.now();
+            if (suppressedSince == 0) suppressedSince = soFar.length;
+
+            final grewBy = soFar.length - suppressedSince;
+            final elapsed = DateTime.now().difference(suppressedAt);
+
+            if (grewBy > _maxSuppressedChars || elapsed > _maxSuppressionWindow) {
+              renderAllowed = true;
+              watchdogReleasedThisTurn = true;
+              RitmoLog.warning(
+                'Agent',
+                'suppression watchdog released render '
+                '(grewBy=$grewBy, elapsedMs=${elapsed.inMilliseconds})',
+              );
+              BridgeTraceLog.instance.addEntry(
+                type: 'suppression_watchdog_release',
+                source: 'dart',
+                note: 'suppression_watchdog_release (grewBy=$grewBy, elapsedMs=${elapsed.inMilliseconds})',
+                level: BridgeTraceLevel.warn,
+              );
+            }
+          } else if (!live.hasOpenTag) {
+            suppressedAt = null;
+            suppressedSince = 0;
+          }
+
+          if (renderAllowed) {
             final combined = AgentToolCallParser.cleanForDisplay(
               _join(rawBuffer, AgentToolCallParser.stripToolCalls(soFar)),
             );
             if (combined != displayed) {
-              final delta = combined.startsWith(displayed)
+              final delta = combined.startsWith(displayed) && displayed.isNotEmpty
                   ? combined.substring(displayed.length)
                   : combined;
               displayed = combined;
               yield AgentTokenStreamEvent(delta: delta, accumulated: combined);
             }
           }
-          // else: تگ باز است — متن سرکوب می‌شود (Stage 2 کامیت نمی‌کند)
+          // else: تگ باز است — متن موقتاً سرکوب می‌شود
 
           if (live.hasCalls && live.tailLength > _tailCutoffAfterToolCall) {
             cutEarly = true;
@@ -609,6 +658,20 @@ class AgentLoopRunner {
 
     interactiveAction ??= _parseFirstAction(finalRaw);
 
+    // A-11: تور ایمنی نهایی — اگر متن نهایی هنوز به UI نرسیده، فلاش کن
+    final cleanFinalAnswer = AgentToolCallParser.cleanForDisplay(finalAnswer);
+    if (cleanFinalAnswer.isNotEmpty && cleanFinalAnswer != displayed) {
+      final delta = cleanFinalAnswer.startsWith(displayed) && displayed.isNotEmpty
+          ? cleanFinalAnswer.substring(displayed.length)
+          : cleanFinalAnswer;
+      RitmoLog.debug(
+        'Agent',
+        'final flush: displayedLen=${displayed.length} finalLen=${cleanFinalAnswer.length}',
+      );
+      yield AgentTokenStreamEvent(delta: delta, accumulated: cleanFinalAnswer);
+      displayed = cleanFinalAnswer;
+    }
+
     yield const AgentStatusChangedEvent(
       statusTextFa: 'پاسخ آماده است.',
       isWorking: false,
@@ -636,8 +699,9 @@ class AgentLoopRunner {
     String encoded;
     try {
       encoded = jsonEncode(normalized);
-    } catch (_) {
+    } catch (e) {
       encoded = normalized.toString();
+      RitmoLog.debug('Agent', 'jsonEncode failed for cacheKey: $e');
     }
     return '$toolName|$encoded';
   }
@@ -692,7 +756,8 @@ class AgentLoopRunner {
         return (decoded.first as Map).cast<String, dynamic>();
       }
       if (decoded is Map) return decoded.cast<String, dynamic>();
-    } catch (_) {
+    } catch (e) {
+      RitmoLog.debug('Agent', 'Could not parse actions from raw text: $e');
       return null;
     }
     return null;

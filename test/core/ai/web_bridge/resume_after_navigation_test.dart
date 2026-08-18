@@ -32,7 +32,7 @@ void main() {
     test('setupBridgeScript contains __ritmo_resume implementation', () {
       final script = ChatGptJsInjector.setupBridgeScript;
       expect(script.contains('window.__ritmo_resume'), isTrue);
-      expect(script.contains('resend_required'), isTrue);
+      expect(script.contains('window.__ritmo_turn_baseline'), isTrue);
       expect(script.contains('resumed'), isTrue);
     });
 

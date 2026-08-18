@@ -3,8 +3,11 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:ritmo/core/ai/web_bridge/bridge_response_accumulator.dart';
+import 'package:ritmo/core/ai/web_bridge/bridge_trace_log.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_bridge_timeouts.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_js_injector.dart';
+import 'package:ritmo/core/ai/web_bridge/web_bridge_event.dart';
 import 'package:ritmo/core/ai/web_bridge/web_bridge_exception.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
@@ -90,6 +93,20 @@ class PendingWebBridgeRequest {
   }
 }
 
+/// Diagnostic reason for an empty response (A-22).
+class EmptyResponseReason {
+  final String messageFa;
+  final String technicalDetail;
+
+  const EmptyResponseReason({
+    required this.messageFa,
+    required this.technicalDetail,
+  });
+
+  @override
+  String toString() => '$messageFa ($technicalDetail)';
+}
+
 class ChatGptWebBridgeManager with WidgetsBindingObserver {
   static final ChatGptWebBridgeManager _instance = ChatGptWebBridgeManager._internal();
   static ChatGptWebBridgeManager get instance => _instance;
@@ -98,11 +115,17 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
   }
 
+  /// Sentinel prefix emitted when response accumulator detects a non-prefix rewrite (A-12).
+  static const String rewriteSentinel = '\u0000RITMO_REWRITE\u0000';
+
   static const String targetUrl = 'https://chatgpt.com/';
   static const Duration inactivityTimeout = ChatGptBridgeTimeouts.inactivityTimeout;
 
   /// Hard ceiling for a single generation.
   static const Duration generationTimeout = ChatGptBridgeTimeouts.generationTimeout;
+
+  /// Max navigation reloads before considering it a loop (A-18).
+  static const int maxNavigationReloads = 6;
 
   WebViewController? _controller;
   WebViewController? get controller => _controller;
@@ -129,6 +152,12 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   String? _lastChunkSource;
   String? get lastChunkSource => _lastChunkSource;
 
+  BridgeSource? _lockedSource;
+  BridgeSource? get lockedSource => _lockedSource;
+
+  final BridgeResponseAccumulator _accumulator = BridgeResponseAccumulator();
+  BridgeResponseAccumulator get accumulator => _accumulator;
+
   bool _hasActiveSseStream = false;
   bool get hasActiveSseStream => _hasActiveSseStream;
 
@@ -137,6 +166,18 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
 
   PendingWebBridgeRequest? _pendingRequest;
   PendingWebBridgeRequest? get pendingRequest => _pendingRequest;
+
+  void _acquireSourceLockIfNeeded(BridgeSource src) {
+    if (_lockedSource == null) {
+      _lockedSource = src;
+      BridgeTraceLog.instance.addEntry(
+        type: 'source_locked',
+        source: src.name,
+        requestId: _currentRequestId,
+        note: 'locked_to_${src.name}',
+      );
+    }
+  }
 
   @visibleForTesting
   void setTestPendingRequest(PendingWebBridgeRequest? req) {
@@ -163,8 +204,6 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     return 'req_${DateTime.now().microsecondsSinceEpoch}_$_reqCounter';
   }
 
-  /// Text already forwarded downstream for the CURRENT generation.
-  String _emittedText = '';
 
   @visibleForTesting
   static WebViewController Function()? testControllerFactory;
@@ -302,9 +341,15 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     if (hasPendingRequest || _status == ChatGptBridgeStatus.generating) {
       _navigationReloadCount++;
       RitmoLog.debug('ChatGptWebBridge', 'Navigation finished with pending request (count: $_navigationReloadCount)');
-      if (_navigationReloadCount > 3) {
-        RitmoLog.error('ChatGptWebBridge', 'Navigation reload loop detected (>3 times). Aborting stream.');
-        _failGeneration(WebBridgeException.navigationLoop());
+      if (_navigationReloadCount > maxNavigationReloads) {
+        RitmoLog.error('ChatGptWebBridge', 'Navigation reload loop detected (> $maxNavigationReloads times). Aborting stream.');
+        if (!_accumulator.isEmpty) {
+          RitmoLog.warning('ChatGptWebBridge',
+              'Salvaging ${_accumulator.length} chars before aborting on navigation loop.');
+          _finishGeneration(null);
+        } else {
+          _failGeneration(WebBridgeException.navigationLoop());
+        }
         return;
       }
 
@@ -340,6 +385,13 @@ if (typeof window.__ritmo_resume === 'function') {
     }
 
     if (hasPendingRequest || _status == ChatGptBridgeStatus.generating) {
+      if (!_accumulator.isEmpty) {
+        RitmoLog.warning('ChatGptWebBridge',
+            'Salvaging ${_accumulator.length} chars before aborting on resource error.');
+        _finishGeneration(null);
+        return;
+      }
+
       final desc = error.description.toLowerCase();
       final code = error.errorCode;
       final isNetworkDisconnect = code == -2 || // ERROR_HOST_LOOKUP
@@ -367,6 +419,13 @@ if (typeof window.__ritmo_resume === 'function') {
     RitmoLog.error('ChatGptWebBridge', 'HTTP Error: statusCode=$status');
 
     if (hasPendingRequest || _status == ChatGptBridgeStatus.generating) {
+      if (!_accumulator.isEmpty) {
+        RitmoLog.warning('ChatGptWebBridge',
+            'Salvaging ${_accumulator.length} chars before aborting on HTTP error.');
+        _finishGeneration(null);
+        return;
+      }
+
       if (status != null && status >= 500 && status <= 599) {
         _failGeneration('چت‌جی‌پی‌تی الان جواب نمی‌دهد (خطای سرور $status). لطفاً کمی بعد دوباره تلاش کنید.');
       } else if (status == 401 || status == 403) {
@@ -394,7 +453,10 @@ if (typeof window.__ritmo_resume === 'function') {
 
     final controller = _currentStreamController;
     _currentStreamController = null;
-    _emittedText = '';
+    _accumulator.reset();
+    _lockedSource = null;
+    _lastChunkSource = null;
+    _hasActiveSseStream = false;
     if (controller != null && !controller.isClosed) {
       controller.addError(Exception(reasonFa));
       await controller.close();
@@ -450,145 +512,172 @@ if (typeof window.__ritmo_resume === 'function') {
 
   void _handleJsMessage(JavaScriptMessage message) {
     try {
-      final data = jsonDecode(message.message) as Map<String, dynamic>;
-      final type = data['type'] as String?;
+      final event = WebBridgeEvent.parse(message.message);
+      final source = event.source;
 
-      final nested = (data['payload'] is Map<String, dynamic>)
-          ? data['payload'] as Map<String, dynamic>
-          : const <String, dynamic>{};
-      String? readString(String key) {
-        final top = data[key];
-        if (top is String) return top;
-        final inner = nested[key];
-        if (inner is String) return inner;
-        return null;
-      }
-
-      final reqId = readString('requestId');
-      final source = readString('source') ?? 'dom';
-
-      if (type != 'chunk') {
-        RitmoLog.debug('ChatGptWebBridge', 'JS event received: type=$type, reqId=$reqId, source=$source');
+      if (event is! BridgeChunkEvent) {
+        RitmoLog.debug('ChatGptWebBridge', 'JS event received: ${event.runtimeType} (source: $source)');
       }
 
       // WEB-07: Drop stale events belonging to previous or mismatched requests
-      if (type != 'ready' &&
-          type != 'cloudflare_challenge' &&
-          type != 'cloudflare_resolved') {
+      if (event is! BridgeReadyEvent &&
+          event is! BridgeCloudflareEvent) {
+        final reqId = switch (event) {
+          BridgeChunkEvent(:final requestId) => requestId,
+          BridgeDoneEvent(:final requestId) => requestId,
+          BridgeFirstTokenEvent(:final requestId) => requestId,
+          BridgeResumedEvent(:final requestId) => requestId,
+          BridgeHttpErrorEvent(:final requestId) => requestId,
+          BridgeHarvestResultEvent(:final requestId) => requestId,
+          BridgeNetworkConversationStartedEvent(:final requestId) => requestId,
+          _ => null,
+        };
         if (reqId != null && reqId.isNotEmpty && reqId != _currentRequestId) {
           RitmoLog.debug(
             'ChatGptWebBridge',
-            'Dropping stale JS event: type=$type for reqId=$reqId (active: $_currentRequestId, source: $source)',
+            'Dropping stale JS event: ${event.runtimeType} for reqId=$reqId (active: $_currentRequestId, source: $source)',
+          );
+          BridgeTraceLog.instance.addEntry(
+            type: 'stale_event_dropped',
+            source: source,
+            requestId: reqId,
+            note: 'mismatched_request_id (active: $_currentRequestId)',
+            level: BridgeTraceLevel.warn,
           );
           return;
         }
       }
 
-      switch (type) {
-        case 'ready':
-          _isAuthenticated = true;
+      switch (event) {
+        case BridgeReadyEvent(:final isAuthed):
+          _isAuthenticated = isAuthed;
           if (_status != ChatGptBridgeStatus.ready) {
             _setStatus(ChatGptBridgeStatus.ready);
           }
           if (_cloudflareNotifier.value) {
             _cloudflareNotifier.value = false;
           }
-          break;
+          BridgeTraceLog.instance.addEntry(
+            type: 'ready',
+            source: source,
+            level: BridgeTraceLevel.info,
+          );
 
-        case 'auth_required':
+        case BridgeNetworkConversationStartedEvent(:final requestId):
+          RitmoLog.debug(
+            'ChatGptWebBridge',
+            'Network conversation stream endpoint intercepted in JS (reqId: $requestId)',
+          );
+          if (_pendingRequest != null && _pendingRequest!.stage == PendingRequestStage.sending) {
+            _pendingRequest!.stage = PendingRequestStage.awaitingFirstToken;
+          }
+          BridgeTraceLog.instance.addEntry(
+            type: 'network_conversation_started',
+            source: source,
+            requestId: requestId,
+            level: BridgeTraceLevel.info,
+          );
+
+        case BridgeAuthRequiredEvent(:final url):
           _isAuthenticated = false;
           RitmoLog.warning(
             'ChatGptWebBridge',
-            'Auth required detected on page: path=${readString('currentPath')}',
+            'Auth required detected on page: url=$url',
           );
-          if (_status == ChatGptBridgeStatus.generating && _emittedText.isEmpty && !_hasActiveSseStream) {
+          BridgeTraceLog.instance.addEntry(
+            type: 'auth_required',
+            source: source,
+            note: 'url=$url',
+            level: BridgeTraceLevel.warn,
+          );
+          if (_status == ChatGptBridgeStatus.generating && _accumulator.isEmpty && !_hasActiveSseStream) {
             _failGeneration(WebBridgeException.authRequired());
           }
-          break;
 
-        case 'cloudflare_challenge':
+        case BridgeCloudflareEvent(:final reason):
           if (_status != ChatGptBridgeStatus.cloudflareChallenge) {
             _setStatus(ChatGptBridgeStatus.cloudflareChallenge);
             _cloudflareNotifier.value = true;
             RitmoLog.debug('ChatGptWebBridge', 'Cloudflare challenge detected.');
           }
-          break;
-
-        case 'cloudflare_resolved':
-          if (_status == ChatGptBridgeStatus.cloudflareChallenge) {
-            _setStatus(ChatGptBridgeStatus.ready);
-            _cloudflareNotifier.value = false;
-            RitmoLog.debug('ChatGptWebBridge', 'Cloudflare challenge resolved.');
-          }
-          break;
-
-        case 'network_conversation_started':
-          RitmoLog.debug(
-            'ChatGptWebBridge',
-            'Network conversation stream endpoint intercepted in JS (reqId: $reqId)',
+          BridgeTraceLog.instance.addEntry(
+            type: 'cloudflare_challenge',
+            source: source,
+            note: reason,
+            level: BridgeTraceLevel.warn,
           );
-          if (_pendingRequest != null && _pendingRequest!.stage == PendingRequestStage.sending) {
-            _pendingRequest!.stage = PendingRequestStage.awaitingFirstToken;
-          }
-          break;
 
-        case 'resumed':
+        case BridgeResumedEvent(:final stage, :final requestId, :final recoveredLength):
           RitmoLog.debug(
             'ChatGptWebBridge',
-            'Resumed event received from JS bridge (stage: ${readString('stage')}, reqId: $reqId)',
+            'Resumed event received from JS bridge (stage: $stage, reqId: $requestId, recoveredLen: $recoveredLength)',
           );
           _pendingRequest?.stage = PendingRequestStage.streaming;
-          break;
-
-        case 'resend_required':
-          RitmoLog.debug(
-            'ChatGptWebBridge',
-            'Resend required event received for reqId: $reqId',
+          BridgeTraceLog.instance.addEntry(
+            type: 'resumed',
+            source: source,
+            requestId: requestId,
+            textLength: recoveredLength,
+            level: BridgeTraceLevel.info,
           );
-          _handleResendRequired();
-          break;
 
-        case 'first_token':
-          final latency = readString('latencyMs') ?? '0';
+        case BridgeFirstTokenEvent(:final requestId):
           RitmoLog.debug(
             'ChatGptWebBridge',
-            'First token received in ${latency}ms (source: $source, reqId: $reqId)',
+            'First token received (source: $source, reqId: $requestId)',
           );
           _pendingRequest?.stage = PendingRequestStage.streaming;
-          break;
+          BridgeTraceLog.instance.addEntry(
+            type: 'first_token',
+            source: source,
+            requestId: requestId,
+            level: BridgeTraceLevel.info,
+          );
 
-        case 'chunk':
-          final full = readString('fullText');
-          final delta = readString('delta');
-          _emitChunk(full, delta, source: source);
+        case BridgeChunkEvent(:final fullText, :final delta):
+          _emitChunk(fullText, delta, source: source);
           _resetInactivityTimer();
-          break;
 
-        case 'done':
-          _finishGeneration(readString('fullText'));
-          break;
+        case BridgeDoneEvent(:final fullText, :final requestId):
+          final src = parseBridgeSource(source);
+          if (_lockedSource != null && src != _lockedSource) {
+            RitmoLog.debug('ChatGptWebBridge',
+                'Ignoring done from non-locked source $src (locked: $_lockedSource)');
+            BridgeTraceLog.instance.addEntry(
+              type: 'done_ignored',
+              source: source,
+              requestId: requestId,
+              note: 'ignored_non_locked_source (locked: ${_lockedSource?.name})',
+              level: BridgeTraceLevel.info,
+            );
+            break;
+          }
+          _finishGeneration(fullText);
 
-        case 'http_error':
-          final statusCode = (data['statusCode'] is int)
-              ? data['statusCode'] as int
-              : (nested['statusCode'] is int)
-                  ? nested['statusCode'] as int
-                  : int.tryParse(readString('statusCode') ?? '') ?? 0;
+        case BridgeHttpErrorEvent(:final statusCode, :final message, :final requestId):
           RitmoLog.error(
             'ChatGptWebBridge',
-            'HTTP error received from JS bridge: status=$statusCode, reqId=$reqId',
+            'HTTP error received from JS bridge: status=$statusCode, reqId=$requestId',
           );
-          // FIX: If DOM streaming is already active (emittedText has content or SSE is live),
-          // only abort for critical auth/rate-limit errors. Transient errors during an active
-          // DOM stream are benign — the 'done' event from the DOM watcher will finalize cleanly.
+          BridgeTraceLog.instance.addEntry(
+            type: 'http_error',
+            source: source,
+            requestId: requestId,
+            note: 'status=$statusCode message="$message"',
+            level: BridgeTraceLevel.error,
+          );
           final isCriticalError = statusCode == 429 || statusCode == 401 || statusCode == 403 ||
               (statusCode >= 500 && statusCode <= 599);
-          final isDomStreamingActive = _emittedText.isNotEmpty || _hasActiveSseStream;
-          if (!isCriticalError && isDomStreamingActive) {
+          final isStreamingActive = !_accumulator.isEmpty || _hasActiveSseStream;
+          if (!isCriticalError && isStreamingActive) {
             RitmoLog.debug(
               'ChatGptWebBridge',
-              'Suppressing non-critical http_error $statusCode — DOM stream has $_emittedText chars already emitted.',
+              'Suppressing non-critical http_error $statusCode — accumulator has ${_accumulator.length} chars.',
             );
+            break;
+          }
+          if (!_accumulator.isEmpty) {
+            _finishGeneration(null);
             break;
           }
           if (statusCode == 429) {
@@ -600,16 +689,47 @@ if (typeof window.__ritmo_resume === 'function') {
           } else {
             _failGeneration(WebBridgeException.networkError(statusCode: statusCode));
           }
-          break;
 
-        case 'error':
-          final msg = readString('message') ?? 'خطای ناشناخته در پل ارتباطی با وب.';
-          RitmoLog.error('ChatGptWebBridge', 'JS error received: msg=$msg (source: $source, reqId: $reqId)');
-          _failGeneration(WebBridgeException.unknown(messageFa: msg));
-          break;
+        case BridgeSelectorHealthEvent(:final issue, :final bridgeVersion, :final report):
+          BridgeTraceLog.instance.addEntry(
+            type: 'selector_health',
+            source: source,
+            note: 'issue="$issue" v=$bridgeVersion report=$report',
+            level: BridgeTraceLevel.info,
+          );
 
-        default:
-          RitmoLog.debug('ChatGptWebBridge', 'Unhandled JS message: ${message.message}');
+        case BridgeAutoDismissEvent(:final label):
+          BridgeTraceLog.instance.addEntry(
+            type: 'auto_dismiss',
+            source: source,
+            note: 'label="$label"',
+            level: BridgeTraceLevel.info,
+          );
+
+        case BridgeHarvestResultEvent(:final fullText, :final error, :final requestId, :final strategy):
+          BridgeTraceLog.instance.addEntry(
+            type: 'harvest_result',
+            source: source,
+            requestId: requestId,
+            textLength: fullText.length,
+            note: 'strategy="$strategy" error="$error"',
+            level: BridgeTraceLevel.info,
+          );
+          if (_harvestCompleter != null && !_harvestCompleter!.isCompleted) {
+            _harvestCompleter!.complete(fullText.isNotEmpty ? fullText : null);
+          }
+          if (fullText.isNotEmpty && _status == ChatGptBridgeStatus.generating) {
+            _emitChunk(fullText, null, source: 'dom');
+          }
+
+        case BridgeUnknownEvent(:final type, :final error, :final rawPayload):
+          RitmoLog.debug('ChatGptWebBridge', 'Unhandled JS message: type=$type raw=$rawPayload');
+          BridgeTraceLog.instance.addEntry(
+            type: 'unknown_event',
+            source: source,
+            note: 'type=$type error=$error',
+            level: BridgeTraceLevel.warn,
+          );
       }
     } catch (e, st) {
       RitmoLog.error('ChatGptWebBridge', 'Error parsing JS message: $e', e, st);
@@ -670,72 +790,133 @@ if (typeof window.__ritmo_resume === 'function') {
     }
   }
 
-  static final _noisePrefixRegex = RegExp(
-    r'^[•\-\*\s:]*(ChatGPT\s*said:?|:ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|:You\s*said:?|Assistant\s*said:?)[\s:]*',
-    caseSensitive: false,
-    multiLine: true,
-  );
+  Completer<String?>? _harvestCompleter;
 
-  static final _cssBlockRegex = RegExp(
-    r'(\[data-[^\]]+\]\s*\{[^}]*\}|--[a-zA-Z0-9_-]+:[^;]+;?)',
-    multiLine: true,
-  );
+  /// Harvests visible assistant text directly from ChatGPT WebView DOM (A-40).
+  Future<String?> harvestVisibleAnswer() async {
+    final controller = _controller;
+    if (controller == null) return null;
 
-  static String _sanitizeResponseText(String text) {
-    var cleaned = text;
-    while (true) {
-      final before = cleaned;
-      cleaned = cleaned.replaceFirst(_noisePrefixRegex, '').trimLeft();
-      cleaned = cleaned.replaceFirst(RegExp(r'^[•\-\*:\s]+'), '').trimLeft();
-      if (cleaned == before) break;
+    final completer = Completer<String?>();
+    _harvestCompleter = completer;
+
+    try {
+      final reqId = _currentRequestId ?? '';
+      await controller.runJavaScript('''
+if (typeof window.__ritmo_forceHarvest === 'function') {
+  window.__ritmo_forceHarvest('$reqId');
+} else {
+  var text = (typeof findLatestAssistantText === 'function') ? findLatestAssistantText() : '';
+  if (typeof notifyFlutter === 'function') {
+    notifyFlutter('harvest_result', { fullText: text || '', requestId: '$reqId', source: 'dom', strategy: 'manual_fallback' });
+  }
+}
+''');
+      final result = await completer.future.timeout(
+        ChatGptBridgeTimeouts.composerReadyTimeout,
+        onTimeout: () => null,
+      );
+      return result;
+    } catch (e, st) {
+      RitmoLog.error('ChatGptWebBridge', 'harvestVisibleAnswer error: $e', e, st);
+      return null;
+    } finally {
+      if (_harvestCompleter == completer) {
+        _harvestCompleter = null;
+      }
     }
-    if (cleaned.contains('[data-conversation-') || cleaned.contains('--component-')) {
-      cleaned = cleaned.replaceAll(_cssBlockRegex, '').trim();
+  }
+
+  /// Describes the probable cause of an empty response for diagnostics and UI (A-22).
+  EmptyResponseReason describeEmptyResponseReason() {
+    if (_status == ChatGptBridgeStatus.cloudflareChallenge) {
+      return const EmptyResponseReason(
+        messageFa: 'برای ادامه گفتگو، لطفاً تایید امنیتی کلودفلر را کامل کنید.',
+        technicalDetail: 'status: cloudflareChallenge',
+      );
     }
-    return cleaned;
+    if (!_isAuthenticated) {
+      return const EmptyResponseReason(
+        messageFa: 'نشست کاربری ChatGPT منقضی شده است. لطفاً وارد حساب شوید.',
+        technicalDetail: 'status: auth_required',
+      );
+    }
+
+    final recent = BridgeTraceLog.instance.entries.reversed.take(15).toList();
+    final hadStaleDrops = recent.any((e) => e.type == 'stale_event_dropped');
+    if (hadStaleDrops) {
+      return const EmptyResponseReason(
+        messageFa: 'ارتباط با گفتگو قطع شد. پیام را دوباره بفرستید.',
+        technicalDetail: 'stale_event_dropped (requestId mismatch)',
+      );
+    }
+
+    final hadChunks = recent.any((e) => e.type == 'chunk');
+    final hadWatchdog = recent.any((e) => e.type == 'suppression_watchdog_release');
+    if (hadChunks || hadWatchdog) {
+      return const EmptyResponseReason(
+        messageFa: 'پاسخ دریافت شد ولی قابل نمایش نبود. دوباره تلاش کنید.',
+        technicalDetail: 'chunks received but suppressed or discarded in UI presenter',
+      );
+    }
+
+    if (_status == ChatGptBridgeStatus.ready) {
+      return const EmptyResponseReason(
+        messageFa: 'چت‌جی‌پی‌تی پاسخ داد، اما برنامه نتوانست متن را از صفحهٔ مرورگر بخواند. احتمالاً رابط کاربری چت‌جی‌پی‌تی تغییر کرده است.',
+        technicalDetail: 'ready without chunks (DOM watcher / selectors missed text)',
+      );
+    }
+
+    return const EmptyResponseReason(
+      messageFa: 'پاسخ در زمان مقرر کامل نشد.',
+      technicalDetail: 'generation timeout or unhandled state',
+    );
   }
 
   void _emitChunk(String? full, String? delta, {String source = 'dom'}) {
-    if (source == 'sse') {
+    final src = parseBridgeSource(source);
+    if (src == BridgeSource.sse) {
       _hasActiveSseStream = true;
     }
     _lastChunkSource = source;
 
     final controller = _currentStreamController;
-    if (controller == null || controller.isClosed) return;
-
-    RitmoLog.debug(
-      'ChatGptWebBridge',
-      'Chunk received from [$source] (deltaLen: ${delta?.length ?? 0}, fullLen: ${full?.length ?? 0}, currentEmitted: ${_emittedText.length})',
-    );
-
-    if (full != null && full.isNotEmpty) {
-      final cleanFull = _sanitizeResponseText(full);
-      if (cleanFull != _emittedText) {
-        if (cleanFull.length > _emittedText.length) {
-          final d = cleanFull.substring(_emittedText.length);
-          _emittedText = cleanFull;
-          controller.add(d);
-        } else if (_emittedText.isEmpty) {
-          _emittedText = cleanFull;
-          controller.add(cleanFull);
-        }
-      }
-      _pendingRequest?.stage = PendingRequestStage.streaming;
-      _pendingRequest?.receivedLength = _emittedText.length;
+    if (controller == null || controller.isClosed) {
+      BridgeTraceLog.instance.addEntry(
+        type: 'chunk_dropped',
+        source: source,
+        note: 'dropped_no_controller',
+        level: BridgeTraceLevel.warn,
+      );
       return;
     }
 
-    if (delta != null && delta.isNotEmpty) {
-      final cleanDelta = _emittedText.isEmpty ? _sanitizeResponseText(delta) : delta;
-      if (cleanDelta.isNotEmpty) {
-        _emittedText += cleanDelta;
-        controller.add(cleanDelta);
-      }
+    _acquireSourceLockIfNeeded(src);
+
+    AccumulatorDelta? result;
+    if (full != null && full.isNotEmpty) {
+      result = _accumulator.applyFull(full, source: source);
+    } else if (delta != null && delta.isNotEmpty) {
+      result = _accumulator.applyDelta(delta, source: source);
+    }
+
+    if (result == null) return;
+
+    if (result.isRewrite) {
+      controller.add(rewriteSentinel + result.fullText);
+    } else {
+      controller.add(result.delta);
     }
 
     _pendingRequest?.stage = PendingRequestStage.streaming;
-    _pendingRequest?.receivedLength = _emittedText.length;
+    _pendingRequest?.receivedLength = _accumulator.length;
+    BridgeTraceLog.instance.addEntry(
+      type: 'chunk',
+      source: source,
+      requestId: _currentRequestId,
+      textLength: _accumulator.length,
+      level: BridgeTraceLevel.info,
+    );
   }
 
   /// Flushes whatever the page ended up showing, then closes the stream.
@@ -743,27 +924,28 @@ if (typeof window.__ritmo_resume === 'function') {
     _generationTimer?.cancel();
     _generationTimer = null;
 
-    final controller = _currentStreamController;
-
-    if (fullText != null && fullText.isNotEmpty && controller != null && !controller.isClosed) {
-      final cleanFull = _sanitizeResponseText(fullText);
-      if (_emittedText.isEmpty) {
-        _emittedText = cleanFull;
-        controller.add(cleanFull);
-      } else if (cleanFull.length > _emittedText.length) {
-        final remaining = cleanFull.substring(_emittedText.length);
-        _emittedText = cleanFull;
-        controller.add(remaining);
-      }
+    if (fullText != null && fullText.isNotEmpty) {
+      _emitChunk(fullText, null, source: _lockedSource?.name ?? 'dom');
     }
 
+    final finalText = _accumulator.text;
+    BridgeTraceLog.instance.addEntry(
+      type: 'finish',
+      source: _lockedSource?.name ?? 'lifecycle',
+      requestId: _currentRequestId,
+      textLength: finalText.length,
+      level: BridgeTraceLevel.info,
+    );
+
+    final controller = _currentStreamController;
     _setStatus(ChatGptBridgeStatus.ready);
     _currentStreamController = null;
-    _emittedText = '';
+    _accumulator.reset();
     _navigationReloadCount = 0;
     _currentRequestId = null;
     _pendingRequest = null;
     _lastChunkSource = null;
+    _lockedSource = null;
     _hasActiveSseStream = false;
     controller?.close();
     _resetInactivityTimer();
@@ -775,11 +957,12 @@ if (typeof window.__ritmo_resume === 'function') {
 
     final controller = _currentStreamController;
     _currentStreamController = null;
-    _emittedText = '';
+    _accumulator.reset();
     _navigationReloadCount = 0;
     _currentRequestId = null;
     _pendingRequest = null;
     _lastChunkSource = null;
+    _lockedSource = null;
     _hasActiveSseStream = false;
 
     _setStatus(ChatGptBridgeStatus.ready);
@@ -807,11 +990,12 @@ if (typeof window.__ritmo_resume === 'function') {
     _generationTimer = null;
     final controller = _currentStreamController;
     _currentStreamController = null;
-    _emittedText = '';
+    _accumulator.reset();
     _navigationReloadCount = 0;
     _currentRequestId = null;
     _pendingRequest = null;
     _lastChunkSource = null;
+    _lockedSource = null;
     _hasActiveSseStream = false;
     _setStatus(ChatGptBridgeStatus.ready);
 
@@ -836,14 +1020,25 @@ if (typeof window.__ritmo_resume === 'function') {
     _resetInactivityTimer();
     _navigationReloadCount = 0;
     _lastChunkSource = null;
+    _lockedSource = null;
     _hasActiveSseStream = false;
 
-    // FIX: In-flight guard — if we are already generating, don't overwrite the active stream.
-    // This prevents the duplicate-message race when AgentLoopRunner + StreamingChatService
-    // both call sendPrompt for the same user turn (e.g. fallback path triggering on chatgpt_web).
-    if (_status == ChatGptBridgeStatus.generating && _currentStreamController != null && !_currentStreamController!.isClosed) {
-      RitmoLog.debug('ChatGptWebBridgeManager', 'sendPrompt BLOCKED: already generating (reqId: $_currentRequestId). Refusing duplicate call.');
-      yield* _currentStreamController!.stream;
+    // A-13: In-flight guard — refuse concurrent sendPrompt and yield Persian error
+    if (_status == ChatGptBridgeStatus.generating &&
+        _currentStreamController != null &&
+        !_currentStreamController!.isClosed) {
+      RitmoLog.warning(
+        'ChatGptWebBridgeManager',
+        'sendPrompt refused: generation already in flight (reqId: $_currentRequestId)',
+      );
+      BridgeTraceLog.instance.addEntry(
+        type: 'send_refused',
+        source: 'lifecycle',
+        requestId: _currentRequestId,
+        note: 'already_generating',
+        level: BridgeTraceLevel.warn,
+      );
+      yield 'error:یک پاسخ در حال دریافت است. لطفاً تا پایان آن صبر کنید یا انصراف بدهید.';
       return;
     }
 
@@ -881,6 +1076,7 @@ if (typeof window.__ritmo_resume === 'function') {
     }
 
     _setStatus(ChatGptBridgeStatus.generating);
+    _accumulator.reset();
 
     final reqId = _generateRequestId();
     _currentRequestId = reqId;
@@ -903,7 +1099,6 @@ if (typeof window.__ritmo_resume === 'function') {
       },
     );
     _currentStreamController = streamController;
-    _emittedText = '';
 
     final formattedPrompt = ChatGptJsInjector.formatPromptWithSystemDirective(
       userPrompt: prompt,
@@ -930,7 +1125,7 @@ if (typeof window.__ritmo_resume === 'function') {
     _generationTimer = Timer(generationTimeout, () {
       if (!identical(_currentStreamController, streamController)) return;
       RitmoLog.debug('ChatGptWebBridge', 'Generation timed out after ${generationTimeout.inSeconds}s (reqId: $reqId).');
-      if (_emittedText.isEmpty) {
+      if (_accumulator.isEmpty) {
         _failGeneration(
           WebBridgeException.timeout(
             messageFa: 'پاسخی از صفحهٔ ChatGPT دریافت نشد. لطفاً پنجرهٔ مرورگر را باز کنید و وضعیت ورود یا تایید امنیتی را بررسی کنید.',
@@ -967,7 +1162,8 @@ if (typeof window.__ritmo_resume === 'function') {
 
     final controller = _currentStreamController;
     _currentStreamController = null;
-    _emittedText = '';
+    _accumulator.reset();
+    _lockedSource = null;
     _navigationReloadCount = 0;
     _currentRequestId = null;
     _pendingRequest = null;

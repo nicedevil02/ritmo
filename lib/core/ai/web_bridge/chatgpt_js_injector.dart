@@ -230,7 +230,9 @@ $_bridgeScriptBody''';
       return reader.read().then(function(result) {
         if (result.done) {
           if (state.accumulatedText.length > 0) {
-            notifyFlutter('done', { fullText: state.accumulatedText, requestId: reqId, source: 'sse' });
+            setTimeout(function() {
+              notifyFlutter('done', { fullText: state.accumulatedText, requestId: reqId, source: 'sse' });
+            }, 500);
           }
           return;
         }
@@ -245,6 +247,12 @@ $_bridgeScriptBody''';
           if (trimmed.length > 0) {
             var event = parseSSELine(trimmed, state, reqId);
             if (event) {
+              if (event.type === 'done') {
+                setTimeout(function() {
+                  notifyFlutter('done', { fullText: state.accumulatedText, requestId: reqId, source: 'sse' });
+                }, 500);
+                return;
+              }
               if (!state.firstTokenEmitted && event.type === 'chunk') {
                 state.firstTokenEmitted = true;
                 notifyFlutter('first_token', {
@@ -671,27 +679,30 @@ $_bridgeScriptBody''';
       }
     }, 350);
 
+    var sawGeneratingSignal = false;
+
     function evaluateStreamCompletion() {
       var stopButton = querySafe(RITMO_SELECTORS.stopButton);
       var isStreamingClass = querySafe(RITMO_SELECTORS.streamingIndicator);
       var isGenerating = !!stopButton || !!isStreamingClass;
 
-      var sendButton = querySafe(RITMO_SELECTORS.sendButton);
-      var hasSendButton = !!sendButton && !sendButton.disabled;
+      if (isGenerating) {
+        sawGeneratingSignal = true;
+        return false;
+      }
+
       var idleMs = Date.now() - lastChangeTimestamp;
 
-      // 1. If stop button or streaming class is present, stream is strictly continuing
-      if (isGenerating) return false;
-
-      // 2. Multi-signal vote: Stop button gone AND we have received content
-      if (lastLength > 0) {
-        if (hasSendButton && idleMs > 400) {
-          return true; // Fast completion when composer send button is restored
-        }
-        if (idleMs > 2500) {
-          return true; // Idle fallback completion
-        }
+      // Confirmed generating transition: stop button observed then disappeared (A-15)
+      if (sawGeneratingSignal && lastLength > 0 && idleMs > 800) {
+        return true;
       }
+
+      // Unconfirmed generating fallback (A-15)
+      if (lastLength > 0 && idleMs > 4000) {
+        return true;
+      }
+
       return false;
     }
   };
@@ -732,12 +743,15 @@ $_bridgeScriptBody''';
         autoCloseSidebar();
         autoDismissCookiesAndModals();
 
+        window.__ritmo_active_req_id = currentReqId || '';
+
         // WEB-18: Anchor existing messages so only the new incoming turn is tracked
         queryAllSafe('article, [data-message-author-role], [data-testid*="conversation-turn"], div.markdown, div.prose').forEach(function(el) {
           el.setAttribute('data-ritmo-seen', 'true');
         });
 
         var previousBaselineText = findLatestAssistantText();
+        window.__ritmo_turn_baseline = previousBaselineText || '';
 
         editor.focus();
 
@@ -818,20 +832,20 @@ $_bridgeScriptBody''';
       var stage = payload.stage || 'sending';
       var receivedLength = payload.receivedLength || 0;
 
+      window.__ritmo_active_req_id = reqId;
+
       console.log('[Ritmo] __ritmo_resume invoked for reqId: ' + reqId + ' (stage: ' + stage + ', received: ' + receivedLength + ')');
 
       var currentText = findLatestAssistantText();
 
-      if (currentText && currentText.length > 0 && currentText.length >= receivedLength) {
-        notifyFlutter('resumed', { stage: 'done', requestId: reqId, source: 'dom' });
-        notifyFlutter('done', { fullText: currentText, requestId: reqId, source: 'dom' });
-        return;
+      if (currentText && currentText.length > 0) {
+        notifyFlutter('resumed', { stage: 'streaming', requestId: reqId, recoveredLength: currentText.length, source: 'dom' });
+        notifyFlutter('chunk', { fullText: currentText, requestId: reqId, source: 'dom' });
+      } else {
+        notifyFlutter('resumed', { stage: 'streaming', requestId: reqId, recoveredLength: 0, source: 'dom' });
       }
 
-      // Note: resend_required is deprecated and removed to prevent duplicate sends after navigation
-      // Seamlessly resume watching the DOM for live streaming tokens without duplicate resending
-      notifyFlutter('resumed', { stage: 'streaming', requestId: reqId, source: 'dom' });
-      window.__ritmo_startStreamingWatcher('', reqId);
+      window.__ritmo_startStreamingWatcher(window.__ritmo_turn_baseline || '', reqId);
     } catch (e) {
       console.error('[Ritmo] Error in __ritmo_resume: ' + e);
       notifyFlutter('error', { message: 'خطا در بازیابی پاسخ پس از جابجایی صفحه: ' + e.toString(), requestId: payload && payload.requestId, source: 'dom' });
@@ -867,6 +881,30 @@ $_bridgeScriptBody''';
       return { ready: true };
     } catch (e) {
       return { ready: false, reason: e.toString() };
+    }
+  };
+
+  // --- 8.1 Force Harvest Visible Answer ---
+  window.__ritmo_forceHarvest = function(reqId) {
+    try {
+      reqId = reqId || window.__ritmo_active_req_id || '';
+      var text = findLatestAssistantText() || '';
+      notifyFlutter('harvest_result', {
+        fullText: text,
+        requestId: reqId,
+        strategy: 'dom_direct',
+        source: 'dom'
+      });
+      return text;
+    } catch (e) {
+      notifyFlutter('harvest_result', {
+        fullText: '',
+        error: e.toString(),
+        requestId: reqId,
+        strategy: 'dom_direct_failed',
+        source: 'dom'
+      });
+      return '';
     }
   };
 

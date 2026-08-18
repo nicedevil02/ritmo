@@ -50,6 +50,20 @@ class AgentToolCallScan {
 class AgentToolCallParser {
   const AgentToolCallParser._();
 
+  /// فقط وقتی اسکن کن که نشانهٔ واقعی فراخوانی ابزار در متن باشد (A-10).
+  static bool shouldScanForToolCalls(String soFar) {
+    return soFar.contains('<tool_call') ||
+        soFar.contains('<ritmo-tool') ||
+        soFar.contains('<actions') ||
+        soFar.contains('<memory_ops') ||
+        soFar.contains('<function') ||
+        soFar.contains('```tool') ||
+        soFar.contains('```json') ||
+        soFar.contains('[tool_call') ||
+        soFar.contains('[TOOL_CALL]') ||
+        soFar.contains('[TOOL]');
+  }
+
   static final RegExp _blockRe = RegExp(
       r'<(?:tool_call|tool)>([\s\S]*?)<\/(?:tool_call|tool)>|\[TOOL_CALL\]([\s\S]*?)\[\/TOOL_CALL\]|\[TOOL\]([\s\S]*?)\[\/TOOL\]',
       caseSensitive: false);

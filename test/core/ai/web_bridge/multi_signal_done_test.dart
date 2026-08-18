@@ -12,20 +12,19 @@ void main() {
       expect(script.contains('var isFinished = evaluateStreamCompletion()'), isTrue);
     });
 
-    test('setupBridgeScript checks stop button, streaming class, and active send button', () {
+    test('setupBridgeScript checks stop button, streaming class, and active indicators', () {
       final script = ChatGptJsInjector.setupBridgeScript;
 
       expect(script.contains('stop-button'), isTrue);
       expect(script.contains('result-streaming'), isTrue);
-      expect(script.contains('send-button'), isTrue);
-      expect(script.contains('!sendButton.disabled'), isTrue);
+      expect(script.contains('sawGeneratingSignal'), isTrue);
     });
 
-    test('setupBridgeScript enforces fast completion on send button restoration and idle fallback', () {
+    test('setupBridgeScript enforces confirmed generating transition and idle fallback', () {
       final script = ChatGptJsInjector.setupBridgeScript;
 
-      expect(script.contains('hasSendButton && idleMs > 400'), isTrue);
-      expect(script.contains('idleMs > 2500'), isTrue);
+      expect(script.contains('sawGeneratingSignal && lastLength > 0 && idleMs > 800'), isTrue);
+      expect(script.contains('idleMs > 4000'), isTrue);
     });
   });
 }

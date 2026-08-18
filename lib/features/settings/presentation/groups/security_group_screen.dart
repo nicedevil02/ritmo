@@ -17,7 +17,12 @@ import 'package:ritmo/features/settings/presentation/widgets/settings_section.da
 import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
 
 class SecurityGroupScreen extends StatefulWidget {
-  const SecurityGroupScreen({super.key});
+  final String? highlightKey;
+
+  const SecurityGroupScreen({
+    super.key,
+    this.highlightKey,
+  });
 
   @override
   State<SecurityGroupScreen> createState() => _SecurityGroupScreenState();

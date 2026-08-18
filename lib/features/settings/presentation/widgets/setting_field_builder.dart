@@ -10,14 +10,16 @@ import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
 
 /// ویجت اعلامی جامع برای رندر هر نوع تنظیم از روی توصیفگر رجیستری
-class SettingField extends StatelessWidget {
+class SettingField extends StatefulWidget {
   SettingField(
     this.settingKey, {
     super.key,
-    this.highlighted = false,
+    bool? highlight,
+    bool highlighted = false,
     this.customSubtitle,
     SettingDescriptor? descriptor,
-  }) : descriptor = descriptor ?? SettingsRegistry.find(settingKey) {
+  })  : highlighted = highlight ?? highlighted,
+        descriptor = descriptor ?? SettingsRegistry.find(settingKey) {
     if (this.descriptor == null) {
       RitmoLog.error('Settings', 'SettingDescriptor for key "$settingKey" not found in SettingsRegistry');
     }
@@ -26,9 +28,11 @@ class SettingField extends StatelessWidget {
   SettingField.withDescriptor(
     this.descriptor, {
     super.key,
-    this.highlighted = false,
+    bool? highlight,
+    bool highlighted = false,
     this.customSubtitle,
-  }) : settingKey = descriptor?.key ?? '';
+  })  : highlighted = highlight ?? highlighted,
+        settingKey = descriptor?.key ?? '';
 
   final String settingKey;
   final SettingDescriptor? descriptor;
@@ -59,8 +63,53 @@ class SettingField extends StatelessWidget {
   }
 
   @override
+  State<SettingField> createState() => _SettingFieldState();
+}
+
+class _SettingFieldState extends State<SettingField> with SingleTickerProviderStateMixin {
+  AnimationController? _highlightController;
+  Animation<double>? _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.highlighted) {
+      _initHighlightAnimation();
+    }
+  }
+
+  void _initHighlightAnimation() {
+    _highlightController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _pulseAnimation = CurvedAnimation(
+      parent: _highlightController!,
+      curve: Curves.easeOutCubic,
+    );
+    _highlightController!.forward();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOutCubic,
+          alignment: 0.3,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _highlightController?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final desc = descriptor;
+    final desc = widget.descriptor;
     if (desc == null || desc.visibility == SettingVisibility.internal) {
       return const SizedBox.shrink();
     }
@@ -96,7 +145,7 @@ class SettingField extends StatelessWidget {
           }
         }
 
-        final subtitleText = customSubtitle ??
+        final subtitleText = widget.customSubtitle ??
             (dependencyHint != null
                 ? '$dependencyHint\n${desc.descriptionFa ?? ''}'
                 : desc.descriptionFa);
@@ -109,14 +158,31 @@ class SettingField extends StatelessWidget {
           SettingType.time => _buildTimeTile(context, desc, isEnabled, subtitleText),
         };
 
+        Widget finalChild = child;
         if (!isEnabled) {
-          return Opacity(
+          finalChild = Opacity(
             opacity: 0.45,
             child: IgnorePointer(child: child),
           );
         }
 
-        return child;
+        if (widget.highlighted && _highlightController != null && _pulseAnimation != null) {
+          return AnimatedBuilder(
+            animation: _pulseAnimation!,
+            builder: (context, _) {
+              final alpha = (1.0 - _pulseAnimation!.value) * 0.25;
+              return Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFD700).withValues(alpha: alpha),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: finalChild,
+              );
+            },
+          );
+        }
+
+        return finalChild;
       },
     );
   }
@@ -136,19 +202,19 @@ class SettingField extends StatelessWidget {
       leading: desc.icon != null
           ? Icon(desc.icon, color: colors.primary, size: 22)
           : null,
-      highlighted: highlighted,
+      highlighted: widget.highlighted,
       trailing: CupertinoSwitch(
         value: value,
         activeTrackColor: colors.primary,
         onChanged: isEnabled
             ? (newVal) async {
-                await executeWrite(context, desc.key, newVal);
+                await SettingField.executeWrite(context, desc.key, newVal);
               }
             : null,
       ),
       onTap: isEnabled
           ? () async {
-              await executeWrite(context, desc.key, !value);
+              await SettingField.executeWrite(context, desc.key, !value);
             }
           : null,
     );
@@ -175,7 +241,7 @@ class SettingField extends StatelessWidget {
       leading: desc.icon != null
           ? Icon(desc.icon, color: colors.primary, size: 22)
           : null,
-      highlighted: highlighted,
+      highlighted: widget.highlighted,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -226,7 +292,7 @@ class SettingField extends StatelessWidget {
               );
 
               if (selected != null && selected != currentVal && context.mounted) {
-                await executeWrite(context, desc.key, selected);
+                await SettingField.executeWrite(context, desc.key, selected);
               }
             }
           : null,
@@ -251,7 +317,7 @@ class SettingField extends StatelessWidget {
       leading: desc.icon != null
           ? Icon(desc.icon, color: colors.primary, size: 22)
           : null,
-      highlighted: highlighted,
+      highlighted: widget.highlighted,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -260,7 +326,7 @@ class SettingField extends StatelessWidget {
             color: value > min ? colors.primary : colors.textTertiary,
             onPressed: isEnabled && value > min
                 ? () async {
-                    await executeWrite(context, desc.key, value - 1);
+                    await SettingField.executeWrite(context, desc.key, value - 1);
                   }
                 : null,
           ),
@@ -280,7 +346,7 @@ class SettingField extends StatelessWidget {
             color: value < max ? colors.primary : colors.textTertiary,
             onPressed: isEnabled && value < max
                 ? () async {
-                    await executeWrite(context, desc.key, value + 1);
+                    await SettingField.executeWrite(context, desc.key, value + 1);
                   }
                 : null,
           ),
@@ -304,7 +370,7 @@ class SettingField extends StatelessWidget {
       leading: desc.icon != null
           ? Icon(desc.icon, color: colors.primary, size: 22)
           : null,
-      highlighted: highlighted,
+      highlighted: widget.highlighted,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -356,7 +422,7 @@ class SettingField extends StatelessWidget {
               );
 
               if (updatedText != null && updatedText != value && context.mounted) {
-                await executeWrite(context, desc.key, updatedText);
+                await SettingField.executeWrite(context, desc.key, updatedText);
               }
             }
           : null,
@@ -381,7 +447,7 @@ class SettingField extends StatelessWidget {
       leading: desc.icon != null
           ? Icon(desc.icon, color: colors.primary, size: 22)
           : null,
-      highlighted: highlighted,
+      highlighted: widget.highlighted,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -448,7 +514,7 @@ class SettingField extends StatelessWidget {
               );
 
               if (picked != null && picked != value && context.mounted) {
-                await executeWrite(context, desc.key, picked);
+                await SettingField.executeWrite(context, desc.key, picked);
               }
             }
           : null,

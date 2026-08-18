@@ -16,7 +16,12 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 
 /// صفحهٔ حساب و هویت با زبان طراحی فوق‌مدرن iOS 26 و افکت‌های کریستالی
 class IdentityGroupScreen extends StatefulWidget {
-  const IdentityGroupScreen({super.key});
+  final String? highlightKey;
+
+  const IdentityGroupScreen({
+    super.key,
+    this.highlightKey,
+  });
 
   @override
   State<IdentityGroupScreen> createState() => _IdentityGroupScreenState();

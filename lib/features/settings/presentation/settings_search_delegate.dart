@@ -113,42 +113,43 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
           ),
           onTap: () {
             close(context, desc);
-            _navigateToGroup(context, desc.group);
+            _navigateToGroup(context, desc.group, highlightKey: desc.key);
           },
         );
       },
     );
   }
 
-  void _navigateToGroup(BuildContext context, SettingsGroup group) {
+  void _navigateToGroup(BuildContext context, SettingsGroup group, {String? highlightKey}) {
     Widget page;
     switch (group) {
       case SettingsGroup.identity:
-        page = const IdentityGroupScreen();
+        page = IdentityGroupScreen(highlightKey: highlightKey);
         break;
       case SettingsGroup.modules:
-        page = const ModulesGroupScreen();
+        page = ModulesGroupScreen(highlightKey: highlightKey);
         break;
       case SettingsGroup.notifications:
-        page = const NotificationsGroupScreen();
+        page = NotificationsGroupScreen(highlightKey: highlightKey);
         break;
       case SettingsGroup.appearance:
         page = AppearanceGroupScreen(
           themeRepository: themeRepository,
           localeRepository: localeRepository,
+          highlightKey: highlightKey,
         );
         break;
       case SettingsGroup.assistant:
-        page = const AssistantPrivacyGroupScreen();
+        page = AssistantPrivacyGroupScreen(highlightKey: highlightKey);
         break;
       case SettingsGroup.dataBackup:
-        page = const DataBackupGroupScreen();
+        page = DataBackupGroupScreen(highlightKey: highlightKey);
         break;
       case SettingsGroup.security:
-        page = const SecurityGroupScreen();
+        page = SecurityGroupScreen(highlightKey: highlightKey);
         break;
       case SettingsGroup.calendar:
-        page = const CalendarGroupScreen();
+        page = CalendarGroupScreen(highlightKey: highlightKey);
         break;
     }
 

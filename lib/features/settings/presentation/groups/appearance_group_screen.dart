@@ -12,10 +12,13 @@ import 'package:ritmo/features/settings/presentation/widgets/settings_section.da
 import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
 
 class AppearanceGroupScreen extends StatefulWidget {
+  final String? highlightKey;
+
   const AppearanceGroupScreen({
     super.key,
     required this.themeRepository,
     required this.localeRepository,
+    this.highlightKey,
   });
 
   final ThemeRepository themeRepository;

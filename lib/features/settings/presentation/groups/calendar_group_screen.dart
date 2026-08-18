@@ -11,7 +11,12 @@ import 'package:ritmo/features/settings/presentation/widgets/settings_ready_gate
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
 
 class CalendarGroupScreen extends StatelessWidget {
-  const CalendarGroupScreen({super.key});
+  final String? highlightKey;
+
+  const CalendarGroupScreen({
+    super.key,
+    this.highlightKey,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,23 +36,24 @@ class CalendarGroupScreen extends StatelessWidget {
               child: Column(
                 children: [
                   // ۱. نمای پیش‌فرض و نمایش تقویم
-                  SettingsSection(
+                  SettingsSection.fromKeys(
                     title: 'نمای پیش‌فرض و تقویم',
-                    children: [
-                      SettingField('calendar_default_scale'),
-                      SettingField('calendar_show_hijri'),
-                      SettingField('calendar_show_occasions'),
+                    keys: const [
+                      'calendar_default_scale',
+                      'calendar_show_hijri',
+                      'calendar_show_occasions',
                     ],
+                    highlightKey: highlightKey,
                   ),
 
                   // ۲. چه چیزی در تقویم دیده شود
                   SettingsSection(
                     title: 'چه چیزی در تقویم دیده شود',
                     children: [
-                      SettingField('calendar_show_tasks'),
-                      SettingField('calendar_show_events'),
-                      SettingField('calendar_show_commitments'),
-                      SettingField('calendar_show_appointments'),
+                      SettingField('calendar_show_tasks', highlight: highlightKey == 'calendar_show_tasks'),
+                      SettingField('calendar_show_events', highlight: highlightKey == 'calendar_show_events'),
+                      SettingField('calendar_show_commitments', highlight: highlightKey == 'calendar_show_commitments'),
+                      SettingField('calendar_show_appointments', highlight: highlightKey == 'calendar_show_appointments'),
                       if (!isSleepEnabled)
                         _buildDisabledModuleRow(
                           context,
@@ -55,7 +61,7 @@ class CalendarGroupScreen extends StatelessWidget {
                           'نیاز به روشن بودن ماژول خواب',
                         )
                       else
-                        SettingField('calendar_show_sleep_band'),
+                        SettingField('calendar_show_sleep_band', highlight: highlightKey == 'calendar_show_sleep_band'),
                       if (!isCycleEnabled)
                         _buildDisabledModuleRow(
                           context,
@@ -69,7 +75,7 @@ class CalendarGroupScreen extends StatelessWidget {
                           'نیازمند فعال‌سازی رضایت صریح در بخش امنیت و حریم خصوصی',
                         )
                       else
-                        SettingField('show_cycle_in_calendar'),
+                        SettingField('show_cycle_in_calendar', highlight: highlightKey == 'show_cycle_in_calendar'),
                     ],
                   ),
 
@@ -94,21 +100,22 @@ class CalendarGroupScreen extends StatelessWidget {
                           'نیاز به روشن بودن ماژول عبادت',
                         ),
                       ] else ...[
-                        SettingField('calendar_show_worship_obligatory'),
-                        SettingField('calendar_show_worship_mustahab'),
-                        SettingField('calendar_show_worship_qada'),
+                        SettingField('calendar_show_worship_obligatory', highlight: highlightKey == 'calendar_show_worship_obligatory'),
+                        SettingField('calendar_show_worship_mustahab', highlight: highlightKey == 'calendar_show_worship_mustahab'),
+                        SettingField('calendar_show_worship_qada', highlight: highlightKey == 'calendar_show_worship_qada'),
                       ],
                     ],
                   ),
 
                   // ۴. رفتار اجندا و گزارش‌ها
-                  SettingsSection(
+                  SettingsSection.fromKeys(
                     title: 'رفتار اجندا و گزارش‌ها',
-                    children: [
-                      SettingField('calendar_overdue_lookback_days'),
-                      SettingField('calendar_compress_recurring'),
-                      SettingField('calendar_morning_brief_enabled'),
+                    keys: const [
+                      'calendar_overdue_lookback_days',
+                      'calendar_compress_recurring',
+                      'calendar_morning_brief_enabled',
                     ],
+                    highlightKey: highlightKey,
                   ),
                 ],
               ),

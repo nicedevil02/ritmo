@@ -15,12 +15,15 @@ class SettingsSection extends StatelessWidget {
     required String title,
     required List<String> keys,
     String? footer,
+    String? highlightKey,
   }) {
     return SettingsSection(
       key: key,
       title: title,
       footer: footer,
-      children: keys.map((k) => SettingField(k)).toList(growable: false),
+      children: keys
+          .map((k) => SettingField(k, highlight: k == highlightKey))
+          .toList(growable: false),
     );
   }
 

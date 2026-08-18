@@ -13,7 +13,12 @@ import 'package:ritmo/features/settings/presentation/widgets/settings_section.da
 import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
 
 class AssistantPrivacyGroupScreen extends StatefulWidget {
-  const AssistantPrivacyGroupScreen({super.key});
+  final String? highlightKey;
+
+  const AssistantPrivacyGroupScreen({
+    super.key,
+    this.highlightKey,
+  });
 
   @override
   State<AssistantPrivacyGroupScreen> createState() => _AssistantPrivacyGroupScreenState();

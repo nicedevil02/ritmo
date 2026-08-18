@@ -17,9 +17,12 @@ import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart'
 import 'package:shamsi_date/shamsi_date.dart';
 
 class DataBackupGroupScreen extends StatefulWidget {
+  final String? highlightKey;
+
   const DataBackupGroupScreen({
     super.key,
     this.onFactoryReset,
+    this.highlightKey,
   });
 
   final VoidCallback? onFactoryReset;

@@ -15,7 +15,12 @@ import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
 
 class ModulesGroupScreen extends StatefulWidget {
-  const ModulesGroupScreen({super.key});
+  final String? highlightKey;
+
+  const ModulesGroupScreen({
+    super.key,
+    this.highlightKey,
+  });
 
   @override
   State<ModulesGroupScreen> createState() => _ModulesGroupScreenState();

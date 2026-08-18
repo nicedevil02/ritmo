@@ -15,7 +15,12 @@ import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart'
 import 'package:sqflite/sqflite.dart';
 
 class NotificationsGroupScreen extends StatefulWidget {
-  const NotificationsGroupScreen({super.key});
+  final String? highlightKey;
+
+  const NotificationsGroupScreen({
+    super.key,
+    this.highlightKey,
+  });
 
   @override
   State<NotificationsGroupScreen> createState() => _NotificationsGroupScreenState();

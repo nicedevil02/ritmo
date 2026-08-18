@@ -576,6 +576,25 @@ $_bridgeScriptBody''';
     }
   };
 
+  // --- 7. Cancellation Implementation ---
+  window.__ritmo_cancelGeneration = function() {
+    try {
+      if (streamCheckTimer) {
+        clearInterval(streamCheckTimer);
+        streamCheckTimer = null;
+      }
+      var stopBtn = document.querySelector(
+        'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button'
+      );
+      if (stopBtn) {
+        stopBtn.click();
+        console.log('[Ritmo] Clicked stop button in DOM on cancel.');
+      }
+    } catch (e) {
+      console.error('[Ritmo] Error cancelling generation:', e);
+    }
+  };
+
   var challengedAtBoot = checkCloudflareStatus();
   autoDismissCookiesAndModals();
   autoCloseSidebar();
@@ -616,4 +635,11 @@ $_bridgeScriptBody''';
 })();
 ''';
   }
+
+  /// Script to cancel any running generation in the DOM and clear watchers
+  static const String cancelScript = '''
+if (typeof window.__ritmo_cancelGeneration === 'function') {
+  window.__ritmo_cancelGeneration();
+}
+''';
 }

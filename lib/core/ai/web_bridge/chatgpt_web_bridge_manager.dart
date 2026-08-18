@@ -645,7 +645,7 @@ if (typeof window.__ritmo_resume === 'function') {
     _resetInactivityTimer();
   }
 
-  /// Cancels the current stream if active
+  /// Cancels the current stream if active and stops generation in the WebView
   void cancelCurrentStream() {
     _generationTimer?.cancel();
     _generationTimer = null;
@@ -656,6 +656,13 @@ if (typeof window.__ritmo_resume === 'function') {
     _currentRequestId = null;
     _pendingRequest = null;
     _setStatus(ChatGptBridgeStatus.ready);
+
+    try {
+      _controller?.runJavaScript(ChatGptJsInjector.cancelScript);
+    } catch (e, st) {
+      RitmoLog.error('ChatGptWebBridge', 'Error sending cancel script to WebView: $e', e, st);
+    }
+
     controller?.close();
     _resetInactivityTimer();
   }
@@ -720,7 +727,12 @@ if (typeof window.__ritmo_resume === 'function') {
       recentHistory: recentHistory,
     );
 
-    final streamController = StreamController<String>();
+    final streamController = StreamController<String>(
+      onCancel: () {
+        RitmoLog.debug('ChatGptWebBridge', 'Stream subscriber cancelled.');
+        cancelCurrentStream();
+      },
+    );
     _currentStreamController = streamController;
     _emittedText = '';
 

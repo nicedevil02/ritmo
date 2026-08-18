@@ -210,6 +210,15 @@ class DayPlanTables {
       ''');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_planning_reviews_cycle ON planning_reviews(cycleId);');
 
+      // 7. Day Templates (CAL-46)
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS day_templates (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          payloadJson TEXT NOT NULL,
+          createdAt INTEGER NOT NULL
+        );
+      ''');
     } catch (e, st) {
       debugPrint('[DAY_PLAN_TABLES] Error in ensureSchema: $e\n$st');
     }

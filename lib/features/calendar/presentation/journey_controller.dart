@@ -22,6 +22,7 @@ import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
+import 'package:ritmo/features/calendar/data/day_template_repository.dart';
 import 'package:ritmo/features/calendar/presentation/logic/gap_finder.dart';
 import 'package:ritmo/features/calendar/presentation/logic/timeline_snapping.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -907,6 +908,118 @@ class JourneyController extends ChangeNotifier {
     }
   }
 
+  Future<DayTemplate?> saveCurrentDayAsTemplate(String templateName, {DayTemplateRepository? templateRepo}) async {
+    if (_snapshot == null || _snapshot!.items.isEmpty) return null;
+    final timedItems = _snapshot!.items.where((i) => i.isTimed).toList();
+    if (timedItems.isEmpty) return null;
+
+    final slots = timedItems.map((item) {
+      return DayTemplateSlot(
+        title: item.title,
+        timeOfDay: item.timeOfDay ?? CalendarDefaults.fallbackTimeOfDay,
+        durationMinutes: DurationBounds.sanitize(item.durationMinutes),
+        domainName: item.domain.name,
+        kindName: item.kind.name,
+        categoryName: item.category.name,
+        sourceId: item.sourceId,
+      );
+    }).toList();
+
+    final template = DayTemplate(
+      id: 'dt_${DateTime.now().millisecondsSinceEpoch}',
+      name: templateName.trim().isEmpty ? 'قالب بدون نام' : templateName.trim(),
+      slots: slots,
+      createdAt: DateTime.now(),
+    );
+
+    final repo = templateRepo ?? DayTemplateRepository();
+    await repo.saveTemplate(template);
+    return template;
+  }
+
+  Future<bool> applyTemplate(DayTemplate template) async {
+    if (_isDisposed || _isExecutingAction) return false;
+    _isExecutingAction = true;
+    notifyListeners();
+
+    try {
+      final dateStr = DateKey.of(_selectedDate);
+      final currentItems = _snapshot?.items ?? const <AgendaItem>[];
+      if (currentItems.isEmpty || template.slots.isEmpty) {
+        _isExecutingAction = false;
+        notifyListeners();
+        return false;
+      }
+
+      final mutations = <({AgendaItem item, String newTimeOfDay, int newDurationMinutes, _TemplateItemRestoreState restore})>[];
+
+      for (final slot in template.slots) {
+        AgendaItem? match;
+        for (final i in currentItems) {
+          if ((slot.sourceId != null && i.sourceId == slot.sourceId) ||
+              (i.title == slot.title && (slot.domainName == null || i.domain.name == slot.domainName))) {
+            match = i;
+            break;
+          }
+        }
+
+        if (match == null) continue;
+
+        OccurrenceOverride? prevOverride;
+        if (match.domain == AgendaDomain.routine) {
+          prevOverride = await _overrideRepo.readOne(
+            match.domain.name,
+            match.sourceId,
+            dateStr,
+          );
+        }
+
+        final restore = _TemplateItemRestoreState(
+          item: match,
+          previousTimeOfDay: match.timeOfDay,
+          previousDurationMinutes: match.durationMinutes,
+          previousOverride: prevOverride,
+        );
+
+        mutations.add((
+          item: match,
+          newTimeOfDay: slot.timeOfDay,
+          newDurationMinutes: slot.durationMinutes,
+          restore: restore,
+        ));
+      }
+
+      if (mutations.isEmpty) {
+        _isExecutingAction = false;
+        notifyListeners();
+        return false;
+      }
+
+      final command = _ApplyDayTemplateCommand(
+        actionHandler: _actionHandler,
+        overrideRepo: _overrideRepo,
+        template: template,
+        targetDateStr: dateStr,
+        mutations: mutations,
+      );
+
+      await command.execute();
+      CommandStack.instance.push(command);
+      RitmoHapticsPolicy.success();
+      await refresh();
+      return true;
+    } catch (e, stackTrace) {
+      RitmoLog.error('JourneyController', 'applyTemplate failed', e, stackTrace);
+      _errorMessage = 'خطا در اعمال قالب روز';
+      return false;
+    } finally {
+      if (!_isDisposed) {
+        _isExecutingAction = false;
+        notifyListeners();
+      }
+    }
+  }
+
   void startItemResize(AgendaItem item) {
     if (_isDisposed) return;
     _manipulatingItemId = item.id;
@@ -1478,5 +1591,92 @@ class _PostponeItemCommand extends _CalendarCommand {
         }
       }
     }
+  }
+}
+
+class _TemplateItemRestoreState {
+  _TemplateItemRestoreState({
+    required this.item,
+    required this.previousTimeOfDay,
+    required this.previousDurationMinutes,
+    required this.previousOverride,
+  });
+
+  final AgendaItem item;
+  final String? previousTimeOfDay;
+  final int? previousDurationMinutes;
+  final OccurrenceOverride? previousOverride;
+}
+
+class _ApplyDayTemplateCommand implements UndoableCommand {
+  _ApplyDayTemplateCommand({
+    required this.actionHandler,
+    required this.overrideRepo,
+    required this.template,
+    required this.targetDateStr,
+    required this.mutations,
+  });
+
+  final AgendaActionHandler actionHandler;
+  final OccurrenceOverrideRepository overrideRepo;
+  final DayTemplate template;
+  final String targetDateStr;
+  final List<({AgendaItem item, String newTimeOfDay, int newDurationMinutes, _TemplateItemRestoreState restore})> mutations;
+
+  @override
+  String get description => 'اعمال قالب «${template.name}»';
+
+  @override
+  Future<void> execute() async {
+    final nowIso = DateTime.now().toIso8601String();
+    for (final m in mutations) {
+      if (m.item.domain == AgendaDomain.routine) {
+        final override = OccurrenceOverride(
+          sourceType: m.item.domain.name,
+          sourceId: m.item.sourceId,
+          dateStr: targetDateStr,
+          timeOfDay: m.newTimeOfDay,
+          durationMinutes: m.newDurationMinutes,
+          status: 'MODIFIED',
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        );
+        await overrideRepo.upsert(override);
+      } else {
+        await actionHandler.updateAgendaItemTimeAndDuration(
+          item: m.item,
+          newTimeOfDay: m.newTimeOfDay,
+          newDurationMinutes: m.newDurationMinutes,
+        );
+      }
+    }
+    DayAgendaService.instance.invalidateDate(targetDateStr);
+    RitmoEvents.notifyRoutineChanged();
+  }
+
+  @override
+  Future<void> undo() async {
+    for (final m in mutations) {
+      if (m.item.domain == AgendaDomain.routine) {
+        final prev = m.restore.previousOverride;
+        if (prev != null) {
+          await overrideRepo.upsert(prev);
+        } else {
+          await overrideRepo.remove(
+            m.item.domain.name,
+            m.item.sourceId,
+            targetDateStr,
+          );
+        }
+      } else {
+        await actionHandler.updateAgendaItemTimeAndDuration(
+          item: m.item,
+          newTimeOfDay: m.restore.previousTimeOfDay,
+          newDurationMinutes: m.restore.previousDurationMinutes,
+        );
+      }
+    }
+    DayAgendaService.instance.invalidateDate(targetDateStr);
+    RitmoEvents.notifyRoutineChanged();
   }
 }

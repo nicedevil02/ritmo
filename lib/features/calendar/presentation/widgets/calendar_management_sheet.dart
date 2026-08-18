@@ -18,6 +18,8 @@ class CalendarManagementSheet extends StatefulWidget {
     required this.onOpenDayMarkPicker,
     required this.onOpenAllPlans,
     required this.onRefresh,
+    this.onSaveDayTemplate,
+    this.onApplyDayTemplate,
   });
 
   final DateTime selectedDate;
@@ -28,6 +30,8 @@ class CalendarManagementSheet extends StatefulWidget {
   final VoidCallback onOpenDayMarkPicker;
   final VoidCallback onOpenAllPlans;
   final VoidCallback onRefresh;
+  final VoidCallback? onSaveDayTemplate;
+  final VoidCallback? onApplyDayTemplate;
 
   static Future<void> show({
     required BuildContext context,
@@ -39,6 +43,8 @@ class CalendarManagementSheet extends StatefulWidget {
     required VoidCallback onOpenDayMarkPicker,
     required VoidCallback onOpenAllPlans,
     required VoidCallback onRefresh,
+    VoidCallback? onSaveDayTemplate,
+    VoidCallback? onApplyDayTemplate,
   }) {
     RitmoHaptics.sheetOpen();
     return showModalBottomSheet<void>(
@@ -54,6 +60,8 @@ class CalendarManagementSheet extends StatefulWidget {
         onOpenDayMarkPicker: onOpenDayMarkPicker,
         onOpenAllPlans: onOpenAllPlans,
         onRefresh: onRefresh,
+        onSaveDayTemplate: onSaveDayTemplate,
+        onApplyDayTemplate: onApplyDayTemplate,
       ),
     ).then((result) {
       RitmoHaptics.sheetClose();
@@ -309,6 +317,28 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
                         colors: colors,
                         onTap: _showMorningBrief,
                       ),
+                      if (widget.onSaveDayTemplate != null)
+                        _buildActionTile(
+                          icon: Icons.bookmark_add_outlined,
+                          title: 'ذخیره به‌عنوان قالب روز',
+                          subtitle: 'ذخیرهٔ چیدمان زمانی آیتم‌های این روز برای استفادهٔ مجدد',
+                          colors: colors,
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            widget.onSaveDayTemplate!();
+                          },
+                        ),
+                      if (widget.onApplyDayTemplate != null)
+                        _buildActionTile(
+                          icon: Icons.dashboard_customize_outlined,
+                          title: 'اعمال قالب روز',
+                          subtitle: 'بارگذاری و چینش زمان‌بندی از روی قالب‌های ذخیره‌شده',
+                          colors: colors,
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            widget.onApplyDayTemplate!();
+                          },
+                        ),
 
                       const SizedBox(height: RitmoSpacing.md),
                     ],

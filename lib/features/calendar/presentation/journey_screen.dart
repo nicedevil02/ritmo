@@ -19,6 +19,7 @@ import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/calendar/data/day_mark_repository.dart';
+import 'package:ritmo/features/calendar/data/day_template_repository.dart';
 import 'package:ritmo/features/calendar/data/occasions_calendar_source.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
 import 'package:ritmo/features/calendar/presentation/models/now_pill_view_model.dart';
@@ -299,6 +300,135 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
+  Future<void> _saveDayAsTemplate() async {
+    final controller = TextEditingController(text: 'قالب روز ${_controller.selectedDate.day}');
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('ذخیره به‌عنوان قالب روز'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'نام قالب',
+            hintText: 'مثلاً: روز مطالعه، روز کاری فشرده',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('انصراف'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('ذخیره'),
+          ),
+        ],
+      ),
+    );
+
+    if (name == null || name.trim().isEmpty) return;
+    final saved = await _controller.saveCurrentDayAsTemplate(name.trim());
+    if (!mounted) return;
+    if (saved != null) {
+      RitmoToast.show(context, 'قالب «${saved.name}» با موفقیت ذخیره شد.');
+    } else {
+      RitmoToast.show(context, 'آیتم زمان‌داری برای ذخیره در این روز وجود ندارد.', icon: Icons.warning_amber_rounded);
+    }
+  }
+
+  Future<void> _applyDayTemplate() async {
+    final repo = DayTemplateRepository();
+    final templates = await repo.getAllTemplates();
+    if (!mounted) return;
+
+    if (templates.isEmpty) {
+      RitmoToast.show(context, 'هنوز قالبی ذخیره نشده است.', icon: Icons.info_outline);
+      return;
+    }
+
+    final selectedTemplate = await showModalBottomSheet<DayTemplate>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final colors = ctx.colors;
+        return Container(
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.card)),
+          ),
+          padding: const EdgeInsets.all(RitmoSpacing.lg),
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('انتخاب قالب برای اعمال', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                const SizedBox(height: RitmoSpacing.md),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: templates.length,
+                    itemBuilder: (listCtx, i) {
+                      final t = templates[i];
+                      return ListTile(
+                        leading: Icon(Icons.dashboard_customize_outlined, color: colors.primary),
+                        title: Text(t.name, style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                        subtitle: Text('${toPersianDigits(t.slots.length.toString())} بلاک زمانی', style: TextStyle(color: colors.textSecondary)),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete_outline, color: colors.error, size: 20),
+                          onPressed: () async {
+                            await repo.deleteTemplate(t.id);
+                            if (listCtx.mounted) {
+                              Navigator.of(listCtx).pop();
+                            }
+                            unawaited(_applyDayTemplate());
+                          },
+                        ),
+                        onTap: () => Navigator.of(listCtx).pop(t),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selectedTemplate == null || !mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('اعمال قالب «${selectedTemplate.name}»'),
+        content: Text('آیا می‌خواهید زمان‌بندی ${toPersianDigits(selectedTemplate.slots.length.toString())} آیتم این روز مطابق این قالب تنظیم شود؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('انصراف'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('اعمال قالب'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final success = await _controller.applyTemplate(selectedTemplate);
+      if (!mounted) return;
+      if (success) {
+        RitmoToast.show(context, 'قالب «${selectedTemplate.name}» با موفقیت اعمال شد.');
+      } else {
+        RitmoToast.show(context, 'هیچ آیتم منطبقی برای اعمال این قالب در این روز یافت نشد.', icon: Icons.warning_amber_rounded);
+      }
+    }
+  }
+
   String _getHeroDateTitle(DateTime date) {
     return CalendarDateFormatter.formatSelectedDateTitle(
       date,
@@ -503,6 +633,8 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                                   onOpenDayMarkPicker: () => _showDayMarkMenu(context, selectedDate),
                                   onOpenAllPlans: _openAllPlans,
                                   onRefresh: _controller.refresh,
+                                  onSaveDayTemplate: _saveDayAsTemplate,
+                                  onApplyDayTemplate: _applyDayTemplate,
                                 ),
                               ),
                               if (_registryHealthCount > 0)

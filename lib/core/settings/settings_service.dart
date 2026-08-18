@@ -137,6 +137,16 @@ class SettingsService {
     }
   }
 
+  @visibleForTesting
+  void resetForTesting() {
+    _initialized = false;
+    _initFuture = null;
+    _initError = null;
+    _cache.clear();
+    _agendaDebounceTimer?.cancel();
+    _agendaDebounceTimer = null;
+  }
+
   Future<bool> retryInit() async {
     _initialized = false;
     _initFuture = null;

@@ -40,6 +40,7 @@ void main() {
         },
       );
       DatabaseHelper.instance.overrideDatabaseForTesting(db);
+      SettingsService.instance.resetForTesting();
       await SettingsService.instance.init();
     });
 

@@ -50,7 +50,6 @@ void main() {
 
       final skipCmd = JourneyController.createSkipItemCommand(
         item: item,
-        onRefresh: () async {},
         overrideRepo: repo,
       );
 

@@ -314,7 +314,6 @@ class JourneyController extends ChangeNotifier {
       final command = _PostponeItemCommand(
         item: item,
         days: days,
-        onRefresh: refresh,
       );
       await command.execute();
       CommandStack.instance.push(command);
@@ -340,13 +339,11 @@ class JourneyController extends ChangeNotifier {
       if (item.domain == AgendaDomain.routine) {
         command = _SkipRoutineCommand(
           item: item,
-          onRefresh: refresh,
           kernel: _kernel,
         );
       } else {
         command = _SkipItemCommand(
           item: item,
-          onRefresh: refresh,
         );
       }
       await command.execute();
@@ -395,7 +392,6 @@ class JourneyController extends ChangeNotifier {
         item: item,
         oldTimeOfDay: oldTimeOfDay,
         newTimeOfDay: newTimeOfDay,
-        onRefresh: refresh,
         scope: scope,
       );
       await command.execute();
@@ -428,7 +424,6 @@ class JourneyController extends ChangeNotifier {
         item: item,
         oldDuration: oldDuration,
         newDuration: newDurationMinutes,
-        onRefresh: refresh,
         scope: scope,
       );
       await command.execute();
@@ -687,7 +682,6 @@ class JourneyController extends ChangeNotifier {
         item: item,
         newTimeOfDay: newTimeStr,
         newDurationMinutes: durationMinutes,
-        onRefresh: refresh,
       );
       await command.execute();
       CommandStack.instance.push(command);
@@ -715,7 +709,6 @@ class JourneyController extends ChangeNotifier {
         item: item,
         oldTimeOfDay: item.timeOfDay,
         oldDurationMinutes: item.durationMinutes,
-        onRefresh: refresh,
       );
       await command.execute();
       CommandStack.instance.push(command);
@@ -754,7 +747,6 @@ class JourneyController extends ChangeNotifier {
     required AgendaItem item,
     required String oldTimeOfDay,
     required String newTimeOfDay,
-    required Future<void> Function() onRefresh,
     CalendarEditScope scope = CalendarEditScope.thisDayOnly,
     OccurrenceOverrideRepository? overrideRepo,
   }) => _MoveItemCommand(
@@ -762,7 +754,6 @@ class JourneyController extends ChangeNotifier {
     item: item,
     oldTimeOfDay: oldTimeOfDay,
     newTimeOfDay: newTimeOfDay,
-    onRefresh: onRefresh,
     scope: scope,
     overrideRepo: overrideRepo,
   );
@@ -773,7 +764,6 @@ class JourneyController extends ChangeNotifier {
     required AgendaItem item,
     required int oldDuration,
     required int newDuration,
-    required Future<void> Function() onRefresh,
     CalendarEditScope scope = CalendarEditScope.thisDayOnly,
     OccurrenceOverrideRepository? overrideRepo,
   }) => _ResizeItemCommand(
@@ -781,7 +771,6 @@ class JourneyController extends ChangeNotifier {
     item: item,
     oldDuration: oldDuration,
     newDuration: newDuration,
-    onRefresh: onRefresh,
     scope: scope,
     overrideRepo: overrideRepo,
   );
@@ -789,11 +778,9 @@ class JourneyController extends ChangeNotifier {
   @visibleForTesting
   static UndoableCommand createSkipItemCommand({
     required AgendaItem item,
-    required Future<void> Function() onRefresh,
     OccurrenceOverrideRepository? overrideRepo,
   }) => _SkipItemCommand(
     item: item,
-    onRefresh: onRefresh,
     overrideRepo: overrideRepo,
   );
 
@@ -801,13 +788,11 @@ class JourneyController extends ChangeNotifier {
   static UndoableCommand createPostponeItemCommand({
     required AgendaItem item,
     int days = 1,
-    required Future<void> Function() onRefresh,
     OccurrenceOverrideRepository? overrideRepo,
     SimpleTaskRepository? taskRepo,
   }) => _PostponeItemCommand(
     item: item,
     days: days,
-    onRefresh: onRefresh,
     overrideRepo: overrideRepo,
     taskRepo: taskRepo,
   );
@@ -818,11 +803,9 @@ enum CalendarEditScope { thisDayOnly, allFutureDays }
 abstract class _CalendarCommand implements UndoableCommand {
   _CalendarCommand({
     required this.item,
-    required this.onRefresh,
   });
 
   final AgendaItem item;
-  final Future<void> Function() onRefresh;
 
   /// Subclasses specify whether they modify multiple days (e.g. allFutureDays).
   bool get affectsMultipleDays => false;
@@ -836,23 +819,22 @@ abstract class _CalendarCommand implements UndoableCommand {
   @override
   Future<void> execute() async {
     await applyForward();
-    _invalidateCache();
-    await onRefresh();
+    _invalidateCacheAndNotify();
   }
 
   @override
   Future<void> undo() async {
     await applyBackward();
-    _invalidateCache();
-    await onRefresh();
+    _invalidateCacheAndNotify();
   }
 
-  void _invalidateCache() {
+  void _invalidateCacheAndNotify() {
     if (affectsMultipleDays) {
       DayAgendaService.instance.invalidateAll();
     } else {
       DayAgendaService.instance.invalidateDate(item.dateStr);
     }
+    RitmoEvents.notifyRoutineChanged();
   }
 }
 
@@ -862,7 +844,6 @@ class _MoveItemCommand extends _CalendarCommand {
     required super.item,
     required this.oldTimeOfDay,
     required this.newTimeOfDay,
-    required super.onRefresh,
     this.scope = CalendarEditScope.thisDayOnly,
     OccurrenceOverrideRepository? overrideRepo,
   }) : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository();
@@ -960,7 +941,6 @@ class _ResizeItemCommand extends _CalendarCommand {
     required super.item,
     required this.oldDuration,
     required this.newDuration,
-    required super.onRefresh,
     this.scope = CalendarEditScope.thisDayOnly,
     OccurrenceOverrideRepository? overrideRepo,
   }) : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository();
@@ -1058,7 +1038,6 @@ class _ScheduleItemCommand extends _CalendarCommand {
     required super.item,
     required this.newTimeOfDay,
     required this.newDurationMinutes,
-    required super.onRefresh,
   });
 
   final AgendaActionHandler actionHandler;
@@ -1089,7 +1068,6 @@ class _UnscheduleItemCommand extends _CalendarCommand {
     required super.item,
     required this.oldTimeOfDay,
     required this.oldDurationMinutes,
-    required super.onRefresh,
   });
 
   final AgendaActionHandler actionHandler;
@@ -1119,7 +1097,6 @@ class _UnscheduleItemCommand extends _CalendarCommand {
 class _SkipRoutineCommand extends _CalendarCommand {
   _SkipRoutineCommand({
     required super.item,
-    required super.onRefresh,
     required this.kernel,
   });
 
@@ -1151,7 +1128,6 @@ class _SkipRoutineCommand extends _CalendarCommand {
 class _SkipItemCommand extends _CalendarCommand {
   _SkipItemCommand({
     required super.item,
-    required super.onRefresh,
     OccurrenceOverrideRepository? overrideRepo,
   }) : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository();
 
@@ -1200,7 +1176,6 @@ class _PostponeItemCommand extends _CalendarCommand {
   _PostponeItemCommand({
     required super.item,
     required this.days,
-    required super.onRefresh,
     OccurrenceOverrideRepository? overrideRepo,
     SimpleTaskRepository? taskRepo,
   })  : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository(),

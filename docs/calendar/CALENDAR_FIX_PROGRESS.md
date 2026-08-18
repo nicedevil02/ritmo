@@ -25,8 +25,8 @@
 | CAL-21 | یک fallback واحد برای snapshot تهی | C | DONE | e394cf6 | ایجاد _snapshotForSelectedDate و تضمین بازگشت اسنپ‌شات خالی معتبر در تمام مقیاس‌ها |
 | CAL-22 | loadDefaultScale: خواندن تنظیمات از SettingsService | C | DONE | 52df4f2 | خواندن مقیاس از SettingsService، بارگذاری واقعی داده‌ها، و اولویت‌بخشی به scale صریح |
 | CAL-23 | setScale: ذخیره مقیاس در تنظیمات | C | DONE | a6c4352 | ذخیرهٔ ناهمگام مقیاس انتخابی در SettingsService با نگاشت 1-به-1 نام enum |
-| CAL-24 | طوفان رفرش: ادغام دو منبع رویداد و اعمال debounce | C | DONE | pending | اعمال debounce 250ms، فیلتر رویدادهای خارج از پنجرهٔ فعال، و جایگزینی زنجیره if با Set |
-| CAL-25 | نشتی حافظه: مدیریت اشتراک CommandStack | C | TODO | - | - |
+| CAL-24 | طوفان رفرش: ادغام دو منبع رویداد و اعمال debounce | C | DONE | abd52f8 | اعمال debounce 250ms، فیلتر رویدادهای خارج از پنجرهٔ فعال، و جایگزینی زنجیره if با Set |
+| CAL-25 | نشتی حافظه: مدیریت اشتراک CommandStack | C | DONE | pending | حذف closureهای onRefresh از دستورات و مستقل‌سازی پشته با سقف ظرفیت ۵۰ آیتم |
 | CAL-26 | درگ و ریسایز: اعتبارسنجی و تشخیص تداخل | D | TODO | - | - |
 | CAL-27 | محاسبهٔ totalLanes: خوشه‌بندی هم‌پوشانی تراگذر | D | TODO | - | - |
 | CAL-28 | کارت overflow: عدم شمارش مجدد آیتم‌های دیده‌شده | D | TODO | - | - |

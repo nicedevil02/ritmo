@@ -73,7 +73,6 @@ void main() {
         item: item,
         oldDuration: 30,
         newDuration: 45,
-        onRefresh: () async {},
         overrideRepo: repo,
       );
       await resizeCmd.execute();
@@ -89,7 +88,6 @@ void main() {
         item: item.copyWith(durationMinutes: 45),
         oldTimeOfDay: '07:00',
         newTimeOfDay: '09:30',
-        onRefresh: () async {},
         overrideRepo: repo,
       );
       await moveCmd.execute();
@@ -171,7 +169,6 @@ void main() {
         item: item,
         oldTimeOfDay: '07:00',
         newTimeOfDay: '10:00',
-        onRefresh: () async {},
         scope: CalendarEditScope.allFutureDays,
         overrideRepo: repo,
       );

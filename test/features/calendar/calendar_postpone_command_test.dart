@@ -85,7 +85,6 @@ void main() {
       final cmd = JourneyController.createPostponeItemCommand(
         item: item,
         days: 1,
-        onRefresh: () async {},
         overrideRepo: repo,
         taskRepo: SimpleTaskRepository.instance,
       );
@@ -132,7 +131,6 @@ void main() {
       final cmd = JourneyController.createPostponeItemCommand(
         item: item,
         days: 2,
-        onRefresh: () async {},
         overrideRepo: repo,
         taskRepo: SimpleTaskRepository.instance,
       );
@@ -166,7 +164,6 @@ void main() {
       final cmd = JourneyController.createPostponeItemCommand(
         item: item,
         days: 1,
-        onRefresh: () async {},
         overrideRepo: repo,
       );
 

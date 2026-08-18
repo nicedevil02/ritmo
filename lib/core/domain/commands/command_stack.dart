@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 /// An abstract command that can be executed and undone.
 abstract class UndoableCommand {
@@ -12,12 +12,17 @@ class CommandStack {
   CommandStack._();
   static final CommandStack instance = CommandStack._();
 
+  static const int maxStackDepth = 50;
   final List<UndoableCommand> _undoStack = [];
 
   bool get canUndo => _undoStack.isNotEmpty;
+  int get length => _undoStack.length;
 
   void push(UndoableCommand command) {
     _undoStack.add(command);
+    if (_undoStack.length > maxStackDepth) {
+      _undoStack.removeAt(0);
+    }
   }
 
   Future<bool> undoLast() async {
@@ -26,8 +31,8 @@ class CommandStack {
     try {
       await command.undo();
       return true;
-    } catch (e) {
-      debugPrint('[CommandStack] Error undoing command "${command.description}": $e');
+    } catch (e, st) {
+      RitmoLog.error('CommandStack', 'Error undoing command "${command.description}"', e, st);
       return false;
     }
   }

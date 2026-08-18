@@ -942,6 +942,16 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       return;
     }
 
+    if (_lockedSource != null && _lockedSource != BridgeSource.dom && src == BridgeSource.dom) {
+      BridgeTraceLog.instance.addEntry(
+        type: 'chunk_dropped',
+        source: source,
+        note: 'dropped_competing_dom_chunk (locked: ${_lockedSource?.name})',
+        level: BridgeTraceLevel.info,
+      );
+      return;
+    }
+
     _acquireSourceLockIfNeeded(src);
 
     AccumulatorDelta? result;

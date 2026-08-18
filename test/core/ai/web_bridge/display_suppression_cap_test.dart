@@ -9,15 +9,15 @@ void main() {
 
   group('A-48: Display Suppression Watchdog and Partial Tag Handling', () {
     test('AgentToolCallParser detects open tool tags for suppression', () {
-      const partialTag = 'سلام <ritmo-tool name="routine.create">{"title": "ورزش"';
+      const partialTag = 'سلام <tool_call>{"name": "routine.create", "parameters": {"title": "ورزش"}';
       final scan = AgentToolCallParser.scan(partialTag);
 
       expect(scan.hasOpenTag, isTrue);
-      expect(scan.cleanText, 'سلام ');
+      expect(scan.cleanText, 'سلام');
     });
 
     test('AgentToolCallParser recognizes closed tags and releases suppression', () {
-      const closedTag = 'سلام <ritmo-tool name="routine.create">{"title": "ورزش"}</ritmo-tool> ادامه گفتگو';
+      const closedTag = 'سلام <tool_call>{"name": "routine.create", "parameters": {"title": "ورزش"}}</tool_call> ادامه گفتگو';
       final scan = AgentToolCallParser.scan(closedTag);
 
       expect(scan.hasOpenTag, isFalse);
@@ -39,7 +39,7 @@ void main() {
     });
 
     test('AgentToolCallParser cleanForDisplay handles unclosed tag gracefully when released', () {
-      final text = 'پاسخ کاربر <ritmo-tool name="bad.tool"> متن خیلی طولانی بدون بستن تگ...';
+      const text = 'پاسخ کاربر <ritmo-tool name="bad.tool"> متن خیلی طولانی بدون بستن تگ...';
       final cleaned = AgentToolCallParser.cleanForDisplay(text);
       expect(cleaned, isNotEmpty);
       expect(cleaned.contains('پاسخ کاربر'), isTrue);

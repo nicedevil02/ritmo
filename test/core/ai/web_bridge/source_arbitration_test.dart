@@ -68,6 +68,8 @@ void main() {
       // Verify trace log recorded source_locked
       final traceEntries = BridgeTraceLog.instance.entries;
       expect(traceEntries.any((e) => e.type == 'source_locked'), isTrue);
+
+      await streamCtrl.close();
     });
 
     test('resets locked source upon completion or new prompt', () {

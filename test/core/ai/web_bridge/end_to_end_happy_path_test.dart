@@ -71,7 +71,7 @@ void main() {
           message: '{"type":"chunk","delta":" برنامه روز شما آماده است: ","fullText":"سلام! برنامه روز شما آماده است: ","source":"fetch","requestId":"req_e2e_001"}',
         ),
       );
-      expect(manager.accumulator.text, 'سلام! برنامه روز شما آماده است: ');
+      expect(manager.accumulator.text, 'سلام! برنامه روز شما آماده است:');
 
       manager.handleJsMessageForTest(
         const JavaScriptMessage(
@@ -88,7 +88,9 @@ void main() {
       );
 
       expect(manager.status, ChatGptBridgeStatus.ready);
-      expect(manager.accumulator.text, 'سلام! برنامه روز شما آماده است: ۱. ورزش صبحگاهی');
+      expect(manager.accumulator.isEmpty, isTrue);
+
+      await streamCtrl.close();
     });
   });
 }

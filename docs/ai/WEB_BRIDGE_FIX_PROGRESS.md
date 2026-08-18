@@ -145,7 +145,7 @@
 
 ### ۵-۳ — آزمون‌های جامع
 - `flutter analyze lib/core/ai/ lib/features/profile/presentation/web_bridge_diagnostics_screen.dart lib/features/profile/presentation/ai_connection_screen.dart lib/features/assistant/ lib/features/chat/ test/core/ai/`: **No issues found! (0 errors, 0 warnings)**
-- `flutter test test/core/ai/`: **255/255 Tests Passed!**
+- `flutter test test/core/ai/`: **271/271 Tests Passed!**
 
 ---
 
@@ -153,14 +153,31 @@
 
 | شناسه | شرح تسک | وضعیت | کامیت | توضیحات فنی |
 | --- | --- | --- | --- | --- |
-| A-39 | صفحهٔ جامع تشخیص و مانیتورینگ پل هوش مصنوعی وب | DONE | pending | ایجاد WebBridgeDiagnosticsScreen شامل کارت وضعیت چرخه حیات، گرید سلامت سلکتورهای DOM، گزارش ردیاب لاگ زنده |
-| A-40 | دکمه و سازوکار بازیابی دستی پاسخ | DONE | pending | اتصال harvestVisibleAnswer به دکمهٔ «بازیابی پاسخ از مرورگر» و کپی در حافظه در صورت قطعی یا تایم‌اوت |
-| A-41 | جدول قطعی حالات خالی و خطا با اقدام‌های شفاف | DONE | pending | پیاده‌سازی راهنمای خطای فارسی و کلیدهای بازیابی در AiChatScreen و AssistantSheet طبق جدول ماتریس خطا |
-| A-42 | محلی‌سازی کامل پیام‌های دامنهٔ پل وب | DONE | pending | انتقال تمام پیام‌ها به app_fa.arb و app_en.arb با پیشوند bridge، افزودن messageKey به WebBridgeException و اجرای flutter gen-l10n |
-| A-43 | بازسازی تایپوگرافی و توکن‌های طراحی مودال‌ها | DONE | pending | تبدیل تمام fontSizeهای هاردکد به Theme.of(context).textTheme در ChatGptAuthModal, CloudflareChallengeModal, ChatGptMiniPreview, BridgeStatusChip و کامپوننت‌های ایجنت |
-| A-44 | پیام‌های پلکانی در حین انتظار در AgentStreamPresenter | DONE | pending | پیاده‌سازی getProgressiveStatusText با پیام‌های تفکیک‌شده بر اساس مراحل sending, awaitingFirstToken (<=8s, <=20s, >20s), streaming |
-| A-45 | بررسی زودهنگام وضعیت احراز هویت و کلادفلر پیش از مصرف پرامپت | DONE | pending | گیت‌های اولیه در sendPrompt و waitForComposerReady برای جلوگیری از مصرف نوبت در وضعیت‌های unauthenticated و challenge |
-| A-46 | اتصال BridgeStatusChip به صفحهٔ تشخیص در وضعیت خطا | DONE | pending | ناوبری خودکار به WebBridgeDiagnosticsScreen با لمس چیپ در وضعیت قرمز خطا و افزودن دکمه در AiConnectionScreen |
-| A-47 | دسترسی دائمی به پنجرهٔ مرورگر چت‌جی‌پی‌تی در سربرگ | DONE | pending | افزودن دکمهٔ همیشگی «مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی» در AppBar صفحه چت و هدر شیت دستیار با فراخوانی خودکار ensureBooted |
+| A-39 | صفحهٔ جامع تشخیص و مانیتورینگ پل هوش مصنوعی وب | DONE | b952702 | ایجاد WebBridgeDiagnosticsScreen شامل کارت وضعیت چرخه حیات، گرید سلامت سلکتورهای DOM، گزارش ردیاب لاگ زنده |
+| A-40 | دکمه و سازوکار بازیابی دستی پاسخ | DONE | b952702 | اتصال harvestVisibleAnswer به دکمهٔ «بازیابی پاسخ از مرورگر» و کپی در حافظه در صورت قطعی یا تایم‌اوت |
+| A-41 | جدول قطعی حالات خالی و خطا با اقدام‌های شفاف | DONE | b952702 | پیاده‌سازی راهنمای خطای فارسی و کلیدهای بازیابی در AiChatScreen و AssistantSheet طبق جدول ماتریس خطا |
+| A-42 | محلی‌سازی کامل پیام‌های دامنهٔ پل وب | DONE | b952702 | انتقال تمام پیام‌ها به app_fa.arb و app_en.arb با پیشوند bridge، افزودن messageKey به WebBridgeException و اجرای flutter gen-l10n |
+| A-43 | بازسازی تایپوگرافی و توکن‌های طراحی مودال‌ها | DONE | b952702 | تبدیل تمام fontSizeهای هاردکد به Theme.of(context).textTheme در ChatGptAuthModal, CloudflareChallengeModal, ChatGptMiniPreview, BridgeStatusChip و کامپوننت‌های ایجنت |
+| A-44 | پیام‌های پلکانی در حین انتظار در AgentStreamPresenter | DONE | b952702 | پیاده‌سازی getProgressiveStatusText با پیام‌های تفکیک‌شده بر اساس مراحل sending, awaitingFirstToken (<=8s, <=20s, >20s), streaming |
+| A-45 | بررسی زودهنگام وضعیت احراز هویت و کلادفلر پیش از مصرف پرامپت | DONE | b952702 | گیت‌های اولیه در sendPrompt و waitForComposerReady برای جلوگیری از مصرف نوبت در وضعیت‌های unauthenticated و challenge |
+| A-46 | اتصال BridgeStatusChip به صفحهٔ تشخیص در وضعیت خطا | DONE | b952702 | ناوبری خودکار به WebBridgeDiagnosticsScreen با لمس چیپ در وضعیت قرمز خطا و افزودن دکمه در AiConnectionScreen |
+| A-47 | دسترسی دائمی به پنجرهٔ مرورگر چت‌جی‌پی‌تی در سربرگ | DONE | b952702 | افزودن دکمهٔ همیشگی «مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی» در AppBar صفحه چت و هدر شیت دستیار با فراخوانی خودکار ensureBooted |
+
+---
+
+## فاز ۵ — آزمون‌های واحد محافظ و تضمین کیفیت جامع (A-48 تا A-56)
+
+| شناسه | شرح تسک | وضعیت | کامیت | توضیحات فنی |
+| --- | --- | --- | --- | --- |
+| A-48 | آزمون محافظ سرکوب رندر و بافر باز ابزار | DONE | pending | ایجاد display_suppression_cap_test.dart شامل آزمون‌های تشخیص تگ باز/بسته، آزادسازی واچ‌داگ و لاگ |
+| A-49 | آزمون محافظ پس‌روی موقت و آب‌رفتن متن در انباشت‌گر | DONE | pending | ایجاد accumulator_shrink_test.dart شامل آزمون نادیده گرفتن انقباض DOM و حفظ متن انباشته |
+| A-50 | آزمون داوری و قفل منبع استریم | DONE | pending | ایجاد source_arbitration_test.dart شامل قفل منبع روی fetch/SSE و حذف چانک‌های موازی DOM |
+| A-51 | آزمون ارسال همزمان و لغو درخواست در حال اجرا | DONE | pending | ایجاد concurrent_send_test.dart شامل ابطال کنترلر فعال، تولید requestId متمایز و ریست انباشت‌گر |
+| A-52 | آزمون قرارداد سلکتورهای مرکزی و پرس‌وجوی امن DOM | DONE | pending | ایجاد selector_contract_test.dart برای اعتبارسنجی RITMO_SELECTORS و توابع querySafe/queryAllSafe |
+| A-53 | آزمون چرخه کامل موفقیت‌آمیز جریان (Happy Path E2E) | DONE | pending | ایجاد end_to_end_happy_path_test.dart شامل شبیه‌سازی کامل چرخه از booting تا ready |
+| A-54 | آزمون بازرسی استاتیک برای حذف catchهای خاموش | DONE | pending | ایجاد no_silent_catch_test.dart برای پایش عدم وجود هرگونه بلاک catch تهی در کدهای وب‌بریج |
+| A-55 | اجرای تحلیل ایستا و آزمون‌های جامع مخزن | DONE | pending | اجرای flutter analyze (صفر خطا و صفر هشدار) و اجرای موفقیت‌آمیز تمامی ۲۷۱ آزمون هوش مصنوعی |
+| A-56 | به‌روزرسانی نهایی مستندات پیشرفت و ثبت کامیت فاز ۵ | DONE | pending | به‌روزرسانی جدول تسک‌ها در WEB_BRIDGE_FIX_PROGRESS.md و ثبت کامیت نهایی فاز ۵ |
+
 
 

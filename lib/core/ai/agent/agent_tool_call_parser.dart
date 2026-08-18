@@ -139,8 +139,14 @@ class AgentToolCallParser {
     final tail =
         lastClose >= 0 ? raw.substring(lastClose + _closeTag.length).trim() : '';
 
-    final lastOpen = raw.lastIndexOf(_openTag);
-    final hasDanglingTag = _danglingTagRe.hasMatch(raw) || _partialTagRe.hasMatch(raw);
+    var textForDangling = raw;
+    textForDangling = textForDangling.replaceAll(_blockRe, '');
+    textForDangling = textForDangling.replaceAll(_functionTagRe, '');
+    textForDangling = textForDangling.replaceAll(_actionsRe, '');
+    textForDangling = textForDangling.replaceAll(_memOpsRe, '');
+    textForDangling = textForDangling.replaceAll(_codeBlockJsonRe, '');
+
+    final hasDanglingTag = _danglingTagRe.hasMatch(textForDangling) || _partialTagRe.hasMatch(textForDangling);
 
     // بررسی بلوک کد مارک‌داون باز (تعداد فرد ```)
     final fenceMatches = RegExp(r'```').allMatches(raw).toList();
@@ -153,6 +159,7 @@ class AgentToolCallParser {
       }
     }
 
+    final lastOpen = raw.lastIndexOf(_openTag);
     final hasOpenTag = hasDanglingTag || hasOpenFenceTool || (lastOpen >= 0 && lastOpen > lastClose);
 
     // ۴. حالت لبه: مدل بدون تگ، تنها یک JSON با کلید tool فرستاده است

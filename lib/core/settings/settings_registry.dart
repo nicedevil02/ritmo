@@ -167,6 +167,7 @@ class SettingsRegistry {
       defaultValue: false,
       labelFa: 'وضعیت پرسش جنسیت',
       group: SettingsGroup.identity,
+      visibility: SettingVisibility.internal,
     ),
     SettingDescriptor(
       key: 'identity_age_asked',
@@ -175,6 +176,7 @@ class SettingsRegistry {
       defaultValue: false,
       labelFa: 'وضعیت پرسش سن',
       group: SettingsGroup.identity,
+      visibility: SettingVisibility.internal,
     ),
     SettingDescriptor(
       key: 'onboarding_completed',
@@ -1020,9 +1022,17 @@ class SettingsRegistry {
 
   static SettingDescriptor? find(String key) => _byKey[key];
 
-  static List<SettingDescriptor> userVisibleByGroup(SettingsGroup g) {
+  static List<SettingDescriptor> userVisibleByGroup(SettingsGroup g, {bool includeAdvanced = true}) {
     final list = _byGroup[g] ?? const [];
-    return list.where((d) => d.descriptionFa != null && !d.key.endsWith('_asked') && d.key != 'onboarding_completed').toList(growable: false);
+    return list.where((d) {
+      if (d.visibility == SettingVisibility.internal) return false;
+      if (!includeAdvanced && d.visibility == SettingVisibility.advanced) return false;
+      return true;
+    }).toList(growable: false);
+  }
+
+  static List<SettingDescriptor> searchable() {
+    return all.where((d) => d.visibility != SettingVisibility.internal).toList(growable: false);
   }
 
   static List<String> get aiWritableKeys {

@@ -9,7 +9,7 @@
 | SET-05 | اصلاح پیش‌فرض خطرناک onboarding_completed | A | DONE | `fix(settings): SET-05 — پیش‌فرض onboarding_completed به false` | |
 | SET-06 | حد بالا و پایین برای calendar_overdue_lookback_days | A | DONE | `fix(settings): SET-06 — کران‌گذاری بازهٔ معوقه` | |
 | SET-07 | مستندسازی مقدار نگهبان -1 در مهلت قفل | A | DONE | `refactor(settings): SET-07 — نام‌گذاری مقادیر مهلت قفل` | |
-| SET-08 | علامت‌گذاری صریح تنظیمات داخلی | A | TODO | | |
+| SET-08 | علامت‌گذاری صریح تنظیمات داخلی | A | DONE | `fix(settings): SET-08 — قابلیت دیده‌شدن صریح به‌جای قرارداد ضمنی` | |
 | SET-09 | علامت‌گذاری affectsAgenda و dependsOn | A | TODO | | |
 | SET-10 | پشتیبانی از وابستگی غیربولی | A | TODO | | |
 | SET-11 | بارگذاری واقعی تنظیمات scope secure | B | TODO | | |

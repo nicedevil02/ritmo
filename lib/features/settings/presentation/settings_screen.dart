@@ -171,6 +171,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Ios26PageRoute(builder: (_) => const CrashReportsScreen()),
       );
     }
+  }
+
   void _navigateToGroupWithHighlight(
     BuildContext context,
     SettingsGroup group,

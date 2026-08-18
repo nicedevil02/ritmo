@@ -111,6 +111,7 @@ class AgendaItem {
     this.windowEnd,
     this.hasOverride = false,
     this.isEstimated = false,
+    this.recurrenceLabelFa,
     this.meta = const {},
     AgendaItemType? itemType,
     AgendaItemKind? kind,
@@ -175,6 +176,9 @@ class AgendaItem {
 
   final bool hasOverride;
   final bool isEstimated;
+
+  /// Optional explicit Persian recurrence label (e.g. from recurrence rule)
+  final String? recurrenceLabelFa;
 
   /// Domain-specific extras. For routines: `meta['routine']` = raw routine map,
   /// `meta['schedule']` = raw schedule map.
@@ -247,6 +251,7 @@ class AgendaItem {
     DateTime? windowEnd,
     bool? hasOverride,
     bool? isEstimated,
+    String? recurrenceLabelFa,
     Map<String, dynamic>? meta,
     AgendaItemType? itemType,
     AgendaItemKind? kind,
@@ -269,6 +274,7 @@ class AgendaItem {
       windowEnd: windowEnd ?? this.windowEnd,
       hasOverride: hasOverride ?? this.hasOverride,
       isEstimated: isEstimated ?? this.isEstimated,
+      recurrenceLabelFa: recurrenceLabelFa ?? this.recurrenceLabelFa,
       meta: meta ?? this.meta,
       itemType: itemType ?? this.itemType,
       kind: kind ?? this.kind,

@@ -190,10 +190,10 @@ String calculateRecurrenceLabel(List<DateTime> dates, int daysInBucket) {
     return 'هر روز';
   }
 
-  // Check if all dates fall on Shamsi workdays (Saturday=1 to Wednesday=5)
+  // Check if all 5 Shamsi workdays (Saturday=1 to Wednesday=5) are present
   final jalaliDates = uniqueDates.map((d) => Jalali.fromDateTime(d)).toList();
-  final isAllWorkdays = jalaliDates.every((j) => j.weekDay >= 1 && j.weekDay <= 5);
-  if (isAllWorkdays && n >= 3 && (m == 7 || n == 5)) {
+  final weekdaySet = jalaliDates.map((j) => j.weekDay).toSet();
+  if (weekdaySet.length == 5 && weekdaySet.every((w) => w >= 1 && w <= 5)) {
     return 'روزهای کاری';
   }
 
@@ -255,12 +255,12 @@ List<AgendaEntry> collapseRecurringSeries(
         }
       }
 
-      final label = calculateRecurrenceLabel(dates, daysInBucket);
-
       final rep = instances.firstWhere(
         (i) => !i.isCompleted,
         orElse: () => instances.first,
       );
+
+      final label = rep.recurrenceLabelFa ?? calculateRecurrenceLabel(dates, daysInBucket);
 
       seriesList.add(AgendaSeries(
         representative: rep,

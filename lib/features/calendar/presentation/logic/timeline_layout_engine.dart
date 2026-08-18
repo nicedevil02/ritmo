@@ -115,7 +115,9 @@ class TimelineLayoutEngine {
     rawEntries.sort((a, b) {
       final cmp = a.visibleStart.compareTo(b.visibleStart);
       if (cmp != 0) return cmp;
-      return b.durationMinutes.compareTo(a.durationMinutes);
+      final durCmp = b.durationMinutes.compareTo(a.durationMinutes);
+      if (durCmp != 0) return durCmp;
+      return a.item.id.compareTo(b.item.id);
     });
 
     // Build connected components (clusters) on overlap graph
@@ -174,7 +176,11 @@ class TimelineLayoutEngine {
             if (a.item.priority != b.item.priority) {
               return b.item.priority.compareTo(a.item.priority);
             }
-            return a.visibleStart.compareTo(b.visibleStart);
+            final startCmp = a.visibleStart.compareTo(b.visibleStart);
+            if (startCmp != 0) return startCmp;
+            final durCmp = b.durationMinutes.compareTo(a.durationMinutes);
+            if (durCmp != 0) return durCmp;
+            return a.item.id.compareTo(b.item.id);
           });
 
         final primaryCount = maxLanes! - 1;

@@ -7,7 +7,6 @@ import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
-import 'package:ritmo/features/settings/presentation/settings_screen.dart';
 import 'package:ritmo/features/settings/presentation/settings_search_delegate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';

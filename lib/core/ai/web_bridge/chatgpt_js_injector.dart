@@ -118,12 +118,43 @@ $_bridgeScriptBody''';
       );
 
       if (isConvo) {
-        console.log('[Ritmo] Intercepted conversation network request: ' + url);
+        var activeReqId = window.__ritmo_active_req_id || '';
+        console.log('[Ritmo] Intercepted conversation network request: ' + url + ' (reqId: ' + activeReqId + ')');
         notifyFlutter('network_conversation_started', {
           url: url,
           timestamp: Date.now(),
+          requestId: activeReqId,
           source: 'fetch'
         });
+
+        try {
+          return originalFetch.apply(this, args).then(function(response) {
+            if (response && response.status === 200 && response.body && typeof response.body.tee === 'function') {
+              try {
+                var branches = response.body.tee();
+                var ritmoReader = branches[0].getReader();
+                readSSEStream(ritmoReader, activeReqId);
+
+                var clonedResponse = new Response(branches[1], {
+                  headers: response.headers,
+                  status: response.status,
+                  statusText: response.statusText
+                });
+                return clonedResponse;
+              } catch (teeErr) {
+                console.warn('[Ritmo] response.body.tee failed, falling back to original response:', teeErr);
+                return response;
+              }
+            }
+            return response;
+          }).catch(function(err) {
+            console.error('[Ritmo] Fetch promise rejected:', err);
+            throw err;
+          });
+        } catch (e) {
+          console.error('[Ritmo] Error initiating fetch:', e);
+          throw e;
+        }
       }
 
       try {
@@ -460,6 +491,7 @@ $_bridgeScriptBody''';
       window.fetch = window.__ritmo_original_fetch;
       window.__ritmo_fetch_hooked = false;
     }
+    window.__ritmo_active_req_id = null;
   };
 
   window.__ritmo_startStreamingWatcher = function(previousBaselineText, reqId) {
@@ -533,6 +565,8 @@ $_bridgeScriptBody''';
   // --- 5. Prompt Sender Implementation ---
   window.__ritmo_sendPrompt = function(promptText, reqId) {
     try {
+      window.__ritmo_active_req_id = reqId || '';
+
       function findTextarea() {
         return document.querySelector('#prompt-textarea') ||
                document.querySelector('textarea') ||

@@ -28,7 +28,10 @@ import 'package:ritmo/features/settings/presentation/settings_search_delegate.da
 import 'package:ritmo/features/settings/presentation/widgets/identity_header.dart';
 import 'package:ritmo/features/settings/presentation/widgets/quick_settings_sheet.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_degraded_banner.dart';
+import 'package:ritmo/features/settings/presentation/widgets/settings_group_tile.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_health_card.dart';
+import 'package:ritmo/features/settings/presentation/widgets/settings_mode_switcher.dart';
+import 'package:ritmo/features/settings/presentation/widgets/settings_premium_card.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_ready_gate.dart';
 
 /// صفحه اصلی تنظیمات اپلیکیشن با طراحی اختصاصی iOS 26 Inset Grouped
@@ -59,175 +62,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadPackageInfo();
-  }
-
-  Widget _buildPremiumStatusCard(BuildContext context) {
-    final colors = context.colors;
-    final isPremium = PremiumService.instance.isPremium;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: (isPremium ? colors.primary : colors.warning).withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (isPremium ? colors.primary : colors.warning).withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: (isPremium ? colors.primary : colors.warning).withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isPremium ? Icons.diamond_rounded : Icons.star_rounded,
-              color: isPremium ? colors.primary : colors.warning,
-              size: 26,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isPremium ? 'اشتراک پرمیوم ریتمو پلاس 💎' : 'ریتمو پایه (نسخه رایگان) ⚡',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  isPremium
-                      ? 'دسترسی کامل به تمام امکانات هوشمند اپلیکیشن'
-                      : 'سقف ۴ ماژول، ۷ روتین و ۳ هدف همزمان',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              PremiumUpgradeSheet.show(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isPremium ? colors.primary : colors.warning,
-              foregroundColor: isPremium ? colors.onPrimary : colors.background,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text(
-              isPremium ? 'مدیریت' : 'ارتقا 💎',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildModeSwitcher(BuildContext context) {
-    final colors = context.colors;
-
-    return AnimatedBuilder(
-      animation: SettingsService.instance.revision,
-      builder: (context, _) {
-        final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
-
-        return Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colors.border),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  key: const ValueKey('mode_switch_simple'),
-                  onTap: () async {
-                    if (showAdvanced) {
-                      await SettingsService.instance.set('show_advanced_settings', false);
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: !showAdvanced ? colors.primary.withValues(alpha: 0.12) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: !showAdvanced ? Border.all(color: colors.primary.withValues(alpha: 0.3)) : null,
-                    ),
-                    child: Center(
-                      child: Text(
-                        'حالت ساده',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: !showAdvanced ? FontWeight.bold : FontWeight.w500,
-                          color: !showAdvanced ? colors.primary : colors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: GestureDetector(
-                  key: const ValueKey('mode_switch_advanced'),
-                  onTap: () async {
-                    if (!showAdvanced) {
-                      await SettingsService.instance.set('show_advanced_settings', true);
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: showAdvanced ? colors.primary.withValues(alpha: 0.12) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: showAdvanced ? Border.all(color: colors.primary.withValues(alpha: 0.3)) : null,
-                    ),
-                    child: Center(
-                      child: Text(
-                        'حالت پیشرفته',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: showAdvanced ? FontWeight.bold : FontWeight.w500,
-                          color: showAdvanced ? colors.primary : colors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _loadPackageInfo() async {
@@ -480,11 +314,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 16),
 
               // ─── کارت وضعیت اشتراک ریتمو پلاس ───
-              _buildPremiumStatusCard(context),
+              const SettingsPremiumCard(),
               const SizedBox(height: 16),
 
               // ─── جابجایی حالت ساده / پیشرفته ───
-              _buildModeSwitcher(context),
+              const SettingsModeSwitcher(),
               const SizedBox(height: 24),
 
               // ─── عنوان بخش دسته‌بندی‌ها ───
@@ -555,7 +389,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 g.group,
                                 includeAdvanced: showAdvanced,
                               ).length;
-                              return _Ios26SettingsTile(
+                              return SettingsGroupTile(
                                 title: g.title,
                                 subtitle: g.subtitle,
                                 icon: g.icon,
@@ -609,143 +443,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// ردیف تنظیمات به سبک اختصاصی iOS 26
-class _Ios26SettingsTile extends StatefulWidget {
-  const _Ios26SettingsTile({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.gradient,
-    required this.count,
-    required this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final List<Color> gradient;
-  final int count;
-  final VoidCallback onTap;
-
-  @override
-  State<_Ios26SettingsTile> createState() => _Ios26SettingsTileState();
-}
-
-class _Ios26SettingsTileState extends State<_Ios26SettingsTile> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        RitmoHaptics.tap();
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        padding: const EdgeInsetsDirectional.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: _isPressed
-              ? colors.primary.withValues(alpha: 0.07)
-              : Colors.transparent,
-        ),
-        child: Row(
-          children: [
-            // ─── آیکن سه‌بعدی با هاله‌ی گرادیانی ───
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(13),
-                gradient: LinearGradient(
-                  colors: widget.gradient,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: widget.gradient.first.withValues(alpha: 0.35),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Icon(
-                widget.icon,
-                color: Colors.white,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 14),
-
-            // ─── متن عنوان و زیرعنوان ───
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textPrimary,
-                      ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    widget.subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: colors.textSecondary,
-                      height: 1.35,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-
-            // ─── بج تعداد تنظیمات و شورون ───
-            Container(
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: 9, vertical: 4),
-              decoration: BoxDecoration(
-                color: widget.gradient.first.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: widget.gradient.first.withValues(alpha: 0.16),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                '${toPersianDigits(widget.count)} تنظیم',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: widget.gradient.first,
-                  ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Icon(
-              CupertinoIcons.chevron_back, // RTL forward navigation chevron pointing left
-              size: 16,
-              color: colors.textTertiary,
-            ),
-          ],
         ),
       ),
     );

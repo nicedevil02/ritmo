@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
 
@@ -15,23 +16,26 @@ class TimelineSnappingHelper {
     int intervalMinutes = defaultSnapIntervalMinutes,
     int durationMinutes = CalendarDefaults.fallbackDurationMinutes,
   }) {
+    final sanitizedDuration = DurationBounds.sanitize(durationMinutes);
     final interval = intervalMinutes > 0 ? intervalMinutes : CalendarDefaults.snapIntervalMinutes;
     final snapped = (rawMinutes / interval).round() * interval;
-    final maxAllowed = (1440 - durationMinutes).clamp(0, 1440);
+    final maxAllowed = (1440 - sanitizedDuration).clamp(0, 1440);
     return snapped.clamp(0, maxAllowed);
   }
 
   /// Snaps [rawDurationMinutes] to the nearest [intervalMinutes]
   /// enforcing a minimum duration of [minDurationMinutes] (default 15 mins).
-  static int snapDurationMinutes(
+  /// null یعنی در این نقطهٔ شروع، حتی حداقل مدت هم جا نمی‌شود.
+  static int? snapDurationMinutes(
     int rawDurationMinutes, {
     int startMinutes = 0,
     int intervalMinutes = defaultSnapIntervalMinutes,
   }) {
     final interval = intervalMinutes > 0 ? intervalMinutes : CalendarDefaults.snapIntervalMinutes;
-    final snapped = (rawDurationMinutes / interval).round() * interval;
     final untilEndOfDay = 1440 - startMinutes;
-    final maxAllowed = untilEndOfDay.clamp(minDurationMinutes, DurationBounds.maxMinutes);
-    return snapped.clamp(minDurationMinutes, maxAllowed);
+    if (untilEndOfDay < minDurationMinutes) return null;
+    final hardMax = min(untilEndOfDay, DurationBounds.maxMinutes);
+    final snapped = (rawDurationMinutes / interval).round() * interval;
+    return snapped.clamp(minDurationMinutes, hardMax);
   }
 }

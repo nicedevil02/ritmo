@@ -486,6 +486,14 @@ class JourneyController extends ChangeNotifier {
     final sanitizedDur = DurationBounds.sanitize(newDurationMinutes);
     final snappedDur = TimelineSnappingHelper.snapDurationMinutes(sanitizedDur, startMinutes: start);
 
+    if (snappedDur == null) {
+      _errorMessage = CalendarMessagesFa.invalidTime;
+      _isExecutingAction = false;
+      cancelManipulation();
+      notifyListeners();
+      return;
+    }
+
     final boundsErr = _validatePlacement(item: item, startMinutes: start, durationMinutes: snappedDur, allowOverlap: true);
     if (boundsErr != null) {
       _errorMessage = boundsErr;

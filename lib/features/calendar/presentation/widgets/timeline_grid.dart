@@ -432,7 +432,7 @@ class _TimelineGridState extends State<TimelineGrid> {
                   rawDuration,
                   startMinutes: layoutItem.startMinutes,
                 );
-                if (snapped != _resizeDurationMinutes && mounted) {
+                if (snapped != null && snapped != _resizeDurationMinutes && mounted) {
                   setState(() {
                     _resizeDurationMinutes = snapped;
                   });

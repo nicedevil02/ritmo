@@ -75,22 +75,7 @@ class _IdentityHeaderState extends State<IdentityHeader>
       _isSimpleMode = AppModeService.instance.isSimple;
 
       final db = await DatabaseHelper.instance.database;
-
-      final installEpochRes = await db.query(
-        'app_settings',
-        where: "key = 'first_install_time'",
-        limit: 1,
-      );
-
-      if (installEpochRes.isNotEmpty) {
-        final rawVal = installEpochRes.first['value'] as String?;
-        final installEpoch = int.tryParse(rawVal ?? '') ?? DateTime.now().millisecondsSinceEpoch;
-        final installDate = DateTime.fromMillisecondsSinceEpoch(installEpoch);
-        final diff = DateTime.now().difference(installDate).inDays;
-        _daysWithRitmo = diff > 0 ? diff : 1;
-      } else {
-        _daysWithRitmo = 1;
-      }
+      _daysWithRitmo = 1;
 
       final activeRoutines = await db.rawQuery(
         'SELECT COUNT(*) FROM routines WHERE isArchived = 0',

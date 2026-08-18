@@ -1,6 +1,7 @@
 // C-43, C-44: CycleCalendarView
 // Minimalist, modern, accessible Jalali cycle calendar with swipe gestures,
 // animated month transitions, pre-computed day marks (F-25..F-34), and dynamic legend.
+import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -51,6 +52,10 @@ class CycleCalendarView extends StatefulWidget {
     required Set<String> loggedDayKeys,
     required List<PredictedCycle> forecast,
     int defaultPeriodDuration = 6,
+    int lutealPhaseDays = 14,
+    int pmsWindowDays = 4,
+    double avgCycleLength = 28.0,
+    bool isFertilityVisible = true,
   }) {
     final marks = <String, CycleDayMark>{};
     final monthLength = month.monthLength;
@@ -86,14 +91,86 @@ class CycleCalendarView extends StatefulWidget {
       }
     }
 
-    // 2. Process forecast cycles
+    // 2. Process historical completed cycles from recorded periods (Retrospective fertile windows)
+    final ovulationDays = <String>{};
+    final fertileDays = <String>{};
+    final pmsDays = <String>{};
+
+    final distinctStarts = <DateTime>{};
+    for (final p in periods) {
+      final rawStart = p['startDate']?.toString();
+      final pStart = CycleDateContract.parseDayKey(rawStart);
+      if (pStart != null) {
+        distinctStarts.add(pStart);
+      }
+    }
+    final sortedStarts = distinctStarts.toList()..sort((a, b) => a.compareTo(b));
+
+    for (var i = 0; i < sortedStarts.length; i++) {
+      final sCurrent = sortedStarts[i];
+      DateTime? sNext;
+      int cycleL;
+
+      if (i + 1 < sortedStarts.length) {
+        sNext = sortedStarts[i + 1];
+        cycleL = CycleDateContract.daysBetween(sCurrent, sNext);
+      } else {
+        // Last recorded cycle: if forecast is empty, estimate its next start
+        if (forecast.isEmpty) {
+          cycleL = avgCycleLength.round().clamp(15, 60);
+          sNext = sCurrent.add(Duration(days: cycleL));
+        } else {
+          // Covered by forecast.first
+          continue;
+        }
+      }
+
+      if (cycleL >= 15 && cycleL <= 60) {
+        final cycleLuteal = math.min(lutealPhaseDays, math.max(1, cycleL - 10));
+        final ovDate = sNext.subtract(Duration(days: cycleLuteal));
+        final fertStart = ovDate.subtract(const Duration(days: 5));
+        final fertEnd = ovDate.add(const Duration(days: 1));
+        final pmsStart = sNext.subtract(Duration(days: pmsWindowDays));
+        final pmsEnd = sNext.subtract(const Duration(days: 1));
+
+        if (isFertilityVisible) {
+          // Ovulation
+          final ovClean = CycleDateContract.cleanDate(ovDate);
+          if (CycleDateContract.isSameOrAfter(ovClean, monthStartGregorian) &&
+              CycleDateContract.isSameOrBefore(ovClean, monthEndGregorian)) {
+            ovulationDays.add(CycleDateContract.toDayKey(ovClean));
+          }
+
+          // Fertile Window
+          var fCurr = CycleDateContract.cleanDate(fertStart);
+          final fEnd = CycleDateContract.cleanDate(fertEnd);
+          while (!fCurr.isAfter(fEnd)) {
+            if (CycleDateContract.isSameOrAfter(fCurr, monthStartGregorian) &&
+                CycleDateContract.isSameOrBefore(fCurr, monthEndGregorian)) {
+              fertileDays.add(CycleDateContract.toDayKey(fCurr));
+            }
+            fCurr = fCurr.add(const Duration(days: 1));
+          }
+        }
+
+        // PMS Window
+        var pCurr = CycleDateContract.cleanDate(pmsStart);
+        final pEnd = CycleDateContract.cleanDate(pmsEnd);
+        while (!pCurr.isAfter(pEnd)) {
+          if (CycleDateContract.isSameOrAfter(pCurr, monthStartGregorian) &&
+              CycleDateContract.isSameOrBefore(pCurr, monthEndGregorian)) {
+            pmsDays.add(CycleDateContract.toDayKey(pCurr));
+          }
+          pCurr = pCurr.add(const Duration(days: 1));
+        }
+      }
+    }
+
+    // 3. Process forecast cycles
     final predictedDays =
         <String, ({PredictionConfidenceLevel level, PredictedCycle cycle})>{};
     final predictionWindowDays =
         <String, ({PredictionConfidenceLevel level, PredictedCycle cycle})>{};
-    final ovulationDays = <String>{};
-    final fertileDays = <String>{};
-    final pmsDays = <String>{};
 
     for (final cycle in forecast) {
       // Window range: [windowStart, windowEnd]
@@ -123,25 +200,27 @@ class CycleCalendarView extends StatefulWidget {
         pCurr = pCurr.add(const Duration(days: 1));
       }
 
-      // Ovulation day
-      if (cycle.ovulationDay != null) {
-        final ovClean = CycleDateContract.cleanDate(cycle.ovulationDay!);
-        if (CycleDateContract.isSameOrAfter(ovClean, monthStartGregorian) &&
-            CycleDateContract.isSameOrBefore(ovClean, monthEndGregorian)) {
-          ovulationDays.add(CycleDateContract.toDayKey(ovClean));
-        }
-      }
-
-      // Fertile window
-      if (cycle.fertileStart != null && cycle.fertileEnd != null) {
-        var fCurr = CycleDateContract.cleanDate(cycle.fertileStart!);
-        final fEnd = CycleDateContract.cleanDate(cycle.fertileEnd!);
-        while (!fCurr.isAfter(fEnd)) {
-          if (CycleDateContract.isSameOrAfter(fCurr, monthStartGregorian) &&
-              CycleDateContract.isSameOrBefore(fCurr, monthEndGregorian)) {
-            fertileDays.add(CycleDateContract.toDayKey(fCurr));
+      if (isFertilityVisible) {
+        // Ovulation day
+        if (cycle.ovulationDay != null) {
+          final ovClean = CycleDateContract.cleanDate(cycle.ovulationDay!);
+          if (CycleDateContract.isSameOrAfter(ovClean, monthStartGregorian) &&
+              CycleDateContract.isSameOrBefore(ovClean, monthEndGregorian)) {
+            ovulationDays.add(CycleDateContract.toDayKey(ovClean));
           }
-          fCurr = fCurr.add(const Duration(days: 1));
+        }
+
+        // Fertile window
+        if (cycle.fertileStart != null && cycle.fertileEnd != null) {
+          var fCurr = CycleDateContract.cleanDate(cycle.fertileStart!);
+          final fEnd = CycleDateContract.cleanDate(cycle.fertileEnd!);
+          while (!fCurr.isAfter(fEnd)) {
+            if (CycleDateContract.isSameOrAfter(fCurr, monthStartGregorian) &&
+                CycleDateContract.isSameOrBefore(fCurr, monthEndGregorian)) {
+              fertileDays.add(CycleDateContract.toDayKey(fCurr));
+            }
+            fCurr = fCurr.add(const Duration(days: 1));
+          }
         }
       }
 
@@ -159,7 +238,7 @@ class CycleCalendarView extends StatefulWidget {
       }
     }
 
-    // 3. Populate marks for each day of the Jalali month
+    // 4. Populate marks for each day of the Jalali month
     for (var day = 1; day <= monthLength; day++) {
       final jDay = Jalali(month.year, month.month, day);
       final gDay = CycleDateContract.cleanDate(jDay.toDateTime());
@@ -238,6 +317,11 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
     }
 
     final pDur = CycleSettings.getPeriodDuration(widget.settings);
+    final lutealDays = CycleSettings.getLutealPhase(widget.settings);
+    final pmsDays = int.tryParse(widget.settings[CycleSettings.keyPmsWindowDays] ?? '4') ?? 4;
+    final avgL = widget.engineOutput?.stats.avgCycleLength ??
+        (double.tryParse(widget.settings[CycleSettings.keyCycleLength] ?? '28') ?? 28.0);
+    final isFertilityVisible = widget.settings[CycleSettings.keyFertilityVisible] != 'false';
     final forecast = widget.engineOutput?.forecast ?? const <PredictedCycle>[];
 
     _marks = CycleCalendarView.buildMonthMarks(
@@ -246,6 +330,10 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
       loggedDayKeys: _loggedDayKeys,
       forecast: forecast,
       defaultPeriodDuration: pDur,
+      lutealPhaseDays: lutealDays,
+      pmsWindowDays: pmsDays,
+      avgCycleLength: avgL,
+      isFertilityVisible: isFertilityVisible,
     );
   }
 

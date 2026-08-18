@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -84,7 +86,9 @@ class CyclePredictionDetailSheet extends StatelessWidget {
         'محاسبه‌شده با داده‌های محدود اولیه؛ با ثبت چرخه‌های بیشتر دقت افزایش می‌یابد.',
       ForecastBasis.defaultAssumption =>
         'محاسبه‌شده بر اساس تنظیمات پیش‌فرض بالینی، به دلیل نبود چرخه‌های ثبت‌شده کافی.',
-      null => 'محاسبه‌شده بر اساس الگوهای زمانی.',
+      null => CycleDateContract.isSameOrBefore(selectedDate, CycleClock.now)
+          ? 'محاسبه‌شده گذشته‌نگر بر اساس تاریخ شروع دوره بعدی و طول فاز لوتئال (Luteal Phase).'
+          : 'محاسبه‌شده بر اساس الگوهای زمانی.',
     };
 
     final disclaimer =

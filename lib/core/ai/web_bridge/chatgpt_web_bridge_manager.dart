@@ -206,6 +206,39 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _isAuthenticated = auth;
   }
 
+  @visibleForTesting
+  void resetStateForTest() {
+    _status = ChatGptBridgeStatus.idle;
+    _currentRequestId = null;
+    _pendingRequest = null;
+    _lockedSource = null;
+    _lastChunkSource = null;
+    _accumulator.reset();
+    _currentStreamController?.close();
+    _currentStreamController = null;
+  }
+
+  @visibleForTesting
+  void setStatusForTest(ChatGptBridgeStatus status) {
+    _setStatus(status);
+  }
+
+  @visibleForTesting
+  void setCurrentRequestIdForTest(String? id) {
+    _currentRequestId = id;
+  }
+
+  @visibleForTesting
+  void setLockedSourceForTest(BridgeSource? source) {
+    _lockedSource = source;
+  }
+
+  @visibleForTesting
+  void setTestAccumulator(String text) {
+    _accumulator.reset();
+    _accumulator.applyFull(text, source: 'test');
+  }
+
   String _generateRequestId() {
     _reqCounter++;
     return 'req_${DateTime.now().microsecondsSinceEpoch}_$_reqCounter';

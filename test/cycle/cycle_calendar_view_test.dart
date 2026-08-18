@@ -105,5 +105,64 @@ void main() {
       expect(marks.length, month.monthLength);
       expect(marks['2026-07-25']?.kind, equals(CycleDayKind.recordedPeriod));
     });
+
+    test('Historical Fertile Windows: calculates and marks fertile and ovulation days for past recorded cycles', () {
+      // Month: Tir 1405 (approx June 22 to July 22, 2026)
+      final month = Jalali(1405, 4, 1);
+
+      // Two recorded periods in the past:
+      // P1: 2026-06-25 (Tir 4)
+      // P2: 2026-07-23 (Mordad 1) -> 28 days interval
+      // Retrospective Ovulation for P1 cycle = 2026-07-23 - 14 days = 2026-07-09
+      // Fertile Window: 2026-07-04 to 2026-07-10
+      final periods = [
+        {'startDate': '2026-06-25', 'endDate': '2026-06-30'},
+        {'startDate': '2026-07-23', 'endDate': '2026-07-28'},
+      ];
+
+      final marks = CycleCalendarView.buildMonthMarks(
+        month: month,
+        periods: periods,
+        loggedDayKeys: {},
+        forecast: [],
+        lutealPhaseDays: 14,
+        isFertilityVisible: true,
+      );
+
+      // Check recorded period
+      expect(marks['2026-06-25']?.kind, equals(CycleDayKind.recordedPeriod));
+
+      // Check historical ovulation on 2026-07-09
+      expect(marks['2026-07-09']?.kind, equals(CycleDayKind.ovulation));
+
+      // Check historical fertile window on 2026-07-05
+      expect(marks['2026-07-05']?.kind, equals(CycleDayKind.fertileWindow));
+      expect(marks['2026-07-08']?.kind, equals(CycleDayKind.fertileWindow));
+      expect(marks['2026-07-10']?.kind, equals(CycleDayKind.fertileWindow));
+
+      // Day outside fertile window (e.g. 2026-07-01) should be normal
+      expect(marks['2026-07-01']?.kind, equals(CycleDayKind.normal));
+    });
+
+    test('Historical Fertile Windows: isFertilityVisible: false suppresses ovulation and fertile days in past cycles', () {
+      final month = Jalali(1405, 4, 1);
+      final periods = [
+        {'startDate': '2026-06-25', 'endDate': '2026-06-30'},
+        {'startDate': '2026-07-23', 'endDate': '2026-07-28'},
+      ];
+
+      final marks = CycleCalendarView.buildMonthMarks(
+        month: month,
+        periods: periods,
+        loggedDayKeys: {},
+        forecast: [],
+        lutealPhaseDays: 14,
+        isFertilityVisible: false,
+      );
+
+      expect(marks['2026-06-25']?.kind, equals(CycleDayKind.recordedPeriod));
+      expect(marks['2026-07-09']?.kind, equals(CycleDayKind.normal));
+      expect(marks['2026-07-05']?.kind, equals(CycleDayKind.normal));
+    });
   });
 }

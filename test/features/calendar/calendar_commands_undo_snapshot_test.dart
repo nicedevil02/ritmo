@@ -21,8 +21,26 @@ void main() {
       version: 1,
       onCreate: (d, v) async {
         await SqliteOccurrenceOverrideRepository.ensureTable(d);
+        await d.execute('''
+          CREATE TABLE routine_schedules (
+            id TEXT PRIMARY KEY,
+            routineId TEXT NOT NULL,
+            scheduleType TEXT NOT NULL,
+            timeOfDay TEXT,
+            createdAt INTEGER NOT NULL,
+            updatedAt INTEGER NOT NULL
+          );
+        ''');
       },
     );
+    await db.insert('routine_schedules', {
+      'id': 'sched-888',
+      'routineId': 'routine-888',
+      'scheduleType': 'fixed',
+      'timeOfDay': '07:00',
+      'createdAt': 1000,
+      'updatedAt': 1000,
+    });
     DatabaseHelper.databaseInstance = db;
     repo = const SqliteOccurrenceOverrideRepository();
   });
@@ -96,6 +114,91 @@ void main() {
 
       override = await repo.readOne('routine', routineId, dateStr);
       expect(override, isNull, reason: 'Override should be completely removed after undoing initial action');
+    });
+
+    test('allFutureDays move command snapshots and restores all deleted future overrides on undo (CAL-12 / CAL-57)', () async {
+      const routineId = 'routine-888';
+      const dateStr = '2026-08-18';
+      const d1 = '2026-08-19';
+      const d2 = '2026-08-20';
+      const d3 = '2026-08-21';
+
+      // 3 future custom overrides
+      await repo.upsert(const OccurrenceOverride(
+        sourceType: 'routine',
+        sourceId: routineId,
+        dateStr: d1,
+        timeOfDay: '08:15',
+        durationMinutes: 40,
+        status: 'MOVED',
+        createdAt: '2026-08-01T00:00:00Z',
+        updatedAt: '2026-08-01T00:00:00Z',
+      ));
+      await repo.upsert(const OccurrenceOverride(
+        sourceType: 'routine',
+        sourceId: routineId,
+        dateStr: d2,
+        durationMinutes: 50,
+        status: 'RESIZED',
+        createdAt: '2026-08-01T00:00:00Z',
+        updatedAt: '2026-08-01T00:00:00Z',
+      ));
+      await repo.upsert(const OccurrenceOverride(
+        sourceType: 'routine',
+        sourceId: routineId,
+        dateStr: d3,
+        note: 'Special routine',
+        status: 'CUSTOM',
+        createdAt: '2026-08-01T00:00:00Z',
+        updatedAt: '2026-08-01T00:00:00Z',
+      ));
+
+      final item = AgendaItem(
+        id: 'routine:$routineId:$dateStr',
+        domain: AgendaDomain.routine,
+        kind: AgendaItemKind.routine,
+        sourceId: routineId,
+        title: 'Morning Routine',
+        category: Category.fitness,
+        deepLink: const AgendaDeepLink(domain: AgendaDomain.routine, targetId: routineId),
+        dateStr: dateStr,
+        timeOfDay: '07:00',
+        durationMinutes: 30,
+      );
+
+      final moveAllCmd = JourneyController.createMoveItemCommand(
+        actionHandler: AgendaActionHandler.instance,
+        item: item,
+        oldTimeOfDay: '07:00',
+        newTimeOfDay: '10:00',
+        onRefresh: () async {},
+        scope: CalendarEditScope.allFutureDays,
+        overrideRepo: repo,
+      );
+
+      // Execute allFutureDays move
+      await moveAllCmd.execute();
+
+      // All 3 future overrides should be removed by removeAllFuture
+      var futureList = await repo.readAllFuture('routine', routineId, dateStr);
+      expect(futureList, isEmpty, reason: 'Future overrides were not removed during allFutureDays move');
+
+      // Undo allFutureDays move
+      await moveAllCmd.undo();
+
+      // All 3 future overrides must be completely restored!
+      futureList = await repo.readAllFuture('routine', routineId, dateStr);
+      expect(futureList.length, equals(3), reason: 'Future overrides were not restored on undo');
+
+      final o1 = await repo.readOne('routine', routineId, d1);
+      expect(o1?.timeOfDay, equals('08:15'));
+      expect(o1?.durationMinutes, equals(40));
+
+      final o2 = await repo.readOne('routine', routineId, d2);
+      expect(o2?.durationMinutes, equals(50));
+
+      final o3 = await repo.readOne('routine', routineId, d3);
+      expect(o3?.note, equals('Special routine'));
     });
   });
 }

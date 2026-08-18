@@ -12,8 +12,8 @@
 | CAL-08 | نرمال‌سازی selectedDate به نیمه‌شب | A | DONE | 7459a86 | نرمال‌سازی کامل selectedDate به نیمه‌شب محلی در همه مقیاس‌ها و ناوبری‌ها |
 | CAL-09 | upsert ادغامی: توقف نابودی ستون‌های همسایه | B | DONE | 0b66b20 | بازنویسی upsert به صورت تراکنشی و ادغامی بدون نابودی ستون‌ها |
 | CAL-10 | snapshot خواندن override برای بازگردانی درست | B | DONE | ff2dce3 | افزودن readAllFuture و restoreAll به مخزن override برای بازگردانی دقیق |
-| CAL-11 | بازگردانی مبتنی بر snapshot در MoveItemCommand و ResizeItemCommand | B | DONE | pending | بازگردانی snapshot-based در Move/Resize برای جلوگیری از پاک شدن overrideهای پیشین |
-| CAL-12 | allFutureDays: snapshot و transaction برای removeAllFuture | B | TODO | - | - |
+| CAL-11 | بازگردانی مبتنی بر snapshot در MoveItemCommand و ResizeItemCommand | B | DONE | 79fc50c | بازگردانی snapshot-based در Move/Resize برای جلوگیری از پاک شدن overrideهای پیشین |
+| CAL-12 | allFutureDays: snapshot و transaction برای removeAllFuture | B | DONE | pending | پشتیبان‌گیری snapshot و بازگردانی کلیه overrideهای آینده در صورت undo با سقف زمانی امن |
 | CAL-13 | حذف کلید برهنهٔ sourceId در نگاشت override | B | TODO | - | - |
 | CAL-14 | پایهٔ مشترک دستورات تقویم: بی‌اعتبارسازی کش اجباری | B | TODO | - | - |
 | CAL-15 | skipItem برای دامنه‌های غیرروتین | B | TODO | - | - |

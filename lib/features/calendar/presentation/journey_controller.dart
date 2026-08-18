@@ -700,6 +700,7 @@ class _MoveItemCommand implements UndoableCommand {
   final OccurrenceOverrideRepository _overrideRepo;
 
   OccurrenceOverride? _beforeSnapshot;
+  List<OccurrenceOverride> _futureSnapshot = const [];
   bool _hasCapturedBefore = false;
 
   @override
@@ -707,12 +708,23 @@ class _MoveItemCommand implements UndoableCommand {
 
   @override
   Future<void> execute() async {
-    if (!_hasCapturedBefore && scope == CalendarEditScope.thisDayOnly) {
-      _beforeSnapshot = await _overrideRepo.readOne(
-        item.domain.name,
-        item.sourceId,
-        item.dateStr,
-      );
+    if (!_hasCapturedBefore) {
+      if (scope == CalendarEditScope.thisDayOnly) {
+        _beforeSnapshot = await _overrideRepo.readOne(
+          item.domain.name,
+          item.sourceId,
+          item.dateStr,
+        );
+      } else {
+        final parsedDate = DateKey.parse(item.dateStr) ?? DateTime.now();
+        final untilDateStr = DateKey.of(DateKey.addDays(parsedDate, 366));
+        _futureSnapshot = await _overrideRepo.readAllFuture(
+          item.domain.name,
+          item.sourceId,
+          item.dateStr,
+          untilDateStr: untilDateStr,
+        );
+      }
       _hasCapturedBefore = true;
     }
 
@@ -729,7 +741,14 @@ class _MoveItemCommand implements UndoableCommand {
       );
       await _overrideRepo.upsert(override);
     } else {
-      await _overrideRepo.removeAllFuture(item.domain.name, item.sourceId, item.dateStr);
+      final parsedDate = DateKey.parse(item.dateStr) ?? DateTime.now();
+      final untilDateStr = DateKey.of(DateKey.addDays(parsedDate, 366));
+      await _overrideRepo.removeAllFuture(
+        item.domain.name,
+        item.sourceId,
+        item.dateStr,
+        untilDateStr: untilDateStr,
+      );
       await actionHandler.updateAgendaItemTimeAndDuration(
         item: item,
         newTimeOfDay: newTimeOfDay,
@@ -753,6 +772,9 @@ class _MoveItemCommand implements UndoableCommand {
         item: item,
         newTimeOfDay: oldTimeOfDay,
       );
+      if (_futureSnapshot.isNotEmpty) {
+        await _overrideRepo.restoreAll(_futureSnapshot);
+      }
     }
     DayAgendaService.instance.invalidateDate(item.dateStr);
     await onRefresh();
@@ -779,6 +801,7 @@ class _ResizeItemCommand implements UndoableCommand {
   final OccurrenceOverrideRepository _overrideRepo;
 
   OccurrenceOverride? _beforeSnapshot;
+  List<OccurrenceOverride> _futureSnapshot = const [];
   bool _hasCapturedBefore = false;
 
   @override
@@ -786,12 +809,23 @@ class _ResizeItemCommand implements UndoableCommand {
 
   @override
   Future<void> execute() async {
-    if (!_hasCapturedBefore && scope == CalendarEditScope.thisDayOnly) {
-      _beforeSnapshot = await _overrideRepo.readOne(
-        item.domain.name,
-        item.sourceId,
-        item.dateStr,
-      );
+    if (!_hasCapturedBefore) {
+      if (scope == CalendarEditScope.thisDayOnly) {
+        _beforeSnapshot = await _overrideRepo.readOne(
+          item.domain.name,
+          item.sourceId,
+          item.dateStr,
+        );
+      } else {
+        final parsedDate = DateKey.parse(item.dateStr) ?? DateTime.now();
+        final untilDateStr = DateKey.of(DateKey.addDays(parsedDate, 366));
+        _futureSnapshot = await _overrideRepo.readAllFuture(
+          item.domain.name,
+          item.sourceId,
+          item.dateStr,
+          untilDateStr: untilDateStr,
+        );
+      }
       _hasCapturedBefore = true;
     }
 
@@ -808,7 +842,14 @@ class _ResizeItemCommand implements UndoableCommand {
       );
       await _overrideRepo.upsert(override);
     } else {
-      await _overrideRepo.removeAllFuture(item.domain.name, item.sourceId, item.dateStr);
+      final parsedDate = DateKey.parse(item.dateStr) ?? DateTime.now();
+      final untilDateStr = DateKey.of(DateKey.addDays(parsedDate, 366));
+      await _overrideRepo.removeAllFuture(
+        item.domain.name,
+        item.sourceId,
+        item.dateStr,
+        untilDateStr: untilDateStr,
+      );
       await actionHandler.updateAgendaItemTimeAndDuration(
         item: item,
         newDurationMinutes: newDuration,
@@ -832,6 +873,9 @@ class _ResizeItemCommand implements UndoableCommand {
         item: item,
         newDurationMinutes: oldDuration,
       );
+      if (_futureSnapshot.isNotEmpty) {
+        await _overrideRepo.restoreAll(_futureSnapshot);
+      }
     }
     DayAgendaService.instance.invalidateDate(item.dateStr);
     await onRefresh();

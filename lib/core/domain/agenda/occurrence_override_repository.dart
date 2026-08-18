@@ -106,14 +106,16 @@ abstract class OccurrenceOverrideRepository {
   Future<void> removeAllFuture(
     String sourceType,
     String sourceId,
-    String dateStr,
-  );
+    String dateStr, {
+    String? untilDateStr,
+  });
   /// همهٔ overrideهای این منبع از [dateStr] به بعد — برای snapshot قبل از removeAllFuture.
   Future<List<OccurrenceOverride>> readAllFuture(
     String sourceType,
     String sourceId,
-    String dateStr,
-  );
+    String dateStr, {
+    String? untilDateStr,
+  });
   /// درج دسته‌ای بدون ادغام — فقط برای بازگردانی snapshot. داخل یک transaction.
   Future<void> restoreAll(List<OccurrenceOverride> overrides);
 }
@@ -366,15 +368,24 @@ class SqliteOccurrenceOverrideRepository
   Future<void> removeAllFuture(
     String sourceType,
     String sourceId,
-    String dateStr,
-  ) async {
+    String dateStr, {
+    String? untilDateStr,
+  }) async {
     final db = await DatabaseHelper.instance.database;
     try {
-      await db.delete(
-        'occurrence_overrides',
-        where: 'sourceType = ? AND sourceId = ? AND dateStr >= ?',
-        whereArgs: [sourceType, sourceId, dateStr],
-      );
+      if (untilDateStr != null) {
+        await db.delete(
+          'occurrence_overrides',
+          where: 'sourceType = ? AND sourceId = ? AND dateStr >= ? AND dateStr <= ?',
+          whereArgs: [sourceType, sourceId, dateStr, untilDateStr],
+        );
+      } else {
+        await db.delete(
+          'occurrence_overrides',
+          where: 'sourceType = ? AND sourceId = ? AND dateStr >= ?',
+          whereArgs: [sourceType, sourceId, dateStr],
+        );
+      }
     } catch (e) {
       if (e is DatabaseException && e.toString().contains('no such table')) {
         await ensureTable(db);
@@ -388,16 +399,24 @@ class SqliteOccurrenceOverrideRepository
   Future<List<OccurrenceOverride>> readAllFuture(
     String sourceType,
     String sourceId,
-    String dateStr,
-  ) async {
+    String dateStr, {
+    String? untilDateStr,
+  }) async {
     final db = await DatabaseHelper.instance.database;
     try {
-      final rows = await db.query(
-        'occurrence_overrides',
-        where: 'sourceType = ? AND sourceId = ? AND dateStr >= ?',
-        whereArgs: [sourceType, sourceId, dateStr],
-        orderBy: 'dateStr ASC',
-      );
+      final rows = untilDateStr != null
+          ? await db.query(
+              'occurrence_overrides',
+              where: 'sourceType = ? AND sourceId = ? AND dateStr >= ? AND dateStr <= ?',
+              whereArgs: [sourceType, sourceId, dateStr, untilDateStr],
+              orderBy: 'dateStr ASC',
+            )
+          : await db.query(
+              'occurrence_overrides',
+              where: 'sourceType = ? AND sourceId = ? AND dateStr >= ?',
+              whereArgs: [sourceType, sourceId, dateStr],
+              orderBy: 'dateStr ASC',
+            );
       return rows.map(OccurrenceOverride.fromMap).toList();
     } catch (e, st) {
       if (e is DatabaseException && e.toString().contains('no such table')) {

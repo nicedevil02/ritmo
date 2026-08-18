@@ -161,6 +161,49 @@ class SettingsService {
     }
   }
 
+  Object? _validateAndNormalize(SettingDescriptor desc, Object rawValue) {
+    if (desc.type == SettingType.integer) {
+      final intVal = rawValue is int ? rawValue : int.tryParse(rawValue.toString());
+      if (intVal == null) return null;
+      if (desc.min != null && intVal < desc.min!) return null;
+      if (desc.max != null && intVal > desc.max!) return null;
+      return intVal;
+    } else if (desc.type == SettingType.enumeration) {
+      final strVal = rawValue.toString();
+      if (desc.allowed != null) {
+        final match = desc.allowed!.firstWhere(
+          (a) => a.toUpperCase() == strVal.toUpperCase(),
+          orElse: () => '',
+        );
+        if (match.isEmpty) {
+          RitmoLog.warning('Settings', 'رد ذخیره‌سازی برای کلید ${desc.key}: مقدار در فهرست مجاز نیست');
+          return null;
+        }
+        return match;
+      }
+      return strVal;
+    } else if (desc.type == SettingType.boolean) {
+      if (rawValue is bool) return rawValue;
+      return rawValue.toString() == 'true';
+    } else if (desc.type == SettingType.time) {
+      final str = rawValue.toString().trim();
+      final match = RegExp(r'^([01]\d|2[0-3]):([0-5]\d)$').firstMatch(str);
+      if (match == null) {
+        RitmoLog.warning('Settings', 'مقدار زمان نامعتبر برای کلید ${desc.key}: $str');
+        return null;
+      }
+      return str;
+    } else if (desc.type == SettingType.text) {
+      final str = rawValue.toString();
+      if (str.length > 4096) {
+        RitmoLog.warning('Settings', 'طول متن برای کلید ${desc.key} فراتر از سقف ۴۰۹۶ است');
+        return null;
+      }
+      return str;
+    }
+    return rawValue;
+  }
+
   Future<bool> set(String key, Object value) async {
     if (!_initialized) {
       final ok = await retryInit();
@@ -176,51 +219,11 @@ class SettingsService {
       return false;
     }
 
-    // Validation
-    if (desc.type == SettingType.integer) {
-      final intVal = value is int ? value : int.tryParse(value.toString());
-      if (intVal == null) return false;
-      if (desc.min != null && intVal < desc.min!) return false;
-      if (desc.max != null && intVal > desc.max!) return false;
-      value = intVal;
-    } else if (desc.type == SettingType.enumeration) {
-      final strVal = value.toString();
-      if (desc.allowed != null) {
-        final match = desc.allowed!.firstWhere(
-          (a) => a.toUpperCase() == strVal.toUpperCase(),
-          orElse: () => '',
-        );
-        if (match.isEmpty) {
-          RitmoLog.warning('Settings', 'رد ذخیره‌سازی برای کلید $key: مقدار در فهرست مجاز نیست');
-          return false;
-        }
-        value = match;
-      } else {
-        value = strVal;
-      }
-    } else if (desc.type == SettingType.boolean) {
-      if (value is! bool) {
-        value = value.toString() == 'true';
-      }
-    } else if (desc.type == SettingType.time) {
-      final str = value.toString().trim();
-      final match = RegExp(r'^([01]\d|2[0-3]):([0-5]\d)$').firstMatch(str);
-      if (match == null) {
-        RitmoLog.warning('Settings', 'مقدار زمان نامعتبر برای کلید $key: $str');
-        return false;
-      }
-      value = str;
-    } else if (desc.type == SettingType.text) {
-      final str = value.toString();
-      if (str.length > 4096) {
-        RitmoLog.warning('Settings', 'طول متن برای کلید $key فراتر از سقف ۴۰۹۶ است');
-        return false;
-      }
-      value = str;
-    }
+    final normalized = _validateAndNormalize(desc, value);
+    if (normalized == null) return false;
 
     final currentVal = _cache[key];
-    if (currentVal == value) {
+    if (currentVal == normalized) {
       return true;
     }
 
@@ -232,34 +235,27 @@ class SettingsService {
           'app_settings',
           {
             'key': key,
-            'value': value.toString(),
+            'value': normalized.toString(),
             'updatedAt': now,
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       } else if (desc.scope == SettingScope.prefs) {
         final prefs = await SharedPreferences.getInstance();
-        if (value is bool) {
-          await prefs.setBool(key, value);
-        } else if (value is int) {
-          await prefs.setInt(key, value);
+        if (normalized is bool) {
+          await prefs.setBool(key, normalized);
+        } else if (normalized is int) {
+          await prefs.setInt(key, normalized);
         } else {
-          await prefs.setString(key, value.toString());
+          await prefs.setString(key, normalized.toString());
         }
       } else if (desc.scope == SettingScope.secure) {
-        await SecureKeyStore.setKey(key, value.toString());
+        await SecureKeyStore.setKey(key, normalized.toString());
       }
 
-      _cache[key] = value;
+      _cache[key] = normalized;
       revision.value++;
 
-      // A settings write used to fan out a *synchronous* routine-change
-      // notification for every single key. Home, Calendar and the systems hub
-      // all listen to that notifier and reload their entire day (syncAll plus
-      // several agenda builds), so a burst of writes - onboarding hand-off,
-      // module toggles, alarm rescheduling - multiplied into a reload storm
-      // that could exhaust the Dart heap. `revision` still fires immediately
-      // for settings UI; the heavy refresh is coalesced per burst.
       if (desc.affectsAgenda) {
         _scheduleAgendaRefreshSignal();
       }
@@ -280,6 +276,127 @@ class SettingsService {
       return true;
     } catch (e, st) {
       RitmoLog.error('Settings', 'خطا در ذخیره‌سازی کلید $key', e, st);
+      return false;
+    }
+  }
+
+  Future<bool> setMany(Map<String, Object> values) async {
+    if (!_initialized) {
+      final ok = await retryInit();
+      if (!ok) {
+        RitmoLog.warning('Settings', 'عدم امکان ذخیره‌سازی دسته‌ای به دلیل عدم راه‌اندازی موفق سرویس تنظیمات');
+        return false;
+      }
+    }
+
+    final dbEntries = <String, Object>{};
+    final prefsEntries = <String, (SettingDescriptor, Object)>{};
+    final secureEntries = <String, Object>{};
+    bool affectsAgendaAny = false;
+    bool hasNotifChange = false;
+
+    for (final entry in values.entries) {
+      final key = entry.key;
+      final rawVal = entry.value;
+      final desc = SettingsRegistry.find(key);
+      if (desc == null) {
+        RitmoLog.warning('Settings', 'رد ذخیره‌سازی دسته‌ای برای کلید نامشخص: $key');
+        continue;
+      }
+
+      final normalized = _validateAndNormalize(desc, rawVal);
+      if (normalized == null) continue;
+
+      final currentVal = _cache[key];
+      if (currentVal == normalized) continue;
+
+      if (desc.scope == SettingScope.db) {
+        dbEntries[key] = normalized;
+      } else if (desc.scope == SettingScope.prefs) {
+        prefsEntries[key] = (desc, normalized);
+      } else if (desc.scope == SettingScope.secure) {
+        secureEntries[key] = normalized;
+      }
+
+      if (desc.affectsAgenda) {
+        affectsAgendaAny = true;
+      }
+      if (desc.group == SettingsGroup.notifications) {
+        hasNotifChange = true;
+      }
+    }
+
+    if (dbEntries.isEmpty && prefsEntries.isEmpty && secureEntries.isEmpty) {
+      return true;
+    }
+
+    try {
+      if (dbEntries.isNotEmpty) {
+        final db = await DatabaseHelper.instance.database;
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final batch = db.batch();
+        for (final entry in dbEntries.entries) {
+          batch.insert(
+            'app_settings',
+            {
+              'key': entry.key,
+              'value': entry.value.toString(),
+              'updatedAt': now,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+        await batch.commit(noResult: true);
+      }
+
+      if (prefsEntries.isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        for (final item in prefsEntries.values) {
+          final desc = item.$1;
+          final val = item.$2;
+          if (val is bool) {
+            await prefs.setBool(desc.key, val);
+          } else if (val is int) {
+            await prefs.setInt(desc.key, val);
+          } else {
+            await prefs.setString(desc.key, val.toString());
+          }
+        }
+      }
+
+      if (secureEntries.isNotEmpty) {
+        for (final entry in secureEntries.entries) {
+          await SecureKeyStore.setKey(entry.key, entry.value.toString());
+        }
+      }
+
+      // Update cache
+      dbEntries.forEach((k, v) => _cache[k] = v);
+      prefsEntries.forEach((k, pair) => _cache[k] = pair.$2);
+      secureEntries.forEach((k, v) => _cache[k] = v);
+
+      revision.value++;
+
+      if (affectsAgendaAny) {
+        _scheduleAgendaRefreshSignal();
+      }
+
+      if (hasNotifChange) {
+        try {
+          final notifSettings = <String, String>{
+            'digest_mode': get<String>('digest_mode'),
+            'coalescing_window_minutes': get<int>('coalescing_window_minutes').toString(),
+            'max_non_essential_per_hour': get<int>('max_non_essential_per_hour').toString(),
+          };
+          await SnapshotHelper.updateNotificationSettingsSnapshot(notifSettings);
+        } catch (e, st) {
+          RitmoLog.error('Settings', 'به‌روزرسانی اسنپ‌شات اعلان ناموفق بود', e, st);
+        }
+      }
+
+      return true;
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در ذخیره‌سازی دسته‌ای تنظیمات', e, st);
       return false;
     }
   }

@@ -16,8 +16,8 @@
 | CAL-12 | allFutureDays: snapshot و transaction برای removeAllFuture | B | DONE | c13a57d | پشتیبان‌گیری snapshot و بازگردانی کلیه overrideهای آینده در صورت undo با سقف زمانی امن |
 | CAL-13 | حذف کلید برهنهٔ sourceId در نگاشت override | B | DONE | 666b960 | حذف کلید برهنه و fallback، استفاده از formatKey با پیشوند sourceType و تفکیک دامنه‌ها |
 | CAL-14 | پایهٔ مشترک دستورات تقویم: بی‌اعتبارسازی کش اجباری | B | DONE | e793518 | ایجاد _CalendarCommand با الگوی Template Method و بی‌اعتبارسازی اجباری تک‌روزه و چندروزه کش |
-| CAL-15 | skipItem برای دامنه‌های غیرروتین | B | DONE | pending | ایجاد _SkipItemCommand با override وضعیت SKIPPED و اتصال کامل به CommandStack با قابلیت undo |
-| CAL-16 | postponeItem برای همه دامنه‌ها | B | TODO | - | - |
+| CAL-15 | skipItem برای دامنه‌های غیرروتین | B | DONE | e0f16d9 | ایجاد _SkipItemCommand با override وضعیت SKIPPED و اتصال کامل به CommandStack با قابلیت undo |
+| CAL-16 | postponeItem برای همه دامنه‌ها | B | DONE | pending | تعویق تسک‌ها بر مبنای max(today, dueDate) و تعویق آیتم‌های تکراری با override دوطرفه و پشتیبانی undo |
 | CAL-17 | توکن نسل بارگذاری برای جلوگیری از نوشتن بی‌ترتیب | C | TODO | - | - |
 | CAL-18 | حذف شاخهٔ مردهٔ agenda و یک تعریف واحد برای پنجرهٔ اجندا | C | TODO | - | - |
 | CAL-19 | پنجرهٔ بارگذاری صریح و عبور isBackgroundRefresh | C | TODO | - | - |

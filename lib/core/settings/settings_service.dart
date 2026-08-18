@@ -105,6 +105,48 @@ class SettingsService {
     return _initialized;
   }
 
+  /// Reloads all settings from the persistent layers (SQLite, SharedPreferences, SecureKeyStore)
+  /// and updates the in-memory cache and revision without tearing down streams or controllers.
+  Future<void> reload() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final dbRows = await db.query('app_settings');
+      final dbMap = {
+        for (final r in dbRows) r['key']! as String: r['value']! as String,
+      };
+
+      SharedPreferences? prefs;
+      try {
+        prefs = await SharedPreferences.getInstance();
+        await prefs.reload();
+      } catch (e, st) {
+        RitmoLog.error('Settings', 'SharedPreferences reload error', e, st);
+      }
+
+      for (final desc in SettingsRegistry.all) {
+        if (desc.scope == SettingScope.db) {
+          final raw = dbMap[desc.key];
+          _cache[desc.key] = desc.parseValue(raw);
+        } else if (desc.scope == SettingScope.prefs && prefs != null) {
+          final raw = prefs.get(desc.key);
+          _cache[desc.key] = desc.parseValue(raw);
+        } else if (desc.scope == SettingScope.secure) {
+          try {
+            final secVal = await SecureKeyStore.getKey(desc.key);
+            _cache[desc.key] = desc.parseValue(secVal != null && secVal.isNotEmpty ? secVal : null);
+          } catch (e, st) {
+            RitmoLog.error('Settings', 'خطا در بارگذاری کلید امن ${desc.key}', e, st);
+          }
+        }
+      }
+
+      _initialized = true;
+      revision.value++;
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در بارگذاری مجدد تنظیمات (reload)', e, st);
+    }
+  }
+
   T get<T>(String key) {
     final desc = SettingsRegistry.find(key);
     final rawVal = _cache.containsKey(key) ? _cache[key] : desc?.defaultValue;

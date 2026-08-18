@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,52 +8,85 @@ import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/settings/presentation/settings_inspector_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
   setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
-  });
 
-  setUp(() async {
-    final db = await DatabaseHelper.instance.database;
-    await db.delete('app_settings');
-    // Seed some test data
-    await db.insert('app_settings', {
-      'key': 'theme_mode',
-      'value': 'dark',
-      'updated_at': DateTime.now().toIso8601String(),
-    });
-    // Insert an orphan key
-    await db.insert('app_settings', {
-      'key': 'legacy_orphan_key_abc',
-      'value': 'orphan_payload_value',
-      'updated_at': DateTime.now().toIso8601String(),
-    });
-
-    SettingsService.instance.resetForTesting();
-    await SettingsService.instance.init();
-  });
-
-  tearDown(() {
-    SettingsService.instance.cancelPendingSignals();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+      (call) async => null,
+    );
   });
 
   group('Settings Inspector & Zero Secrets Tests (SET-70)', () {
-    test('safeDisplayValue and safeExportValue strictly redact secure keys', () {
-      final secureDesc = SettingsRegistry.find('user_pin');
-      const secretPinValue = '1234';
+    late Database db;
 
-      final displayStr = SettingsInspectorScreen.safeDisplayValue(secureDesc, secretPinValue);
-      final exportStr = SettingsInspectorScreen.safeExportValue(secureDesc, secretPinValue);
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      db = await openDatabase(
+        inMemoryDatabasePath,
+        version: 1,
+        onCreate: (database, version) async {
+          await database.execute('''
+            CREATE TABLE app_settings (
+              key TEXT PRIMARY KEY,
+              value TEXT,
+              updatedAt INTEGER,
+              updated_at TEXT
+            )
+          ''');
+        },
+      );
+      DatabaseHelper.instance.overrideDatabaseForTesting(db);
+
+      // Seed some test data
+      await db.insert('app_settings', {
+        'key': 'theme_mode',
+        'value': 'dark',
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+      // Insert an orphan key
+      await db.insert('app_settings', {
+        'key': 'legacy_orphan_key_abc',
+        'value': 'orphan_payload_value',
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+
+      SettingsService.instance.resetForTesting();
+      await SettingsService.instance.init();
+    });
+
+    tearDown(() async {
+      SettingsService.instance.cancelPendingSignals();
+      await db.close();
+    });
+
+    test('safeDisplayValue and safeExportValue strictly redact secure keys', () {
+      final secureDesc = SettingsRegistry.find('app_lock_password');
+      expect(secureDesc, isNotNull);
+      const secretPasswordValue = 'secretPass1234';
+
+      final displayStr = SettingsInspectorScreen.safeDisplayValue(secureDesc, secretPasswordValue);
+      final exportStr = SettingsInspectorScreen.safeExportValue(secureDesc, secretPasswordValue);
 
       // Must never contain the secret plaintext
-      expect(displayStr.contains(secretPinValue), isFalse);
-      expect(exportStr.contains(secretPinValue), isFalse);
+      expect(displayStr.contains(secretPasswordValue), isFalse);
+      expect(exportStr.contains(secretPasswordValue), isFalse);
 
       expect(displayStr, equals('[محرمانه - غیرقابل نمایش]'));
       expect(exportStr, equals('[REDACTED_SECRET]'));
+
+      final aiDesc = SettingsRegistry.find('ai_api_key');
+      expect(aiDesc, isNotNull);
+      const apiKeyVal = 'sk-proj-xyz987654321';
+      expect(SettingsInspectorScreen.safeDisplayValue(aiDesc, apiKeyVal), equals('[محرمانه - غیرقابل نمایش]'));
+      expect(SettingsInspectorScreen.safeExportValue(aiDesc, apiKeyVal), equals('[REDACTED_SECRET]'));
     });
 
     test('safeDisplayValue formats regular values properly', () {
@@ -69,12 +101,18 @@ void main() {
     testWidgets('SettingsInspectorScreen mounts and renders all 4 sections in debug mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: ThemeData(extensions: [RitmoTheme.light]),
-          home: const SettingsInspectorScreen(),
+          theme: RitmoTheme.build(
+            palette: RitmoPalette.jadeNoir,
+            brightness: Brightness.light,
+          ),
+          home: const Scaffold(
+            body: SettingsInspectorScreen(),
+          ),
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       // Check Section 1: Service Status
       expect(find.text('وضعیت سلامت سرویس'), findsOneWidget);
@@ -96,7 +134,7 @@ void main() {
       String? copiedText;
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         SystemChannels.platform,
-        (MethodCall methodCall) async {
+        (methodCall) async {
           if (methodCall.method == 'Clipboard.setData') {
             final args = methodCall.arguments as Map<dynamic, dynamic>;
             copiedText = args['text'] as String?;
@@ -108,18 +146,25 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: ThemeData(extensions: [RitmoTheme.light]),
-          home: const SettingsInspectorScreen(),
+          theme: RitmoTheme.build(
+            palette: RitmoPalette.jadeNoir,
+            brightness: Brightness.light,
+          ),
+          home: const Scaffold(
+            body: SettingsInspectorScreen(),
+          ),
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       // Tap copy diagnostic button
       final copyBtn = find.byIcon(CupertinoIcons.doc_on_clipboard);
       expect(copyBtn, findsOneWidget);
       await tester.tap(copyBtn);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       expect(copiedText, isNotNull);
       final jsonMap = jsonDecode(copiedText!) as Map<String, dynamic>;
@@ -128,7 +173,7 @@ void main() {
       expect(jsonMap['service_status']['load_state'], equals('loaded'));
 
       // Verify no PIN or secret text anywhere in the JSON dump
-      expect(copiedText!.contains('1234'), isFalse);
+      expect(copiedText!.contains('secretPass1234'), isFalse);
     });
   });
 }

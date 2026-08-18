@@ -16,6 +16,31 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 class SettingsInspectorScreen extends StatefulWidget {
   const SettingsInspectorScreen({super.key});
 
+  /// قالب‌بندی امن مقادیر: تضمین مطلق عدم افشای رازها در رابط کاربری
+  static String safeDisplayValue(SettingDescriptor? desc, Object? value) {
+    if (desc != null && (desc.scope == SettingScope.secure ||
+        desc.key.toLowerCase().contains('pin') ||
+        desc.key.toLowerCase().contains('password') ||
+        desc.key.toLowerCase().contains('api_key') ||
+        desc.key.toLowerCase().contains('secret'))) {
+      return '[محرمانه - غیرقابل نمایش]';
+    }
+    if (value == null) return '(خالی / null)';
+    return value.toString();
+  }
+
+  /// قالب‌بندی امن برای خروجی کلیپ‌بورد: جایگزینی صریح رازها با [REDACTED_SECRET]
+  static String safeExportValue(SettingDescriptor? desc, Object? value) {
+    if (desc != null && (desc.scope == SettingScope.secure ||
+        desc.key.toLowerCase().contains('pin') ||
+        desc.key.toLowerCase().contains('password') ||
+        desc.key.toLowerCase().contains('api_key') ||
+        desc.key.toLowerCase().contains('secret'))) {
+      return '[REDACTED_SECRET]';
+    }
+    return value?.toString() ?? 'null';
+  }
+
   @override
   State<SettingsInspectorScreen> createState() => _SettingsInspectorScreenState();
 }
@@ -64,23 +89,6 @@ class _SettingsInspectorScreenState extends State<SettingsInspectorScreen> {
     }
   }
 
-  /// قالب‌بندی امن مقادیر: تضمین مطلق عدم افشای رازها در رابط کاربری
-  static String safeDisplayValue(SettingDescriptor? desc, Object? value) {
-    if (desc != null && (desc.scope == SettingScope.secure || desc.isSecure || desc.key.toLowerCase().contains('pin'))) {
-      return '[محرمانه - غیرقابل نمایش]';
-    }
-    if (value == null) return '(خالی / null)';
-    return value.toString();
-  }
-
-  /// قالب‌بندی امن برای خروجی کلیپ‌بورد: جایگزینی صریح رازها با [REDACTED_SECRET]
-  static String safeExportValue(SettingDescriptor? desc, Object? value) {
-    if (desc != null && (desc.scope == SettingScope.secure || desc.isSecure || desc.key.toLowerCase().contains('pin'))) {
-      return '[REDACTED_SECRET]';
-    }
-    return value?.toString() ?? 'null';
-  }
-
   Future<void> _copyDiagnosticDump() async {
     final schemaVersion = SettingsService.instance.get<int>('settings_schema_version');
     final loadState = SettingsService.instance.loadState.name;
@@ -92,7 +100,7 @@ class _SettingsInspectorScreenState extends State<SettingsInspectorScreen> {
       final key = r['key'] as String;
       final desc = SettingsRegistry.find(key);
       dbDump[key] = {
-        'value': safeExportValue(desc, r['value']),
+        'value': SettingsInspectorScreen.safeExportValue(desc, r['value']),
         'updated_at': r['updated_at'] ?? 'null',
         'isOrphan': desc == null,
       };
@@ -429,7 +437,7 @@ class _SettingsInspectorScreenState extends State<SettingsInspectorScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(desc.key, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              Text(desc.titleFa, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+              Text(desc.labelFa, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
             ],
           ),
         ),
@@ -440,7 +448,7 @@ class _SettingsInspectorScreenState extends State<SettingsInspectorScreen> {
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
-            safeDisplayValue(desc, desc.defaultValue),
+            SettingsInspectorScreen.safeDisplayValue(desc, desc.defaultValue),
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: colors.primary),
           ),
         ),
@@ -489,7 +497,7 @@ class _SettingsInspectorScreenState extends State<SettingsInspectorScreen> {
             const SizedBox(width: 6),
             Expanded(
               child: Text(
-                safeDisplayValue(desc, rawVal),
+                SettingsInspectorScreen.safeDisplayValue(desc, rawVal),
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.textPrimary),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

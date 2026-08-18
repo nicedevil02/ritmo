@@ -252,6 +252,32 @@ $_bridgeScriptBody''';
   }
   window.__ritmo_readSSEStream = readSSEStream;
 
+  // --- Centralized RITMO Selector Table ---
+  var RITMO_SELECTORS = {
+    composer: '#prompt-textarea, textarea, div[contenteditable="true"], .ProseMirror',
+    sendButton: 'button[data-testid="send-button"], button[data-testid="fruitjuice-send-button"], button[aria-label="Send prompt"], button[aria-label="ارسال پیام"], form button[type="submit"]',
+    stopButton: 'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button',
+    assistantMessage: '[data-message-author-role="assistant"]',
+    unseenAssistantMessage: '[data-message-author-role="assistant"]:not([data-ritmo-seen="true"])',
+    userMessage: '[data-message-author-role="user"], [data-testid*="user"], div.font-user-message',
+    markdownBodies: 'div.markdown, div.prose, [class*="markdown"], [class*="prose"]',
+    unseenMarkdownBodies: 'div.markdown:not([data-ritmo-seen="true"]), div.prose:not([data-ritmo-seen="true"]), [class*="markdown"]:not([data-ritmo-seen="true"]), [class*="prose"]:not([data-ritmo-seen="true"])',
+    conversationTurns: 'article, [data-testid*="conversation-turn-"]',
+    unseenConversationTurns: 'article:not([data-ritmo-seen="true"]), [data-testid*="conversation-turn-"]:not([data-ritmo-seen="true"])',
+    streamingIndicator: '.result-streaming, .streaming, [data-is-streaming="true"]',
+    cloudflare: 'iframe[src*="cloudflare"], iframe[src*="challenges.cloudflare.com"], #cf-turnstile, #challenge-stage, #challenge-running, .cf-turnstile-wrapper',
+    sidebarClose: 'button[aria-label*="Close sidebar" i], button[aria-label*="بستن نوار" i], button[data-testid*="close-sidebar" i]'
+  };
+
+  function querySafe(selector) {
+    try {
+      return document.querySelector(selector);
+    } catch (e) {
+      console.warn('[Ritmo] querySafe skipped invalid selector:', selector);
+      return null;
+    }
+  }
+
   // A selector that the current WebView cannot parse makes querySelectorAll
   // throw for the ENTIRE list, taking the caller down with it. Never query raw.
   function queryAllSafe(selector) {
@@ -269,7 +295,7 @@ $_bridgeScriptBody''';
   function checkCloudflareStatus() {
     var title = document.title || '';
     var isCfTitle = title.includes('Just a moment') || title.includes('Security Check') || title.includes('Cloudflare') || title.includes('Attention Required');
-    var hasCfIframe = !!document.querySelector('iframe[src*="cloudflare"], iframe[src*="challenges.cloudflare.com"], #cf-turnstile, #challenge-stage, #challenge-running, .cf-turnstile-wrapper');
+    var hasCfIframe = !!querySafe(RITMO_SELECTORS.cloudflare);
     var isChallenged = isCfTitle || hasCfIframe;
 
     if (isChallenged !== lastCfState) {
@@ -394,23 +420,14 @@ $_bridgeScriptBody''';
 
   function autoCloseSidebar() {
     try {
-      if (!isSidebarOpen()) return;
-
-      var closeBtns = document.querySelectorAll(
-        'button[aria-label="Close sidebar"], button[aria-label="Close navigation"], button[data-testid="close-sidebar-button"], button[aria-label="بستن منو"]'
-      );
-      for (var i = 0; i < closeBtns.length; i++) {
-        var btn = closeBtns[i];
-        if (btn && isVisiblyOnScreen(btn)) {
-          btn.click();
-          console.log('[Ritmo] Auto-closed sidebar via close button');
-          return;
-        }
+      var closeBtn = querySafe(RITMO_SELECTORS.sidebarClose);
+      if (closeBtn && isVisiblyOnScreen(closeBtn)) {
+        closeBtn.click();
+        console.log('[Ritmo] Auto-closed sidebar via close button');
+        return;
       }
 
-      var backdrops = document.querySelectorAll(
-        'div.fixed.inset-0.bg-black\\/50, div.fixed.inset-0.bg-black, div[class*="backdrop"]'
-      );
+      var backdrops = queryAllSafe('div.fixed.inset-0, div[class*="backdrop"], div[class*="sidebar-mask"]');
       for (var j = 0; j < backdrops.length; j++) {
         var bd = backdrops[j];
         if (bd && isVisiblyOnScreen(bd)) {
@@ -450,24 +467,24 @@ $_bridgeScriptBody''';
   function findLatestAssistantText() {
     try {
       // 1. Prioritize newly generated assistant elements not present before this turn
-      var unseenAssistants = queryAllSafe('[data-message-author-role="assistant"]:not([data-ritmo-seen="true"])');
+      var unseenAssistants = queryAllSafe(RITMO_SELECTORS.unseenAssistantMessage);
       if (unseenAssistants.length > 0) {
         var lastUnseen = unseenAssistants[unseenAssistants.length - 1];
         var t = extractCleanText(lastUnseen);
         if (t) return t;
       }
 
-      var unseenMarkdowns = queryAllSafe('div.markdown:not([data-ritmo-seen="true"]), div.prose:not([data-ritmo-seen="true"]), [class*="markdown"]:not([data-ritmo-seen="true"]), [class*="prose"]:not([data-ritmo-seen="true"])');
+      var unseenMarkdowns = queryAllSafe(RITMO_SELECTORS.unseenMarkdownBodies);
       for (var j = unseenMarkdowns.length - 1; j >= 0; j--) {
         var md = unseenMarkdowns[j];
-        var isUser = !!md.closest('[data-message-author-role="user"], [data-testid*="user"], div.font-user-message');
+        var isUser = !!md.closest(RITMO_SELECTORS.userMessage);
         if (!isUser) {
           var t = extractCleanText(md);
           if (t) return t;
         }
       }
 
-      var unseenArticles = queryAllSafe('article:not([data-ritmo-seen="true"]), [data-testid*="conversation-turn-"]:not([data-ritmo-seen="true"])');
+      var unseenArticles = queryAllSafe(RITMO_SELECTORS.unseenConversationTurns);
       for (var i = unseenArticles.length - 1; i >= 0; i--) {
         var art = unseenArticles[i];
         var isUser = !!art.querySelector('[data-message-author-role="user"]') ||
@@ -479,24 +496,24 @@ $_bridgeScriptBody''';
       }
 
       // 2. Fallback to all assistant elements if no unseen flag match found
-      var assistants = queryAllSafe('[data-message-author-role="assistant"]');
+      var assistants = queryAllSafe(RITMO_SELECTORS.assistantMessage);
       if (assistants.length > 0) {
         var lastAssistant = assistants[assistants.length - 1];
         var tAll = extractCleanText(lastAssistant);
         if (tAll) return tAll;
       }
 
-      var markdowns = queryAllSafe('div.markdown, div.prose, [class*="markdown"], [class*="prose"]');
+      var markdowns = queryAllSafe(RITMO_SELECTORS.markdownBodies);
       for (var k = markdowns.length - 1; k >= 0; k--) {
         var mdAll = markdowns[k];
-        var isUserMd = !!mdAll.closest('[data-message-author-role="user"], [data-testid*="user"], div.font-user-message');
+        var isUserMd = !!mdAll.closest(RITMO_SELECTORS.userMessage);
         if (!isUserMd) {
           var tAllMd = extractCleanText(mdAll);
           if (tAllMd) return tAllMd;
         }
       }
 
-      var articles = queryAllSafe('article, [data-testid*="conversation-turn-"]');
+      var articles = queryAllSafe(RITMO_SELECTORS.conversationTurns);
       for (var m = articles.length - 1; m >= 0; m--) {
         var artAll = articles[m];
         var isUserArt = !!artAll.querySelector('[data-message-author-role="user"]') ||
@@ -626,15 +643,11 @@ $_bridgeScriptBody''';
     }, 350);
 
     function evaluateStreamCompletion() {
-      var stopButton = document.querySelector(
-        'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button'
-      );
-      var isStreamingClass = document.querySelector('.result-streaming, .streaming, [data-is-streaming="true"]');
+      var stopButton = querySafe(RITMO_SELECTORS.stopButton);
+      var isStreamingClass = querySafe(RITMO_SELECTORS.streamingIndicator);
       var isGenerating = !!stopButton || !!isStreamingClass;
 
-      var sendButton = document.querySelector(
-        'button[data-testid="send-button"], button[data-testid="fruitjuice-send-button"], button[aria-label="Send prompt"], button[aria-label="ارسال پیام"], form button[type="submit"]'
-      );
+      var sendButton = querySafe(RITMO_SELECTORS.sendButton);
       var hasSendButton = !!sendButton && !sendButton.disabled;
       var idleMs = Date.now() - lastChangeTimestamp;
 
@@ -660,18 +673,11 @@ $_bridgeScriptBody''';
       window.__ritmo_active_req_id = reqId || '';
 
       function findTextarea() {
-        return document.querySelector('#prompt-textarea') ||
-               document.querySelector('textarea') ||
-               document.querySelector('div[contenteditable="true"]') ||
-               document.querySelector('.ProseMirror');
+        return querySafe(RITMO_SELECTORS.composer);
       }
 
       function findSendButton() {
-        return document.querySelector('button[data-testid="send-button"]') ||
-               document.querySelector('button[data-testid="fruitjuice-send-button"]') ||
-               document.querySelector('button[aria-label="Send prompt"]') ||
-               document.querySelector('button[aria-label="ارسال پیام"]') ||
-               document.querySelector('form button[type="submit"]');
+        return querySafe(RITMO_SELECTORS.sendButton);
       }
 
       var textarea = findTextarea();
@@ -779,10 +785,8 @@ $_bridgeScriptBody''';
 
       console.log('[Ritmo] __ritmo_resume invoked for reqId: ' + reqId + ' (stage: ' + stage + ', received: ' + receivedLength + ')');
 
-      var stopButton = document.querySelector(
-        'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button'
-      );
-      var isStreamingClass = document.querySelector('.result-streaming, .streaming');
+      var stopButton = querySafe(RITMO_SELECTORS.stopButton);
+      var isStreamingClass = querySafe(RITMO_SELECTORS.streamingIndicator);
       var isCurrentlyGenerating = !!stopButton || !!isStreamingClass;
 
       var currentText = findLatestAssistantText();
@@ -826,9 +830,8 @@ $_bridgeScriptBody''';
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
       }
-      var stopBtn = document.querySelector(
-        'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button'
-      );
+      stopDomObserver();
+      var stopBtn = querySafe(RITMO_SELECTORS.stopButton);
       if (stopBtn) {
         stopBtn.click();
         console.log('[Ritmo] Clicked stop button in DOM on cancel.');
@@ -841,14 +844,9 @@ $_bridgeScriptBody''';
   // --- 8. Composer Readiness Check ---
   window.__ritmo_checkComposerReady = function() {
     try {
-      var el = document.querySelector('#prompt-textarea') ||
-               document.querySelector('textarea') ||
-               document.querySelector('div[contenteditable="true"]') ||
-               document.querySelector('.ProseMirror');
+      var el = querySafe(RITMO_SELECTORS.composer);
       if (!el) return { ready: false, reason: 'not_found' };
-      var isGenerating = !!document.querySelector(
-        'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button'
-      );
+      var isGenerating = !!querySafe(RITMO_SELECTORS.stopButton);
       if (isGenerating) return { ready: false, reason: 'still_generating' };
       if (el.disabled || el.getAttribute('aria-disabled') === 'true') return { ready: false, reason: 'disabled' };
       return { ready: true };

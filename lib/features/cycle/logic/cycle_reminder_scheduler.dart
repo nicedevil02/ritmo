@@ -10,6 +10,7 @@ import 'package:ritmo/core/services/cycle_notification_service.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
+import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CycleReminderScheduler {
@@ -56,15 +57,23 @@ class CycleReminderScheduler {
             CycleEngineInput(db: db, appSettings: settings, now: effectiveNow),
           );
 
-      if (engineOutput.hasData && engineOutput.nextPeriodWindowStart != null) {
-        final cycleLen = engineOutput.stats.avgCycleLength.round();
-        await CycleNotificationService.scheduleReminders(
-          nextPeriodWindowStart: engineOutput.nextPeriodWindowStart,
-          cycleLength: cycleLen > 0 ? cycleLen : 28,
-          consentReminders: consentReminders,
-          pregnancyMode: isPregnant,
-          now: effectiveNow,
-        );
+      if (engineOutput.hasData && engineOutput.forecast.isNotEmpty) {
+        // F-24: Take at most 3 cycles, filter out low-confidence cycles
+        final eligibleCycles = engineOutput.forecast
+            .take(3)
+            .where((c) => c.confidenceLevel != PredictionConfidenceLevel.low)
+            .toList();
+
+        if (eligibleCycles.isNotEmpty) {
+          await CycleNotificationService.scheduleForecastReminders(
+            forecastCycles: eligibleCycles,
+            consentReminders: consentReminders,
+            pregnancyMode: isPregnant,
+            now: effectiveNow,
+          );
+        } else {
+          await CycleNotificationService.cancelAll();
+        }
       } else {
         await CycleNotificationService.cancelAll();
       }

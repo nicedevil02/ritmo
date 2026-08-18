@@ -71,6 +71,46 @@ class AgentToolCallParser {
   static final RegExp _fenceOpenRe = RegExp(r'^\s*```[a-zA-Z0-9_-]*\s*');
   static final RegExp _fenceCloseRe = RegExp(r'\s*```\s*$');
 
+  // --- تشخیص بلوک کد بازِ مربوط به فراخوانی ابزار ---
+  //
+  // الگوی قبلی این بود:
+  //
+  //     RegExp(r'^```(?:json|tool)?\s*\{?', caseSensitive: false)
+  //
+  // هر سه بخش آن اختیاری بودند — `(?:json|tool)?` و `\s*` و `\{?` — پس عملاً
+  // فقط `^```` باقی می‌ماند و با هر بلوک کد بازی (مثلاً ```dart) مطابقت می‌کرد.
+  //
+  // دو پیامد داشت که هر دو پاسخ را از دید کاربر پنهان می‌کردند:
+  //   ۱) در `scan()` مقدار `hasOpenTag` ترو می‌شد و گیت مرحلهٔ دوم در
+  //      `AgentLoopRunner` تمام متن قابل نمایش را سرکوب می‌کرد.
+  //   ۲) در `cleanForDisplay()` دستور `text.substring(0, lastFencePos)` پاسخ نهایی را
+  //      از محل بلوک کد می‌برید.
+  static final RegExp _toolFenceWithBraceRe =
+      RegExp(r'^```(?:json|tool)\s*\{', caseSensitive: false);
+  static final RegExp _toolFenceOnlyRe =
+      RegExp(r'^```(?:json|tool)\s*$', caseSensitive: false);
+  static final RegExp _bareFenceWithJsonRe =
+      RegExp(r'^```[ \t]*\r?\n?\s*(\{[\s\S]*)$');
+
+  /// آیا دنبالهٔ بلوک کدِ باز، واقعاً یک فراخوانی ابزارِ نیمه‌کاره است؟
+  static bool _isOpenToolFence(String fenceTail) {
+    // ```json { یا ```tool {
+    if (_toolFenceWithBraceRe.hasMatch(fenceTail)) return true;
+
+    // ```json که هنوز آکولادِ آن نرسیده است
+    if (_toolFenceOnlyRe.hasMatch(fenceTail)) return true;
+
+    // بلوک بدون زبان: فقط وقتی که محتوایش آشکارا JSON فراخوانی ابزار است.
+    final match = _bareFenceWithJsonRe.firstMatch(fenceTail);
+    if (match == null) return false;
+    final body = match.group(1) ?? '';
+    return body.contains('"tool"') ||
+        body.contains('"tool_name"') ||
+        body.contains('"tool_calls"') ||
+        (body.contains('"name"') && body.contains('"parameters"')) ||
+        (body.contains('"name"') && body.contains('"arguments"'));
+  }
+
   static const String _openTag = '<tool_call>';
   static const String _closeTag = '</tool_call>';
 
@@ -133,7 +173,7 @@ class AgentToolCallParser {
     if (fenceMatches.length % 2 != 0) {
       final lastFencePos = fenceMatches.last.start;
       final fenceTail = raw.substring(lastFencePos);
-      if (RegExp(r'^```(?:json|tool)?\s*\{?', caseSensitive: false).hasMatch(fenceTail)) {
+      if (_isOpenToolFence(fenceTail)) {
         hasOpenFenceTool = true;
       }
     }
@@ -194,12 +234,13 @@ class AgentToolCallParser {
     text = text.replaceAll(_danglingTagRe, '');
     text = text.replaceAll(_partialTagRe, '');
 
-    // اگر بلوک کد ابزار نیمه‌کاره باز مانده، تا ابتدای آن را پاک کن
+    // اگر بلوک کد ابزار نیمه‌کاره باز مانده، تا ابتدای آن را پاک کن.
+    // توجه: فقط برای بلوک فراخوانی ابزار؛ بلوک کد عادی کاربر نباید بریده شود.
     final fenceMatches = RegExp(r'```').allMatches(text).toList();
     if (fenceMatches.length % 2 != 0) {
       final lastFencePos = fenceMatches.last.start;
       final fenceTail = text.substring(lastFencePos);
-      if (RegExp(r'^```(?:json|tool)?\s*\{?', caseSensitive: false).hasMatch(fenceTail)) {
+      if (_isOpenToolFence(fenceTail)) {
         text = text.substring(0, lastFencePos);
       }
     }

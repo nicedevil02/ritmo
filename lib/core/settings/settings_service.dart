@@ -163,10 +163,17 @@ class SettingsService {
         value = strVal;
       }
     } else if (desc.type == SettingType.boolean) {
-
       if (value is! bool) {
         value = value.toString() == 'true';
       }
+    } else if (desc.type == SettingType.time) {
+      final str = value.toString().trim();
+      final match = RegExp(r'^([01]\d|2[0-3]):([0-5]\d)$').firstMatch(str);
+      if (match == null) {
+        RitmoLog.warning('Settings', 'مقدار زمان نامعتبر برای کلید $key: $str');
+        return false;
+      }
+      value = str;
     }
 
     try {

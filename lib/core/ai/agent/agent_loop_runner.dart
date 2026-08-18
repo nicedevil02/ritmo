@@ -198,20 +198,25 @@ class AgentLoopRunner {
           turnRaw.write(chunk);
           final soFar = turnRaw.toString();
 
-          final live = soFar.contains('<')
+          // Stage 1: بررسی وضعیت partial token
+          final live = (soFar.contains('<') || soFar.contains('[') || soFar.contains('`'))
               ? AgentToolCallParser.scan(soFar)
               : AgentToolCallScan.empty;
 
-          final combined = AgentToolCallParser.cleanForDisplay(
-            _join(rawBuffer, AgentToolCallParser.stripToolCalls(soFar)),
-          );
-          if (combined != displayed) {
-            final delta = combined.startsWith(displayed)
-                ? combined.substring(displayed.length)
-                : '';
-            displayed = combined;
-            yield AgentTokenStreamEvent(delta: delta, accumulated: combined);
+          // Stage 2: رندر فقط در صورتی که تگ باز نداریم
+          if (!live.hasOpenTag) {
+            final combined = AgentToolCallParser.cleanForDisplay(
+              _join(rawBuffer, AgentToolCallParser.stripToolCalls(soFar)),
+            );
+            if (combined != displayed) {
+              final delta = combined.startsWith(displayed)
+                  ? combined.substring(displayed.length)
+                  : combined;
+              displayed = combined;
+              yield AgentTokenStreamEvent(delta: delta, accumulated: combined);
+            }
           }
+          // else: تگ باز است — متن سرکوب می‌شود (Stage 2 کامیت نمی‌کند)
 
           if (live.hasCalls && live.tailLength > _tailCutoffAfterToolCall) {
             cutEarly = true;

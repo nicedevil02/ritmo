@@ -14,6 +14,7 @@ import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/navigation/ritmo_router.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/assistant/logic/day_plan_template_service.dart';
 // Logic
 import 'package:ritmo/features/assistant/logic/settings_action_guard.dart';
@@ -225,14 +226,12 @@ class AssistantActionRegistry {
         );
 
         if (context.mounted) {
-          unawaited(showModalBottomSheet(
+          unawaited(RitmoSheetScaffold.present(
             context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            builder: (context) => SleepLogSheet(
+            title: 'ثبت خواب دیشب',
+            builder: (ctx) => SleepLogSheet(
               target: target,
               onSaved: () {
-                Navigator.pop(context);
                 onComplete();
               },
             ),
@@ -241,13 +240,11 @@ class AssistantActionRegistry {
 
       case AssistantActionType.logEnergyMood:
         if (context.mounted) {
-          unawaited(showModalBottomSheet(
+          unawaited(RitmoSheetScaffold.present(
             context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            builder: (context) => QuickLogSheet(
+            title: 'الان چطورم؟',
+            builder: (ctx) => QuickLogSheet(
               onSaved: () {
-                Navigator.pop(context);
                 onComplete();
               },
             ),

@@ -1,9 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/energy/models/energy_mood_models.dart';
 import 'package:ritmo/features/wellbeing/logic/wellbeing_log_gateway.dart';
@@ -55,7 +52,6 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
       if (_selectedEnergy != null) {
         await WellbeingLogGateway.instance.logEnergy(
           level: _selectedEnergy!,
-          note: noteText.isNotEmpty ? noteText : null,
           source: 'quick_sheet',
           now: now,
         );
@@ -64,9 +60,9 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
       // ۲. ثبت حال روحی از طریق درگاه یکپارچه
       if (_selectedMood != null) {
         await WellbeingLogGateway.instance.logMood(
-          valence: _valence,
-          label: _selectedMood!.label,
+          score: _valence.toInt(),
           note: noteText.isNotEmpty ? noteText : null,
+          source: 'quick_sheet',
           now: now,
         );
       }

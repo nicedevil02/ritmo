@@ -342,7 +342,7 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
             style: RitmoTextStyles.caption(colors.textSecondary),
           ),
           value: _winddownEnabled,
-          activeColor: colors.sleepAccent,
+          activeThumbColor: colors.sleepAccent,
           onChanged: (val) {
             HapticFeedback.selectionClick();
             setState(() {

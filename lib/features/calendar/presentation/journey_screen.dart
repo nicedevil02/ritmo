@@ -444,6 +444,24 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                                   ),
                           ),
 
+                          // Control: Undo Action Button (CAL-44)
+                          if (_controller.canUndo)
+                            IconButton(
+                              icon: const Icon(Icons.undo_rounded, size: 20),
+                              tooltip: 'بازگردانی (${_controller.lastUndoDescription ?? ''})',
+                              color: colors.textPrimary,
+                              onPressed: _controller.undoLastAction,
+                            ),
+
+                          // Control: Redo Action Button (CAL-44)
+                          if (_controller.canRedo)
+                            IconButton(
+                              icon: const Icon(Icons.redo_rounded, size: 20),
+                              tooltip: 'انجام مجدد (${_controller.lastRedoDescription ?? ''})',
+                              color: colors.textPrimary,
+                              onPressed: _controller.redoLastAction,
+                            ),
+
                           // Control 3: Search Button
                           IconButton(
                             icon: const Icon(Icons.search_rounded, size: 22),

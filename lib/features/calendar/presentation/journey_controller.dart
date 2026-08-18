@@ -100,6 +100,10 @@ class JourneyController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? get warningMessage => _warningMessage;
   TimeSlot? get suggestedSlot => _suggestedSlot;
+  bool get canUndo => CommandStack.instance.canUndo;
+  bool get canRedo => CommandStack.instance.canRedo;
+  String? get lastUndoDescription => CommandStack.instance.lastUndoDescription;
+  String? get lastRedoDescription => CommandStack.instance.lastRedoDescription;
   String? get highlightedItemId => _highlightedItemId;
   int? get focusedMinutes => _focusedMinutes;
   String? get manipulatingItemId => _manipulatingItemId;
@@ -561,6 +565,15 @@ class JourneyController extends ChangeNotifier {
   Future<bool> undoLastAction() async {
     if (_isDisposed) return false;
     final success = await CommandStack.instance.undoLast();
+    if (success) {
+      await refresh();
+    }
+    return success;
+  }
+
+  Future<bool> redoLastAction() async {
+    if (_isDisposed) return false;
+    final success = await CommandStack.instance.redoLast();
     if (success) {
       await refresh();
     }

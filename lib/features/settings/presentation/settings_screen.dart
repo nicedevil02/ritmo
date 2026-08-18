@@ -171,6 +171,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Ios26PageRoute(builder: (_) => const CrashReportsScreen()),
       );
     }
+  void _navigateToGroupWithHighlight(
+    BuildContext context,
+    SettingsGroup group,
+    String highlightKey,
+  ) {
+    Widget page;
+    switch (group) {
+      case SettingsGroup.identity:
+        page = IdentityGroupScreen(highlightKey: highlightKey);
+        break;
+      case SettingsGroup.modules:
+        page = ModulesGroupScreen(highlightKey: highlightKey);
+        break;
+      case SettingsGroup.notifications:
+        page = NotificationsGroupScreen(highlightKey: highlightKey);
+        break;
+      case SettingsGroup.appearance:
+        page = AppearanceGroupScreen(
+          themeRepository: widget.themeRepository,
+          localeRepository: widget.localeRepository,
+          highlightKey: highlightKey,
+        );
+        break;
+      case SettingsGroup.assistant:
+        page = AssistantPrivacyGroupScreen(highlightKey: highlightKey);
+        break;
+      case SettingsGroup.dataBackup:
+        page = DataBackupGroupScreen(
+          onFactoryReset: widget.onFactoryReset,
+          highlightKey: highlightKey,
+        );
+        break;
+      case SettingsGroup.security:
+        page = SecurityGroupScreen(highlightKey: highlightKey);
+        break;
+      case SettingsGroup.calendar:
+        page = CalendarGroupScreen(highlightKey: highlightKey);
+        break;
+    }
+
+    Navigator.push(
+      context,
+      Ios26PageRoute(builder: (_) => page),
+    );
   }
 
   @override
@@ -256,14 +300,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () {
-                  showSearch(
+                onTap: () async {
+                  final selected = await showSearch<SettingDescriptor?>(
                     context: context,
                     delegate: SettingsSearchDelegate(
                       themeRepository: widget.themeRepository,
                       localeRepository: widget.localeRepository,
                     ),
                   );
+                  if (selected != null && context.mounted) {
+                    _navigateToGroupWithHighlight(context, selected.group, selected.key);
+                  }
                 },
                 borderRadius: BorderRadius.circular(14),
                 child: Container(

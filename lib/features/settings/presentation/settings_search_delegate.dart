@@ -4,14 +4,6 @@ import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
-import 'package:ritmo/features/settings/presentation/groups/appearance_group_screen.dart';
-import 'package:ritmo/features/settings/presentation/groups/assistant_privacy_group_screen.dart';
-import 'package:ritmo/features/settings/presentation/groups/calendar_group_screen.dart';
-import 'package:ritmo/features/settings/presentation/groups/data_backup_group_screen.dart';
-import 'package:ritmo/features/settings/presentation/groups/identity_group_screen.dart';
-import 'package:ritmo/features/settings/presentation/groups/modules_group_screen.dart';
-import 'package:ritmo/features/settings/presentation/groups/notifications_group_screen.dart';
-import 'package:ritmo/features/settings/presentation/groups/security_group_screen.dart';
 
 class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
   SettingsSearchDelegate({
@@ -113,46 +105,9 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
           ),
           onTap: () {
             close(context, desc);
-            _navigateToGroup(context, desc.group, highlightKey: desc.key);
           },
         );
       },
     );
-  }
-
-  void _navigateToGroup(BuildContext context, SettingsGroup group, {String? highlightKey}) {
-    Widget page;
-    switch (group) {
-      case SettingsGroup.identity:
-        page = IdentityGroupScreen(highlightKey: highlightKey);
-        break;
-      case SettingsGroup.modules:
-        page = ModulesGroupScreen(highlightKey: highlightKey);
-        break;
-      case SettingsGroup.notifications:
-        page = NotificationsGroupScreen(highlightKey: highlightKey);
-        break;
-      case SettingsGroup.appearance:
-        page = AppearanceGroupScreen(
-          themeRepository: themeRepository,
-          localeRepository: localeRepository,
-          highlightKey: highlightKey,
-        );
-        break;
-      case SettingsGroup.assistant:
-        page = AssistantPrivacyGroupScreen(highlightKey: highlightKey);
-        break;
-      case SettingsGroup.dataBackup:
-        page = DataBackupGroupScreen(highlightKey: highlightKey);
-        break;
-      case SettingsGroup.security:
-        page = SecurityGroupScreen(highlightKey: highlightKey);
-        break;
-      case SettingsGroup.calendar:
-        page = CalendarGroupScreen(highlightKey: highlightKey);
-        break;
-    }
-
-    Navigator.push(context, CupertinoPageRoute(builder: (_) => page));
   }
 }

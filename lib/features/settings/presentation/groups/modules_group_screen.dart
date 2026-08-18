@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/modules/module_registry.dart';
@@ -62,7 +63,7 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
           icon: Icons.lock_outline,
         );
         // Show upgrade sheet
-        PremiumUpgradeSheet.show(context);
+        unawaited(PremiumUpgradeSheet.show(context));
         return;
       }
       setState(() {

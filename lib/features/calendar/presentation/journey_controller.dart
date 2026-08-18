@@ -22,6 +22,7 @@ import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
+import 'package:ritmo/features/calendar/data/day_mark_repository.dart';
 import 'package:ritmo/features/calendar/data/day_template_repository.dart';
 import 'package:ritmo/features/calendar/presentation/logic/gap_finder.dart';
 import 'package:ritmo/features/calendar/presentation/logic/timeline_snapping.dart';
@@ -45,12 +46,14 @@ class JourneyController extends ChangeNotifier {
     AgendaActionHandler? actionHandler,
     RitmoExecutionKernel? kernel,
     OccurrenceOverrideRepository? overrideRepo,
+    DayMarkRepository? dayMarkRepo,
   })  : _agendaService = agendaService ?? DayAgendaService.instance,
         _snapshotBuilder = snapshotBuilder ?? const DayAgendaSnapshotBuilder(),
         _eventBus = eventBus ?? RitmoEventBus(),
         _actionHandler = actionHandler ?? AgendaActionHandler.instance,
         _kernel = kernel ?? RitmoExecutionKernel.instance,
-        _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository() {
+        _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository(),
+        _dayMarkRepo = dayMarkRepo ?? DayMarkRepository.instance {
     _subscription = _eventBus.onEvents.listen(_handleEvent);
     RitmoEvents.routineChangedNotifier.addListener(_onRoutineChangedNotification);
   }
@@ -61,6 +64,7 @@ class JourneyController extends ChangeNotifier {
   final AgendaActionHandler _actionHandler;
   final RitmoExecutionKernel _kernel;
   final OccurrenceOverrideRepository _overrideRepo;
+  final DayMarkRepository _dayMarkRepo;
   StreamSubscription<RitmoEvent>? _subscription;
 
   bool _isDisposed = false;
@@ -86,11 +90,13 @@ class JourneyController extends ChangeNotifier {
   DateTime? _windowStart;
   DateTime? _windowEnd;
   int _olderOverdueCount = 0;
+  DayMarkKind _currentDayMark = DayMarkKind.normal;
 
   bool _scaleExplicitlySet = false;
 
   DateTime get selectedDate => _selectedDate;
   JourneyScale get activeScale => _activeScale;
+  DayMarkKind get currentDayMark => _currentDayMark;
   DateTime? get windowStart => _windowStart;
   DateTime? get windowEnd => _windowEnd;
   int get olderOverdueCount => _olderOverdueCount;
@@ -257,6 +263,9 @@ class JourneyController extends ChangeNotifier {
       _snapshot = _snapshotForSelectedDate();
       _windowStart = range.start;
       _windowEnd = range.end;
+
+      final mark = await _dayMarkRepo.getMark(DateKey.of(_selectedDate));
+      _currentDayMark = mark?.kind ?? DayMarkKind.normal;
 
       // Cleanup stale highlights or manipulation state if item no longer exists
       if (_snapshot != null) {
@@ -930,6 +939,40 @@ class JourneyController extends ChangeNotifier {
       if (_isDisposed) return;
       _errorMessage = 'خطا در انتقال رویداد به تاریخ دیگر';
       RitmoLog.error('JourneyController', 'moveItemToDate failed', e, stackTrace);
+    } finally {
+      if (!_isDisposed) {
+        _isExecutingAction = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> setDayMark(DayMarkKind kind, {DayMarkRepository? dayMarkRepo}) async {
+    if (_isDisposed || _isExecutingAction) return;
+    final dateStr = DateKey.of(_selectedDate);
+    final prevKind = _currentDayMark;
+    if (prevKind == kind) return;
+
+    _isExecutingAction = true;
+    notifyListeners();
+
+    try {
+      final repo = dayMarkRepo ?? _dayMarkRepo;
+      final command = _SetDayMarkCommand(
+        dayMarkRepo: repo,
+        dateStr: dateStr,
+        newKind: kind,
+        previousKind: prevKind,
+      );
+      await command.execute();
+      _currentDayMark = kind;
+      CommandStack.instance.push(command);
+      RitmoHapticsPolicy.success();
+      await refresh();
+    } catch (e, stackTrace) {
+      if (_isDisposed) return;
+      _errorMessage = 'خطا در تغییر وضعیت روز';
+      RitmoLog.error('JourneyController', 'setDayMark failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -1823,6 +1866,48 @@ class _ApplyDayTemplateCommand implements UndoableCommand {
       }
     }
     DayAgendaService.instance.invalidateDate(targetDateStr);
+    RitmoEvents.notifyRoutineChanged();
+  }
+}
+
+class _SetDayMarkCommand implements UndoableCommand {
+  _SetDayMarkCommand({
+    required this.dayMarkRepo,
+    required this.dateStr,
+    required this.newKind,
+    required this.previousKind,
+  });
+
+  final DayMarkRepository dayMarkRepo;
+  final String dateStr;
+  final DayMarkKind newKind;
+  final DayMarkKind previousKind;
+
+  @override
+  String get description {
+    switch (newKind) {
+      case DayMarkKind.rest:
+        return 'علامت‌گذاری روز استراحت';
+      case DayMarkKind.travel:
+        return 'علامت‌گذاری روز سفر';
+      case DayMarkKind.special:
+        return 'علامت‌گذاری روز ویژه';
+      case DayMarkKind.normal:
+        return 'تغییر وضعیت به روز عادی';
+    }
+  }
+
+  @override
+  Future<void> execute() async {
+    await dayMarkRepo.setMark(dateStr, newKind);
+    DayAgendaService.instance.invalidateDate(dateStr);
+    RitmoEvents.notifyRoutineChanged();
+  }
+
+  @override
+  Future<void> undo() async {
+    await dayMarkRepo.setMark(dateStr, previousKind);
+    DayAgendaService.instance.invalidateDate(dateStr);
     RitmoEvents.notifyRoutineChanged();
   }
 }

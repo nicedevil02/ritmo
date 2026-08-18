@@ -37,12 +37,14 @@ class DayMark {
 /// K43 — Repository for managing Day Marks (REST, TRAVEL, SPECIAL, NORMAL)
 /// in `day_marks` table.
 class DayMarkRepository {
-  DayMarkRepository._();
-  static final DayMarkRepository instance = DayMarkRepository._();
+  DayMarkRepository({DatabaseHelper? dbHelper}) : _dbHelper = dbHelper ?? DatabaseHelper.instance;
+  static final DayMarkRepository instance = DayMarkRepository();
+
+  final DatabaseHelper _dbHelper;
 
   Future<DayMark?> getMark(String dateStr) async {
     try {
-      final db = await DatabaseHelper.instance.database;
+      final db = await _dbHelper.database;
       final rows = await db.query('day_marks', where: 'date = ?', whereArgs: [dateStr], limit: 1);
       if (rows.isEmpty) return null;
       final row = rows.first;
@@ -59,7 +61,7 @@ class DayMarkRepository {
 
   Future<bool> setMark(String dateStr, DayMarkKind kind, {String? note}) async {
     try {
-      final db = await DatabaseHelper.instance.database;
+      final db = await _dbHelper.database;
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       final kindCode = DayMark.codeOf(kind);
 

@@ -429,6 +429,86 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
     }
   }
 
+  Widget _buildQuickDayMarkButton(RitmoColors colors) {
+    final mark = _controller.currentDayMark;
+    IconData icon;
+    Color iconColor;
+    String label;
+
+    switch (mark) {
+      case DayMarkKind.rest:
+        icon = Icons.spa_rounded;
+        iconColor = colors.success;
+        label = 'روز استراحت';
+        break;
+      case DayMarkKind.travel:
+        icon = Icons.flight_takeoff_rounded;
+        iconColor = colors.warning;
+        label = 'روز سفر';
+        break;
+      case DayMarkKind.special:
+        icon = Icons.star_rounded;
+        iconColor = colors.accent;
+        label = 'روز ویژه';
+        break;
+      case DayMarkKind.normal:
+        icon = Icons.bedtime_outlined;
+        iconColor = colors.textSecondary;
+        label = 'روز عادی';
+        break;
+    }
+
+    return PopupMenuButton<DayMarkKind>(
+      tooltip: 'وضعیت روز ($label)',
+      icon: Icon(icon, color: iconColor, size: 20),
+      onSelected: (newKind) async {
+        await _controller.setDayMark(newKind);
+        if (mounted) {
+          final desc = newKind == DayMarkKind.rest
+              ? 'روز استراحت فعال شد'
+              : (newKind == DayMarkKind.travel ? 'روز سفر فعال شد' : 'وضعیت به روز عادی تغییر یافت');
+          RitmoToast.show(
+            context,
+            desc,
+            onUndo: () => _controller.undoLastAction(),
+          );
+        }
+      },
+      itemBuilder: (ctx) => [
+        PopupMenuItem(
+          value: DayMarkKind.normal,
+          child: Row(
+            children: [
+              Icon(Icons.wb_sunny_outlined, size: 18, color: mark == DayMarkKind.normal ? colors.primary : colors.textSecondary),
+              const SizedBox(width: 8),
+              const Text('عادی (همه‌چیز فعال)'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: DayMarkKind.rest,
+          child: Row(
+            children: [
+              Icon(Icons.spa_rounded, size: 18, color: mark == DayMarkKind.rest ? colors.success : colors.textSecondary),
+              const SizedBox(width: 8),
+              const Text('استراحت (فقط ضروری)'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: DayMarkKind.travel,
+          child: Row(
+            children: [
+              Icon(Icons.flight_takeoff_rounded, size: 18, color: mark == DayMarkKind.travel ? colors.warning : colors.textSecondary),
+              const SizedBox(width: 8),
+              const Text('سفر (فقط ضروری)'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   String _getHeroDateTitle(DateTime date) {
     return CalendarDateFormatter.formatSelectedDateTitle(
       date,
@@ -597,6 +677,9 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                               color: colors.textPrimary,
                               onPressed: _controller.redoLastAction,
                             ),
+
+                          // Quick Day Mark Status Button (CAL-49)
+                          _buildQuickDayMarkButton(colors),
 
                           // Control 3: Search Button
                           IconButton(
@@ -834,6 +917,54 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                             ),
                           ),
                         ],
+                      ],
+                    ),
+                  ),
+
+                // ─── Day Mark Banner (CAL-49: REST / TRAVEL Day Banner) ───
+                if (_controller.currentDayMark == DayMarkKind.rest || _controller.currentDayMark == DayMarkKind.travel)
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: (_controller.currentDayMark == DayMarkKind.rest ? colors.success : colors.warning).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(RitmoRadius.card),
+                      border: Border.all(
+                        color: (_controller.currentDayMark == DayMarkKind.rest ? colors.success : colors.warning).withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _controller.currentDayMark == DayMarkKind.rest ? Icons.spa_rounded : Icons.flight_takeoff_rounded,
+                          size: 18,
+                          color: _controller.currentDayMark == DayMarkKind.rest ? colors.success : colors.warning,
+                        ),
+                        const SizedBox(width: RitmoSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            _controller.currentDayMark == DayMarkKind.rest
+                                ? 'روز استراحت — فقط موارد ضروری فعال هستند'
+                                : 'روز سفر — فقط موارد ضروری فعال هستند',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.textPrimary),
+                          ),
+                        ),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          onPressed: () => _controller.setDayMark(DayMarkKind.normal),
+                          child: Text(
+                            'تغییر به عادی',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: _controller.currentDayMark == DayMarkKind.rest ? colors.success : colors.warning,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

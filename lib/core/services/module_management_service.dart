@@ -1,17 +1,17 @@
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/di/service_locator.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_deactivation_service.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/modules/module_registry.dart';
+import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/services/feature_limits.dart';
-import 'package:ritmo/core/platform/alarm_platform.dart';
-import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
-import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
-import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// نتیجه تلاش برای فعال/غیرفعال‌کردن ماژول
@@ -35,49 +35,27 @@ class ModuleManagementService {
   static List<String> get allModuleKeys =>
       ModuleRegistry.modules.map((m) => m.key).toList();
 
-  /// Fetches all module enable flags atomically from SQLite `app_settings`
+  /// Fetches all module enable flags atomically from SettingsService
   Future<Map<String, bool>> getAllModuleStates() async {
     try {
-      final db = await DatabaseHelper.instance.database;
-      final settings = await db.query('app_settings');
-      final settingsMap = <String, String>{
-        for (final s in settings) s['key']! as String: s['value']! as String,
-      };
-
       final states = <String, bool>{};
       for (final desc in ModuleRegistry.modules) {
         if (desc.isCore) {
           states[desc.key] = true;
         } else {
-          final rawVal = settingsMap[desc.key];
-          states[desc.key] = rawVal != null
-              ? rawVal == 'true'
-              : desc.defaultEnabled;
+          states[desc.key] = SettingsService.instance.get<bool>(desc.key);
         }
       }
       return states;
-    } catch (e) {
-      debugPrint('ModuleManagementService: Error fetching module states: $e');
+    } catch (e, st) {
+      RitmoLog.error('Modules', 'خطا در دریافت وضعیت ماژول‌ها', e, st);
       return {};
     }
   }
 
   /// Check if a specific module is enabled
   Future<bool> isModuleEnabled(String key) async {
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final result = await db.query(
-        'app_settings',
-        where: 'key = ?',
-        whereArgs: [key],
-      );
-      if (result.isNotEmpty) {
-        return result.first['value'] == 'true';
-      }
-    } catch (e) {
-      debugPrint('ModuleManagementService: Error checking module $key: $e');
-    }
-    return false;
+    return ModuleGate.instance.isEnabled(key);
   }
 
   /// Sets a module enabled state with guaranteed atomic upsert, alarm cleanup/rescheduling,
@@ -94,83 +72,45 @@ class ModuleManagementService {
       if (!ModuleRegistry.isCoreModule(key)) {
         if (!ModuleGate.instance.canActivateMoreModules) {
           final limit = FeatureLimits.current.maxActiveModules;
-          debugPrint(
-            'ModuleManagementService: Module cap ($limit) reached. Upgrade required.',
+          RitmoLog.warning(
+            'Modules',
+            'سقف ماژول‌های فعال ($limit) تکمیل است. نیاز به ارتقا به نسخه پیشرفته.',
           );
           return ModuleToggleResult.limitReached;
         }
       }
 
-      final db = await DatabaseHelper.instance.database;
-      final now = DateTime.now().millisecondsSinceEpoch;
-
-      // 1. Atomic Replace into app_settings (Never fails even if key was missing)
-      await db.insert('app_settings', {
-        'key': key,
-        'value': 'true',
-        'updatedAt': now,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      // 1. Update settings via SettingsService
+      await SettingsService.instance.set(key, true);
 
       if (key == 'module_sports_enabled' ||
           key == 'module_supplementary_sports_enabled') {
-        await db.insert('app_settings', {
-          'key': 'module_sports_enabled',
-          'value': 'true',
-          'updatedAt': now,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
-        await db.insert('app_settings', {
-          'key': 'module_supplementary_sports_enabled',
-          'value': 'true',
-          'updatedAt': now,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        await SettingsService.instance.set('module_sports_enabled', true);
+        await SettingsService.instance.set(
+          'module_supplementary_sports_enabled',
+          true,
+        );
       }
 
-      if (key == 'module_medicine_enabled' || key == 'module_health_enabled') {
-        await db.insert('app_settings', {
-          'key': 'module_medicine_enabled',
-          'value': 'true',
-          'updatedAt': now,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
-        await db.insert('app_settings', {
-          'key': 'module_health_enabled',
-          'value': 'true',
-          'updatedAt': now,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      if (key == 'module_medicine_enabled' ||
+          key == 'module_health_enabled') {
+        await SettingsService.instance.set('module_medicine_enabled', true);
+        await SettingsService.instance.set('module_health_enabled', true);
       }
 
-      // 2. Update in-memory settings service
-      try {
-        await SettingsService.instance.set(key, true);
-        if (key == 'module_sports_enabled' ||
-            key == 'module_supplementary_sports_enabled') {
-          await SettingsService.instance.set('module_sports_enabled', true);
-          await SettingsService.instance.set(
-            'module_supplementary_sports_enabled',
-            true,
-          );
-        }
-        if (key == 'module_medicine_enabled' ||
-            key == 'module_health_enabled') {
-          await SettingsService.instance.set('module_medicine_enabled', true);
-          await SettingsService.instance.set('module_health_enabled', true);
-        }
-      } catch (_) {}
-
-      // 3. Invalidate DayAgenda cache & schedule alarms
+      // 2. Invalidate DayAgenda cache & schedule alarms
       DayAgendaService.instance.invalidateAll();
       await AlarmSchedulerService.scheduleNextAlarms();
 
-      // 4. Refresh ModuleGate state
+      // 3. Refresh ModuleGate state
       await ModuleGate.instance.refresh();
 
-      // 5. Broadcast global event to notify all listeners (UI screens, engines, services)
+      // 4. Broadcast global event to notify all listeners (UI screens, engines, services)
       RitmoEvents.notifyRoutineChanged();
 
       return ModuleToggleResult.success;
-    } catch (e) {
-      debugPrint(
-        'ModuleManagementService: Error setting module $key to $enabled: $e',
-      );
+    } catch (e, st) {
+      RitmoLog.error('Modules', 'خطا در تغییر وضعیت ماژول $key به $enabled', e, st);
       return ModuleToggleResult.error;
     }
   }
@@ -386,21 +326,14 @@ class ModuleManagementService {
             await safeDeleteSettingsLike('notes_%');
             break;
         }
-
-        // Set module enable flag to 'false' so it requires activation & onboarding
-        final now = DateTime.now().millisecondsSinceEpoch;
-        await txn.insert('app_settings', {
-          'key': key,
-          'value': 'false',
-          'updatedAt': now,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
       });
 
+      // Set module enable flag to 'false' in SettingsService
+      await SettingsService.instance.set(key, false);
+      await ModuleGate.instance.refresh();
       RitmoEvents.notifyRoutineChanged();
-    } catch (e) {
-      debugPrint(
-        'ModuleManagementService: Error resetting module data for $key: $e',
-      );
+    } catch (e, st) {
+      RitmoLog.error('Modules', 'خطا در بازنشانی اطلاعات ماژول $key', e, st);
     }
   }
 

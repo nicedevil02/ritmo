@@ -293,18 +293,23 @@ class JourneyController extends ChangeNotifier {
     }
   }
 
-  Future<void> completeItem(AgendaItem item) async {
+  Future<void> completeItem(
+    AgendaItem item, {
+    String resultType = OccurrenceResultType.full,
+    int? actualDurationMinutes,
+  }) async {
     if (_isDisposed || _isExecutingAction) return;
     _isExecutingAction = true;
     notifyListeners();
 
     try {
+      final effectiveDuration = actualDurationMinutes ?? item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
       if (item.domain == AgendaDomain.routine) {
         await _kernel.execute(CompleteOccurrenceCommand(
           routineId: item.sourceId,
           dateStr: item.dateStr,
-          resultType: OccurrenceResultType.full,
-          durationMinutes: item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes,
+          resultType: resultType,
+          durationMinutes: effectiveDuration,
         ));
       } else {
         await _actionHandler.toggleAgendaItem(item: item, isDone: true);

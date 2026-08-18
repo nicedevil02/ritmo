@@ -11,6 +11,8 @@ class NowPillViewModel {
     this.targetItem,
     required this.statusLabel,
     required this.timeLabel,
+    this.nextItemTitle,
+    this.remainingMinutesCurrent,
     this.isOverdue = false,
     this.isToday = true,
   });
@@ -20,6 +22,8 @@ class NowPillViewModel {
   final AgendaItem? targetItem;
   final String statusLabel;
   final String timeLabel;
+  final String? nextItemTitle;
+  final int? remainingMinutesCurrent;
   final bool isOverdue;
   final bool isToday;
 
@@ -29,6 +33,8 @@ class NowPillViewModel {
         targetItem = null,
         statusLabel = '',
         timeLabel = '',
+        nextItemTitle = null,
+        remainingMinutesCurrent = null,
         isOverdue = false,
         isToday = true;
 
@@ -95,17 +101,23 @@ class NowPillViewModel {
     final next = snapshot.nextActivity;
 
     if (current != null) {
-      final currentTime = current.timeOfDay;
-      final timeStr = currentTime != null ? toPersianDigits(currentTime) : '';
+      final startDt = _resolveItemStart(current);
       final durMinutes = DurationBounds.sanitize(current.durationMinutes);
-      final durStr = ' (${RelativeTimeFormatter.durationFa(durMinutes)})';
+      final endDt = startDt?.add(Duration(minutes: durMinutes));
+      final remainingMins = (endDt != null && endDt.isAfter(now))
+          ? endDt.difference(now).inMinutes.clamp(1, durMinutes)
+          : durMinutes;
+
+      final remStr = '${toPersianDigits(remainingMins.toString())} دقیقه باقی‌مانده';
 
       return NowPillViewModel(
         isVisible: true,
         isCurrent: true,
         targetItem: current,
         statusLabel: 'NOW',
-        timeLabel: '$timeStr$durStr',
+        timeLabel: remStr,
+        nextItemTitle: next?.title,
+        remainingMinutesCurrent: remainingMins,
         isToday: true,
       );
     }
@@ -125,6 +137,8 @@ class NowPillViewModel {
         targetItem: next,
         statusLabel: 'NEXT',
         timeLabel: relativeTimeStr,
+        nextItemTitle: null,
+        remainingMinutesCurrent: null,
         isOverdue: isOverdue,
         isToday: true,
       );

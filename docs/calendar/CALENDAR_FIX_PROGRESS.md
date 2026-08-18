@@ -50,9 +50,9 @@
 | CAL-46 | قالب روز | G | DONE | eba1444 | ایجاد جدول day_templates، مخزن DayTemplateRepository، دستور یکپارچه _ApplyDayTemplateCommand و منوی ذخیره/اعمال قالب |
 | CAL-47 | نقشهٔ حرارتی در نمای سال | G | DONE | 16ec774 | بازطراحی نمای سال با نقشهٔ حرارتی سلولی برای هر ماه بر پایه نسبت تکمیل و تراکم، همراه با راهنمای رنگ و Semantics |
 | CAL-48 | درگ چندروزه در نمای هفته و ماه | G | DONE | 5f8a2e5 | پیاده‌سازی _MoveItemToDateCommand با پشتیبانی چندروزه، LongPressDraggable روی آیتم‌ها و DragTarget روی ستون‌ها و خانه‌های هفته و ماه |
-| CAL-49 | علامت‌گذاری سریع روز استراحت و سفر | G | DONE | pending | پیاده‌سازی _SetDayMarkCommand با UndoableCommand، دکمه تغییر سریع وضعیت در هدر روز و نمایش بنر فارسی روز استراحت/سفر |
-| CAL-50 | حالت تمرکز روی بلوک زمانی | G | TODO | - | - |
-| CAL-51 | ارتقای نشان «الان چی؟» | G | TODO | - | - |
+| CAL-49 | علامت‌گذاری سریع روز استراحت و سفر | G | DONE | 2ea261f | پیاده‌سازی _SetDayMarkCommand با UndoableCommand، دکمه تغییر سریع وضعیت در هدر روز و نمایش بنر فارسی روز استراحت/سفر |
+| CAL-50 | حالت تمرکز روی بلوک زمانی | G | DONE | pending | ایجاد FocusBlockSheet با تایمر معکوس، پشتیبانی از ثبت انجام جزئی (partial) در JourneyController و کرنل |
+| CAL-51 | ارتقای نشان «الان چی؟» | G | DONE | pending | افزودن محاسبه زمان باقی‌مانده آیتم جاری به فارسی، عنوان آیتم بعدی، دکمه‌های انجام شد و شروع تمرکز در NowPill |
 | CAL-52 | ورود و خروج تقویم ICS | G | TODO | - | - |
 | CAL-53 | تست سطل‌بندی اجندا (agenda_bucketing_test.dart) | H | TODO | - | - |
 | CAL-54 | تست موتور چیدمان زمان (timeline_layout_engine_test.dart) | H | TODO | - | - |

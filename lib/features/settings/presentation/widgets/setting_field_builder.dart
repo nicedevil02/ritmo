@@ -68,17 +68,31 @@ class SettingField extends StatelessWidget {
     return AnimatedBuilder(
       animation: SettingsService.instance.revision,
       builder: (context, _) {
-        // بررسی وابستگی شرطی
+        // بررسی وابستگی شرطی و وضعیت بارگذاری
         bool isEnabled = true;
         String? dependencyHint;
 
-        if (desc.dependsOn != null) {
-          final parentKey = desc.dependsOn!.key;
-          final parentVal = SettingsService.instance.get<Object?>(parentKey);
-          if (!desc.dependsOn!.isSatisfied(parentVal)) {
-            isEnabled = false;
-            final parentDesc = SettingsRegistry.find(parentKey);
-            dependencyHint = 'وابسته به «${parentDesc?.labelFa ?? parentKey}»';
+        if (SettingsService.instance.isDegraded) {
+          isEnabled = false;
+          dependencyHint = 'به دلیل خطای بارگذاری، تنظیمات موقتاً غیرفعال است';
+        } else {
+          if (desc.dependsOn != null) {
+            final parentKey = desc.dependsOn!.key;
+            final parentVal = SettingsService.instance.get<Object?>(parentKey);
+            if (!desc.dependsOn!.isSatisfied(parentVal)) {
+              isEnabled = false;
+              final parentDesc = SettingsRegistry.find(parentKey);
+              dependencyHint = 'نیاز به روشن بودن «${parentDesc?.labelFa ?? parentKey}»';
+            }
+          }
+
+          if (isEnabled && desc.group == SettingsGroup.notifications && desc.key != 'notif_master_enabled') {
+            final masterEnabled = SettingsService.instance.get<bool>('notif_master_enabled');
+            if (!masterEnabled) {
+              isEnabled = false;
+              final masterDesc = SettingsRegistry.find('notif_master_enabled');
+              dependencyHint = 'نیاز به روشن بودن «${masterDesc?.labelFa ?? "اعلان‌های کلی"}»';
+            }
           }
         }
 

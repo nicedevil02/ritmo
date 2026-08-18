@@ -17,6 +17,7 @@ import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
+import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/calendar/data/day_mark_repository.dart';
 import 'package:ritmo/features/calendar/data/day_template_repository.dart';
@@ -29,6 +30,7 @@ import 'package:ritmo/features/calendar/presentation/widgets/calendar_search_del
 import 'package:ritmo/features/calendar/presentation/widgets/day_review_sheet.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/day_summary_bar.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/agenda_degraded_banner.dart';
+import 'package:ritmo/features/calendar/presentation/widgets/focus_block_sheet.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/go_to_date_dialog.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_agenda_view.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_month_view.dart';
@@ -221,6 +223,30 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
     }
 
     ActionRouter.open(context, item: item, onChanged: () => _controller.refresh());
+  }
+
+  void _startFocusMode(AgendaItem item) {
+    FocusBlockSheet.show(
+      context: context,
+      item: item,
+      onComplete: ({required resultType, required actualDurationMinutes}) async {
+        await _controller.completeItem(
+          item,
+          resultType: resultType,
+          actualDurationMinutes: actualDurationMinutes,
+        );
+        if (mounted) {
+          final desc = resultType == OccurrenceResultType.partial
+              ? 'انجام جزئی به مدت ${toPersianDigits(actualDurationMinutes.toString())} دقیقه ثبت شد'
+              : 'رویداد به صورت کامل ثبت شد';
+          RitmoToast.show(
+            context,
+            desc,
+            onUndo: () => _controller.undoLastAction(),
+          );
+        }
+      },
+    );
   }
 
   Future<void> _openSmartPanel() async {
@@ -1214,6 +1240,9 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                     viewModel: pillViewModel,
                     onTapPill: _openSmartPanel,
                     onTapJumpNow: _autoScrollToNow,
+                    onTapStartFocus: pillViewModel.targetItem != null
+                        ? () => _startFocusMode(pillViewModel.targetItem!)
+                        : null,
                     onTapComplete: pillViewModel.targetItem != null
                         ? () async {
                             final item = pillViewModel.targetItem!;

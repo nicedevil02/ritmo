@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/domain/engines/reshuffle_engine.dart';
@@ -145,6 +146,22 @@ class RitmoExecutionKernel {
         confirmReshuffleHandler: ConfirmReshuffleHandler(),
         testAlarmHandler: TestAlarmHandler(),
       );
+
+  @visibleForTesting
+  RitmoExecutionKernel.test({KernelCommandHandlerRegistry? handlers})
+    : _handlers = handlers ??
+          const KernelCommandHandlerRegistry(
+            createRoutineHandler: CreateRoutineHandler(),
+            editRoutineHandler: EditRoutineHandler(),
+            deleteRoutineHandler: DeleteRoutineHandler(),
+            archiveRoutineHandler: ArchiveRoutineHandler(),
+            unarchiveRoutineHandler: UnarchiveRoutineHandler(),
+            completeOccurrenceHandler: CompleteOccurrenceHandler(),
+            skipOccurrenceHandler: SkipOccurrenceHandler(),
+            snoozeReminderHandler: SnoozeReminderHandler(),
+            confirmReshuffleHandler: ConfirmReshuffleHandler(),
+            testAlarmHandler: TestAlarmHandler(),
+          );
 
   static final RitmoExecutionKernel instance = RitmoExecutionKernel._internal();
 

@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/calendar/presentation/models/now_pill_view_model.dart';
 
 class NowPill extends StatefulWidget {
@@ -9,12 +9,14 @@ class NowPill extends StatefulWidget {
     required this.viewModel,
     this.onTapPill,
     this.onTapComplete,
+    this.onTapStartFocus,
     this.onTapJumpNow,
   });
 
   final NowPillViewModel viewModel;
   final VoidCallback? onTapPill;
   final VoidCallback? onTapComplete;
+  final VoidCallback? onTapStartFocus;
   final VoidCallback? onTapJumpNow;
 
   @override
@@ -105,7 +107,6 @@ class _NowPillState extends State<NowPill>
   @override
   Widget build(BuildContext context) {
     final vm = widget.viewModel;
-
     final colors = context.colors;
 
     Color badgeColor = colors.primary;
@@ -227,6 +228,21 @@ class _NowPillState extends State<NowPill>
                                       },
                                     ),
                                   ),
+
+                                  // Next item title hint (CAL-51)
+                                  if (vm.nextItemTitle != null && width >= 380) ...[
+                                    Flexible(
+                                      child: Text(
+                                        ' (بعدی: ${vm.nextItemTitle})',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 11.0,
+                                          color: colors.textTertiary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -235,7 +251,7 @@ class _NowPillState extends State<NowPill>
                       ),
                     ),
 
-                    // Actions Area (Jump + Complete Buttons)
+                    // Actions Area (Jump + Focus + Complete Buttons)
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -247,20 +263,38 @@ class _NowPillState extends State<NowPill>
                               widget.onTapJumpNow?.call();
                             },
                             tooltip: 'پرش به زمان فعلی',
-                            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                            constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
                             padding: const EdgeInsets.all(4),
                           ),
                         ],
 
-                        if (widget.onTapComplete != null && vm.targetItem != null && !vm.targetItem!.isCompleted) ...[
-                          if (showJumpButton)
-                            Container(
-                              width: 1,
-                              height: 16,
-                              margin: const EdgeInsets.symmetric(horizontal: 2),
-                              color: colors.borderSubtle,
+                        // Start Focus Button (CAL-50 / CAL-51)
+                        if (widget.onTapStartFocus != null && vm.targetItem != null && !vm.targetItem!.isCompleted) ...[
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: colors.accent.withValues(alpha: 0.12),
                             ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.center_focus_strong_rounded,
+                                size: 18,
+                                color: colors.accent,
+                              ),
+                              onPressed: () {
+                                RitmoHapticsPolicy.selection();
+                                widget.onTapStartFocus?.call();
+                              },
+                              tooltip: 'شروع تمرکز',
+                              constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                              padding: const EdgeInsets.all(4),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
 
+                        // Complete Button (CAL-51)
+                        if (widget.onTapComplete != null && vm.targetItem != null && !vm.targetItem!.isCompleted) ...[
                           Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
@@ -269,15 +303,15 @@ class _NowPillState extends State<NowPill>
                             child: IconButton(
                               icon: Icon(
                                 Icons.check_circle_outline_rounded,
-                                size: 20,
+                                size: 19,
                                 color: colors.primary,
                               ),
                               onPressed: () {
                                 RitmoHapticsPolicy.success();
                                 widget.onTapComplete?.call();
                               },
-                              tooltip: 'تکمیل رویداد',
-                              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                              tooltip: 'انجام شد',
+                              constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
                               padding: const EdgeInsets.all(4),
                             ),
                           ),

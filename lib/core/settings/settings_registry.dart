@@ -907,6 +907,28 @@ class SettingsRegistry {
       descriptionFa: 'فهرست کلیدهای جداشده با کاما که دستیار حق تغییر آن‌ها را ندارد',
       searchTerms: ['ممنوعه', 'بلک لیست', 'لیست سیاه دستیار'],
     ),
+    SettingDescriptor(
+      key: 'ai_local_processing_only',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: false,
+      labelFa: 'پردازش هوش مصنوعی صرفاً محلی',
+      group: SettingsGroup.assistant,
+      descriptionFa: 'عدم ارسال داده‌های شناختی و پردازش‌ها به سرویس‌های ابری خارج از دستگاه',
+      searchTerms: ['محلی', 'آفلاین', 'حریم خصوصی', 'local'],
+    ),
+    SettingDescriptor(
+      key: 'ai_auto_purge_days',
+      type: SettingType.integer,
+      scope: SettingScope.db,
+      defaultValue: 30,
+      labelFa: 'پاکسازی خودکار تاریخچه دستیار (روز)',
+      group: SettingsGroup.assistant,
+      min: 0,
+      max: 365,
+      descriptionFa: 'حذف خودکار تاریخچه پردازش و گفتگوها پس از تعداد روز مشخص (۰ برای دائمی)',
+      searchTerms: ['پاکسازی', 'حذف سوابق', 'انقضا', 'purge'],
+    ),
 
     // ----------------------------------------------------
     // ۶. داده و پشتیبان (Data & Backup)
@@ -1025,6 +1047,16 @@ class SettingsRegistry {
       dependsOn: SettingCondition('module_cycle_enabled'),
       descriptionFa: 'امکان بازگشایی بخش چرخه با اثر انگشت',
       searchTerms: ['اثر انگشت چرخه', 'بیومتریک چرخه'],
+    ),
+    SettingDescriptor(
+      key: 'screen_security_enabled',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: false,
+      labelFa: 'امنیت صفحه و پیش‌نمای برنامه',
+      group: SettingsGroup.security,
+      descriptionFa: 'جلوگیری از اسکرین‌شات و مخفی‌سازی محتوا هنگام باز کردن اپ سوئیچر',
+      searchTerms: ['اسکرین شات', 'امنیت صفحه', 'اپ سوئیچر', 'task switcher', 'مخفی سازی'],
     ),
     // Prompt 063: Task Upgrade Settings
     SettingDescriptor(

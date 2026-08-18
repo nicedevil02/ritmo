@@ -25,6 +25,15 @@ enum SettingsGroup {
   calendar,
 }
 
+enum SettingVisibility {
+  /// در فهرست گروه و جست‌وجو دیده می‌شود.
+  normal,
+  /// فقط وقتی «نمایش تنظیمات پیشرفته» روشن باشد.
+  advanced,
+  /// وضعیت داخلی؛ نه در فهرست، نه در جست‌وجو.
+  internal,
+}
+
 @immutable
 class SettingDescriptor {
   const SettingDescriptor({
@@ -40,6 +49,14 @@ class SettingDescriptor {
     this.allowed,
     this.aiWritable = false,
     this.searchTerms = const [],
+    this.visibility = SettingVisibility.normal,
+    this.dependsOn,
+    this.affectsAgenda = false,
+    this.requiresRestart = false,
+    this.icon,
+    this.unitFa,
+    this.optionLabelsFa,
+    this.searchTermsEn = const [],
   });
 
   final String key;
@@ -54,6 +71,14 @@ class SettingDescriptor {
   final List<String>? allowed;
   final bool aiWritable;
   final List<String> searchTerms;
+  final SettingVisibility visibility;
+  final String? dependsOn;
+  final bool affectsAgenda;
+  final bool requiresRestart;
+  final IconData? icon;
+  final String? unitFa;
+  final Map<String, String>? optionLabelsFa;
+  final List<String> searchTermsEn;
 }
 
 class SettingsRegistry {

@@ -3,7 +3,7 @@
 | ID | عنوان | فاز | وضعیت | commit | یادداشت |
 |----|-------|-----|--------|--------|---------|
 | SET-01 | تبدیل رجیستری به منبع حقیقت با جست‌وجوی O(1) | A | DONE | `perf(settings): SET-01 — جست‌وجوی نگاشتی در رجیستری` | |
-| SET-02 | افزودن فیلدهای گمشده به SettingDescriptor | A | TODO | | |
+| SET-02 | افزودن فیلدهای گمشده به SettingDescriptor | A | DONE | `feat(settings): SET-02 — فیلدهای visibility و dependsOn در توصیفگر` | |
 | SET-03 | اعتبارسنجی خودِ رجیستری در زمان ساخت | A | TODO | | |
 | SET-04 | پاک‌سازی فهرست allowed تنظیم user_gender | A | TODO | | |
 | SET-05 | اصلاح پیش‌فرض خطرناک onboarding_completed | A | TODO | | |

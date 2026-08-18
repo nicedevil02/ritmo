@@ -96,7 +96,7 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: results.length,
-      separatorBuilder: (_, __) => Divider(color: colors.border),
+      separatorBuilder: (context, index) => Divider(color: colors.border),
       itemBuilder: (context, index) {
         final desc = results[index];
         return ListTile(
@@ -108,7 +108,7 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
               ? Text(desc.descriptionFa!, style: TextStyle(fontSize: 12, color: colors.textSecondary))
               : null,
           trailing: Text(
-            _getGroupName(desc.group),
+            desc.group.labelFa,
             style: TextStyle(fontSize: 11, color: colors.primary, fontWeight: FontWeight.bold),
           ),
           onTap: () {
@@ -118,27 +118,6 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
         );
       },
     );
-  }
-
-  String _getGroupName(SettingsGroup group) {
-    switch (group) {
-      case SettingsGroup.identity:
-        return 'حساب و هویت';
-      case SettingsGroup.modules:
-        return 'ماژول‌ها';
-      case SettingsGroup.notifications:
-        return 'اعلان‌ها';
-      case SettingsGroup.appearance:
-        return 'ظاهر و زبان';
-      case SettingsGroup.assistant:
-        return 'دستیار';
-      case SettingsGroup.dataBackup:
-        return 'داده و پشتیبان';
-      case SettingsGroup.security:
-        return 'امنیت';
-      case SettingsGroup.calendar:
-        return 'تقویم';
-    }
   }
 
   void _navigateToGroup(BuildContext context, SettingsGroup group) {

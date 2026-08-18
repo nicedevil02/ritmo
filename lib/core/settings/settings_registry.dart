@@ -22,7 +22,91 @@ enum SettingsGroup {
   assistant,
   dataBackup,
   security,
-  calendar,
+  calendar;
+
+  String get labelFa {
+    switch (this) {
+      case SettingsGroup.identity:
+        return 'حساب و هویت';
+      case SettingsGroup.modules:
+        return 'ماژول‌ها و بخش‌های برنامه';
+      case SettingsGroup.notifications:
+        return 'اعلان‌ها و یادآوری‌ها';
+      case SettingsGroup.appearance:
+        return 'ظاهر و زبان';
+      case SettingsGroup.assistant:
+        return 'دستیار و روان‌شناسی';
+      case SettingsGroup.dataBackup:
+        return 'داده و پشتیبان';
+      case SettingsGroup.security:
+        return 'امنیت و قفل برنامه';
+      case SettingsGroup.calendar:
+        return 'تقویم و برنامه‌ریزی';
+    }
+  }
+
+  String get subtitleFa {
+    switch (this) {
+      case SettingsGroup.identity:
+        return 'نام، سن، جنسیت و حالت اپلیکیشن (ساده / کامل)';
+      case SettingsGroup.modules:
+        return 'فعال‌سازی، پیکربندی و بازنشانی بخش‌های مختلف';
+      case SettingsGroup.notifications:
+        return 'کلید اصلی، ساعات سکوت، تجمیع و تعویق آلارم‌ها';
+      case SettingsGroup.appearance:
+        return 'حالت روشنایی، پالت رنگ، سیاه خالص OLED و زبان';
+      case SettingsGroup.assistant:
+        return 'هوش مصنوعی، حافظه شناختی و تنظیمات رفتار روان‌شناختی';
+      case SettingsGroup.dataBackup:
+        return 'پشتیبان‌گیری محلی، گزارش خطاها، پاک‌سازی و بازنشانی';
+      case SettingsGroup.security:
+        return 'قفل ورود، بیومتریک، مهلت قفل و رمز بخش چرخه';
+      case SettingsGroup.calendar:
+        return 'نمای پیش‌فرض، نمایش مناسبت‌ها، تسک‌ها و خلاصه صبحگاهی';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case SettingsGroup.identity:
+        return Icons.person_outline_rounded;
+      case SettingsGroup.modules:
+        return Icons.grid_view_rounded;
+      case SettingsGroup.notifications:
+        return Icons.notifications_none_rounded;
+      case SettingsGroup.appearance:
+        return Icons.palette_outlined;
+      case SettingsGroup.assistant:
+        return Icons.auto_awesome_outlined;
+      case SettingsGroup.dataBackup:
+        return Icons.backup_outlined;
+      case SettingsGroup.security:
+        return Icons.security_rounded;
+      case SettingsGroup.calendar:
+        return Icons.calendar_month_outlined;
+    }
+  }
+
+  int get sortOrder {
+    switch (this) {
+      case SettingsGroup.identity:
+        return 1;
+      case SettingsGroup.modules:
+        return 2;
+      case SettingsGroup.notifications:
+        return 3;
+      case SettingsGroup.appearance:
+        return 4;
+      case SettingsGroup.assistant:
+        return 5;
+      case SettingsGroup.dataBackup:
+        return 6;
+      case SettingsGroup.security:
+        return 7;
+      case SettingsGroup.calendar:
+        return 8;
+    }
+  }
 }
 
 abstract final class AppLockTimeout {

@@ -10,6 +10,7 @@ import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 import 'package:ritmo/features/settings/presentation/groups/notification_privacy_screen.dart';
+import 'package:ritmo/features/settings/presentation/widgets/day_timeline_preview.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
 import 'package:sqflite/sqflite.dart';
@@ -181,6 +182,10 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // 0. 24h Timeline Preview
+              const DayTimelinePreview(),
+              const SizedBox(height: 12),
+
               // 1. Master Control Section
               _buildMasterSection(colors),
               const SizedBox(height: 12),

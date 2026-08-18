@@ -595,6 +595,25 @@ $_bridgeScriptBody''';
     }
   };
 
+  // --- 8. Composer Readiness Check ---
+  window.__ritmo_checkComposerReady = function() {
+    try {
+      var el = document.querySelector('#prompt-textarea') ||
+               document.querySelector('textarea') ||
+               document.querySelector('div[contenteditable="true"]') ||
+               document.querySelector('.ProseMirror');
+      if (!el) return { ready: false, reason: 'not_found' };
+      var isGenerating = !!document.querySelector(
+        'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button'
+      );
+      if (isGenerating) return { ready: false, reason: 'still_generating' };
+      if (el.disabled || el.getAttribute('aria-disabled') === 'true') return { ready: false, reason: 'disabled' };
+      return { ready: true };
+    } catch (e) {
+      return { ready: false, reason: e.toString() };
+    }
+  };
+
   var challengedAtBoot = checkCloudflareStatus();
   autoDismissCookiesAndModals();
   autoCloseSidebar();

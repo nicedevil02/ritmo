@@ -373,6 +373,28 @@ if (typeof window.__ritmo_resume === 'function') {
     return ensureBooted();
   }
 
+  /// Waits until the page composer textarea is present, enabled, and ChatGPT is not generating.
+  @visibleForTesting
+  Future<bool> waitForComposerReady({Duration timeout = const Duration(seconds: 8)}) async {
+    final start = DateTime.now();
+    while (DateTime.now().difference(start) < timeout) {
+      try {
+        final result = await _controller?.runJavaScriptReturningResult(
+          "window.__ritmo_checkComposerReady ? JSON.stringify(window.__ritmo_checkComposerReady()) : JSON.stringify({ready: false})",
+        );
+        if (result != null) {
+          final parsed = jsonDecode(result.toString());
+          final map = (parsed is String) ? jsonDecode(parsed) : parsed;
+          if (map is Map && map['ready'] == true) return true;
+        }
+      } catch (e) {
+        RitmoLog.debug('ChatGptWebBridge', 'waitForComposerReady retry after: $e');
+      }
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+    return false;
+  }
+
   Future<bool> _waitForReady({required Duration timeout}) async {
     final start = DateTime.now();
     while (DateTime.now().difference(start) < timeout) {
@@ -749,6 +771,12 @@ if (typeof window.__ritmo_resume === 'function') {
       formattedPrompt,
       requestId: reqId,
     );
+
+    final composerReady = await waitForComposerReady();
+    if (!composerReady) {
+      RitmoLog.debug('ChatGptWebBridge', 'Composer not ready after wait; proceeding with optimistic injection.');
+    }
+
     await _controller!.runJavaScript(jsCall);
 
     _generationTimer?.cancel();

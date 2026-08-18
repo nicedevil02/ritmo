@@ -174,9 +174,10 @@ class SettingsRegistry {
       key: 'onboarding_completed',
       type: SettingType.boolean,
       scope: SettingScope.prefs,
-      defaultValue: true,
+      defaultValue: false,
       labelFa: 'تکمیل راه‌اندازی اولیه',
       group: SettingsGroup.identity,
+      visibility: SettingVisibility.internal,
     ),
 
     // ----------------------------------------------------

@@ -22,8 +22,8 @@
 | CAL-18 | حذف شاخهٔ مردهٔ agenda و یک تعریف واحد برای پنجرهٔ اجندا | C | DONE | fe7c06d | حذف شاخهٔ مردهٔ agenda از محاسبهٔ بازه، پرتاب StateError، و تعریف ثابت‌های پنجرهٔ اجندا |
 | CAL-19 | پنجرهٔ بارگذاری صریح و عبور isBackgroundRefresh | C | DONE | 8f6c3ad | ذخیرهٔ windowStart/End و عبور کامل پرچم isBackgroundRefresh برای جلوگیری از پرش لودینگ |
 | CAL-20 | تعویض مقیاس: دادهٔ مقیاس قبلی پاک شود | C | DONE | 41f68ee | ریست فوری اسنپ‌شات‌ها و فعال‌سازی isLoading در setScale و selectDate با مقیاس جدید |
-| CAL-21 | یک fallback واحد برای snapshot تهی | C | DONE | pending | ایجاد _snapshotForSelectedDate و تضمین بازگشت اسنپ‌شات خالی معتبر در تمام مقیاس‌ها |
-| CAL-22 | loadDefaultScale: خواندن تنظیمات از SettingsService | C | TODO | - | - |
+| CAL-21 | یک fallback واحد برای snapshot تهی | C | DONE | e394cf6 | ایجاد _snapshotForSelectedDate و تضمین بازگشت اسنپ‌شات خالی معتبر در تمام مقیاس‌ها |
+| CAL-22 | loadDefaultScale: خواندن تنظیمات از SettingsService | C | DONE | pending | خواندن مقیاس از SettingsService، بارگذاری واقعی داده‌ها، و اولویت‌بخشی به scale صریح |
 | CAL-23 | setScale: ذخیره مقیاس در تنظیمات | C | TODO | - | - |
 | CAL-24 | طوفان رفرش: ادغام دو منبع رویداد و اعمال debounce | C | TODO | - | - |
 | CAL-25 | نشتی حافظه: مدیریت اشتراک CommandStack | C | TODO | - | - |

@@ -20,6 +20,7 @@ import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dar
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 /// Calendar view scale. `agenda` is the primary view ("what's next?").
@@ -73,6 +74,8 @@ class JourneyController extends ChangeNotifier {
   DateTime? _windowStart;
   DateTime? _windowEnd;
 
+  bool _scaleExplicitlySet = false;
+
   DateTime get selectedDate => _selectedDate;
   JourneyScale get activeScale => _activeScale;
   DateTime? get windowStart => _windowStart;
@@ -92,6 +95,8 @@ class JourneyController extends ChangeNotifier {
   bool get isDisposed => _isDisposed;
   @visibleForTesting
   int get loadGeneration => _loadGeneration;
+  @visibleForTesting
+  bool get scaleExplicitlySet => _scaleExplicitlySet;
   AgendaLoadStatus get agendaLoadStatus => _agendaService.lastLoadStatus;
   Set<AgendaDomain> get activeDegradedSources {
     if (_snapshot != null && _snapshot!.degradedSources.isNotEmpty) {
@@ -145,14 +150,17 @@ class JourneyController extends ChangeNotifier {
   void selectDate(DateTime date, {JourneyScale? scaleToSet}) {
     if (_isDisposed) return;
     _selectedDate = DateKey.dayOf(date);
-    if (scaleToSet != null && scaleToSet != _activeScale) {
-      _activeScale = scaleToSet;
-      _rangeSnapshots = const {};
-      _snapshot = null;
-      _windowStart = null;
-      _windowEnd = null;
-      _isLoading = true;
-      notifyListeners();
+    if (scaleToSet != null) {
+      _scaleExplicitlySet = true;
+      if (scaleToSet != _activeScale) {
+        _activeScale = scaleToSet;
+        _rangeSnapshots = const {};
+        _snapshot = null;
+        _windowStart = null;
+        _windowEnd = null;
+        _isLoading = true;
+        notifyListeners();
+      }
     }
     loadForActiveScale();
   }
@@ -452,41 +460,42 @@ class JourneyController extends ChangeNotifier {
     selectDate(date);
   }
 
-  /// K22 — Reads `calendar_default_scale` from app_settings and applies it.
+  /// K22 — Reads `calendar_default_scale` from SettingsService and applies it.
   /// EXCEPTION: if the caller sets scaleToSet on selectDate (e.g. via initialItemId
   /// or a push notification), that takes priority and this method must NOT override it.
   /// This comment is intentional — do not remove without reading 067.md §K22.
-  Future<void> loadDefaultScale() async {
-    if (_isDisposed) return;
+  Future<void> loadDefaultScale({SettingsService? settingsService}) async {
+    if (_isDisposed || _scaleExplicitlySet) return;
     try {
-      final db = await DatabaseHelper.instance.database;
-      final rows = await db.query(
-        'app_settings',
-        where: 'key = ?',
-        whereArgs: ['calendar_default_scale'],
-        limit: 1,
-      );
-      if (rows.isNotEmpty) {
-        final val = rows.first['value']?.toString() ?? 'agenda';
-        final scale = _scaleFromString(val);
-        if (!_isDisposed) {
-          _activeScale = scale;
-          notifyListeners();
-        }
+      final service = settingsService ?? SettingsService.instance;
+      final val = service.getString('calendar_default_scale') ?? 'agenda';
+      final scale = _scaleFromString(val);
+      if (!_isDisposed && !_scaleExplicitlySet && scale != _activeScale) {
+        _activeScale = scale;
+        _rangeSnapshots = const {};
+        _snapshot = null;
+        _windowStart = null;
+        _windowEnd = null;
+        _isLoading = true;
+        notifyListeners();
+        await loadForActiveScale();
       }
     } catch (e, st) {
+      if (_isDisposed) return;
       RitmoLog.error('JourneyController', 'loadDefaultScale failed', e, st);
     }
   }
 
   static JourneyScale _scaleFromString(String val) {
-    switch (val) {
+    switch (val.toLowerCase().trim()) {
       case 'agenda': return JourneyScale.agenda;
       case 'day':    return JourneyScale.day;
       case 'week':   return JourneyScale.week;
       case 'month':  return JourneyScale.month;
       case 'year':   return JourneyScale.year;
-      default:       return JourneyScale.agenda;
+      default:
+        RitmoLog.error('JourneyController', 'Invalid calendar scale string in settings: "$val"');
+        return JourneyScale.agenda;
     }
   }
 

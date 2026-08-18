@@ -57,7 +57,12 @@ class SettingDescriptor {
     this.unitFa,
     this.optionLabelsFa,
     this.searchTermsEn = const [],
-  });
+  })  : assert(type != SettingType.boolean || defaultValue is bool, 'Boolean setting $key must have bool defaultValue'),
+        assert(type != SettingType.integer || (defaultValue is int && (min == null || defaultValue >= min) && (max == null || defaultValue <= max)), 'Integer setting $key defaultValue ($defaultValue) must be int within [$min, $max]'),
+        assert((type != SettingType.text && type != SettingType.enumeration && type != SettingType.time) || defaultValue is String, 'Text/Enum/Time setting $key must have String defaultValue'),
+        assert(type != SettingType.enumeration || allowed != null, 'Enum setting $key must have allowed list'),
+        assert(min == null || max == null || min <= max, 'Setting $key min ($min) must be <= max ($max)'),
+        assert(type != SettingType.time || (defaultValue is String && defaultValue.length == 5), 'Time setting $key defaultValue ($defaultValue) must match HH:mm pattern');
 
   final String key;
   final SettingType type;
@@ -66,8 +71,8 @@ class SettingDescriptor {
   final String labelFa;
   final SettingsGroup group;
   final String? descriptionFa;
-  final num? min;
-  final num? max;
+  final int? min;
+  final int? max;
   final List<String>? allowed;
   final bool aiWritable;
   final List<String> searchTerms;

@@ -79,57 +79,61 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
     final pinController = TextEditingController();
     bool saved = false;
 
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'یک رمز عددی ۴ رقمی وارد کنید:',
-              style: TextStyle(fontSize: 13, color: colors.textSecondary),
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: colors.card,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'یک رمز عددی ۴ رقمی وارد کنید:',
+                style: TextStyle(fontSize: 13, color: colors.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              CupertinoTextField(
+                controller: pinController,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                textAlign: TextAlign.center,
+                obscureText: true,
+                placeholder: '••••',
+                style: TextStyle(fontSize: 20, letterSpacing: 6, color: colors.textPrimary),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
             ),
-            const SizedBox(height: 12),
-            CupertinoTextField(
-              controller: pinController,
-              keyboardType: TextInputType.number,
-              maxLength: 4,
-              textAlign: TextAlign.center,
-              obscureText: true,
-              placeholder: '••••',
-              style: TextStyle(fontSize: 20, letterSpacing: 6, color: colors.textPrimary),
+            TextButton(
+              onPressed: () async {
+                final pin = pinController.text.trim();
+                if (pin.length < 4) {
+                  RitmoToast.show(context, 'رمز باید حداقل ۴ رقم باشد.', iconColor: colors.medicalRed);
+                  return;
+                }
+                Navigator.pop(ctx);
+                final hashed = PinHasher.hashPin(pin);
+                await SettingsService.instance.set(keyName, hashed);
+                saved = true;
+                await _loadState();
+                if (mounted) {
+                  RitmoToast.show(context, 'رمز با موفقیت ذخیره شد.');
+                }
+              },
+              child: Text('ذخیره رمز', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final pin = pinController.text.trim();
-              if (pin.length < 4) {
-                RitmoToast.show(context, 'رمز باید حداقل ۴ رقم باشد.', iconColor: colors.medicalRed);
-                return;
-              }
-              Navigator.pop(ctx);
-              final hashed = PinHasher.hashPin(pin);
-              await SettingsService.instance.set(keyName, hashed);
-              saved = true;
-              await _loadState();
-              if (mounted) {
-                RitmoToast.show(context, 'رمز با موفقیت ذخیره شد.');
-              }
-            },
-            child: Text('ذخیره رمز', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      pinController.dispose();
+    }
     return saved;
   }
 

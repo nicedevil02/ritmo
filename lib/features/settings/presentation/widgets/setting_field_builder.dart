@@ -481,36 +481,40 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           ? () async {
               RitmoHaptics.tap();
               final controller = TextEditingController(text: value);
-              final updatedText = await showDialog<String>(
-                context: context,
-                builder: (modalCtx) => AlertDialog(
-                  backgroundColor: colors.card,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  title: Text(
-                    desc.labelFa,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                  ),
-                  content: CupertinoTextField(
-                    controller: controller,
-                    autofocus: true,
-                    placeholder: desc.labelFa,
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(modalCtx),
-                      child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+              try {
+                final updatedText = await showDialog<String>(
+                  context: context,
+                  builder: (modalCtx) => AlertDialog(
+                    backgroundColor: colors.card,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    title: Text(
+                      desc.labelFa,
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                     ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(modalCtx, controller.text.trim()),
-                      child: Text('ذخیره', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
+                    content: CupertinoTextField(
+                      controller: controller,
+                      autofocus: true,
+                      placeholder: desc.labelFa,
+                      style: TextStyle(color: colors.textPrimary),
                     ),
-                  ],
-                ),
-              );
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(modalCtx),
+                        child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(modalCtx, controller.text.trim()),
+                        child: Text('ذخیره', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
 
-              if (updatedText != null && updatedText != value && context.mounted) {
-                await SettingField.executeWrite(context, desc.key, updatedText);
+                if (updatedText != null && updatedText != value && context.mounted) {
+                  await SettingField.executeWrite(context, desc.key, updatedText);
+                }
+              } finally {
+                controller.dispose();
               }
             }
           : null,

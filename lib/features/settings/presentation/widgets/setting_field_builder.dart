@@ -241,6 +241,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
+      requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
       onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: CupertinoSwitch(
@@ -284,6 +285,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
+      requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
       onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(
@@ -364,6 +366,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
+      requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
       onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(
@@ -421,6 +424,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
+      requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
       onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(
@@ -502,6 +506,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
+      requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
       onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(

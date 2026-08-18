@@ -48,6 +48,7 @@ class SettingsService {
   /// Coalescing window for the heavy "reload the day" refresh signal.
   static const Duration agendaSignalDebounce = Duration(milliseconds: 350);
   Timer? _agendaDebounceTimer;
+  final Set<String> _pendingRestartKeys = {};
 
   bool get isInitialized => _initialized;
   Object? get initError => _initError;
@@ -59,6 +60,10 @@ class SettingsService {
   }
   bool get isDegraded => loadState == SettingsLoadState.degraded;
   Stream<String> get changes => _changeController.stream;
+
+  bool get hasPendingRestartSettings => _pendingRestartKeys.isNotEmpty;
+  Set<String> get pendingRestartKeys => Set.unmodifiable(_pendingRestartKeys);
+  void markRestartHandled() => _pendingRestartKeys.clear();
 
   Stream<T> watch<T>(String key) {
     return _changeController.stream
@@ -143,6 +148,7 @@ class SettingsService {
     _initFuture = null;
     _initError = null;
     _cache.clear();
+    _pendingRestartKeys.clear();
     _agendaDebounceTimer?.cancel();
     _agendaDebounceTimer = null;
   }
@@ -392,6 +398,9 @@ class SettingsService {
       }
 
       _cache[key] = normalized;
+      if (desc.requiresRestart) {
+        _pendingRestartKeys.add(key);
+      }
       revision.value++;
       _changeController.add(key);
 
@@ -643,6 +652,143 @@ class SettingsService {
       _agendaDebounceTimer = null;
       RitmoEvents.notifyRoutineChanged();
     });
+  }
+
+  /// اعمال دسته‌ای مجموعه‌ای از تنظیمات با اعتبارسنجی و تحریک فقط یک بار رویداد تغییر
+  Future<int> setBatch(
+    Map<String, Object> newValues, {
+    SettingsWriteOrigin origin = SettingsWriteOrigin.user,
+  }) async {
+    if (!_initialized) {
+      final ok = await retryInit();
+      if (!ok) {
+        RitmoLog.warning('Settings', 'عدم امکان ذخیره‌سازی دسته‌ای به دلیل عدم راه‌اندازی موفق سرویس تنظیمات');
+        return 0;
+      }
+    }
+
+    final dbEntries = <String, String>{};
+    final prefEntries = <String, Object>{};
+    final secureEntries = <String, String>{};
+    final changedKeys = <String>[];
+    bool hasAgendaAffecting = false;
+    bool hasNotifGroup = false;
+
+    for (final entry in newValues.entries) {
+      final key = entry.key;
+      final rawVal = entry.value;
+
+      final desc = SettingsRegistry.find(key);
+      if (desc == null) {
+        RitmoLog.warning('Settings', 'رد ذخیره‌سازی دسته‌ای برای کلید نامشخص: $key');
+        continue;
+      }
+
+      if (origin == SettingsWriteOrigin.ai && !desc.aiWritable) {
+        RitmoLog.warning('Settings', 'AI مجاز به تغییر تنظیم غیرقابل‌دسترس $key نیست');
+        continue;
+      }
+
+      final normalized = _validateAndNormalize(desc, rawVal);
+      if (normalized == null) {
+        RitmoLog.warning('Settings', 'مقدار نامعتبر در ذخیره‌سازی دسته‌ای برای $key: $rawVal');
+        continue;
+      }
+
+      final currentVal = _cache[key];
+      if (currentVal == normalized) continue;
+
+      _cache[key] = normalized;
+      changedKeys.add(key);
+
+      if (desc.requiresRestart) {
+        _pendingRestartKeys.add(key);
+      }
+      if (desc.affectsAgenda) {
+        hasAgendaAffecting = true;
+      }
+      if (desc.group == SettingsGroup.notifications) {
+        hasNotifGroup = true;
+      }
+
+      if (desc.scope == SettingScope.db) {
+        dbEntries[key] = normalized.toString();
+      } else if (desc.scope == SettingScope.prefs) {
+        prefEntries[key] = normalized;
+      } else if (desc.scope == SettingScope.secure) {
+        secureEntries[key] = normalized.toString();
+      }
+    }
+
+    if (changedKeys.isEmpty) return 0;
+
+    try {
+      if (dbEntries.isNotEmpty) {
+        final db = await DatabaseHelper.instance.database;
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final batch = db.batch();
+        for (final entry in dbEntries.entries) {
+          batch.insert(
+            'app_settings',
+            {
+              'key': entry.key,
+              'value': entry.value,
+              'updatedAt': now,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+        await batch.commit(noResult: true);
+      }
+
+      if (prefEntries.isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        for (final entry in prefEntries.entries) {
+          final val = entry.value;
+          if (val is bool) {
+            await prefs.setBool(entry.key, val);
+          } else if (val is int) {
+            await prefs.setInt(entry.key, val);
+          } else {
+            await prefs.setString(entry.key, val.toString());
+          }
+        }
+      }
+
+      if (secureEntries.isNotEmpty) {
+        for (final entry in secureEntries.entries) {
+          await SecureKeyStore.setKey(entry.key, entry.value);
+        }
+      }
+
+      revision.value++;
+      for (final k in changedKeys) {
+        _changeController.add(k);
+      }
+
+      if (hasAgendaAffecting) {
+        _scheduleAgendaRefreshSignal();
+      }
+
+      if (hasNotifGroup) {
+        try {
+          final notifSettings = <String, String>{
+            'digest_mode': get<String>('digest_mode'),
+            'coalescing_window_minutes': get<int>('coalescing_window_minutes').toString(),
+            'max_non_essential_per_hour': get<int>('max_non_essential_per_hour').toString(),
+          };
+          await SnapshotHelper.updateNotificationSettingsSnapshot(notifSettings);
+        } catch (e, st) {
+          RitmoLog.error('Settings', 'Notification snapshot error in setBatch', e, st);
+        }
+      }
+
+      RitmoLog.info('Settings', 'ذخیره‌سازی دسته‌ای موفق: ${changedKeys.length} کلید تغییر یافت.');
+      return changedKeys.length;
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در ذخیره‌سازی دسته‌ای تنظیمات', e, st);
+      return changedKeys.length;
+    }
   }
 
   @visibleForTesting

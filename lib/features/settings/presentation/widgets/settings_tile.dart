@@ -15,6 +15,7 @@ class SettingsTile extends StatelessWidget {
     this.isDanger = false,
     this.highlighted = false,
     this.isModified = false,
+    this.requiresRestart = false,
   });
 
   final String title;
@@ -27,6 +28,7 @@ class SettingsTile extends StatelessWidget {
   final bool isDanger;
   final bool highlighted;
   final bool isModified;
+  final bool requiresRestart;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +86,26 @@ class SettingsTile extends StatelessWidget {
                                   CupertinoIcons.question_circle,
                                   size: 16,
                                   color: colors.primary.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (requiresRestart) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              key: const ValueKey('setting_restart_needed_chip'),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+                              ),
+                              child: const Text(
+                                'نیاز به راه‌اندازی مجدد',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFF59E0B),
                                 ),
                               ),
                             ),

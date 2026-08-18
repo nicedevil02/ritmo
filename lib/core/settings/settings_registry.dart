@@ -878,7 +878,7 @@ class SettingsRegistry {
       labelFa: 'پشتیبان‌گیری خودکار',
       group: SettingsGroup.dataBackup,
       descriptionFa: 'ایجاد نسخه پشتیبان دوره‌ای از اطلاعات برنامه',
-      searchTerms: ['پشتیبان', 'بکاپ', 'پشتیبان‌گیری'],
+      searchTerms: ['پشتیبان', 'بکاپ', 'پشتیبان‌گیری', 'backup'],
     ),
     SettingDescriptor(
       key: 'backup_frequency_days',
@@ -891,7 +891,7 @@ class SettingsRegistry {
       min: 1,
       max: 30,
       descriptionFa: 'فاصله زمانی بین هر بار نسخه پشتیبان خودکار',
-      searchTerms: ['دوره بکاپ', 'فاصله پشتیبان'],
+      searchTerms: ['دوره بکاپ', 'فاصله پشتیبان', 'backup'],
     ),
     SettingDescriptor(
       key: 'crash_reports_enabled',

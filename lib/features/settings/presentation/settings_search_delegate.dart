@@ -5,6 +5,7 @@ import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
+import 'package:ritmo/core/utils/persian_text.dart';
 
 class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
   SettingsSearchDelegate({
@@ -65,7 +66,6 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
 
   Widget _buildList(BuildContext context) {
     final colors = context.colors;
-    final q = query.trim().toLowerCase();
 
     final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
 
@@ -73,11 +73,11 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
       if (desc.visibility == SettingVisibility.internal) return false;
       if (desc.visibility == SettingVisibility.advanced && !showAdvanced) return false;
 
-      if (q.isEmpty) return true;
-      if (desc.labelFa.toLowerCase().contains(q)) return true;
-      if (desc.descriptionFa != null && desc.descriptionFa!.toLowerCase().contains(q)) return true;
+      if (query.trim().isEmpty) return true;
+      if (searchMatchFa(desc.labelFa, query)) return true;
+      if (desc.descriptionFa != null && searchMatchFa(desc.descriptionFa!, query)) return true;
       for (final t in desc.searchTerms) {
-        if (t.toLowerCase().contains(q)) return true;
+        if (searchMatchFa(t, query)) return true;
       }
       return false;
     }).toList();

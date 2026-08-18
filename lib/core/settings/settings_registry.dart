@@ -110,8 +110,14 @@ class SettingsRegistry {
       defaultValue: 'UNSET',
       labelFa: 'جنسیت',
       group: SettingsGroup.identity,
-      allowed: ['UNSET', 'MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY', 'male', 'female', 'other'],
-
+      allowed: ['UNSET', 'MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'],
+      optionLabelsFa: {
+        'UNSET': 'نامشخص',
+        'MALE': 'مرد',
+        'FEMALE': 'زن',
+        'OTHER': 'دیگر',
+        'PREFER_NOT_TO_SAY': 'ترجیح می‌دهم نگویم',
+      },
       descriptionFa: 'برای تنظیم پیشنهادهای زیستی و سلامت',
       searchTerms: ['جنسیت', 'زن', 'مرد'],
     ),

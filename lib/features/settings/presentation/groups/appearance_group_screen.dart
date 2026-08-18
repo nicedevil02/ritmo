@@ -36,7 +36,6 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
 
   Future<void> _changeLocale(String loc) async {
     setState(() => _locale = loc);
-    await SettingsService.instance.set('locale', loc);
     await widget.localeRepository.updateLocale(Locale(loc));
   }
 
@@ -138,10 +137,17 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                             selected: _locale,
                             segments: const {
                               'fa': 'فارسی (پیش‌فرض)',
-                              'en': 'English',
+                              'en': 'English (آزمایشی)',
                             },
                             onSelected: (val) => _changeLocale(val),
                           ),
+                          if (_locale == 'en') ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              'توجه: پشتیبانی از زبان انگلیسی در حال حاضر آزمایشی و در دست تکمیل است.',
+                              style: TextStyle(fontSize: 12, color: colors.warning),
+                            ),
+                          ],
                         ],
                       ),
                     ),

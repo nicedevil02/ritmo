@@ -15,9 +15,18 @@ class DangerZone extends StatelessWidget {
 
   final VoidCallback onFactoryReset;
 
+  static String _normalizePersian(String s) {
+    return s
+        .replaceAll('ي', 'ی')
+        .replaceAll('ك', 'ک')
+        .replaceAll('ة', 'ه')
+        .replaceAll('\u200c', '')
+        .replaceAll(' ', '')
+        .trim()
+        .toLowerCase();
+  }
+
   Future<void> _showResetDialog(BuildContext context) async {
-    final colors = context.colors;
-    final textController = TextEditingController();
     String? backupPath;
 
     try {
@@ -32,117 +41,16 @@ class DangerZone extends StatelessWidget {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            final isConfirmed = textController.text.trim() == 'پاک کن';
-
-            return AlertDialog(
-              backgroundColor: colors.card,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: Row(
-                children: [
-                  Icon(CupertinoIcons.exclamationmark_triangle_fill, color: colors.medicalRed, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'بازنشانی کارخانه‌ای داده‌ها',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: colors.medicalRed,
-                    ),
-                  ),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'با این عملیات کلیه اطلاعات روتین‌ها، یادآوری‌ها، اهداف، آمارها و تنظیمات ریتمو به طور کامل از روی دستگاه پاک خواهد شد.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colors.textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (backupPath != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: colors.surface,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: colors.border),
-                      ),
-                      child: Text(
-                        'یک فایل پشتیبان اضطراری در مسیر زیر ایجاد شد:\n$backupPath',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.textTertiary,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  Text(
-                    'جهت تأیید، عبارت «پاک کن» را در کادر زیر وارد کنید:',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: colors.medicalRed,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  CupertinoTextField(
-                    controller: textController,
-                    textAlign: TextAlign.center,
-                    placeholder: 'پاک کن',
-                    onChanged: (_) => setDialogState(() {}),
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isConfirmed ? colors.medicalRed : colors.border,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-                ),
-                TextButton(
-                  onPressed: isConfirmed
-                      ? () async {
-                          Navigator.pop(ctx);
-                          await AccountResetService.wipeUserData();
-                          RitmoToast.show(context, 'کلیه داده‌ها با موفقیت پاک شدند.');
-                          onFactoryReset();
-                        }
-                      : null,
-                  child: Text(
-                    'حذف کامل داده‌ها',
-                    style: TextStyle(
-                      color: isConfirmed ? colors.medicalRed : colors.textTertiary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (ctx) => _FactoryResetDialog(
+        backupPath: backupPath,
+        onConfirmed: () async {
+          Navigator.pop(ctx);
+          await AccountResetService.wipeUserData();
+          if (!context.mounted) return;
+          RitmoToast.show(context, 'کلیه داده‌ها با موفقیت پاک شدند.');
+          onFactoryReset();
+        },
+      ),
     );
   }
 
@@ -232,6 +140,147 @@ class DangerZone extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _FactoryResetDialog extends StatefulWidget {
+  const _FactoryResetDialog({
+    required this.backupPath,
+    required this.onConfirmed,
+  });
+
+  final String? backupPath;
+  final Future<void> Function() onConfirmed;
+
+  @override
+  State<_FactoryResetDialog> createState() => _FactoryResetDialogState();
+}
+
+class _FactoryResetDialogState extends State<_FactoryResetDialog> {
+  late final TextEditingController _textController;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isConfirmed = DangerZone._normalizePersian(_textController.text) ==
+        DangerZone._normalizePersian('پاک کن');
+
+    return AlertDialog(
+      backgroundColor: colors.card,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          Icon(CupertinoIcons.exclamationmark_triangle_fill, color: colors.medicalRed, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            'بازنشانی کارخانه‌ای داده‌ها',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: colors.medicalRed,
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'با این عملیات کلیه اطلاعات روتین‌ها، یادآوری‌ها، اهداف، آمارها و تنظیمات ریتمو به طور کامل از روی دستگاه پاک خواهد شد.',
+            style: TextStyle(
+              fontSize: 13,
+              color: colors.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (widget.backupPath != null) ...[
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: colors.border),
+              ),
+              child: Text(
+                'یک فایل پشتیبان اضطراری در مسیر زیر ایجاد شد:\n${widget.backupPath}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: colors.textTertiary,
+                  height: 1.3,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          Text(
+            'جهت تأیید، عبارت «پاک کن» را در کادر زیر وارد کنید:',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: colors.medicalRed,
+            ),
+          ),
+          const SizedBox(height: 8),
+          CupertinoTextField(
+            controller: _textController,
+            textAlign: TextAlign.center,
+            placeholder: 'پاک کن',
+            onChanged: (_) => setState(() {}),
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isConfirmed ? colors.medicalRed : colors.border,
+                width: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
+          child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+        ),
+        TextButton(
+          onPressed: (isConfirmed && !_isLoading)
+              ? () async {
+                  setState(() => _isLoading = true);
+                  await widget.onConfirmed();
+                }
+              : null,
+          child: _isLoading
+              ? const CupertinoActivityIndicator()
+              : Text(
+                  'حذف کامل داده‌ها',
+                  style: TextStyle(
+                    color: isConfirmed ? colors.medicalRed : colors.textTertiary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }

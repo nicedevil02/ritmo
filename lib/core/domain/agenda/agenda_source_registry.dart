@@ -7,6 +7,7 @@ import 'package:ritmo/core/domain/agenda/sources/course_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/cycle_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/event_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/goal_steps_agenda_source.dart';
+import 'package:ritmo/core/domain/agenda/sources/ics_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/konkur_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/medicine_agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/routine_agenda_source.dart';
@@ -429,6 +430,33 @@ class AgendaSourceRegistry {
               pregnancyEnabled: pregnancyEnabled,
             ),
             () => AppointmentAgendaSource.disabled(),
+          );
+        },
+      ),
+    );
+
+    // 13. ICS Calendar Agenda Source (Imported ICS Events)
+    _entries.add(
+      AgendaSourceEntry(
+        id: 'ics_calendar',
+        domains: {AgendaDomain.event},
+        loader: (ctx) async {
+          final icsEnabled = ModuleGate.instance.isEnabledFrom(
+            ctx.settingsMap,
+            'module_ics_enabled',
+          );
+          if (!icsEnabled || !ctx.options.wants(AgendaDomain.event)) {
+            return IcsAgendaSource.disabled();
+          }
+          return ctx.guardSource<AgendaSource>(
+            'ics_calendar',
+            () => IcsAgendaSource.load(
+              db: ctx.db,
+              startStr: ctx.startStr,
+              endStr: ctx.endStr,
+              isEnabled: true,
+            ),
+            () => IcsAgendaSource.disabled(),
           );
         },
       ),

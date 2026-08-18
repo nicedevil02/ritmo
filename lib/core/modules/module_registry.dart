@@ -146,6 +146,13 @@ class ModuleRegistry {
       icon: Icons.menu_book_rounded,
       defaultEnabled: false,
     ),
+    ModuleDescriptor(
+      key: 'module_ics_enabled',
+      titleFa: 'تقویم ICS',
+      oneLineFa: 'ورود و خروج تقویم با فرمت استاندارد iCalendar',
+      icon: Icons.sync_alt_rounded,
+      defaultEnabled: false,
+    ),
   ];
 
   static ModuleDescriptor? findByKey(String key) {

@@ -129,21 +129,32 @@ $_bridgeScriptBody''';
 
         try {
           return originalFetch.apply(this, args).then(function(response) {
-            if (response && response.status === 200 && response.body && typeof response.body.tee === 'function') {
-              try {
-                var branches = response.body.tee();
-                var ritmoReader = branches[0].getReader();
-                readSSEStream(ritmoReader, activeReqId);
-
-                var clonedResponse = new Response(branches[1], {
-                  headers: response.headers,
-                  status: response.status,
-                  statusText: response.statusText
+            if (response) {
+              if (response.status !== 200) {
+                console.warn('[Ritmo] Conversation HTTP error: ' + response.status + ' ' + response.statusText);
+                notifyFlutter('http_error', {
+                  statusCode: response.status,
+                  statusText: response.statusText,
+                  url: url,
+                  requestId: activeReqId,
+                  source: 'fetch'
                 });
-                return clonedResponse;
-              } catch (teeErr) {
-                console.warn('[Ritmo] response.body.tee failed, falling back to original response:', teeErr);
-                return response;
+              } else if (response.body && typeof response.body.tee === 'function') {
+                try {
+                  var branches = response.body.tee();
+                  var ritmoReader = branches[0].getReader();
+                  readSSEStream(ritmoReader, activeReqId);
+
+                  var clonedResponse = new Response(branches[1], {
+                    headers: response.headers,
+                    status: response.status,
+                    statusText: response.statusText
+                  });
+                  return clonedResponse;
+                } catch (teeErr) {
+                  console.warn('[Ritmo] response.body.tee failed, falling back to original response:', teeErr);
+                  return response;
+                }
               }
             }
             return response;

@@ -14,6 +14,8 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
+import 'package:ritmo/features/settings/presentation/widgets/identity_app_mode_cards.dart';
+import 'package:ritmo/features/settings/presentation/widgets/identity_hero_card.dart';
 
 /// صفحهٔ حساب و هویت با زبان طراحی فوق‌مدرن iOS 26 و افکت‌های کریستالی
 class IdentityGroupScreen extends StatefulWidget {
@@ -785,7 +787,15 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── 1. Hero Identity & Avatar Card ───────────────────────────
-            _buildHeroIdentityCard(context, colors, isDark, genderLabel),
+            IdentityHeroCard(
+              userName: _userName,
+              avatarPath: _avatarPath,
+              genderLabel: genderLabel,
+              age: _age,
+              appMode: _appMode,
+              onPickAvatar: _pickAvatar,
+              onEditName: _editNameModal,
+            ),
 
             const SizedBox(height: 24),
 
@@ -799,7 +809,10 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
             // ── 3. App Experience Mode Selector ──────────────────────────
             _buildSectionHeader('حالت اپلیکیشن', CupertinoIcons.slider_horizontal_3, colors),
             const SizedBox(height: 10),
-            _buildAppModeExperienceCards(context, colors, isDark),
+            IdentityAppModeCards(
+              appMode: _appMode,
+              onModeChanged: _switchAppMode,
+            ),
 
             const SizedBox(height: 28),
 
@@ -836,264 +849,7 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
     );
   }
 
-  Widget _buildHeroIdentityCard(
-    BuildContext context,
-    dynamic colors,
-    bool isDark,
-    String genderLabel,
-  ) {
-    final displayName = _userName.trim().isNotEmpty ? _userName.trim() : 'کاربر گرامی';
-    final hasValidAvatar = _isAvatarFileValid(_avatarPath);
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  colors.surfaceElevated,
-                  colors.surface,
-                ]
-              : [
-                  Colors.white,
-                  colors.surface,
-                ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.35)
-                : colors.primary.withValues(alpha: 0.08),
-            blurRadius: 28,
-            offset: const Offset(0, 10),
-          ),
-        ],
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.12)
-              : Colors.black.withValues(alpha: 0.06),
-          width: 1.2,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Column(
-              children: [
-                // Avatar with Glowing Ring and Camera Floating Badge
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Outer subtle gradient glow ring
-                    Container(
-                      width: 104,
-                      height: 104,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            colors.primary,
-                            const Color(0xFF38BDF8),
-                            const Color(0xFFA855F7),
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colors.primary.withValues(alpha: 0.28),
-                            blurRadius: 18,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(3),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                        ),
-                        padding: const EdgeInsets.all(3),
-                        child: ClipOval(
-                          child: hasValidAvatar
-                              ? (_avatarPath.startsWith('http') || _avatarPath.startsWith('blob:')
-                                  ? Image.network(
-                                      _avatarPath,
-                                      width: 90,
-                                      height: 90,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Image.file(
-                                      File(_avatarPath),
-                                      width: 90,
-                                      height: 90,
-                                      fit: BoxFit.cover,
-                                    ))
-                              : Container(
-                                  width: 90,
-                                  height: 90,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        colors.primary.withValues(alpha: 0.25),
-                                        colors.primary.withValues(alpha: 0.08),
-                                      ],
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    CupertinoIcons.person_fill,
-                                    size: 46,
-                                    color: colors.primary,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                    // Floating Glass Camera Button
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      child: GestureDetector(
-                        onTap: _pickAvatar,
-                        child: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: colors.primary,
-                            border: Border.all(
-                              color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-                              width: 2.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.25),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            CupertinoIcons.camera_fill,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                // Name with Quick Edit Button
-                GestureDetector(
-                  onTap: _editNameModal,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        displayName,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: colors.primary.withValues(alpha: 0.12),
-                        ),
-                        child: Icon(
-                          CupertinoIcons.pencil,
-                          size: 14,
-                          color: colors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Quick Identity Chips
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    _buildHeroBadge(
-                      icon: CupertinoIcons.sparkles,
-                      label: _appMode == 'full' ? 'نسخهٔ کامل' : 'نسخهٔ ساده',
-                      color: _appMode == 'full' ? const Color(0xFF10B981) : const Color(0xFF3B82F6),
-                      isDark: isDark,
-                    ),
-                    _buildHeroBadge(
-                      icon: CupertinoIcons.person_fill,
-                      label: genderLabel,
-                      color: colors.primary,
-                      isDark: isDark,
-                    ),
-                    _buildHeroBadge(
-                      icon: CupertinoIcons.calendar,
-                      label: '${toPersianDigits(_age)} سال',
-                      color: const Color(0xFFF59E0B),
-                      isDark: isDark,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroBadge({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required bool isDark,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.15 : 0.10),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withValues(alpha: isDark ? 0.3 : 0.2),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildIdentityGroupCard(
     BuildContext context,
@@ -1279,215 +1035,7 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
     );
   }
 
-  Widget _buildAppModeExperienceCards(
-    BuildContext context,
-    dynamic colors,
-    bool isDark,
-  ) {
-    final isFullSelected = _appMode == 'full';
-    final isSimpleSelected = _appMode == 'simple';
 
-    return Column(
-      children: [
-        // Card 1: Full Experience
-        _buildModeSelectCard(
-          isSelected: isFullSelected,
-          title: 'نسخهٔ جامع و کامل',
-          badge: 'پیشنهادی ریتمو',
-          description:
-              'دسترسی کامل به تمام ماژول‌ها، تحلیل‌های هوشمند، برنامه‌ریزی پیشرفته، روتین‌ها و ابزارهای هوش مصنوعی.',
-          icon: CupertinoIcons.sparkles,
-          themeColor: const Color(0xFF10B981),
-          tags: ['تمامی ماژول‌ها', 'هوش مصنوعی', 'تحلیل پیشرفته'],
-          onTap: () => _switchAppMode('full'),
-          isDark: isDark,
-          colors: colors,
-        ),
-
-        const SizedBox(height: 12),
-
-        // Card 2: Simple Experience
-        _buildModeSelectCard(
-          isSelected: isSimpleSelected,
-          title: 'نسخهٔ ساده و مینیمال',
-          badge: 'نهایت تمرکز',
-          description:
-              'محیطی خلوت و بدون دغدغه که تنها روتین‌ها و تایمرهای ضروری را برای آرامش ذهنی نمایش می‌دهد.',
-          icon: CupertinoIcons.bolt_horizontal_circle_fill,
-          themeColor: const Color(0xFF3B82F6),
-          tags: ['فقط روتین‌ها', 'تایمرها', 'تمرکز خالص'],
-          onTap: () => _switchAppMode('simple'),
-          isDark: isDark,
-          colors: colors,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildModeSelectCard({
-    required bool isSelected,
-    required String title,
-    required String badge,
-    required String description,
-    required IconData icon,
-    required Color themeColor,
-    required List<String> tags,
-    required VoidCallback onTap,
-    required bool isDark,
-    required dynamic colors,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? themeColor.withValues(alpha: isDark ? 0.12 : 0.08)
-              : colors.surface,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: isSelected
-                ? themeColor.withValues(alpha: isDark ? 0.7 : 0.5)
-                : (isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.06)),
-            width: isSelected ? 1.8 : 1,
-          ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: themeColor.withValues(alpha: isDark ? 0.2 : 0.12),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
-              )
-            else if (!isDark)
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // Icon
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: themeColor.withValues(alpha: isSelected ? 0.22 : 0.1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: themeColor,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Title and Badge
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            title,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? themeColor : colors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: themeColor.withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              badge,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: themeColor,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // Selection Radio Checkmark
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected ? themeColor : Colors.transparent,
-                    border: Border.all(
-                      color: isSelected
-                          ? themeColor
-                          : colors.textSecondary.withValues(alpha: 0.4),
-                      width: 2,
-                    ),
-                  ),
-                  child: isSelected
-                      ? const Icon(
-                          CupertinoIcons.checkmark,
-                          size: 14,
-                          color: Colors.white,
-                        )
-                      : null,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 13,
-                color: colors.textSecondary,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: tags.map((t) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.06)
-                        : Colors.black.withValues(alpha: 0.04),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '• $t',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: isSelected ? colors.textPrimary : colors.textSecondary,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildPrivacyReassuranceBadge(dynamic colors, bool isDark) {
     return Container(

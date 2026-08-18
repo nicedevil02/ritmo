@@ -507,6 +507,31 @@ if (typeof window.__ritmo_resume === 'function') {
           _finishGeneration(readString('fullText'));
           break;
 
+        case 'http_error':
+          final statusCode = (data['statusCode'] is int)
+              ? data['statusCode'] as int
+              : (nested['statusCode'] is int)
+                  ? nested['statusCode'] as int
+                  : int.tryParse(readString('statusCode') ?? '') ?? 0;
+          RitmoLog.error(
+            'ChatGptWebBridge',
+            'HTTP error received from JS bridge: status=$statusCode, reqId=$reqId',
+          );
+          final String errorMsgFa;
+          if (statusCode == 429) {
+            errorMsgFa = 'محدودیت درخواست چت‌جی‌پی‌تی (Rate Limit). لطفاً کمی صبر کرده و مجدداً تلاش کنید.';
+          } else if (statusCode == 401 || statusCode == 403) {
+            errorMsgFa = 'نشست کاربری ChatGPT منقضی شده است. لطفاً پنجرهٔ ورود را باز کنید.';
+          } else if (statusCode >= 500 && statusCode <= 599) {
+            errorMsgFa = 'سرورهای ChatGPT موقتاً دچار اختلال شده‌اند (خطای $statusCode).';
+          } else if (statusCode > 0) {
+            errorMsgFa = 'خطای ارتباط با سرور ChatGPT (کد وضعیت $statusCode).';
+          } else {
+            errorMsgFa = 'خطای ارتباط با سرور ChatGPT.';
+          }
+          _failGeneration(errorMsgFa);
+          break;
+
         case 'error':
           _failGeneration(readString('message') ?? 'Unknown error');
           break;

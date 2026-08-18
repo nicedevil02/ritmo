@@ -243,6 +243,20 @@ class TimelineLayoutEngine {
       }
     }
 
+    assert(() {
+      final seen = <String>{};
+      for (final r in result) {
+        if (r.overflowCount > 0) {
+          for (final o in r.overflowItems) {
+            if (!seen.add(o.id)) return false;
+          }
+        } else {
+          if (!seen.add(r.item.id)) return false;
+        }
+      }
+      return true;
+    }(), 'یک آیتم دو بار در چیدمان ظاهر شده است');
+
     return result;
   }
 }

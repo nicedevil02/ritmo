@@ -1,7 +1,5 @@
-// سیستم پالت‌های Ritmo — شامل ۵ پالت هارمونیک
-// جایگزین پالت‌های هاردکد قبلی
-
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/palettes/copper_dusk.dart';
 import 'package:ritmo/core/theme/palettes/graphite_champagne.dart';
 import 'package:ritmo/core/theme/palettes/jade_noir.dart';
@@ -124,7 +122,7 @@ class RitmoPalette {
       case 'graphitechampagne':
         return RitmoPaletteId.graphiteChampagne;
       default:
-        debugPrint('[THEME_WARN] Unknown palette id "$raw". Falling back to jadeNoir.');
+        RitmoLog.warning('Theme', 'پالت ناشناخته "$raw". بازگشت به jade_noir.');
         return RitmoPaletteId.jadeNoir;
     }
   }

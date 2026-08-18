@@ -282,6 +282,25 @@ class DayAgendaService {
     return result;
   }
 
+  /// Counts uncompleted simple tasks with dueDate strictly before [cutoff].
+  Future<int> countOverdueBefore(DateTime cutoff) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final cutoffStr = DateKey.of(cutoff);
+      final res = await db.rawQuery(
+        'SELECT COUNT(*) as cnt FROM simple_tasks WHERE isDone = 0 AND dueDate IS NOT NULL AND dueDate < ?',
+        [cutoffStr],
+      );
+      if (res.isNotEmpty) {
+        return (res.first['cnt'] as num?)?.toInt() ?? 0;
+      }
+      return 0;
+    } catch (e, st) {
+      RitmoLog.error('DayAgendaService', 'countOverdueBefore error', e, st);
+      return 0;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Context (loaded once per range)
   // ---------------------------------------------------------------------------

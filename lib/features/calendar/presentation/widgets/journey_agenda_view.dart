@@ -33,6 +33,9 @@ class JourneyAgendaView extends StatefulWidget {
     this.errorMessage,
     this.agendaLoadStatus,
     this.onRetry,
+    this.olderOverdueCount = 0,
+    this.daysBack = 14,
+    this.onExpandOverdue,
   });
 
   final Map<String, DayAgendaSnapshot> rangeSnapshots;
@@ -45,6 +48,9 @@ class JourneyAgendaView extends StatefulWidget {
   final String? errorMessage;
   final AgendaLoadStatus? agendaLoadStatus;
   final VoidCallback? onRetry;
+  final int olderOverdueCount;
+  final int daysBack;
+  final VoidCallback? onExpandOverdue;
 
   @override
   State<JourneyAgendaView> createState() => _JourneyAgendaViewState();
@@ -216,6 +222,42 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
             onDoneItem: widget.onDoneItem,
           ));
         }
+      }
+
+      // Display older overdue expansion banner if historical overdue items exist outside window
+      if (bucket == AgendaBucket.overdue && widget.olderOverdueCount > 0) {
+        slivers.add(SliverToBoxAdapter(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: RitmoSpacing.xl, vertical: RitmoSpacing.sm),
+            padding: const EdgeInsets.all(RitmoSpacing.md),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.error.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(RitmoRadius.card),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.error.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${toPersianDigits(widget.olderOverdueCount)} مورد قدیمی‌تر از ${toPersianDigits(widget.daysBack)} روز',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+                if (widget.onExpandOverdue != null)
+                  TextButton(
+                    onPressed: widget.onExpandOverdue,
+                    child: const Text('نمایش همه'),
+                  ),
+              ],
+            ),
+          ),
+        ));
       }
     }
 

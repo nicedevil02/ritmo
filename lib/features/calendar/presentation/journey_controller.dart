@@ -32,6 +32,7 @@ enum JourneyScale { agenda, day, week, month, year }
 class JourneyController extends ChangeNotifier {
   static const int agendaWindowDaysBack = 14;
   static const int agendaWindowDaysForward = 45;
+  static const int agendaExpandedDaysBack = 365;
 
   JourneyController({
     DayAgendaService? agendaService,
@@ -79,6 +80,7 @@ class JourneyController extends ChangeNotifier {
 
   DateTime? _windowStart;
   DateTime? _windowEnd;
+  int _olderOverdueCount = 0;
 
   bool _scaleExplicitlySet = false;
 
@@ -86,6 +88,7 @@ class JourneyController extends ChangeNotifier {
   JourneyScale get activeScale => _activeScale;
   DateTime? get windowStart => _windowStart;
   DateTime? get windowEnd => _windowEnd;
+  int get olderOverdueCount => _olderOverdueCount;
   bool get isLoading => _isLoading;
   bool get isExecutingAction => _isExecutingAction;
   DayAgendaSnapshot? get snapshot => _snapshot;
@@ -632,6 +635,11 @@ class JourneyController extends ChangeNotifier {
       _snapshot = _snapshotForSelectedDate();
       _windowStart = start;
       _windowEnd = end;
+
+      // Query older overdue tasks outside the loaded window
+      _olderOverdueCount = await _agendaService.countOverdueBefore(start);
+      if (_isDisposed || gen != _loadGeneration) return;
+
       sw.stop();
       RitmoLog.debug('JourneyController', 'loadAgendaRange: ${sw.elapsedMilliseconds}ms');
       _errorMessage = null; // clear stale error on successful load
@@ -645,6 +653,11 @@ class JourneyController extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  /// Expands agenda range backwards up to 365 days to show all historical overdue items.
+  Future<void> expandAgendaOverdue() async {
+    await loadAgendaRange(daysBack: agendaExpandedDaysBack);
   }
 
   Future<void> refresh() async {

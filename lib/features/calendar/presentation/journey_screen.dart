@@ -725,6 +725,9 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
           errorMessage: _controller.errorMessage,
           agendaLoadStatus: _controller.agendaLoadStatus,
           onRetry: _controller.loadForActiveScale,
+          olderOverdueCount: _controller.olderOverdueCount,
+          daysBack: JourneyController.agendaWindowDaysBack,
+          onExpandOverdue: _controller.expandAgendaOverdue,
         );
 
       case JourneyScale.day:

@@ -488,10 +488,57 @@ if (typeof window.__ritmo_resume === 'function') {
   }
 
   @visibleForTesting
-  void handleResendRequiredForTest() => _handleResendRequired();
+  Future<void> handleResendRequiredForTest() => _handleResendRequired();
 
-  void _handleResendRequired() {
-    RitmoLog.debug('ChatGptWebBridge', '_handleResendRequired called for ${_pendingRequest?.requestId}');
+  Future<void> _handleResendRequired() async {
+    final req = _pendingRequest;
+    if (req == null) return;
+
+    RitmoLog.debug('ChatGptWebBridge', '_handleResendRequired checking safety for req: ${req.requestId}');
+
+    final hasNoTokens = req.receivedLength == 0 && req.stage != PendingRequestStage.streaming;
+    final isFirstAttempt = req.resendAttempts == 0;
+    final isWithinWindow = DateTime.now().difference(req.sentAt).inSeconds < 15;
+
+    if (hasNoTokens && isFirstAttempt && isWithinWindow) {
+      req.resendAttempts++;
+      req.stage = PendingRequestStage.sending;
+      RitmoLog.debug('ChatGptWebBridge', 'Triggering safe one-time resend for req: ${req.requestId}');
+
+      String? userName;
+      try {
+        final db = await DatabaseHelper.instance.database;
+        final rows = await db.query(
+          'app_settings',
+          where: 'key = ?',
+          whereArgs: ['user_name'],
+          limit: 1,
+        );
+        if (rows.isNotEmpty) {
+          userName = rows.first['value'] as String?;
+        }
+      } catch (e, st) {
+        RitmoLog.error('ChatGptWebBridge', 'Error fetching user_name for resend: $e', e, st);
+      }
+
+      final formattedPrompt = ChatGptJsInjector.formatPromptWithSystemDirective(
+        userPrompt: req.promptText,
+        personaTitle: req.personaTitle,
+        personaSystemPrompt: req.personaSystemPrompt,
+        userName: userName,
+        contextSummary: req.contextSummary,
+        recentHistory: req.recentHistory,
+      );
+
+      final jsCall = ChatGptJsInjector.buildSendPromptScript(
+        formattedPrompt,
+        requestId: req.requestId,
+      );
+      await _controller?.runJavaScript(jsCall);
+    } else {
+      RitmoLog.error('ChatGptWebBridge', 'Safe resend disallowed (hasNoTokens=$hasNoTokens, isFirstAttempt=$isFirstAttempt, isWithinWindow=$isWithinWindow). Failing generation.');
+      _failGeneration('ارتباط با گفتگو قطع شد و پیام ارسال نشد. لطفاً دوباره تلاش کنید.');
+    }
   }
 
   static final _noisePrefixRegex = RegExp(

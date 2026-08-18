@@ -938,4 +938,62 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
 
   @override
   List<Type> dependencies() => [];
+
+  /// F-08..F-17: Pure static computation of multi-cycle forecasts for testing and external consumers.
+  @visibleForTesting
+  static List<PredictedCycle> computeMultiCycleForecast({
+    required DateTime lastPeriodStart,
+    required double avgCycleLength,
+    required double avgPeriodDuration,
+    double? cycleStdDev,
+    String dataMaturity = 'ESTABLISHED',
+    Map<String, String> settings = const {},
+    int horizonCycles = 12,
+    DateTime? now,
+    int completedCycles = 5,
+    double? regularityScore = 85.0,
+    bool isDelayedOrStale = false,
+  }) {
+    final effectiveNow = now ?? lastPeriodStart;
+    final cleanAnchor = CycleDateContract.cleanDate(lastPeriodStart);
+    final pmsWindowDays = int.tryParse(settings[CycleSettings.keyPmsWindowDays] ?? '4') ??
+        CycleSettings.defaultPmsWindowDays;
+    final lutealDays = CycleSettings.getLutealPhase(settings);
+    final fertilityVisible = CycleSettings.isFertilityVisible(settings);
+
+    return buildForecast(
+      anchorStart: cleanAnchor,
+      now: effectiveNow,
+      cycleLength: avgCycleLength.round(),
+      periodDays: avgPeriodDuration.round(),
+      sdDays: cycleStdDev,
+      regularityScore: regularityScore?.round(),
+      dataMaturity: dataMaturity,
+      discardedOutliers: 0,
+      completedCycles: completedCycles,
+      horizonCycles: horizonCycles,
+      isDelayedOrStale: isDelayedOrStale,
+      lutealDays: lutealDays,
+      pmsWindowDays: pmsWindowDays,
+      fertilityVisible: fertilityVisible,
+    );
+  }
+
+  /// F-06: Static fingerprint computation helper for testing.
+  @visibleForTesting
+  static String computeInputFingerprint({
+    required Map<String, String> settings,
+    required DateTime now,
+    int horizonCycles = 12,
+  }) {
+    final dayStamp = CycleDateContract.toDayKey(now);
+    final cycleLen = CycleSettings.getCycleLength(settings);
+    final periodDur = CycleSettings.getPeriodDuration(settings);
+    final luteal = CycleSettings.getLutealPhase(settings);
+    final pmsWindow = settings[CycleSettings.keyPmsWindowDays] ??
+        CycleSettings.defaultPmsWindowDays.toString();
+    final isPregnancy = CycleSettings.isPregnancyMode(settings);
+    final fertilityVisible = settings[CycleSettings.keyFertilityVisible] ?? 'true';
+    return '$dayStamp|$cycleLen|$periodDur|$luteal|$pmsWindow|$isPregnancy|$fertilityVisible|$horizonCycles';
+  }
 }

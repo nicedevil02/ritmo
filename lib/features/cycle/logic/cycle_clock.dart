@@ -15,4 +15,6 @@ abstract final class CycleClock {
   static void reset() {
     nowProvider = DateTime.now;
   }
+
+  static void resetNow() => reset();
 }

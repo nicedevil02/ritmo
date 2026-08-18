@@ -8,6 +8,7 @@ import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_snapshot_builder.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/date_key.dart';
@@ -143,10 +144,12 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         if (dateStr != null) {
-          try {
-            final targetDate = DateTime.parse(dateStr);
+          final targetDate = DateKey.parse(dateStr);
+          if (targetDate != null) {
             _controller.selectDate(targetDate, scaleToSet: JourneyScale.day);
-          } catch (_) {}
+          } else {
+            RitmoLog.error('JourneyScreen', 'Invalid date in FOCUS_ITEM event: $dateStr');
+          }
         }
 
         if (itemId != null) {

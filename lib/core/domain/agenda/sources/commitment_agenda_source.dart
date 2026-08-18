@@ -1,6 +1,7 @@
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -52,8 +53,8 @@ class CommitmentAgendaSource implements AgendaSource {
           allocationsByDate.putIfAbsent(dateStr, () => []).add(row);
         }
       }
-    } catch (_) {
-      // Return empty source on table missing / load error
+    } catch (e, st) {
+      RitmoLog.error('CommitmentAgendaSource', 'Failed to load planning allocations', e, st);
     }
 
     return CommitmentAgendaSource(allocationsByDate: allocationsByDate);

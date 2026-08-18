@@ -1,17 +1,17 @@
 import 'dart:convert';
-import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
-import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/utils/date_key.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart'
     hide toPersianDigits;
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 
 class WorshipAgendaSource implements AgendaSource {
   final List<Map<String, dynamic>> prayerPractices;
@@ -115,7 +115,9 @@ class WorshipAgendaSource implements AgendaSource {
         final dStr = r['dateStr'] as String?;
         if (dStr != null) exceptionsByDate[dStr] = r;
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error('WorshipAgendaSource', 'Error querying worship_day_exceptions', e, st);
+    }
 
     // Fetch occurrence overrides for worship (M2-12)
     final overridesByKey = <String, Map<String, dynamic>>{};
@@ -132,7 +134,9 @@ class WorshipAgendaSource implements AgendaSource {
           overridesByKey['${sId}_$dStr'] = r;
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error('WorshipAgendaSource', 'Error querying occurrence_overrides for WORSHIP', e, st);
+    }
 
     // Fetch all statuses at once (E-14 N+1 fix)
     final statusesByDate = await WorshipCompletionRepository.instance

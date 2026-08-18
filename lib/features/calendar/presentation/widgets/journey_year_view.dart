@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -73,18 +74,16 @@ class JourneyYearView extends StatelessWidget {
                   int monthTaskCount = 0;
                   int monthCompletedCount = 0;
 
-                  for (int d = 1; d <= 31; d++) {
-                    try {
-                      final jDate = Jalali(jalaliYear, monthIndex, d);
-                      final gDate = jDate.toDateTime();
-                      final dateStr =
-                          '${gDate.year}-${gDate.month.toString().padLeft(2, '0')}-${gDate.day.toString().padLeft(2, '0')}';
-                      final snapshot = rangeSnapshots[dateStr];
-                      if (snapshot != null) {
-                        monthTaskCount += snapshot.items.length;
-                        monthCompletedCount += snapshot.completedCount;
-                      }
-                    } catch (_) {}
+                  final monthLength = Jalali(jalaliYear, monthIndex, 1).monthLength;
+                  for (int d = 1; d <= monthLength; d++) {
+                    final jDate = Jalali(jalaliYear, monthIndex, d);
+                    final gDate = jDate.toDateTime();
+                    final dateStr = DateKey.of(gDate);
+                    final snapshot = rangeSnapshots[dateStr];
+                    if (snapshot != null) {
+                      monthTaskCount += snapshot.items.length;
+                      monthCompletedCount += snapshot.completedCount;
+                    }
                   }
 
                   final progressRatio = monthTaskCount > 0 ? (monthCompletedCount / monthTaskCount) : 0.0;

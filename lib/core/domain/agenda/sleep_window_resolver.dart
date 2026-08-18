@@ -1,3 +1,4 @@
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:sqflite/sqflite.dart';
@@ -82,8 +83,8 @@ class SleepWindowResolver {
           if (block != null) return block;
         }
       }
-    } catch (_) {
-      // Fallback to settings on query error
+    } catch (e, st) {
+      RitmoLog.error('SleepWindowResolver', 'Error fetching sleep target for $dateStr', e, st);
     }
 
     return resolveFromSettings(settingsMap, defaultLabel: defaultLabel);

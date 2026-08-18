@@ -7,8 +7,8 @@ import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
-import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
@@ -73,8 +73,8 @@ class CycleAgendaSource implements AgendaSource {
                 now: DateTime.now(),
               ),
             );
-      } catch (_) {
-        // Fallback to direct calculation if bus is uninitialized (e.g. In isolated unit tests)
+      } catch (e) {
+        RitmoLog.debug('CycleAgendaSource', 'Bus execute failed, falling back to direct calculation: $e');
         cycleOutput = await CycleEngine().calculate(
           CycleEngineInput(
             db: db,
@@ -84,10 +84,11 @@ class CycleAgendaSource implements AgendaSource {
         );
       }
     } catch (e, st) {
-      RitmoLogger.error(
-        '[CycleAgendaSource] error during load',
-        error: e,
-        stack: st,
+      RitmoLog.error(
+        'CycleAgendaSource',
+        'error during load',
+        e,
+        st,
       );
     }
 

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/features/calendar/presentation/logic/today_calendar_convergence_helper.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -47,13 +49,13 @@ class DayReviewSheet extends StatelessWidget {
   }
 
   String get _fullJalaliDateStr {
-    try {
-      final dt = DateTime.parse(dateStr);
-      final j = Jalali.fromDateTime(dt);
-      return '${j.formatter.wN} ${toPersianDigits(j.day.toString())} ${j.formatter.mN} ${toPersianDigits(j.year.toString())}';
-    } catch (_) {
-      return dateStr;
+    final dt = DateKey.parse(dateStr);
+    if (dt == null) {
+      RitmoLog.error('DayReviewSheet', 'Invalid dateStr: $dateStr');
+      return toPersianDigits(dateStr);
     }
+    final j = Jalali.fromDateTime(dt);
+    return '${ShamsiWeek.nameOf(j.weekDay)} ${toPersianDigits(j.day)} ${j.formatter.mN} ${toPersianDigits(j.year)}';
   }
 
   String get _narrativeSummary {

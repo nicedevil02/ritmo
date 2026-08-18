@@ -155,6 +155,15 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     }
   }
 
+  /// Attaches a viewer widget without triggering a reboot.
+  /// If the bridge is completely idle (and only then), initiates lazy boot in background.
+  WebViewController? attachViewer() {
+    if (_status == ChatGptBridgeStatus.idle) {
+      unawaited(ensureBooted());
+    }
+    return _controller;
+  }
+
   /// Sole authorized path for a forced reboot. Closes any in-flight stream with [reasonFa].
   Future<bool> forceReboot({required String reasonFa}) async {
     RitmoLog.debug('ChatGptWebBridgeManager', 'forceReboot requested. reason: $reasonFa');

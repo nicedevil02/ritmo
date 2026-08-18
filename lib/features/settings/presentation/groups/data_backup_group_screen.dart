@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
+import 'package:ritmo/core/settings/settings_transfer_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -12,6 +14,7 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/features/profile/presentation/backup_screen.dart';
 import 'package:ritmo/features/profile/presentation/crash_reports_screen.dart';
 import 'package:ritmo/features/settings/presentation/widgets/danger_zone.dart';
+import 'package:ritmo/features/settings/presentation/widgets/settings_import_diff_dialog.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -106,6 +109,86 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
     );
   }
 
+  Future<void> _exportSettings() async {
+    final json = SettingsTransferService.instance.exportSettingsJson();
+    await Clipboard.setData(ClipboardData(text: json));
+    if (mounted) {
+      RitmoToast.show(context, 'تنظیمات در قالب JSON کپی شد');
+    }
+  }
+
+  Future<void> _importSettings() async {
+    final textController = TextEditingController();
+    final colors = context.colors;
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: colors.card,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(
+            'ورود تنظیمات از JSON',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'متن JSON خروجی گرفته‌شده را در کادر زیر جای‌گذاری کنید:',
+                style: TextStyle(fontSize: 13, color: colors.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: textController,
+                maxLines: 6,
+                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                decoration: InputDecoration(
+                  hintText: '{\n  "schemaVersion": 1,\n  "settings": { ... }\n}',
+                  hintStyle: TextStyle(color: colors.textTertiary, fontSize: 11),
+                  filled: true,
+                  fillColor: colors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colors.border),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, textController.text.trim()),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('تحلیل و پیش‌نما'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result != null && result.isNotEmpty && mounted) {
+      try {
+        final diff = SettingsTransferService.instance.analyzeImport(result);
+        await SettingsImportDiffDialog.show(context, diff);
+        await _loadState();
+      } catch (_) {
+        if (mounted) {
+          RitmoToast.show(context, 'خطا در خواندن فرمت فایل تنظیمات');
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -116,6 +199,25 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 60),
         child: Column(
           children: [
+            SettingsSection(
+              title: 'انتقال و استخراج تنظیمات',
+              children: [
+                SettingsTile(
+                  key: const ValueKey('export_settings_tile'),
+                  title: 'خروجی تنظیمات (JSON)',
+                  subtitle: 'کپی پیکربندی تنظیمات در حافظه موقت',
+                  leading: Icon(CupertinoIcons.square_arrow_up, color: colors.primary),
+                  onTap: _exportSettings,
+                ),
+                SettingsTile(
+                  key: const ValueKey('import_settings_tile'),
+                  title: 'ورود تنظیمات با پیش‌نمای تغییرات',
+                  subtitle: 'تحلیل تفاوت‌ها و اعمال انتخابی فایل تنظیمات',
+                  leading: Icon(CupertinoIcons.square_arrow_down, color: colors.primary),
+                  onTap: _importSettings,
+                ),
+              ],
+            ),
             SettingsSection(
               title: 'پشتیبان‌گیری محلی و ابری',
               children: [

@@ -21,7 +21,7 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
   @override
   void initState() {
     super.initState();
-    ChatGptWebBridgeManager.instance.ensureBooted();
+    ChatGptWebBridgeManager.instance.attachViewer();
   }
 
   @override
@@ -33,6 +33,7 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
       valueListenable: ChatGptWebBridgeManager.instance.statusNotifier,
       builder: (context, status, _) {
         final isError = status == ChatGptBridgeStatus.error;
+        final isGenerating = status == ChatGptBridgeStatus.generating;
         return Material(
           type: MaterialType.transparency,
           child: Container(
@@ -87,13 +88,28 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                             ),
                           ),
                         ),
-                        // Refresh Button
-                        InkWell(
-                          onTap: () => controller?.reload(),
-                          borderRadius: BorderRadius.circular(4),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(Icons.refresh_rounded, size: 16, color: colors.textSecondary),
+                        // Refresh Button (WEB-02: disabled during generation, triggers forceReboot otherwise)
+                        Tooltip(
+                          message: isGenerating
+                              ? 'در حین تولید پاسخ نمی‌توان صفحه را نو کرد'
+                              : 'بارگذاری مجدد',
+                          child: InkWell(
+                            onTap: isGenerating
+                                ? null
+                                : () => ChatGptWebBridgeManager.instance.forceReboot(
+                                      reasonFa: 'بارگذاری مجدد توسط کاربر از پیش‌نمایش',
+                                    ),
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.refresh_rounded,
+                                size: 16,
+                                color: isGenerating
+                                    ? colors.textTertiary.withValues(alpha: 0.4)
+                                    : colors.textSecondary,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -141,7 +157,7 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                             )
                           : Center(
                               child: InkWell(
-                                onTap: () => ChatGptWebBridgeManager.instance.ensureBooted(),
+                                onTap: () => ChatGptWebBridgeManager.instance.attachViewer(),
                                 child: Padding(
                                   padding: const EdgeInsets.all(12),
                                   child: Column(

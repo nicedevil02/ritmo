@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:ritmo/core/logging/ritmo_log.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 
@@ -45,10 +45,10 @@ class SettingsTransferService {
     final settingsMap = <String, dynamic>{};
     for (final desc in SettingsRegistry.all) {
       if (desc.scope != SettingScope.db) continue;
-      if (!includeSecure && desc.isEncrypted) continue;
+      if (!includeSecure && desc.scope == SettingScope.secure) continue;
       if (desc.visibility == SettingVisibility.internal) continue;
 
-      final val = SettingsService.instance.getUntyped(desc.key);
+      final val = SettingsService.instance.get<Object?>(desc.key);
       settingsMap[desc.key] = val;
     }
 
@@ -79,14 +79,14 @@ class SettingsTransferService {
       for (final entry in rawSettings.entries) {
         final key = entry.key;
         final newVal = entry.value;
-        final desc = SettingsRegistry.byKey(key);
+        final desc = SettingsRegistry.find(key);
 
         if (desc == null || desc.scope != SettingScope.db || desc.visibility == SettingVisibility.internal) {
           ignoredKeys.add(key);
           continue;
         }
 
-        final currentVal = SettingsService.instance.getUntyped(key);
+        final currentVal = SettingsService.instance.get<Object?>(key);
         final item = SettingDiffItem(
           key: key,
           labelFa: desc.labelFa,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -21,8 +22,8 @@ class CloudflareChallengeModal extends StatefulWidget {
         backgroundColor: Colors.transparent,
         builder: (ctx) => const CloudflareChallengeModal(),
       );
-    } catch (e) {
-      debugPrint('[CloudflareChallengeModal] Error showing modal: $e');
+    } catch (e, st) {
+      RitmoLog.error('CloudflareChallengeModal', 'Error showing modal: $e', e, st);
     } finally {
       _isShowing = false;
     }
@@ -118,10 +119,14 @@ class _CloudflareChallengeModalState extends State<CloudflareChallengeModal> {
                 ),
                 IconButton(
                   icon: Icon(Icons.refresh_rounded, color: colors.textSecondary),
-                  tooltip: 'بارگذاری مجدد',
-                  onPressed: () {
-                    controller?.reload();
-                  },
+                  tooltip: ChatGptWebBridgeManager.instance.status == ChatGptBridgeStatus.generating
+                      ? 'در حین تولید پاسخ نمی‌توان صفحه را نو کرد'
+                      : 'بارگذاری مجدد',
+                  onPressed: ChatGptWebBridgeManager.instance.status == ChatGptBridgeStatus.generating
+                      ? null
+                      : () => ChatGptWebBridgeManager.instance.forceReboot(
+                            reasonFa: 'بارگذاری مجدد توسط کاربر در چالش کلودفلر',
+                          ),
                 ),
                 IconButton(
                   icon: Icon(Icons.close_rounded, color: colors.textTertiary),

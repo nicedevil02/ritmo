@@ -174,6 +174,13 @@ class SettingsService {
         return false;
       }
       value = str;
+    } else if (desc.type == SettingType.text) {
+      final str = value.toString();
+      if (str.length > 4096) {
+        RitmoLog.warning('Settings', 'طول متن برای کلید $key فراتر از سقف ۴۰۹۶ است');
+        return false;
+      }
+      value = str;
     }
 
     try {

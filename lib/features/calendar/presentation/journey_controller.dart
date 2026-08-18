@@ -908,6 +908,36 @@ class JourneyController extends ChangeNotifier {
     }
   }
 
+  Future<void> moveItemToDate(AgendaItem item, DateTime targetDate) async {
+    if (_isDisposed || _isExecutingAction) return;
+    final targetDateStr = DateKey.of(targetDate);
+    if (targetDateStr == item.dateStr) return;
+
+    _isExecutingAction = true;
+    notifyListeners();
+
+    try {
+      final command = _MoveItemToDateCommand(
+        item: item,
+        targetDate: targetDate,
+        overrideRepo: _overrideRepo,
+      );
+      await command.execute();
+      CommandStack.instance.push(command);
+      RitmoHapticsPolicy.success();
+      await refresh();
+    } catch (e, stackTrace) {
+      if (_isDisposed) return;
+      _errorMessage = 'خطا در انتقال رویداد به تاریخ دیگر';
+      RitmoLog.error('JourneyController', 'moveItemToDate failed', e, stackTrace);
+    } finally {
+      if (!_isDisposed) {
+        _isExecutingAction = false;
+        notifyListeners();
+      }
+    }
+  }
+
   Future<DayTemplate?> saveCurrentDayAsTemplate(String templateName, {DayTemplateRepository? templateRepo}) async {
     if (_snapshot == null || _snapshot!.items.isEmpty) return null;
     final timedItems = _snapshot!.items.where((i) => i.isTimed).toList();
@@ -1586,6 +1616,122 @@ class _PostponeItemCommand extends _CalendarCommand {
         final tgtBefore = _targetDayBeforeSnapshot;
         if (tgtBefore == null) {
           await _overrideRepo.remove(item.domain.name, item.sourceId, targetDate);
+        } else {
+          await _overrideRepo.restoreAll([tgtBefore]);
+        }
+      }
+    }
+  }
+}
+
+class _MoveItemToDateCommand extends _CalendarCommand {
+  _MoveItemToDateCommand({
+    required super.item,
+    required this.targetDate,
+    OccurrenceOverrideRepository? overrideRepo,
+    SimpleTaskRepository? taskRepo,
+  })  : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository(),
+        _taskRepo = taskRepo ?? SimpleTaskRepository.instance;
+
+  final DateTime targetDate;
+  final OccurrenceOverrideRepository _overrideRepo;
+  final SimpleTaskRepository _taskRepo;
+
+  @override
+  bool get affectsMultipleDays => true;
+
+  @override
+  String get description => 'انتقال رویداد به تاریخ دیگر';
+
+  String? _originalTaskDueDate;
+  OccurrenceOverride? _sourceDayBeforeSnapshot;
+  OccurrenceOverride? _targetDayBeforeSnapshot;
+  String? _targetDateStr;
+  bool _hasCapturedBefore = false;
+
+  @override
+  Future<void> applyForward() async {
+    final nextDateStr = DateKey.of(targetDate);
+    _targetDateStr = nextDateStr;
+
+    if (item.domain == AgendaDomain.task) {
+      final task = await _taskRepo.getById(item.sourceId);
+      if (task == null) {
+        throw StateError('Task ${item.sourceId} not found');
+      }
+
+      if (!_hasCapturedBefore) {
+        _originalTaskDueDate = task.dueDate;
+        _hasCapturedBefore = true;
+      }
+
+      await _taskRepo.updateTask(task.copyWith(dueDate: nextDateStr));
+    } else {
+      if (!_hasCapturedBefore) {
+        _sourceDayBeforeSnapshot = await _overrideRepo.readOne(
+          item.domain.name,
+          item.sourceId,
+          item.dateStr,
+        );
+        _targetDayBeforeSnapshot = await _overrideRepo.readOne(
+          item.domain.name,
+          item.sourceId,
+          nextDateStr,
+        );
+        _hasCapturedBefore = true;
+      }
+
+      final nowIso = DateTime.now().toIso8601String();
+
+      // 1. Source day: SKIPPED
+      final skipOverride = OccurrenceOverride(
+        sourceType: item.domain.name,
+        sourceId: item.sourceId,
+        dateStr: item.dateStr,
+        status: 'SKIPPED',
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      );
+
+      // 2. Target day: MOVED with original timeOfDay and durationMinutes
+      final targetOverride = OccurrenceOverride(
+        sourceType: item.domain.name,
+        sourceId: item.sourceId,
+        dateStr: nextDateStr,
+        timeOfDay: item.timeOfDay,
+        durationMinutes: item.durationMinutes,
+        status: 'MOVED',
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      );
+
+      await _overrideRepo.upsert(skipOverride);
+      await _overrideRepo.upsert(targetOverride);
+    }
+  }
+
+  @override
+  Future<void> applyBackward() async {
+    if (item.domain == AgendaDomain.task) {
+      final task = await _taskRepo.getById(item.sourceId);
+      if (task != null) {
+        await _taskRepo.updateTask(task.copyWith(dueDate: _originalTaskDueDate));
+      }
+    } else {
+      // Revert source day override
+      final srcBefore = _sourceDayBeforeSnapshot;
+      if (srcBefore == null) {
+        await _overrideRepo.remove(item.domain.name, item.sourceId, item.dateStr);
+      } else {
+        await _overrideRepo.restoreAll([srcBefore]);
+      }
+
+      // Revert target day override
+      final targetDateStr = _targetDateStr;
+      if (targetDateStr != null) {
+        final tgtBefore = _targetDayBeforeSnapshot;
+        if (tgtBefore == null) {
+          await _overrideRepo.remove(item.domain.name, item.sourceId, targetDateStr);
         } else {
           await _overrideRepo.restoreAll([tgtBefore]);
         }

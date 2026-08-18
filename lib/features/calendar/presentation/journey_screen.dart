@@ -1109,6 +1109,7 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
           onSelectDate: (date) {
             _controller.selectDate(date, scaleToSet: JourneyScale.day);
           },
+          onMoveItemToDate: _controller.moveItemToDate,
         );
 
       case JourneyScale.month:
@@ -1124,6 +1125,7 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
               onSaved: _controller.refresh,
             );
           },
+          onMoveItemToDate: _controller.moveItemToDate,
         );
 
       case JourneyScale.year:

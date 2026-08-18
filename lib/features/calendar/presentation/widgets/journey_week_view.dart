@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
@@ -15,11 +16,13 @@ class JourneyWeekView extends StatelessWidget {
     required this.selectedDate,
     required this.rangeSnapshots,
     required this.onSelectDate,
+    this.onMoveItemToDate,
   });
 
   final DateTime selectedDate;
   final Map<String, DayAgendaSnapshot> rangeSnapshots;
   final ValueChanged<DateTime> onSelectDate;
+  final void Function(AgendaItem item, DateTime targetDate)? onMoveItemToDate;
 
   static const double miniPxPerMin = 0.35; // ~504px total timeline height
 
@@ -98,21 +101,29 @@ class JourneyWeekView extends StatelessWidget {
             Row(
               children: List.generate(7, (index) {
                 final day = weekDays[index];
-                final isSelected = _isSameDay(day, selectedDate);
                 final isToday = _isSameDay(day, now);
-                final jalali = Jalali.fromDateTime(day);
+                final isSelected = _isSameDay(day, selectedDate);
+                final isFriday = index == 6;
+
+                final jalaliDay = Jalali.fromDateTime(day);
+                final dayNumStr = toPersianDigits(jalaliDay.day.toString());
 
                 return Expanded(
                   child: GestureDetector(
                     onTap: () => onSelectDate(day),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 6.0),
-                      margin: const EdgeInsets.symmetric(horizontal: 2.0),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      margin: const EdgeInsets.symmetric(horizontal: 1.5),
                       decoration: BoxDecoration(
-                        color: isSelected ? colors.primary : (isToday ? colors.primaryContainer : colors.surface),
-                        borderRadius: BorderRadius.circular(10.0),
+                        color: isSelected
+                            ? colors.primary
+                            : (isToday ? colors.primaryContainer.withValues(alpha: 0.3) : colors.surface),
+                        borderRadius: BorderRadius.circular(RitmoRadius.card),
                         border: Border.all(
-                          color: isSelected ? colors.primary : (isToday ? colors.primary : colors.border),
+                          color: isToday && !isSelected
+                              ? colors.primary
+                              : (isSelected ? colors.primary : colors.border),
+                          width: (isToday || isSelected) ? 1.5 : 0.5,
                         ),
                       ),
                       child: Column(
@@ -121,12 +132,15 @@ class JourneyWeekView extends StatelessWidget {
                             weekDayShortFa[index],
                             style: TextStyle(
                               fontSize: 10,
-                              color: isSelected ? colors.onPrimary : colors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? colors.onPrimary
+                                  : (isFriday ? colors.error : colors.textSecondary),
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            toPersianDigits(jalali.day.toString()),
+                            dayNumStr,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -164,46 +178,60 @@ class JourneyWeekView extends StatelessWidget {
                         final timedItems = (snapshot?.items ?? []).where((i) => i.isTimed).toList();
 
                         return Expanded(
-                          child: GestureDetector(
-                            onTap: () => onSelectDate(day),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: isSelected ? colors.primaryContainer.withValues(alpha: 0.15) : null,
-                                border: Border(
-                                  left: BorderSide(color: colors.divider, width: 0.5),
+                          child: DragTarget<AgendaItem>(
+                            onWillAcceptWithDetails: (details) => DateKey.of(day) != details.data.dateStr,
+                            onAcceptWithDetails: (details) {
+                              onMoveItemToDate?.call(details.data, day);
+                            },
+                            builder: (ctx, candidateData, rejectedData) {
+                              final isHovered = candidateData.isNotEmpty;
+                              return GestureDetector(
+                                onTap: () => onSelectDate(day),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: isHovered
+                                        ? colors.primary.withValues(alpha: 0.22)
+                                        : (isSelected ? colors.primaryContainer.withValues(alpha: 0.15) : null),
+                                    border: Border(
+                                      left: BorderSide(
+                                        color: isHovered ? colors.primary : colors.divider,
+                                        width: isHovered ? 1.5 : 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      // Grid Hour Lines (every 3 hours)
+                                      for (int h = 3; h < 24; h += 3)
+                                        Positioned(
+                                          top: (h * 60) * miniPxPerMin,
+                                          left: 0,
+                                          right: 0,
+                                          child: Container(
+                                            height: 0.5,
+                                            color: colors.divider.withValues(alpha: 0.3),
+                                          ),
+                                        ),
+
+                                      // Mini Item Blocks (Compact tier with LongPressDraggable)
+                                      for (final item in timedItems) _buildMiniItemBlock(context, item),
+
+                                      // Live Now Line (drawn ONLY on today's column)
+                                      if (isToday)
+                                        Positioned(
+                                          top: nowTop,
+                                          left: 0,
+                                          right: 0,
+                                          child: Container(
+                                            height: 1.5,
+                                            color: colors.accent,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              child: Stack(
-                                children: [
-                                  // Grid Hour Lines (every 3 hours)
-                                  for (int h = 3; h < 24; h += 3)
-                                    Positioned(
-                                      top: (h * 60) * miniPxPerMin,
-                                      left: 0,
-                                      right: 0,
-                                      child: Container(
-                                        height: 0.5,
-                                        color: colors.divider.withValues(alpha: 0.3),
-                                      ),
-                                    ),
-
-                                  // Mini Item Blocks (Compact tier - color block only)
-                                  for (final item in timedItems) _buildMiniItemBlock(context, item),
-
-                                  // Live Now Line (drawn ONLY on today's column)
-                                  if (isToday)
-                                    Positioned(
-                                      top: nowTop,
-                                      left: 0,
-                                      right: 0,
-                                      child: Container(
-                                        height: 1.5,
-                                        color: colors.accent,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
+                              );
+                            },
                           ),
                         );
                       }),
@@ -228,16 +256,43 @@ class JourneyWeekView extends StatelessWidget {
 
     final color = domainColor(context, item.domain);
 
+    final block = Container(
+      decoration: BoxDecoration(
+        color: item.isCompleted ? colors.disabled : color,
+        borderRadius: BorderRadius.circular(3.0),
+      ),
+    );
+
     return Positioned(
       top: top,
       left: 1.5,
       right: 1.5,
       height: height,
-      child: Container(
-        decoration: BoxDecoration(
-          color: item.isCompleted ? colors.disabled : color,
-          borderRadius: BorderRadius.circular(3.0),
+      child: LongPressDraggable<AgendaItem>(
+        data: item,
+        feedback: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(RitmoRadius.badge),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Text(
+              item.title,
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.onPrimary),
+            ),
+          ),
         ),
+        childWhenDragging: Opacity(opacity: 0.3, child: block),
+        child: block,
       ),
     );
   }

@@ -201,6 +201,11 @@ class SettingsService {
       value = str;
     }
 
+    final currentVal = _cache[key];
+    if (currentVal == value) {
+      return true;
+    }
+
     try {
       if (desc.scope == SettingScope.db) {
         final db = await DatabaseHelper.instance.database;

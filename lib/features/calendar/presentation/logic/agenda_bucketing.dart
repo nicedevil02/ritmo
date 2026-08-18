@@ -147,7 +147,8 @@ int calculateDaysInBucket(
       final thisSat = CourseScheduler.getSaturdayOfWeek(today);
       final thisFri = DateKey.addDays(thisSat, 6);
       final thisWeekStart = DateKey.addDays(tomorrow, 1);
-      if (thisWeekStart.isAfter(thisFri)) return 1;
+      // سطل خالی است (مثلاً امروز پنج‌شنبه یا جمعه است و این سطل در تقویم امروز وجود ندارد)
+      if (thisWeekStart.isAfter(thisFri)) return 0;
       return thisFri.difference(thisWeekStart).inDays + 1;
     case AgendaBucket.nextWeek:
       return 7;
@@ -179,7 +180,13 @@ String calculateRecurrenceLabel(List<DateTime> dates, int daysInBucket) {
   final n = uniqueDates.length;
   final m = daysInBucket > 0 ? daysInBucket : n;
 
-  if (n >= m && m >= 3) {
+  if (n > m) {
+    // نمی‌تواند بیشتر از تعداد روزهای سطل باشد؛ داده‌ها ناسازگارند.
+    RitmoLog.error('AgendaBucketing', 'n=$n > m=$m in recurrence label: bucket span mismatch');
+    return 'تکرارشونده';
+  }
+
+  if (n == m) {
     return 'هر روز';
   }
 

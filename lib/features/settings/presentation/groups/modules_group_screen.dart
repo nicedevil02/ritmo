@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/modules/module_registry.dart';
-import 'package:ritmo/core/modules/module_deactivation_service.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/services/feature_limits.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
@@ -44,31 +43,53 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
   Future<void> _toggleModule(ModuleDescriptor mod, bool val) async {
     if (!val) {
       final confirmed = await _showDeactivationWarningDialog(mod.titleFa);
-      if (!confirmed) return;
-      
-      setState(() {
-        _moduleStates[mod.key] = false;
-      });
-      await ModuleDeactivationService.deactivate(mod.key);
+      if (!confirmed) {
+        _loadModules();
+        return;
+      }
+
+      final result = await ModuleManagementService.instance.setModuleEnabled(mod.key, false);
+      if (!mounted) return;
+      if (result == ModuleToggleResult.success) {
+        RitmoToast.show(
+          context,
+          'ماژول «${mod.titleFa}» غیرفعال شد.',
+          icon: Icons.check_circle_outline,
+        );
+      } else {
+        RitmoToast.show(
+          context,
+          'خطا در تغییر وضعیت ماژول. لطفاً دوباره تلاش کنید.',
+          icon: Icons.error_outline,
+        );
+      }
       _loadModules();
     } else {
-      // Check module cap before enabling
       final result = await ModuleManagementService.instance.setModuleEnabled(mod.key, true);
+      if (!mounted) return;
       if (result == ModuleToggleResult.limitReached) {
-        if (!mounted) return;
         final limit = FeatureLimits.current.maxActiveModules;
         RitmoToast.show(
           context,
           'سقف $limit ماژول فعال همزمان پر شده. ابتدا یک ماژول را خاموش کنید یا به ریتمو پلاس ارتقا دهید.',
           icon: Icons.lock_outline,
         );
-        // Show upgrade sheet
         unawaited(PremiumUpgradeSheet.show(context));
+        _loadModules();
         return;
+      } else if (result == ModuleToggleResult.success) {
+        RitmoToast.show(
+          context,
+          'ماژول «${mod.titleFa}» فعال شد.',
+          icon: Icons.check_circle_outline,
+        );
+      } else {
+        RitmoToast.show(
+          context,
+          'خطا در تغییر وضعیت ماژول. لطفاً دوباره تلاش کنید.',
+          icon: Icons.error_outline,
+        );
       }
-      setState(() {
-        _moduleStates[mod.key] = true;
-      });
       _loadModules();
     }
   }

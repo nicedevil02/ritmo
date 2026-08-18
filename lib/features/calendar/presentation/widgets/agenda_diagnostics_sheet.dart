@@ -7,6 +7,7 @@ import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/routine_agenda_source.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 
@@ -46,12 +47,8 @@ Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
     // ---- 1. settings ------------------------------------------------------
     var settingsMap = <String, String>{};
     try {
-      final settings = await db.query('app_settings');
-      settingsMap = {
-        for (final s in settings)
-          if (s['key'] != null) s['key'].toString(): s['value']?.toString() ?? ''
-      };
-      out.writeln('-- settings (${settings.length} rows)');
+      settingsMap = SettingsService.instance.getAllStringMap();
+      out.writeln('-- settings (${settingsMap.length} entries)');
     } catch (e) {
       out.writeln('-- settings FAILED: $e');
     }

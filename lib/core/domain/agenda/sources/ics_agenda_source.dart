@@ -204,7 +204,8 @@ class IcsParser {
         );
       }
       return null;
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.warning('IcsParser', 'Invalid datetime format: $raw', e, st);
       return null;
     }
   }

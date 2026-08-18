@@ -253,13 +253,22 @@ class SettingsService {
 
     try {
       return rawVal as T;
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.warning('SettingsService', 'Failed to cast setting $key as $T', e, st);
       if (T == bool) return false as T;
       if (T == int) return 0 as T;
       if (T == double) return 0.0 as T;
       if (T == String) return '' as T;
       rethrow;
     }
+  }
+
+  Map<String, String> getAllStringMap() {
+    final map = <String, String>{};
+    for (final entry in _cache.entries) {
+      map[entry.key] = entry.value.toString();
+    }
+    return map;
   }
 
   String? getString(String key) {

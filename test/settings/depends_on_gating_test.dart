@@ -57,14 +57,21 @@ void main() {
       expect(aiApiKey?.dependsOn?.key, 'ai_mode');
       expect(aiApiKey?.dependsOn?.expectedValue, 'personal_key');
 
+      final aiModel = SettingsRegistry.find('ai_model');
+      expect(aiModel?.dependsOn?.key, 'ai_mode');
+      expect(aiModel?.dependsOn?.expectedValue, 'personal_key');
+
       final autoBackupFreq = SettingsRegistry.find('backup_frequency_days');
       expect(autoBackupFreq?.dependsOn?.key, 'auto_backup_enabled');
 
       final appBiometric = SettingsRegistry.find('app_biometric_enabled');
       expect(appBiometric?.dependsOn?.key, 'app_lock_enabled');
 
-      final cycleConsent = SettingsRegistry.find('cycle_consent');
-      expect(cycleConsent?.dependsOn?.key, 'module_cycle_enabled');
+      final cycleBiometric = SettingsRegistry.find('cycle_biometric_enabled');
+      expect(cycleBiometric?.dependsOn?.key, 'module_cycle_enabled');
+
+      final cycleLock = SettingsRegistry.find('cycle_lock_password');
+      expect(cycleLock?.dependsOn?.key, 'module_cycle_enabled');
     });
 
     testWidgets('Toggling notif_master_enabled gates child settings in UI', (tester) async {

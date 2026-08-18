@@ -2,6 +2,9 @@ import 'dart:convert';
 
 /// Utilities and JavaScript scripts for injecting into ChatGPT Web (chatgpt.com)
 class ChatGptJsInjector {
+  /// Source of truth version for the JavaScript bridge script.
+  static const int bridgeVersion = 7;
+
   /// Wraps user query with Ritmo's Persona, Context (RAG/Goals/Routines) and System Directives
   static String formatPromptWithSystemDirective({
     required String userPrompt,
@@ -37,12 +40,10 @@ $userPrompt
 
   /// Master JavaScript injected once page finishes loading.
   /// Sets up bridge listeners, the streaming watcher, and Cloudflare detection.
-  static String get setupBridgeScript => r'''
+  static String get setupBridgeScript => '''
 (function() {
-  if (window.__RITMO_BRIDGE_INITIALIZED__) return;
-  window.__RITMO_BRIDGE_INITIALIZED__ = true;
-
-  console.log('[Ritmo] Initializing ChatGPT Web Bridge...');
+  var requiredVersion = $bridgeVersion;
+  var currentVersion = window.__RITMO_BRIDGE_V;
 
   // Safe PostMessage to Flutter JavascriptChannel 'RitmoChatBridge'.
   function notifyFlutter(type, payload) {
@@ -65,6 +66,42 @@ $userPrompt
     }
   }
 
+  function checkComposerPresent() {
+    return !!(
+      document.querySelector('#prompt-textarea') ||
+      document.querySelector('textarea') ||
+      document.querySelector('div[contenteditable="true"]') ||
+      document.querySelector('.ProseMirror')
+    );
+  }
+
+  // Idempotent guard: if the current document is already running this exact bridge version,
+  // report warm readiness immediately and do not duplicate listeners or watchers.
+  if (currentVersion === requiredVersion) {
+    console.log('[Ritmo] Bridge already active at version ' + requiredVersion + ' (warm document).');
+    notifyFlutter('ready', {
+      version: requiredVersion,
+      isWarm: true,
+      currentPath: window.location.pathname || '',
+      hasComposer: checkComposerPresent()
+    });
+    return;
+  }
+
+  // If a previous different bridge version was present, clean up existing timers.
+  if (typeof window.__ritmo_cleanup === 'function') {
+    try {
+      window.__ritmo_cleanup();
+    } catch (e) {
+      console.warn('[Ritmo] Cleanup of prior bridge instance threw:', e);
+    }
+  }
+
+  window.__RITMO_BRIDGE_V = requiredVersion;
+  console.log('[Ritmo] Initializing ChatGPT Web Bridge version ' + requiredVersion + '...');
+$_bridgeScriptBody''';
+
+  static const String _bridgeScriptBody = r'''
   // A selector that the current WebView cannot parse makes querySelectorAll
   // throw for the ENTIRE list, taking the caller down with it. Never query raw.
   function queryAllSafe(selector) {
@@ -241,24 +278,18 @@ $userPrompt
   function extractCleanText(el) {
     if (!el) return '';
     
-    // 1. Try finding inner markdown/prose/body container
     var target = el.querySelector('.markdown, .prose, [class*="markdown"], [class*="prose"], [data-conversation-part="body"], [data-assistant-writing-block-body], div.whitespace-pre-wrap') || el;
-    
-    // 2. Read live innerText (which is attached to DOM and has full native Chromium linebreaks)
     var rawText = (target.innerText || target.textContent || '').trim();
     
-    // 3. Fallback to parent el if target was empty
     if (!rawText && el !== target) {
       rawText = (el.innerText || el.textContent || '').trim();
     }
     
     if (!rawText) return '';
 
-    // 4. Strip ChatGPT said / You said headers and leading bullet artifacts
     rawText = rawText.replace(/^[•\-\*\s:]*(ChatGPT\s*said:?|:ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|:You\s*said:?|Assistant\s*said:?)[\s:]*/gmi, '');
     rawText = rawText.replace(/^[•\-\*\s:]+/g, '');
     
-    // 5. Strip any raw CSS variables or data attributes
     if (rawText.indexOf('[data-conversation-') !== -1 || rawText.indexOf('--component-') !== -1) {
       rawText = rawText.replace(/\[data-[^\]]+\]\s*\{[^}]*\}/g, '');
       rawText = rawText.replace(/--[a-zA-Z0-9_-]+:[^;]+;?/g, '');
@@ -268,7 +299,6 @@ $userPrompt
 
   function findLatestAssistantText() {
     try {
-      // 1. Explicit assistant role
       var assistants = document.querySelectorAll('[data-message-author-role="assistant"]');
       if (assistants && assistants.length > 0) {
         var lastAssistant = assistants[assistants.length - 1];
@@ -276,7 +306,6 @@ $userPrompt
         if (t) return t;
       }
 
-      // 2. Markdown / Prose blocks (excluding user messages)
       var markdowns = document.querySelectorAll('div.markdown, div.prose, [class*="markdown"], [class*="prose"]');
       for (var j = markdowns.length - 1; j >= 0; j--) {
         var md = markdowns[j];
@@ -287,7 +316,6 @@ $userPrompt
         }
       }
 
-      // 3. Articles / turns from bottom up (excluding user)
       var articles = document.querySelectorAll('article, [data-testid*="conversation-turn-"]');
       for (var i = articles.length - 1; i >= 0; i--) {
         var art = articles[i];
@@ -305,10 +333,22 @@ $userPrompt
   }
 
   var streamCheckTimer = null;
+  var cfCheckTimer = null;
   var lastLength = 0;
   var lastText = '';
   var lastChangeTimestamp = Date.now();
   var streamStartTime = 0;
+
+  window.__ritmo_cleanup = function() {
+    if (streamCheckTimer) {
+      clearInterval(streamCheckTimer);
+      streamCheckTimer = null;
+    }
+    if (cfCheckTimer) {
+      clearInterval(cfCheckTimer);
+      cfCheckTimer = null;
+    }
+  };
 
   window.__ritmo_startStreamingWatcher = function(previousBaselineText) {
     lastLength = 0;
@@ -323,7 +363,6 @@ $userPrompt
       var totalDuration = Date.now() - streamStartTime;
       var currentText = findLatestAssistantText();
 
-      // If no new text yet, check for timeout
       if (!currentText || currentText === previousBaselineText) {
         if (totalDuration > 35000) {
           clearInterval(streamCheckTimer);
@@ -333,7 +372,6 @@ $userPrompt
         return;
       }
 
-      // New/growing assistant text detected!
       if (currentText !== lastText && currentText.length > 0) {
         var delta = '';
         if (currentText.length > lastLength && currentText.indexOf(lastText) === 0) {
@@ -421,7 +459,6 @@ $userPrompt
         autoCloseSidebar();
         autoDismissCookiesAndModals();
 
-        // Snapshot assistant text BEFORE sending
         var previousBaselineText = findLatestAssistantText();
 
         editor.focus();
@@ -488,22 +525,20 @@ $userPrompt
     }
   };
 
-  // Initial pass, then keep watching. A single call could only ever catch a
-  // challenge that was already on screen at injection time, and it made
-  // cloudflare_resolved unreachable.
   var challengedAtBoot = checkCloudflareStatus();
   autoDismissCookiesAndModals();
   autoCloseSidebar();
-  setInterval(checkCloudflareStatus, 2000);
+  cfCheckTimer = setInterval(checkCloudflareStatus, 2000);
 
   console.log('[Ritmo] Bridge setup complete.');
 
-  // Do NOT report ready while a challenge is up. This used to be the last
-  // unconditional statement of the script, and the Dart 'ready' handler clears
-  // the Cloudflare flag -- so the challenge raised a few lines earlier was
-  // wiped out instantly and the modal could never appear.
   if (!challengedAtBoot) {
-    notifyFlutter('ready', { status: 'ok' });
+    notifyFlutter('ready', {
+      version: requiredVersion,
+      isWarm: false,
+      currentPath: window.location.pathname || '',
+      hasComposer: checkComposerPresent()
+    });
   } else {
     console.warn('[Ritmo] Cloudflare challenge active at boot; withholding ready.');
   }

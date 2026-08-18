@@ -9,6 +9,7 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 import 'package:ritmo/features/profile/presentation/ai_connection_screen.dart';
 import 'package:ritmo/features/profile/presentation/ai_memory_management_screen.dart';
 import 'package:ritmo/features/profile/presentation/widgets/psych_layer_settings_sheet.dart';
+import 'package:ritmo/features/settings/presentation/widgets/ai_write_history_sheet.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
 
@@ -26,6 +27,7 @@ class AssistantPrivacyGroupScreen extends StatefulWidget {
 
 class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScreen> {
   bool _cloudConsent = true;
+  bool _assistantCanModify = true;
   String _gentleness = 'medium';
   int _dailyCapacity = 480;
   String _wakeTime = '06:30';
@@ -40,6 +42,7 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
   void _loadSettings() {
     setState(() {
       _cloudConsent = SettingsService.instance.get<bool>('assistant_cloud_consent');
+      _assistantCanModify = SettingsService.instance.get<bool>('assistant_can_modify_settings');
       _gentleness = SettingsService.instance.get<String>('gentleness_level');
       _dailyCapacity = SettingsService.instance.get<int>('daily_capacity_minutes');
       _wakeTime = SettingsService.instance.get<String>('wake_time');
@@ -186,6 +189,46 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
                       ),
                     ],
                   ),
+                ),
+              ],
+            ),
+            SettingsSection(
+              title: 'اختیارات و تغییرات خودکار دستیار',
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'تغییر خودکار تنظیمات توسط دستیار',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colors.textPrimary),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'هماهنگی هوشمند ساعات خواب، آلارم‌ها و ظرفیت',
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                          ),
+                        ],
+                      ),
+                      CupertinoSwitch(
+                        key: const ValueKey('assistant_modify_switch'),
+                        value: _assistantCanModify,
+                        activeTrackColor: colors.primary,
+                        onChanged: (val) => _update('assistant_can_modify_settings', val),
+                      ),
+                    ],
+                  ),
+                ),
+                SettingsTile(
+                  key: const ValueKey('ai_write_history_tile'),
+                  title: 'تاریخچه تغییرات دستیار هوشمند',
+                  subtitle: 'مشاهده گزارش ویرایش‌های خودکار و امکان بازگردانی',
+                  leading: Icon(CupertinoIcons.clock_fill, color: colors.primary),
+                  onTap: () => AiWriteHistorySheet.show(context),
                 ),
               ],
             ),

@@ -876,6 +876,27 @@ class SettingsRegistry {
       descriptionFa: 'پایان فعالیت‌های فعال و بسته شدن پرونده روز',
       searchTerms: ['خواب', 'شب', 'استراحت'],
     ),
+    SettingDescriptor(
+      key: 'assistant_can_modify_settings',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: true,
+      labelFa: 'اجازه به دستیار برای تغییر تنظیمات',
+      group: SettingsGroup.assistant,
+      descriptionFa: 'اجازه به دستیار هوشمند برای اعمال تغییرات مجاز (مانند ساعات خواب و اعلان‌ها)',
+      searchTerms: ['تغییر تنظیمات', 'دستیار', 'مجوز هوش مصنوعی', 'هوشمند'],
+    ),
+    SettingDescriptor(
+      key: 'ai_forbidden_keys',
+      type: SettingType.string,
+      scope: SettingScope.db,
+      defaultValue: '',
+      labelFa: 'کلیدهای ممنوعه برای تغییر توسط دستیار',
+      group: SettingsGroup.assistant,
+      visibility: SettingVisibility.advanced,
+      descriptionFa: 'فهرست کلیدهای جداشده با کاما که دستیار حق تغییر آن‌ها را ندارد',
+      searchTerms: ['ممنوعه', 'بلک لیست', 'لیست سیاه دستیار'],
+    ),
 
     // ----------------------------------------------------
     // ۶. داده و پشتیبان (Data & Backup)

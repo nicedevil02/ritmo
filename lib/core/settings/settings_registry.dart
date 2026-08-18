@@ -112,6 +112,32 @@ class SettingDescriptor {
     final parentVal = currentSettings[c.key];
     return c.isSatisfied(parentVal);
   }
+
+  Object parseValue(Object? raw) {
+    if (raw == null) return defaultValue;
+    switch (type) {
+      case SettingType.boolean:
+        if (raw is bool) return raw;
+        final s = raw.toString().trim().toLowerCase();
+        return s == 'true' || s == '1' || s == 'yes';
+      case SettingType.integer:
+        if (raw is int) return raw;
+        if (raw is num) return raw.toInt();
+        final parsed = int.tryParse(raw.toString().trim());
+        return parsed ?? defaultValue;
+      case SettingType.text:
+      case SettingType.time:
+        return raw.toString();
+      case SettingType.enumeration:
+        final str = raw.toString();
+        if (allowed == null) return str;
+        final match = allowed!.firstWhere(
+          (a) => a.toUpperCase() == str.toUpperCase(),
+          orElse: () => defaultValue as String,
+        );
+        return match;
+    }
+  }
 }
 
 class SettingsRegistry {

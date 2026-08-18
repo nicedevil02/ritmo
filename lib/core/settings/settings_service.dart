@@ -40,27 +40,14 @@ class SettingsService {
       for (final desc in SettingsRegistry.all) {
         if (desc.scope == SettingScope.db) {
           final raw = dbMap[desc.key];
-          if (raw != null) {
-            _cache[desc.key] = _parseRaw(desc.type, raw, desc.defaultValue);
-          } else {
-            _cache[desc.key] = desc.defaultValue;
-          }
+          _cache[desc.key] = desc.parseValue(raw);
         } else if (desc.scope == SettingScope.prefs && prefs != null) {
-          if (desc.type == SettingType.boolean) {
-            _cache[desc.key] = prefs.getBool(desc.key) ?? desc.defaultValue;
-          } else if (desc.type == SettingType.integer) {
-            _cache[desc.key] = prefs.getInt(desc.key) ?? desc.defaultValue;
-          } else {
-            _cache[desc.key] = prefs.getString(desc.key) ?? desc.defaultValue;
-          }
+          final raw = prefs.get(desc.key);
+          _cache[desc.key] = desc.parseValue(raw);
         } else if (desc.scope == SettingScope.secure) {
           try {
             final secVal = await SecureKeyStore.getKey(desc.key);
-            if (secVal != null && secVal.isNotEmpty) {
-              _cache[desc.key] = secVal;
-            } else {
-              _cache[desc.key] = desc.defaultValue;
-            }
+            _cache[desc.key] = desc.parseValue(secVal != null && secVal.isNotEmpty ? secVal : null);
           } catch (e, st) {
             RitmoLog.error('Settings', 'خطا در بارگذاری کلید امن ${desc.key}', e, st);
             _cache[desc.key] = desc.defaultValue;
@@ -245,18 +232,5 @@ class SettingsService {
       _agendaSignalScheduled = false;
       RitmoEvents.notifyRoutineChanged();
     });
-  }
-
-  Object _parseRaw(SettingType type, String raw, Object fallback) {
-    switch (type) {
-      case SettingType.boolean:
-        return raw == 'true';
-      case SettingType.integer:
-        return int.tryParse(raw) ?? fallback;
-      case SettingType.text:
-      case SettingType.enumeration:
-      case SettingType.time:
-        return raw;
-    }
   }
 }

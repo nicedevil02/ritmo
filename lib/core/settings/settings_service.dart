@@ -443,6 +443,39 @@ class SettingsService {
     return setMany(batch);
   }
 
+  Future<bool> setFromAi(String key, Object value) async {
+    final desc = SettingsRegistry.find(key);
+    if (desc == null) {
+      RitmoLog.warning('Settings', 'AI تلاش کرد کلید نامشخص $key را تغییر دهد');
+      return false;
+    }
+    if (!desc.aiWritable) {
+      RitmoLog.warning('Settings', 'AI مجاز به تغییر تنظیم غیرقابل‌دسترس $key نیست');
+      return false;
+    }
+    return set(key, value);
+  }
+
+  Future<bool> setManyFromAi(Map<String, Object> values) async {
+    final filtered = <String, Object>{};
+    for (final entry in values.entries) {
+      final desc = SettingsRegistry.find(entry.key);
+      if (desc == null) {
+        RitmoLog.warning('Settings', 'AI تلاش کرد کلید نامشخص ${entry.key} را تغییر دهد');
+        continue;
+      }
+      if (!desc.aiWritable) {
+        RitmoLog.warning('Settings', 'AI مجاز به تغییر تنظیم غیرقابل‌دسترس ${entry.key} نیست');
+        continue;
+      }
+      filtered[entry.key] = entry.value;
+    }
+    if (filtered.isEmpty && values.isNotEmpty) {
+      return false;
+    }
+    return setMany(filtered);
+  }
+
   /// Emits at most one `notifyRoutineChanged()` per [agendaSignalDebounce]
   /// window, coalescing repeated writes into a single refresh.
   void _scheduleAgendaRefreshSignal() {

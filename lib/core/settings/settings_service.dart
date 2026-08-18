@@ -13,6 +13,8 @@ import 'package:sqflite/sqflite.dart';
 
 enum SettingsWriteOrigin { user, system, ai }
 
+enum SettingsLoadState { notLoaded, loaded, degraded }
+
 sealed class SettingWriteResult {
   const SettingWriteResult();
 }
@@ -50,6 +52,12 @@ class SettingsService {
   bool get isInitialized => _initialized;
   Object? get initError => _initError;
   bool get hasInitError => _initError != null;
+  SettingsLoadState get loadState {
+    if (_initError != null) return SettingsLoadState.degraded;
+    if (!_initialized) return SettingsLoadState.notLoaded;
+    return SettingsLoadState.loaded;
+  }
+  bool get isDegraded => loadState == SettingsLoadState.degraded;
   Stream<String> get changes => _changeController.stream;
 
   Stream<T> watch<T>(String key) {

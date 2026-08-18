@@ -7,6 +7,8 @@ import 'package:ritmo/core/services/account_reset_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 
+import 'package:ritmo/core/settings/settings_service.dart';
+
 class DangerZone extends StatelessWidget {
   const DangerZone({
     super.key,
@@ -56,9 +58,16 @@ class DangerZone extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
+    return AnimatedBuilder(
+      animation: SettingsService.instance.revision,
+      builder: (context, _) {
+        if (SettingsService.instance.isDegraded) {
+          return const SizedBox.shrink();
+        }
 
-    return Container(
+        final colors = context.colors;
+
+        return Container(
       decoration: BoxDecoration(
         color: colors.medicalRed.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
@@ -141,7 +150,9 @@ class DangerZone extends StatelessWidget {
         ],
       ),
     );
-  }
+  },
+);
+}
 }
 
 class _FactoryResetDialog extends StatefulWidget {

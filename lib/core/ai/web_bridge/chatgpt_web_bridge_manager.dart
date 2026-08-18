@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_bridge_timeouts.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_js_injector.dart';
+import 'package:ritmo/core/ai/web_bridge/web_bridge_exception.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -291,7 +292,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       RitmoLog.debug('ChatGptWebBridge', 'Navigation finished with pending request (count: $_navigationReloadCount)');
       if (_navigationReloadCount > 3) {
         RitmoLog.error('ChatGptWebBridge', 'Navigation reload loop detected (>3 times). Aborting stream.');
-        _failGeneration('صفحه مکرراً بارگذاری مجدد شد و امکان ادامه پاسخ وجود ندارد.');
+        _failGeneration(WebBridgeException.navigationLoop());
         return;
       }
 
@@ -484,7 +485,7 @@ if (typeof window.__ritmo_resume === 'function') {
             'Auth required detected on page: path=${readString('currentPath')}',
           );
           if (_status == ChatGptBridgeStatus.generating) {
-            _failGeneration('برای استفاده از مدل ChatGPT، لطفاً وارد حساب کاربری خود شوید.');
+            _failGeneration(WebBridgeException.authRequired());
           }
           break;
 
@@ -507,7 +508,7 @@ if (typeof window.__ritmo_resume === 'function') {
         case 'network_conversation_started':
           RitmoLog.debug(
             'ChatGptWebBridge',
-            'Network conversation started: url=${readString('url')}, source=$source',
+            'Network conversation stream endpoint intercepted in JS (reqId: $reqId)',
           );
           if (_pendingRequest != null && _pendingRequest!.stage == PendingRequestStage.sending) {
             _pendingRequest!.stage = PendingRequestStage.awaitingFirstToken;
@@ -517,7 +518,7 @@ if (typeof window.__ritmo_resume === 'function') {
         case 'resumed':
           RitmoLog.debug(
             'ChatGptWebBridge',
-            'Streaming resumed after navigation for reqId: $reqId (stage: ${readString('stage')})',
+            'Resumed event received from JS bridge (stage: ${readString('stage')}, reqId: $reqId)',
           );
           _pendingRequest?.stage = PendingRequestStage.streaming;
           break;
@@ -560,23 +561,21 @@ if (typeof window.__ritmo_resume === 'function') {
             'ChatGptWebBridge',
             'HTTP error received from JS bridge: status=$statusCode, reqId=$reqId',
           );
-          final String errorMsgFa;
           if (statusCode == 429) {
-            errorMsgFa = 'محدودیت درخواست چت‌جی‌پی‌تی (Rate Limit). لطفاً کمی صبر کرده و مجدداً تلاش کنید.';
+            _failGeneration(WebBridgeException.rateLimited(statusCode: statusCode));
           } else if (statusCode == 401 || statusCode == 403) {
-            errorMsgFa = 'نشست کاربری ChatGPT منقضی شده است. لطفاً پنجرهٔ ورود را باز کنید.';
+            _failGeneration(WebBridgeException.authRequired(messageFa: 'نشست کاربری ChatGPT منقضی شده است. لطفاً پنجرهٔ ورود را باز کنید.'));
           } else if (statusCode >= 500 && statusCode <= 599) {
-            errorMsgFa = 'سرورهای ChatGPT موقتاً دچار اختلال شده‌اند (خطای $statusCode).';
-          } else if (statusCode > 0) {
-            errorMsgFa = 'خطای ارتباط با سرور ChatGPT (کد وضعیت $statusCode).';
+            _failGeneration(WebBridgeException.serverError(statusCode: statusCode));
           } else {
-            errorMsgFa = 'خطای ارتباط با سرور ChatGPT.';
+            _failGeneration(WebBridgeException.networkError(statusCode: statusCode));
           }
-          _failGeneration(errorMsgFa);
           break;
 
         case 'error':
-          _failGeneration(readString('message') ?? 'Unknown error');
+          final msg = readString('message') ?? 'خطای ناشناخته در پل ارتباطی با وب.';
+          RitmoLog.error('ChatGptWebBridge', 'JS error received: msg=$msg (source: $source, reqId: $reqId)');
+          _failGeneration(WebBridgeException.unknown(messageFa: msg));
           break;
 
         default:
@@ -740,7 +739,7 @@ if (typeof window.__ritmo_resume === 'function') {
     _resetInactivityTimer();
   }
 
-  void _failGeneration(String messageFa) {
+  void _failGeneration(dynamic errorOrMessageFa) {
     _generationTimer?.cancel();
     _generationTimer = null;
 
@@ -755,7 +754,18 @@ if (typeof window.__ritmo_resume === 'function') {
 
     _setStatus(ChatGptBridgeStatus.ready);
     if (controller != null && !controller.isClosed) {
-      controller.addError(Exception(messageFa));
+      final WebBridgeException err;
+      if (errorOrMessageFa is WebBridgeException) {
+        err = errorOrMessageFa;
+      } else if (errorOrMessageFa is String) {
+        err = WebBridgeException.unknown(messageFa: errorOrMessageFa);
+      } else {
+        err = WebBridgeException.unknown(
+          messageFa: errorOrMessageFa.toString(),
+          originalError: errorOrMessageFa,
+        );
+      }
+      controller.addError(err);
       controller.close();
     }
     _resetInactivityTimer();
@@ -882,7 +892,11 @@ if (typeof window.__ritmo_resume === 'function') {
       if (!identical(_currentStreamController, streamController)) return;
       RitmoLog.debug('ChatGptWebBridge', 'Generation timed out after ${generationTimeout.inSeconds}s (reqId: $reqId).');
       if (_emittedText.isEmpty) {
-        _failGeneration('پاسخی از صفحهٔ ChatGPT دریافت نشد. لطفاً پنجرهٔ مرورگر را باز کنید و وضعیت ورود یا تایید امنیتی را بررسی کنید.');
+        _failGeneration(
+          WebBridgeException.timeout(
+            messageFa: 'پاسخی از صفحهٔ ChatGPT دریافت نشد. لطفاً پنجرهٔ مرورگر را باز کنید و وضعیت ورود یا تایید امنیتی را بررسی کنید.',
+          ),
+        );
       } else {
         _finishGeneration(null);
       }

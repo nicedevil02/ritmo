@@ -30,6 +30,7 @@ import 'package:shamsi_date/shamsi_date.dart';
 enum JourneyScale { agenda, day, week, month, year }
 
 class JourneyController extends ChangeNotifier {
+  static const Duration agendaLoadBudget = Duration(milliseconds: 250);
   static const int agendaFastWindowDays = 3;
   static const int agendaWindowDaysBack = 14;
   static const int agendaWindowDaysForward = 45;
@@ -632,6 +633,17 @@ class JourneyController extends ChangeNotifier {
       _windowEnd = _windowEnd == null ? end : (end.isAfter(_windowEnd!) ? end : _windowEnd);
 
       sw.stop();
+      if (sw.elapsed > agendaLoadBudget) {
+        RitmoLog.error(
+          'JourneyController',
+          'بارگذاری اجندا از بودجه گذشت: ${sw.elapsedMilliseconds}ms (بودجه ${agendaLoadBudget.inMilliseconds}ms)',
+          StateError('agenda load budget exceeded'),
+        );
+      }
+      assert(
+        sw.elapsed <= agendaLoadBudget * 4,
+        'بارگذاری اجندا بیش از حد کند است: ${sw.elapsedMilliseconds}ms',
+      );
       RitmoLog.debug('JourneyController', '_loadWindow (${DateKey.of(start)}..${DateKey.of(end)}): ${sw.elapsedMilliseconds}ms');
       _errorMessage = null;
     } catch (e, st) {

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// سیاست و سطح حساسیت اجرای ابزار
 enum ToolPolicy {
   /// ابزار فقط خواندنی و کاملاً امن (اجرای آنی و خودکار در پس‌زمینه)
@@ -116,14 +118,34 @@ class AgentToolCall {
   });
 
   factory AgentToolCall.fromJson(Map<String, dynamic> json) {
+    final toolName = json['tool']?.toString() ??
+        json['name']?.toString() ??
+        json['action']?.toString() ??
+        json['tool_name']?.toString() ??
+        json['function']?.toString() ??
+        '';
+
+    dynamic rawParams = json['parameters'] ??
+        json['arguments'] ??
+        json['args'] ??
+        json['params'] ??
+        json['data'] ??
+        json['input'];
+
+    if (rawParams is String && rawParams.trim().startsWith('{')) {
+      try {
+        rawParams = jsonDecode(rawParams);
+      } catch (_) {}
+    }
+
+    final params = (rawParams is Map)
+        ? rawParams.cast<String, dynamic>()
+        : const <String, dynamic>{};
+
     return AgentToolCall(
-      toolName: json['tool']?.toString() ?? json['name']?.toString() ?? '',
-      parameters: (json['parameters'] is Map<String, dynamic>)
-          ? json['parameters'] as Map<String, dynamic>
-          : (json['args'] is Map<String, dynamic>
-              ? json['args'] as Map<String, dynamic>
-              : const <String, dynamic>{}),
-      callId: json['id']?.toString(),
+      toolName: toolName,
+      parameters: params,
+      callId: json['id']?.toString() ?? json['call_id']?.toString(),
     );
   }
 

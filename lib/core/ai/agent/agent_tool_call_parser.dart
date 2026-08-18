@@ -49,13 +49,17 @@ class AgentToolCallScan {
 class AgentToolCallParser {
   const AgentToolCallParser._();
 
-  static final RegExp _blockRe = RegExp(r'<tool_call>([\s\S]*?)<\/tool_call>');
+  static final RegExp _blockRe = RegExp(
+      r'<(?:tool_call|tool)>([\s\S]*?)<\/(?:tool_call|tool)>|\[TOOL_CALL\]([\s\S]*?)\[\/TOOL_CALL\]|\[TOOL\]([\s\S]*?)\[\/TOOL\]',
+      caseSensitive: false);
   static final RegExp _functionTagRe = RegExp(
       r'<(?:function|tool)=([a-zA-Z0-9_\-]+)>([\s\S]*?)<\/(?:function|tool)>',
       caseSensitive: false);
   static final RegExp _codeBlockJsonRe =
-      RegExp(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', caseSensitive: false);
-  static final RegExp _danglingToolRe = RegExp(r'<tool_call>[\s\S]*$');
+      RegExp(r'```(?:json|tool)?\s*(\{[\s\S]*?\})\s*```', caseSensitive: false);
+  static final RegExp _danglingToolRe = RegExp(
+      r'<(?:tool_call|tool)>[\s\S]*$|\[TOOL_CALL\][\s\S]*$|\[TOOL\][\s\S]*$',
+      caseSensitive: false);
   static final RegExp _actionsRe = RegExp(r'<actions>[\s\S]*?<\/actions>', caseSensitive: false);
   static final RegExp _memOpsRe = RegExp(r'<memory_ops>[\s\S]*?<\/memory_ops>', caseSensitive: false);
   static final RegExp _danglingTagRe =
@@ -76,9 +80,10 @@ class AgentToolCallParser {
     final errors = <String>[];
     final seen = <String>{};
 
-    // ۱. تگ استاندارد <tool_call>
+    // ۱. تگ استاندارد <tool_call>, <tool>, [TOOL_CALL], [TOOL]
     for (final match in _blockRe.allMatches(raw)) {
-      for (final call in _decodeCalls(match.group(1) ?? '', errors)) {
+      final body = match.group(1) ?? match.group(2) ?? match.group(3) ?? '';
+      for (final call in _decodeCalls(body, errors)) {
         final signature = '${call.toolName}|${stableArgs(call.parameters)}';
         if (seen.add(signature)) {
           calls.add(call);
@@ -150,6 +155,13 @@ class AgentToolCallParser {
     var text = raw.replaceAll(_blockRe, '');
     text = text.replaceAll(_functionTagRe, '');
     text = text.replaceAll(_danglingToolRe, '');
+    text = text.replaceAllMapped(_codeBlockJsonRe, (match) {
+      final jsonText = match.group(1) ?? '';
+      if (_decodeBareJsonCall(jsonText) != null) {
+        return '';
+      }
+      return match.group(0) ?? '';
+    });
     return text;
   }
 
@@ -346,12 +358,20 @@ class AgentToolCallParser {
         .trim();
     if (!text.startsWith('{') || !text.endsWith('}')) return null;
 
-    final looksLikeCall = text.contains('"tool"') ||
-        (text.contains('"name"') &&
-            (text.contains('"parameters"') ||
-                text.contains('"arguments"') ||
-                text.contains('"args"')));
-    if (!looksLikeCall) return null;
+    final hasNameKey = text.contains('"tool"') ||
+        text.contains('"action"') ||
+        text.contains('"name"') ||
+        text.contains('"tool_name"') ||
+        text.contains('"function"');
+
+    final hasArgsKey = text.contains('"parameters"') ||
+        text.contains('"arguments"') ||
+        text.contains('"args"') ||
+        text.contains('"params"') ||
+        text.contains('"data"') ||
+        text.contains('"input"');
+
+    if (!hasNameKey && !hasArgsKey) return null;
 
     try {
       final decoded = jsonDecode(text);

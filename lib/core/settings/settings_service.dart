@@ -15,15 +15,19 @@ class SettingsService {
   final Map<String, Object> _cache = {};
   final ValueNotifier<int> revision = ValueNotifier<int>(0);
   bool _initialized = false;
+  Object? _initError;
 
   /// Coalescing window for the heavy "reload the day" refresh signal.
   static const Duration agendaSignalDebounce = Duration(milliseconds: 350);
   static bool _agendaSignalScheduled = false;
 
   bool get isInitialized => _initialized;
+  Object? get initError => _initError;
+  bool get hasInitError => _initError != null;
 
   Future<void> init() async {
     try {
+      _initError = null;
       final db = await DatabaseHelper.instance.database;
       final rows = await db.query('app_settings');
       final dbMap = <String, String>{
@@ -58,13 +62,19 @@ class SettingsService {
       _initialized = true;
       revision.value++;
     } catch (e, st) {
+      _initError = e;
+      _initialized = false;
       RitmoLog.error('Settings', 'init error', e, st);
       // Fallback populate all defaults
       for (final desc in SettingsRegistry.all) {
         _cache[desc.key] = desc.defaultValue;
       }
-      _initialized = true;
     }
+  }
+
+  Future<bool> retryInit() async {
+    await init();
+    return _initialized;
   }
 
   T get<T>(String key) {
@@ -134,6 +144,14 @@ class SettingsService {
   }
 
   Future<bool> set(String key, Object value) async {
+    if (!_initialized) {
+      final ok = await retryInit();
+      if (!ok) {
+        RitmoLog.warning('Settings', 'عدم امکان ذخیره‌سازی کلید $key به دلیل عدم راه‌اندازی موفق سرویس تنظیمات');
+        return false;
+      }
+    }
+
     final desc = SettingsRegistry.find(key);
     if (desc == null) {
       RitmoLog.warning('Settings', 'رد ذخیره‌سازی برای کلید نامشخص: $key');

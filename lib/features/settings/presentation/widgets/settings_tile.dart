@@ -70,21 +70,20 @@ class SettingsTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 4,
+                          runSpacing: 4,
                           children: [
-                            Flexible(
-                              child: Text(
-                                title,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDanger ? colors.medicalRed : colors.textPrimary,
-                                ),
+                            Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: isDanger ? colors.medicalRed : colors.textPrimary,
                               ),
                             ),
-                            if (onWhyTap != null) ...[
-                              const SizedBox(width: 4),
+                            if (onWhyTap != null)
                               Semantics(
                                 label: 'راهنمای تنظیم $title',
                                 button: true,
@@ -93,7 +92,7 @@ class SettingsTile extends StatelessWidget {
                                   onTap: onWhyTap,
                                   behavior: HitTestBehavior.opaque,
                                   child: Container(
-                                    constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                                     alignment: Alignment.center,
                                     padding: const EdgeInsets.all(4.0),
                                     child: Icon(
@@ -104,9 +103,7 @@ class SettingsTile extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                            ],
-                            if (requiresRestart) ...[
-                              const SizedBox(width: 6),
+                            if (requiresRestart)
                               Container(
                                 key: const ValueKey('setting_restart_needed_chip'),
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -124,9 +121,7 @@ class SettingsTile extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                            ],
-                            if (isModified) ...[
-                              const SizedBox(width: 6),
+                            if (isModified)
                               Container(
                                 key: const ValueKey('setting_modified_dot'),
                                 width: 6,
@@ -136,7 +131,6 @@ class SettingsTile extends StatelessWidget {
                                   shape: BoxShape.circle,
                                 ),
                               ),
-                            ],
                           ],
                         ),
                         if (subtitle != null && subtitle!.isNotEmpty) ...[

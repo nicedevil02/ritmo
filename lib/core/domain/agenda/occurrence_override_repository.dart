@@ -39,7 +39,10 @@ class OccurrenceOverride {
   final String createdAt;
   final String updatedAt;
 
-  String get compositeKey => '$sourceType:$sourceId';
+  static String formatKey(String sourceType, String sourceId) =>
+      '${sourceType.toLowerCase()}:$sourceId';
+
+  String get compositeKey => formatKey(sourceType, sourceId);
 
   Map<String, dynamic> toMap() {
     return {

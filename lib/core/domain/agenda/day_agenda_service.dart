@@ -681,14 +681,11 @@ class DayAgendaService {
     if (dayOverrides.isNotEmpty) {
       final overrideMap = <String, OccurrenceOverride>{};
       for (final ovr in dayOverrides) {
-        overrideMap['${ovr.sourceType.toLowerCase()}:${ovr.sourceId}'] = ovr;
-        overrideMap[ovr.sourceId] = ovr;
+        overrideMap[OccurrenceOverride.formatKey(ovr.sourceType, ovr.sourceId)] = ovr;
       }
 
       items = items.map((item) {
-        final ovr =
-            overrideMap['${item.domain.name.toLowerCase()}:${item.sourceId}'] ??
-            overrideMap[item.sourceId];
+        final ovr = overrideMap[OccurrenceOverride.formatKey(item.domain.name, item.sourceId)];
         if (ovr == null) return item;
 
         var updated = item.copyWith(hasOverride: true);

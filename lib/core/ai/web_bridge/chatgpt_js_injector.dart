@@ -514,10 +514,22 @@ $_bridgeScriptBody''';
 
   var streamCheckTimer = null;
   var cfCheckTimer = null;
+  var domObserver = null;
   var lastLength = 0;
   var lastText = '';
   var lastChangeTimestamp = Date.now();
   var streamStartTime = 0;
+
+  function stopDomObserver() {
+    if (domObserver) {
+      try {
+        domObserver.disconnect();
+      } catch (e) {
+        console.warn('[Ritmo] domObserver disconnect error:', e);
+      }
+      domObserver = null;
+    }
+  }
 
   window.__ritmo_cleanup = function() {
     if (streamCheckTimer) {
@@ -528,6 +540,7 @@ $_bridgeScriptBody''';
       clearInterval(cfCheckTimer);
       cfCheckTimer = null;
     }
+    stopDomObserver();
     if (window.__ritmo_fetch_hooked && window.__ritmo_original_fetch) {
       window.fetch = window.__ritmo_original_fetch;
       window.__ritmo_fetch_hooked = false;
@@ -543,19 +556,11 @@ $_bridgeScriptBody''';
     previousBaselineText = (previousBaselineText || '').trim();
 
     if (streamCheckTimer) clearInterval(streamCheckTimer);
+    stopDomObserver();
 
-    streamCheckTimer = setInterval(function() {
-      var totalDuration = Date.now() - streamStartTime;
+    function checkAndEmitChunk() {
       var currentText = findLatestAssistantText();
-
-      if (!currentText || currentText === previousBaselineText) {
-        if (totalDuration > 35000) {
-          clearInterval(streamCheckTimer);
-          streamCheckTimer = null;
-          notifyFlutter('error', { message: 'پاسخی از ChatGPT دریافت نشد.', requestId: reqId, source: 'dom' });
-        }
-        return;
-      }
+      if (!currentText || currentText === previousBaselineText) return;
 
       if (currentText !== lastText && currentText.length > 0) {
         var delta = '';
@@ -568,6 +573,35 @@ $_bridgeScriptBody''';
         lastLength = currentText.length;
         lastChangeTimestamp = Date.now();
         notifyFlutter('chunk', { delta: delta, fullText: currentText, requestId: reqId, source: 'dom' });
+      }
+    }
+
+    if (typeof MutationObserver !== 'undefined') {
+      try {
+        domObserver = new MutationObserver(function() {
+          checkAndEmitChunk();
+        });
+        domObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+        console.log('[Ritmo] MutationObserver attached for DOM stream watching.');
+      } catch (obsErr) {
+        console.warn('[Ritmo] MutationObserver init failed, using polling timer only:', obsErr);
+      }
+    }
+
+    streamCheckTimer = setInterval(function() {
+      checkAndEmitChunk();
+
+      var totalDuration = Date.now() - streamStartTime;
+      var currentText = findLatestAssistantText();
+
+      if (!currentText || currentText === previousBaselineText) {
+        if (totalDuration > 35000) {
+          clearInterval(streamCheckTimer);
+          streamCheckTimer = null;
+          stopDomObserver();
+          notifyFlutter('error', { message: 'پاسخی از ChatGPT دریافت نشد.', requestId: reqId, source: 'dom' });
+        }
+        return;
       }
 
       var stopButton = document.querySelector(
@@ -582,25 +616,28 @@ $_bridgeScriptBody''';
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
+        stopDomObserver();
         notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
         console.log('[Ritmo] Stream completed with ' + finalFullText.length + ' characters (reqId: ' + reqId + ')');
       } else if (lastLength > 0 && timeSinceLastChange > 3000) {
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
+        stopDomObserver();
         notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
         console.log('[Ritmo] Stream fallback completed after 3s idle (reqId: ' + reqId + ')');
       } else if (totalDuration > 70000) {
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
+        stopDomObserver();
         if (finalFullText.length > 0) {
           notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
         } else {
           notifyFlutter('error', { message: 'زمان انتظار برای پاسخ به پایان رسید.', requestId: reqId, source: 'dom' });
         }
       }
-    }, 100);
+    }, 350);
   };
 
   // --- 5. Prompt Sender Implementation ---

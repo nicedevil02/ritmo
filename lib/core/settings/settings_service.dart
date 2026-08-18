@@ -65,6 +65,25 @@ class SettingsService {
   Set<String> get pendingRestartKeys => Set.unmodifiable(_pendingRestartKeys);
   void markRestartHandled() => _pendingRestartKeys.clear();
 
+  int get cachedCount => _cache.length;
+  Map<String, Object> get cachedEntries => Map.unmodifiable(_cache);
+
+  /// Inspector helper: retrieves raw database rows for diagnostics.
+  Future<List<Map<String, dynamic>>> getRawDatabaseRows() async {
+    final db = await DatabaseHelper.instance.database;
+    return db.query('app_settings', orderBy: 'key ASC');
+  }
+
+  /// Inspector helper: permanently deletes orphan keys from database.
+  Future<int> deleteOrphanKeys(List<String> keys) async {
+    if (keys.isEmpty) return 0;
+    final db = await DatabaseHelper.instance.database;
+    final placeholders = List.filled(keys.length, '?').join(',');
+    final count = await db.delete('app_settings', where: 'key IN ($placeholders)', whereArgs: keys);
+    await reload();
+    return count;
+  }
+
   Stream<T> watch<T>(String key) {
     return _changeController.stream
         .where((k) => k == key)

@@ -10,7 +10,6 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
-import 'package:ritmo/core/services/cycle_notification_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
 import 'package:ritmo/core/ux/ritmo_empty_state.dart';
@@ -22,7 +21,9 @@ import 'package:ritmo/features/cycle/logic/cycle_data_quality_engine.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_load_balancer.dart';
 import 'package:ritmo/features/cycle/logic/cycle_personal_pattern_engine.dart';
+import 'package:ritmo/features/cycle/logic/cycle_reminder_scheduler.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
+import 'package:ritmo/features/cycle/logic/cycle_state_provider.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart';
@@ -123,12 +124,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       );
 
       if (_engineOutput != null) {
-        final consentReminders = _settings['cycle_consent_reminders'] == 'true';
-        final pregnancyMode = _settings['cycle_pregnancy_mode'] == 'true';
-        await CycleNotificationService.scheduleReminders(
-          nextPeriodWindowStart: _engineOutput!.nextPeriodWindowStart,
-          consentReminders: consentReminders,
-          pregnancyMode: pregnancyMode,
+        await CycleReminderScheduler.rescheduleAll(
+          dbExecutor: db,
+          appSettings: _settings,
+          now: CycleClock.now,
         );
 
         final todayStr = CycleDateContract.toDayKey(CycleClock.now);
@@ -588,8 +587,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             const SizedBox(height: 16),
                             CycleCalendarView(
                               calendarMonth: _calendarMonth,
-                              onMonthChanged: (m) =>
-                                  setState(() => _calendarMonth = m),
+                              onMonthChanged: (m) async {
+                                setState(() => _calendarMonth = m);
+                                final lastDayOfMonth = Jalali(m.year, m.month, m.monthLength).toDateTime();
+                                await CycleStateNotifier.instance.ensureHorizonCovers(lastDayOfMonth);
+                              },
                               periods: _periods,
                               dayLogs: _dayLogs,
                               engineOutput: _engineOutput,

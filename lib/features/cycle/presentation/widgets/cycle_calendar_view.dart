@@ -1,13 +1,19 @@
 // C-43, C-44: CycleCalendarView
 // Minimalist, modern, accessible Jalali cycle calendar with swipe gestures,
-// animated month transitions, explicit directional arrows, and maximized typography.
+// animated month transitions, pre-computed day marks (F-25..F-34), and dynamic legend.
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
+import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
+import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_calendar_grid.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_calendar_legend.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class CycleCalendarView extends StatefulWidget {
@@ -34,113 +40,291 @@ class CycleCalendarView extends StatefulWidget {
 
   @override
   State<CycleCalendarView> createState() => _CycleCalendarViewState();
+
+  /// F-25: Pure builder for month day marks without in-cell iteration loops.
+  @visibleForTesting
+  static Map<String, CycleDayMark> buildMonthMarks({
+    required Jalali month,
+    required List<Map<String, dynamic>> periods,
+    required Set<String> loggedDayKeys,
+    required List<PredictedCycle> forecast,
+    int defaultPeriodDuration = 6,
+  }) {
+    final marks = <String, CycleDayMark>{};
+    final monthLength = month.monthLength;
+
+    final firstJalali = Jalali(month.year, month.month, 1);
+    final lastJalali = Jalali(month.year, month.month, monthLength);
+    final monthStartGregorian = CycleDateContract.cleanDate(
+      firstJalali.toDateTime(),
+    );
+    final monthEndGregorian = CycleDateContract.cleanDate(
+      lastJalali.toDateTime(),
+    );
+
+    // 1. Process recorded periods
+    final recordedPeriodDays = <String>{};
+    for (final p in periods) {
+      final rawStart = p['startDate']?.toString();
+      final pStart = CycleDateContract.parseDayKey(rawStart);
+      if (pStart == null) continue;
+
+      final rawEnd = p['endDate']?.toString();
+      final pEnd = CycleDateContract.parseDayKey(rawEnd);
+      final effectiveEnd =
+          pEnd ?? pStart.add(Duration(days: defaultPeriodDuration - 1));
+
+      var curr = pStart;
+      while (!curr.isAfter(effectiveEnd)) {
+        if (CycleDateContract.isSameOrAfter(curr, monthStartGregorian) &&
+            CycleDateContract.isSameOrBefore(curr, monthEndGregorian)) {
+          recordedPeriodDays.add(CycleDateContract.toDayKey(curr));
+        }
+        curr = curr.add(const Duration(days: 1));
+      }
+    }
+
+    // 2. Process forecast cycles
+    final predictedDays =
+        <String, ({PredictionConfidenceLevel level, PredictedCycle cycle})>{};
+    final predictionWindowDays =
+        <String, ({PredictionConfidenceLevel level, PredictedCycle cycle})>{};
+    final ovulationDays = <String>{};
+    final fertileDays = <String>{};
+    final pmsDays = <String>{};
+
+    for (final cycle in forecast) {
+      // Window range: [windowStart, windowEnd]
+      var wCurr = CycleDateContract.cleanDate(cycle.windowStart);
+      final wEnd = CycleDateContract.cleanDate(cycle.windowEnd);
+      while (!wCurr.isAfter(wEnd)) {
+        if (CycleDateContract.isSameOrAfter(wCurr, monthStartGregorian) &&
+            CycleDateContract.isSameOrBefore(wCurr, monthEndGregorian)) {
+          final key = CycleDateContract.toDayKey(wCurr);
+          predictionWindowDays[key] = (
+            level: cycle.confidenceLevel,
+            cycle: cycle,
+          );
+        }
+        wCurr = wCurr.add(const Duration(days: 1));
+      }
+
+      // Predicted period days: [predictedStart, predictedEnd]
+      var pCurr = CycleDateContract.cleanDate(cycle.predictedStart);
+      final pEnd = CycleDateContract.cleanDate(cycle.predictedEnd);
+      while (!pCurr.isAfter(pEnd)) {
+        if (CycleDateContract.isSameOrAfter(pCurr, monthStartGregorian) &&
+            CycleDateContract.isSameOrBefore(pCurr, monthEndGregorian)) {
+          final key = CycleDateContract.toDayKey(pCurr);
+          predictedDays[key] = (level: cycle.confidenceLevel, cycle: cycle);
+        }
+        pCurr = pCurr.add(const Duration(days: 1));
+      }
+
+      // Ovulation day
+      if (cycle.ovulationDay != null) {
+        final ovClean = CycleDateContract.cleanDate(cycle.ovulationDay!);
+        if (CycleDateContract.isSameOrAfter(ovClean, monthStartGregorian) &&
+            CycleDateContract.isSameOrBefore(ovClean, monthEndGregorian)) {
+          ovulationDays.add(CycleDateContract.toDayKey(ovClean));
+        }
+      }
+
+      // Fertile window
+      if (cycle.fertileStart != null && cycle.fertileEnd != null) {
+        var fCurr = CycleDateContract.cleanDate(cycle.fertileStart!);
+        final fEnd = CycleDateContract.cleanDate(cycle.fertileEnd!);
+        while (!fCurr.isAfter(fEnd)) {
+          if (CycleDateContract.isSameOrAfter(fCurr, monthStartGregorian) &&
+              CycleDateContract.isSameOrBefore(fCurr, monthEndGregorian)) {
+            fertileDays.add(CycleDateContract.toDayKey(fCurr));
+          }
+          fCurr = fCurr.add(const Duration(days: 1));
+        }
+      }
+
+      // PMS window
+      if (cycle.pmsStart != null && cycle.pmsEnd != null) {
+        var pmsCurr = CycleDateContract.cleanDate(cycle.pmsStart!);
+        final pmsEnd = CycleDateContract.cleanDate(cycle.pmsEnd!);
+        while (!pmsCurr.isAfter(pmsEnd)) {
+          if (CycleDateContract.isSameOrAfter(pmsCurr, monthStartGregorian) &&
+              CycleDateContract.isSameOrBefore(pmsCurr, monthEndGregorian)) {
+            pmsDays.add(CycleDateContract.toDayKey(pmsCurr));
+          }
+          pmsCurr = pmsCurr.add(const Duration(days: 1));
+        }
+      }
+    }
+
+    // 3. Populate marks for each day of the Jalali month
+    for (var day = 1; day <= monthLength; day++) {
+      final jDay = Jalali(month.year, month.month, day);
+      final gDay = CycleDateContract.cleanDate(jDay.toDateTime());
+      final dayKey = CycleDateContract.toDayKey(gDay);
+      final hasLog = loggedDayKeys.contains(dayKey);
+
+      CycleDayKind kind;
+      PredictionConfidenceLevel? confidence;
+      PredictedCycle? matchedCycle;
+
+      if (recordedPeriodDays.contains(dayKey)) {
+        kind = CycleDayKind.recordedPeriod;
+      } else if (predictedDays.containsKey(dayKey)) {
+        kind = CycleDayKind.predictedPeriod;
+        confidence = predictedDays[dayKey]!.level;
+        matchedCycle = predictedDays[dayKey]!.cycle;
+      } else if (ovulationDays.contains(dayKey)) {
+        kind = CycleDayKind.ovulation;
+      } else if (fertileDays.contains(dayKey)) {
+        kind = CycleDayKind.fertileWindow;
+      } else if (pmsDays.contains(dayKey)) {
+        kind = CycleDayKind.pms;
+      } else if (predictionWindowDays.containsKey(dayKey)) {
+        kind = CycleDayKind.predictionWindow;
+        confidence = predictionWindowDays[dayKey]!.level;
+        matchedCycle = predictionWindowDays[dayKey]!.cycle;
+      } else {
+        kind = CycleDayKind.normal;
+      }
+
+      marks[dayKey] = CycleDayMark(
+        kind: kind,
+        confidenceLevel: confidence,
+        hasLog: hasLog,
+        predictedCycle: matchedCycle,
+      );
+    }
+
+    return marks;
+  }
 }
 
 class _CycleCalendarViewState extends State<CycleCalendarView> {
   int _slideDirection = 1;
   DateTime? _selectedDay;
+  Map<String, CycleDayMark> _marks = const {};
+  Set<String> _loggedDayKeys = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _recomputeMarks();
+  }
+
+  @override
+  void didUpdateWidget(CycleCalendarView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.calendarMonth != widget.calendarMonth ||
+        oldWidget.periods != widget.periods ||
+        oldWidget.dayLogs != widget.dayLogs ||
+        oldWidget.engineOutput != widget.engineOutput ||
+        oldWidget.settings != widget.settings) {
+      _recomputeMarks();
+    }
+  }
+
+  void _recomputeMarks() {
+    // F-27: Convert logs to normalized Set<String> dayKeys once
+    _loggedDayKeys = <String>{};
+    for (final l in widget.dayLogs) {
+      final raw = (l['logDate'] ?? l['dateIso'])?.toString();
+      final dt = CycleDateContract.parseDayKey(raw);
+      if (dt != null) {
+        _loggedDayKeys.add(CycleDateContract.toDayKey(dt));
+      }
+    }
+
+    final pDur = CycleSettings.getPeriodDuration(widget.settings);
+    final forecast = widget.engineOutput?.forecast ?? const <PredictedCycle>[];
+
+    _marks = CycleCalendarView.buildMonthMarks(
+      month: widget.calendarMonth,
+      periods: widget.periods,
+      loggedDayKeys: _loggedDayKeys,
+      forecast: forecast,
+      defaultPeriodDuration: pDur,
+    );
+  }
+
+  void _clearSelectedDayIfNotInMonth(Jalali targetMonth) {
+    if (_selectedDay != null) {
+      final selectedJalali = Jalali.fromDateTime(_selectedDay!);
+      if (selectedJalali.year != targetMonth.year ||
+          selectedJalali.month != targetMonth.month) {
+        _selectedDay = null;
+      }
+    }
+  }
 
   void _changeMonth(int delta) {
     HapticFeedback.selectionClick();
+    final target = widget.calendarMonth.addMonths(delta);
+    _clearSelectedDayIfNotInMonth(target);
     setState(() {
       _slideDirection = delta;
     });
-    widget.onMonthChanged(widget.calendarMonth.addMonths(delta));
+    widget.onMonthChanged(target);
   }
 
   void _goToCurrentMonth() {
     HapticFeedback.mediumImpact();
-    final now = Jalali.now();
+    final now = Jalali.fromDateTime(CycleClock.now);
     final currentFirst = Jalali(now.year, now.month, 1);
     final isAfter = currentFirst.toDateTime().isAfter(
       widget.calendarMonth.toDateTime(),
     );
+    _clearSelectedDayIfNotInMonth(currentFirst);
     setState(() {
       _slideDirection = isAfter ? 1 : -1;
     });
     widget.onMonthChanged(currentFirst);
   }
 
-  bool _checkIsPeriodDay(DateTime date) {
-    final cleanDate = DateTime(date.year, date.month, date.day);
-    for (final p in widget.periods) {
-      final pStart = DateTime.parse(p['startDate'] as String);
-      final start = DateTime(pStart.year, pStart.month, pStart.day);
-      final endStr = p['endDate'] as String?;
-      final end = endStr != null ? DateTime.parse(endStr) : null;
-      final cleanEnd = end != null
-          ? DateTime(end.year, end.month, end.day)
-          : null;
-
-      if (!cleanDate.isBefore(start)) {
-        if (cleanEnd != null) {
-          if (!cleanDate.isAfter(cleanEnd)) return true;
-        } else {
-          final pDur = CycleSettings.getPeriodDuration(widget.settings);
-          if (cleanDate.difference(start).inDays < pDur) return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  bool _checkIsPredictedDay(DateTime date) {
-    if (widget.engineOutput == null) return false;
-    final nextPeriod = widget.engineOutput!.nextPeriodPrediction;
-    if (nextPeriod == null) return false;
-    final cleanNextPeriod = DateTime(
-      nextPeriod.year,
-      nextPeriod.month,
-      nextPeriod.day,
+  void _jumpToNextPredictedPeriod() {
+    final forecast = widget.engineOutput?.forecast ?? const [];
+    if (forecast.isEmpty) return;
+    HapticFeedback.mediumImpact();
+    final nextPeriodStart = forecast.first.predictedStart;
+    final nextJalali = Jalali.fromDateTime(nextPeriodStart);
+    final targetMonth = Jalali(nextJalali.year, nextJalali.month, 1);
+    final isAfter = targetMonth.toDateTime().isAfter(
+      widget.calendarMonth.toDateTime(),
     );
-    final cleanDate = DateTime(date.year, date.month, date.day);
-    final pDur = CycleSettings.getPeriodDuration(widget.settings);
-    final diff = cleanDate.difference(cleanNextPeriod).inDays;
-    return diff >= 0 && diff < pDur;
+    _clearSelectedDayIfNotInMonth(targetMonth);
+    setState(() {
+      _slideDirection = isAfter ? 1 : -1;
+    });
+    widget.onMonthChanged(targetMonth);
   }
 
-  bool _checkIsOvulationDay(DateTime date) {
-    if (widget.engineOutput == null || !widget.engineOutput!.hasData) {
-      return false;
+  PredictionConfidenceLevel? _getDominantConfidenceLevel() {
+    final levels = _marks.values
+        .where(
+          (m) =>
+              m.kind == CycleDayKind.predictedPeriod &&
+              m.confidenceLevel != null,
+        )
+        .map((m) => m.confidenceLevel!)
+        .toList();
+    if (levels.isEmpty) return null;
+    if (levels.any((l) => l == PredictionConfidenceLevel.low)) {
+      return PredictionConfidenceLevel.low;
     }
-    final ovDay = widget.engineOutput!.ovulationDay;
-    if (ovDay == null) return false;
-    final cleanDate = DateTime(date.year, date.month, date.day);
-    final ovulation = DateTime(ovDay.year, ovDay.month, ovDay.day);
-    return cleanDate.isAtSameMomentAs(ovulation);
+    if (levels.any((l) => l == PredictionConfidenceLevel.medium)) {
+      return PredictionConfidenceLevel.medium;
+    }
+    return PredictionConfidenceLevel.high;
   }
 
-  bool _checkIsFertileDay(DateTime date) {
-    if (widget.engineOutput == null || !widget.engineOutput!.hasData) {
-      return false;
-    }
-    final fStart = widget.engineOutput!.fertileWindowStart;
-    final fEnd = widget.engineOutput!.fertileWindowEnd;
-    if (fStart == null || fEnd == null) return false;
-    final cleanDate = DateTime(date.year, date.month, date.day);
-    final start = DateTime(fStart.year, fStart.month, fStart.day);
-    final end = DateTime(fEnd.year, fEnd.month, fEnd.day);
-    return !cleanDate.isBefore(start) && !cleanDate.isAfter(end);
-  }
-
-  bool _checkIsPmsDay(DateTime date) {
-    if (widget.engineOutput == null || !widget.engineOutput!.hasData) {
-      return false;
-    }
-    final pStart = widget.engineOutput!.pmsWindowStart;
-    final pEnd = widget.engineOutput!.pmsWindowEnd;
-    if (pStart == null || pEnd == null) return false;
-    final cleanDate = DateTime(date.year, date.month, date.day);
-    final start = DateTime(pStart.year, pStart.month, pStart.day);
-    final end = DateTime(pEnd.year, pEnd.month, pEnd.day);
-    return !cleanDate.isBefore(start) && !cleanDate.isAfter(end);
-  }
-
-  bool _checkHasLog(String dateStr) {
-    for (final l in widget.dayLogs) {
-      if (l['logDate'] == dateStr || l['dateIso'] == dateStr) return true;
-    }
-    return false;
+  bool _hasOnlyPredictionsInMonth() {
+    final hasRecorded = _marks.values.any(
+      (m) => m.kind == CycleDayKind.recordedPeriod,
+    );
+    final hasPredicted = _marks.values.any(
+      (m) => m.kind == CycleDayKind.predictedPeriod,
+    );
+    return !hasRecorded && hasPredicted;
   }
 
   @override
@@ -151,9 +335,20 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
     final year = cal.year;
     final monthName = cal.formatter.mN;
 
-    final nowJalali = Jalali.now();
+    final nowJalali = Jalali.fromDateTime(CycleClock.now);
     final isCurrentMonth =
         cal.year == nowJalali.year && cal.month == nowJalali.month;
+
+    // Check if next predicted period is in another month (F-37)
+    final firstForecast = widget.engineOutput?.forecast.firstOrNull;
+    bool canJumpToNext = false;
+    if (firstForecast != null) {
+      final nextJ = Jalali.fromDateTime(firstForecast.predictedStart);
+      canJumpToNext = (nextJ.year != cal.year || nextJ.month != cal.month);
+    }
+
+    final dominantConfidence = _getDominantConfidenceLevel();
+    final isPredictionOnlyMonth = _hasOnlyPredictionsInMonth();
 
     final weekdaysHeaders = <String>[
       'شنبه',
@@ -170,10 +365,8 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
       onHorizontalDragEnd: (details) {
         final velocity = details.primaryVelocity ?? 0;
         if (velocity < -120) {
-          // Drag left -> in Persian RTL: next month (+1)
           _changeMonth(1);
         } else if (velocity > 120) {
-          // Drag right -> in Persian RTL: previous month (-1)
           _changeMonth(-1);
         }
       },
@@ -198,7 +391,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Right Button: Previous Month (-1) with arrow pointing RIGHT (>)
+                  // Previous Month Button (pointing right in RTL)
                   InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () => _changeMonth(-1),
@@ -222,7 +415,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                     ),
                   ),
 
-                  // Month & Year Center Display + "امروز" Return Pill
+                  // Month & Year Center Display + Action Buttons
                   Column(
                     children: [
                       Row(
@@ -246,55 +439,108 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                               color: colors.textSecondary,
                             ),
                           ),
+                          // F-36: Confidence Badge for Future Estimated Months
+                          if (isPredictionOnlyMonth &&
+                              dominantConfidence != null) ...[
+                            const SizedBox(width: 8),
+                            _buildConfidenceBadge(dominantConfidence, colors),
+                          ],
                         ],
                       ),
-                      if (!isCurrentMonth) ...[
-                        const SizedBox(height: 4),
-                        InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: _goToCurrentMonth,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: widget.activePhaseColor.withValues(
-                                alpha: 0.12,
-                              ),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: widget.activePhaseColor.withValues(
-                                  alpha: 0.3,
-                                ),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  CupertinoIcons.arrow_counterclockwise,
-                                  size: 12,
-                                  color: widget.activePhaseColor,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'بازگشت به ماه جاری',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: widget.activePhaseColor,
+                      if (!isCurrentMonth || canJumpToNext) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (!isCurrentMonth)
+                              InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: _goToCurrentMonth,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: widget.activePhaseColor.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: widget.activePhaseColor.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.arrow_counterclockwise,
+                                        size: 11,
+                                        color: widget.activePhaseColor,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'ماه جاری',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: widget.activePhaseColor,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
+                            if (!isCurrentMonth && canJumpToNext)
+                              const SizedBox(width: 6),
+                            if (canJumpToNext)
+                              InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: _jumpToNextPredictedPeriod,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colors.error.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: colors.error.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.calendar_today,
+                                        size: 11,
+                                        color: colors.error,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'پرش به دوره بعد',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: colors.error,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ],
                     ],
                   ),
 
-                  // Left Button: Next Month (+1) with arrow pointing LEFT (<)
+                  // Next Month Button (pointing left in RTL)
                   InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () => _changeMonth(1),
@@ -355,7 +601,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
 
               const SizedBox(height: 12),
 
-              // Animated Days Grid
+              // Animated Days Grid (F-26: Zero loops in itemBuilder)
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 280),
                 switchInCurve: Curves.easeOutCubic,
@@ -372,13 +618,29 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                 },
                 child: KeyedSubtree(
                   key: ValueKey('${cal.year}_${cal.month}'),
-                  child: _buildDaysGrid(cal, colors, isDark),
+                  child: CycleCalendarGrid(
+                    cal: cal,
+                    marks: _marks,
+                    selectedDay: _selectedDay,
+                    activePhaseColor: widget.activePhaseColor,
+                    onDayTapped: (day) {
+                      setState(() {
+                        _selectedDay = day;
+                      });
+                      widget.onDayTapped?.call(day);
+                    },
+                  ),
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              _buildCalendarLegend(colors, isDark),
+              // Dynamic Legend (F-35, F-31)
+              CycleCalendarLegend(
+                marks: _marks,
+                settings: widget.settings,
+                activePhaseColor: widget.activePhaseColor,
+              ),
             ],
           ),
         ),
@@ -386,268 +648,44 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
     );
   }
 
-  Widget _buildDaysGrid(Jalali cal, RitmoColors colors, bool isDark) {
-    final year = cal.year;
-    final month = cal.month;
-    final monthLength = cal.monthLength;
-
-    final firstDay = Jalali(year, month);
-    final emptyCells = firstDay.weekDay - 1;
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7,
-        mainAxisSpacing: 6,
-        crossAxisSpacing: 6,
-        childAspectRatio: 0.96,
+  Widget _buildConfidenceBadge(
+    PredictionConfidenceLevel level,
+    RitmoColors colors,
+  ) {
+    final String label;
+    final Color badgeColor;
+    switch (level) {
+      case PredictionConfidenceLevel.high:
+        label = 'اطمینان بالا';
+        badgeColor = colors.accent;
+        break;
+      case PredictionConfidenceLevel.medium:
+        label = 'اطمینان متوسط';
+        badgeColor = colors.primary;
+        break;
+      case PredictionConfidenceLevel.low:
+        label = 'اطمینان کم';
+        badgeColor = colors.textSecondary;
+        break;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: badgeColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: badgeColor.withValues(alpha: 0.35),
+          width: 0.8,
+        ),
       ),
-      itemCount: emptyCells + monthLength,
-      itemBuilder: (context, index) {
-        if (index < emptyCells) {
-          return const SizedBox();
-        }
-
-        final dayNum = index - emptyCells + 1;
-        final dayJalali = Jalali(year, month, dayNum);
-        final dayGregorian = dayJalali.toDateTime();
-        final dateStr = dayGregorian.toIso8601String().substring(0, 10);
-
-        final isPeriodDay = _checkIsPeriodDay(dayGregorian);
-        final isPredictedDay = _checkIsPredictedDay(dayGregorian);
-        final isOvulationDay = _checkIsOvulationDay(dayGregorian);
-        final isFertileDay = _checkIsFertileDay(dayGregorian);
-        final isPmsDay = _checkIsPmsDay(dayGregorian);
-        final hasLog = _checkHasLog(dateStr);
-
-        final todayJalali = Jalali.now();
-        final isToday =
-            dayJalali.year == todayJalali.year &&
-            dayJalali.month == todayJalali.month &&
-            dayJalali.day == todayJalali.day;
-
-        final isSelected =
-            _selectedDay != null &&
-            _selectedDay!.year == dayGregorian.year &&
-            _selectedDay!.month == dayGregorian.month &&
-            _selectedDay!.day == dayGregorian.day;
-
-        Color? cellBg;
-        Border? cellBorder;
-        var textColor = colors.textPrimary;
-        FontWeight textWeight = FontWeight.w700;
-
-        if (isPeriodDay) {
-          cellBg = colors.error.withValues(alpha: isDark ? 0.35 : 0.28);
-          textColor = colors.textPrimary;
-          textWeight = FontWeight.w900;
-          cellBorder = Border.all(
-            color: colors.error.withValues(alpha: 0.5),
-            width: 1,
-          );
-        } else if (isPredictedDay) {
-          cellBg = colors.error.withValues(alpha: isDark ? 0.12 : 0.08);
-          cellBorder = Border.all(
-            color: colors.error.withValues(alpha: 0.55),
-            width: 1.5,
-          );
-        } else if (isOvulationDay) {
-          cellBg = colors.accent.withValues(alpha: isDark ? 0.40 : 0.30);
-          cellBorder = Border.all(color: colors.accent, width: 1.5);
-          textWeight = FontWeight.w900;
-        } else if (isFertileDay) {
-          cellBg = colors.accent.withValues(alpha: isDark ? 0.16 : 0.12);
-        } else if (isPmsDay) {
-          cellBg = colors.primary.withValues(alpha: isDark ? 0.18 : 0.12);
-        }
-
-        if (isToday) {
-          cellBorder = Border.all(color: widget.activePhaseColor, width: 2.2);
-          textWeight = FontWeight.w900;
-        }
-
-        if (isSelected && !isToday) {
-          cellBorder = Border.all(
-            color: colors.textPrimary.withValues(alpha: 0.8),
-            width: 1.8,
-          );
-        }
-
-        return InkWell(
-          borderRadius: BorderRadius.circular(13),
-          onTap: () {
-            HapticFeedback.lightImpact();
-            setState(() {
-              _selectedDay = dayGregorian;
-            });
-            widget.onDayTapped?.call(dayGregorian);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            decoration: BoxDecoration(
-              color: cellBg,
-              border: cellBorder,
-              borderRadius: BorderRadius.circular(13),
-              boxShadow: (isPeriodDay || isOvulationDay)
-                  ? [
-                      BoxShadow(
-                        color: (isPeriodDay ? colors.error : colors.accent)
-                            .withValues(alpha: 0.15),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Center(
-                  child: Text(
-                    PersianDigits.toFa(dayNum.toString()),
-                    style: TextStyle(
-                      fontSize: 18.5,
-                      fontWeight: textWeight,
-                      color: textColor,
-                    ),
-                  ),
-                ),
-                if (hasLog)
-                  Positioned(
-                    bottom: 3,
-                    child: Container(
-                      height: 5,
-                      width: 5,
-                      decoration: BoxDecoration(
-                        color: isPeriodDay
-                            ? colors.textPrimary
-                            : widget.activePhaseColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCalendarLegend(RitmoColors colors, bool isDarkTheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Divider(color: colors.border.withValues(alpha: 0.6), height: 28),
-        Text(
-          'راهنمای تقویم چرخه بدنی:',
-          style: TextStyle(
-            fontSize: 15.5,
-            fontWeight: FontWeight.w900,
-            color: colors.textPrimary,
-          ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: badgeColor,
         ),
-        const SizedBox(height: 14),
-        Wrap(
-          spacing: 16,
-          runSpacing: 12,
-          children: [
-            _buildLegendItem(
-              colors.error.withValues(alpha: isDarkTheme ? 0.35 : 0.28),
-              'قاعدگی (پریود)',
-              colors.textPrimary,
-              borderColor: colors.error.withValues(alpha: 0.5),
-            ),
-            _buildLegendItem(
-              colors.error.withValues(alpha: 0.10),
-              'پیش‌بینی دوره بعدی',
-              colors.textPrimary,
-              borderColor: colors.error.withValues(alpha: 0.6),
-            ),
-            _buildLegendItem(
-              colors.primary.withValues(alpha: 0.15),
-              'روزهای پیش از عادت (PMS)',
-              colors.textPrimary,
-            ),
-            _buildLegendItem(
-              colors.accent.withValues(alpha: 0.35),
-              'روز تخمک‌گذاری',
-              colors.textPrimary,
-              borderColor: colors.accent,
-            ),
-            _buildLegendItem(
-              colors.accent.withValues(alpha: 0.15),
-              'پنجره باروری (Fertile)',
-              colors.textPrimary,
-            ),
-            _buildLegendItem(
-              Colors.transparent,
-              'امروز',
-              colors.textPrimary,
-              borderColor: widget.activePhaseColor,
-              borderWidth: 2,
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: widget.activePhaseColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 7),
-                Text(
-                  'علائم ثبت شده',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: colors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLegendItem(
-    Color bg,
-    String text,
-    Color textColor, {
-    Color? borderColor,
-    double borderWidth = 1.3,
-  }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: bg,
-            border: borderColor != null
-                ? Border.all(color: borderColor, width: borderWidth)
-                : null,
-            borderRadius: BorderRadius.circular(5),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w700,
-            color: textColor,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

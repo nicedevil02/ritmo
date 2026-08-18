@@ -44,24 +44,29 @@ class PredictedCycle {
 }
 
 enum CycleDayKind {
-  actualPeriod,
+  recordedPeriod,
   predictedPeriod,
-  predictionWindow, // بازهٔ عدم‌قطعیت، بیرون از باند اصلی
+  predictionWindow,
   ovulation,
-  fertile,
+  fertileWindow,
   pms,
+  normal,
 }
 
 class CycleDayMark {
   const CycleDayMark({
     required this.kind,
-    this.cycleIndex, // null برای روزهای واقعی
-    this.confidence, // null برای روزهای واقعی
+    this.cycleIndex,
+    this.confidence,
+    this.confidenceLevel,
     this.hasLog = false,
+    this.predictedCycle,
   });
 
   final CycleDayKind kind;
   final int? cycleIndex;
   final double? confidence;
+  final PredictionConfidenceLevel? confidenceLevel;
   final bool hasLog;
+  final PredictedCycle? predictedCycle;
 }

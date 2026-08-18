@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/agenda/agenda_load_status.dart';
 import 'package:ritmo/core/domain/agenda/agenda_source_registry.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
@@ -37,6 +38,10 @@ class DayAgendaService {
   DayAgendaService._() {
     _subscribeToEvents();
   }
+
+  @visibleForTesting
+  DayAgendaService.test();
+
   static final DayAgendaService instance = DayAgendaService._();
 
   /// Small per-date cache (invalidated reactively via the event bus).

@@ -61,6 +61,13 @@ class TimelineLayoutEngine {
   int get rangeDurationMinutes => rangeEndMinutes - rangeStartMinutes;
   double get totalTimelineHeight => rangeDurationMinutes * pxPerMinute;
 
+  double _calculateSafeHeight(double rawHeight, double top) {
+    final maxHeight = (totalTimelineHeight - top).clamp(0.0, totalTimelineHeight);
+    return maxHeight <= minItemHeight
+        ? maxHeight
+        : max(rawHeight, minItemHeight).clamp(minItemHeight, maxHeight);
+  }
+
   List<TimelineLayoutItem> calculateLayout(List<AgendaItem> items) {
     final timed = items.where((i) => i.isTimed).toList();
     if (timed.isEmpty) return [];
@@ -85,8 +92,10 @@ class TimelineLayoutEngine {
       final isClippedAtStart = startM < rangeStartMinutes;
       final isClippedAtEnd = endM > rangeEndMinutes;
 
-      final renderDurM = (visibleEnd - visibleStart).clamp(DurationBounds.minMinutes, DurationBounds.maxRenderMinutes);
-      final isTruncated = renderDurM < (visibleEnd - visibleStart);
+      final visibleDuration = visibleEnd - visibleStart;
+      final renderDurM = min(visibleDuration, DurationBounds.maxRenderMinutes);
+      /// true یعنی مدت واقعی از سقف رندر بیشتر بوده و کارت کوتاه‌تر کشیده شده.
+      final isTruncated = durM > renderDurM;
 
       rawEntries.add(_RawEntry(
         item: item,
@@ -176,8 +185,7 @@ class TimelineLayoutEngine {
           final entry = primaryEntries[laneIdx];
           final top = (entry.visibleStart - rangeStartMinutes) * pxPerMinute;
           final rawHeight = entry.renderDurationMinutes * pxPerMinute;
-          final maxHeight = totalTimelineHeight - top;
-          final height = max(rawHeight, minItemHeight).clamp(minItemHeight, maxHeight);
+          final height = _calculateSafeHeight(rawHeight, top);
 
           result.add(TimelineLayoutItem(
             item: entry.item,
@@ -201,8 +209,7 @@ class TimelineLayoutEngine {
 
           final top = (minStart - rangeStartMinutes) * pxPerMinute;
           final rawHeight = (maxEnd - minStart) * pxPerMinute;
-          final maxHeight = totalTimelineHeight - top;
-          final height = max(rawHeight, minItemHeight).clamp(minItemHeight, maxHeight);
+          final height = _calculateSafeHeight(rawHeight, top);
 
           result.add(TimelineLayoutItem(
             item: overflowEntries.first.item,
@@ -223,8 +230,7 @@ class TimelineLayoutEngine {
         for (final entry in cluster) {
           final top = (entry.visibleStart - rangeStartMinutes) * pxPerMinute;
           final rawHeight = entry.renderDurationMinutes * pxPerMinute;
-          final maxHeight = totalTimelineHeight - top;
-          final height = max(rawHeight, minItemHeight).clamp(minItemHeight, maxHeight);
+          final height = _calculateSafeHeight(rawHeight, top);
 
           result.add(TimelineLayoutItem(
             item: entry.item,

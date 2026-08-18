@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/legacy_database_recovery.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/services/account_reset_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -22,8 +23,8 @@ class DangerZone extends StatelessWidget {
     try {
       final db = await DatabaseHelper.instance.database;
       backupPath = await LegacyDatabaseRecovery.createEmergencyBackup(db.path);
-    } catch (e) {
-      debugPrint('Emergency backup error: $e');
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'Emergency backup error', e, st);
     }
 
     if (!context.mounted) return;

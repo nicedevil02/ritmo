@@ -16,6 +16,7 @@ class SettingsService {
 
   final Map<String, Object> _cache = {};
   final ValueNotifier<int> revision = ValueNotifier<int>(0);
+  final _changeController = StreamController<String>.broadcast();
   bool _initialized = false;
   Object? _initError;
 
@@ -26,6 +27,13 @@ class SettingsService {
   bool get isInitialized => _initialized;
   Object? get initError => _initError;
   bool get hasInitError => _initError != null;
+  Stream<String> get changes => _changeController.stream;
+
+  Stream<T> watch<T>(String key) {
+    return _changeController.stream
+        .where((k) => k == key)
+        .map((_) => get<T>(key));
+  }
 
   Future<void> init() async {
     try {
@@ -255,6 +263,7 @@ class SettingsService {
 
       _cache[key] = normalized;
       revision.value++;
+      _changeController.add(key);
 
       if (desc.affectsAgenda) {
         _scheduleAgendaRefreshSignal();
@@ -377,6 +386,16 @@ class SettingsService {
 
       revision.value++;
 
+      for (final k in dbEntries.keys) {
+        _changeController.add(k);
+      }
+      for (final k in prefsEntries.keys) {
+        _changeController.add(k);
+      }
+      for (final k in secureEntries.keys) {
+        _changeController.add(k);
+      }
+
       if (affectsAgendaAny) {
         _scheduleAgendaRefreshSignal();
       }
@@ -399,6 +418,29 @@ class SettingsService {
       RitmoLog.error('Settings', 'خطا در ذخیره‌سازی دسته‌ای تنظیمات', e, st);
       return false;
     }
+  }
+
+  Future<bool> reset(String key) async {
+    final desc = SettingsRegistry.find(key);
+    if (desc == null) return false;
+    return set(key, desc.defaultValue);
+  }
+
+  Future<bool> resetGroup(SettingsGroup group) async {
+    final descriptors = SettingsRegistry.byGroup(group);
+    final batch = <String, Object>{
+      for (final d in descriptors) d.key: d.defaultValue,
+    };
+    return setMany(batch);
+  }
+
+  Future<bool> resetAll({bool includeSecure = false}) async {
+    final batch = <String, Object>{
+      for (final d in SettingsRegistry.all)
+        if (includeSecure || d.scope != SettingScope.secure)
+          d.key: d.defaultValue,
+    };
+    return setMany(batch);
   }
 
   /// Emits at most one `notifyRoutineChanged()` per [agendaSignalDebounce]

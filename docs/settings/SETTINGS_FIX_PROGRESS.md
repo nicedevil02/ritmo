@@ -23,7 +23,7 @@
 | SET-19 | سیگنال اجندا: فقط کلیدهای مرتبط، و قابل لغو | B | DONE | `perf(settings): SET-19 — بازسازی اجندا فقط برای تنظیمات مرتبط با تایمر لغوپذیر` | |
 | SET-20 | مهاجرت طرحواره و پاک‌سازی ردیف‌های یتیم | B | DONE | `fix(settings): SET-20 — پاک‌سازی ردیف‌های یتیم جدول تنظیمات در آغاز به کار` | |
 | SET-21 | نوشتن دسته‌ای setMany | B | DONE | `feat(settings): SET-21 — ذخیره‌سازی دسته‌ای تنظیمات در یک تراکنش` | |
-| SET-22 | watch، reset، resetGroup و حذف کامل debugPrint | B | TODO | | |
+| SET-22 | watch، reset، resetGroup و حذف کامل debugPrint | B | DONE | `feat(settings): SET-22 — افزودن watch، reset، resetGroup و پاک‌سازی لاگ‌ها` | |
 | SET-23 | کلیدهای دروغین SettingsFlags | C | TODO | | |
 | SET-24 | aiWritable باید در مسیر نوشتن اعمال شود | C | TODO | | |
 | SET-25 | PIN: حذف نوشتن دوگانه و ذخیرهٔ هش‌شده | C | TODO | | |

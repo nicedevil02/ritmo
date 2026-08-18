@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -104,8 +105,8 @@ class _IdentityHeaderState extends State<IdentityHeader>
         [dateStr],
       );
       _completedTodayCount = Sqflite.firstIntValue(completedRes) ?? 0;
-    } catch (e) {
-      debugPrint('Error loading identity header: $e');
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'Error loading identity header', e, st);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

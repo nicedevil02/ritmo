@@ -11,6 +11,7 @@ class SettingsTile extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.onLongPress,
+    this.onWhyTap,
     this.isDanger = false,
     this.highlighted = false,
     this.isModified = false,
@@ -22,6 +23,7 @@ class SettingsTile extends StatelessWidget {
   final Widget? trailing;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onWhyTap;
   final bool isDanger;
   final bool highlighted;
   final bool isModified;
@@ -70,6 +72,22 @@ class SettingsTile extends StatelessWidget {
                               ),
                             ),
                           ),
+                          if (onWhyTap != null) ...[
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              key: const ValueKey('setting_why_button'),
+                              onTap: onWhyTap,
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.all(2.0),
+                                child: Icon(
+                                  CupertinoIcons.question_circle,
+                                  size: 16,
+                                  color: colors.primary.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ),
+                          ],
                           if (isModified) ...[
                             const SizedBox(width: 6),
                             Container(

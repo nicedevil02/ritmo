@@ -7,6 +7,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/features/settings/presentation/widgets/setting_explainer_sheet.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
 
 /// ویجت اعلامی جامع برای رندر هر نوع تنظیم از روی توصیفگر رجیستری
@@ -240,6 +241,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
+      onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: CupertinoSwitch(
         value: value,
@@ -282,6 +284,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
+      onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -361,6 +364,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
+      onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -417,6 +421,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
+      onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -497,6 +502,7 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
+      onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

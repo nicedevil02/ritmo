@@ -149,6 +149,7 @@ class SettingDescriptor {
     required this.labelFa,
     required this.group,
     this.descriptionFa,
+    this.whyExplanationFa,
     this.min,
     this.max,
     this.allowed,
@@ -176,6 +177,7 @@ class SettingDescriptor {
   final String labelFa;
   final SettingsGroup group;
   final String? descriptionFa;
+  final String? whyExplanationFa;
   final int? min;
   final int? max;
   final List<String>? allowed;
@@ -521,6 +523,7 @@ class SettingsRegistry {
       labelFa: 'ساعات سکوت',
       group: SettingsGroup.notifications,
       descriptionFa: 'قطع موقت اعلان‌های غیراضطراری در ساعات مشخص',
+      whyExplanationFa: 'سکوت شبانه مانع از بیداری ناگهانی و قطع فازهای خواب عمیق می‌شود و پیام‌های غیرضروری را تا صبح به تعویق می‌اندازد.',
       aiWritable: true,
       searchTerms: ['سکوت', 'ساعت سکوت', 'شب', 'مزاحم نشوید'],
     ),
@@ -849,6 +852,7 @@ class SettingsRegistry {
       group: SettingsGroup.assistant,
       allowed: ['gentle', 'medium', 'strict'],
       descriptionFa: 'میزان سخت‌گیری و سبک پیام‌های یادآوری',
+      whyExplanationFa: 'لحن دستیار نحوه برخورد سیستم هنگام عقب افتادن برنامه‌ها را تنظیم می‌کند؛ لحن ملایم استرس روانی را کاهش داده و لحن قاطع از اهمال‌کاری جلوگیری می‌کند.',
       searchTerms: ['لحن', 'سختی', 'سخت‌گیری', 'انعطاف'],
     ),
     SettingDescriptor(
@@ -862,6 +866,7 @@ class SettingsRegistry {
       min: 60,
       max: 1440,
       descriptionFa: 'حداکثر دقایق تخصیص داده شده به فعالیت‌های تمرکزی',
+      whyExplanationFa: 'مغز انسان توان تمرکزی محدودی در طول شبانه‌روز دارد. این سقف مانع از فشردگی بیش‌ازحد کارهای تمرکزی و فرسودگی ذهنی می‌شود.',
       searchTerms: ['ظرفیت', 'توان', 'ساعت کار'],
     ),
     SettingDescriptor(
@@ -873,6 +878,7 @@ class SettingsRegistry {
       group: SettingsGroup.assistant,
       affectsAgenda: true,
       descriptionFa: 'آغاز خط زمانی روز در تقویم و برنامه‌ریز',
+      whyExplanationFa: 'تقویم هوشمند آغاز روز و بلوک‌های تمرکز صبحگاهی را با ساعت فیزیولوژیک بیداری شما تراز می‌کند.',
       searchTerms: ['بیداری', 'صبح', 'طلوع'],
     ),
     SettingDescriptor(
@@ -884,6 +890,7 @@ class SettingsRegistry {
       group: SettingsGroup.assistant,
       affectsAgenda: true,
       descriptionFa: 'پایان فعالیت‌های فعال و بسته شدن پرونده روز',
+      whyExplanationFa: 'برای تثبیت ریتم سیرکادین و ترشح ملاتونین، وظایف قبل از این زمان بسته شده تا ذهن آماده استراحت کامل شود.',
       searchTerms: ['خواب', 'شب', 'استراحت'],
     ),
     SettingDescriptor(
@@ -915,6 +922,7 @@ class SettingsRegistry {
       labelFa: 'پردازش هوش مصنوعی صرفاً محلی',
       group: SettingsGroup.assistant,
       descriptionFa: 'عدم ارسال داده‌های شناختی و پردازش‌ها به سرویس‌های ابری خارج از دستگاه',
+      whyExplanationFa: 'برای بیشترین میزان محرمانگی، تمام تحلیل‌های رفتارشناسی و حافظه دستیار در داخل حافظه محلی دستگاه شما باقی می‌مانند.',
       searchTerms: ['محلی', 'آفلاین', 'حریم خصوصی', 'local'],
     ),
     SettingDescriptor(

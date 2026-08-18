@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:ritmo/core/database/database_helper.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/services/secure_key_store.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 
 class AppLockService {
   AppLockService._privateConstructor();
@@ -9,77 +10,42 @@ class AppLockService {
 
   final LocalAuthentication _auth = LocalAuthentication();
 
-  Future<Map<String, String>> _loadSettings() async {
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final list = await db.query('app_settings');
-      return {for (final s in list) s['key']! as String: s['value']! as String};
-    } catch (e) {
-      debugPrint('Error loading app lock settings from db: $e');
-      return {};
-    }
-  }
-
-  Future<void> _saveSetting(String key, String value) async {
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await db.insert(
-        'app_settings',
-        {'key': key, 'value': value, 'updatedAt': now},
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    } catch (e) {
-      debugPrint('Error saving app lock setting ($key: $value): $e');
-    }
-  }
-
   // --- Getters ---
   Future<bool> isLockEnabled() async {
-    final settings = await _loadSettings();
-    return settings['app_lock_enabled'] == 'true';
+    return SettingsService.instance.get<bool>('app_lock_enabled');
   }
 
   Future<String?> getLockPassword() async {
-    final settings = await _loadSettings();
-    return settings['app_lock_password'];
+    return SecureKeyStore.getKey('app_lock_password');
   }
 
   Future<bool> useDeviceLock() async {
-    final settings = await _loadSettings();
-    return settings['app_use_device_lock'] == 'true';
+    return SettingsService.instance.get<bool>('app_use_device_lock');
   }
 
   Future<bool> isBiometricEnabled() async {
-    final settings = await _loadSettings();
-    return settings['app_biometric_enabled'] == 'true';
+    return SettingsService.instance.get<bool>('app_biometric_enabled');
   }
 
   Future<int> getLockTimeoutSeconds() async {
-    final settings = await _loadSettings();
-    return int.tryParse(settings['app_lock_timeout_seconds'] ?? '300') ?? 300;
+    return SettingsService.instance.get<int>('app_lock_timeout_seconds');
   }
 
   // --- Setters ---
   Future<void> setLockEnabled(bool enabled) async {
-    await _saveSetting('app_lock_enabled', enabled.toString());
+    await SettingsService.instance.set('app_lock_enabled', enabled);
   }
 
   Future<void> setLockPassword(String? password) async {
-    if (password == null) {
-      final db = await DatabaseHelper.instance.database;
-      await db.delete('app_settings', where: 'key = ?', whereArgs: ['app_lock_password']);
-    } else {
-      await _saveSetting('app_lock_password', password);
-    }
+    await SettingsService.instance.set('app_lock_password', password ?? '');
   }
 
   Future<void> setUseDeviceLock(bool useDeviceLock) async {
-    await _saveSetting('app_use_device_lock', useDeviceLock.toString());
+    await SettingsService.instance.set('app_use_device_lock', useDeviceLock);
   }
 
   Future<void> setBiometricEnabled(bool enabled) async {
-    await _saveSetting('app_biometric_enabled', enabled.toString());
+    await SettingsService.instance.set('app_biometric_enabled', enabled);
   }
 
   // --- Auth Capabilities ---
@@ -87,8 +53,8 @@ class AppLockService {
     if (kIsWeb) return false;
     try {
       return await _auth.isDeviceSupported();
-    } catch (e) {
-      debugPrint('Error checking if device is supported: $e');
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در بررسی پشتیبانی دستگاه از احراز هویت', e, st);
       return false;
     }
   }
@@ -98,8 +64,8 @@ class AppLockService {
     try {
       final canCheck = await _auth.canCheckBiometrics;
       return canCheck;
-    } catch (e) {
-      debugPrint('Error checking canCheckBiometrics: $e');
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در بررسی امکان سنجش بیومتریک', e, st);
       return false;
     }
   }
@@ -121,8 +87,8 @@ class AppLockService {
         biometricOnly: biometricOnly,
         persistAcrossBackgrounding: true,
       );
-    } catch (e) {
-      debugPrint('Error authenticating with device: $e');
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در احراز هویت با دستگاه', e, st);
       return false;
     }
   }

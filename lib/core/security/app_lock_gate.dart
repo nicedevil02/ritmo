@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/security/app_lock_service.dart';
 import 'package:ritmo/core/security/pin_hasher.dart';
+import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 class AppLockGate extends StatefulWidget {
@@ -65,8 +67,8 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
       if (_lockEnabled && (hasPassword || _useDeviceLock)) {
         _pausedAt = DateTime.now();
       }
-    } catch (e) {
-      debugPrint('Error handling app lock pause: $e');
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در مدیریت توقف برنامه (قفل)', e, st);
     }
   }
 
@@ -81,14 +83,16 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
       final hasPassword = _lockPassword != null && _lockPassword!.isNotEmpty;
 
       if (_lockEnabled && (hasPassword || _useDeviceLock) && _pausedAt != null) {
-        final elapsedSecs = DateTime.now().difference(_pausedAt!).inSeconds;
-        if (elapsedSecs >= _lockTimeoutSecs) {
-          if (mounted) {
-            setState(() {
-              _isLocked = true;
-              _enteredPin = '';
-              _pinErrorMessage = '';
-            });
+        if (_lockTimeoutSecs != AppLockTimeout.never) {
+          final elapsedSecs = DateTime.now().difference(_pausedAt!).inSeconds;
+          if (_lockTimeoutSecs == AppLockTimeout.immediate || elapsedSecs >= _lockTimeoutSecs) {
+            if (mounted) {
+              setState(() {
+                _isLocked = true;
+                _enteredPin = '';
+                _pinErrorMessage = '';
+              });
+            }
           }
         }
       }
@@ -97,8 +101,8 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
       if (_isLocked && _lockEnabled && (_biometricEnabled || _useDeviceLock)) {
         unawaited(_authenticateDeviceLock());
       }
-    } catch (e) {
-      debugPrint('Error handling app lock resume: $e');
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در مدیریت ازسرگیری برنامه (قفل)', e, st);
     }
   }
 
@@ -127,8 +131,8 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
           }
         });
       }
-    } catch (e) {
-      debugPrint('Error loading app lock gate settings: $e');
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در بارگذاری تنظیمات گیت قفل برنامه', e, st);
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -170,8 +174,8 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
           });
         }
       }
-    } catch (e) {
-      debugPrint('App lock auth error: $e');
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در احراز هویت بیومتریک گیت ورود', e, st);
     } finally {
       if (mounted) {
         setState(() {

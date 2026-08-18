@@ -43,7 +43,7 @@ void main() {
       );
 
       expect(manager.lockedSource, BridgeSource.fetch);
-      expect(manager.accumulator.text, 'سلام! ');
+      expect(manager.accumulator.text, 'سلام!');
 
       // 2. Competing DOM event arrives with fullText
       manager.handleJsMessageForTest(
@@ -54,12 +54,12 @@ void main() {
 
       // DOM event must be dropped because source is locked to fetch
       expect(manager.lockedSource, BridgeSource.fetch);
-      expect(manager.accumulator.text, 'سلام! ');
+      expect(manager.accumulator.text, 'سلام!');
 
       // 3. Second event from locked fetch source is processed normally
       manager.handleJsMessageForTest(
         const JavaScriptMessage(
-          message: '{"type":"chunk","delta":"من ریتمو هستم.","fullText":"سلام! من ریتمو هستم.","source":"fetch","requestId":"req_arb_100"}',
+          message: '{"type":"chunk","delta":" من ریتمو هستم.","fullText":"سلام! من ریتمو هستم.","source":"fetch","requestId":"req_arb_100"}',
         ),
       );
 

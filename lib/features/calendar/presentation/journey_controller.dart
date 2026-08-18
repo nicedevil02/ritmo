@@ -132,14 +132,27 @@ class JourneyController extends ChangeNotifier {
   void setScale(JourneyScale scale) {
     if (_isDisposed || _activeScale == scale) return;
     _activeScale = scale;
+    // دادهٔ مقیاس قبلی برای مقیاس جدید معنا ندارد؛ نگه‌داشتنش نمای غلط می‌سازد.
+    _rangeSnapshots = const {};
+    _snapshot = null;
+    _windowStart = null;
+    _windowEnd = null;
+    _isLoading = true;
+    notifyListeners();
     loadForActiveScale();
   }
 
   void selectDate(DateTime date, {JourneyScale? scaleToSet}) {
     if (_isDisposed) return;
     _selectedDate = DateKey.dayOf(date);
-    if (scaleToSet != null) {
+    if (scaleToSet != null && scaleToSet != _activeScale) {
       _activeScale = scaleToSet;
+      _rangeSnapshots = const {};
+      _snapshot = null;
+      _windowStart = null;
+      _windowEnd = null;
+      _isLoading = true;
+      notifyListeners();
     }
     loadForActiveScale();
   }

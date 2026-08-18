@@ -20,8 +20,8 @@
 | CAL-16 | postponeItem برای همه دامنه‌ها | B | DONE | a0e9baf | تعویق تسک‌ها بر مبنای max(today, dueDate) و تعویق آیتم‌های تکراری با override دوطرفه و پشتیبانی undo |
 | CAL-17 | توکن نسل بارگذاری برای جلوگیری از نوشتن بی‌ترتیب | C | DONE | 0d24e3b | افزودن _loadGeneration و محافظت در برابر race condition بارگذاری‌های ناهمگام |
 | CAL-18 | حذف شاخهٔ مردهٔ agenda و یک تعریف واحد برای پنجرهٔ اجندا | C | DONE | fe7c06d | حذف شاخهٔ مردهٔ agenda از محاسبهٔ بازه، پرتاب StateError، و تعریف ثابت‌های پنجرهٔ اجندا |
-| CAL-19 | پنجرهٔ بارگذاری صریح و عبور isBackgroundRefresh | C | DONE | pending | ذخیرهٔ windowStart/End و عبور کامل پرچم isBackgroundRefresh برای جلوگیری از پرش لودینگ |
-| CAL-20 | تعویض مقیاس: دادهٔ مقیاس قبلی پاک شود | C | TODO | - | - |
+| CAL-19 | پنجرهٔ بارگذاری صریح و عبور isBackgroundRefresh | C | DONE | 8f6c3ad | ذخیرهٔ windowStart/End و عبور کامل پرچم isBackgroundRefresh برای جلوگیری از پرش لودینگ |
+| CAL-20 | تعویض مقیاس: دادهٔ مقیاس قبلی پاک شود | C | DONE | pending | ریست فوری اسنپ‌شات‌ها و فعال‌سازی isLoading در setScale و selectDate با مقیاس جدید |
 | CAL-21 | یک fallback واحد برای snapshot تهی | C | TODO | - | - |
 | CAL-22 | loadDefaultScale: خواندن تنظیمات از SettingsService | C | TODO | - | - |
 | CAL-23 | setScale: ذخیره مقیاس در تنظیمات | C | TODO | - | - |

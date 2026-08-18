@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/security/pin_hasher.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
@@ -24,6 +26,7 @@ class SecurityGroupScreen extends StatefulWidget {
 class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
   bool _appLockEnabled = false;
   bool _biometricEnabled = false;
+  bool _canUseBiometrics = false;
   int _timeoutSeconds = 300;
   bool _hasAppPassword = false;
 
@@ -47,6 +50,16 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
     _cycleBiometricEnabled = SettingsService.instance.get<bool>('cycle_biometric_enabled');
     final cyclePass = await SecureKeyStore.getKey('cycle_lock_password');
     _hasCyclePassword = cyclePass != null && cyclePass.isNotEmpty;
+
+    try {
+      final auth = LocalAuthentication();
+      final canCheck = await auth.canCheckBiometrics;
+      final isSupported = await auth.isDeviceSupported();
+      _canUseBiometrics = canCheck && isSupported;
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در بررسی پشتیبانی بیومتریک', e, st);
+      _canUseBiometrics = false;
+    }
 
     if (mounted) setState(() {});
   }
@@ -160,10 +173,68 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
     await _update('app_lock_enabled', val);
   }
 
+  Future<void> _onAppBiometricToggled(bool val) async {
+    if (!_canUseBiometrics) {
+      RitmoToast.show(context, 'این دستگاه از حسگر اثر انگشت یا چهره پشتیبانی نمی‌کند یا حسگری ثبت نشده است.');
+      return;
+    }
+    if (val) {
+      if (!_hasAppPassword) {
+        final pinSet = await _setPin('app_lock_password', 'تعریف رمز قفل برنامه');
+        if (!pinSet) return;
+      }
+      try {
+        final auth = LocalAuthentication();
+        final authenticated = await auth.authenticate(
+          localizedReason: 'لطفاً برای فعال‌سازی قفل بیومتریک، هویت خود را تایید کنید',
+          options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
+        );
+        if (!authenticated) {
+          if (mounted) {
+            RitmoToast.show(context, 'احراز هویت بیومتریک ناموفق بود.');
+          }
+          return;
+        }
+      } catch (e, st) {
+        RitmoLog.error('Settings', 'خطا در احراز هویت بیومتریک', e, st);
+        if (mounted) {
+          RitmoToast.show(context, 'خطا در دسترسی به حسگر بیومتریک.');
+        }
+        return;
+      }
+    }
+    await _update('app_biometric_enabled', val);
+  }
+
   Future<void> _onCycleBiometricToggled(bool val) async {
-    if (val && !_hasCyclePassword) {
-      final pinSet = await _setPin('cycle_lock_password', 'تعریف رمز بخش چرخهٔ زیستی');
-      if (!pinSet) return;
+    if (!_canUseBiometrics) {
+      RitmoToast.show(context, 'این دستگاه از حسگر اثر انگشت یا چهره پشتیبانی نمی‌کند یا حسگری ثبت نشده است.');
+      return;
+    }
+    if (val) {
+      if (!_hasCyclePassword) {
+        final pinSet = await _setPin('cycle_lock_password', 'تعریف رمز بخش چرخهٔ زیستی');
+        if (!pinSet) return;
+      }
+      try {
+        final auth = LocalAuthentication();
+        final authenticated = await auth.authenticate(
+          localizedReason: 'لطفاً برای فعال‌سازی قفل بیومتریک چرخه، هویت خود را تایید کنید',
+          options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
+        );
+        if (!authenticated) {
+          if (mounted) {
+            RitmoToast.show(context, 'احراز هویت بیومتریک ناموفق بود.');
+          }
+          return;
+        }
+      } catch (e, st) {
+        RitmoLog.error('Settings', 'خطا در احراز هویت بیومتریک چرخه', e, st);
+        if (mounted) {
+          RitmoToast.show(context, 'خطا در دسترسی به حسگر بیومتریک.');
+        }
+        return;
+      }
     }
     await _update('cycle_biometric_enabled', val);
   }
@@ -258,11 +329,23 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('ورود با اثر انگشت / تشخیص چهره', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('ورود با اثر انگشت / تشخیص چهره', style: TextStyle(fontSize: 14, color: _canUseBiometrics ? colors.textPrimary : colors.textSecondary)),
+                            if (!_canUseBiometrics) ...[
+                              const SizedBox(height: 4),
+                              Text('این دستگاه از حسگر اثر انگشت یا چهره پشتیبانی نمی‌کند یا حسگری ثبت نشده است', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       CupertinoSwitch(
-                        value: _biometricEnabled,
+                        value: _canUseBiometrics && _biometricEnabled,
                         activeTrackColor: colors.primary,
-                        onChanged: (val) => _update('app_biometric_enabled', val),
+                        onChanged: _canUseBiometrics ? _onAppBiometricToggled : null,
                       ),
                     ],
                   ),
@@ -316,11 +399,23 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('بیومتریک اختصاصی بخش چرخه', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('بیومتریک اختصاصی بخش چرخه', style: TextStyle(fontSize: 14, color: _canUseBiometrics ? colors.textPrimary : colors.textSecondary)),
+                              if (!_canUseBiometrics) ...[
+                                const SizedBox(height: 4),
+                                Text('این دستگاه از حسگر اثر انگشت یا چهره پشتیبانی نمی‌کند یا حسگری ثبت نشده است', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         CupertinoSwitch(
-                          value: _cycleBiometricEnabled,
+                          value: _canUseBiometrics && _cycleBiometricEnabled,
                           activeTrackColor: colors.primary,
-                          onChanged: _onCycleBiometricToggled,
+                          onChanged: _canUseBiometrics ? _onCycleBiometricToggled : null,
                         ),
                       ],
                     ),

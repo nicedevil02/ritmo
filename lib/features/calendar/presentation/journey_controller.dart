@@ -30,6 +30,7 @@ import 'package:shamsi_date/shamsi_date.dart';
 enum JourneyScale { agenda, day, week, month, year }
 
 class JourneyController extends ChangeNotifier {
+  static const int agendaFastWindowDays = 3;
   static const int agendaWindowDaysBack = 14;
   static const int agendaWindowDaysForward = 45;
   static const int agendaExpandedDaysBack = 365;
@@ -602,14 +603,13 @@ class JourneyController extends ChangeNotifier {
   /// Performance target: < 250ms for the initial load.
   /// Uses a single agendaForRange call — NOT one query per day.
   /// Must start with if (_isDisposed) return; — guaranteed by spec (067.md §K21).
-  Future<void> loadAgendaRange({
-    DateTime? anchorDate,
-    int daysBack = agendaWindowDaysBack,
-    int daysForward = agendaWindowDaysForward,
-    bool isBackgroundRefresh = false,
+  Future<void> _loadWindow(
+    int gen, {
+    required DateTime start,
+    required DateTime end,
+    required bool isBackgroundRefresh,
   }) async {
-    if (_isDisposed) return;
-    final gen = ++_loadGeneration;
+    if (_isDisposed || gen != _loadGeneration) return;
 
     if (!isBackgroundRefresh && _snapshot == null) {
       _isLoading = true;
@@ -619,11 +619,6 @@ class JourneyController extends ChangeNotifier {
 
     try {
       final sw = Stopwatch()..start();
-      final anchor = DateKey.dayOf(anchorDate ?? _selectedDate);
-      final start = DateKey.addDays(anchor, -daysBack);
-      final end = DateKey.addDays(anchor, daysForward);
-
-      // Single range call — never N-per-day calls
       final daysMap = await _agendaService.agendaForRange(start, end);
       if (_isDisposed || gen != _loadGeneration) return;
 
@@ -631,27 +626,63 @@ class JourneyController extends ChangeNotifier {
       for (final entry in daysMap.entries) {
         newSnapshots[entry.key] = _snapshotBuilder.buildSnapshot(entry.value);
       }
-      _rangeSnapshots = newSnapshots;
+      _rangeSnapshots = Map<String, DayAgendaSnapshot>.from(_rangeSnapshots)..addAll(newSnapshots);
       _snapshot = _snapshotForSelectedDate();
-      _windowStart = start;
-      _windowEnd = end;
-
-      // Query older overdue tasks outside the loaded window
-      _olderOverdueCount = await _agendaService.countOverdueBefore(start);
-      if (_isDisposed || gen != _loadGeneration) return;
+      _windowStart = _windowStart == null ? start : (start.isBefore(_windowStart!) ? start : _windowStart);
+      _windowEnd = _windowEnd == null ? end : (end.isAfter(_windowEnd!) ? end : _windowEnd);
 
       sw.stop();
-      RitmoLog.debug('JourneyController', 'loadAgendaRange: ${sw.elapsedMilliseconds}ms');
-      _errorMessage = null; // clear stale error on successful load
+      RitmoLog.debug('JourneyController', '_loadWindow (${DateKey.of(start)}..${DateKey.of(end)}): ${sw.elapsedMilliseconds}ms');
+      _errorMessage = null;
     } catch (e, st) {
       if (_isDisposed || gen != _loadGeneration) return;
       _errorMessage = CalendarMessagesFa.load;
-      RitmoLog.error('JourneyController', 'loadAgendaRange failed', e, st);
+      RitmoLog.error('JourneyController', '_loadWindow failed', e, st);
     } finally {
       if (!_isDisposed && gen == _loadGeneration) {
         _isLoading = false;
         notifyListeners();
       }
+    }
+  }
+
+  /// K21 / CAL-39 — Loads a date range for the Agenda scale in 2 stages:
+  /// Stage 1: Fast immediate window (-3..+3 days) for instant interactive render.
+  /// Stage 2: Background full window without spinner.
+  Future<void> loadAgendaRange({
+    DateTime? anchorDate,
+    int daysBack = agendaWindowDaysBack,
+    int daysForward = agendaWindowDaysForward,
+    bool isBackgroundRefresh = false,
+  }) async {
+    if (_isDisposed) return;
+    final gen = ++_loadGeneration;
+
+    final anchor = DateKey.dayOf(anchorDate ?? _selectedDate);
+
+    // مرحلهٔ ۱: پنجرهٔ کوچک، سریع، برای رندر فوری
+    await _loadWindow(
+      gen,
+      start: DateKey.addDays(anchor, -agendaFastWindowDays),
+      end: DateKey.addDays(anchor, agendaFastWindowDays),
+      isBackgroundRefresh: isBackgroundRefresh,
+    );
+    if (_isDisposed || gen != _loadGeneration) return;
+
+    // مرحلهٔ ۲: بقیهٔ پنجره در پس‌زمینه، بدون اسپینر
+    await _loadWindow(
+      gen,
+      start: DateKey.addDays(anchor, -daysBack),
+      end: DateKey.addDays(anchor, daysForward),
+      isBackgroundRefresh: true,
+    );
+    if (_isDisposed || gen != _loadGeneration) return;
+
+    // بارگذاری تعداد معوقه‌های قدیمی‌تر خارج از کل پنجره بارگذاری‌شده
+    final fullStart = DateKey.addDays(anchor, -daysBack);
+    _olderOverdueCount = await _agendaService.countOverdueBefore(fullStart);
+    if (!_isDisposed && gen == _loadGeneration) {
+      notifyListeners();
     }
   }
 

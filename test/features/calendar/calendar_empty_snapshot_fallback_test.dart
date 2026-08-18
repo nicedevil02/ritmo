@@ -16,6 +16,9 @@ class EmptyDayAgendaService implements DayAgendaService {
   }
 
   @override
+  Future<int> countOverdueBefore(DateTime cutoff) async => 0;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

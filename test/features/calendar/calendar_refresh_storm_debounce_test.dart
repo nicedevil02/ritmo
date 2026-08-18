@@ -18,6 +18,9 @@ class CallCountingDayAgendaService implements DayAgendaService {
   }
 
   @override
+  Future<int> countOverdueBefore(DateTime cutoff) async => 0;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -33,9 +36,9 @@ void main() {
         eventBus: bus,
       );
 
-      // Initial load
+      // Initial load (2 calls: stage 1 + stage 2)
       await controller.loadAgendaRange(anchorDate: DateTime(2026, 8, 18));
-      expect(service.agendaForRangeCallCount, equals(1));
+      expect(service.agendaForRangeCallCount, equals(2));
 
       // Emit 10 rapid events on the bus
       for (int i = 0; i < 10; i++) {
@@ -48,14 +51,14 @@ void main() {
 
       // Wait 100ms (less than 250ms debounce)
       await Future<void>.delayed(const Duration(milliseconds: 100));
-      expect(service.agendaForRangeCallCount, equals(1),
+      expect(service.agendaForRangeCallCount, equals(2),
           reason: 'Before debounce timer elapses, no extra reloads should execute');
 
       // Wait until debounce (250ms) completes
       await Future<void>.delayed(const Duration(milliseconds: 200));
 
-      expect(service.agendaForRangeCallCount, equals(2),
-          reason: '10 rapid events must coalesce into exactly 1 refresh call');
+      expect(service.agendaForRangeCallCount, equals(4),
+          reason: '10 rapid events must coalesce into exactly 1 refresh call (2 stages)');
 
       controller.dispose();
     });
@@ -70,7 +73,7 @@ void main() {
 
       // Initial load for 2026-08-18 (window: ~2026-08-04 to 2026-10-02)
       await controller.loadAgendaRange(anchorDate: DateTime(2026, 8, 18));
-      expect(service.agendaForRangeCallCount, equals(1));
+      expect(service.agendaForRangeCallCount, equals(2));
 
       // Fire an event 1 year in the future (outside loaded window)
       bus.fire(RitmoEvent(
@@ -82,7 +85,7 @@ void main() {
       // Wait for debounce window
       await Future<void>.delayed(const Duration(milliseconds: 300));
 
-      expect(service.agendaForRangeCallCount, equals(1),
+      expect(service.agendaForRangeCallCount, equals(2),
           reason: 'Event outside window bounds must be discarded to prevent pointless reload');
 
       controller.dispose();

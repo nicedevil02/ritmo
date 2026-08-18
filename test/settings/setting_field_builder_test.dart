@@ -63,7 +63,7 @@ void main() {
 
     testWidgets('Renders Boolean SettingField correctly', (tester) async {
       await tester.pumpWidget(
-        createTestWidget(const SettingField('module_today_routines')),
+        createTestWidget(SettingField('module_today_routines')),
       );
       await tester.pumpAndSettle();
 
@@ -74,7 +74,7 @@ void main() {
 
     testWidgets('Renders Enumeration SettingField correctly', (tester) async {
       await tester.pumpWidget(
-        createTestWidget(const SettingField('theme_mode')),
+        createTestWidget(SettingField('theme_mode')),
       );
       await tester.pumpAndSettle();
 
@@ -84,7 +84,7 @@ void main() {
 
     testWidgets('Renders Integer SettingField correctly', (tester) async {
       await tester.pumpWidget(
-        createTestWidget(const SettingField('snooze_minutes')),
+        createTestWidget(SettingField('snooze_minutes')),
       );
       await tester.pumpAndSettle();
 
@@ -96,7 +96,7 @@ void main() {
 
     testWidgets('Renders Text SettingField correctly', (tester) async {
       await tester.pumpWidget(
-        createTestWidget(const SettingField('user_name')),
+        createTestWidget(SettingField('user_name')),
       );
       await tester.pumpAndSettle();
 
@@ -106,12 +106,22 @@ void main() {
 
     testWidgets('Renders Time SettingField correctly', (tester) async {
       await tester.pumpWidget(
-        createTestWidget(const SettingField('notif_quiet_start')),
+        createTestWidget(SettingField('notif_quiet_start')),
       );
       await tester.pumpAndSettle();
 
       expect(find.byType(SettingsTile), findsOneWidget);
       expect(find.text('شروع ساعات سکوت'), findsOneWidget);
+    });
+
+    testWidgets('Handles nonexistent key gracefully without crash', (tester) async {
+      await tester.pumpWidget(
+        createTestWidget(SettingField('non_existent_key_123')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SettingsTile), findsNothing);
+      expect(find.byType(SizedBox), findsWidgets);
     });
   });
 }

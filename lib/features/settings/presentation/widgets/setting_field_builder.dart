@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -10,14 +11,27 @@ import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart'
 
 /// ویجت اعلامی جامع برای رندر هر نوع تنظیم از روی توصیفگر رجیستری
 class SettingField extends StatelessWidget {
-  const SettingField(
+  SettingField(
     this.settingKey, {
     super.key,
     this.highlighted = false,
     this.customSubtitle,
-  });
+    SettingDescriptor? descriptor,
+  }) : descriptor = descriptor ?? SettingsRegistry.find(settingKey) {
+    if (this.descriptor == null) {
+      RitmoLog.error('Settings', 'SettingDescriptor for key "$settingKey" not found in SettingsRegistry');
+    }
+  }
+
+  SettingField.withDescriptor(
+    this.descriptor, {
+    super.key,
+    this.highlighted = false,
+    this.customSubtitle,
+  }) : settingKey = descriptor?.key ?? '';
 
   final String settingKey;
+  final SettingDescriptor? descriptor;
   final bool highlighted;
   final String? customSubtitle;
 
@@ -46,7 +60,7 @@ class SettingField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final desc = SettingsRegistry.find(settingKey);
+    final desc = descriptor;
     if (desc == null || desc.visibility == SettingVisibility.internal) {
       return const SizedBox.shrink();
     }

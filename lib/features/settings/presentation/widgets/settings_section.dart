@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/settings/presentation/widgets/setting_field_builder.dart';
 
 class SettingsSection extends StatelessWidget {
   const SettingsSection({
@@ -8,6 +9,20 @@ class SettingsSection extends StatelessWidget {
     required this.children,
     this.footer,
   });
+
+  factory SettingsSection.fromKeys({
+    Key? key,
+    required String title,
+    required List<String> keys,
+    String? footer,
+  }) {
+    return SettingsSection(
+      key: key,
+      title: title,
+      footer: footer,
+      children: keys.map((k) => SettingField(k)).toList(growable: false),
+    );
+  }
 
   final String title;
   final List<Widget> children;

@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 class OccurrenceOverride {
@@ -81,12 +82,26 @@ class OccurrenceOverride {
 }
 
 abstract class OccurrenceOverrideRepository {
+  Future<OccurrenceOverride?> readOne(
+    String sourceType,
+    String sourceId,
+    String dateStr,
+  );
   Future<Map<String, OccurrenceOverride>> forDate(String dateStr);
   Future<Map<String, List<OccurrenceOverride>>> forRange(
     String startDateStr,
     String endDateStr,
   );
   Future<void> upsert(OccurrenceOverride override);
+  Future<void> clearFields(
+    String sourceType,
+    String sourceId,
+    String dateStr, {
+    bool timeOfDay = false,
+    bool durationMinutes = false,
+    bool status = false,
+    bool note = false,
+  });
   Future<void> remove(String sourceType, String sourceId, String dateStr);
   Future<void> removeAllFuture(
     String sourceType,
@@ -123,6 +138,32 @@ class SqliteOccurrenceOverrideRepository
       CREATE INDEX IF NOT EXISTS idx_occ_override_date
         ON occurrence_overrides (dateStr);
     ''');
+  }
+
+  @override
+  Future<OccurrenceOverride?> readOne(
+    String sourceType,
+    String sourceId,
+    String dateStr,
+  ) async {
+    final db = await DatabaseHelper.instance.database;
+    try {
+      final rows = await db.query(
+        'occurrence_overrides',
+        where: 'sourceType = ? AND sourceId = ? AND dateStr = ?',
+        whereArgs: [sourceType, sourceId, dateStr],
+        limit: 1,
+      );
+      if (rows.isEmpty) return null;
+      return OccurrenceOverride.fromMap(rows.first);
+    } catch (e, st) {
+      if (e is DatabaseException && e.toString().contains('no such table')) {
+        await ensureTable(db);
+        return null;
+      }
+      RitmoLog.error('OccurrenceOverrideRepo', 'readOne failed', e, st);
+      rethrow;
+    }
   }
 
   @override
@@ -193,21 +234,99 @@ class SqliteOccurrenceOverrideRepository
   @override
   Future<void> upsert(OccurrenceOverride override) async {
     final db = await DatabaseHelper.instance.database;
-    try {
-      await db.insert(
+    Future<void> run() => db.transaction((txn) async {
+      final existing = await txn.query(
         'occurrence_overrides',
-        override.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        where: 'sourceType = ? AND sourceId = ? AND dateStr = ?',
+        whereArgs: [override.sourceType, override.sourceId, override.dateStr],
+        limit: 1,
       );
-    } catch (e) {
+      if (existing.isEmpty) {
+        await txn.insert('occurrence_overrides', override.toMap());
+        return;
+      }
+      final old = OccurrenceOverride.fromMap(existing.first);
+      // ادغام: فیلد null در ورودی یعنی «دست نزن»، نه «پاک کن».
+      final merged = old.copyWith(
+        timeOfDay: override.timeOfDay,
+        durationMinutes: override.durationMinutes,
+        status: override.status,
+        note: override.note,
+        updatedAt: override.updatedAt,
+        // createdAt عمداً پاس نمی‌شود: copyWith مقدار قدیمی را نگه می‌دارد.
+      );
+      await txn.update(
+        'occurrence_overrides',
+        merged.toMap(),
+        where: 'sourceType = ? AND sourceId = ? AND dateStr = ?',
+        whereArgs: [override.sourceType, override.sourceId, override.dateStr],
+      );
+    });
+    try {
+      await run();
+    } catch (e, st) {
       if (e is DatabaseException && e.toString().contains('no such table')) {
         await ensureTable(db);
-        await db.insert(
+        await run();
+      } else {
+        RitmoLog.error('OccurrenceOverrideRepo', 'upsert failed', e, st);
+        rethrow;
+      }
+    }
+  }
+
+  @override
+  Future<void> clearFields(
+    String sourceType,
+    String sourceId,
+    String dateStr, {
+    bool timeOfDay = false,
+    bool durationMinutes = false,
+    bool status = false,
+    bool note = false,
+  }) async {
+    final db = await DatabaseHelper.instance.database;
+    Future<void> run() => db.transaction((txn) async {
+      final existing = await txn.query(
+        'occurrence_overrides',
+        where: 'sourceType = ? AND sourceId = ? AND dateStr = ?',
+        whereArgs: [sourceType, sourceId, dateStr],
+        limit: 1,
+      );
+      if (existing.isEmpty) return;
+      final map = Map<String, dynamic>.from(existing.first);
+      if (timeOfDay) map['timeOfDay'] = null;
+      if (durationMinutes) map['durationMinutes'] = null;
+      if (status) map['status'] = null;
+      if (note) map['note'] = null;
+      map['updatedAt'] = DateTime.now().toIso8601String();
+
+      if (map['timeOfDay'] == null &&
+          map['durationMinutes'] == null &&
+          map['status'] == null &&
+          map['note'] == null) {
+        await txn.delete(
           'occurrence_overrides',
-          override.toMap(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
+          where: 'sourceType = ? AND sourceId = ? AND dateStr = ?',
+          whereArgs: [sourceType, sourceId, dateStr],
         );
       } else {
+        await txn.update(
+          'occurrence_overrides',
+          map,
+          where: 'sourceType = ? AND sourceId = ? AND dateStr = ?',
+          whereArgs: [sourceType, sourceId, dateStr],
+        );
+      }
+    });
+    try {
+      await run();
+    } catch (e, st) {
+      if (e is DatabaseException && e.toString().contains('no such table')) {
+        await ensureTable(db);
+        await run();
+      } else {
+        RitmoLog.error('OccurrenceOverrideRepo', 'clearFields failed', e, st);
         rethrow;
       }
     }

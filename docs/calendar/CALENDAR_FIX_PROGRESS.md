@@ -9,8 +9,8 @@
 | CAL-05 | یک منبع برای ثابت‌های مدت و زمان پیش‌فرض | A | DONE | 75135f2 | یکپارچه‌سازی ثابت‌های مدت و زمان پیش‌فرض در CalendarDefaults |
 | CAL-06 | RitmoLog به‌جای debugPrint | A | DONE | 240eb0a | انتقال کامل لاگ‌های تقویم و اجندا به خط لوله RitmoLog |
 | CAL-07 | پیام‌های خطای فارسی و بدون افشای استثنا | A | DONE | 0d21123 | ایجاد CalendarMessagesFa و حذف افشای استثنا از رشته‌های خطا |
-| CAL-08 | نرمال‌سازی selectedDate به نیمه‌شب | A | DONE | pending | نرمال‌سازی کامل selectedDate به نیمه‌شب محلی در همه مقیاس‌ها و ناوبری‌ها |
-| CAL-09 | upsert ادغامی: توقف نابودی ستون‌های همسایه | B | TODO | - | - |
+| CAL-08 | نرمال‌سازی selectedDate به نیمه‌شب | A | DONE | 7459a86 | نرمال‌سازی کامل selectedDate به نیمه‌شب محلی در همه مقیاس‌ها و ناوبری‌ها |
+| CAL-09 | upsert ادغامی: توقف نابودی ستون‌های همسایه | B | DONE | pending | بازنویسی upsert به صورت تراکنشی و ادغامی بدون نابودی ستون‌ها |
 | CAL-10 | snapshot خواندن override برای بازگردانی درست | B | TODO | - | - |
 | CAL-11 | بازگردانی مبتنی بر snapshot در MoveItemCommand و ResizeItemCommand | B | TODO | - | - |
 | CAL-12 | allFutureDays: snapshot و transaction برای removeAllFuture | B | TODO | - | - |

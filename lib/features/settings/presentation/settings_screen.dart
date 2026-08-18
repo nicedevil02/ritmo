@@ -25,6 +25,7 @@ import 'package:ritmo/features/settings/presentation/groups/notifications_group_
 import 'package:ritmo/features/settings/presentation/groups/security_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/settings_search_delegate.dart';
 import 'package:ritmo/features/settings/presentation/widgets/identity_header.dart';
+import 'package:ritmo/features/settings/presentation/widgets/settings_degraded_banner.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_ready_gate.dart';
 
 /// صفحه اصلی تنظیمات اپلیکیشن با طراحی اختصاصی iOS 26 Inset Grouped
@@ -175,7 +176,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = context.isDark;
 
     final groups = [
       _GroupItem(
@@ -369,36 +369,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: EdgeInsets.zero,
-                  itemCount: groups.length,
-                  separatorBuilder: (context, index) => Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: colors.border.withValues(alpha: 0.6),
-                    indent: 64,
-                    endIndent: 16,
-                  ),
-                  itemBuilder: (context, index) {
-                    final g = groups[index];
-                    final count = SettingsRegistry.userVisibleByGroup(g.group).length;
-
-                    return _Ios26SettingsTile(
-                      title: g.title,
-                      subtitle: g.subtitle,
-                      icon: g.icon,
-                      gradient: g.gradient,
-                      count: count,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          Ios26PageRoute(builder: (_) => g.pageBuilder()),
-                        );
-                      },
-                    );
-                  },
+                child: Column(
+                  children: [
+                    for (int i = 0; i < groups.length; i++) ...[
+                      if (i > 0)
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: colors.border.withValues(alpha: 0.6),
+                          indent: 64,
+                          endIndent: 16,
+                        ),
+                      Builder(
+                        builder: (context) {
+                          final g = groups[i];
+                          final count = SettingsRegistry.userVisibleByGroup(g.group).length;
+                          return _Ios26SettingsTile(
+                            title: g.title,
+                            subtitle: g.subtitle,
+                            icon: g.icon,
+                            gradient: g.gradient,
+                            count: count,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                Ios26PageRoute(builder: (_) => g.pageBuilder()),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ],
                 ),
               ),
               if (kDebugMode) ...[

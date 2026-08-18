@@ -57,19 +57,20 @@ class SettingsSection extends StatelessWidget {
                 width: 1,
               ),
             ),
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.zero,
-              itemCount: children.length,
-              separatorBuilder: (context, index) => Divider(
-                height: 1,
-                thickness: 1,
-                color: colors.border.withValues(alpha: 0.6),
-                indent: 16,
-                endIndent: 16,
-              ),
-              itemBuilder: (context, index) => children[index],
+            child: Column(
+              children: [
+                for (int i = 0; i < children.length; i++) ...[
+                  if (i > 0)
+                    Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: colors.border.withValues(alpha: 0.6),
+                      indent: 16,
+                      endIndent: 16,
+                    ),
+                  children[i],
+                ],
+              ],
             ),
           ),
           if (footer != null) ...[

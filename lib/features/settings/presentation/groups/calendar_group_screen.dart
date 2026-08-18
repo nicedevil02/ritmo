@@ -31,7 +31,7 @@ class CalendarGroupScreen extends StatelessWidget {
               child: Column(
                 children: [
                   // ۱. نمای پیش‌فرض و نمایش تقویم
-                  const SettingsSection(
+                  SettingsSection(
                     title: 'نمای پیش‌فرض و تقویم',
                     children: [
                       SettingField('calendar_default_scale'),
@@ -44,10 +44,10 @@ class CalendarGroupScreen extends StatelessWidget {
                   SettingsSection(
                     title: 'چه چیزی در تقویم دیده شود',
                     children: [
-                      const SettingField('calendar_show_tasks'),
-                      const SettingField('calendar_show_events'),
-                      const SettingField('calendar_show_commitments'),
-                      const SettingField('calendar_show_appointments'),
+                      SettingField('calendar_show_tasks'),
+                      SettingField('calendar_show_events'),
+                      SettingField('calendar_show_commitments'),
+                      SettingField('calendar_show_appointments'),
                       if (!isSleepEnabled)
                         _buildDisabledModuleRow(
                           context,
@@ -55,7 +55,7 @@ class CalendarGroupScreen extends StatelessWidget {
                           'نیاز به روشن بودن ماژول خواب',
                         )
                       else
-                        const SettingField('calendar_show_sleep_band'),
+                        SettingField('calendar_show_sleep_band'),
                       if (!isCycleEnabled)
                         _buildDisabledModuleRow(
                           context,
@@ -69,7 +69,7 @@ class CalendarGroupScreen extends StatelessWidget {
                           'نیازمند فعال‌سازی رضایت صریح در بخش امنیت و حریم خصوصی',
                         )
                       else
-                        const SettingField('show_cycle_in_calendar'),
+                        SettingField('show_cycle_in_calendar'),
                     ],
                   ),
 
@@ -94,15 +94,15 @@ class CalendarGroupScreen extends StatelessWidget {
                           'نیاز به روشن بودن ماژول عبادت',
                         ),
                       ] else ...[
-                        const SettingField('calendar_show_worship_obligatory'),
-                        const SettingField('calendar_show_worship_mustahab'),
-                        const SettingField('calendar_show_worship_qada'),
+                        SettingField('calendar_show_worship_obligatory'),
+                        SettingField('calendar_show_worship_mustahab'),
+                        SettingField('calendar_show_worship_qada'),
                       ],
                     ],
                   ),
 
                   // ۴. رفتار اجندا و گزارش‌ها
-                  const SettingsSection(
+                  SettingsSection(
                     title: 'رفتار اجندا و گزارش‌ها',
                     children: [
                       SettingField('calendar_overdue_lookback_days'),

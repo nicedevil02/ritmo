@@ -24,7 +24,7 @@
 | SET-20 | مهاجرت طرحواره و پاک‌سازی ردیف‌های یتیم | B | DONE | `fix(settings): SET-20 — پاک‌سازی ردیف‌های یتیم جدول تنظیمات در آغاز به کار` | |
 | SET-21 | نوشتن دسته‌ای setMany | B | DONE | `feat(settings): SET-21 — ذخیره‌سازی دسته‌ای تنظیمات در یک تراکنش` | |
 | SET-22 | watch، reset، resetGroup و حذف کامل debugPrint | B | DONE | `feat(settings): SET-22 — افزودن watch، reset، resetGroup و پاک‌سازی لاگ‌ها` | |
-| SET-23 | کلیدهای دروغین SettingsFlags | C | TODO | | |
+| SET-23 | کلیدهای دروغین SettingsFlags | C | DONE | `fix(settings): SET-23 — انطباق کلیدهای SettingsFlags با رجیستری رسمی` | |
 | SET-24 | aiWritable باید در مسیر نوشتن اعمال شود | C | TODO | | |
 | SET-25 | PIN: حذف نوشتن دوگانه و ذخیرهٔ هش‌شده | C | TODO | | |
 | SET-26 | قفل برنامه بدون رمز نباید قابل روشن شدن باشد | C | TODO | | |

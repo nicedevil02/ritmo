@@ -26,11 +26,11 @@ class SettingsFlags {
     final genderDesc = SettingsRegistry.find('user_gender');
     final gender = genderDesc?.parseValue(m['user_gender']) as String? ?? 'UNSET';
     final female = gender.toUpperCase() == 'FEMALE';
-    final consent = parseBool('cycle_consent', false);
+    final consent = (m['cycle_consent_dashboard'] ?? m['cycle_consent'] ?? 'false') == 'true';
     final module = parseBool('module_cycle_enabled', true);
-    final proactive = parseBool('proactive_assistant_enabled', true);
-    final briefing = parseBool('briefing_enabled', true);
-    final energy = parseBool('energy_tuning_enabled', true);
+    final proactive = parseBool('assistant_proactive_enabled', true);
+    final briefing = parseBool('calendar_morning_brief_enabled', true);
+    final energy = parseBool('module_energy_enabled', true);
     return SettingsFlags(
       isFemale: female,
       cycleConsent: consent,
@@ -50,4 +50,15 @@ class SettingsFlags {
 
   /// Rule M-12: Female ONLY + explicit consent + enabled module
   bool get canShowCycle => isFemale && cycleConsent && cycleModuleEnabled;
+
+  Map<String, String> toSettingsMap() {
+    return {
+      'user_gender': isFemale ? 'FEMALE' : 'MALE',
+      'cycle_consent_dashboard': cycleConsent.toString(),
+      'module_cycle_enabled': cycleModuleEnabled.toString(),
+      'assistant_proactive_enabled': proactiveAssistantEnabled.toString(),
+      'calendar_morning_brief_enabled': briefingEnabled.toString(),
+      'module_energy_enabled': energyTuningEnabled.toString(),
+    };
+  }
 }

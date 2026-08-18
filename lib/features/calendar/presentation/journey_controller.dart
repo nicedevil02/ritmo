@@ -217,8 +217,7 @@ class JourneyController extends ChangeNotifier {
       }
 
       _rangeSnapshots = newSnapshots;
-      final selectedKey = DateKey.of(_selectedDate);
-      _snapshot = _rangeSnapshots[selectedKey];
+      _snapshot = _snapshotForSelectedDate();
       _windowStart = range.start;
       _windowEnd = range.end;
 
@@ -526,9 +525,7 @@ class JourneyController extends ChangeNotifier {
         newSnapshots[entry.key] = _snapshotBuilder.buildSnapshot(entry.value);
       }
       _rangeSnapshots = newSnapshots;
-      final selectedKey = DateKey.of(_selectedDate);
-      _snapshot = _rangeSnapshots[selectedKey] ??
-          _snapshotBuilder.buildSnapshot(DayAgenda(dateStr: selectedKey, items: const []));
+      _snapshot = _snapshotForSelectedDate();
       _windowStart = start;
       _windowEnd = end;
       sw.stop();
@@ -591,6 +588,12 @@ class JourneyController extends ChangeNotifier {
     _subscription?.cancel();
     _subscription = null;
     super.dispose();
+  }
+
+  DayAgendaSnapshot _snapshotForSelectedDate() {
+    final key = DateKey.of(_selectedDate);
+    return _rangeSnapshots[key] ??
+        _snapshotBuilder.buildSnapshot(DayAgenda(dateStr: key, items: const []));
   }
 
   @visibleForTesting

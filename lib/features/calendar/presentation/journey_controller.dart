@@ -564,43 +564,76 @@ class JourneyController extends ChangeNotifier {
     await loadForActiveScale(isBackgroundRefresh: true);
   }
 
+  /// Events that indicate a database mutation requiring calendar re-fetch.
+  /// Keep in sync with DayAgendaService._cacheInvalidatingEvents.
+  static const Set<String> _refreshTriggeringEvents = {
+    'RoutineCompleted',
+    'RoutineSkipped',
+    'RoutineUpdated',
+    'RoutineCreated',
+    'RoutineEdited',
+    'RoutineChanged',
+    'RoutineDeleted',
+    'DataImported',
+    'DayRolledOver',
+    'PrayerCompleted',
+    'WorshipUpdated',
+    'WorshipPracticeChanged',
+    'CourseSessionCompleted',
+    'CourseCreated',
+    'CourseUpdated',
+    'AgendaItemToggled',
+    'TaskToggled',
+    'TaskUpdated',
+    'TaskCreated',
+    'task_created',
+    'task_updated',
+    'GoalStepToggled',
+    'GoalUpdated',
+    'completion_recorded',
+    'ReshuffleApplied',
+    'commitmentChanged',
+    'planningCycleActivated',
+    'ReflectionChanged',
+  };
+
+  Timer? _refreshDebounce;
+  static const Duration _refreshDebounceDuration = Duration(milliseconds: 250);
+
+  void _requestRefresh() {
+    if (_isDisposed) return;
+    _refreshDebounce?.cancel();
+    _refreshDebounce = Timer(_refreshDebounceDuration, () {
+      if (_isDisposed) return;
+      refresh();
+    });
+  }
+
   void _onRoutineChangedNotification() {
     if (_isDisposed) return;
-    refresh();
+    _requestRefresh();
   }
 
   void _handleEvent(RitmoEvent event) {
     if (_isDisposed) return;
-    if (event.type == 'RoutineCompleted' ||
-        event.type == 'RoutineSkipped' ||
-        event.type == 'RoutineUpdated' ||
-        event.type == 'RoutineCreated' ||
-        event.type == 'RoutineEdited' ||
-        event.type == 'RoutineChanged' ||
-        event.type == 'RoutineDeleted' ||
-        event.type == 'DataImported' ||
-        event.type == 'DayRolledOver' ||
-        event.type == 'PrayerCompleted' ||
-        event.type == 'WorshipUpdated' ||
-        event.type == 'WorshipPracticeChanged' ||
-        event.type == 'CourseSessionCompleted' ||
-        event.type == 'CourseCreated' ||
-        event.type == 'CourseUpdated' ||
-        event.type == 'AgendaItemToggled' ||
-        event.type == 'TaskToggled' ||
-        event.type == 'TaskUpdated' ||
-        event.type == 'TaskCreated' ||
-        event.type == 'GoalStepToggled' ||
-        event.type == 'GoalUpdated' ||
-        event.type == 'completion_recorded' ||
-        event.type == 'ReshuffleApplied') {
-      refresh();
+    if (!_refreshTriggeringEvents.contains(event.type)) return;
+
+    final payload = event.payload;
+    final d = (payload['date'] ?? payload['dateStr']) as String?;
+    if (d != null && _windowStart != null && _windowEnd != null) {
+      final parsed = DateKey.parse(d);
+      if (parsed != null && (parsed.isBefore(_windowStart!) || parsed.isAfter(_windowEnd!))) {
+        return; // Out of currently loaded window; skip expensive reload
+      }
     }
+    _requestRefresh();
   }
 
   @override
   void dispose() {
     _isDisposed = true;
+    _refreshDebounce?.cancel();
+    _refreshDebounce = null;
     RitmoEvents.routineChangedNotifier.removeListener(_onRoutineChangedNotification);
     _subscription?.cancel();
     _subscription = null;

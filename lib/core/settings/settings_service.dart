@@ -63,6 +63,12 @@ class SettingsService {
 
       _initialized = true;
       revision.value++;
+
+      try {
+        await _migrateAndPruneOrphanKeys(db, dbMap);
+      } catch (e, st) {
+        RitmoLog.error('Settings', 'خطا در پاک‌سازی کلیدهای یتیم', e, st);
+      }
     } catch (e, st) {
       _initError = e;
       _initialized = false;
@@ -71,6 +77,16 @@ class SettingsService {
       for (final desc in SettingsRegistry.all) {
         _cache[desc.key] = desc.defaultValue;
       }
+    }
+  }
+
+  Future<void> _migrateAndPruneOrphanKeys(Database db, Map<String, String> dbMap) async {
+    final knownKeys = SettingsRegistry.all.map((d) => d.key).toSet();
+    final orphanKeys = dbMap.keys.where((k) => !knownKeys.contains(k)).toList();
+    if (orphanKeys.isNotEmpty) {
+      RitmoLog.info('Settings', 'پاک‌سازی ${orphanKeys.length} کلید یتیم از جدول تنظیمات: $orphanKeys');
+      final placeholders = List.filled(orphanKeys.length, '?').join(',');
+      await db.delete('app_settings', where: 'key IN ($placeholders)', whereArgs: orphanKeys);
     }
   }
 

@@ -57,8 +57,8 @@
 | CAL-53 | تست سطل‌بندی اجندا (agenda_bucketing_test.dart) | H | DONE | 958c641 | ایجاد تست‌های جامع سطل‌بندی ۳۰ روزه بدون تکرار و گم‌شدن، مرزهای هفته، پنج‌شنبه و جمعه، الگوهای تکرار و ارقام فارسی |
 | CAL-54 | تست موتور چیدمان زمان (timeline_layout_engine_test.dart) | H | DONE | f1c7463 | ایجاد تست‌های جامع موتور چیدمان زمان شامل خوشه‌های تراگذر، ظرفیت لاین‌ها و سرریز، برش مرز ظهر و قطعیت چیدمان |
 | CAL-55 | تست اسنپ زمان (timeline_snapping_test.dart) | H | DONE | baab9b4 | ایجاد تست‌های اسنپ دقایق، برش مرز نیمه‌شب، بازگرداندن null در زمان ناکافی و هندلینگ interval=0 |
-| CAL-56 | تست کنترلر تقویم (journey_controller_test.dart) | H | DONE | pending | ایجاد مستر تست‌های جامع JourneyController شامل نرمال‌سازی نیمه‌شب، مسابقه توکن نسل، رفتار دستورات بازگردانی و خطاناپذیری dispose |
-| CAL-57 | تست ریپازیتوری اورراید (occurrence_override_repository_test.dart) | H | TODO | - | - |
+| CAL-56 | تست کنترلر تقویم (journey_controller_test.dart) | H | DONE | 2b0b497 | ایجاد مستر تست‌های جامع JourneyController شامل نرمال‌سازی نیمه‌شب، مسابقه توکن نسل، رفتار دستورات بازگردانی و خطاناپذیری dispose |
+| CAL-57 | تست ریپازیتوری اورراید (occurrence_override_repository_test.dart) | H | DONE | pending | ایجاد تست‌های ادغام upsert، ثبات createdAt، اسنپ‌شات readAllFuture/restoreAll، تفکیک کلیدهای task/routine و ریکاوری خودکار جدول |
 | CAL-58 | تست مرزهای وابستگی و معماری (calendar_dependency_test.dart) | H | TODO | - | - |
 | CAL-59 | تست کلید تاریخ و تبدیل زمان (date_key_test / time_of_day_minutes_test) | H | TODO | - | - |
 | CAL-60 | تست طلایی RTL و رگرسیون سرتاسری | H | TODO | - | - |

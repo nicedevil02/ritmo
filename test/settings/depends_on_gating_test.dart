@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/settings/presentation/widgets/setting_field_builder.dart';
@@ -48,7 +49,25 @@ void main() {
       await db.close();
     });
 
-    testWidgets('Toggling notif_master_enabled immediately gates child notification settings', (tester) async {
+    test('Registry contains all required dependency declarations', () {
+      final quietStart = SettingsRegistry.find('notif_quiet_start');
+      expect(quietStart?.dependsOn?.key, 'notif_quiet_enabled');
+
+      final aiApiKey = SettingsRegistry.find('ai_api_key');
+      expect(aiApiKey?.dependsOn?.key, 'ai_mode');
+      expect(aiApiKey?.dependsOn?.expectedValue, 'personal_key');
+
+      final autoBackupFreq = SettingsRegistry.find('backup_frequency_days');
+      expect(autoBackupFreq?.dependsOn?.key, 'auto_backup_enabled');
+
+      final appBiometric = SettingsRegistry.find('app_biometric_enabled');
+      expect(appBiometric?.dependsOn?.key, 'app_lock_enabled');
+
+      final cycleConsent = SettingsRegistry.find('cycle_consent');
+      expect(cycleConsent?.dependsOn?.key, 'module_cycle_enabled');
+    });
+
+    testWidgets('Toggling notif_master_enabled gates child settings in UI', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: RitmoTheme.build(
@@ -67,16 +86,15 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
-      // Initially notif_master_enabled is true
       expect(SettingsService.instance.get<bool>('notif_master_enabled'), isTrue);
 
-      // Now turn off notif_master_enabled
+      // Now set notif_master_enabled to false
       await SettingsService.instance.setChecked('notif_master_enabled', false);
-      await tester.pumpAndSettle();
+      await tester.pump();
 
-      // notif_quiet_start now displays dependency requirement hint
+      // Hint should now appear on notif_quiet_start
       expect(find.textContaining('نیاز به روشن بودن'), findsWidgets);
     });
   });

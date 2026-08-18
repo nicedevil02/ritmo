@@ -753,6 +753,7 @@ class SettingsRegistry {
       defaultValue: '',
       labelFa: 'نام مدل هوش مصنوعی',
       group: SettingsGroup.assistant,
+      dependsOn: SettingCondition('ai_mode', 'personal_key'),
       descriptionFa: 'شناسه مدل مورد استفاده برای پاسخگویی',
       searchTerms: ['مدل', 'model', 'glm', 'llama'],
     ),

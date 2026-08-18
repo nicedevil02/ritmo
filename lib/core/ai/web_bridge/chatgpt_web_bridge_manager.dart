@@ -49,6 +49,20 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   StreamController<String>? _currentStreamController;
   Completer<bool>? _bootCompleter;
 
+  int _reqCounter = 0;
+  String? _currentRequestId;
+  String? get currentRequestId => _currentRequestId;
+
+  @visibleForTesting
+  void setTestRequestId(String? reqId) {
+    _currentRequestId = reqId;
+  }
+
+  String _generateRequestId() {
+    _reqCounter++;
+    return 'req_${DateTime.now().microsecondsSinceEpoch}_$_reqCounter';
+  }
+
   /// Text already forwarded downstream for the CURRENT generation.
   String _emittedText = '';
 
@@ -289,6 +303,9 @@ if (typeof window.__ritmo_resume === 'function') {
     return _status == ChatGptBridgeStatus.ready;
   }
 
+  @visibleForTesting
+  void handleJsMessageForTest(JavaScriptMessage message) => _handleJsMessage(message);
+
   void _handleJsMessage(JavaScriptMessage message) {
     try {
       final data = jsonDecode(message.message) as Map<String, dynamic>;
@@ -305,8 +322,24 @@ if (typeof window.__ritmo_resume === 'function') {
         return null;
       }
 
+      final reqId = readString('requestId');
+      final source = readString('source') ?? 'dom';
+
       if (type != 'chunk') {
-        RitmoLog.debug('ChatGptWebBridge', 'JS event received: type=$type');
+        RitmoLog.debug('ChatGptWebBridge', 'JS event received: type=$type, reqId=$reqId, source=$source');
+      }
+
+      // WEB-07: Drop stale events belonging to previous or mismatched requests
+      if (type != 'ready' &&
+          type != 'cloudflare_challenge' &&
+          type != 'cloudflare_resolved') {
+        if (reqId != null && reqId.isNotEmpty && reqId != _currentRequestId) {
+          RitmoLog.debug(
+            'ChatGptWebBridge',
+            'Dropping stale JS event: type=$type for reqId=$reqId (active: $_currentRequestId, source: $source)',
+          );
+          return;
+        }
       }
 
       switch (type) {
@@ -434,6 +467,7 @@ if (typeof window.__ritmo_resume === 'function') {
     _currentStreamController = null;
     _emittedText = '';
     _navigationReloadCount = 0;
+    _currentRequestId = null;
     controller?.close();
     _resetInactivityTimer();
   }
@@ -446,6 +480,7 @@ if (typeof window.__ritmo_resume === 'function') {
     _currentStreamController = null;
     _emittedText = '';
     _navigationReloadCount = 0;
+    _currentRequestId = null;
 
     _setStatus(ChatGptBridgeStatus.ready);
     if (controller != null && !controller.isClosed) {
@@ -463,6 +498,7 @@ if (typeof window.__ritmo_resume === 'function') {
     _currentStreamController = null;
     _emittedText = '';
     _navigationReloadCount = 0;
+    _currentRequestId = null;
     _setStatus(ChatGptBridgeStatus.ready);
     controller?.close();
     _resetInactivityTimer();
@@ -514,6 +550,9 @@ if (typeof window.__ritmo_resume === 'function') {
 
     _setStatus(ChatGptBridgeStatus.generating);
 
+    final reqId = _generateRequestId();
+    _currentRequestId = reqId;
+
     final streamController = StreamController<String>();
     _currentStreamController = streamController;
     _emittedText = '';
@@ -527,13 +566,16 @@ if (typeof window.__ritmo_resume === 'function') {
       recentHistory: recentHistory,
     );
 
-    final jsCall = ChatGptJsInjector.buildSendPromptScript(formattedPrompt);
+    final jsCall = ChatGptJsInjector.buildSendPromptScript(
+      formattedPrompt,
+      requestId: reqId,
+    );
     await _controller!.runJavaScript(jsCall);
 
     _generationTimer?.cancel();
     _generationTimer = Timer(generationTimeout, () {
       if (!identical(_currentStreamController, streamController)) return;
-      RitmoLog.debug('ChatGptWebBridge', 'Generation timed out after ${generationTimeout.inSeconds}s.');
+      RitmoLog.debug('ChatGptWebBridge', 'Generation timed out after ${generationTimeout.inSeconds}s (reqId: $reqId).');
       if (_emittedText.isEmpty) {
         _failGeneration('پاسخی از صفحهٔ ChatGPT دریافت نشد. لطفاً پنجرهٔ مرورگر را باز کنید و وضعیت ورود یا تایید امنیتی را بررسی کنید.');
       } else {
@@ -569,6 +611,7 @@ if (typeof window.__ritmo_resume === 'function') {
     _currentStreamController = null;
     _emittedText = '';
     _navigationReloadCount = 0;
+    _currentRequestId = null;
     controller?.close();
 
     _bootCompleter = null;

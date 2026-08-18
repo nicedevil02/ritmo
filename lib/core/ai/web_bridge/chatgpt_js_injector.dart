@@ -350,7 +350,7 @@ $_bridgeScriptBody''';
     }
   };
 
-  window.__ritmo_startStreamingWatcher = function(previousBaselineText) {
+  window.__ritmo_startStreamingWatcher = function(previousBaselineText, reqId) {
     lastLength = 0;
     lastText = '';
     lastChangeTimestamp = Date.now();
@@ -367,7 +367,7 @@ $_bridgeScriptBody''';
         if (totalDuration > 35000) {
           clearInterval(streamCheckTimer);
           streamCheckTimer = null;
-          notifyFlutter('error', { message: 'پاسخی از ChatGPT دریافت نشد.' });
+          notifyFlutter('error', { message: 'پاسخی از ChatGPT دریافت نشد.', requestId: reqId, source: 'dom' });
         }
         return;
       }
@@ -382,7 +382,7 @@ $_bridgeScriptBody''';
         lastText = currentText;
         lastLength = currentText.length;
         lastChangeTimestamp = Date.now();
-        notifyFlutter('chunk', { delta: delta, fullText: currentText });
+        notifyFlutter('chunk', { delta: delta, fullText: currentText, requestId: reqId, source: 'dom' });
       }
 
       var stopButton = document.querySelector(
@@ -397,29 +397,29 @@ $_bridgeScriptBody''';
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
-        notifyFlutter('done', { fullText: finalFullText });
-        console.log('[Ritmo] Stream completed with ' + finalFullText.length + ' characters');
+        notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
+        console.log('[Ritmo] Stream completed with ' + finalFullText.length + ' characters (reqId: ' + reqId + ')');
       } else if (lastLength > 0 && timeSinceLastChange > 3000) {
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
-        notifyFlutter('done', { fullText: finalFullText });
-        console.log('[Ritmo] Stream fallback completed after 3s idle');
+        notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
+        console.log('[Ritmo] Stream fallback completed after 3s idle (reqId: ' + reqId + ')');
       } else if (totalDuration > 70000) {
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
         if (finalFullText.length > 0) {
-          notifyFlutter('done', { fullText: finalFullText });
+          notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
         } else {
-          notifyFlutter('error', { message: 'زمان انتظار برای پاسخ به پایان رسید.' });
+          notifyFlutter('error', { message: 'زمان انتظار برای پاسخ به پایان رسید.', requestId: reqId, source: 'dom' });
         }
       }
     }, 100);
   };
 
   // --- 5. Prompt Sender Implementation ---
-  window.__ritmo_sendPrompt = function(promptText) {
+  window.__ritmo_sendPrompt = function(promptText, reqId) {
     try {
       function findTextarea() {
         return document.querySelector('#prompt-textarea') ||
@@ -444,18 +444,18 @@ $_bridgeScriptBody''';
           waitCount++;
           if (textarea) {
             clearInterval(pageWaitInterval);
-            injectAndTriggerSend(textarea, promptText);
+            injectAndTriggerSend(textarea, promptText, reqId);
           } else if (waitCount > 20) {
             clearInterval(pageWaitInterval);
-            notifyFlutter('error', { message: 'فیلد ورودی متن ChatGPT هنوز لود نشده است.' });
+            notifyFlutter('error', { message: 'فیلد ورودی متن ChatGPT هنوز لود نشده است.', requestId: reqId, source: 'dom' });
           }
         }, 500);
         return;
       }
 
-      injectAndTriggerSend(textarea, promptText);
+      injectAndTriggerSend(textarea, promptText, reqId);
 
-      function injectAndTriggerSend(editor, text) {
+      function injectAndTriggerSend(editor, text, currentReqId) {
         autoCloseSidebar();
         autoDismissCookiesAndModals();
 
@@ -501,7 +501,7 @@ $_bridgeScriptBody''';
             sendBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
             sendBtn.click();
             console.log('[Ritmo] Send button clicked successfully!');
-            window.__ritmo_startStreamingWatcher(previousBaselineText);
+            window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
           } else if (sendCheckAttempts >= 8) {
             clearInterval(sendInterval);
             editor.focus();
@@ -515,13 +515,13 @@ $_bridgeScriptBody''';
             });
             editor.dispatchEvent(enterDown);
             console.log('[Ritmo] Fallback Enter key dispatched');
-            window.__ritmo_startStreamingWatcher(previousBaselineText);
+            window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
           }
         }, 250);
       }
 
     } catch (e) {
-      notifyFlutter('error', { message: 'خطا در ارسال پرامپت: ' + e.toString() });
+      notifyFlutter('error', { message: 'خطا در ارسال پرامپت: ' + e.toString(), requestId: reqId, source: 'dom' });
     }
   };
 
@@ -545,19 +545,20 @@ $_bridgeScriptBody''';
 })();
 ''';
 
-  /// Generates the call to send a specific formatted prompt
-  static String buildSendPromptScript(String prompt) {
+  /// Generates the call to send a specific formatted prompt correlated with [requestId]
+  static String buildSendPromptScript(String prompt, {String requestId = ''}) {
     final encoded = jsonEncode(prompt);
+    final reqEncoded = jsonEncode(requestId);
     return '''
 (() => {
   if (typeof window.__ritmo_sendPrompt === 'function') {
-    window.__ritmo_sendPrompt($encoded);
+    window.__ritmo_sendPrompt($encoded, $reqEncoded);
   } else {
     console.warn("[Ritmo] __ritmo_sendPrompt missing, injecting setupBridgeScript...");
     ${ChatGptJsInjector.setupBridgeScript}
     setTimeout(function() {
       if (typeof window.__ritmo_sendPrompt === 'function') {
-        window.__ritmo_sendPrompt($encoded);
+        window.__ritmo_sendPrompt($encoded, $reqEncoded);
       }
     }, 500);
   }

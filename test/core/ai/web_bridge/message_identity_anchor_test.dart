@@ -31,7 +31,7 @@ void main() {
     test('setupBridgeScript preserves fallback to general elements if no unseen matches exist', () {
       final script = ChatGptJsInjector.setupBridgeScript;
 
-      expect(script.contains("queryAllSafe('[data-message-author-role=\"assistant\"]')"), isTrue);
+      expect(script.contains('queryAllSafe(RITMO_SELECTORS.assistantMessage)'), isTrue);
     });
   });
 }

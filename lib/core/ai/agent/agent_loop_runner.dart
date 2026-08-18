@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/ai/agent/agent_budget.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
@@ -20,6 +19,7 @@ import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/ai_prompt_engine.dart';
 import 'package:ritmo/core/ai/personas/persona_inference_profile.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 /// حلقه واقعی ReAct ایجنت ریتمو (فاز ۱) + دروازه سیاست و تایید (فاز ۳)
 /// + محدوده اختیارات پرسونا (فاز ۵ · P5-1)
@@ -128,8 +128,9 @@ class AgentLoopRunner {
         config.baseUrl.contains('chatgpt.com');
     final wireFormat =
         AgentToolProtocol.formatFor(supportsNativeTools: false);
-    debugPrint(
-        '[Agent] loop start | web=$isChatGptWeb | wire=${wireFormat.name} | persona=$personaId | tools=${allowedTools.length}/${AgentToolRegistry.instance.count} | session=$sessionId');
+    RitmoLog.debug(
+        'Agent',
+        'loop start | web=$isChatGptWeb | wire=${wireFormat.name} | persona=$personaId | tools=${allowedTools.length}/${AgentToolRegistry.instance.count} | session=$sessionId');
 
     final transcript = AgentTranscript(systemPrompt: systemPrompt);
     if (recentHistory != null && recentHistory.isNotEmpty) {
@@ -229,11 +230,11 @@ class AgentLoopRunner {
         }
       } catch (e, st) {
         streamErrorFa = e.toString();
-        debugPrint('[Agent] stream error on turn $turn: $e\n$st');
+        RitmoLog.error('Agent', 'stream error on turn $turn: $e', e, st);
       }
 
       if (cutEarly) {
-        debugPrint('[Agent] turn $turn stream cut early');
+        RitmoLog.debug('Agent', 'turn $turn stream cut early');
         if (isChatGptWeb) {
           ChatGptWebBridgeManager.instance.cancelCurrentStream();
         }
@@ -242,8 +243,9 @@ class AgentLoopRunner {
       final raw = turnRaw.toString();
       final scan = AgentToolCallParser.scan(raw);
       if (scan.parseErrors.isNotEmpty) {
-        debugPrint(
-            '[Agent] tool_call parse issues: ${scan.parseErrors.join(' | ')}');
+        RitmoLog.warning(
+            'Agent',
+            'tool_call parse issues: ${scan.parseErrors.join(' | ')}');
       }
 
       // تعیین نوع نوبت (WEB-33)
@@ -260,8 +262,9 @@ class AgentLoopRunner {
         if (streamErrorFa.isNotEmpty &&
             AgentToolCallParser.cleanForDisplay(rawBuffer).isEmpty) {
           if (turn == 1 && allResults.isEmpty) {
-            debugPrint(
-                '[Agent] turn 1 failed with no data -> plain chat fallback');
+            RitmoLog.debug(
+                'Agent',
+                'turn 1 failed with no data -> plain chat fallback');
             yield AgentErrorEvent(streamErrorFa);
             return;
           }
@@ -281,8 +284,9 @@ class AgentLoopRunner {
         stopNoteFa = budget.isTimedOut
             ? '⚠️ زمان پردازش طولانی شد و ادامه فراخوانی ابزار متوقف شد.'
             : '⚠️ سقف فراخوانی ابزار در این پیام پر شد؛ اگر پاسخ کامل نیست دوباره بپرس.';
-        debugPrint(
-            '[Agent] ignoring ${scan.calls.length} tool call(s) on final turn $turn');
+        RitmoLog.debug(
+            'Agent',
+            'ignoring ${scan.calls.length} tool call(s) on final turn $turn');
         break;
       }
 
@@ -307,7 +311,7 @@ class AgentLoopRunner {
             errorMessage:
                 'ابزاری با این نام وجود ندارد. فقط از فهرست ابزارهای اعلام‌شده استفاده کن.',
           ));
-          debugPrint('[Agent] unknown tool requested: ${call.toolName}');
+          RitmoLog.debug('Agent', 'unknown tool requested: ${call.toolName}');
           continue;
         }
 
@@ -317,8 +321,8 @@ class AgentLoopRunner {
               AgentToolScope.instance.refusalReasonFa(personaId, tool);
           turnResults
               .add(AgentPolicyGate.instance.refusalResult(tool, reason));
-          debugPrint(
-              '[Agent] scope denied | ${tool.name} | persona=$personaId');
+          RitmoLog.debug(
+              'Agent', 'scope denied | ${tool.name} | persona=$personaId');
           continue;
         }
 
@@ -332,7 +336,7 @@ class AgentLoopRunner {
             toolName: tool.name,
             errorMessage: err,
           ));
-          debugPrint('[Agent] validation failed | ${tool.name} | $err');
+          RitmoLog.debug('Agent', 'validation failed | ${tool.name} | $err');
           continue;
         }
         final validatedArgs = validation.sanitizedArgs;
@@ -348,7 +352,7 @@ class AgentLoopRunner {
               summaryFa:
                   '${cached.summaryFa} (همین داده پیش‌تر در این پیام خوانده شده بود)',
             ));
-            debugPrint('[Agent] cache hit | ${tool.name}');
+            RitmoLog.debug('Agent', 'cache hit | ${tool.name}');
             continue;
           }
         } else {
@@ -361,7 +365,7 @@ class AgentLoopRunner {
               summaryFa:
                   '${previousMutation.summaryFa} (این تغییر پیش‌تر در همین گفتگو با موفقیت اعمال شده بود و تکرار نشد)',
             ));
-            debugPrint('[Agent] mutation idempotency hit | ${tool.name}');
+            RitmoLog.debug('Agent', 'mutation idempotency hit | ${tool.name}');
             continue;
           }
         }
@@ -377,7 +381,7 @@ class AgentLoopRunner {
           final reason = decision.reasonFa ?? 'اجرای این ابزار مجاز نبود.';
           turnResults
               .add(AgentPolicyGate.instance.refusalResult(tool, reason));
-          debugPrint('[Agent] gate denied | ${tool.name} | $reason');
+          RitmoLog.debug('Agent', 'gate denied | ${tool.name} | $reason');
           continue;
         }
 
@@ -387,7 +391,7 @@ class AgentLoopRunner {
             toolName: tool.name,
             errorMessage: admission.reasonFa ?? 'اجرای این ابزار مجاز نبود.',
           ));
-          debugPrint('[Agent] tool denied (${tool.name}): ${admission.reasonFa}');
+          RitmoLog.debug('Agent', 'tool denied (${tool.name}): ${admission.reasonFa}');
           continue;
         }
 
@@ -442,7 +446,7 @@ class AgentLoopRunner {
                 : 'کاربر این تغییر را تایید نکرد$suffix. هیچ داده‌ای ذخیره نشد.';
             turnResults
                 .add(AgentPolicyGate.instance.refusalResult(tool, why));
-            debugPrint('[Agent] confirmation rejected | ${tool.name}');
+            RitmoLog.debug('Agent', 'confirmation rejected | ${tool.name}');
             continue;
           }
 
@@ -571,8 +575,9 @@ class AgentLoopRunner {
         );
         steps[stepIndex] = doneStep;
         yield AgentStepCompletedEvent(doneStep);
-        debugPrint(
-            '[Agent] turn $turn tool ${tool.name} -> ${result.isSuccess ? 'ok' : 'failed'}');
+        RitmoLog.debug(
+            'Agent',
+            'turn $turn tool ${tool.name} -> ${result.isSuccess ? 'ok' : 'failed'}');
       }
 
       final nextNoMoreTools = turn + 1 >= budget.maxTurns ||
@@ -592,8 +597,9 @@ class AgentLoopRunner {
       final fallback = AgentToolProtocol.fallbackAnswerFromResults(allResults);
       finalAnswer = fallback;
       finalRaw = fallback;
-      debugPrint(
-          '[Agent] empty model answer -> deterministic fallback from ${allResults.length} result(s)');
+      RitmoLog.debug(
+          'Agent',
+          'empty model answer -> deterministic fallback from ${allResults.length} result(s)');
     }
 
     if (stopNoteFa.isNotEmpty) {
@@ -607,8 +613,9 @@ class AgentLoopRunner {
       statusTextFa: 'پاسخ آماده است.',
       isWorking: false,
     );
-    debugPrint(
-        '[Agent] loop done | turns=${budget.turnsUsed} | tools=${budget.toolCallsUsed} | writes=$writesUsed | steps=${steps.length} | ${budget.elapsed.inMilliseconds}ms');
+    RitmoLog.debug(
+        'Agent',
+        'loop done | turns=${budget.turnsUsed} | tools=${budget.toolCallsUsed} | writes=$writesUsed | steps=${steps.length} | ${budget.elapsed.inMilliseconds}ms');
 
     yield AgentCompletedEvent(
       finalAnswer: finalAnswer,

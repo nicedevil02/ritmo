@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_bridge_timeouts.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_js_injector.dart';
@@ -33,11 +32,8 @@ void main() {
     });
 
     test('cancelCurrentStream immediately resets active generation and timer states', () {
-      final streamController = StreamController<String>();
-      addTearDown(streamController.close);
       manager.setTestState(
         status: ChatGptBridgeStatus.generating,
-        streamController: streamController,
       );
       manager.setTestRequestId('req_cancel_1');
 

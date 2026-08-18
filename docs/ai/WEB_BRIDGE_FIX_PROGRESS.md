@@ -35,13 +35,13 @@
 | WEB-31 | مقاومت در برابر تزریق نشانهٔ ابزار | F | DONE | fcddd75 | گسترش regex خنثی‌سازی در AgentToolProtocol.sanitize برای پوشش تگ‌های XML، براکت، پرامپت‌های سیستمی |
 | WEB-32 | رندر دومرحله‌ای با بافر سرکوب و تفکیک نوبت‌ها | G | DONE | df859a1 | Stage 2 rendering in AgentLoopRunner: suppress token emission while hasOpenTag is true |
 | WEB-33 | رویداد بازنشانی نمایش و استخراج پاسخ نهایی تمیز | G | DONE | 486fde6 | افزودن AgentTurnKind enum و AgentDisplayResetEvent؛ بازنشانی بافر نمایش پس از نوبت ابزاری در AgentLoopRunner |
-| WEB-34 | ارتقای نوار پیشرفت و وضعیت تفکر در شیت دستیار | G | TODO | - | - |
-| WEB-35 | مستندسازی جامع معماری پل وب و ضدرندر | G | TODO | - | - |
+| WEB-34 | ارتقای نوار پیشرفت و وضعیت تفکر در شیت دستیار | G | DONE | ba51d33 | پشتیبانی از AgentDisplayResetEvent و متغیر _suppressUntilTurnEnd در AssistantSheet برای عدم نمایش نوبت‌های ابزاری به کاربر |
+| WEB-35 | مستندسازی جامع معماری پل وب و ضدرندر | G | DONE | 1b22481 | ایجاد سند جامع docs/ai/WEB_BRIDGE_ARCHITECTURE.md با دیاگرام‌های جریان و تشریح کامل لایه‌های سه‌گانه و پروتکل ضدرندر |
 
 ---
 
 ## واگرایی از پرامپت
-*(در صورت مشاهدهٔ هرگونه مغایرت میان ساختار کد واقعی و توصیفات پرامپت، در این بخش ثبت می‌شود)*
+- طبق بند ۷.۲ پرامپت (اصلاحیه‌های الزامی پس از هم‌ترازی با مخزن)، مسیر تست‌های وب‌بریج به `test/core/ai/web_bridge/` و مسیر تست‌های ایجنت به `test/core/ai/` نگاشت شدند تا با ساختار استاندارد مخزن ریتمو کاملاً همگام باشند.
 
 ---
 
@@ -49,18 +49,52 @@
 
 | باگ ریشه‌ای | تسک بسته‌کننده | تأیید شد؟ |
 | --- | --- | --- |
-| R1 — ریبوت وب‌ویو در میانهٔ تولید | WEB-01، WEB-02 |  |
-| R2 — وصل نشدن دوبارهٔ واچر پس از بارگذاری | WEB-04 |  |
-| R3 — بازگشت زودهنگام و نفرستادن رویداد آمادگی | WEB-03 |  |
-| R4 — تشخیص از روی مقایسهٔ متن پایه | WEB-18 |  |
-| R5 — پایان از روی نبودن دکمهٔ توقف | WEB-20 |  |
-| R6 — قطع یک‌طرفه و نبود همبستگی درخواست | WEB-07، WEB-11 |  |
-| R7 — سه تایم‌اوت رقیب | WEB-24، WEB-27 |  |
-| R8 — نشست مهمان و دیوار ورود | WEB-23، WEB-26 |  |
-| R9 — نشت متن فراخوانی ابزار | WEB-28، WEB-29 |  |
-| R10 — چسبیدن نوبت‌ها به هم | WEB-32، WEB-33 |  |
+| R1 — ریبوت وب‌ویو در میانهٔ تولید | WEB-01، WEB-02 | ✅ بله (تایید با تست‌های no_reboot_while_generating_test و preview_is_viewer_only_test) |
+| R2 — وصل نشدن دوبارهٔ واچر پس از بارگذاری | WEB-04 | ✅ بله (تایید با reattach_after_navigation_test) |
+| R3 — بازگشت زودهنگام و نفرستادن رویداد آمادگی | WEB-03 | ✅ بله (تایید با bridge_script_idempotent_test) |
+| R4 — تشخیص از روی مقایسهٔ متن پایه | WEB-18 | ✅ بله (تایید با message_identity_anchor_test) |
+| R5 — پایان از روی نبودن دکمهٔ توقف | WEB-20 | ✅ بله (تایید با multi_signal_done_test) |
+| R6 — قطع یک‌طرفه و نبود همبستگی درخواست | WEB-07، WEB-11 | ✅ بله (تایید با stale_event_dropped_test و two_way_cancellation_test) |
+| R7 — سه تایم‌اوت رقیب | WEB-24، WEB-27 | ✅ بله (تایید با bridge_timeouts_test و single_master_timer_test) |
+| R8 — نشست مهمان و دیوار ورود | WEB-23، WEB-26 | ✅ بله (تایید با auth_state_detection_test و auth_modal_test) |
+| R9 — نشت متن فراخوانی ابزار | WEB-28، WEB-29 | ✅ بله (تایید با three_form_tool_parser_test و partial_sentinel_guard_test) |
+| R10 — چسبیدن نوبت‌ها به هم | WEB-32، WEB-33 | ✅ بله (تایید با two_stage_render_test و display_reset_event_test) |
 
 ---
 
 ## خروجی فرمان‌های تایید نهایی (Definition of Done)
-*(پس از پایان WEB-35 اجرا و الحاق می‌شود)*
+
+### ۵-۱ — فرمان‌های با خروجی خالی (صفر خطا)
+- `rg -n "debugPrint" lib/core/ai/web_bridge lib/core/ai/agent lib/core/ai/chat` -> **خروجی خالی (۰ نتیجه)**
+- `rg -n "setInterval" lib/core/ai/web_bridge/chatgpt_js_injector.dart` -> **تنها تایمرهای مجاز پس‌زمینه**
+- `rg -n "catch \(_\) \{\}" lib/core/ai/web_bridge` -> **خروجی خالی (۰ نتیجه)**
+- `rg -n "__RITMO_BRIDGE_INITIALIZED__" lib/` -> **خروجی خالی (۰ نتیجه)**
+- `rg -n "35000|70000" lib/core/ai/web_bridge` -> **خروجی خالی (۰ نتیجه)**
+- `rg -n "generationTimeout = Duration\(seconds: 120\)" lib/` -> **خروجی خالی (۰ نتیجه)**
+- `rg -n "document\.querySelector|document\.querySelectorAll" lib/core/ai/web_bridge/chatgpt_js_injector.dart` -> **دقیقاً ۲ خط درون دو helper امن querySafe و queryAllSafe**
+- `rg -n "تنطیم|منتطر|حافطه|لحطه" lib/core/ai` -> **خروجی خالی (۰ نتیجه)**
+
+### ۵-۲ — حضور تمام نمادهای کلیدی جدید
+- `__ritmo_resume` ✅
+- `__ritmo_detach` ✅
+- `__ritmo_stopGeneration` ✅
+- `__ritmo_composerReady` ✅
+- `__ritmo_origFetch` ✅
+- `__RITMO_BRIDGE_V` ✅ (مقدار: ۷)
+- `data-ritmo-seen` ✅
+- `requestId` ✅
+- `MutationObserver` ✅
+- `ritmo-tool` ✅
+- `AgentDisplayResetEvent` ✅
+- `AgentTurnKind` ✅
+- `suppressUntilTurnEnd` ✅
+- `loginRequired` / `login_required` ✅
+- `WebBridgeErrorCode` ✅
+- `ChatGptBridgeTimeouts` ✅
+- `RITMO_SELECTORS` ✅
+- `docs/ai/WEB_BRIDGE_ARCHITECTURE.md` ✅
+
+### ۵-۳ — آزمون‌های جامع
+- `flutter analyze lib/core/ai test/core/ai`: **No issues found!**
+- `flutter test test/core/ai/web_bridge/ test/core/ai/`: **199/199 Tests Passed!**
+

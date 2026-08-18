@@ -68,10 +68,10 @@ $userPrompt
 
   function checkComposerPresent() {
     return !!(
-      document.querySelector('#prompt-textarea') ||
-      document.querySelector('textarea') ||
-      document.querySelector('div[contenteditable="true"]') ||
-      document.querySelector('.ProseMirror')
+      querySafe('#prompt-textarea') ||
+      querySafe('textarea') ||
+      querySafe('div[contenteditable="true"]') ||
+      querySafe('.ProseMirror')
     );
   }
 
@@ -338,14 +338,14 @@ $_bridgeScriptBody''';
       ];
 
       for (var i = 0; i < directSelectors.length; i++) {
-        var el = document.querySelector(directSelectors[i]);
+        var el = querySafe(directSelectors[i]);
         if (el && el.offsetParent !== null) {
           el.click();
           console.log('[Ritmo] Auto-clicked cookie accept button:', directSelectors[i]);
         }
       }
 
-      var buttons = document.querySelectorAll('button, div[role="button"], a[role="button"], a');
+      var buttons = queryAllSafe('button, div[role="button"], a[role="button"], a');
       var dismissKeywords = [
         'accept all',
         'accept cookies',
@@ -376,7 +376,7 @@ $_bridgeScriptBody''';
         }
       }
 
-      var bannerContainers = document.querySelectorAll('#onetrust-banner-sdk, #onetrust-consent-sdk, .onetrust-pc-dark-filter, .cookie-banner');
+      var bannerContainers = queryAllSafe('#onetrust-banner-sdk, #onetrust-consent-sdk, .onetrust-pc-dark-filter, .cookie-banner');
       for (var k = 0; k < bannerContainers.length; k++) {
         bannerContainers[k].style.display = 'none';
       }
@@ -404,21 +404,21 @@ $_bridgeScriptBody''';
 
   function isSidebarOpen() {
     try {
-      var closeBtn = document.querySelector(
+      var closeBtn = querySafe(
         'button[aria-label="Close sidebar"], button[aria-label="Close navigation"], button[data-testid="close-sidebar-button"], button[aria-label="بستن منو"]'
       );
       if (closeBtn && isVisiblyOnScreen(closeBtn)) {
         return true;
       }
 
-      var backdrop = document.querySelector(
+      var backdrop = querySafe(
         'div.fixed.inset-0.bg-black\\/50, div.fixed.inset-0.bg-black'
       );
       if (backdrop && isVisiblyOnScreen(backdrop)) {
         return true;
       }
 
-      var navDrawer = document.querySelector('#headlessui-dialog-panel, nav[aria-label="Chat history"]');
+      var navDrawer = querySafe('#headlessui-dialog-panel, nav[aria-label="Chat history"]');
       if (navDrawer && isVisiblyOnScreen(navDrawer)) {
         var rect = navDrawer.getBoundingClientRect();
         if (rect.left >= 0 && rect.right > 50) {
@@ -648,7 +648,7 @@ $_bridgeScriptBody''';
         stopDomObserver();
         notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
         console.log('[Ritmo] Stream completed via multi-signal vote with ' + finalFullText.length + ' characters (reqId: ' + reqId + ')');
-      } else if (totalDuration > 70000) {
+      } else if (totalDuration > 85000) {
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;

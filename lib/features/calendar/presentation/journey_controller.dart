@@ -280,16 +280,21 @@ class JourneyController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final _CalendarCommand command;
       if (item.domain == AgendaDomain.routine) {
-        await _kernel.execute(SkipOccurrenceCommand(
-          routineId: item.sourceId,
-          dateStr: item.dateStr,
-          reason: 'Skipped via Calendar',
-        ));
+        command = _SkipRoutineCommand(
+          item: item,
+          onRefresh: refresh,
+          kernel: _kernel,
+        );
       } else {
-        await _actionHandler.toggleAgendaItem(item: item, isDone: false);
+        command = _SkipItemCommand(
+          item: item,
+          onRefresh: refresh,
+        );
       }
-      await refresh();
+      await command.execute();
+      CommandStack.instance.push(command);
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = CalendarMessagesFa.skip;
@@ -676,6 +681,17 @@ class JourneyController extends ChangeNotifier {
     scope: scope,
     overrideRepo: overrideRepo,
   );
+
+  @visibleForTesting
+  static UndoableCommand createSkipItemCommand({
+    required AgendaItem item,
+    required Future<void> Function() onRefresh,
+    OccurrenceOverrideRepository? overrideRepo,
+  }) => _SkipItemCommand(
+    item: item,
+    onRefresh: onRefresh,
+    overrideRepo: overrideRepo,
+  );
 }
 
 enum CalendarEditScope { thisDayOnly, allFutureDays }
@@ -977,6 +993,86 @@ class _UnscheduleItemCommand extends _CalendarCommand {
         newTimeOfDay: oldTimeOfDay,
         newDurationMinutes: oldDurationMinutes,
       );
+    }
+  }
+}
+
+class _SkipRoutineCommand extends _CalendarCommand {
+  _SkipRoutineCommand({
+    required super.item,
+    required super.onRefresh,
+    required this.kernel,
+  });
+
+  final RitmoExecutionKernel kernel;
+
+  @override
+  String get description => 'رد کردن روتین';
+
+  @override
+  Future<void> applyForward() async {
+    await kernel.execute(SkipOccurrenceCommand(
+      routineId: item.sourceId,
+      dateStr: item.dateStr,
+      reason: 'Skipped via Calendar',
+    ));
+  }
+
+  @override
+  Future<void> applyBackward() async {
+    final db = await DatabaseHelper.instance.database;
+    await db.delete(
+      'routine_completions',
+      where: 'routineId = ? AND dateStr = ? AND status = ?',
+      whereArgs: [item.sourceId, item.dateStr, 'SKIPPED'],
+    );
+  }
+}
+
+class _SkipItemCommand extends _CalendarCommand {
+  _SkipItemCommand({
+    required super.item,
+    required super.onRefresh,
+    OccurrenceOverrideRepository? overrideRepo,
+  }) : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository();
+
+  final OccurrenceOverrideRepository _overrideRepo;
+  OccurrenceOverride? _beforeSnapshot;
+  bool _hasCapturedBefore = false;
+
+  @override
+  String get description => 'رد کردن رویداد';
+
+  @override
+  Future<void> applyForward() async {
+    if (!_hasCapturedBefore) {
+      _beforeSnapshot = await _overrideRepo.readOne(
+        item.domain.name,
+        item.sourceId,
+        item.dateStr,
+      );
+      _hasCapturedBefore = true;
+    }
+
+    final nowIso = DateTime.now().toIso8601String();
+    final override = OccurrenceOverride(
+      sourceType: item.domain.name,
+      sourceId: item.sourceId,
+      dateStr: item.dateStr,
+      status: 'SKIPPED',
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    );
+    await _overrideRepo.upsert(override);
+  }
+
+  @override
+  Future<void> applyBackward() async {
+    final before = _beforeSnapshot;
+    if (before == null) {
+      await _overrideRepo.remove(item.domain.name, item.sourceId, item.dateStr);
+    } else {
+      await _overrideRepo.restoreAll([before]);
     }
   }
 }

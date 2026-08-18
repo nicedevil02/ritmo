@@ -208,12 +208,16 @@ class SettingsService {
       _scheduleAgendaRefreshSignal();
 
       if (desc.group == SettingsGroup.notifications) {
-        final notifSettings = <String, String>{
-          'digest_mode': get<String>('digest_mode'),
-          'coalescing_window_minutes': get<int>('coalescing_window_minutes').toString(),
-          'max_non_essential_per_hour': get<int>('max_non_essential_per_hour').toString(),
-        };
-        await SnapshotHelper.updateNotificationSettingsSnapshot(notifSettings);
+        try {
+          final notifSettings = <String, String>{
+            'digest_mode': get<String>('digest_mode'),
+            'coalescing_window_minutes': get<int>('coalescing_window_minutes').toString(),
+            'max_non_essential_per_hour': get<int>('max_non_essential_per_hour').toString(),
+          };
+          await SnapshotHelper.updateNotificationSettingsSnapshot(notifSettings);
+        } catch (e, st) {
+          RitmoLog.error('Settings', 'به‌روزرسانی اسنپ‌شات اعلان ناموفق بود', e, st);
+        }
       }
 
       return true;

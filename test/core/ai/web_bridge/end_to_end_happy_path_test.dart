@@ -60,15 +60,15 @@ void main() {
       // 5. Chunks arrive via SSE
       manager.handleJsMessageForTest(
         const JavaScriptMessage(
-          message: '{"type":"chunk","delta":"سلام! ","fullText":"سلام! ","source":"fetch","requestId":"req_e2e_001"}',
+          message: '{"type":"chunk","delta":"سلام!","fullText":"سلام!","source":"fetch","requestId":"req_e2e_001"}',
         ),
       );
-      expect(manager.accumulator.text, 'سلام! ');
+      expect(manager.accumulator.text, 'سلام!');
       expect(manager.pendingRequest?.stage, PendingRequestStage.streaming);
 
       manager.handleJsMessageForTest(
         const JavaScriptMessage(
-          message: '{"type":"chunk","delta":"برنامه روز شما آماده است: ","fullText":"سلام! برنامه روز شما آماده است: ","source":"fetch","requestId":"req_e2e_001"}',
+          message: '{"type":"chunk","delta":" برنامه روز شما آماده است: ","fullText":"سلام! برنامه روز شما آماده است: ","source":"fetch","requestId":"req_e2e_001"}',
         ),
       );
       expect(manager.accumulator.text, 'سلام! برنامه روز شما آماده است: ');

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
@@ -238,7 +239,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildNumber = toPersianDigits(info.buildNumber);
         });
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'Failed to load package info', e, st);
+      if (mounted) {
+        setState(() {
+          _version = 'نامشخص';
+          _buildNumber = '';
+        });
+      }
+    }
   }
 
   void _onVersionTapped() {

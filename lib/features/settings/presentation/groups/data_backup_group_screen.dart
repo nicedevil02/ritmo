@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/settings/settings_transfer_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -63,7 +64,9 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
           _lastBackupDate = '${j.year}/${j.month.toString().padLeft(2, '0')}/${j.day.toString().padLeft(2, '0')} - ${lastModified.hour.toString().padLeft(2, '0')}:${lastModified.minute.toString().padLeft(2, '0')}';
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'Failed to inspect backup directory', e, st);
+    }
 
     if (mounted) setState(() {});
   }
@@ -186,7 +189,8 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
         final diff = SettingsTransferService.instance.analyzeImport(result);
         await SettingsImportDiffDialog.show(context, diff);
         await _loadState();
-      } catch (_) {
+      } catch (e, st) {
+        RitmoLog.error('Settings', 'Failed to import settings from JSON', e, st);
         if (mounted) {
           RitmoToast.show(context, 'خطا در خواندن فرمت فایل تنظیمات');
         }

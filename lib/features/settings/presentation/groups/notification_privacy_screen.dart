@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -40,7 +41,9 @@ class _NotificationPrivacyScreenState extends State<NotificationPrivacyScreen> {
     });
     try {
       await SettingsService.instance.set(key, val);
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'Failed to update setting: $key', e, st);
+    }
     _loadSettings();
   }
 

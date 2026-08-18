@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
@@ -78,7 +79,8 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
           _loadingChannels = false;
         });
       }
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'Failed to load notification channel preferences', e, st);
       if (mounted) {
         setState(() => _loadingChannels = false);
       }
@@ -112,7 +114,9 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       await AlarmSchedulerService.scheduleNextAlarms();
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'Failed to update channel prefs for ${channel.nativeId}', e, st);
+    }
   }
 
   Future<void> _pickTime(String key, String currentVal, String title) async {

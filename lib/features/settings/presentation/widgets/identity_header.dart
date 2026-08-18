@@ -301,7 +301,8 @@ class _IdentityHeaderState extends State<IdentityHeader>
     if (!kIsWeb) {
       try {
         return File(path).existsSync();
-      } catch (_) {
+      } catch (e, st) {
+        RitmoLog.error('Settings', 'Failed to check avatar file exists in header', e, st);
         return false;
       }
     }

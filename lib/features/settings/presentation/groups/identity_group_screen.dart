@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
@@ -63,7 +64,8 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
     if (!kIsWeb) {
       try {
         return File(path).existsSync();
-      } catch (_) {
+      } catch (e, st) {
+        RitmoLog.error('Settings', 'Failed to check avatar file exists', e, st);
         return false;
       }
     }

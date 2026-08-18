@@ -56,9 +56,10 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
     await _loadState();
   }
 
-  Future<void> _setPin(String keyName, String title) async {
+  Future<bool> _setPin(String keyName, String title) async {
     final colors = context.colors;
     final pinController = TextEditingController();
+    bool saved = false;
 
     await showDialog<void>(
       context: context,
@@ -100,6 +101,7 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
               Navigator.pop(ctx);
               final hashed = PinHasher.hashPin(pin);
               await SettingsService.instance.set(keyName, hashed);
+              saved = true;
               await _loadState();
               if (mounted) {
                 RitmoToast.show(context, 'رمز با موفقیت ذخیره شد.');
@@ -110,6 +112,7 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
         ],
       ),
     );
+    return saved;
   }
 
   Future<void> _deletePin(String keyName, String title) async {
@@ -121,7 +124,7 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
         backgroundColor: colors.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('حذف $title', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-        content: const Text('آیا از حذف این رمز عبور اطمینان دارید؟'),
+        content: const Text('آیا از حذف این رمز عبور اطمینان دارید؟ قفل برنامه غیرفعال خواهد شد.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -131,6 +134,12 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
             onPressed: () async {
               Navigator.pop(ctx);
               await SettingsService.instance.set(keyName, '');
+              if (keyName == 'app_lock_password') {
+                await SettingsService.instance.set('app_lock_enabled', false);
+                await SettingsService.instance.set('app_biometric_enabled', false);
+              } else if (keyName == 'cycle_lock_password') {
+                await SettingsService.instance.set('cycle_biometric_enabled', false);
+              }
               await _loadState();
               if (mounted) {
                 RitmoToast.show(context, 'رمز با موفقیت حذف شد.');
@@ -141,6 +150,22 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _onAppLockToggled(bool val) async {
+    if (val && !_hasAppPassword) {
+      final pinSet = await _setPin('app_lock_password', 'تعریف رمز قفل برنامه');
+      if (!pinSet) return;
+    }
+    await _update('app_lock_enabled', val);
+  }
+
+  Future<void> _onCycleBiometricToggled(bool val) async {
+    if (val && !_hasCyclePassword) {
+      final pinSet = await _setPin('cycle_lock_password', 'تعریف رمز بخش چرخهٔ زیستی');
+      if (!pinSet) return;
+    }
+    await _update('cycle_biometric_enabled', val);
   }
 
   void _showPrivacyPolicy() {
@@ -211,7 +236,7 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
                       CupertinoSwitch(
                         value: _appLockEnabled,
                         activeTrackColor: colors.primary,
-                        onChanged: (val) => _update('app_lock_enabled', val),
+                        onChanged: _onAppLockToggled,
                       ),
                     ],
                   ),
@@ -295,7 +320,7 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
                         CupertinoSwitch(
                           value: _cycleBiometricEnabled,
                           activeTrackColor: colors.primary,
-                          onChanged: (val) => _update('cycle_biometric_enabled', val),
+                          onChanged: _onCycleBiometricToggled,
                         ),
                       ],
                     ),

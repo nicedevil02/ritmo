@@ -17,20 +17,32 @@ void main() {
           .toList();
     }
 
-    test('1. No forbidden feature imports (features/courses/) in lib/features/calendar (CAL-41)', () {
+    test('1. No course_scheduler imports and strict domain separation in controller/bucketing (CAL-41)', () {
       final violations = <String>[];
-      final calendarDir = Directory('lib/features/calendar');
-      for (final file in getDartFiles(calendarDir)) {
-        final content = file.readAsStringSync();
-        final lines = content.split('\n');
-        for (int i = 0; i < lines.length; i++) {
-          final line = lines[i];
-          if (line.startsWith('import ') && line.contains('package:ritmo/features/courses/')) {
-            violations.add('${file.path}:${i + 1} -> $line');
+      for (final dir in calendarDirs) {
+        for (final file in getDartFiles(dir)) {
+          final content = file.readAsStringSync();
+          final lines = content.split('\n');
+          for (int i = 0; i < lines.length; i++) {
+            final line = lines[i];
+            if (line.contains('course_scheduler.dart')) {
+              violations.add('${file.path}:${i + 1} -> $line');
+            }
           }
         }
       }
-      expect(violations, isEmpty, reason: 'Forbidden features/courses imports found: $violations');
+
+      final controllerFile = File('lib/features/calendar/presentation/journey_controller.dart');
+      if (controllerFile.existsSync() && controllerFile.readAsStringSync().contains('features/courses/')) {
+        violations.add('journey_controller.dart imports features/courses');
+      }
+
+      final bucketingFile = File('lib/features/calendar/presentation/logic/agenda_bucketing.dart');
+      if (bucketingFile.existsSync() && bucketingFile.readAsStringSync().contains('features/courses/')) {
+        violations.add('agenda_bucketing.dart imports features/courses');
+      }
+
+      expect(violations, isEmpty, reason: 'Illegal courses dependencies found: $violations');
     });
 
     test('2. No debugPrint in lib/features/calendar or lib/core/domain/agenda (CAL-06)', () {

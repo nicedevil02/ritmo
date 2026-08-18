@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_time_range.dart';
+import 'package:ritmo/features/courses/presentation/widgets/create_course_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/create_goal_sheet.dart';
 import 'package:ritmo/features/health/presentation/widgets/medication_form_sheet.dart';
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';

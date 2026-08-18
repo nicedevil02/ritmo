@@ -470,6 +470,16 @@ if (typeof window.__ritmo_resume === 'function') {
           }
           break;
 
+        case 'network_conversation_started':
+          RitmoLog.debug(
+            'ChatGptWebBridge',
+            'Network conversation started: url=${readString('url')}, source=$source',
+          );
+          if (_pendingRequest != null && _pendingRequest!.stage == PendingRequestStage.sending) {
+            _pendingRequest!.stage = PendingRequestStage.awaitingFirstToken;
+          }
+          break;
+
         case 'resumed':
           RitmoLog.debug(
             'ChatGptWebBridge',

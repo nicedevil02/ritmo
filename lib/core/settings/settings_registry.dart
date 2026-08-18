@@ -707,6 +707,16 @@ class SettingsRegistry {
       descriptionFa: 'فارسی یا انگلیسی',
       searchTerms: ['زبان', 'فارسی', 'انگلیسی', 'locale'],
     ),
+    SettingDescriptor(
+      key: 'haptic_feedback_enabled',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: true,
+      labelFa: 'بازخورد لرزشی (هپتیک)',
+      group: SettingsGroup.appearance,
+      descriptionFa: 'لرزش ملایم هنگام لمس دکمه‌ها و ثبت رویدادها',
+      searchTerms: ['لرزش', 'هپتیک', 'ویبره', 'بازخورد'],
+    ),
 
     // ----------------------------------------------------
     // ۵. دستیار و حریم خصوصی (Assistant & Privacy)

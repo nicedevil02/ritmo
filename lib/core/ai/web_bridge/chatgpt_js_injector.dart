@@ -102,6 +102,39 @@ $userPrompt
 $_bridgeScriptBody''';
 
   static const String _bridgeScriptBody = r'''
+  // --- 0. Global Fetch Interceptor Hook ---
+  var originalFetch = window.fetch;
+  if (originalFetch && !window.__ritmo_fetch_hooked) {
+    window.__ritmo_fetch_hooked = true;
+    window.__ritmo_original_fetch = originalFetch;
+    window.fetch = function() {
+      var args = arguments;
+      var url = (args[0] && typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) ? args[0].url : '';
+      var isConvo = typeof url === 'string' && (
+        url.indexOf('/backend-api/conversation') !== -1 ||
+        url.indexOf('/backend-anon/conversation') !== -1 ||
+        url.indexOf('/backend-api/lat/r') !== -1 ||
+        url.indexOf('/backend-anon/lat/r') !== -1
+      );
+
+      if (isConvo) {
+        console.log('[Ritmo] Intercepted conversation network request: ' + url);
+        notifyFlutter('network_conversation_started', {
+          url: url,
+          timestamp: Date.now(),
+          source: 'fetch'
+        });
+      }
+
+      try {
+        return originalFetch.apply(this, args);
+      } catch (e) {
+        console.error('[Ritmo] Error executing original fetch:', e);
+        throw e;
+      }
+    };
+  }
+
   // A selector that the current WebView cannot parse makes querySelectorAll
   // throw for the ENTIRE list, taking the caller down with it. Never query raw.
   function queryAllSafe(selector) {
@@ -347,6 +380,10 @@ $_bridgeScriptBody''';
     if (cfCheckTimer) {
       clearInterval(cfCheckTimer);
       cfCheckTimer = null;
+    }
+    if (window.__ritmo_fetch_hooked && window.__ritmo_original_fetch) {
+      window.fetch = window.__ritmo_original_fetch;
+      window.__ritmo_fetch_hooked = false;
     }
   };
 

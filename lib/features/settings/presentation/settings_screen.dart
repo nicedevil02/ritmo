@@ -26,6 +26,7 @@ import 'package:ritmo/features/settings/presentation/groups/notifications_group_
 import 'package:ritmo/features/settings/presentation/groups/security_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/settings_search_delegate.dart';
 import 'package:ritmo/features/settings/presentation/widgets/identity_header.dart';
+import 'package:ritmo/features/settings/presentation/widgets/quick_settings_sheet.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_degraded_banner.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_health_card.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_ready_gate.dart';
@@ -382,6 +383,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: RitmoModuleAppBar(
         title: 'پروفایل و تنظیمات',
         actions: [
+          IconButton(
+            key: const ValueKey('quick_settings_appbar_btn'),
+            icon: Icon(CupertinoIcons.slider_horizontal_3, color: colors.primary, size: 20),
+            tooltip: 'تنظیمات سریع',
+            onPressed: () {
+              RitmoHaptics.selection();
+              QuickSettingsSheet.show(context);
+            },
+          ),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Material(

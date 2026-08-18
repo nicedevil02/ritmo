@@ -45,9 +45,10 @@ class QuickSettingsSheet extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               border: Border.all(color: colors.border),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
                   child: Container(
@@ -159,7 +160,8 @@ class QuickSettingsSheet extends StatelessWidget {
               ],
             ),
           ),
-        );
+        ),
+      );
       },
     );
   }
@@ -186,22 +188,19 @@ class _QuickTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: ValueKey(keyName),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: isActive ? activeColor.withValues(alpha: 0.15) : colors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isActive ? activeColor.withValues(alpha: 0.4) : colors.border,
-            ),
+    return GestureDetector(
+      key: ValueKey(keyName),
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? activeColor.withValues(alpha: 0.15) : colors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isActive ? activeColor.withValues(alpha: 0.4) : colors.border,
           ),
+        ),
           child: Row(
             children: [
               Icon(
@@ -225,7 +224,6 @@ class _QuickTile extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }

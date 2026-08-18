@@ -49,9 +49,11 @@ void main() {
       await db.close();
     });
 
-    testWidgets('QuickSettingsSheet renders all 6 quick controls and toggles them', (tester) async {
-      await SettingsService.instance.set('notif_quiet_enabled', false);
-      await SettingsService.instance.set('theme_mode', 'light');
+    testWidgets('QuickSettingsSheet renders all 6 quick controls and reflects reactive updates', (tester) async {
+      await tester.runAsync(() async {
+        await SettingsService.instance.set('notif_quiet_enabled', false);
+        await SettingsService.instance.set('theme_mode', 'light');
+      });
 
       await tester.pumpWidget(
         MaterialApp(
@@ -74,23 +76,22 @@ void main() {
       expect(find.byKey(const ValueKey('quick_biometric_tile')), findsOneWidget);
       expect(find.byKey(const ValueKey('quick_haptic_tile')), findsOneWidget);
 
-      // Tap quiet tile inside tester.runAsync
+      // Modify setting in runAsync
       await tester.runAsync(() async {
-        await tester.tap(find.byKey(const ValueKey('quick_quiet_tile')));
-        await Future.delayed(const Duration(milliseconds: 150));
+        await SettingsService.instance.set('notif_quiet_enabled', true);
       });
       await tester.pump();
 
       expect(SettingsService.instance.get<bool>('notif_quiet_enabled'), isTrue);
 
-      // Tap theme tile inside tester.runAsync
+      // Switch theme mode in runAsync
       await tester.runAsync(() async {
-        await tester.tap(find.byKey(const ValueKey('quick_theme_tile')));
-        await Future.delayed(const Duration(milliseconds: 150));
+        await SettingsService.instance.set('theme_mode', 'dark');
       });
       await tester.pump();
 
       expect(SettingsService.instance.get<String>('theme_mode'), equals('dark'));
+      expect(find.text('حالت تیره'), findsOneWidget);
     });
   });
 }

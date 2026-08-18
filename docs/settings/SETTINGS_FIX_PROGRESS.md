@@ -71,4 +71,4 @@
 | SET-67 | حذف کامل debugPrint و catch خالی | I | DONE | `fix(settings): SET-67 — لاگ ایمن و حذف catch خالی` | |
 | SET-68 | افوردنس‌های دیباگ در مسیر تولید | I | DONE | `fix(settings): SET-68 — امن‌سازی افوردنس‌های دیباگ` | |
 | SET-69 | شکستن فایل‌های غول | I | DONE | `refactor(settings): SET-69 — شکستن فایل‌های غول` | |
-| SET-70 | بازرس تنظیمات فقط در دیباگ | I | TODO | | |
+| SET-70 | بازرس تنظیمات فقط در دیباگ | I | DONE | `feat(settings): SET-70 — بازرس تنظیمات در حالت دیباگ` | |

@@ -19,17 +19,21 @@ void main() {
 
   Future<void> insertNight(String date, int bedMin) async {
     final day = DateTime.parse(date);
-    await db.insert('bedtime_diagnostics', {
-      'date': date,
-      'reason': 'مناسب',
-      'createdAt': 0,
-      'bedtimeAt': day.add(Duration(minutes: bedMin)).millisecondsSinceEpoch,
-      'wakeAt':
-          day.add(const Duration(days: 1, minutes: 420)).millisecondsSinceEpoch,
-      'durationMinutes': 450,
-      'quality': 4,
-      'awakenings': 0,
-    });
+    await db.insert(
+      'bedtime_diagnostics',
+      {
+        'date': date,
+        'reason': 'مناسب',
+        'createdAt': 0,
+        'bedtimeAt': day.add(Duration(minutes: bedMin)).millisecondsSinceEpoch,
+        'wakeAt':
+            day.add(const Duration(days: 1, minutes: 420)).millisecondsSinceEpoch,
+        'durationMinutes': 450,
+        'quality': 4,
+        'awakenings': 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<void> insertPlan(
@@ -38,13 +42,17 @@ void main() {
     int plannedMin, {
     SleepPlanOutcome outcome = SleepPlanOutcome.pending,
   }) async {
-    await db.insert('sleep_plan_days', {
-      'programId': programId,
-      'date': date,
-      'plannedBedtimeMin': plannedMin,
-      'plannedWakeMin': 420,
-      'outcome': outcome.name,
-    });
+    await db.insert(
+      'sleep_plan_days',
+      {
+        'programId': programId,
+        'date': date,
+        'plannedBedtimeMin': plannedMin,
+        'plannedWakeMin': 420,
+        'outcome': outcome.name,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   /// ۷ شب ثبت‌شده تا برنامه از فاز گوش دادن خارج شود.

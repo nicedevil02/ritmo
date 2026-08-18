@@ -203,3 +203,30 @@ class AgentErrorEvent extends AgentEvent {
   final String errorMessageFa;
   const AgentErrorEvent(this.errorMessageFa);
 }
+
+/// نوع هر نوبت در حلقهٔ ReAct — تعیین می‌کند بافر نمایش فلاش شود یا دور ریخته
+///
+/// - [toolCallTurn]: این نوبت حاوی فراخوانی ابزار بود؛ بافر **دور ریخته** می‌شود.
+/// - [finalAnswerTurn]: پاسخ نهایی کاربر است؛ بافر یکجا فلاش می‌شود.
+enum AgentTurnKind {
+  toolCallTurn,
+  finalAnswerTurn,
+}
+
+/// وقتی یک نوبت ابزاری تمام می‌شود، این رویداد ساطع می‌شود.
+///
+/// مصرف‌کننده باید نوار «در حال فکر کردن» را نگه دارد و هر متن استریم‌شده
+/// در این نوبت را **دور بریزد** تا کاربر فراخوانی ابزار را نبیند.
+/// پس از این رویداد، نوبت بعدی از ابتدا شروع می‌شود.
+class AgentDisplayResetEvent extends AgentEvent {
+  /// نوع نوبت تمام‌شده
+  final AgentTurnKind turnKind;
+
+  /// شماره نوبتی که تازه تمام شد
+  final int turn;
+
+  const AgentDisplayResetEvent({
+    required this.turnKind,
+    required this.turn,
+  });
+}

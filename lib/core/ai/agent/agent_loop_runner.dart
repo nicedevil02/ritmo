@@ -246,11 +246,17 @@ class AgentLoopRunner {
             '[Agent] tool_call parse issues: ${scan.parseErrors.join(' | ')}');
       }
 
+      // تعیین نوع نوبت (WEB-33)
+      final turnKind =
+          scan.hasCalls ? AgentTurnKind.toolCallTurn : AgentTurnKind.finalAnswerTurn;
+
       rawBuffer = _join(rawBuffer, AgentToolCallParser.stripToolCalls(raw));
       transcript.addAssistant(raw);
 
       // پاسخ نهایی: مدل دیگر ابزاری نخواسته است
       if (!scan.hasCalls) {
+        // رویداد بازنشانی برای نوبت پاسخ نهایی (جهت آگاهی مصرف‌کننده)
+        yield AgentDisplayResetEvent(turnKind: turnKind, turn: turn);
         if (streamErrorFa.isNotEmpty &&
             AgentToolCallParser.cleanForDisplay(rawBuffer).isEmpty) {
           if (turn == 1 && allResults.isEmpty) {
@@ -263,6 +269,12 @@ class AgentLoopRunner {
         }
         break;
       }
+
+      // نوبت ابزاری تمام شد — بافر نمایش بازنشانی می‌شود (WEB-33)
+      yield AgentDisplayResetEvent(turnKind: turnKind, turn: turn);
+      // بافر نمایشی این نوبت دور ریخته می‌شود؛ نوبت بعدی از صفر شروع می‌کند
+      displayed = '';
+
 
       // نوبت آخر: دیگر ابزاری اجرا نمی‌شود
       if (noMoreTools) {

@@ -33,7 +33,7 @@
 | WEB-29 | پاکسازی سه‌شکلی و محافظ نشانهٔ نیمه‌تمام | F | DONE | ff4f405 | تشخیص و پنهان‌سازی نشانه‌ها و بلوک‌های نیمه‌کاره ابزار در طول استریم توکن‌ها در AgentToolCallParser |
 | WEB-30 | دستورالعمل فراخوانی ابزار مخصوص مسیر وب | F | DONE | 5d1d428 | ایجاد متد buildWebBridgeToolPrompt در AgentToolProtocol برای ساخت پرامپت شفاف فراخوانی ابزار |
 | WEB-31 | مقاومت در برابر تزریق نشانهٔ ابزار | F | DONE | fcddd75 | گسترش regex خنثی‌سازی در AgentToolProtocol.sanitize برای پوشش تگ‌های XML، براکت، پرامپت‌های سیستمی |
-| WEB-32 | رندر دومرحله‌ای با بافر سرکوب و تفکیک نوبت‌ها | G | TODO | - | - |
+| WEB-32 | رندر دومرحله‌ای با بافر سرکوب و تفکیک نوبت‌ها | G | DONE | df859a1 | Stage 2 rendering in AgentLoopRunner: suppress token emission while hasOpenTag is true |
 | WEB-33 | رویداد بازنشانی نمایش و استخراج پاسخ نهایی تمیز | G | TODO | - | - |
 | WEB-34 | ارتقای نوار پیشرفت و وضعیت تفکر در شیت دستیار | G | TODO | - | - |
 | WEB-35 | مستندسازی جامع معماری پل وب و ضدرندر | G | TODO | - | - |

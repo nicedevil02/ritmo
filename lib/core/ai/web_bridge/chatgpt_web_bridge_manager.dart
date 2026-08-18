@@ -133,7 +133,10 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
             await handlePageFinished(url, controller);
           },
           onWebResourceError: (error) {
-            RitmoLog.error('ChatGptWebBridge', 'Resource Error (${error.errorCode}): ${error.description}');
+            RitmoLog.warning('ChatGptWebBridge', 'Web resource error: ${error.description}');
+          },
+          onHttpError: (error) {
+            RitmoLog.warning('ChatGptWebBridge', 'HTTP error: ${error.response?.statusCode}');
           },
         ),
       );
@@ -192,6 +195,56 @@ if (typeof window.__ritmo_resume === 'function') {
 ''');
     } catch (e, st) {
       RitmoLog.error('ChatGptWebBridge', 'Error calling __ritmo_resume: $e', e, st);
+    }
+  }
+
+  /// Handles web resource loading errors from NavigationDelegate.
+  @visibleForTesting
+  void handleWebResourceError(WebResourceError error) {
+    RitmoLog.error('ChatGptWebBridge', 'Resource Error (code=${error.errorCode}, isMainFrame=${error.isForMainFrame}): ${error.description}');
+
+    // Only close in-flight stream if the error affects the main frame
+    final isMain = error.isForMainFrame ?? true;
+    if (!isMain) {
+      RitmoLog.debug('ChatGptWebBridge', 'Sub-resource error ignored for stream closure.');
+      return;
+    }
+
+    if (hasPendingRequest || _status == ChatGptBridgeStatus.generating) {
+      final desc = error.description.toLowerCase();
+      final code = error.errorCode;
+      final isNetworkDisconnect = code == -2 || // ERROR_HOST_LOOKUP
+          code == -6 || // ERROR_CONNECT
+          code == -8 || // ERROR_TIMEOUT
+          desc.contains('net::err_internet_disconnected') ||
+          desc.contains('net::err_name_not_resolved') ||
+          desc.contains('net::err_connection_refused') ||
+          desc.contains('net::err_connection_timed_out') ||
+          desc.contains('disconnected') ||
+          desc.contains('network');
+
+      if (isNetworkDisconnect) {
+        _failGeneration('دسترسی به اینترنت برقرار نشد. لطفاً اتصال شبکه خود را بررسی کنید.');
+      } else {
+        _failGeneration('خطا در بارگذاری صفحهٔ ChatGPT (${error.description}).');
+      }
+    }
+  }
+
+  /// Handles HTTP response status errors from NavigationDelegate.
+  @visibleForTesting
+  void handleHttpError(HttpResponseError error) {
+    final status = error.response?.statusCode;
+    RitmoLog.error('ChatGptWebBridge', 'HTTP Error: statusCode=$status');
+
+    if (hasPendingRequest || _status == ChatGptBridgeStatus.generating) {
+      if (status != null && status >= 500 && status <= 599) {
+        _failGeneration('چت‌جی‌پی‌تی الان جواب نمی‌دهد (خطای سرور $status). لطفاً کمی بعد دوباره تلاش کنید.');
+      } else if (status == 401 || status == 403) {
+        _failGeneration('برای ادامه باید وارد حساب ChatGPT شوید.');
+      } else if (status != null && status >= 400) {
+        _failGeneration('خطای ارتباط با سرور ChatGPT ($status).');
+      }
     }
   }
 

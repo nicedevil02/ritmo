@@ -107,14 +107,15 @@ void main() {
     });
 
     testWidgets('AiWriteHistorySheet renders history items and supports rollback', (tester) async {
-      await tester.runAsync(() async {
-        await AiSettingsGuard.instance.recordAiChange(
-          key: 'notif_quiet_enabled',
-          oldValue: false,
-          newValue: true,
-          reason: 'بهینه‌سازی زمان سکوت شبانه',
-        );
-      });
+      final record = AiSettingHistoryRecord(
+        id: 1,
+        key: 'notif_quiet_enabled',
+        labelFa: 'ساعات سکوت',
+        oldValue: false,
+        newValue: true,
+        reasonFa: 'بهینه‌سازی زمان سکوت شبانه',
+        timestamp: DateTime.now(),
+      );
 
       await tester.pumpWidget(
         MaterialApp(
@@ -122,16 +123,13 @@ void main() {
             palette: RitmoPalette.jadeNoir,
             brightness: Brightness.light,
           ),
-          home: const Scaffold(
-            body: AiWriteHistorySheet(),
+          home: Scaffold(
+            body: AiWriteHistorySheet(
+              initialRecords: [record],
+            ),
           ),
         ),
       );
-      await tester.pump();
-
-      await tester.runAsync(() async {
-        await Future.delayed(const Duration(milliseconds: 150));
-      });
       await tester.pump();
 
       expect(find.text('تاریخچه تغییرات دستیار هوشمند'), findsOneWidget);

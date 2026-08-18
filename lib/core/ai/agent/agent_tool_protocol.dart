@@ -122,6 +122,25 @@ class AgentToolProtocol {
     return '\n[این ابزارها همین حالا به‌صورت خودکار اجرا شده‌اند و داده‌شان در بالا آمده است: $names. آن‌ها را با همان پارامترها دوباره صدا نزن.]';
   }
 
+  /// تولید پرامپت دستورالعمل ابزارها مخصوص مسیر Web Bridge
+  static String buildWebBridgeToolPrompt(List<AgentTool> tools) {
+    final b = StringBuffer();
+    b.writeln('=== [راهنمای فراخوانی ابزارهای ریتمو در پل وب] ===');
+    b.writeln(
+        'برای اجرای هر یک از ابزارهای زیر، درخواست خود را در تگ استاندارد <tool_call> با فرمت JSON زیر بفرست:');
+    b.writeln('<tool_call>');
+    b.writeln('{"name": "tool_name", "parameters": {"param1": "value1"}}');
+    b.writeln('</tool_call>');
+    b.writeln('قوانین حیاتی:');
+    b.writeln('۱) پس از بستن تگ </tool_call> متن اضافی دیگری ننویس تا ابزار بلافاصله اجرا شود.');
+    b.writeln('۲) نتیجه اجرای ابزار در نوبت بعدی به صورت خودکار برایت ارسال خواهد شد.');
+    b.writeln('۳) فهرست ابزارهای مجاز:');
+    for (final t in tools) {
+      b.writeln(t.toCompactPromptDescription());
+    }
+    return b.toString();
+  }
+
   /// پاسخ اضطراری و قطعی، ساخته‌شده تنها از خلاصه ابزارهای موفق.
   static String fallbackAnswerFromResults(List<AgentToolResult> results) {
     final ok = results.where((r) => r.isSuccess).toList();

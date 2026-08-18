@@ -41,6 +41,21 @@ enum SettingVisibility {
 }
 
 @immutable
+class SettingCondition {
+  final String key;
+  final Object? expectedValue; // اگر null باشد یعنی باید والد true باشد
+
+  const SettingCondition(this.key, [this.expectedValue]);
+
+  bool isSatisfied(Object? actualValue) {
+    if (expectedValue == null) {
+      return actualValue == true || actualValue == 'true';
+    }
+    return actualValue == expectedValue || actualValue == expectedValue.toString();
+  }
+}
+
+@immutable
 class SettingDescriptor {
   const SettingDescriptor({
     required this.key,
@@ -83,13 +98,20 @@ class SettingDescriptor {
   final bool aiWritable;
   final List<String> searchTerms;
   final SettingVisibility visibility;
-  final String? dependsOn;
+  final SettingCondition? dependsOn;
   final bool affectsAgenda;
   final bool requiresRestart;
   final IconData? icon;
   final String? unitFa;
   final Map<String, String>? optionLabelsFa;
   final List<String> searchTermsEn;
+
+  bool isEnabled(Map<String, dynamic> currentSettings) {
+    final c = dependsOn;
+    if (c == null) return true;
+    final parentVal = currentSettings[c.key];
+    return c.isSatisfied(parentVal);
+  }
 }
 
 class SettingsRegistry {
@@ -389,7 +411,7 @@ class SettingsRegistry {
       defaultValue: '00:00',
       labelFa: 'شروع ساعات سکوت',
       group: SettingsGroup.notifications,
-      dependsOn: 'notif_quiet_enabled',
+      dependsOn: SettingCondition('notif_quiet_enabled'),
       descriptionFa: 'زمان آغاز عدم ارسال اعلان‌های غیراضطراری',
       searchTerms: ['شروع سکوت', 'زمان سکوت'],
     ),
@@ -400,7 +422,7 @@ class SettingsRegistry {
       defaultValue: '07:00',
       labelFa: 'پایان ساعات سکوت',
       group: SettingsGroup.notifications,
-      dependsOn: 'notif_quiet_enabled',
+      dependsOn: SettingCondition('notif_quiet_enabled'),
       descriptionFa: 'زمان پایان سکوت و شروع مجدد اعلان‌ها',
       searchTerms: ['پایان سکوت', 'صبح'],
     ),
@@ -411,7 +433,7 @@ class SettingsRegistry {
       defaultValue: true,
       labelFa: 'اعلان دائمی وضعیت',
       group: SettingsGroup.notifications,
-      dependsOn: 'notif_master_enabled',
+      dependsOn: SettingCondition('notif_master_enabled'),
       descriptionFa: 'نمایش ویجت زندهٔ وظیفه جاری در نوار اعلان‌ها',
       searchTerms: ['اعلان دائم', 'استاتوس', 'نوار وضعیت'],
     ),
@@ -422,7 +444,7 @@ class SettingsRegistry {
       defaultValue: 'standard',
       labelFa: 'حالت خلاصه اعلان',
       group: SettingsGroup.notifications,
-      dependsOn: 'notif_master_enabled',
+      dependsOn: SettingCondition('notif_master_enabled'),
       allowed: ['standard', 'concise', 'grouped'],
       descriptionFa: 'نحوهٔ نمایش دسته‌ای پیام‌ها و یادآوری‌ها',
       searchTerms: ['خلاصه', 'دایجست', 'تجمیع پیام'],
@@ -434,7 +456,7 @@ class SettingsRegistry {
       defaultValue: 15,
       labelFa: 'بازهٔ تجمیع اعلان‌ها',
       group: SettingsGroup.notifications,
-      dependsOn: 'notif_master_enabled',
+      dependsOn: SettingCondition('notif_master_enabled'),
       min: 1,
       max: 60,
       descriptionFa: 'فاصله زمانی ادغام اعلان‌های نزدیک به هم (دقیقه)',
@@ -447,7 +469,7 @@ class SettingsRegistry {
       defaultValue: 3,
       labelFa: 'سقف اعلان‌های غیراضطراری در ساعت',
       group: SettingsGroup.notifications,
-      dependsOn: 'notif_master_enabled',
+      dependsOn: SettingCondition('notif_master_enabled'),
       min: 1,
       max: 20,
       descriptionFa: 'حداکثر پیام‌های غیربحرانی در هر ۶۰ دقیقه',
@@ -460,7 +482,7 @@ class SettingsRegistry {
       defaultValue: 10,
       labelFa: 'زمان تعویق پیش‌فرض (دقیقه)',
       group: SettingsGroup.notifications,
-      dependsOn: 'notif_master_enabled',
+      dependsOn: SettingCondition('notif_master_enabled'),
       min: 1,
       max: 120,
       descriptionFa: 'فاصلهٔ زمانی تا یادآوری مجدد بعد از اسنوز',
@@ -473,7 +495,7 @@ class SettingsRegistry {
       defaultValue: 3,
       labelFa: 'حداکثر دفعات تعویق مجاز',
       group: SettingsGroup.notifications,
-      dependsOn: 'notif_master_enabled',
+      dependsOn: SettingCondition('notif_master_enabled'),
       min: 0,
       max: 10,
       descriptionFa: 'تعداد دفعات مجاز برای به تعویق انداختن یک روتین',
@@ -497,7 +519,7 @@ class SettingsRegistry {
       defaultValue: false,
       labelFa: 'قفل اثرانگشت برای اعلان‌های خصوصی',
       group: SettingsGroup.notifications,
-      dependsOn: 'notif_master_enabled',
+      dependsOn: SettingCondition('notif_master_enabled'),
       descriptionFa: 'الزام احراز هویت برای مشاهده متن اعلان‌های محرمانه',
       searchTerms: ['اثرانگشت', 'بیومتریک', 'قفل', 'احراز هویت'],
     ),
@@ -581,6 +603,7 @@ class SettingsRegistry {
       defaultValue: 'zhipu',
       labelFa: 'سرویس‌دهنده هوش مصنوعی',
       group: SettingsGroup.assistant,
+      dependsOn: SettingCondition('ai_mode', 'personal_key'),
       allowed: ['zhipu', 'openrouter', 'cloudflare', 'groq', 'local', 'custom'],
       descriptionFa: 'انتخاب ارائه‌دهنده مدل هوش مصنوعی',
       searchTerms: ['ارائه‌دهنده', 'ژیپو', 'کلودفلر', 'اوپن روتر'],
@@ -592,6 +615,7 @@ class SettingsRegistry {
       defaultValue: '',
       labelFa: 'آدرس سرویس‌دهنده هوش مصنوعی',
       group: SettingsGroup.assistant,
+      dependsOn: SettingCondition('ai_mode', 'personal_key'),
       descriptionFa: 'Endpoint اختصاصی برای ارتباط چت',
       searchTerms: ['آدرس هوش مصنوعی', 'url', 'endpoint'],
     ),
@@ -602,6 +626,7 @@ class SettingsRegistry {
       defaultValue: '',
       labelFa: 'کلید دسترسی هوش مصنوعی',
       group: SettingsGroup.assistant,
+      dependsOn: SettingCondition('ai_mode', 'personal_key'),
       descriptionFa: 'ذخیره رمزنگاری‌شده در حافظه امن دستگاه',
       searchTerms: ['کلید api', 'api key', 'رمز هوش مصنوعی'],
     ),
@@ -644,7 +669,7 @@ class SettingsRegistry {
       defaultValue: true,
       labelFa: 'یادگیری خودکار و ضمنی',
       group: SettingsGroup.assistant,
-      dependsOn: 'ai_memory_enabled',
+      dependsOn: SettingCondition('ai_memory_enabled'),
       descriptionFa: 'استخراج هوشمند الگوی روزمره بدون نیاز به ثبت دستی',
       searchTerms: ['یادگیری خودکار', 'ضمنی', 'عادات'],
     ),
@@ -745,7 +770,7 @@ class SettingsRegistry {
       defaultValue: 7,
       labelFa: 'دورهٔ پشتیبان‌گیری خودکار (روز)',
       group: SettingsGroup.dataBackup,
-      dependsOn: 'auto_backup_enabled',
+      dependsOn: SettingCondition('auto_backup_enabled'),
       min: 1,
       max: 30,
       descriptionFa: 'فاصله زمانی بین هر بار نسخه پشتیبان خودکار',
@@ -792,7 +817,7 @@ class SettingsRegistry {
       defaultValue: false,
       labelFa: 'استفاده از قفل صفحه دستگاه',
       group: SettingsGroup.security,
-      dependsOn: 'app_lock_enabled',
+      dependsOn: SettingCondition('app_lock_enabled'),
       descriptionFa: 'استفاده از الگو، پین یا رمز عبور اصلی گوشی',
       searchTerms: ['قفل گوشی', 'پین سیستم', 'الگو'],
     ),
@@ -803,7 +828,7 @@ class SettingsRegistry {
       defaultValue: false,
       labelFa: 'ورود با اثر انگشت / چهره',
       group: SettingsGroup.security,
-      dependsOn: 'app_lock_enabled',
+      dependsOn: SettingCondition('app_lock_enabled'),
       descriptionFa: 'بازگشایی سریع با حسگرهای بیومتریک گوشی',
       searchTerms: ['اثر انگشت', 'تشخیص چهره', 'بیومتریک'],
     ),
@@ -814,7 +839,7 @@ class SettingsRegistry {
       defaultValue: 300,
       labelFa: 'مهلت قفل خودکار',
       group: SettingsGroup.security,
-      dependsOn: 'app_lock_enabled',
+      dependsOn: SettingCondition('app_lock_enabled'),
       min: -1,
       max: 3600,
       descriptionFa: 'مدت زمان خروج از برنامه تا فعال شدن مجدد قفل (ثانیه؛ ۱- برای هرگز)',
@@ -837,7 +862,7 @@ class SettingsRegistry {
       defaultValue: false,
       labelFa: 'بیومتریک اختصاصی چرخه',
       group: SettingsGroup.security,
-      dependsOn: 'module_cycle_enabled',
+      dependsOn: SettingCondition('module_cycle_enabled'),
       descriptionFa: 'امکان بازگشایی بخش چرخه با اثر انگشت',
       searchTerms: ['اثر انگشت چرخه', 'بیومتریک چرخه'],
     ),
@@ -869,7 +894,7 @@ class SettingsRegistry {
       defaultValue: false,
       labelFa: 'یادآور «برنامهٔ امروزت را بچین»',
       group: SettingsGroup.notifications,
-      dependsOn: 'notif_master_enabled',
+      dependsOn: SettingCondition('notif_master_enabled'),
       descriptionFa: 'ارسال اعلان یادآوری روزانه برای مرور کارهای امروز',
       searchTerms: ['یادآور روزانه', 'برنامه‌ریزی روزانه', 'اعلان'],
     ),
@@ -880,7 +905,7 @@ class SettingsRegistry {
       defaultValue: '08:30',
       labelFa: 'ساعت یادآور روزانه',
       group: SettingsGroup.notifications,
-      dependsOn: 'daily_planning_nudge_enabled',
+      dependsOn: SettingCondition('daily_planning_nudge_enabled'),
       descriptionFa: 'زمان ارسال اعلان یادآوری روزانه',
       searchTerms: ['ساعت یادآور', 'زمان برنامه'],
     ),

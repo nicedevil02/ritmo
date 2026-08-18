@@ -187,7 +187,8 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
         final auth = LocalAuthentication();
         final authenticated = await auth.authenticate(
           localizedReason: 'لطفاً برای فعال‌سازی قفل بیومتریک، هویت خود را تایید کنید',
-          options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
+          biometricOnly: true,
+          persistAcrossBackgrounding: true,
         );
         if (!authenticated) {
           if (mounted) {
@@ -220,7 +221,8 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
         final auth = LocalAuthentication();
         final authenticated = await auth.authenticate(
           localizedReason: 'لطفاً برای فعال‌سازی قفل بیومتریک چرخه، هویت خود را تایید کنید',
-          options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
+          biometricOnly: true,
+          persistAcrossBackgrounding: true,
         );
         if (!authenticated) {
           if (mounted) {

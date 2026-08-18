@@ -3,6 +3,7 @@ import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -211,17 +212,7 @@ String calculateRecurrenceLabel(List<DateTime> dates, int daysInBucket) {
   // Check if all dates share the same weekday
   final firstWd = jalaliDates.first.weekDay;
   if (jalaliDates.every((j) => j.weekDay == firstWd)) {
-    const weekdayPlurals = [
-      'شنبه‌ها',
-      'یک‌شنبه‌ها',
-      'دوشنبه‌ها',
-      'سه‌شنبه‌ها',
-      'چهارشنبه‌ها',
-      'پنج‌شنبه‌ها',
-      'جمعه‌ها'
-    ];
-    final idx = (firstWd - 1).clamp(0, 6);
-    return weekdayPlurals[idx];
+    return ShamsiWeek.pluralOf(firstWd);
   }
 
   return '${toPersianDigits(n)} روز از ${toPersianDigits(m)}';
@@ -322,12 +313,9 @@ String daySubGroupLabel(String dateStr) {
   final date = DateKey.parse(dateStr);
   if (date == null) {
     RitmoLog.error('AgendaBucketing', 'Invalid dateStr for subGroup label: $dateStr');
-    return dateStr;
+    return toPersianDigits(dateStr);
   }
   final j = Jalali.fromDateTime(date);
-  const weekdays = ['شنبه', 'یک‌شنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
-  // Jalali weekday: 1=Saturday, 7=Friday
-  final wdLabel = weekdays[(j.weekDay - 1).clamp(0, 6)];
-  return '$wdLabel ${j.day} ${j.formatter.mN}';
+  return '${ShamsiWeek.nameOf(j.weekDay)} ${toPersianDigits(j.day)} ${j.formatter.mN}';
 }
 

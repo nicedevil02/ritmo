@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// SecureKeyStore uses Keystore/Keychain via FlutterSecureStorage for sensitive API keys,
@@ -25,8 +25,8 @@ class SecureKeyStore {
       if (value != null && value.isNotEmpty) {
         return value;
       }
-    } catch (e) {
-      debugPrint('[SecureKeyStore] SecureStorage read error for $keyName: $e');
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در خواندن کلید امن $keyName', e, st);
     }
 
     // Fallback & Auto-Migration from legacy SQLite app_settings
@@ -74,8 +74,8 @@ class SecureKeyStore {
           );
         }
       } catch (_) {}
-    } catch (e) {
-      debugPrint('[SecureKeyStore] SecureStorage write error for $keyName: $e');
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در نوشتن کلید امن $keyName', e, st);
     }
   }
 
@@ -95,10 +95,26 @@ class SecureKeyStore {
           );
         }
       } catch (_) {}
-    } catch (e) {
-      debugPrint(
-        '[SecureKeyStore] SecureStorage delete error for $keyName: $e',
-      );
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در حذف کلید امن $keyName', e, st);
+    }
+  }
+
+  static Future<void> clearAll([DatabaseExecutor? dbExecutor]) async {
+    try {
+      await _storage.deleteAll();
+      try {
+        final db = _resolveDb(dbExecutor);
+        if (db != null) {
+          await db.delete(
+            'app_settings',
+            where: 'key IN (?, ?, ?)',
+            whereArgs: ['ai_api_key', 'app_lock_password', 'cycle_lock_password'],
+          );
+        }
+      } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در پاک‌سازی کامل مخزن امن', e, st);
     }
   }
 }

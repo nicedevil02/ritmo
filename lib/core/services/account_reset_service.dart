@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/seed/seed_service.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/services/premium_service.dart';
+import 'package:ritmo/core/services/secure_key_store.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Full transactional account and user data reset service.
@@ -79,9 +80,15 @@ class AccountResetService {
 
     // 6. Clear Secure Storage (PIN, backup passcodes, tokens)
     try {
-      const storage = FlutterSecureStorage();
-      await storage.deleteAll();
-    } catch (_) {}
+      await SecureKeyStore.clearAll();
+    } catch (e, st) {
+      RitmoLog.error(
+        'AccountResetService',
+        'Error clearing SecureKeyStore',
+        e,
+        st,
+      );
+    }
 
     // Restore premium status if backup exists
     if (premiumBackup != null && premiumBackup.isNotEmpty) {
@@ -110,7 +117,19 @@ class AccountResetService {
       );
     }
 
-    // 8. Re-load premium state
+    // 8. Re-initialize SettingsService in-memory cache to clean state
+    try {
+      await SettingsService.instance.init();
+    } catch (e, st) {
+      RitmoLog.error(
+        'AccountResetService',
+        'Error re-initializing SettingsService after wipe',
+        e,
+        st,
+      );
+    }
+
+    // 9. Re-load premium state
     try {
       await PremiumService.instance.loadEntitlement();
     } catch (e) {

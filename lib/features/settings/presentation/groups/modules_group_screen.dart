@@ -101,13 +101,36 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: colors.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'خاموش کردن ماژول',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: colors.medicalRed, size: 24),
+            const SizedBox(width: 8),
+            Text(
+              'خاموش کردن ماژول',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+            ),
+          ],
         ),
-        content: Text(
-          'با خاموش کردن ماژول «$title»، تمامی دیتاهای محلی آن (مثل یادآورها، گزارش‌ها و ...) حذف می‌شوند. آیا ادامه می‌دهید؟',
-          style: TextStyle(fontSize: 13, color: colors.textSecondary, height: 1.4),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text.rich(
+              TextSpan(
+                style: TextStyle(fontSize: 13, color: colors.textSecondary, height: 1.5),
+                children: [
+                  const TextSpan(text: 'با خاموش کردن ماژول '),
+                  TextSpan(
+                    text: '«$title»',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary),
+                  ),
+                  const TextSpan(
+                    text: '، تمامی سوابق محلی، یادآورها، روتین‌های متصل و گزارش‌های مرتبط با آن متوقف و حذف می‌شوند.\n\nآیا از انجام این عملیات اطمینان دارید؟',
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -116,7 +139,7 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('خاموش کن', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
+            child: Text('غیرفعال‌سازی و پاک‌سازی', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -128,37 +151,62 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
   Future<void> _confirmAndResetModule(String key, String title) async {
     final colors = context.colors;
 
-    await showDialog<void>(
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colors.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'بازنشانی داده‌های ماژول',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+        title: Row(
+          children: [
+            Icon(Icons.delete_forever_rounded, color: colors.medicalRed, size: 24),
+            const SizedBox(width: 8),
+            Text(
+              'بازنشانی داده‌های ماژول',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+            ),
+          ],
         ),
-        content: Text(
-          'آیا از پاک کردن تمام داده‌ها و سوابق ماژول «$title» اطمینان دارید؟ این عمل غیرقابل بازگشت است.',
-          style: TextStyle(fontSize: 13, color: colors.textSecondary, height: 1.4),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text.rich(
+              TextSpan(
+                style: TextStyle(fontSize: 13, color: colors.textSecondary, height: 1.5),
+                children: [
+                  const TextSpan(text: 'آیا از پاک کردن تمام داده‌ها، جدول‌ها و سوابق ماژول '),
+                  TextSpan(
+                    text: '«$title»',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary),
+                  ),
+                  const TextSpan(
+                    text: ' اطمینان دارید؟\n\nاین عمل دائمی و غیرقابل بازگشت است.',
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(ctx, false),
             child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
           ),
           TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await ModuleManagementService.instance.resetModuleData(key);
-              if (mounted) {
-                RitmoToast.show(context, 'داده‌های ماژول «$title» با موفقیت بازنشانی شدند.');
-              }
-            },
-            child: Text('پاک‌سازی داده‌ها', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('حذف و پاک‌سازی داده‌ها', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
+
+    if (confirmed == true) {
+      await ModuleManagementService.instance.resetModuleData(key);
+      if (mounted) {
+        RitmoToast.show(context, 'داده‌های ماژول «$title» با موفقیت پاک‌سازی شدند.');
+        _loadModules();
+      }
+    }
   }
 
   @override

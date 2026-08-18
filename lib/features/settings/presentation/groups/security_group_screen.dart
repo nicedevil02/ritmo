@@ -23,7 +23,6 @@ class SecurityGroupScreen extends StatefulWidget {
 
 class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
   bool _appLockEnabled = false;
-  bool _useDeviceLock = false;
   bool _biometricEnabled = false;
   int _timeoutSeconds = 300;
   bool _hasAppPassword = false;
@@ -39,7 +38,6 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
 
   Future<void> _loadState() async {
     _appLockEnabled = SettingsService.instance.get<bool>('app_lock_enabled');
-    _useDeviceLock = SettingsService.instance.get<bool>('app_use_device_lock');
     _biometricEnabled = SettingsService.instance.get<bool>('app_biometric_enabled');
     _timeoutSeconds = SettingsService.instance.get<int>('app_lock_timeout_seconds');
 

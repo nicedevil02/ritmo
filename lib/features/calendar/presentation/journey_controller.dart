@@ -70,8 +70,13 @@ class JourneyController extends ChangeNotifier {
   String? _previewTimeOfDay;
   int? _previewDurationMinutes;
 
+  DateTime? _windowStart;
+  DateTime? _windowEnd;
+
   DateTime get selectedDate => _selectedDate;
   JourneyScale get activeScale => _activeScale;
+  DateTime? get windowStart => _windowStart;
+  DateTime? get windowEnd => _windowEnd;
   bool get isLoading => _isLoading;
   bool get isExecutingAction => _isExecutingAction;
   DayAgendaSnapshot? get snapshot => _snapshot;
@@ -173,7 +178,10 @@ class JourneyController extends ChangeNotifier {
 
     // K21: Agenda scale uses its own dedicated range loader
     if (_activeScale == JourneyScale.agenda) {
-      await loadAgendaRange(anchorDate: _selectedDate);
+      await loadAgendaRange(
+        anchorDate: _selectedDate,
+        isBackgroundRefresh: isBackgroundRefresh,
+      );
       return;
     }
 
@@ -198,6 +206,8 @@ class JourneyController extends ChangeNotifier {
       _rangeSnapshots = newSnapshots;
       final selectedKey = DateKey.of(_selectedDate);
       _snapshot = _rangeSnapshots[selectedKey];
+      _windowStart = range.start;
+      _windowEnd = range.end;
 
       // Cleanup stale highlights or manipulation state if item no longer exists
       if (_snapshot != null) {
@@ -477,11 +487,12 @@ class JourneyController extends ChangeNotifier {
     DateTime? anchorDate,
     int daysBack = agendaWindowDaysBack,
     int daysForward = agendaWindowDaysForward,
+    bool isBackgroundRefresh = false,
   }) async {
     if (_isDisposed) return;
     final gen = ++_loadGeneration;
 
-    if (_snapshot == null) {
+    if (!isBackgroundRefresh && _snapshot == null) {
       _isLoading = true;
     }
     _errorMessage = null;
@@ -505,6 +516,8 @@ class JourneyController extends ChangeNotifier {
       final selectedKey = DateKey.of(_selectedDate);
       _snapshot = _rangeSnapshots[selectedKey] ??
           _snapshotBuilder.buildSnapshot(DayAgenda(dateStr: selectedKey, items: const []));
+      _windowStart = start;
+      _windowEnd = end;
       sw.stop();
       RitmoLog.debug('JourneyController', 'loadAgendaRange: ${sw.elapsedMilliseconds}ms');
       _errorMessage = null; // clear stale error on successful load

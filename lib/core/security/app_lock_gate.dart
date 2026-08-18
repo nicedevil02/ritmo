@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
-import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:flutter/services.dart';
 import 'package:ritmo/core/security/app_lock_service.dart';
+import 'package:ritmo/core/security/pin_hasher.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 class AppLockGate extends StatefulWidget {
   const AppLockGate({super.key, required this.child});
@@ -182,8 +183,8 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
 
   void _onPinKeyTapped(String key) {
     final correctPin = _lockPassword ?? '';
-    final pinLength = correctPin.length;
-    if (_enteredPin.length >= pinLength || pinLength == 0) return;
+    if (correctPin.isEmpty) return;
+    if (_enteredPin.length >= 4) return;
     
     HapticFeedback.lightImpact();
     setState(() {
@@ -191,9 +192,9 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
       _enteredPin += key;
     });
 
-    if (_enteredPin.length == pinLength) {
+    if (_enteredPin.length == 4) {
       Future.delayed(const Duration(milliseconds: 200), () {
-        if (_enteredPin == correctPin) {
+        if (PinHasher.verifyPin(_enteredPin, correctPin)) {
           HapticFeedback.mediumImpact();
           if (mounted) {
             setState(() {

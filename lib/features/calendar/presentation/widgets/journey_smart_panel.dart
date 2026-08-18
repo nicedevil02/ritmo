@@ -16,12 +16,14 @@ class JourneySmartPanel extends StatefulWidget {
     this.onSelectActivity,
     this.onSelectFreeGap,
     this.onSelectConflict,
+    this.onDropItemOnGap,
   });
 
   final DayAgendaSnapshot snapshot;
   final ValueChanged<AgendaItem>? onSelectActivity;
   final ValueChanged<TimeGap>? onSelectFreeGap;
   final ValueChanged<AgendaConflict>? onSelectConflict;
+  final void Function(AgendaItem item, TimeGap gap)? onDropItemOnGap;
 
   static Future<void> showAsBottomSheet(
     BuildContext context, {
@@ -29,6 +31,7 @@ class JourneySmartPanel extends StatefulWidget {
     ValueChanged<AgendaItem>? onSelectActivity,
     ValueChanged<TimeGap>? onSelectFreeGap,
     ValueChanged<AgendaConflict>? onSelectConflict,
+    void Function(AgendaItem item, TimeGap gap)? onDropItemOnGap,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -39,6 +42,7 @@ class JourneySmartPanel extends StatefulWidget {
         onSelectActivity: onSelectActivity,
         onSelectFreeGap: onSelectFreeGap,
         onSelectConflict: onSelectConflict,
+        onDropItemOnGap: onDropItemOnGap,
       ),
     );
   }
@@ -177,6 +181,10 @@ class _JourneySmartPanelState extends State<JourneySmartPanel> with SingleTicker
                       onSelectFreeGap: (gap) {
                         Navigator.maybePop(context);
                         widget.onSelectFreeGap?.call(gap);
+                      },
+                      onDropItemOnGap: (item, gap) {
+                        Navigator.maybePop(context);
+                        widget.onDropItemOnGap?.call(item, gap);
                       },
                     ),
                   ),

@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
 import 'package:ritmo/core/domain/agenda/action_feedback.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
@@ -244,6 +246,10 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
           _controller.setScale(JourneyScale.day);
         }
         _scrollToTimeString(gap.startTimeStr);
+      },
+      onDropItemOnGap: (item, gap) async {
+        final dur = min(gap.durationMinutes, item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes);
+        await _controller.scheduleItem(item, gap.startMinutes, dur);
       },
     ));
   }

@@ -22,6 +22,7 @@ import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
+import 'package:ritmo/features/calendar/presentation/logic/gap_finder.dart';
 import 'package:ritmo/features/calendar/presentation/logic/timeline_snapping.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -72,6 +73,7 @@ class JourneyController extends ChangeNotifier {
   Map<String, DayAgendaSnapshot> _rangeSnapshots = {};
   String? _errorMessage;
   String? _warningMessage;
+  TimeSlot? _suggestedSlot;
   String? _highlightedItemId;
   int? _focusedMinutes;
   String? _manipulatingItemId;
@@ -97,6 +99,7 @@ class JourneyController extends ChangeNotifier {
   Map<String, DayAgendaSnapshot> get rangeSnapshots => _rangeSnapshots;
   String? get errorMessage => _errorMessage;
   String? get warningMessage => _warningMessage;
+  TimeSlot? get suggestedSlot => _suggestedSlot;
   String? get highlightedItemId => _highlightedItemId;
   int? get focusedMinutes => _focusedMinutes;
   String? get manipulatingItemId => _manipulatingItemId;
@@ -449,6 +452,15 @@ class JourneyController extends ChangeNotifier {
     final overlapWarn = _validatePlacement(item: item, startMinutes: snapped, durationMinutes: dur, allowOverlap: false);
     if (overlapWarn != null) {
       _warningMessage = overlapWarn;
+      final gaps = GapFinder.findFreeGaps(
+        _snapshot?.items ?? const <AgendaItem>[],
+        minDurationMinutes: dur,
+        preferredStartMinutes: snapped,
+        excludeItemId: item.id,
+      );
+      _suggestedSlot = gaps.isNotEmpty ? gaps.first : null;
+    } else {
+      _suggestedSlot = null;
     }
 
     final finalTime = TimeOfDayMinutes.format(snapped);
@@ -511,6 +523,15 @@ class JourneyController extends ChangeNotifier {
     final overlapWarn = _validatePlacement(item: item, startMinutes: start, durationMinutes: snappedDur, allowOverlap: false);
     if (overlapWarn != null) {
       _warningMessage = overlapWarn;
+      final gaps = GapFinder.findFreeGaps(
+        _snapshot?.items ?? const <AgendaItem>[],
+        minDurationMinutes: snappedDur,
+        preferredStartMinutes: start,
+        excludeItemId: item.id,
+      );
+      _suggestedSlot = gaps.isNotEmpty ? gaps.first : null;
+    } else {
+      _suggestedSlot = null;
     }
 
     final oldDuration = item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;

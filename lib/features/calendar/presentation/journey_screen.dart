@@ -633,6 +633,55 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                   ),
                 ),
 
+                // ─── Non-blocking Overlap Warning & Smart Gap Suggestion Banner (CAL-43) ───
+                if (_controller.warningMessage != null)
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: colors.warning.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(RitmoRadius.card),
+                      border: Border.all(color: colors.warning.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded, size: 18, color: colors.warning),
+                        const SizedBox(width: RitmoSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            _controller.warningMessage!,
+                            style: TextStyle(fontSize: 12, color: colors.textPrimary),
+                          ),
+                        ),
+                        if (_controller.suggestedSlot != null) ...[
+                          const SizedBox(width: RitmoSpacing.sm),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () {
+                              final slot = _controller.suggestedSlot!;
+                              final formattedTime = TimeOfDayMinutes.format(slot.startMinutes);
+                              final targetItem = _controller.snapshot?.items.firstWhere(
+                                (i) => i.isTimed,
+                                orElse: () => _controller.snapshot!.items.first,
+                              );
+                              if (targetItem != null) {
+                                _controller.commitItemDrag(targetItem, formattedTime);
+                              }
+                            },
+                            child: Text(
+                              'انتقال به ${toPersianDigits(TimeOfDayMinutes.format(_controller.suggestedSlot!.startMinutes))}',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colors.primary),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
                 // ─── Main Content Viewport with Pull-to-Refresh & Swipe Gestures ───
                 Expanded(
                   child: RefreshIndicator(

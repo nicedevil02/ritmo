@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 
@@ -66,7 +67,12 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
     final colors = context.colors;
     final q = query.trim().toLowerCase();
 
+    final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
+
     final results = SettingsRegistry.all.where((desc) {
+      if (desc.visibility == SettingVisibility.internal) return false;
+      if (desc.visibility == SettingVisibility.advanced && !showAdvanced) return false;
+
       if (q.isEmpty) return true;
       if (desc.labelFa.toLowerCase().contains(q)) return true;
       if (desc.descriptionFa != null && desc.descriptionFa!.toLowerCase().contains(q)) return true;

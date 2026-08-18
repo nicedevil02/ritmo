@@ -244,14 +244,24 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
       requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
       onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
-      trailing: CupertinoSwitch(
-        value: value,
-        activeTrackColor: colors.primary,
-        onChanged: isEnabled
-            ? (newVal) async {
-                await SettingField.executeWrite(context, desc.key, newVal);
-              }
-            : null,
+      trailing: Semantics(
+        label: desc.labelFa,
+        toggled: value,
+        child: SizedBox(
+          width: 51,
+          height: 44,
+          child: Center(
+            child: CupertinoSwitch(
+              value: value,
+              activeTrackColor: colors.primary,
+              onChanged: isEnabled
+                  ? (newVal) async {
+                      await SettingField.executeWrite(context, desc.key, newVal);
+                    }
+                  : null,
+            ),
+          ),
+        ),
       ),
       onTap: isEnabled
           ? () async {
@@ -288,20 +298,24 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
       requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
       onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            displayVal,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: colors.primary,
+      trailing: Semantics(
+        label: '${desc.labelFa}، گزینه فعلی: $displayVal',
+        button: true,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              displayVal,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: colors.primary,
+              ),
             ),
-          ),
-          const SizedBox(width: 6),
-          Icon(CupertinoIcons.chevron_back, size: 14, color: colors.textTertiary),
-        ],
+            const SizedBox(width: 6),
+            Icon(CupertinoIcons.chevron_back, size: 14, color: colors.textTertiary),
+          ],
+        ),
       ),
       onTap: isEnabled
           ? () async {
@@ -372,14 +386,21 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.minus_circle, size: 22),
-            color: value > min ? colors.primary : colors.textTertiary,
-            onPressed: isEnabled && value > min
-                ? () async {
-                    await SettingField.executeWrite(context, desc.key, value - 1);
-                  }
-                : null,
+          Semantics(
+            label: 'کاهش مقدار ${desc.labelFa}',
+            button: true,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              child: IconButton(
+                icon: const Icon(CupertinoIcons.minus_circle, size: 22),
+                color: value > min ? colors.primary : colors.textTertiary,
+                onPressed: isEnabled && value > min
+                    ? () async {
+                        await SettingField.executeWrite(context, desc.key, value - 1);
+                      }
+                    : null,
+              ),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -392,14 +413,21 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(CupertinoIcons.plus_circle, size: 22),
-            color: value < max ? colors.primary : colors.textTertiary,
-            onPressed: isEnabled && value < max
-                ? () async {
-                    await SettingField.executeWrite(context, desc.key, value + 1);
-                  }
-                : null,
+          Semantics(
+            label: 'افزایش مقدار ${desc.labelFa}',
+            button: true,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              child: IconButton(
+                icon: const Icon(CupertinoIcons.plus_circle, size: 22),
+                color: value < max ? colors.primary : colors.textTertiary,
+                onPressed: isEnabled && value < max
+                    ? () async {
+                        await SettingField.executeWrite(context, desc.key, value + 1);
+                      }
+                    : null,
+              ),
+            ),
           ),
         ],
       ),
@@ -427,23 +455,27 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
       requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
       onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 120),
-            child: Text(
-              value.isEmpty ? 'تنظیم نشده' : value,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                color: value.isEmpty ? colors.textTertiary : colors.textSecondary,
+      trailing: Semantics(
+        label: 'ویرایش مقدار ${desc.labelFa}',
+        button: true,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 120),
+              child: Text(
+                value.isEmpty ? 'تنظیم نشده' : value,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: value.isEmpty ? colors.textTertiary : colors.textSecondary,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 6),
-          Icon(CupertinoIcons.chevron_back, size: 14, color: colors.textTertiary),
-        ],
+            const SizedBox(width: 6),
+            Icon(CupertinoIcons.chevron_back, size: 14, color: colors.textTertiary),
+          ],
+        ),
       ),
       onTap: isEnabled
           ? () async {
@@ -509,20 +541,24 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
       requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
       onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
       onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            toPersianDigits(value),
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: colors.primary,
+      trailing: Semantics(
+        label: 'تنظیم زمان ${desc.labelFa}، مقدار فعلی: ${toPersianDigits(value)}',
+        button: true,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              toPersianDigits(value),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: colors.primary,
+              ),
             ),
-          ),
-          const SizedBox(width: 6),
-          Icon(CupertinoIcons.chevron_back, size: 14, color: colors.textTertiary),
-        ],
+            const SizedBox(width: 6),
+            Icon(CupertinoIcons.chevron_back, size: 14, color: colors.textTertiary),
+          ],
+        ),
       ),
       onTap: isEnabled
           ? () async {

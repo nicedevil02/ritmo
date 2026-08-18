@@ -50,21 +50,31 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
   List<Widget>? buildActions(BuildContext context) {
     return [
       if (query.isNotEmpty)
-        IconButton(
-          icon: const Icon(CupertinoIcons.clear),
-          onPressed: () {
-            query = '';
-            showSuggestions(context);
-          },
+        Semantics(
+          label: 'پاک کردن متن جستجو',
+          button: true,
+          child: IconButton(
+            icon: const Icon(CupertinoIcons.clear),
+            tooltip: 'پاک کردن جستجو',
+            onPressed: () {
+              query = '';
+              showSuggestions(context);
+            },
+          ),
         ),
     ];
   }
 
   @override
   Widget? buildLeading(BuildContext context) {
-    return IconButton(
-      icon: const Icon(CupertinoIcons.back),
-      onPressed: () => close(context, null),
+    return Semantics(
+      label: 'بازگشت از جستجو',
+      button: true,
+      child: IconButton(
+        icon: const Icon(CupertinoIcons.back),
+        tooltip: 'بازگشت',
+        onPressed: () => close(context, null),
+      ),
     );
   }
 

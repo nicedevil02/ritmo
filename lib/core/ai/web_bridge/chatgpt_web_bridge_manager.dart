@@ -278,12 +278,13 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   }
 
   Future<void> _attemptResumePendingRequest(WebViewController controller) async {
-    RitmoLog.debug('ChatGptWebBridge', 'Attempting re-attachment / resume after navigation...');
+    RitmoLog.debug('ChatGptWebBridge', 'Attempting re-attachment / resume after navigation for req: ${_pendingRequest?.requestId}...');
     await Future.delayed(const Duration(milliseconds: 300));
     try {
+      final payload = jsonEncode(_pendingRequest?.toJson() ?? {});
       await controller.runJavaScript('''
 if (typeof window.__ritmo_resume === 'function') {
-  window.__ritmo_resume({});
+  window.__ritmo_resume($payload);
 }
 ''');
     } catch (e, st) {
@@ -447,6 +448,22 @@ if (typeof window.__ritmo_resume === 'function') {
           }
           break;
 
+        case 'resumed':
+          RitmoLog.debug(
+            'ChatGptWebBridge',
+            'Streaming resumed after navigation for reqId: $reqId (stage: ${readString('stage')})',
+          );
+          _pendingRequest?.stage = PendingRequestStage.streaming;
+          break;
+
+        case 'resend_required':
+          RitmoLog.debug(
+            'ChatGptWebBridge',
+            'Resend required event received for reqId: $reqId',
+          );
+          _handleResendRequired();
+          break;
+
         case 'chunk':
           final full = readString('fullText');
           final delta = readString('delta');
@@ -468,6 +485,13 @@ if (typeof window.__ritmo_resume === 'function') {
     } catch (e, st) {
       RitmoLog.error('ChatGptWebBridge', 'Error parsing JS message: $e', e, st);
     }
+  }
+
+  @visibleForTesting
+  void handleResendRequiredForTest() => _handleResendRequired();
+
+  void _handleResendRequired() {
+    RitmoLog.debug('ChatGptWebBridge', '_handleResendRequired called for ${_pendingRequest?.requestId}');
   }
 
   static final _noisePrefixRegex = RegExp(

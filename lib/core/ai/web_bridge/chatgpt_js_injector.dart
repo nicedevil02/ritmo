@@ -525,6 +525,57 @@ $_bridgeScriptBody''';
     }
   };
 
+  // --- 6. Resume After Navigation Implementation ---
+  window.__ritmo_resume = function(payload) {
+    try {
+      payload = payload || {};
+      var reqId = payload.requestId || '';
+      var promptPrefix = payload.promptPrefix || '';
+      var stage = payload.stage || 'sending';
+      var receivedLength = payload.receivedLength || 0;
+
+      console.log('[Ritmo] __ritmo_resume invoked for reqId: ' + reqId + ' (stage: ' + stage + ', received: ' + receivedLength + ')');
+
+      var stopButton = document.querySelector(
+        'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button'
+      );
+      var isStreamingClass = document.querySelector('.result-streaming, .streaming');
+      var isCurrentlyGenerating = !!stopButton || !!isStreamingClass;
+
+      var currentText = findLatestAssistantText();
+
+      if (isCurrentlyGenerating) {
+        notifyFlutter('resumed', { stage: 'streaming', requestId: reqId, source: 'dom' });
+        window.__ritmo_startStreamingWatcher('', reqId);
+        return;
+      }
+
+      if (currentText && currentText.length > 0) {
+        if (currentText.length >= receivedLength) {
+          notifyFlutter('resumed', { stage: 'done', requestId: reqId, source: 'dom' });
+          notifyFlutter('done', { fullText: currentText, requestId: reqId, source: 'dom' });
+          return;
+        } else {
+          notifyFlutter('resumed', { stage: 'streaming', requestId: reqId, source: 'dom' });
+          window.__ritmo_startStreamingWatcher('', reqId);
+          return;
+        }
+      }
+
+      if (stage === 'awaitingFirstToken' && isCurrentlyGenerating) {
+        notifyFlutter('resumed', { stage: 'awaitingFirstToken', requestId: reqId, source: 'dom' });
+        window.__ritmo_startStreamingWatcher('', reqId);
+        return;
+      }
+
+      console.warn('[Ritmo] No generated response found in DOM after navigation; requesting resend.');
+      notifyFlutter('resend_required', { requestId: reqId, source: 'dom' });
+    } catch (e) {
+      console.error('[Ritmo] Error in __ritmo_resume: ' + e);
+      notifyFlutter('error', { message: 'خطا در بازیابی پاسخ پس از جابجایی صفحه: ' + e.toString(), requestId: payload && payload.requestId, source: 'dom' });
+    }
+  };
+
   var challengedAtBoot = checkCloudflareStatus();
   autoDismissCookiesAndModals();
   autoCloseSidebar();

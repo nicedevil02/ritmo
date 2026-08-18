@@ -7,7 +7,7 @@
 | SET-03 | اعتبارسنجی خودِ رجیستری در زمان ساخت | A | DONE | `fix(settings): SET-03 — اعتبارسنجی ساختاری توصیفگرها` | |
 | SET-04 | پاک‌سازی فهرست allowed تنظیم user_gender | A | DONE | `fix(settings): SET-04 — حذف گزینه‌های تکراری جنسیت` | |
 | SET-05 | اصلاح پیش‌فرض خطرناک onboarding_completed | A | DONE | `fix(settings): SET-05 — پیش‌فرض onboarding_completed به false` | |
-| SET-06 | حد بالا و پایین برای calendar_overdue_lookback_days | A | TODO | | |
+| SET-06 | حد بالا و پایین برای calendar_overdue_lookback_days | A | DONE | `fix(settings): SET-06 — کران‌گذاری بازهٔ معوقه` | |
 | SET-07 | مستندسازی مقدار نگهبان -1 در مهلت قفل | A | TODO | | |
 | SET-08 | علامت‌گذاری صریح تنظیمات داخلی | A | TODO | | |
 | SET-09 | علامت‌گذاری affectsAgenda و dependsOn | A | TODO | | |

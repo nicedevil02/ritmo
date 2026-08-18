@@ -24,6 +24,7 @@ import 'package:ritmo/features/cycle/logic/cycle_personal_pattern_engine.dart';
 import 'package:ritmo/features/cycle/logic/cycle_reminder_scheduler.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/logic/cycle_state_provider.dart';
+import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart';
@@ -40,6 +41,7 @@ import 'package:ritmo/features/cycle/presentation/widgets/cycle_log_today_sheet.
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_overview_tab.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_personal_forecast_card.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_prediction_confidence_card.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_prediction_detail_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_pregnancy_mode.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_settings_panel.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_sos_section.dart';
@@ -137,15 +139,20 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           todayIso: todayStr,
         );
 
+        final firstForecast = _engineOutput!.forecast.firstOrNull;
         final confLevel =
-            _periods.length >= 5 && !_dataQualityReport!.hasForgottenOpenPeriod
-            ? PredictionConfidenceLevel.high
-            : (_periods.length >= 2
-                  ? PredictionConfidenceLevel.medium
-                  : PredictionConfidenceLevel.low);
-        final confScore = _periods.length >= 5
-            ? 0.90
-            : (_periods.length >= 2 ? 0.65 : 0.35);
+            firstForecast?.confidenceLevel ??
+            (_periods.length >= 5 && !_dataQualityReport!.hasForgottenOpenPeriod
+                ? PredictionConfidenceLevel.high
+                : (_periods.length >= 3
+                      ? PredictionConfidenceLevel.medium
+                      : PredictionConfidenceLevel.low));
+        final confScore =
+            firstForecast?.confidence ??
+            (_periods.length >= 5
+                ? 0.90
+                : (_periods.length >= 3 ? 0.65 : 0.35));
+
         _predictionConfidence = PredictionConfidence(
           level: confLevel,
           score: confScore,
@@ -153,7 +160,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               (_dataQualityReport!.warningsFa != null &&
                   _dataQualityReport!.warningsFa!.isNotEmpty)
               ? _dataQualityReport!.warningsFa!
-              : ['${_periods.length} چرخه ثبت‌شده و الگوی نسبتاً پایدار'],
+              : ['${_periods.length} چرخه ثبت‌شده و تحلیل آماری الگوها'],
         );
 
         _personalForecasts =
@@ -589,15 +596,49 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               calendarMonth: _calendarMonth,
                               onMonthChanged: (m) async {
                                 setState(() => _calendarMonth = m);
-                                final lastDayOfMonth = Jalali(m.year, m.month, m.monthLength).toDateTime();
-                                await CycleStateNotifier.instance.ensureHorizonCovers(lastDayOfMonth);
+                                final lastDayOfMonth = Jalali(
+                                  m.year,
+                                  m.month,
+                                  m.monthLength,
+                                ).toDateTime();
+                                await CycleStateNotifier.instance
+                                    .ensureHorizonCovers(lastDayOfMonth);
                               },
                               periods: _periods,
                               dayLogs: _dayLogs,
                               engineOutput: _engineOutput,
                               settings: _settings,
                               activePhaseColor: _getActivePhaseColor(context),
-                              onDayTapped: _openLogTodaySheet,
+                              onDayTapped: (day, mark) {
+                                if (mark.kind == CycleDayKind.predictedPeriod ||
+                                    mark.kind ==
+                                        CycleDayKind.predictionWindow ||
+                                    mark.kind == CycleDayKind.ovulation ||
+                                    mark.kind == CycleDayKind.fertileWindow ||
+                                    mark.kind == CycleDayKind.pms) {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (ctx) =>
+                                        CyclePredictionDetailSheet(
+                                          selectedDate: day,
+                                          mark: mark,
+                                          engineOutput: _engineOutput,
+                                          symptomForecasts: _personalForecasts,
+                                          onRecordPeriodFromDate: (d) =>
+                                              _openAddEditPeriodSheet({
+                                                'startDate':
+                                                    CycleDateContract.toDayKey(
+                                                      d,
+                                                    ),
+                                              }),
+                                        ),
+                                  );
+                                } else {
+                                  _openLogTodaySheet(day);
+                                }
+                              },
                             ),
                             const SizedBox(height: 16),
                             CycleHistoryList(

@@ -2185,6 +2185,96 @@ abstract class AppLocalizations {
   /// In fa, this message translates to:
   /// **'همواره طبق تجویز و صلاحدید پزشک خود دارو را مصرف کنید.'**
   String get medicationDisclaimers;
+
+  /// No description provided for @cycleCalendarGuide.
+  ///
+  /// In fa, this message translates to:
+  /// **'راهنمای تقویم چرخه بدنی:'**
+  String get cycleCalendarGuide;
+
+  /// No description provided for @cyclePeriodRecorded.
+  ///
+  /// In fa, this message translates to:
+  /// **'قاعدگی (ثبت‌شده)'**
+  String get cyclePeriodRecorded;
+
+  /// No description provided for @cyclePeriodPredicted.
+  ///
+  /// In fa, this message translates to:
+  /// **'دوره پیش‌بینی‌شده'**
+  String get cyclePeriodPredicted;
+
+  /// No description provided for @cyclePredictionWindow.
+  ///
+  /// In fa, this message translates to:
+  /// **'بازه احتمالی جابجایی'**
+  String get cyclePredictionWindow;
+
+  /// No description provided for @cycleLowConfidence.
+  ///
+  /// In fa, this message translates to:
+  /// **'پیش‌بینی با اطمینان کم'**
+  String get cycleLowConfidence;
+
+  /// No description provided for @cyclePmsDays.
+  ///
+  /// In fa, this message translates to:
+  /// **'روزهای پیش از عادت (PMS)'**
+  String get cyclePmsDays;
+
+  /// No description provided for @cycleOvulationDay.
+  ///
+  /// In fa, this message translates to:
+  /// **'روز تخمک‌گذاری'**
+  String get cycleOvulationDay;
+
+  /// No description provided for @cycleFertileWindow.
+  ///
+  /// In fa, this message translates to:
+  /// **'پنجره باروری (Fertile)'**
+  String get cycleFertileWindow;
+
+  /// No description provided for @cycleToday.
+  ///
+  /// In fa, this message translates to:
+  /// **'امروز'**
+  String get cycleToday;
+
+  /// No description provided for @cycleLoggedSymptoms.
+  ///
+  /// In fa, this message translates to:
+  /// **'علائم ثبت شده'**
+  String get cycleLoggedSymptoms;
+
+  /// No description provided for @cycleJumpToNext.
+  ///
+  /// In fa, this message translates to:
+  /// **'پرش به دوره بعد'**
+  String get cycleJumpToNext;
+
+  /// No description provided for @cycleCurrentMonth.
+  ///
+  /// In fa, this message translates to:
+  /// **'ماه جاری'**
+  String get cycleCurrentMonth;
+
+  /// No description provided for @cycleConfidenceHigh.
+  ///
+  /// In fa, this message translates to:
+  /// **'اطمینان بالا'**
+  String get cycleConfidenceHigh;
+
+  /// No description provided for @cycleConfidenceMedium.
+  ///
+  /// In fa, this message translates to:
+  /// **'اطمینان متوسط'**
+  String get cycleConfidenceMedium;
+
+  /// No description provided for @cycleConfidenceLow.
+  ///
+  /// In fa, this message translates to:
+  /// **'اطمینان کم'**
+  String get cycleConfidenceLow;
 }
 
 class _AppLocalizationsDelegate

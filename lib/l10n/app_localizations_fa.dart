@@ -1177,4 +1177,49 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get medicationDisclaimers =>
       'همواره طبق تجویز و صلاحدید پزشک خود دارو را مصرف کنید.';
+
+  @override
+  String get cycleCalendarGuide => 'راهنمای تقویم چرخه بدنی:';
+
+  @override
+  String get cyclePeriodRecorded => 'قاعدگی (ثبت‌شده)';
+
+  @override
+  String get cyclePeriodPredicted => 'دوره پیش‌بینی‌شده';
+
+  @override
+  String get cyclePredictionWindow => 'بازه احتمالی جابجایی';
+
+  @override
+  String get cycleLowConfidence => 'پیش‌بینی با اطمینان کم';
+
+  @override
+  String get cyclePmsDays => 'روزهای پیش از عادت (PMS)';
+
+  @override
+  String get cycleOvulationDay => 'روز تخمک‌گذاری';
+
+  @override
+  String get cycleFertileWindow => 'پنجره باروری (Fertile)';
+
+  @override
+  String get cycleToday => 'امروز';
+
+  @override
+  String get cycleLoggedSymptoms => 'علائم ثبت شده';
+
+  @override
+  String get cycleJumpToNext => 'پرش به دوره بعد';
+
+  @override
+  String get cycleCurrentMonth => 'ماه جاری';
+
+  @override
+  String get cycleConfidenceHigh => 'اطمینان بالا';
+
+  @override
+  String get cycleConfidenceMedium => 'اطمینان متوسط';
+
+  @override
+  String get cycleConfidenceLow => 'اطمینان کم';
 }

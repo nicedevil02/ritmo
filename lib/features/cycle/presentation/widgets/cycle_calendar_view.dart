@@ -14,6 +14,8 @@ import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_calendar_grid.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_calendar_legend.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_empty_state_banner.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class CycleCalendarView extends StatefulWidget {
@@ -36,7 +38,7 @@ class CycleCalendarView extends StatefulWidget {
   final CycleEngineOutput? engineOutput;
   final Map<String, String> settings;
   final Color activePhaseColor;
-  final ValueChanged<DateTime>? onDayTapped;
+  final void Function(DateTime date, CycleDayMark mark)? onDayTapped;
 
   @override
   State<CycleCalendarView> createState() => _CycleCalendarViewState();
@@ -331,6 +333,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     final cal = widget.calendarMonth;
     final year = cal.year;
     final monthName = cal.formatter.mN;
@@ -443,7 +446,11 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                           if (isPredictionOnlyMonth &&
                               dominantConfidence != null) ...[
                             const SizedBox(width: 8),
-                            _buildConfidenceBadge(dominantConfidence, colors),
+                            _buildConfidenceBadge(
+                              dominantConfidence,
+                              colors,
+                              l10n,
+                            ),
                           ],
                         ],
                       ),
@@ -482,7 +489,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'ماه جاری',
+                                        l10n?.cycleCurrentMonth ?? 'ماه جاری',
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.bold,
@@ -523,7 +530,8 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'پرش به دوره بعد',
+                                        l10n?.cycleJumpToNext ??
+                                            'پرش به دوره بعد',
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.bold,
@@ -623,11 +631,11 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                     marks: _marks,
                     selectedDay: _selectedDay,
                     activePhaseColor: widget.activePhaseColor,
-                    onDayTapped: (day) {
+                    onDayTapped: (day, mark) {
                       setState(() {
                         _selectedDay = day;
                       });
-                      widget.onDayTapped?.call(day);
+                      widget.onDayTapped?.call(day, mark);
                     },
                   ),
                 ),
@@ -641,6 +649,15 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                 settings: widget.settings,
                 activePhaseColor: widget.activePhaseColor,
               ),
+
+              // Reasoned Empty State Banner (F-39)
+              CycleEmptyStateBanner(
+                periodsCount: widget.periods.length,
+                isPregnancyMode:
+                    widget.settings['cycle_pregnancy_mode'] == 'true',
+                calendarMonth: cal,
+                forecast: widget.engineOutput?.forecast ?? const [],
+              ),
             ],
           ),
         ),
@@ -651,20 +668,21 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
   Widget _buildConfidenceBadge(
     PredictionConfidenceLevel level,
     RitmoColors colors,
+    AppLocalizations? l10n,
   ) {
     final String label;
     final Color badgeColor;
     switch (level) {
       case PredictionConfidenceLevel.high:
-        label = 'اطمینان بالا';
+        label = l10n?.cycleConfidenceHigh ?? 'اطمینان بالا';
         badgeColor = colors.accent;
         break;
       case PredictionConfidenceLevel.medium:
-        label = 'اطمینان متوسط';
+        label = l10n?.cycleConfidenceMedium ?? 'اطمینان متوسط';
         badgeColor = colors.primary;
         break;
       case PredictionConfidenceLevel.low:
-        label = 'اطمینان کم';
+        label = l10n?.cycleConfidenceLow ?? 'اطمینان کم';
         badgeColor = colors.textSecondary;
         break;
     }

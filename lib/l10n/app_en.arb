@@ -667,5 +667,20 @@
   "medicationSiteRotation": "Injection Site Rotation",
   "medicationActiveIngredient": "Active Ingredient",
   "medicationStrength": "Strength / Concentration",
-  "medicationDisclaimers": "Always take medication as prescribed by your doctor."
+  "medicationDisclaimers": "Always take medication as prescribed by your doctor.",
+  "cycleCalendarGuide": "Body Cycle Calendar Guide:",
+  "cyclePeriodRecorded": "Period (Recorded)",
+  "cyclePeriodPredicted": "Predicted Period",
+  "cyclePredictionWindow": "Potential Shift Window",
+  "cycleLowConfidence": "Low Confidence Prediction",
+  "cyclePmsDays": "Pre-Menstrual Days (PMS)",
+  "cycleOvulationDay": "Ovulation Day",
+  "cycleFertileWindow": "Fertile Window",
+  "cycleToday": "Today",
+  "cycleLoggedSymptoms": "Logged Symptoms",
+  "cycleJumpToNext": "Jump to Next Period",
+  "cycleCurrentMonth": "Current Month",
+  "cycleConfidenceHigh": "High Confidence",
+  "cycleConfidenceMedium": "Medium Confidence",
+  "cycleConfidenceLow": "Low Confidence"
 }

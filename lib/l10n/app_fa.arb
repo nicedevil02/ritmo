@@ -667,5 +667,20 @@
   "medicationSiteRotation": "چرخش محل تزریق",
   "medicationActiveIngredient": "ماده موثره / ژنریک",
   "medicationStrength": "قدرت / غلظت دارو",
-  "medicationDisclaimers": "همواره طبق تجویز و صلاحدید پزشک خود دارو را مصرف کنید."
+  "medicationDisclaimers": "همواره طبق تجویز و صلاحدید پزشک خود دارو را مصرف کنید.",
+  "cycleCalendarGuide": "راهنمای تقویم چرخه بدنی:",
+  "cyclePeriodRecorded": "قاعدگی (ثبت‌شده)",
+  "cyclePeriodPredicted": "دوره پیش‌بینی‌شده",
+  "cyclePredictionWindow": "بازه احتمالی جابجایی",
+  "cycleLowConfidence": "پیش‌بینی با اطمینان کم",
+  "cyclePmsDays": "روزهای پیش از عادت (PMS)",
+  "cycleOvulationDay": "روز تخمک‌گذاری",
+  "cycleFertileWindow": "پنجره باروری (Fertile)",
+  "cycleToday": "امروز",
+  "cycleLoggedSymptoms": "علائم ثبت شده",
+  "cycleJumpToNext": "پرش به دوره بعد",
+  "cycleCurrentMonth": "ماه جاری",
+  "cycleConfidenceHigh": "اطمینان بالا",
+  "cycleConfidenceMedium": "اطمینان متوسط",
+  "cycleConfidenceLow": "اطمینان کم"
 }

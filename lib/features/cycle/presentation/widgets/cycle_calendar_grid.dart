@@ -24,7 +24,7 @@ class CycleCalendarGrid extends StatelessWidget {
   final Map<String, CycleDayMark> marks;
   final DateTime? selectedDay;
   final Color activePhaseColor;
-  final ValueChanged<DateTime>? onDayTapped;
+  final void Function(DateTime date, CycleDayMark mark)? onDayTapped;
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +163,7 @@ class CycleCalendarGrid extends StatelessWidget {
             borderRadius: BorderRadius.circular(13),
             onTap: () {
               HapticFeedback.lightImpact();
-              onDayTapped?.call(dayGregorian);
+              onDayTapped?.call(dayGregorian, mark);
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),

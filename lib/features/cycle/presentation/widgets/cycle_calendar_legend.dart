@@ -1,9 +1,10 @@
 // C-43, C-44: CycleCalendarLegend
-// F-31, F-35: Dynamic, accessible cycle calendar legend displaying only items present in current month view.
+// F-31, F-35, F-40, F-41: Dynamic, localized cycle calendar legend displaying only items present in current month view.
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 class CycleCalendarLegend extends StatelessWidget {
   const CycleCalendarLegend({
@@ -21,6 +22,7 @@ class CycleCalendarLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     final hasRecorded = marks.values.any(
       (m) => m.kind == CycleDayKind.recordedPeriod,
@@ -53,7 +55,7 @@ class CycleCalendarLegend extends StatelessWidget {
       legendItems.add(
         _buildLegendItem(
           colors.error.withValues(alpha: isDark ? 0.38 : 0.30),
-          'قاعدگی (ثبت‌شده)',
+          l10n?.cyclePeriodRecorded ?? 'قاعدگی (ثبت‌شده)',
           colors.textPrimary,
           borderColor: colors.error.withValues(alpha: 0.7),
         ),
@@ -64,7 +66,7 @@ class CycleCalendarLegend extends StatelessWidget {
       legendItems.add(
         _buildLegendItem(
           colors.error.withValues(alpha: 0.15),
-          'دوره پیش‌بینی‌شده',
+          l10n?.cyclePeriodPredicted ?? 'دوره پیش‌بینی‌شده',
           colors.textPrimary,
           borderColor: colors.error.withValues(alpha: 0.6),
         ),
@@ -75,7 +77,7 @@ class CycleCalendarLegend extends StatelessWidget {
       legendItems.add(
         _buildLegendItem(
           Colors.transparent,
-          'بازه احتمالی جابجایی',
+          l10n?.cyclePredictionWindow ?? 'بازه احتمالی جابجایی',
           colors.textPrimary,
           borderColor: colors.error.withValues(alpha: 0.35),
         ),
@@ -86,7 +88,7 @@ class CycleCalendarLegend extends StatelessWidget {
       legendItems.add(
         _buildLegendItem(
           Colors.transparent,
-          'پیش‌بینی با اطمینان کم',
+          l10n?.cycleLowConfidence ?? 'پیش‌بینی با اطمینان کم',
           colors.textSecondary,
           borderColor: colors.textSecondary.withValues(alpha: 0.4),
         ),
@@ -97,7 +99,7 @@ class CycleCalendarLegend extends StatelessWidget {
       legendItems.add(
         _buildLegendItem(
           colors.primary.withValues(alpha: 0.15),
-          'روزهای پیش از عادت (PMS)',
+          l10n?.cyclePmsDays ?? 'روزهای پیش از عادت (PMS)',
           colors.textPrimary,
         ),
       );
@@ -107,7 +109,7 @@ class CycleCalendarLegend extends StatelessWidget {
       legendItems.add(
         _buildLegendItem(
           colors.accent.withValues(alpha: 0.35),
-          'روز تخمک‌گذاری',
+          l10n?.cycleOvulationDay ?? 'روز تخمک‌گذاری',
           colors.textPrimary,
           borderColor: colors.accent,
         ),
@@ -118,7 +120,7 @@ class CycleCalendarLegend extends StatelessWidget {
       legendItems.add(
         _buildLegendItem(
           colors.accent.withValues(alpha: 0.15),
-          'پنجره باروری (Fertile)',
+          l10n?.cycleFertileWindow ?? 'پنجره باروری (Fertile)',
           colors.textPrimary,
         ),
       );
@@ -127,7 +129,7 @@ class CycleCalendarLegend extends StatelessWidget {
     legendItems.add(
       _buildLegendItem(
         Colors.transparent,
-        'امروز',
+        l10n?.cycleToday ?? 'امروز',
         colors.textPrimary,
         borderColor: activePhaseColor,
         borderWidth: 2,
@@ -149,7 +151,7 @@ class CycleCalendarLegend extends StatelessWidget {
             ),
             const SizedBox(width: 7),
             Text(
-              'علائم ثبت شده',
+              l10n?.cycleLoggedSymptoms ?? 'علائم ثبت شده',
               style: TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w700,
@@ -166,7 +168,7 @@ class CycleCalendarLegend extends StatelessWidget {
       children: [
         Divider(color: colors.border.withValues(alpha: 0.6), height: 28),
         Text(
-          'راهنمای تقویم چرخه بدنی:',
+          l10n?.cycleCalendarGuide ?? 'راهنمای تقویم چرخه بدنی:',
           style: TextStyle(
             fontSize: 15.5,
             fontWeight: FontWeight.w900,

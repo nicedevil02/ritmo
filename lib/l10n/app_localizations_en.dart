@@ -1178,4 +1178,49 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get medicationDisclaimers =>
       'Always take medication as prescribed by your doctor.';
+
+  @override
+  String get cycleCalendarGuide => 'Body Cycle Calendar Guide:';
+
+  @override
+  String get cyclePeriodRecorded => 'Period (Recorded)';
+
+  @override
+  String get cyclePeriodPredicted => 'Predicted Period';
+
+  @override
+  String get cyclePredictionWindow => 'Potential Shift Window';
+
+  @override
+  String get cycleLowConfidence => 'Low Confidence Prediction';
+
+  @override
+  String get cyclePmsDays => 'Pre-Menstrual Days (PMS)';
+
+  @override
+  String get cycleOvulationDay => 'Ovulation Day';
+
+  @override
+  String get cycleFertileWindow => 'Fertile Window';
+
+  @override
+  String get cycleToday => 'Today';
+
+  @override
+  String get cycleLoggedSymptoms => 'Logged Symptoms';
+
+  @override
+  String get cycleJumpToNext => 'Jump to Next Period';
+
+  @override
+  String get cycleCurrentMonth => 'Current Month';
+
+  @override
+  String get cycleConfidenceHigh => 'High Confidence';
+
+  @override
+  String get cycleConfidenceMedium => 'Medium Confidence';
+
+  @override
+  String get cycleConfidenceLow => 'Low Confidence';
 }

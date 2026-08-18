@@ -66,7 +66,14 @@ class SettingsService {
         .map((_) => get<T>(key));
   }
 
-  Future<void> init() async {
+  Future<void>? _initFuture;
+
+  Future<void> init() {
+    if (_initialized) return Future.value();
+    return _initFuture ??= _doInit().whenComplete(() => _initFuture = null);
+  }
+
+  Future<void> _doInit() async {
     try {
       _initError = null;
       final db = await DatabaseHelper.instance.database;
@@ -116,6 +123,7 @@ class SettingsService {
       for (final desc in SettingsRegistry.all) {
         _cache[desc.key] = desc.defaultValue;
       }
+      revision.value++;
     }
   }
 
@@ -130,6 +138,8 @@ class SettingsService {
   }
 
   Future<bool> retryInit() async {
+    _initialized = false;
+    _initFuture = null;
     await init();
     return _initialized;
   }

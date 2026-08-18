@@ -25,7 +25,7 @@ import 'package:ritmo/features/settings/presentation/groups/notifications_group_
 import 'package:ritmo/features/settings/presentation/groups/security_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/settings_search_delegate.dart';
 import 'package:ritmo/features/settings/presentation/widgets/identity_header.dart';
-import 'package:ritmo/features/settings/presentation/widgets/settings_degraded_banner.dart';
+import 'package:ritmo/features/settings/presentation/widgets/settings_ready_gate.dart';
 
 /// صفحه اصلی تنظیمات اپلیکیشن با طراحی اختصاصی iOS 26 Inset Grouped
 /// به همراه آیکن‌های سه‌بعدی نئونی و انیمیشن ناوبری Depth Parallax
@@ -301,84 +301,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SettingsDegradedBanner(),
-            // ─── هدر هویتی اختصاصی پرمیوم iOS 26 ───
-            IdentityHeader(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  Ios26PageRoute(builder: (_) => const IdentityGroupScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // ─── کارت وضعیت اشتراک ریتمو پلاس ───
-            _buildPremiumStatusCard(context),
-            const SizedBox(height: 24),
-
-            // ─── عنوان بخش دسته‌بندی‌ها ───
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                children: [
-                  Container(
-                    width: 4,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: colors.primary,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'دسته‌بندی تنظیمات',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: colors.primary,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ],
+      body: SettingsReadyGate(
+        showDegradedBanner: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SettingsDegradedBanner(),
+              // ─── هدر هویتی اختصاصی پرمیوم iOS 26 ───
+              IdentityHeader(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    Ios26PageRoute(builder: (_) => const IdentityGroupScreen()),
+                  );
+                },
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
-            // ─── کارت شیشه‌ای گروه‌بندی iOS 26 (Inset Grouped Glass Card) ───
-            Container(
-              decoration: BoxDecoration(
-                color: colors.surface,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.1) : colors.border,
-                  width: 1.5,
+              // ─── کارت وضعیت اشتراک ریتمو پلاس ───
+              _buildPremiumStatusCard(context),
+              const SizedBox(height: 24),
+
+              // ─── عنوان بخش دسته‌بندی‌ها ───
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'دسته‌بندی‌های تنظیمات',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(23),
+              const SizedBox(height: 12),
+
+              // ─── فهرست گروه‌های تنظیمات به سبک iOS 26 Inset Grouped ───
+              Container(
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: colors.border,
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.shadow.withValues(alpha: 0.04),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
                 child: ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   padding: EdgeInsets.zero,
                   itemCount: groups.length,
-                  separatorBuilder: (_, _) => Divider(
+                  separatorBuilder: (context, index) => Divider(
                     height: 1,
                     thickness: 1,
-                    color: colors.border.withValues(alpha: 0.5),
-                    indent: 74, // Align with text after icon
+                    color: colors.border.withValues(alpha: 0.6),
+                    indent: 64,
                     endIndent: 16,
                   ),
                   itemBuilder: (context, index) {
@@ -401,59 +401,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
               ),
-            ),
-            if (kDebugMode) ...[
-              const SizedBox(height: 16),
-              Center(
-                child: TextButton.icon(
-                  onPressed: () async {
-                    await SleepProgramDebugHelper.seedSevenNights();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('۷ شب لاگ خواب نمونه ثبت شد (دیباگ)', style: TextStyle()),
-                          backgroundColor: Color(0xff8B5CF6),
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.bug_report, size: 18, color: Color(0xff8B5CF6)),
-                  label: const Text('تولید ۷ شب لاگ خواب تستی (دیباگ)', style: TextStyle(fontSize: 12, color: Color(0xff8B5CF6))),
+              if (kDebugMode) ...[
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      await SleepProgramDebugHelper.seedSevenNights();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('۷ شب لاگ خواب نمونه ثبت شد (دیباگ)', style: TextStyle()),
+                            backgroundColor: Color(0xff8B5CF6),
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.bug_report, size: 18, color: Color(0xff8B5CF6)),
+                    label: const Text('تولید ۷ شب لاگ خواب تستی (دیباگ)', style: TextStyle(fontSize: 12, color: Color(0xff8B5CF6))),
+                  ),
                 ),
-              ),
-            ],
-            const SizedBox(height: 28),
+              ],
+              const SizedBox(height: 28),
 
-            // ─── بخش نسخه و کپی‌رایت ───
-            Center(
-              child: GestureDetector(
-                onTap: _onVersionTapped,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Column(
-                    children: [
-                      Text(
-                        'ریتمو — سبک زندگی منظم و خودآگاه',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textSecondary,
+              // ─── بخش نسخه و کپی‌رایت ───
+              Center(
+                child: GestureDetector(
+                  onTap: _onVersionTapped,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      children: [
+                        Text(
+                          'ریتمو — سبک زندگی منظم و خودآگاه',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textSecondary,
+                            ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'نسخه $_version (ساخت $_buildNumber)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.textTertiary,
                           ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'نسخه $_version (ساخت $_buildNumber)',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.textTertiary,
-                          ),
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

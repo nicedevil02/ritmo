@@ -21,6 +21,8 @@ import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
+import 'package:ritmo/core/domain/models/duration_bounds.dart';
+import 'package:ritmo/features/calendar/presentation/logic/timeline_snapping.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 /// Calendar view scale. `agenda` is the primary view ("what's next?").
@@ -37,11 +39,13 @@ class JourneyController extends ChangeNotifier {
     RitmoEventBus? eventBus,
     AgendaActionHandler? actionHandler,
     RitmoExecutionKernel? kernel,
+    OccurrenceOverrideRepository? overrideRepo,
   })  : _agendaService = agendaService ?? DayAgendaService.instance,
         _snapshotBuilder = snapshotBuilder ?? const DayAgendaSnapshotBuilder(),
         _eventBus = eventBus ?? RitmoEventBus(),
         _actionHandler = actionHandler ?? AgendaActionHandler.instance,
-        _kernel = kernel ?? RitmoExecutionKernel.instance {
+        _kernel = kernel ?? RitmoExecutionKernel.instance,
+        _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository() {
     _subscription = _eventBus.onEvents.listen(_handleEvent);
     RitmoEvents.routineChangedNotifier.addListener(_onRoutineChangedNotification);
   }
@@ -51,6 +55,7 @@ class JourneyController extends ChangeNotifier {
   final RitmoEventBus _eventBus;
   final AgendaActionHandler _actionHandler;
   final RitmoExecutionKernel _kernel;
+  final OccurrenceOverrideRepository _overrideRepo;
   StreamSubscription<RitmoEvent>? _subscription;
 
   bool _isDisposed = false;
@@ -63,6 +68,7 @@ class JourneyController extends ChangeNotifier {
   DayAgendaSnapshot? _snapshot;
   Map<String, DayAgendaSnapshot> _rangeSnapshots = {};
   String? _errorMessage;
+  String? _warningMessage;
   String? _highlightedItemId;
   int? _focusedMinutes;
   String? _manipulatingItemId;
@@ -85,6 +91,7 @@ class JourneyController extends ChangeNotifier {
   DayAgendaSnapshot? get snapshot => _snapshot;
   Map<String, DayAgendaSnapshot> get rangeSnapshots => _rangeSnapshots;
   String? get errorMessage => _errorMessage;
+  String? get warningMessage => _warningMessage;
   String? get highlightedItemId => _highlightedItemId;
   int? get focusedMinutes => _focusedMinutes;
   String? get manipulatingItemId => _manipulatingItemId;
@@ -131,6 +138,7 @@ class JourneyController extends ChangeNotifier {
     if (_isDisposed) return;
     _highlightedItemId = null;
     _focusedMinutes = null;
+    _warningMessage = null;
     notifyListeners();
   }
 
@@ -314,6 +322,7 @@ class JourneyController extends ChangeNotifier {
       final command = _PostponeItemCommand(
         item: item,
         days: days,
+        overrideRepo: _overrideRepo,
       );
       await command.execute();
       CommandStack.instance.push(command);
@@ -344,6 +353,7 @@ class JourneyController extends ChangeNotifier {
       } else {
         command = _SkipItemCommand(
           item: item,
+          overrideRepo: _overrideRepo,
         );
       }
       await command.execute();
@@ -376,6 +386,31 @@ class JourneyController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// null یعنی معتبر؛ در غیر این صورت پیام فارسی برمی‌گرداند.
+  String? _validatePlacement({
+    required AgendaItem item,
+    required int startMinutes,
+    required int durationMinutes,
+    required bool allowOverlap,
+  }) {
+    if (startMinutes < 0 || startMinutes > 1439) return CalendarMessagesFa.invalidTime;
+    if (durationMinutes < CalendarDefaults.minDurationMinutes) return CalendarMessagesFa.invalidTime;
+    if (startMinutes + durationMinutes > 1440) return CalendarMessagesFa.invalidTime;
+    if (!allowOverlap) {
+      final others = (_snapshot?.items ?? const <AgendaItem>[])
+          .where((o) => o.id != item.id && o.isTimed);
+      for (final o in others) {
+        final s = TimeOfDayMinutes.tryParse(o.timeOfDay);
+        if (s == null) continue;
+        final d = DurationBounds.sanitize(o.durationMinutes);
+        if (startMinutes < s + d && startMinutes + durationMinutes > s) {
+          return CalendarMessagesFa.overlap;
+        }
+      }
+    }
+    return null;
+  }
+
   Future<void> commitItemDrag(
     AgendaItem item,
     String newTimeOfDay, {
@@ -383,16 +418,45 @@ class JourneyController extends ChangeNotifier {
   }) async {
     if (_isDisposed || _isExecutingAction) return;
     _isExecutingAction = true;
+    _warningMessage = null;
     notifyListeners();
 
+    final raw = TimeOfDayMinutes.tryParse(newTimeOfDay);
+    if (raw == null) {
+      _errorMessage = CalendarMessagesFa.invalidTime;
+      _isExecutingAction = false;
+      cancelManipulation();
+      notifyListeners();
+      return;
+    }
+
+    final dur = DurationBounds.sanitize(item.durationMinutes);
+    final snapped = TimelineSnappingHelper.snapStartMinutes(raw, durationMinutes: dur);
+    final boundsErr = _validatePlacement(item: item, startMinutes: snapped, durationMinutes: dur, allowOverlap: true);
+    if (boundsErr != null) {
+      _errorMessage = boundsErr;
+      _isExecutingAction = false;
+      cancelManipulation();
+      notifyListeners();
+      return;
+    }
+
+    final overlapWarn = _validatePlacement(item: item, startMinutes: snapped, durationMinutes: dur, allowOverlap: false);
+    if (overlapWarn != null) {
+      _warningMessage = overlapWarn;
+    }
+
+    final finalTime = TimeOfDayMinutes.format(snapped);
     final oldTimeOfDay = item.timeOfDay ?? CalendarDefaults.fallbackTimeOfDay;
+
     try {
       final command = _MoveItemCommand(
         actionHandler: _actionHandler,
         item: item,
         oldTimeOfDay: oldTimeOfDay,
-        newTimeOfDay: newTimeOfDay,
+        newTimeOfDay: finalTime,
         scope: scope,
+        overrideRepo: _overrideRepo,
       );
       await command.execute();
       CommandStack.instance.push(command);
@@ -415,7 +479,26 @@ class JourneyController extends ChangeNotifier {
   }) async {
     if (_isDisposed || _isExecutingAction) return;
     _isExecutingAction = true;
+    _warningMessage = null;
     notifyListeners();
+
+    final start = TimeOfDayMinutes.tryParse(item.timeOfDay) ?? TimeOfDayMinutes.parse(CalendarDefaults.fallbackTimeOfDay);
+    final sanitizedDur = DurationBounds.sanitize(newDurationMinutes);
+    final snappedDur = TimelineSnappingHelper.snapDurationMinutes(sanitizedDur, startMinutes: start);
+
+    final boundsErr = _validatePlacement(item: item, startMinutes: start, durationMinutes: snappedDur, allowOverlap: true);
+    if (boundsErr != null) {
+      _errorMessage = boundsErr;
+      _isExecutingAction = false;
+      cancelManipulation();
+      notifyListeners();
+      return;
+    }
+
+    final overlapWarn = _validatePlacement(item: item, startMinutes: start, durationMinutes: snappedDur, allowOverlap: false);
+    if (overlapWarn != null) {
+      _warningMessage = overlapWarn;
+    }
 
     final oldDuration = item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
     try {
@@ -423,8 +506,9 @@ class JourneyController extends ChangeNotifier {
         actionHandler: _actionHandler,
         item: item,
         oldDuration: oldDuration,
-        newDuration: newDurationMinutes,
+        newDuration: snappedDur,
         scope: scope,
+        overrideRepo: _overrideRepo,
       );
       await command.execute();
       CommandStack.instance.push(command);

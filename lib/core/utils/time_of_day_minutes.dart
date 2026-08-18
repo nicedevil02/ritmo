@@ -21,5 +21,11 @@ abstract final class TimeOfDayMinutes {
         '${(c % 60).toString().padLeft(2, '0')}';
   }
 
+  static int parse(String raw) {
+    final res = tryParse(raw);
+    if (res == null) throw FormatException('Invalid time string: "$raw"');
+    return res;
+  }
+
   static bool isValid(String? raw) => tryParse(raw) != null;
 }

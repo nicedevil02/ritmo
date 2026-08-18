@@ -31,6 +31,8 @@ class SnoozeRefused extends SnoozeOutcome {
 
 class AgendaActionHandler {
   AgendaActionHandler._();
+  @visibleForTesting
+  AgendaActionHandler.test();
   static final AgendaActionHandler instance = AgendaActionHandler._();
 
   Future<List<String>> _practiceIdsForGroup(

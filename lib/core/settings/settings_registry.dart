@@ -961,15 +961,22 @@ class SettingsRegistry {
     ),
   ];
 
-  static SettingDescriptor? find(String key) {
-    for (final desc in all) {
-      if (desc.key == key) return desc;
-    }
-    return null;
-  }
+  static final Map<String, SettingDescriptor> _byKey = {
+    for (final d in all) d.key: d,
+  };
+
+  static final Map<SettingsGroup, List<SettingDescriptor>> _byGroup = {
+    for (final g in SettingsGroup.values)
+      g: all.where((d) => d.group == g).toList(growable: false),
+  };
+
+  static int get count => all.length;
+
+  static SettingDescriptor? find(String key) => _byKey[key];
 
   static List<SettingDescriptor> userVisibleByGroup(SettingsGroup g) {
-    return all.where((d) => d.group == g && d.descriptionFa != null && !d.key.endsWith('_asked') && d.key != 'onboarding_completed').toList(growable: false);
+    final list = _byGroup[g] ?? const [];
+    return list.where((d) => d.descriptionFa != null && !d.key.endsWith('_asked') && d.key != 'onboarding_completed').toList(growable: false);
   }
 
   static List<String> get aiWritableKeys {

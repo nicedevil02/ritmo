@@ -783,7 +783,7 @@ class SettingsRegistry {
       group: SettingsGroup.security,
       min: -1,
       max: 3600,
-      descriptionFa: 'مدت زمان خروج از برنامه تا فعال شدن مجدد قفل (ثانیه)',
+      descriptionFa: 'مدت زمان خروج از برنامه تا فعال شدن مجدد قفل (ثانیه؛ ۱- برای هرگز)',
       searchTerms: ['زمان قفل', 'تایم اوت قفل', 'قفل خودکار'],
     ),
     SettingDescriptor(

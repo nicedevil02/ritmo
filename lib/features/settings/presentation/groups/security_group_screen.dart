@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
+import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
@@ -180,12 +180,12 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
       'module_cycle_enabled': ModuleGate.instance.isEnabled('module_cycle_enabled') ? 'true' : 'false',
     });
 
-    final timeoutLabels = {
-      0: 'فوری',
+    final timeoutLabels = <int, String>{
+      AppLockTimeout.immediate: 'فوری',
       60: '۱ دقیقه',
       300: '۵ دقیقه',
       900: '۱۵ دقیقه',
-      -1: 'هرگز',
+      AppLockTimeout.never: 'هرگز',
     };
 
     return RitmoPageScaffold(

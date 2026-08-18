@@ -631,11 +631,11 @@ $_bridgeScriptBody''';
       var currentText = findLatestAssistantText();
 
       if (!currentText || currentText === previousBaselineText) {
-        if (totalDuration > 35000) {
+        if (totalDuration > 80000) {
           clearInterval(streamCheckTimer);
           streamCheckTimer = null;
           stopDomObserver();
-          notifyFlutter('error', { message: 'پاسخی از ChatGPT دریافت نشد.', requestId: reqId, source: 'dom' });
+          notifyFlutter('error', { message: 'زمان انتظار برای پاسخ به پایان رسید.', requestId: reqId, source: 'dom' });
         }
         return;
       }

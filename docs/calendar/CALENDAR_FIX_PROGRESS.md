@@ -59,6 +59,6 @@
 | CAL-55 | تست اسنپ زمان (timeline_snapping_test.dart) | H | DONE | baab9b4 | ایجاد تست‌های اسنپ دقایق، برش مرز نیمه‌شب، بازگرداندن null در زمان ناکافی و هندلینگ interval=0 |
 | CAL-56 | تست کنترلر تقویم (journey_controller_test.dart) | H | DONE | 2b0b497 | ایجاد مستر تست‌های جامع JourneyController شامل نرمال‌سازی نیمه‌شب، مسابقه توکن نسل، رفتار دستورات بازگردانی و خطاناپذیری dispose |
 | CAL-57 | تست ریپازیتوری اورراید (occurrence_override_repository_test.dart) | H | DONE | 1f0832d | ایجاد تست‌های ادغام upsert، ثبات createdAt، اسنپ‌شات readAllFuture/restoreAll، تفکیک کلیدهای task/routine و ریکاوری خودکار جدول |
-| CAL-58 | تست مرزهای وابستگی و معماری (calendar_dependency_test.dart) | H | DONE | pending | ایجاد تست‌های گارد معماری ثابت برای تضمین عدم وجود debugPrint، catch خاموش، کوئری مستقیم app_settings، خطاهای انگلیسی و وابستگی غیرمجاز |
-| CAL-59 | تست کلید تاریخ و تبدیل زمان (date_key_test / time_of_day_minutes_test) | H | TODO | - | - |
+| CAL-58 | تست مرزهای وابستگی و معماری (calendar_dependency_test.dart) | H | DONE | e6f0ddc | ایجاد تست‌های گارد معماری ثابت برای تضمین عدم وجود debugPrint، catch خاموش، کوئری مستقیم app_settings، خطاهای انگلیسی و وابستگی غیرمجاز |
+| CAL-59 | تست کلید تاریخ و تبدیل زمان (date_key_test / time_of_day_minutes_test) | H | DONE | pending | ایجاد تست‌های جامع تبدیل کلید تاریخ UTC/Local، پارس امن، محاسبات مرز ماه/سال و پارس ارقام فارسی/عربی و کلمپینگ زمان |
 | CAL-60 | تست طلایی RTL و رگرسیون سرتاسری | H | TODO | - | - |

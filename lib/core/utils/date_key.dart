@@ -34,4 +34,7 @@ abstract final class DateKey {
     final d = dayOf(dt);
     return DateTime(d.year, d.month, d.day + days);
   }
+
+  /// بررسی برابری تقویمی دو تاریخ بدون در نظر گرفتن ساعت
+  static bool isSameDay(DateTime a, DateTime b) => dayOf(a) == dayOf(b);
 }

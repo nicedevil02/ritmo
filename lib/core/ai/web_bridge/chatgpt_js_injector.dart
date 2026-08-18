@@ -604,28 +604,14 @@ $_bridgeScriptBody''';
         return;
       }
 
-      var stopButton = document.querySelector(
-        'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button'
-      );
-      var isStreamingClass = document.querySelector('.result-streaming, .streaming');
-      var timeSinceLastChange = Date.now() - lastChangeTimestamp;
-
-      var isGenerating = !!stopButton || !!isStreamingClass;
-
-      if (!isGenerating && lastLength > 0 && timeSinceLastChange > 500) {
+      var isFinished = evaluateStreamCompletion();
+      if (isFinished) {
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
         stopDomObserver();
         notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
-        console.log('[Ritmo] Stream completed with ' + finalFullText.length + ' characters (reqId: ' + reqId + ')');
-      } else if (lastLength > 0 && timeSinceLastChange > 3000) {
-        var finalFullText = findLatestAssistantText() || currentText;
-        clearInterval(streamCheckTimer);
-        streamCheckTimer = null;
-        stopDomObserver();
-        notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
-        console.log('[Ritmo] Stream fallback completed after 3s idle (reqId: ' + reqId + ')');
+        console.log('[Ritmo] Stream completed via multi-signal vote with ' + finalFullText.length + ' characters (reqId: ' + reqId + ')');
       } else if (totalDuration > 70000) {
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
@@ -638,6 +624,34 @@ $_bridgeScriptBody''';
         }
       }
     }, 350);
+
+    function evaluateStreamCompletion() {
+      var stopButton = document.querySelector(
+        'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button'
+      );
+      var isStreamingClass = document.querySelector('.result-streaming, .streaming, [data-is-streaming="true"]');
+      var isGenerating = !!stopButton || !!isStreamingClass;
+
+      var sendButton = document.querySelector(
+        'button[data-testid="send-button"], button[data-testid="fruitjuice-send-button"], button[aria-label="Send prompt"], button[aria-label="ارسال پیام"], form button[type="submit"]'
+      );
+      var hasSendButton = !!sendButton && !sendButton.disabled;
+      var idleMs = Date.now() - lastChangeTimestamp;
+
+      // 1. If stop button or streaming class is present, stream is strictly continuing
+      if (isGenerating) return false;
+
+      // 2. Multi-signal vote: Stop button gone AND we have received content
+      if (lastLength > 0) {
+        if (hasSendButton && idleMs > 400) {
+          return true; // Fast completion when composer send button is restored
+        }
+        if (idleMs > 2500) {
+          return true; // Idle fallback completion
+        }
+      }
+      return false;
+    }
   };
 
   // --- 5. Prompt Sender Implementation ---

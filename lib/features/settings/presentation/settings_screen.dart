@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
@@ -22,6 +23,7 @@ import 'package:ritmo/features/settings/presentation/groups/identity_group_scree
 import 'package:ritmo/features/settings/presentation/groups/modules_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/notifications_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/security_group_screen.dart';
+import 'package:ritmo/features/settings/presentation/settings_inspector_screen.dart';
 import 'package:ritmo/features/settings/presentation/settings_search_delegate.dart';
 import 'package:ritmo/features/settings/presentation/widgets/identity_header.dart';
 import 'package:ritmo/features/settings/presentation/widgets/quick_settings_sheet.dart';
@@ -94,14 +96,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final remaining = 7 - _tapCount;
       RitmoToast.show(
         context,
-        '${toPersianDigits(remaining.toString())} لمس تا فعال‌سازی پنل فنی و گزارش خرابی',
+        '${toPersianDigits(remaining.toString())} لمس تا فعال‌سازی پنل فنی و بازرس تنظیمات',
       );
     } else if (_tapCount >= 7) {
       _tapCount = 0;
-      Navigator.push(
-        context,
-        Ios26PageRoute(builder: (_) => const CrashReportsScreen()),
-      );
+      if (kDebugMode) {
+        Navigator.push(
+          context,
+          Ios26PageRoute(builder: (_) => const SettingsInspectorScreen()),
+        );
+      } else {
+        Navigator.push(
+          context,
+          Ios26PageRoute(builder: (_) => const CrashReportsScreen()),
+        );
+      }
     }
   }
 

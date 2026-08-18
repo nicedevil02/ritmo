@@ -287,6 +287,10 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
           onPageStarted: (url) {
             if (_controller != null && _controller != controller) return;
             RitmoLog.debug('ChatGptWebBridge', 'Page loading started: $url');
+            // A-36: Early hook injection at page start
+            controller.runJavaScript(ChatGptJsInjector.earlyHookScript).catchError((e) {
+              RitmoLog.warning('ChatGptWebBridge', 'earlyHookScript injection warning on page start: $e');
+            });
           },
           onPageFinished: (url) async {
             if (_controller != null && _controller != controller) return;
@@ -697,6 +701,12 @@ if (typeof window.__ritmo_resume === 'function') {
             note: 'issue="$issue" v=$bridgeVersion report=$report',
             level: BridgeTraceLevel.info,
           );
+          if (report != null) {
+            final composerCount = report['composer'] as int? ?? 0;
+            if (composerCount == 0 && _status == ChatGptBridgeStatus.ready) {
+              RitmoLog.warning('ChatGptWebBridge', 'Selector self-test warning: composer element not found in DOM.');
+            }
+          }
 
         case BridgeAutoDismissEvent(:final label):
           BridgeTraceLog.instance.addEntry(

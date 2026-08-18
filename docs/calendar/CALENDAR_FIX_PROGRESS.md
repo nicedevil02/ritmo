@@ -55,8 +55,8 @@
 | CAL-51 | ارتقای نشان «الان چی؟» | G | DONE | 379498f | افزودن محاسبه زمان باقی‌مانده آیتم جاری به فارسی، عنوان آیتم بعدی، دکمه‌های انجام شد و شروع تمرکز در NowPill |
 | CAL-52 | ورود و خروج تقویم ICS | G | DONE | a5acd01 | ایجاد IcsParser، IcsExporter و منبع اجندای IcsAgendaSource با ماژول گیت module_ics_enabled و پشتیبانی از خروجی استاندارد iCalendar |
 | CAL-53 | تست سطل‌بندی اجندا (agenda_bucketing_test.dart) | H | DONE | 958c641 | ایجاد تست‌های جامع سطل‌بندی ۳۰ روزه بدون تکرار و گم‌شدن، مرزهای هفته، پنج‌شنبه و جمعه، الگوهای تکرار و ارقام فارسی |
-| CAL-54 | تست موتور چیدمان زمان (timeline_layout_engine_test.dart) | H | DONE | pending | ایجاد تست‌های جامع موتور چیدمان زمان شامل خوشه‌های تراگذر، ظرفیت لاین‌ها و سرریز، برش مرز ظهر و قطعیت چیدمان |
-| CAL-55 | تست اسنپ زمان (timeline_snapping_test.dart) | H | TODO | - | - |
+| CAL-54 | تست موتور چیدمان زمان (timeline_layout_engine_test.dart) | H | DONE | f1c7463 | ایجاد تست‌های جامع موتور چیدمان زمان شامل خوشه‌های تراگذر، ظرفیت لاین‌ها و سرریز، برش مرز ظهر و قطعیت چیدمان |
+| CAL-55 | تست اسنپ زمان (timeline_snapping_test.dart) | H | DONE | pending | ایجاد تست‌های اسنپ دقایق، برش مرز نیمه‌شب، بازگرداندن null در زمان ناکافی و هندلینگ interval=0 |
 | CAL-56 | تست کنترلر تقویم (journey_controller_test.dart) | H | TODO | - | - |
 | CAL-57 | تست ریپازیتوری اورراید (occurrence_override_repository_test.dart) | H | TODO | - | - |
 | CAL-58 | تست مرزهای وابستگی و معماری (calendar_dependency_test.dart) | H | TODO | - | - |

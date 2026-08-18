@@ -150,10 +150,26 @@ class CycleEngineOutput {
   final String? _regularityLabel;
   final String? _predictionDisclaimer;
 
-  String get regularityLabel => _regularityLabel ?? regularityLevel.name;
+  String get regularityLabel =>
+      _regularityLabel ??
+      switch (regularityLevel) {
+        RegularityLevel.regular => 'کاملاً منظم',
+        RegularityLevel.moderate => 'نسبتاً منظم',
+        RegularityLevel.irregular => 'نامنظم',
+        RegularityLevel.insufficientData => 'داده ناکافی',
+        RegularityLevel.pregnancy => 'دوران بارداری',
+      };
 
   String get predictionDisclaimer =>
-      _predictionDisclaimer ?? disclaimerCode.name;
+      _predictionDisclaimer ??
+      switch (disclaimerCode) {
+        CycleDisclaimerCode.standardBiologicalEstimate =>
+          'پیش‌بینی بر اساس میانگین بیولوژیکی استاندارد انجام شده است.',
+        CycleDisclaimerCode.pregnancyModeActive =>
+          'حالت بارداری فعال است و محاسبات چرخه متوقف شده است.',
+        CycleDisclaimerCode.insufficientData =>
+          'داده‌های ثبت‌شده برای تحلیل دقیق‌تر چرخه کافی نیست.',
+      };
 
   final bool isOverdue;
   final int daysOverdue;

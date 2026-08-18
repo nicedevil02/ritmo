@@ -68,8 +68,8 @@ class _ChatGptAuthModalState extends State<ChatGptAuthModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.extension<RitmoColors>() ??
-        RitmoPalette.jadeNoir.forBrightness(Brightness.dark);
+    final colors = context.colors;
+    final textTheme = theme.textTheme;
     final controller = ChatGptWebBridgeManager.instance.controller;
 
     return Container(
@@ -108,16 +108,14 @@ class _ChatGptAuthModalState extends State<ChatGptAuthModal> {
                     children: [
                       Text(
                         'ورود به حساب کاربری ChatGPT',
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
                         ),
                       ),
                       Text(
                         'پس از ورود، این پنجره به‌طور خودکار بسته خواهد شد.',
-                        style: TextStyle(
-                          fontSize: 11,
+                        style: textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                         ),
                       ),
@@ -157,7 +155,7 @@ class _ChatGptAuthModalState extends State<ChatGptAuthModal> {
                         const SizedBox(height: RitmoSpacing.md),
                         Text(
                           'در حال آماده‌سازی صفحه ورود...',
-                          style: TextStyle(color: colors.textSecondary, fontSize: 13),
+                          style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
                         ),
                       ],
                     ),

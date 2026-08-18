@@ -14,7 +14,7 @@ class CloudflareChallengeModal extends StatefulWidget {
     if (_isShowing) return;
     _isShowing = true;
     try {
-      await showModalBottomSheet(
+      await showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
         isDismissible: true,
@@ -62,7 +62,9 @@ class _CloudflareChallengeModalState extends State<CloudflareChallengeModal> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final colors = context.colors;
+    final textTheme = theme.textTheme;
     final controller = ChatGptWebBridgeManager.instance.controller;
 
     return Container(
@@ -101,16 +103,14 @@ class _CloudflareChallengeModalState extends State<CloudflareChallengeModal> {
                     children: [
                       Text(
                         'تایید هویت امنیتی (Cloudflare)',
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
                         ),
                       ),
                       Text(
                         'لطفاً باکس تایید «Verify you are human» را لمس کنید.',
-                        style: TextStyle(
-                          fontSize: 11,
+                        style: textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                         ),
                       ),
@@ -155,7 +155,7 @@ class _CloudflareChallengeModalState extends State<CloudflareChallengeModal> {
                         const SizedBox(height: RitmoSpacing.md),
                         Text(
                           'در حال آماده‌سازی پنجره تایید...',
-                          style: TextStyle(color: colors.textSecondary, fontSize: 13),
+                          style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
                         ),
                       ],
                     ),

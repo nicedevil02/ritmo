@@ -4,8 +4,9 @@ import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/profile/presentation/web_bridge_diagnostics_screen.dart';
 
-/// تراشهٔ وضعیت پل وب چت‌جی‌پی‌تی در سربرگ دستیار (A-23 و A-24).
+/// تراشهٔ وضعیت پل وب چت‌جی‌پی‌تی در سربرگ دستیار (A-23، A-24، A-46).
 class BridgeStatusChip extends StatelessWidget {
   const BridgeStatusChip({
     super.key,
@@ -14,41 +15,10 @@ class BridgeStatusChip extends StatelessWidget {
 
   final bool forceVisible;
 
-  void _showMiniPreviewModal(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              ChatGptMiniPreview(
-                onClose: () => Navigator.of(ctx).pop(),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final textTheme = Theme.of(context).textTheme;
 
     return ValueListenableBuilder<ChatGptBridgeStatus>(
       valueListenable: ChatGptWebBridgeManager.instance.statusNotifier,
@@ -67,7 +37,7 @@ class BridgeStatusChip extends StatelessWidget {
           ChatGptBridgeStatus.ready => (
               'متصل',
               CupertinoIcons.checkmark_circle_fill,
-              Colors.green,
+              colors.success,
               false,
             ),
           ChatGptBridgeStatus.generating => (
@@ -79,7 +49,7 @@ class BridgeStatusChip extends StatelessWidget {
           ChatGptBridgeStatus.cloudflareChallenge => (
               'نیاز به تأیید امنیتی',
               CupertinoIcons.shield_fill,
-              Colors.amber.shade700,
+              colors.warning,
               true,
             ),
           ChatGptBridgeStatus.error => (
@@ -114,16 +84,11 @@ class BridgeStatusChip extends StatelessWidget {
                       if (status == ChatGptBridgeStatus.cloudflareChallenge) {
                         CloudflareChallengeModal.show(context);
                       } else if (status == ChatGptBridgeStatus.generating) {
-                        _showMiniPreviewModal(context);
+                        ChatGptMiniPreview.show(context);
                       } else if (status == ChatGptBridgeStatus.error) {
-                        final reason = ChatGptWebBridgeManager.instance.describeEmptyResponseReason();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              reason.messageFa,
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            backgroundColor: colors.error,
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const WebBridgeDiagnosticsScreen(),
                           ),
                         );
                       }
@@ -143,8 +108,7 @@ class BridgeStatusChip extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       label,
-                      style: TextStyle(
-                        fontSize: 11,
+                      style: textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: chipColor,
                       ),

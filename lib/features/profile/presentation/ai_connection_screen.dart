@@ -21,6 +21,7 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_text_field.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
+import 'package:ritmo/features/profile/presentation/web_bridge_diagnostics_screen.dart';
 import 'package:ritmo/features/profile/presentation/widgets/ai_provider_preset_card.dart';
 import 'package:ritmo/features/profile/presentation/widgets/ai_secret_field.dart';
 import 'package:ritmo/features/profile/presentation/widgets/ai_status_card.dart';
@@ -742,6 +743,17 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                             ),
                           ],
                         ),
+                      ),
+                      RitmoSecondaryButton(
+                        label: 'مشاهدهٔ وضعیت و تشخیص پل وب',
+                        icon: Icons.monitor_heart_outlined,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const WebBridgeDiagnosticsScreen(),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: RitmoSpacing.md),
                     ] else ...[

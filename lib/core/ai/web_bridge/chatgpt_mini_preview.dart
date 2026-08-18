@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -10,6 +11,42 @@ class ChatGptMiniPreview extends StatefulWidget {
   });
 
   final VoidCallback? onClose;
+
+  /// Displays the mini preview bottom sheet from anywhere (A-47).
+  static Future<void> show(BuildContext context) async {
+    if (ChatGptWebBridgeManager.instance.status == ChatGptBridgeStatus.idle) {
+      unawaited(ChatGptWebBridgeManager.instance.ensureBooted());
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ChatGptMiniPreview(
+                onClose: () => Navigator.of(ctx).pop(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   State<ChatGptMiniPreview> createState() => _ChatGptMiniPreviewState();
@@ -27,6 +64,7 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final textTheme = Theme.of(context).textTheme;
     final controller = ChatGptWebBridgeManager.instance.controller;
 
     return ValueListenableBuilder<ChatGptBridgeStatus>(
@@ -81,14 +119,12 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                         Expanded(
                           child: Text(
                             'مرورگر زنده چت‌جی‌پی‌تی (${_getStatusLabel(status)})',
-                            style: TextStyle(
-                              fontSize: 11.5,
+                            style: textTheme.labelMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
                             ),
                           ),
                         ),
-                        // Refresh Button (WEB-02: disabled during generation, triggers forceReboot otherwise)
                         Tooltip(
                           message: isGenerating
                               ? 'در حین تولید پاسخ نمی‌توان صفحه را نو کرد'
@@ -113,7 +149,6 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        // Minimize / Expand
                         InkWell(
                           onTap: () {
                             setState(() {
@@ -169,14 +204,14 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                                         Text(
                                           'خطا در برقراری ارتباط با وب‌سایت. لمس برای تلاش مجدد',
                                           textAlign: TextAlign.center,
-                                          style: TextStyle(fontSize: 12, color: colors.error),
+                                          style: textTheme.bodySmall?.copyWith(color: colors.error),
                                         ),
                                       ] else ...[
                                         const CircularProgressIndicator.adaptive(strokeWidth: 2.5),
                                         const SizedBox(height: 10),
                                         Text(
                                           'در حال اتصال به مرورگر چت‌جی‌پی‌تی...',
-                                          style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                                          style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
                                         ),
                                       ],
                                     ],

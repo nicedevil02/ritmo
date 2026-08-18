@@ -1,5 +1,6 @@
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
+import 'package:ritmo/core/ai/web_bridge/pending_web_bridge_request.dart';
 
 /// ماشین حالت نمایش مشترک بین همهٔ مصرف‌کنندگان جریان ایجنت (A-21).
 ///
@@ -121,5 +122,19 @@ class AgentStreamPresenter {
     _steps.clear();
     _currentTurn = 1;
     _maxTurns = 10;
+  }
+
+  /// متن وضعیت پلکانی در حین انتظار بر اساس مرحله و زمان سپری‌شده (A-44).
+  static String getProgressiveStatusText(PendingRequestStage? stage, {int elapsedSeconds = 0}) {
+    if (stage == null) return 'در حال پردازش…';
+    return switch (stage) {
+      PendingRequestStage.sending => 'در حال ارسال پیام…',
+      PendingRequestStage.awaitingFirstToken when elapsedSeconds <= 8 => 'در حال فکر کردن…',
+      PendingRequestStage.awaitingFirstToken when elapsedSeconds <= 20 => 'پاسخ کمی طول کشیده…',
+      PendingRequestStage.awaitingFirstToken => 'هنوز منتظریم. می‌توانید مرورگر را ببینید.',
+      PendingRequestStage.streaming => 'در حال نوشتن…',
+      PendingRequestStage.done => 'پایان دریافت پاسخ',
+      PendingRequestStage.error => 'خطا در ارتباط',
+    };
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class CycleEmptyStateBanner extends StatelessWidget {
@@ -26,13 +27,15 @@ class CycleEmptyStateBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     // Determine which reasoned state banner to show, if any
     if (isPregnancyMode) {
       return _buildBanner(
         icon: CupertinoIcons.heart_fill,
-        title: 'حالت بارداری فعال است',
+        title: l10n?.cyclePregnancyBannerTitle ?? 'حالت بارداری فعال است',
         description:
+            l10n?.cyclePregnancyBannerDesc ??
             'پیش‌بینی دوره‌ها و پنجره‌های باروری در این حالت متوقف شده است.',
         bannerColor: colors.primary,
         colors: colors,
@@ -43,13 +46,14 @@ class CycleEmptyStateBanner extends StatelessWidget {
     if (periodsCount == 0) {
       return _buildBanner(
         icon: CupertinoIcons.calendar_badge_plus,
-        title: 'هنوز دوره‌ای ثبت نشده است',
+        title: l10n?.cycleNoPeriodsBannerTitle ?? 'هنوز دوره‌ای ثبت نشده است',
         description:
+            l10n?.cycleNoPeriodsBannerDesc ??
             'برای دریافت پیش‌بینی‌های دقیق و شناسایی الگوهای بدنی، اولین دوره خود را ثبت کنید.',
         bannerColor: colors.error,
         colors: colors,
         isDark: isDark,
-        actionLabel: 'ثبت اولین دوره',
+        actionLabel: l10n?.cycleRecordFirstPeriod ?? 'ثبت اولین دوره',
         onAction: onRecordFirstPeriod,
       );
     }
@@ -57,8 +61,9 @@ class CycleEmptyStateBanner extends StatelessWidget {
     if (periodsCount < 3) {
       return _buildBanner(
         icon: CupertinoIcons.info_circle_fill,
-        title: 'پیش‌بینی با داده‌های اولیه',
+        title: l10n?.cycleEarlyDataBannerTitle ?? 'پیش‌بینی با داده‌های اولیه',
         description:
+            l10n?.cycleEarlyDataBannerDesc ??
             'پیش‌بینی فعلی بر اساس تنظیمات اولیه است. با ثبت حداقل ۳ چرخه، الگوی شخصی شما فعال می‌شود.',
         bannerColor: colors.textSecondary,
         colors: colors,
@@ -77,8 +82,9 @@ class CycleEmptyStateBanner extends StatelessWidget {
       if (monthStart.isAfter(lastForecastDay)) {
         return _buildBanner(
           icon: CupertinoIcons.sparkles,
-          title: 'فراتر از افق پیش‌بینی',
+          title: l10n?.cycleBeyondHorizonBannerTitle ?? 'فراتر از افق پیش‌بینی',
           description:
+              l10n?.cycleBeyondHorizonBannerDesc ??
               'پیش‌بینی چرخه‌ها تا حداکثر ۲۴ ماه آینده بر اساس ثبات چرخه‌های قبلی محاسبه می‌شود.',
           bannerColor: colors.textSecondary,
           colors: colors,
@@ -122,20 +128,16 @@ class CycleEmptyStateBanner extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
+                  style: RitmoTextStyles.caption(
+                    colors.textPrimary,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: colors.textSecondary,
-                    height: 1.35,
-                  ),
+                  style: RitmoTextStyles.badge(
+                    colors.textSecondary,
+                  ).copyWith(height: 1.35),
                 ),
                 if (actionLabel != null && onAction != null) ...[
                   const SizedBox(height: 8),
@@ -153,11 +155,9 @@ class CycleEmptyStateBanner extends StatelessWidget {
                       ),
                       child: Text(
                         actionLabel,
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                        style: RitmoTextStyles.badge(
+                          Colors.white,
+                        ).copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),

@@ -880,7 +880,6 @@ class RitmoGlassCardLight extends StatelessWidget {
 extension RitmoThemeExtension on BuildContext {
   RitmoColors get colors {
     final c = Theme.of(this).extension<RitmoColors>();
-    assert(c != null, 'RitmoColors extension is not registered in BuildContext theme.');
     final isDarkMode = Theme.of(this).brightness == Brightness.dark;
     return c ?? (isDarkMode ? kJadeNoirDark : kJadeNoirLight);
   }

@@ -564,8 +564,8 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
         : (regularityScore / 100.0);
 
     // 2) Data maturity factor (F-11)
-    final double maturityFactor = switch (dataMaturity) {
-      'HIGH' => 1.0,
+    final double maturityFactor = switch (dataMaturity.toUpperCase()) {
+      'HIGH' || 'ESTABLISHED' => 1.0,
       'MEDIUM' => 0.8,
       _ => 0.55,
     };
@@ -787,7 +787,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       isProjected: isProjected,
       discardedOutliers: discardedOutliers,
       cycleLengthSd: regularity.sdDays,
-      forecastAnchor: anchorStart ?? (isProjected ? null : startDate),
+      forecastAnchor: effectiveAnchor,
       forecast: forecast,
     );
   }
@@ -962,7 +962,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     required double avgCycleLength,
     required double avgPeriodDuration,
     double? cycleStdDev,
-    String dataMaturity = 'ESTABLISHED',
+    String dataMaturity = 'HIGH',
     Map<String, String> settings = const {},
     int horizonCycles = 12,
     DateTime? now,

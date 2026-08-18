@@ -1273,6 +1273,11 @@ $friendlySummary
             actions: [
               const BridgeStatusChip(),
               IconButton(
+                icon: const Icon(Icons.open_in_browser_rounded, size: 20),
+                tooltip: 'مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی',
+                onPressed: () => ChatGptMiniPreview.show(context),
+              ),
+              IconButton(
                 icon: const Icon(CupertinoIcons.clock, size: 20),
                 tooltip: 'تغییرات اخیر',
                 onPressed: () => _showAuditLogSheet(context),

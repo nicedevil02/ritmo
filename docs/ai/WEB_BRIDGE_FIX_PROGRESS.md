@@ -127,7 +127,7 @@
 - `__ritmo_stopGeneration` ✅
 - `__ritmo_composerReady` ✅
 - `__ritmo_origFetch` ✅
-- `__RITMO_BRIDGE_V` ✅ (مقدار: ۷)
+- `__RITMO_BRIDGE_V` ✅ (مقدار: ۸)
 - `data-ritmo-seen` ✅
 - `requestId` ✅
 - `MutationObserver` ✅
@@ -139,9 +139,28 @@
 - `WebBridgeErrorCode` ✅
 - `ChatGptBridgeTimeouts` ✅
 - `RITMO_SELECTORS` ✅
+- `WebBridgeDiagnosticsScreen` ✅
+- `BridgeTraceLog` ✅
 - `docs/ai/WEB_BRIDGE_ARCHITECTURE.md` ✅
 
 ### ۵-۳ — آزمون‌های جامع
-- `flutter analyze lib/core/ai test/core/ai`: **No issues found!**
-- `flutter test test/core/ai/web_bridge/ test/core/ai/`: **199/199 Tests Passed!**
+- `flutter analyze lib/core/ai/ lib/features/profile/presentation/web_bridge_diagnostics_screen.dart lib/features/profile/presentation/ai_connection_screen.dart lib/features/assistant/ lib/features/chat/ test/core/ai/`: **No issues found! (0 errors, 0 warnings)**
+- `flutter test test/core/ai/`: **255/255 Tests Passed!**
+
+---
+
+## فاز ۴ — رابط کاربری و بهینه‌سازی تجربهٔ کاربری (A-39 تا A-47)
+
+| شناسه | شرح تسک | وضعیت | کامیت | توضیحات فنی |
+| --- | --- | --- | --- | --- |
+| A-39 | صفحهٔ جامع تشخیص و مانیتورینگ پل هوش مصنوعی وب | DONE | pending | ایجاد WebBridgeDiagnosticsScreen شامل کارت وضعیت چرخه حیات، گرید سلامت سلکتورهای DOM، گزارش ردیاب لاگ زنده |
+| A-40 | دکمه و سازوکار بازیابی دستی پاسخ | DONE | pending | اتصال harvestVisibleAnswer به دکمهٔ «بازیابی پاسخ از مرورگر» و کپی در حافظه در صورت قطعی یا تایم‌اوت |
+| A-41 | جدول قطعی حالات خالی و خطا با اقدام‌های شفاف | DONE | pending | پیاده‌سازی راهنمای خطای فارسی و کلیدهای بازیابی در AiChatScreen و AssistantSheet طبق جدول ماتریس خطا |
+| A-42 | محلی‌سازی کامل پیام‌های دامنهٔ پل وب | DONE | pending | انتقال تمام پیام‌ها به app_fa.arb و app_en.arb با پیشوند bridge، افزودن messageKey به WebBridgeException و اجرای flutter gen-l10n |
+| A-43 | بازسازی تایپوگرافی و توکن‌های طراحی مودال‌ها | DONE | pending | تبدیل تمام fontSizeهای هاردکد به Theme.of(context).textTheme در ChatGptAuthModal, CloudflareChallengeModal, ChatGptMiniPreview, BridgeStatusChip و کامپوننت‌های ایجنت |
+| A-44 | پیام‌های پلکانی در حین انتظار در AgentStreamPresenter | DONE | pending | پیاده‌سازی getProgressiveStatusText با پیام‌های تفکیک‌شده بر اساس مراحل sending, awaitingFirstToken (<=8s, <=20s, >20s), streaming |
+| A-45 | بررسی زودهنگام وضعیت احراز هویت و کلادفلر پیش از مصرف پرامپت | DONE | pending | گیت‌های اولیه در sendPrompt و waitForComposerReady برای جلوگیری از مصرف نوبت در وضعیت‌های unauthenticated و challenge |
+| A-46 | اتصال BridgeStatusChip به صفحهٔ تشخیص در وضعیت خطا | DONE | pending | ناوبری خودکار به WebBridgeDiagnosticsScreen با لمس چیپ در وضعیت قرمز خطا و افزودن دکمه در AiConnectionScreen |
+| A-47 | دسترسی دائمی به پنجرهٔ مرورگر چت‌جی‌پی‌تی در سربرگ | DONE | pending | افزودن دکمهٔ همیشگی «مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی» در AppBar صفحه چت و هدر شیت دستیار با فراخوانی خودکار ensureBooted |
+
 

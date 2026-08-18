@@ -1223,4 +1223,142 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cycleConfidenceLow => 'Low Confidence';
+
+  @override
+  String get bridgeAuthRequired =>
+      'Please sign into your account to use ChatGPT.';
+
+  @override
+  String get bridgeAuthRequiredAction => 'Sign in';
+
+  @override
+  String get bridgeCloudflareChallenge =>
+      'Cloudflare security verification is required.';
+
+  @override
+  String get bridgeCloudflareChallengeAction => 'Complete verification';
+
+  @override
+  String get bridgeRateLimited =>
+      'ChatGPT rate limit reached. Please wait a moment and try again.';
+
+  @override
+  String get bridgeRateLimitedAction => 'Retry in a few minutes';
+
+  @override
+  String get bridgeServerError =>
+      'Temporary error on ChatGPT servers. Please try again in a moment.';
+
+  @override
+  String get bridgeServerErrorAction => 'Retry';
+
+  @override
+  String get bridgeTimeout => 'Timed out waiting for a response from ChatGPT.';
+
+  @override
+  String get bridgeTimeoutAction => 'Retry';
+
+  @override
+  String get bridgeNetworkError =>
+      'Unable to reach ChatGPT. Please check your internet connection.';
+
+  @override
+  String get bridgeNetworkErrorAction => 'Check internet connection';
+
+  @override
+  String get bridgeComposerNotFound =>
+      'ChatGPT composer field is not ready or unavailable.';
+
+  @override
+  String get bridgeComposerNotFoundAction => 'Reset conversation';
+
+  @override
+  String get bridgeNavigationLoop =>
+      'Chat page reloaded repeatedly and cannot continue.';
+
+  @override
+  String get bridgeNavigationLoopAction => 'Reload browser';
+
+  @override
+  String get bridgeUnknownError => 'Unknown error in ChatGPT web bridge.';
+
+  @override
+  String get bridgeUnknownErrorAction => 'Retry';
+
+  @override
+  String get bridgeDiagnosticsTitle => 'Web AI Bridge Diagnostics';
+
+  @override
+  String get bridgeHarvestAction => 'Harvest response from browser';
+
+  @override
+  String get bridgeForceRebootAction => 'Force reboot bridge';
+
+  @override
+  String get bridgeCopyLogAction => 'Copy report';
+
+  @override
+  String get bridgeLiveBrowser => 'View ChatGPT browser window';
+
+  @override
+  String get cyclePregnancyBannerTitle => 'Pregnancy Mode Active';
+
+  @override
+  String get cyclePregnancyBannerDesc =>
+      'Cycle forecasting and fertile window predictions are paused during pregnancy.';
+
+  @override
+  String get cycleNoPeriodsBannerTitle => 'No Periods Recorded Yet';
+
+  @override
+  String get cycleNoPeriodsBannerDesc =>
+      'Record your first period to start receiving accurate predictions and personalized patterns.';
+
+  @override
+  String get cycleRecordFirstPeriod => 'Record First Period';
+
+  @override
+  String get cycleEarlyDataBannerTitle => 'Predictions Based on Initial Data';
+
+  @override
+  String get cycleEarlyDataBannerDesc =>
+      'Current prediction relies on baseline settings. Logging at least 3 cycles activates your personal pattern.';
+
+  @override
+  String get cycleBeyondHorizonBannerTitle => 'Beyond Forecast Horizon';
+
+  @override
+  String get cycleBeyondHorizonBannerDesc =>
+      'Cycle projections are calculated up to 24 months based on previous regularity.';
+
+  @override
+  String get cycleSemanticsToday => ', Today';
+
+  @override
+  String get cycleSemanticsRecordedPeriod => ', Recorded period';
+
+  @override
+  String get cycleSemanticsPredictedPeriod => ', Predicted period';
+
+  @override
+  String get cycleSemanticsLowConfidence => ' with low confidence';
+
+  @override
+  String get cycleSemanticsHighConfidence => ' with high confidence';
+
+  @override
+  String get cycleSemanticsPredictionWindow =>
+      ', Potential period shift window';
+
+  @override
+  String get cycleSemanticsOvulation => ', Ovulation day';
+
+  @override
+  String get cycleSemanticsFertileWindow => ', Fertile window';
+
+  @override
+  String get cycleSemanticsPms => ', Pre-menstrual days (PMS)';
+
+  @override
+  String get cycleSemanticsHasLogs => ', Has recorded symptoms';
 }

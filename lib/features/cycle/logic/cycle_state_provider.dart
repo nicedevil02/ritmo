@@ -106,6 +106,9 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
   /// F-18: Ensures that the forecast covers [lastVisibleDay].
   /// If the current forecast already reaches [lastVisibleDay], does nothing (zero recomputation).
   Future<void> ensureHorizonCovers(DateTime lastVisibleDay) async {
+    if (value.isLoading || value.engineOutput == null) {
+      await loadState();
+    }
     final currentForecast = value.engineOutput?.forecast ?? const [];
     if (currentForecast.isEmpty) return;
 
@@ -346,7 +349,7 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
       RitmoEventBus().fire(
         RitmoEvent(
           type: 'CycleStarted',
-          payload: {'date': targetDate.toIso8601String()},
+          payload: {'date': CycleDateContract.toDayKey(targetDate)},
         ),
       );
       CycleEngine().invalidate();
@@ -377,7 +380,7 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
         RitmoEventBus().fire(
           RitmoEvent(
             type: 'CycleEnded',
-            payload: {'date': targetDate.toIso8601String()},
+            payload: {'date': CycleDateContract.toDayKey(targetDate)},
           ),
         );
         CycleEngine().invalidate();

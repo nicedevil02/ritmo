@@ -308,6 +308,7 @@ class AssistantActionRegistry {
           onComplete();
           return;
         }
+        if (!context.mounted) return;
 
         // Fallback برای مسیرهای ناشناخته (رفتار قبلی)
         if (titleLower.contains('پریود') || titleLower.contains('چرخه') || titleLower.contains('قاعدگی')) {
@@ -1138,7 +1139,6 @@ class AssistantActionRegistry {
         onComplete();
 
       case AssistantActionType.applyDayPlan:
-        final planDate = action.payload['planDate']?.toString() ?? DateTime.now().toIso8601String().substring(0, 10);
         final items = action.payload['items'] as List? ?? [];
         final groupId = action.payload['groupId']?.toString() ?? 'day_plan_${DateTime.now().millisecondsSinceEpoch}';
 
@@ -1341,7 +1341,7 @@ class DayPlanApplyExecutor {
     final undoTokens = <String>[];
 
     for (final item in draft.items) {
-      final targetModule = item.targetModule ?? '';
+      final targetModule = item.targetModule;
       final title = item.title;
       final recurrence = item.recurrence.toLowerCase();
 
@@ -1352,9 +1352,9 @@ class DayPlanApplyExecutor {
 
         if (existing.isEmpty) {
           final id = 'worship_${nowMs}_${math.Random().nextInt(99999)}';
-          final practiceType = item.category?.toUpperCase() == 'DHIKR' 
+          final practiceType = item.category.toUpperCase() == 'DHIKR' 
               ? 'DHIKR' 
-              : (item.category?.toUpperCase() == 'QURAN' ? 'QURAN' : 'MUSTAHAB');
+              : (item.category.toUpperCase() == 'QURAN' ? 'QURAN' : 'MUSTAHAB');
           await txn.insert('worship_practices', {
             'id': id,
             'practiceType': practiceType,
@@ -1366,7 +1366,7 @@ class DayPlanApplyExecutor {
             'reminderTime': item.resolvedTime ?? '09:00',
             'reminderFrequency': 'DAILY',
             'reminderAnchor': item.startKind == 'anchor' ? item.anchorEvent : 'NONE',
-            'reminderOffsetMinutes': item.offsetMin ?? 0,
+            'reminderOffsetMinutes': item.offsetMin,
             'reminderTimes': jsonEncode([item.resolvedTime ?? '09:00']),
             'isActive': 1,
             'notes': item.note ?? '',
@@ -1381,7 +1381,7 @@ class DayPlanApplyExecutor {
           await txn.update('worship_practices', {
             'reminderTime': item.resolvedTime ?? '09:00',
             'reminderAnchor': item.startKind == 'anchor' ? item.anchorEvent : 'NONE',
-            'reminderOffsetMinutes': item.offsetMin ?? 0,
+            'reminderOffsetMinutes': item.offsetMin,
             'reminderTimes': jsonEncode([item.resolvedTime ?? '09:00']),
             'updatedAt': nowMs,
           }, where: 'id = ?', whereArgs: [existingId]);
@@ -1422,7 +1422,7 @@ class DayPlanApplyExecutor {
           'personal': 'personal',
           'worship': 'worship'
         };
-        final categoryStr = categoryMap[item.category?.toLowerCase()] ?? 'personal';
+        final categoryStr = categoryMap[item.category.toLowerCase()] ?? 'personal';
 
         final routineData = {
           'id': routineId,

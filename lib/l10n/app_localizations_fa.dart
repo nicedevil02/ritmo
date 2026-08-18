@@ -1222,4 +1222,141 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get cycleConfidenceLow => 'اطمینان کم';
+
+  @override
+  String get bridgeAuthRequired =>
+      'برای استفاده از مدل ChatGPT، لطفاً وارد حساب کاربری خود شوید.';
+
+  @override
+  String get bridgeAuthRequiredAction => 'ورود به حساب کاربری';
+
+  @override
+  String get bridgeCloudflareChallenge => 'تایید امنیتی کلودفلر ضروری است.';
+
+  @override
+  String get bridgeCloudflareChallengeAction => 'تکمیل تایید امنیتی';
+
+  @override
+  String get bridgeRateLimited =>
+      'محدودیت درخواست چت‌جی‌پی‌تی (Rate Limit). لطفاً کمی صبر کرده و مجدداً تلاش کنید.';
+
+  @override
+  String get bridgeRateLimitedAction => 'تلاش مجدد پس از چند دقیقه';
+
+  @override
+  String get bridgeServerError =>
+      'خطای موقت در سرورهای ChatGPT. لطفاً لحظاتی دیگر مجدداً تلاش کنید.';
+
+  @override
+  String get bridgeServerErrorAction => 'تلاش مجدد';
+
+  @override
+  String get bridgeTimeout =>
+      'زمان انتظار برای دریافت پاسخ از ChatGPT به پایان رسید.';
+
+  @override
+  String get bridgeTimeoutAction => 'تلاش مجدد';
+
+  @override
+  String get bridgeNetworkError =>
+      'عدم دسترسی به وب‌سایت ChatGPT. لطفاً اتصال اینترنت خود را بررسی کنید.';
+
+  @override
+  String get bridgeNetworkErrorAction => 'بررسی اتصال اینترنت';
+
+  @override
+  String get bridgeComposerNotFound =>
+      'فیلد ورودی متن ChatGPT هنوز آماده یا در دسترس نیست.';
+
+  @override
+  String get bridgeComposerNotFoundAction => 'بازنشانی گفتگو';
+
+  @override
+  String get bridgeNavigationLoop =>
+      'صفحه چت مکرراً بازنشانی شد و امکان ادامه گفتگو وجود ندارد.';
+
+  @override
+  String get bridgeNavigationLoopAction => 'بارگذاری مجدد مرورگر';
+
+  @override
+  String get bridgeUnknownError => 'خطای ناشناخته در پل وب ChatGPT.';
+
+  @override
+  String get bridgeUnknownErrorAction => 'تلاش مجدد';
+
+  @override
+  String get bridgeDiagnosticsTitle => 'تشخیص پل هوش مصنوعی وب';
+
+  @override
+  String get bridgeHarvestAction => 'بازیابی پاسخ از مرورگر';
+
+  @override
+  String get bridgeForceRebootAction => 'راه‌اندازی مجدد اجباری';
+
+  @override
+  String get bridgeCopyLogAction => 'کپی گزارش';
+
+  @override
+  String get bridgeLiveBrowser => 'مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی';
+
+  @override
+  String get cyclePregnancyBannerTitle => 'حالت بارداری فعال است';
+
+  @override
+  String get cyclePregnancyBannerDesc =>
+      'پیش‌بینی دوره‌ها و پنجره‌های باروری در این حالت متوقف شده است.';
+
+  @override
+  String get cycleNoPeriodsBannerTitle => 'هنوز دوره‌ای ثبت نشده است';
+
+  @override
+  String get cycleNoPeriodsBannerDesc =>
+      'برای دریافت پیش‌بینی‌های دقیق و شناسایی الگوهای بدنی، اولین دوره خود را ثبت کنید.';
+
+  @override
+  String get cycleRecordFirstPeriod => 'ثبت اولین دوره';
+
+  @override
+  String get cycleEarlyDataBannerTitle => 'پیش‌بینی با داده‌های اولیه';
+
+  @override
+  String get cycleEarlyDataBannerDesc =>
+      'پیش‌بینی فعلی بر اساس تنظیمات اولیه است. با ثبت حداقل ۳ چرخه، الگوی شخصی شما فعال می‌شود.';
+
+  @override
+  String get cycleBeyondHorizonBannerTitle => 'فراتر از افق پیش‌بینی';
+
+  @override
+  String get cycleBeyondHorizonBannerDesc =>
+      'پیش‌بینی چرخه‌ها تا حداکثر ۲۴ ماه آینده بر اساس ثبات چرخه‌های قبلی محاسبه می‌شود.';
+
+  @override
+  String get cycleSemanticsToday => '، امروز';
+
+  @override
+  String get cycleSemanticsRecordedPeriod => '، قاعدگی ثبت شده';
+
+  @override
+  String get cycleSemanticsPredictedPeriod => '، پیش‌بینی قاعدگی';
+
+  @override
+  String get cycleSemanticsLowConfidence => ' با اطمینان کم';
+
+  @override
+  String get cycleSemanticsHighConfidence => ' با اطمینان بالا';
+
+  @override
+  String get cycleSemanticsPredictionWindow => '، بازه احتمالی جابجایی قاعدگی';
+
+  @override
+  String get cycleSemanticsOvulation => '، روز تخمک‌گذاری';
+
+  @override
+  String get cycleSemanticsFertileWindow => '، پنجره باروری';
+
+  @override
+  String get cycleSemanticsPms => '، روزهای پیش از عادت';
+
+  @override
+  String get cycleSemanticsHasLogs => '، دارای علائم ثبت‌شده';
 }

@@ -71,3 +71,24 @@
 8. `core/database/migration/migrations_registry.dart`: ۶۷ رشته
 9. `features/assistant/logic/assistant_action_registry.dart`: ۶۴ رشته
 10. `core/analytics/energy_analytics_engine.dart`: ۶۱ رشته
+
+---
+
+## ۵. رشته‌های بومی‌سازی‌شدهٔ پل هوش مصنوعی وب (A-42)
+
+کلیدهای استانداردسازی‌شدهٔ پل وب با پیشوند `bridge` در فایل‌های `app_fa.arb` و `app_en.arb` ثبت و تولید شدند:
+- `bridgeAuthRequired` / `bridgeAuthRequiredAction`: پیام و دکمهٔ ورود به حساب کاربری ChatGPT
+- `bridgeCloudflareChallenge` / `bridgeCloudflareChallengeAction`: پیام و دکمهٔ تایید امنیتی کلودفلر
+- `bridgeRateLimited` / `bridgeRateLimitedAction`: خطای سقف درخواست (۴۲۹)
+- `bridgeServerError` / `bridgeServerErrorAction`: خطای سرورهای چت‌جی‌پی‌تی (۵xx)
+- `bridgeTimeout` / `bridgeTimeoutAction`: خطای مهلت زمانی دریافت پاسخ
+- `bridgeNetworkError` / `bridgeNetworkErrorAction`: خطای عدم دسترسی و اتصال اینترنت
+- `bridgeComposerNotFound` / `bridgeComposerNotFoundAction`: خطای عدم آمادگی کادر ورودی
+- `bridgeNavigationLoop` / `bridgeNavigationLoopAction`: خطای حلقهٔ بارگذاری مجدد ناوبری
+- `bridgeUnknownError` / `bridgeUnknownErrorAction`: خطای عمومی ناشناخته
+- `bridgeDiagnosticsTitle`: عنوان صفحهٔ تشخیص پل وب
+- `bridgeHarvestAction`: دکمهٔ بازیابی پاسخ از مرورگر
+- `bridgeForceRebootAction`: دکمهٔ راه‌اندازی مجدد اجباری
+- `bridgeCopyLogAction`: دکمهٔ کپی گزارش ردیاب
+- `bridgeLiveBrowser`: دکمهٔ مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی
+

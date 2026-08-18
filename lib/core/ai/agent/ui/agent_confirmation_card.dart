@@ -83,7 +83,7 @@ class AgentConfirmationCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               'ابزار: ${request.toolName}',
-              style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             Row(

@@ -161,11 +161,18 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   bool _hasActiveSseStream = false;
   bool get hasActiveSseStream => _hasActiveSseStream;
 
-  bool _isAuthenticated = true;
-  bool get isAuthenticated => _isAuthenticated;
+  final ValueNotifier<bool> _isAuthenticatedNotifier = ValueNotifier<bool>(true);
+  ValueNotifier<bool> get isAuthenticatedNotifier => _isAuthenticatedNotifier;
+  bool get isAuthenticated => _isAuthenticatedNotifier.value;
+  set _isAuthenticated(bool val) => _isAuthenticatedNotifier.value = val;
+
+  Map<String, dynamic>? _lastSelectorHealthReport;
+  Map<String, dynamic>? get lastSelectorHealthReport => _lastSelectorHealthReport;
 
   PendingWebBridgeRequest? _pendingRequest;
   PendingWebBridgeRequest? get pendingRequest => _pendingRequest;
+
+  int get bridgeVersion => ChatGptJsInjector.bridgeVersion;
 
   void _acquireSourceLockIfNeeded(BridgeSource src) {
     if (_lockedSource == null) {
@@ -695,6 +702,7 @@ if (typeof window.__ritmo_resume === 'function') {
           }
 
         case BridgeSelectorHealthEvent(:final issue, :final bridgeVersion, :final report):
+          _lastSelectorHealthReport = report;
           BridgeTraceLog.instance.addEntry(
             type: 'selector_health',
             source: source,
@@ -845,7 +853,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
         technicalDetail: 'status: cloudflareChallenge',
       );
     }
-    if (!_isAuthenticated) {
+    if (!isAuthenticated) {
       return const EmptyResponseReason(
         messageFa: 'نشست کاربری ChatGPT منقضی شده است. لطفاً وارد حساب شوید.',
         technicalDetail: 'status: auth_required',
@@ -1124,6 +1132,18 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       },
     );
     _currentStreamController = streamController;
+
+    if (!isAuthenticated) {
+      _failGeneration(WebBridgeException.authRequired());
+      yield* streamController.stream;
+      return;
+    }
+
+    if (_status == ChatGptBridgeStatus.cloudflareChallenge) {
+      _failGeneration(WebBridgeException.cloudflareChallenge());
+      yield* streamController.stream;
+      return;
+    }
 
     final formattedPrompt = ChatGptJsInjector.formatPromptWithSystemDirective(
       userPrompt: prompt,

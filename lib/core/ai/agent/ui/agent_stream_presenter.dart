@@ -1,6 +1,6 @@
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
-import 'package:ritmo/core/ai/web_bridge/pending_web_bridge_request.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 
 /// ماشین حالت نمایش مشترک بین همهٔ مصرف‌کنندگان جریان ایجنت (A-21).
 ///
@@ -133,8 +133,6 @@ class AgentStreamPresenter {
       PendingRequestStage.awaitingFirstToken when elapsedSeconds <= 20 => 'پاسخ کمی طول کشیده…',
       PendingRequestStage.awaitingFirstToken => 'هنوز منتظریم. می‌توانید مرورگر را ببینید.',
       PendingRequestStage.streaming => 'در حال نوشتن…',
-      PendingRequestStage.done => 'پایان دریافت پاسخ',
-      PendingRequestStage.error => 'خطا در ارتباط',
     };
   }
 }

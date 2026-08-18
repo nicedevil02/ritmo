@@ -134,8 +134,7 @@ class _AgentJournalScreenState extends State<AgentJournalScreen> {
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             entry.summaryFa,
-                            style: TextStyle(
-                              fontSize: 12,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               height: 1.6,
                               color: scheme.onSurface,
                             ),
@@ -144,8 +143,7 @@ class _AgentJournalScreenState extends State<AgentJournalScreen> {
                       const SizedBox(height: 6),
                       Text(
                         subtitle.toString(),
-                        style: TextStyle(
-                          fontSize: 10,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
                       ),

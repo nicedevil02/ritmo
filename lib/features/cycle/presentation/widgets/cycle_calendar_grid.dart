@@ -8,6 +8,7 @@ import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class CycleCalendarGrid extends StatelessWidget {
@@ -154,7 +155,8 @@ class CycleCalendarGrid extends StatelessWidget {
         }
 
         // F-34: Screen-reader semantics
-        final semanticsLabel = _buildSemanticsLabel(dayJalali, mark, isToday);
+        final l10n = AppLocalizations.of(context);
+        final semanticsLabel = _buildSemanticsLabel(dayJalali, mark, isToday, l10n);
 
         return Semantics(
           label: semanticsLabel,
@@ -194,11 +196,9 @@ class CycleCalendarGrid extends StatelessWidget {
                   Center(
                     child: Text(
                       PersianDigits.toFa(dayNum.toString()),
-                      style: TextStyle(
-                        fontSize: 18.5,
-                        fontWeight: textWeight,
-                        color: textColor,
-                      ),
+                      style: RitmoTextStyles.cardTitle(
+                        textColor,
+                      ).copyWith(fontWeight: textWeight),
                     ),
                   ),
                   if (mark.hasLog)
@@ -224,40 +224,45 @@ class CycleCalendarGrid extends StatelessWidget {
     );
   }
 
-  String _buildSemanticsLabel(Jalali jDay, CycleDayMark mark, bool isToday) {
+  String _buildSemanticsLabel(
+    Jalali jDay,
+    CycleDayMark mark,
+    bool isToday,
+    AppLocalizations? l10n,
+  ) {
     final buffer = StringBuffer();
     buffer.write(
       '${PersianDigits.toFa(jDay.day.toString())} ${jDay.formatter.mN}',
     );
-    if (isToday) buffer.write('، امروز');
+    if (isToday) buffer.write(l10n?.cycleSemanticsToday ?? '، امروز');
     switch (mark.kind) {
       case CycleDayKind.recordedPeriod:
-        buffer.write('، قاعدگی ثبت شده');
+        buffer.write(l10n?.cycleSemanticsRecordedPeriod ?? '، قاعدگی ثبت شده');
         break;
       case CycleDayKind.predictedPeriod:
-        buffer.write('، پیش‌بینی قاعدگی');
+        buffer.write(l10n?.cycleSemanticsPredictedPeriod ?? '، پیش‌بینی قاعدگی');
         if (mark.confidenceLevel == PredictionConfidenceLevel.low) {
-          buffer.write(' با اطمینان کم');
+          buffer.write(l10n?.cycleSemanticsLowConfidence ?? ' با اطمینان کم');
         } else if (mark.confidenceLevel == PredictionConfidenceLevel.high) {
-          buffer.write(' با اطمینان بالا');
+          buffer.write(l10n?.cycleSemanticsHighConfidence ?? ' با اطمینان بالا');
         }
         break;
       case CycleDayKind.predictionWindow:
-        buffer.write('، بازه احتمالی جابجایی قاعدگی');
+        buffer.write(l10n?.cycleSemanticsPredictionWindow ?? '، بازه احتمالی جابجایی قاعدگی');
         break;
       case CycleDayKind.ovulation:
-        buffer.write('، روز تخمک‌گذاری');
+        buffer.write(l10n?.cycleSemanticsOvulation ?? '، روز تخمک‌گذاری');
         break;
       case CycleDayKind.fertileWindow:
-        buffer.write('، پنجره باروری');
+        buffer.write(l10n?.cycleSemanticsFertileWindow ?? '، پنجره باروری');
         break;
       case CycleDayKind.pms:
-        buffer.write('، روزهای پیش از عادت');
+        buffer.write(l10n?.cycleSemanticsPms ?? '، روزهای پیش از عادت');
         break;
       case CycleDayKind.normal:
         break;
     }
-    if (mark.hasLog) buffer.write('، دارای علائم ثبت‌شده');
+    if (mark.hasLog) buffer.write(l10n?.cycleSemanticsHasLogs ?? '، دارای علائم ثبت‌شده');
     return buffer.toString();
   }
 }

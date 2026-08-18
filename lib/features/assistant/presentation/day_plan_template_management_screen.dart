@@ -75,7 +75,9 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                   }
                   if (mounted) {
                     await _loadTemplates();
-                    RitmoSnackbar.success(context, 'نام قالب تغییر یافت ✏️');
+                    if (mounted) {
+                      RitmoSnackbar.success(context, 'نام قالب تغییر یافت ✏️');
+                    }
                   }
                 } catch (e) {
                   if (mounted) {
@@ -118,7 +120,9 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                   }
                   if (mounted) {
                     await _loadTemplates();
-                    RitmoSnackbar.success(context, 'قالب با موفقیت حذف شد 🗑️');
+                    if (mounted) {
+                      RitmoSnackbar.success(context, 'قالب با موفقیت حذف شد 🗑️');
+                    }
                   }
                 } catch (e) {
                   if (mounted) {

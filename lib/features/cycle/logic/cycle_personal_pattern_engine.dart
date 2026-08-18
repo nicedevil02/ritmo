@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
@@ -58,10 +59,15 @@ class CyclePersonalPatternEngine {
       // Group symptoms by symptomKey -> cycleDay -> count
       final symptomDayCounts = <String, Map<int, int>>{};
 
+      final effectiveNow = now != null
+          ? CycleDateContract.cleanDate(now)
+          : CycleClock.now;
+
       for (final log in dayLogs) {
         final dateStr = log['logDate']?.toString();
         final logDate = CycleDateContract.parseDayKey(dateStr);
         if (logDate == null) continue;
+        if (!CycleDateContract.isSameOrBefore(logDate, effectiveNow)) continue;
 
         // Find which cycle this log belongs to
         int? activeCycleIndex;

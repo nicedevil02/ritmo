@@ -1016,6 +1016,11 @@ class _AssistantSheetState extends State<AssistantSheet> {
                     ),
                     const Spacer(),
                     const BridgeStatusChip(),
+                    IconButton(
+                      icon: Icon(Icons.open_in_browser_rounded, color: colors.textSecondary, size: 20),
+                      tooltip: 'مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی',
+                      onPressed: () => ChatGptMiniPreview.show(context),
+                    ),
                     if (_canUndoLast)
                       TextButton.icon(
                         style: TextButton.styleFrom(

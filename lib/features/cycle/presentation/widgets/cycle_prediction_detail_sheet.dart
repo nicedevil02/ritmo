@@ -135,20 +135,16 @@ class CyclePredictionDetailSheet extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
+                        style: RitmoTextStyles.titleMedium(
+                          colors.textPrimary,
+                        ).copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${PersianDigits.toFa(jDate.day.toString())} ${jDate.formatter.mN} ${PersianDigits.toFa(jDate.year.toString())}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textSecondary,
-                        ),
+                        style: RitmoTextStyles.caption(
+                          colors.textSecondary,
+                        ).copyWith(fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -169,11 +165,9 @@ class CyclePredictionDetailSheet extends StatelessWidget {
                     ),
                     child: Text(
                       confidenceLabel,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: headerColor,
-                      ),
+                      style: RitmoTextStyles.badge(
+                        headerColor,
+                      ).copyWith(fontWeight: FontWeight.bold),
                     ),
                   ),
               ],
@@ -236,11 +230,9 @@ class CyclePredictionDetailSheet extends StatelessWidget {
                   Expanded(
                     child: Text(
                       disclaimer,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: colors.textSecondary,
-                        height: 1.4,
-                      ),
+                      style: RitmoTextStyles.badge(
+                        colors.textSecondary,
+                      ).copyWith(height: 1.4),
                     ),
                   ),
                 ],
@@ -267,9 +259,9 @@ class CyclePredictionDetailSheet extends StatelessWidget {
                   onRecordPeriodFromDate(selectedDate);
                 },
                 icon: const Icon(CupertinoIcons.plus_circle_fill, size: 18),
-                label: const Text(
+                label: Text(
                   'ثبت شروع قاعدگی از این روز',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: RitmoTextStyles.label(Colors.white),
                 ),
               ),
             ),
@@ -296,21 +288,16 @@ class CyclePredictionDetailSheet extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textSecondary,
-                ),
+                style: RitmoTextStyles.badge(
+                  colors.textSecondary,
+                ).copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textPrimary,
-                  height: 1.35,
-                ),
+                style: RitmoTextStyles.caption(
+                  colors.textPrimary,
+                ).copyWith(fontWeight: FontWeight.w600, height: 1.35),
               ),
             ],
           ),

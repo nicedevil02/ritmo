@@ -59,22 +59,18 @@ class CycleOverviewTab extends StatelessWidget {
   }
 
   bool _checkIsPeriodDay(DateTime date) {
-    final cleanDate = DateTime(date.year, date.month, date.day);
+    final cleanDate = CycleDateContract.cleanDate(date);
     for (final p in periods) {
-      final pStart = DateTime.parse(p['startDate'] as String);
-      final start = DateTime(pStart.year, pStart.month, pStart.day);
-      final endStr = p['endDate'] as String?;
-      final end = endStr != null ? DateTime.parse(endStr) : null;
-      final cleanEnd = end != null
-          ? DateTime(end.year, end.month, end.day)
-          : null;
+      final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
+      if (start == null) continue;
+      final cleanEnd = CycleDateContract.parseDayKey(p['endDate']?.toString());
 
-      if (!cleanDate.isBefore(start)) {
+      if (CycleDateContract.isSameOrAfter(cleanDate, start)) {
         if (cleanEnd != null) {
-          if (!cleanDate.isAfter(cleanEnd)) return true;
+          if (CycleDateContract.isSameOrBefore(cleanDate, cleanEnd)) return true;
         } else {
           final pDur = CycleSettings.getPeriodDuration(settings);
-          if (cleanDate.difference(start).inDays < pDur) return true;
+          if (CycleDateContract.daysBetween(start, cleanDate) < pDur) return true;
         }
       }
     }
@@ -82,25 +78,21 @@ class CycleOverviewTab extends StatelessWidget {
   }
 
   int _calculateActivePeriodDay(DateTime date) {
-    final cleanDate = DateTime(date.year, date.month, date.day);
+    final cleanDate = CycleDateContract.cleanDate(date);
     for (final p in periods) {
-      final pStart = DateTime.parse(p['startDate'] as String);
-      final start = DateTime(pStart.year, pStart.month, pStart.day);
-      final endStr = p['endDate'] as String?;
-      final end = endStr != null ? DateTime.parse(endStr) : null;
-      final cleanEnd = end != null
-          ? DateTime(end.year, end.month, end.day)
-          : null;
+      final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
+      if (start == null) continue;
+      final cleanEnd = CycleDateContract.parseDayKey(p['endDate']?.toString());
 
-      if (!cleanDate.isBefore(start)) {
+      if (CycleDateContract.isSameOrAfter(cleanDate, start)) {
         if (cleanEnd != null) {
-          if (!cleanDate.isAfter(cleanEnd)) {
-            return cleanDate.difference(start).inDays + 1;
+          if (CycleDateContract.isSameOrBefore(cleanDate, cleanEnd)) {
+            return CycleDateContract.daysBetween(start, cleanDate) + 1;
           }
         } else {
           final pDur = CycleSettings.getPeriodDuration(settings);
-          if (cleanDate.difference(start).inDays < pDur) {
-            return cleanDate.difference(start).inDays + 1;
+          if (CycleDateContract.daysBetween(start, cleanDate) < pDur) {
+            return CycleDateContract.daysBetween(start, cleanDate) + 1;
           }
         }
       }

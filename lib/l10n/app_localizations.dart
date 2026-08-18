@@ -2275,6 +2275,258 @@ abstract class AppLocalizations {
   /// In fa, this message translates to:
   /// **'اطمینان کم'**
   String get cycleConfidenceLow;
+
+  /// No description provided for @bridgeAuthRequired.
+  ///
+  /// In fa, this message translates to:
+  /// **'برای استفاده از مدل ChatGPT، لطفاً وارد حساب کاربری خود شوید.'**
+  String get bridgeAuthRequired;
+
+  /// No description provided for @bridgeAuthRequiredAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'ورود به حساب کاربری'**
+  String get bridgeAuthRequiredAction;
+
+  /// No description provided for @bridgeCloudflareChallenge.
+  ///
+  /// In fa, this message translates to:
+  /// **'تایید امنیتی کلودفلر ضروری است.'**
+  String get bridgeCloudflareChallenge;
+
+  /// No description provided for @bridgeCloudflareChallengeAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'تکمیل تایید امنیتی'**
+  String get bridgeCloudflareChallengeAction;
+
+  /// No description provided for @bridgeRateLimited.
+  ///
+  /// In fa, this message translates to:
+  /// **'محدودیت درخواست چت‌جی‌پی‌تی (Rate Limit). لطفاً کمی صبر کرده و مجدداً تلاش کنید.'**
+  String get bridgeRateLimited;
+
+  /// No description provided for @bridgeRateLimitedAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'تلاش مجدد پس از چند دقیقه'**
+  String get bridgeRateLimitedAction;
+
+  /// No description provided for @bridgeServerError.
+  ///
+  /// In fa, this message translates to:
+  /// **'خطای موقت در سرورهای ChatGPT. لطفاً لحظاتی دیگر مجدداً تلاش کنید.'**
+  String get bridgeServerError;
+
+  /// No description provided for @bridgeServerErrorAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'تلاش مجدد'**
+  String get bridgeServerErrorAction;
+
+  /// No description provided for @bridgeTimeout.
+  ///
+  /// In fa, this message translates to:
+  /// **'زمان انتظار برای دریافت پاسخ از ChatGPT به پایان رسید.'**
+  String get bridgeTimeout;
+
+  /// No description provided for @bridgeTimeoutAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'تلاش مجدد'**
+  String get bridgeTimeoutAction;
+
+  /// No description provided for @bridgeNetworkError.
+  ///
+  /// In fa, this message translates to:
+  /// **'عدم دسترسی به وب‌سایت ChatGPT. لطفاً اتصال اینترنت خود را بررسی کنید.'**
+  String get bridgeNetworkError;
+
+  /// No description provided for @bridgeNetworkErrorAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'بررسی اتصال اینترنت'**
+  String get bridgeNetworkErrorAction;
+
+  /// No description provided for @bridgeComposerNotFound.
+  ///
+  /// In fa, this message translates to:
+  /// **'فیلد ورودی متن ChatGPT هنوز آماده یا در دسترس نیست.'**
+  String get bridgeComposerNotFound;
+
+  /// No description provided for @bridgeComposerNotFoundAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'بازنشانی گفتگو'**
+  String get bridgeComposerNotFoundAction;
+
+  /// No description provided for @bridgeNavigationLoop.
+  ///
+  /// In fa, this message translates to:
+  /// **'صفحه چت مکرراً بازنشانی شد و امکان ادامه گفتگو وجود ندارد.'**
+  String get bridgeNavigationLoop;
+
+  /// No description provided for @bridgeNavigationLoopAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'بارگذاری مجدد مرورگر'**
+  String get bridgeNavigationLoopAction;
+
+  /// No description provided for @bridgeUnknownError.
+  ///
+  /// In fa, this message translates to:
+  /// **'خطای ناشناخته در پل وب ChatGPT.'**
+  String get bridgeUnknownError;
+
+  /// No description provided for @bridgeUnknownErrorAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'تلاش مجدد'**
+  String get bridgeUnknownErrorAction;
+
+  /// No description provided for @bridgeDiagnosticsTitle.
+  ///
+  /// In fa, this message translates to:
+  /// **'تشخیص پل هوش مصنوعی وب'**
+  String get bridgeDiagnosticsTitle;
+
+  /// No description provided for @bridgeHarvestAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'بازیابی پاسخ از مرورگر'**
+  String get bridgeHarvestAction;
+
+  /// No description provided for @bridgeForceRebootAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'راه‌اندازی مجدد اجباری'**
+  String get bridgeForceRebootAction;
+
+  /// No description provided for @bridgeCopyLogAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'کپی گزارش'**
+  String get bridgeCopyLogAction;
+
+  /// No description provided for @bridgeLiveBrowser.
+  ///
+  /// In fa, this message translates to:
+  /// **'مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی'**
+  String get bridgeLiveBrowser;
+
+  /// No description provided for @cyclePregnancyBannerTitle.
+  ///
+  /// In fa, this message translates to:
+  /// **'حالت بارداری فعال است'**
+  String get cyclePregnancyBannerTitle;
+
+  /// No description provided for @cyclePregnancyBannerDesc.
+  ///
+  /// In fa, this message translates to:
+  /// **'پیش‌بینی دوره‌ها و پنجره‌های باروری در این حالت متوقف شده است.'**
+  String get cyclePregnancyBannerDesc;
+
+  /// No description provided for @cycleNoPeriodsBannerTitle.
+  ///
+  /// In fa, this message translates to:
+  /// **'هنوز دوره‌ای ثبت نشده است'**
+  String get cycleNoPeriodsBannerTitle;
+
+  /// No description provided for @cycleNoPeriodsBannerDesc.
+  ///
+  /// In fa, this message translates to:
+  /// **'برای دریافت پیش‌بینی‌های دقیق و شناسایی الگوهای بدنی، اولین دوره خود را ثبت کنید.'**
+  String get cycleNoPeriodsBannerDesc;
+
+  /// No description provided for @cycleRecordFirstPeriod.
+  ///
+  /// In fa, this message translates to:
+  /// **'ثبت اولین دوره'**
+  String get cycleRecordFirstPeriod;
+
+  /// No description provided for @cycleEarlyDataBannerTitle.
+  ///
+  /// In fa, this message translates to:
+  /// **'پیش‌بینی با داده‌های اولیه'**
+  String get cycleEarlyDataBannerTitle;
+
+  /// No description provided for @cycleEarlyDataBannerDesc.
+  ///
+  /// In fa, this message translates to:
+  /// **'پیش‌بینی فعلی بر اساس تنظیمات اولیه است. با ثبت حداقل ۳ چرخه، الگوی شخصی شما فعال می‌شود.'**
+  String get cycleEarlyDataBannerDesc;
+
+  /// No description provided for @cycleBeyondHorizonBannerTitle.
+  ///
+  /// In fa, this message translates to:
+  /// **'فراتر از افق پیش‌بینی'**
+  String get cycleBeyondHorizonBannerTitle;
+
+  /// No description provided for @cycleBeyondHorizonBannerDesc.
+  ///
+  /// In fa, this message translates to:
+  /// **'پیش‌بینی چرخه‌ها تا حداکثر ۲۴ ماه آینده بر اساس ثبات چرخه‌های قبلی محاسبه می‌شود.'**
+  String get cycleBeyondHorizonBannerDesc;
+
+  /// No description provided for @cycleSemanticsToday.
+  ///
+  /// In fa, this message translates to:
+  /// **'، امروز'**
+  String get cycleSemanticsToday;
+
+  /// No description provided for @cycleSemanticsRecordedPeriod.
+  ///
+  /// In fa, this message translates to:
+  /// **'، قاعدگی ثبت شده'**
+  String get cycleSemanticsRecordedPeriod;
+
+  /// No description provided for @cycleSemanticsPredictedPeriod.
+  ///
+  /// In fa, this message translates to:
+  /// **'، پیش‌بینی قاعدگی'**
+  String get cycleSemanticsPredictedPeriod;
+
+  /// No description provided for @cycleSemanticsLowConfidence.
+  ///
+  /// In fa, this message translates to:
+  /// **' با اطمینان کم'**
+  String get cycleSemanticsLowConfidence;
+
+  /// No description provided for @cycleSemanticsHighConfidence.
+  ///
+  /// In fa, this message translates to:
+  /// **' با اطمینان بالا'**
+  String get cycleSemanticsHighConfidence;
+
+  /// No description provided for @cycleSemanticsPredictionWindow.
+  ///
+  /// In fa, this message translates to:
+  /// **'، بازه احتمالی جابجایی قاعدگی'**
+  String get cycleSemanticsPredictionWindow;
+
+  /// No description provided for @cycleSemanticsOvulation.
+  ///
+  /// In fa, this message translates to:
+  /// **'، روز تخمک‌گذاری'**
+  String get cycleSemanticsOvulation;
+
+  /// No description provided for @cycleSemanticsFertileWindow.
+  ///
+  /// In fa, this message translates to:
+  /// **'، پنجره باروری'**
+  String get cycleSemanticsFertileWindow;
+
+  /// No description provided for @cycleSemanticsPms.
+  ///
+  /// In fa, this message translates to:
+  /// **'، روزهای پیش از عادت'**
+  String get cycleSemanticsPms;
+
+  /// No description provided for @cycleSemanticsHasLogs.
+  ///
+  /// In fa, this message translates to:
+  /// **'، دارای علائم ثبت‌شده'**
+  String get cycleSemanticsHasLogs;
 }
 
 class _AppLocalizationsDelegate

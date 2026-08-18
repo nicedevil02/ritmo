@@ -152,11 +152,9 @@ class CycleCalendarLegend extends StatelessWidget {
             const SizedBox(width: 7),
             Text(
               l10n?.cycleLoggedSymptoms ?? 'علائم ثبت شده',
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w700,
-                color: colors.textSecondary,
-              ),
+              style: RitmoTextStyles.caption(
+                colors.textSecondary,
+              ).copyWith(fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -169,11 +167,9 @@ class CycleCalendarLegend extends StatelessWidget {
         Divider(color: colors.border.withValues(alpha: 0.6), height: 28),
         Text(
           l10n?.cycleCalendarGuide ?? 'راهنمای تقویم چرخه بدنی:',
-          style: TextStyle(
-            fontSize: 15.5,
-            fontWeight: FontWeight.w900,
-            color: colors.textPrimary,
-          ),
+          style: RitmoTextStyles.titleMedium(
+            colors.textPrimary,
+          ).copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 14),
         Wrap(spacing: 16, runSpacing: 12, children: legendItems),
@@ -205,11 +201,9 @@ class CycleCalendarLegend extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           text,
-          style: TextStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w700,
-            color: textColor,
-          ),
+          style: RitmoTextStyles.caption(
+            textColor,
+          ).copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     );

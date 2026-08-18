@@ -426,21 +426,19 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                         children: [
                           Text(
                             monthName,
-                            style: TextStyle(
-                              fontSize: 19,
+                            style: RitmoTextStyles.cardTitle(
+                              colors.textPrimary,
+                            ).copyWith(
                               fontWeight: FontWeight.w900,
-                              color: colors.textPrimary,
                               letterSpacing: -0.3,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             PersianDigits.toFa(year.toString()),
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: colors.textSecondary,
-                            ),
+                            style: RitmoTextStyles.body(
+                              colors.textSecondary,
+                            ).copyWith(fontWeight: FontWeight.w700),
                           ),
                           // F-36: Confidence Badge for Future Estimated Months
                           if (isPredictionOnlyMonth &&
@@ -490,11 +488,9 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                                       const SizedBox(width: 4),
                                       Text(
                                         l10n?.cycleCurrentMonth ?? 'ماه جاری',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: widget.activePhaseColor,
-                                        ),
+                                        style: RitmoTextStyles.badge(
+                                          widget.activePhaseColor,
+                                        ).copyWith(fontWeight: FontWeight.bold),
                                       ),
                                     ],
                                   ),
@@ -532,11 +528,9 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                                       Text(
                                         l10n?.cycleJumpToNext ??
                                             'پرش به دوره بعد',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.error,
-                                        ),
+                                        style: RitmoTextStyles.badge(
+                                          colors.error,
+                                        ).copyWith(fontWeight: FontWeight.bold),
                                       ),
                                     ],
                                   ),
@@ -593,13 +587,11 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                       child: Center(
                         child: Text(
                           header,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w800,
-                            color: isFriday
+                          style: RitmoTextStyles.caption(
+                            isFriday
                                 ? colors.error.withValues(alpha: 0.85)
                                 : colors.textSecondary,
-                          ),
+                          ).copyWith(fontWeight: FontWeight.w800),
                         ),
                       ),
                     );
@@ -698,11 +690,9 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: badgeColor,
-        ),
+        style: RitmoTextStyles.badge(
+          badgeColor,
+        ).copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }

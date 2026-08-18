@@ -17,10 +17,8 @@ import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_
 import 'package:ritmo/features/cycle/logic/cycle_burden_engine.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
-import 'package:ritmo/features/cycle/logic/cycle_data_quality_engine.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_load_balancer.dart';
-import 'package:ritmo/features/cycle/logic/cycle_personal_pattern_engine.dart';
 import 'package:ritmo/features/cycle/logic/cycle_reminder_scheduler.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/logic/cycle_state_provider.dart';
@@ -80,12 +78,59 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   List<SymptomForecast> _personalForecasts = [];
   BodyBurdenScore? _burdenScore;
   CycleAdaptiveAdvice? _adaptiveAdvice;
-  Jalali _calendarMonth = Jalali.now();
+  Jalali _calendarMonth = Jalali.fromDateTime(CycleClock.now);
 
   @override
   void initState() {
     super.initState();
+    _calendarMonth = Jalali.fromDateTime(CycleClock.now);
+    CycleStateNotifier.instance.addListener(_onStateNotifierChanged);
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    CycleStateNotifier.instance.removeListener(_onStateNotifierChanged);
+    super.dispose();
+  }
+
+  void _onStateNotifierChanged() {
+    if (!mounted) return;
+    final state = CycleStateNotifier.instance.value;
+    setState(() {
+      _isLoading = state.isLoading;
+      _settings = state.settings;
+      _engineOutput = state.engineOutput;
+      _dataQualityReport = state.dataQuality;
+      _personalForecasts = state.symptomForecasts;
+
+      if (_engineOutput != null) {
+        final firstForecast = _engineOutput!.forecast.firstOrNull;
+        final confLevel =
+            firstForecast?.confidenceLevel ??
+            (_periods.length >= 5 &&
+                    !(_dataQualityReport?.hasForgottenOpenPeriod ?? false)
+                ? PredictionConfidenceLevel.high
+                : (_periods.length >= 3
+                      ? PredictionConfidenceLevel.medium
+                      : PredictionConfidenceLevel.low));
+        final confScore =
+            firstForecast?.confidence ??
+            (_periods.length >= 5
+                ? 0.90
+                : (_periods.length >= 3 ? 0.65 : 0.35));
+
+        _predictionConfidence = PredictionConfidence(
+          level: confLevel,
+          score: confScore,
+          reasonsFa:
+              (_dataQualityReport?.warningsFa != null &&
+                  _dataQualityReport!.warningsFa!.isNotEmpty)
+              ? _dataQualityReport!.warningsFa!
+              : ['${_periods.length} چرخه ثبت‌شده و تحلیل آماری الگوها'],
+        );
+      }
+    });
   }
 
   Future<void> _loadData() async {
@@ -94,13 +139,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
     try {
       final db = await DatabaseHelper.instance.database;
-      final settingsList = await db.query('app_settings');
-      _settings = {
-        for (final s in settingsList)
-          if (s['key'] != null)
-            s['key'].toString(): s['value']?.toString() ?? '',
-      };
-
       _periods = await db.query('cycle_periods', orderBy: 'startDate DESC');
 
       _forgottenPeriod = null;
@@ -120,10 +158,13 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       _dayLogs = await db.query('cycle_day_logs', orderBy: 'logDate DESC');
       _fastingDebts = await CycleConsentBridge.getFastingDebts();
 
-      final engine = CycleEngine();
-      _engineOutput = await engine.calculate(
-        CycleEngineInput(db: db, appSettings: _settings, now: CycleClock.now),
-      );
+      // Delegate calculation and unified adjustments to CycleStateNotifier
+      await CycleStateNotifier.instance.loadState();
+      final state = CycleStateNotifier.instance.value;
+      _settings = state.settings;
+      _engineOutput = state.engineOutput;
+      _dataQualityReport = state.dataQuality;
+      _personalForecasts = state.symptomForecasts;
 
       if (_engineOutput != null) {
         await CycleReminderScheduler.rescheduleAll(
@@ -132,17 +173,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           now: CycleClock.now,
         );
 
-        final todayStr = CycleDateContract.toDayKey(CycleClock.now);
-        _dataQualityReport = await CycleDataQualityEngine.evaluateDataQuality(
-          db: db,
-          periodRows: _periods,
-          todayIso: todayStr,
-        );
-
         final firstForecast = _engineOutput!.forecast.firstOrNull;
         final confLevel =
             firstForecast?.confidenceLevel ??
-            (_periods.length >= 5 && !_dataQualityReport!.hasForgottenOpenPeriod
+            (_periods.length >= 5 &&
+                    !(_dataQualityReport?.hasForgottenOpenPeriod ?? false)
                 ? PredictionConfidenceLevel.high
                 : (_periods.length >= 3
                       ? PredictionConfidenceLevel.medium
@@ -157,18 +192,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           level: confLevel,
           score: confScore,
           reasonsFa:
-              (_dataQualityReport!.warningsFa != null &&
+              (_dataQualityReport?.warningsFa != null &&
                   _dataQualityReport!.warningsFa!.isNotEmpty)
               ? _dataQualityReport!.warningsFa!
               : ['${_periods.length} چرخه ثبت‌شده و تحلیل آماری الگوها'],
         );
-
-        _personalForecasts =
-            await CyclePersonalPatternEngine.computePersonalForecasts(
-              db: db,
-              periodRows: _periods,
-              avgCycleLength: _engineOutput!.stats.avgCycleLength,
-            );
 
         final latestLog = _dayLogs.isNotEmpty ? _dayLogs.first : null;
         final symptomsStr = latestLog?['symptoms'] as String? ?? '';
@@ -523,12 +551,12 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   ? CyclePregnancyModeView(
                       pregnancyStartDate:
                           _settings['preg_start_date'] ??
-                          CycleClock.now.toIso8601String(),
+                          CycleDateContract.toDayKey(CycleClock.now),
                       pregnancyDueDate:
                           _settings['preg_due_date'] ??
-                          CycleClock.now
-                              .add(const Duration(days: 280))
-                              .toIso8601String(),
+                          CycleDateContract.toDayKey(
+                            CycleClock.now.add(const Duration(days: 280)),
+                          ),
                       onDeactivated: () async {
                         final db = await DatabaseHelper.instance.database;
                         await db.insert(

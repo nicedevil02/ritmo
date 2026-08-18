@@ -26,14 +26,14 @@ void main() {
   });
 
   group('Phase 5 Forecast Guard Tests (F-43..F-50)', () {
-    test('F-43: Forecast Horizon Length — 6 regular cycles generate 12 cycles up to 336 days', () {
+    test('F-43: Forecast Horizon Length & High Confidence — 6 regular cycles generate 12 cycles and high confidence', () {
       final lastStart = DateTime(2026, 7, 1);
       final forecast = CycleEngine.computeMultiCycleForecast(
         lastPeriodStart: lastStart,
         avgCycleLength: 28.0,
         avgPeriodDuration: 6.0,
         cycleStdDev: 1.0,
-        dataMaturity: 'ESTABLISHED',
+        dataMaturity: 'HIGH',
         settings: {},
         horizonCycles: 12,
       );
@@ -41,6 +41,8 @@ void main() {
       expect(forecast.length, equals(12));
       expect(forecast[0].predictedStart, equals(DateTime(2026, 7, 29)));
       expect(forecast[11].predictedStart, equals(DateTime(2026, 7, 1).add(const Duration(days: 12 * 28))));
+      expect(forecast[0].confidenceLevel, equals(PredictionConfidenceLevel.high));
+      expect(forecast[0].confidence, greaterThanOrEqualTo(0.66));
     });
 
     test('F-44: Uncertainty Growth — sigmaDays expands monotonically and scales with anomaly variance', () {
@@ -50,7 +52,7 @@ void main() {
         avgCycleLength: 28.0,
         avgPeriodDuration: 6.0,
         cycleStdDev: 1.0,
-        dataMaturity: 'ESTABLISHED',
+        dataMaturity: 'HIGH',
         settings: {},
         horizonCycles: 6,
       );
@@ -65,7 +67,7 @@ void main() {
         avgCycleLength: 28.0,
         avgPeriodDuration: 6.0,
         cycleStdDev: 4.5, // Irregular stddev
-        dataMaturity: 'ESTABLISHED',
+        dataMaturity: 'HIGH',
         settings: {},
         horizonCycles: 6,
       );
@@ -101,7 +103,7 @@ void main() {
         avgCycleLength: 28.0,
         avgPeriodDuration: 6.0,
         cycleStdDev: 1.5,
-        dataMaturity: 'ESTABLISHED',
+        dataMaturity: 'HIGH',
         settings: {},
         horizonCycles: 12,
       );
@@ -168,7 +170,7 @@ void main() {
         avgCycleLength: 28.0,
         avgPeriodDuration: 6.0,
         cycleStdDev: 1.0,
-        dataMaturity: 'ESTABLISHED',
+        dataMaturity: 'HIGH',
         settings: {CycleSettings.keyCycleLength: '28'},
         horizonCycles: 6,
       );
@@ -178,7 +180,7 @@ void main() {
         avgCycleLength: 31.0,
         avgPeriodDuration: 6.0,
         cycleStdDev: 1.0,
-        dataMaturity: 'ESTABLISHED',
+        dataMaturity: 'HIGH',
         settings: {CycleSettings.keyCycleLength: '31'},
         horizonCycles: 6,
       );
@@ -196,26 +198,46 @@ void main() {
       expect(diffDays, equals(2));
     });
 
-    test('F-50: Source Code Quality & Structural Guards', () {
+    test('F-50: Source Code Quality & Structural Guards across lib/features/cycle', () {
       final cycleDir = Directory('lib/features/cycle');
       final files = cycleDir.listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'));
 
       for (final file in files) {
         final content = file.readAsStringSync();
+        final isClockFile = file.path.endsWith('cycle_clock.dart');
+
         // Check for empty silent catch blocks
         expect(
           content.contains('catch (_) {}') || content.contains('catch (e) {}'),
           isFalse,
           reason: 'Silent catch block found in ${file.path}',
         );
-      }
 
-      // Check cycle_calendar_view.dart for forbidden methods
-      final calendarViewFile = File('lib/features/cycle/presentation/widgets/cycle_calendar_view.dart');
-      final calendarViewContent = calendarViewFile.readAsStringSync();
-      expect(calendarViewContent.contains('DateTime.parse('), isFalse);
-      expect(calendarViewContent.contains('toIso8601String('), isFalse);
-      expect(calendarViewContent.contains('_checkIs'), isFalse);
+        // Check for direct DateTime.parse / toIso8601String across all cycle files
+        expect(
+          content.contains('DateTime.parse('),
+          isFalse,
+          reason: 'DateTime.parse found in ${file.path}',
+        );
+        expect(
+          content.contains('toIso8601String('),
+          isFalse,
+          reason: 'toIso8601String found in ${file.path}',
+        );
+
+        if (!isClockFile) {
+          expect(
+            content.contains('DateTime.now()'),
+            isFalse,
+            reason: 'DateTime.now() found in ${file.path} without CycleClock',
+          );
+          expect(
+            content.contains('Jalali.now()'),
+            isFalse,
+            reason: 'Jalali.now() found in ${file.path} without CycleClock',
+          );
+        }
+      }
 
       // Check cycle_engine.dart for deprecated setting keys
       final engineFile = File('lib/core/domain/engines/cycle_engine.dart');

@@ -1,9 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/ai/web_bridge/bridge_trace_log.dart';
-import 'package:ritmo/core/ai/web_bridge/chatgpt_js_injector.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
-import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -12,8 +11,7 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 
-/// Screen for displaying real-time diagnostics, selector health,
-/// and event trace logs for the ChatGPT Web Bridge (A-39).
+/// صفحهٔ جامع تشخیص و مانیتورینگ پل هوش مصنوعی وب (A-39).
 class WebBridgeDiagnosticsScreen extends StatefulWidget {
   const WebBridgeDiagnosticsScreen({super.key});
 
@@ -24,6 +22,22 @@ class WebBridgeDiagnosticsScreen extends StatefulWidget {
 class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen> {
   bool _isHarvesting = false;
   bool _isRebooting = false;
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // بروزرسانی دوره‌ای هر ۲ ثانیه در حین باز بودن صفحه
+    _refreshTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,37 +50,41 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
         title: 'تشخیص پل هوش مصنوعی وب',
         actions: [
           IconButton(
+            icon: const Icon(Icons.copy_all_rounded),
+            tooltip: 'کپی گزارش ردیاب',
+            onPressed: () => _copyTraceLog(),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'تازه‌سازی',
             onPressed: () => setState(() {}),
           ),
         ],
       ),
-      body: ValueListenableBuilder<ChatGptBridgeStatus>(
-        valueListenable: manager.statusNotifier,
-        builder: (context, status, _) {
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. وضعیت لحظه‌ای پل
-                Text(
-                  'وضعیت لحظه‌ای پل',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: RitmoSpacing.sm),
-                RitmoCard(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(RitmoSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. کارت وضعیت زنده
+            Text(
+              'وضعیت فعلی پل ارتباطی',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: RitmoSpacing.sm),
+            ValueListenableBuilder<ChatGptBridgeStatus>(
+              valueListenable: manager.statusNotifier,
+              builder: (context, status, _) {
+                return RitmoCard(
                   padding: const EdgeInsets.all(RitmoSpacing.md),
                   child: Column(
                     children: [
                       _buildStatusRow(
                         context,
-                        label: 'وضعیت پل:',
+                        label: 'وضعیت چرخه حیات:',
                         value: status.name,
                         icon: _getStatusIcon(status),
                         valueColor: _getStatusColor(status, colors),
@@ -74,14 +92,14 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
                       const Divider(height: RitmoSpacing.md),
                       _buildStatusRow(
                         context,
-                        label: 'نسخهٔ اسکریپت پل:',
-                        value: 'v${toPersianDigits(ChatGptJsInjector.bridgeVersion.toString())}',
+                        label: 'نسخهٔ پل (Bridge Version):',
+                        value: 'v${toPersianDigits(manager.bridgeVersion.toString())}',
                         icon: Icons.code_rounded,
                       ),
                       const Divider(height: RitmoSpacing.md),
                       _buildStatusRow(
                         context,
-                        label: 'شناسهٔ درخواست جاری:',
+                        label: 'شناسه درخواست جاری:',
                         value: manager.currentRequestId ?? '—',
                         icon: Icons.tag_rounded,
                       ),
@@ -114,92 +132,90 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: RitmoSpacing.lg),
+                );
+              },
+            ),
+            const SizedBox(height: RitmoSpacing.lg),
 
-                // 2. سلامت سلکتورهای صفحه
-                Text(
-                  'سلامت سلکتورهای رابط کاربری (Selector Health)',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
+            // 2. سلامت سلکتورهای صفحه
+            Text(
+              'سلامت سلکتورهای رابط کاربری (Selector Health)',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: RitmoSpacing.sm),
+            RitmoCard(
+              padding: const EdgeInsets.all(RitmoSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'بررسی انطباق عناصر DOM صفحهٔ ChatGPT با قوانین پل ریتمو:',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: RitmoSpacing.sm),
+                  _buildSelectorHealthGrid(context, manager.lastSelectorHealthReport),
+                ],
+              ),
+            ),
+            const SizedBox(height: RitmoSpacing.lg),
+
+            // 3. اقدامات بازیابی دستی
+            Text(
+              'اقدامات بازیابی دستی',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: RitmoSpacing.sm),
+            Row(
+              children: [
+                Expanded(
+                  child: RitmoPrimaryButton(
+                    label: 'بازیابی پاسخ از مرورگر',
+                    icon: Icons.download_rounded,
+                    isLoading: _isHarvesting,
+                    onPressed: () => _handleHarvest(),
                   ),
                 ),
-                const SizedBox(height: RitmoSpacing.sm),
-                RitmoCard(
-                  padding: const EdgeInsets.all(RitmoSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'بررسی انطباق عناصر DOM صفحهٔ ChatGPT با قوانین پل ریتمو:',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: RitmoSpacing.sm),
-                      _buildSelectorHealthGrid(context, manager.lastSelectorHealthReport),
-                    ],
+                const SizedBox(width: RitmoSpacing.sm),
+                Expanded(
+                  child: RitmoSecondaryButton(
+                    label: _isRebooting ? 'در حال راه‌اندازی…' : 'راه‌اندازی مجدد اجباری',
+                    icon: Icons.restart_alt_rounded,
+                    onPressed: _isRebooting ? null : () => _handleForceReboot(),
                   ),
                 ),
-                const SizedBox(height: RitmoSpacing.lg),
-
-                // 3. اقدامات بازیابی دستی
-                Text(
-                  'اقدامات بازیابی دستی',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: RitmoSpacing.sm),
-                Row(
-                  children: [
-                    Expanded(
-                      child: RitmoPrimaryButton(
-                        label: 'بازیابی پاسخ از مرورگر',
-                        icon: Icons.download_rounded,
-                        isLoading: _isHarvesting,
-                        onPressed: () => _handleHarvest(context),
-                      ),
-                    ),
-                    const SizedBox(width: RitmoSpacing.sm),
-                    Expanded(
-                      child: RitmoSecondaryButton(
-                        label: 'راه‌اندازی مجدد اجباری',
-                        icon: Icons.restart_alt_rounded,
-                        isLoading: _isRebooting,
-                        onPressed: () => _handleForceReboot(context),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: RitmoSpacing.lg),
-
-                // 4. ردیاب رویدادها (Event Trace Log)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'ردیاب رویدادها (${toPersianDigits(BridgeTraceLog.instance.entries.length.toString())} رویداد)',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    TextButton.icon(
-                      icon: const Icon(Icons.copy_rounded, size: 16),
-                      label: const Text('کپی گزارش'),
-                      onPressed: () => _copyTraceLog(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: RitmoSpacing.xs),
-                _buildTraceLogList(context),
               ],
             ),
-          );
-        },
+            const SizedBox(height: RitmoSpacing.lg),
+
+            // 4. ردیاب رویدادها (Event Trace Log)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'ردیاب رویدادهای زنده (Trace Log)',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                Text(
+                  '${toPersianDigits(BridgeTraceLog.instance.entries.length.toString())} رویداد',
+                  style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: RitmoSpacing.sm),
+            _buildTraceLogList(context),
+          ],
+        ),
       ),
     );
   }
@@ -216,19 +232,18 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
 
     return Row(
       children: [
-        Icon(icon, size: 18, color: colors.textSecondary),
-        const SizedBox(width: RitmoSpacing.xs),
-        Text(
-          label,
-          style: textTheme.bodyMedium?.copyWith(
-            color: colors.textSecondary,
+        Icon(icon, size: 18, color: valueColor ?? colors.primary),
+        const SizedBox(width: RitmoSpacing.sm),
+        Expanded(
+          child: Text(
+            label,
+            style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
         ),
-        const Spacer(),
         Text(
           value,
           style: textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
             color: valueColor ?? colors.textPrimary,
           ),
         ),
@@ -241,61 +256,43 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
     final textTheme = Theme.of(context).textTheme;
 
     if (report == null || report.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm),
-        child: Text(
-          'هنوز داده‌ای از خودآزمون دریافت نشده است. لطفاً پل را مجدداً راه‌اندازی کنید.',
-          style: textTheme.bodySmall?.copyWith(color: colors.textTertiary),
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.md),
+          child: Text(
+            'هنوز هیچ گزارشی از سلکتورها دریافت نشده است. (پل در وضعیت idle است)',
+            style: textTheme.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
         ),
       );
     }
 
-    final keys = ['composer', 'sendButton', 'assistantMessage', 'conversationTurns', 'markdownBodies', 'userMessage'];
-    final labels = {
-      'composer': 'کادر ورودی (Composer)',
-      'sendButton': 'دکمهٔ ارسال (Send)',
-      'assistantMessage': 'پیام‌های دستیار (Assistant)',
-      'conversationTurns': 'نوبت‌های گفتگو (Turns)',
-      'markdownBodies': 'بدنهٔ مارک‌داون (Markdown)',
-      'userMessage': 'پیام‌های کاربر (User)',
-    };
-
+    final keys = ['composer', 'assistantMessage', 'sendButton', 'stopButton', 'streamIndicator'];
     return Column(
-      children: keys.map((key) {
-        final count = (report[key] as int?) ?? 0;
-        final isZero = count == 0;
-        final label = labels[key] ?? key;
-
+      children: keys.map((k) {
+        final count = report[k] as int? ?? 0;
+        final isOk = count > 0;
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
             children: [
               Icon(
-                isZero ? Icons.cancel_outlined : Icons.check_circle_outline_rounded,
+                isOk ? Icons.check_circle_rounded : Icons.cancel_rounded,
                 size: 16,
-                color: isZero ? colors.error : colors.success,
+                color: isOk ? colors.success : colors.warning,
               ),
-              const SizedBox(width: RitmoSpacing.xs),
+              const SizedBox(width: RitmoSpacing.sm),
               Expanded(
                 child: Text(
-                  label,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colors.textPrimary,
-                  ),
+                  k,
+                  style: textTheme.bodyMedium?.copyWith(color: colors.textPrimary),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isZero ? colors.error.withValues(alpha: 0.1) : colors.success.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '${toPersianDigits(count.toString())} مورد',
-                  style: textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isZero ? colors.error : colors.success,
-                  ),
+              Text(
+                '${toPersianDigits(count.toString())} عنصر',
+                style: textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isOk ? colors.success : colors.warning,
                 ),
               ),
             ],
@@ -326,10 +323,11 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: entries.take(30).length,
-      separatorBuilder: (_, __) => const SizedBox(height: 6),
+      separatorBuilder: (_, _) => const SizedBox(height: 6),
       itemBuilder: (context, index) {
         final entry = entries[index];
-        final timeStr = '${entry.timestamp.hour.toString().padLeft(2, '0')}:${entry.timestamp.minute.toString().padLeft(2, '0')}:${entry.timestamp.second.toString().padLeft(2, '0')}.${entry.timestamp.millisecond.toString().padLeft(3, '0')}';
+        final at = entry.at;
+        final timeStr = '${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}:${at.second.toString().padLeft(2, '0')}.${at.millisecond.toString().padLeft(3, '0')}';
 
         return Container(
           padding: const EdgeInsets.all(RitmoSpacing.sm),
@@ -389,7 +387,7 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
     );
   }
 
-  Future<void> _handleHarvest(BuildContext context) async {
+  Future<void> _handleHarvest() async {
     setState(() => _isHarvesting = true);
     try {
       final harvested = await ChatGptWebBridgeManager.instance.harvestVisibleAnswer();
@@ -406,10 +404,12 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
     }
   }
 
-  Future<void> _handleForceReboot(BuildContext context) async {
+  Future<void> _handleForceReboot() async {
     setState(() => _isRebooting = true);
     try {
-      await ChatGptWebBridgeManager.instance.forceReboot();
+      await ChatGptWebBridgeManager.instance.forceReboot(
+        reasonFa: 'راه‌اندازی مجدد دستی از صفحه تشخیص',
+      );
       if (!mounted) return;
       RitmoToast.show(context, 'پل مجدداً راه‌اندازی شد.');
     } catch (e) {
@@ -419,10 +419,10 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
     }
   }
 
-  Future<void> _copyTraceLog(BuildContext context) async {
+  Future<void> _copyTraceLog() async {
     final text = BridgeTraceLog.instance.exportAsText();
     await Clipboard.setData(ClipboardData(text: text));
-    if (context.mounted) {
+    if (mounted) {
       RitmoToast.show(context, 'گزارش ردیاب در حافظه کپی شد.');
     }
   }
@@ -438,21 +438,21 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
     };
   }
 
-  Color _getStatusColor(ChatGptBridgeStatus status, RitmoColorScheme colors) {
+  Color _getStatusColor(ChatGptBridgeStatus status, RitmoColors colors) {
     return switch (status) {
       ChatGptBridgeStatus.idle => colors.textTertiary,
-      ChatGptBridgeStatus.booting => colors.info,
+      ChatGptBridgeStatus.booting => colors.primary,
       ChatGptBridgeStatus.ready => colors.success,
-      ChatGptBridgeStatus.generating => colors.primary,
+      ChatGptBridgeStatus.generating => colors.accent,
       ChatGptBridgeStatus.cloudflareChallenge => colors.warning,
       ChatGptBridgeStatus.error => colors.error,
     };
   }
 
-  Color _getLevelColor(BridgeTraceLevel level, RitmoColorScheme colors) {
+  Color _getLevelColor(BridgeTraceLevel level, RitmoColors colors) {
     return switch (level) {
-      BridgeTraceLevel.info => colors.info,
-      BridgeTraceLevel.warning => colors.warning,
+      BridgeTraceLevel.info => colors.primary,
+      BridgeTraceLevel.warn => colors.warning,
       BridgeTraceLevel.error => colors.error,
     };
   }

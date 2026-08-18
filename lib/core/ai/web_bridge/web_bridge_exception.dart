@@ -16,6 +16,8 @@ class WebBridgeException implements Exception {
   final WebBridgeErrorKind kind;
   final String messageFa;
   final String? actionTextFa;
+  final String? messageKey;
+  final String? actionKey;
   final int? statusCode;
   final Object? originalError;
 
@@ -23,6 +25,8 @@ class WebBridgeException implements Exception {
     required this.kind,
     required this.messageFa,
     this.actionTextFa,
+    this.messageKey,
+    this.actionKey,
     this.statusCode,
     this.originalError,
   });
@@ -32,6 +36,8 @@ class WebBridgeException implements Exception {
       kind: WebBridgeErrorKind.authRequired,
       messageFa: messageFa ?? 'برای استفاده از مدل ChatGPT، لطفاً وارد حساب کاربری خود شوید.',
       actionTextFa: 'ورود به حساب کاربری',
+      messageKey: 'bridgeAuthRequired',
+      actionKey: 'bridgeAuthRequiredAction',
     );
   }
 
@@ -40,6 +46,8 @@ class WebBridgeException implements Exception {
       kind: WebBridgeErrorKind.cloudflareChallenge,
       messageFa: messageFa ?? 'تایید امنیتی کلودفلر ضروری است.',
       actionTextFa: 'تکمیل تایید امنیتی',
+      messageKey: 'bridgeCloudflareChallenge',
+      actionKey: 'bridgeCloudflareChallengeAction',
     );
   }
 
@@ -49,6 +57,8 @@ class WebBridgeException implements Exception {
       statusCode: statusCode ?? 429,
       messageFa: messageFa ?? 'محدودیت درخواست چت‌جی‌پی‌تی (Rate Limit). لطفاً کمی صبر کرده و مجدداً تلاش کنید.',
       actionTextFa: 'تلاش مجدد پس از چند دقیقه',
+      messageKey: 'bridgeRateLimited',
+      actionKey: 'bridgeRateLimitedAction',
     );
   }
 
@@ -58,6 +68,8 @@ class WebBridgeException implements Exception {
       statusCode: statusCode,
       messageFa: messageFa ?? 'خطای موقت در سرورهای ChatGPT. لطفاً لحظاتی دیگر مجدداً تلاش کنید.',
       actionTextFa: 'تلاش مجدد',
+      messageKey: 'bridgeServerError',
+      actionKey: 'bridgeServerErrorAction',
     );
   }
 
@@ -66,6 +78,8 @@ class WebBridgeException implements Exception {
       kind: WebBridgeErrorKind.timeout,
       messageFa: messageFa ?? 'زمان انتظار برای دریافت پاسخ از ChatGPT به پایان رسید.',
       actionTextFa: 'تلاش مجدد',
+      messageKey: 'bridgeTimeout',
+      actionKey: 'bridgeTimeoutAction',
     );
   }
 
@@ -75,6 +89,8 @@ class WebBridgeException implements Exception {
       statusCode: statusCode,
       messageFa: messageFa ?? 'عدم دسترسی به وب‌سایت ChatGPT. لطفاً اتصال اینترنت خود را بررسی کنید.',
       actionTextFa: 'بررسی اتصال اینترنت',
+      messageKey: 'bridgeNetworkError',
+      actionKey: 'bridgeNetworkErrorAction',
       originalError: originalError,
     );
   }
@@ -84,6 +100,8 @@ class WebBridgeException implements Exception {
       kind: WebBridgeErrorKind.composerNotFound,
       messageFa: messageFa ?? 'فیلد ورودی متن ChatGPT هنوز آماده یا در دسترس نیست.',
       actionTextFa: 'بازنشانی گفتگو',
+      messageKey: 'bridgeComposerNotFound',
+      actionKey: 'bridgeComposerNotFoundAction',
     );
   }
 
@@ -92,6 +110,8 @@ class WebBridgeException implements Exception {
       kind: WebBridgeErrorKind.navigationLoop,
       messageFa: messageFa ?? 'صفحه چت مکرراً بازنشانی شد و امکان ادامه گفتگو وجود ندارد.',
       actionTextFa: 'بارگذاری مجدد مرورگر',
+      messageKey: 'bridgeNavigationLoop',
+      actionKey: 'bridgeNavigationLoopAction',
     );
   }
 
@@ -100,6 +120,8 @@ class WebBridgeException implements Exception {
       kind: WebBridgeErrorKind.unknown,
       messageFa: messageFa,
       actionTextFa: 'تلاش مجدد',
+      messageKey: 'bridgeUnknownError',
+      actionKey: 'bridgeUnknownErrorAction',
       originalError: originalError,
     );
   }

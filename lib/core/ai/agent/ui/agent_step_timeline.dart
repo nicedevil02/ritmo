@@ -67,13 +67,12 @@ class AgentStepTimeline extends StatelessWidget {
                 : Icon(Icons.timeline, size: 18, color: scheme.primary),
             title: Text(
               header.toString(),
-              style: TextStyle(fontSize: 12, color: scheme.onSurface),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurface),
             ),
             subtitle: (status.isNotEmpty && steps.isNotEmpty)
                 ? Text(
                     status,
-                    style: TextStyle(
-                        fontSize: 11, color: scheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
                   )
                 : null,
             children: steps
@@ -131,6 +130,7 @@ class _StepRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final description = step.descriptionFa?.trim() ?? '';
     final duration = _durationText();
 
@@ -148,15 +148,14 @@ class _StepRow extends StatelessWidget {
               children: [
                 Text(
                   step.titleFa,
-                  style: TextStyle(fontSize: 12, color: scheme.onSurface),
+                  style: textTheme.bodySmall?.copyWith(color: scheme.onSurface),
                 ),
                 if (description.isNotEmpty)
                   Text(
                     description,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 11, color: scheme.onSurfaceVariant),
+                    style: textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
                   ),
               ],
             ),
@@ -164,7 +163,7 @@ class _StepRow extends StatelessWidget {
           if (duration.isNotEmpty)
             Text(
               duration,
-              style: TextStyle(fontSize: 10, color: scheme.onSurfaceVariant),
+              style: textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
         ],
       ),

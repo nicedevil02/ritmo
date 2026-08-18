@@ -28,7 +28,9 @@ class AgentToolProtocol {
   /// بدون این خنثی‌سازی، یک یادداشت یا رونوشت می‌توانست داخل خودش تگ
   /// `<tool_call>` داشته باشد و مدل را به اجرای فرمان دلخواه نویسنده وادار کند.
   static final RegExp _controlTags = RegExp(
-    r'<\s*/?\s*(tool_call|user_content|actions|memory_ops|system|assistant|function|im_start|im_end)\b[^>]*>',
+    r'<\s*/?\s*(tool_call|tool|user_content|actions|memory_ops|system|assistant|function|im_start|im_end)\b[^>]*>'
+    r'|\[\/?(TOOL_CALL|TOOL|SYSTEM|ASSISTANT|ACTIONS|MEMORY_OPS)[^\]]*\]'
+    r'|```\s*(json|tool)\s*\{[\s\S]*?```',
     caseSensitive: false,
   );
 

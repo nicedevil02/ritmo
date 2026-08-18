@@ -427,7 +427,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   void _openModuleScreen(String moduleId) {
     Widget? screen;
     switch (moduleId) {
-      case 'sleep': screen = const WellbeingScreen(initialSection: WellbeingSection.sleep);
+      case 'sleep': screen = const WellbeingScreen(initialSection: WellbeingSection.trend); break;
       case 'sports':
         _openSupplementarySports();
         return;

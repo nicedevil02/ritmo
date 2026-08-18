@@ -72,8 +72,28 @@ void main() {
         reason: 'قانون ۹: متن فارسی در core: $hits');
   });
 
-  test('no magic sentinel numbers in analytics', () {
-    final hits = _matching('lib/core/analytics', RegExp(r'-999'));
-    expect(hits, isEmpty, reason: 'W-06: مقدار جادویی -999: $hits');
+  test('no raw TextStyle inside the wellbeing feature', () {
+    final hits = _matching(
+      'lib/features/wellbeing',
+      RegExp(r'\bTextStyle\s*\('),
+    );
+    expect(
+      hits,
+      isEmpty,
+      reason: 'W-41: استایل متنی خام بازگشته است: $hits',
+    );
+  });
+
+  test('no direct db mutations inside wellbeing presentation', () {
+    final hits = _matching(
+      'lib/features/wellbeing/presentation',
+      RegExp(r'\bdb\.(insert|update|delete|rawInsert|rawUpdate|rawDelete)\s*\('),
+    );
+    expect(
+      hits,
+      isEmpty,
+      reason: 'W-07: جهش مستقیم دیتابیس در لایه نمایش: $hits',
+    );
   });
 }
+

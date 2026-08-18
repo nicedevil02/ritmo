@@ -92,3 +92,12 @@ V91 جدول را با الگوی temp-table بازسازی کرد و مقادی
 | `cycle_logs` | `cycle_periods` + `cycle_day_logs` |
 | `fasting_debt` | `worship_debts` |
 | `course_active_timers` | `active_timers` |
+
+---
+
+## B-15: Dual-Write & Unified Wellbeing Table Migration
+**وضعیت:** 🔄 در حال اجرا (فازهای ۱ تا ۱۱ بهبود حال و تعادل)
+
+**توضیح:**
+در فاز بازطراحی ماژول `wellbeing`، تمام ثبت‌های انرژی، حال، خواب و بازتاب از طریق درگاه متمرکز `WellbeingLogGateway` به جداول اختصاصی (`energy_logs`, `mood_logs`, `bedtime_diagnostics`, `daily_reflections`) و همزمان به صورت dual-write به جدول یکپارچهٔ `wellbeing_entry` نوشته می‌شوند. همچنین نتایج قطعی شاخص در جدول `wellbeing_daily` جهت ترسیم نمودارهای روند بلندمدت بدون نیاز به محاسبه مجدد ذخیره می‌گردند. در مهاجرت V100+، جداول اختصاصی legacy حذف و صرفاً `wellbeing_entry` و `wellbeing_daily` استفاده خواهند شد.
+

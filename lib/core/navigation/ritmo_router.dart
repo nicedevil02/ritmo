@@ -111,7 +111,7 @@ class RitmoRouter {
     // همان بخش است (اسکرول به بلوک در فاز A)، پس هر دو به یک مقصد می‌رسند.
     if (r == '/sleep' || r == '/sleep/journey') {
       return RitmoRouteTarget.screen((_) =>
-          const WellbeingScreen(initialSection: WellbeingSection.sleep));
+          const WellbeingScreen(initialSection: WellbeingSection.trend));
     }
 
     // چرخه: کلیدواژه‌های فارسی/انگلیسی (مثل رفتار قبلی registry)

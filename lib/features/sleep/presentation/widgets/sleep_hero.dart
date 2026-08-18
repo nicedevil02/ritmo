@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
 import 'package:ritmo/features/sleep/presentation/widgets/sleep_log_sheet.dart';
 
@@ -23,7 +24,7 @@ class SleepHero extends StatefulWidget {
 }
 
 class _SleepHeroState extends State<SleepHero> {
-  late Timer _timer;
+  Timer? _timer;
   String _countdownText = '';
   bool _isWinddownActive = false;
 
@@ -38,7 +39,7 @@ class _SleepHeroState extends State<SleepHero> {
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -71,11 +72,10 @@ class _SleepHeroState extends State<SleepHero> {
   }
 
   void _showLogSheet() {
-    showModalBottomSheet(
+    RitmoSheetScaffold.present(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => SleepLogSheet(
+      title: 'ثبت خواب دیشب',
+      builder: (ctx) => SleepLogSheet(
         target: widget.target,
         onSaved: widget.onRefresh,
       ),

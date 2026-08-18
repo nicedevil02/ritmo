@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_day_sheet.dart';
 
 class WellbeingPulseDayData {
   const WellbeingPulseDayData({
@@ -236,70 +237,10 @@ class WellbeingPulseChart extends StatelessWidget {
   }
 
   void _showDayDetailDialog(BuildContext context, WellbeingPulseDayData d) {
-    final colors = context.colors;
-    showDialog<void>(
+    WellbeingDaySheet.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.surfaceElevated,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
-        ),
-        title: Text(
-          'جزئیات روز ${RitmoNumber.fa(d.dateStr)}',
-          style: RitmoTextStyles.cardTitle(colors.textPrimary),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _detailRow(
-              colors,
-              'خواب',
-              d.sleepHours != null
-                  ? RitmoNumber.faHours(d.sleepHours!)
-                  : 'ثبت نشده',
-            ),
-            const SizedBox(height: 8),
-            _detailRow(
-              colors,
-              'انرژی',
-              d.energyLevel != null
-                  ? '${RitmoNumber.fa(d.energyLevel!.toStringAsFixed(1))} از ۳'
-                  : 'ثبت نشده',
-            ),
-            const SizedBox(height: 8),
-            _detailRow(
-              colors,
-              'حال',
-              d.moodScore != null
-                  ? '${RitmoNumber.fa(d.moodScore!.toStringAsFixed(1))} از ۵'
-                  : 'ثبت نشده',
-            ),
-            const SizedBox(height: 8),
-            _detailRow(
-              colors,
-              'بازتاب',
-              d.hasReflection ? 'ثبت شده ✓' : 'ثبت نشده',
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('بستن', style: RitmoTextStyles.label(colors.primary)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _detailRow(RitmoColors colors, String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: RitmoTextStyles.body(colors.textSecondary)),
-        Text(value, style: RitmoTextStyles.label(colors.textPrimary)),
-      ],
+      day: d,
     );
   }
 }
+

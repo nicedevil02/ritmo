@@ -163,7 +163,10 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
             color: color.withValues(alpha: 0.12),
             border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
           ),
-          child: Text(emoji, style: const TextStyle(fontSize: 20)),
+          child: Text(
+            emoji,
+            style: RitmoTextStyles.body(color).copyWith(fontSize: 20),
+          ),
         ),
       ),
     );

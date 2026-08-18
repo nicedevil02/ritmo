@@ -1,6 +1,7 @@
 // C-18, C-23, C-24: CycleEngine Overdue & Period Duration Tests
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
+import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -88,7 +89,13 @@ void main() {
         expect(output.missedCycles, equals(2)); // floor(60 / 28) = 2
         expect(output.needsUserAttention, isTrue);
         expect(output.currentPhase, equals(CyclePhase.dataStale));
-        expect(output.nextPeriodPrediction, isNull);
+        // F-16: in dataStale/overdue, forecast provides 3 low-confidence cycles instead of empty
+        expect(output.forecast.length, equals(3));
+        expect(
+          output.forecast.first.confidenceLevel,
+          equals(PredictionConfidenceLevel.low),
+        );
+        expect(output.nextPeriodPrediction, isNotNull);
       },
     );
 

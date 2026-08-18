@@ -1,6 +1,7 @@
 // C-17, C-19, C-22, C-25, C-26: CycleEngine Prediction & Outlier Tests
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
+import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -92,7 +93,7 @@ void main() {
     });
 
     test(
-      'C-17: Prediction window is clamped to at most 7 days wide even across multiple elapsed cycles',
+      'F-10 & F-11: Forecast sigma grows with distance and confidence damps',
       () async {
         // Seed historical records with variable cycle lengths
         await db.insert('cycle_periods', {
@@ -102,33 +103,115 @@ void main() {
         });
         await db.insert('cycle_periods', {
           'id': '2',
-          'startDate': '2026-01-26',
-          'endDate': '2026-01-31',
-        }); // 25 days
+          'startDate': '2026-01-29',
+          'endDate': '2026-02-03',
+        }); // 28 days
         await db.insert('cycle_periods', {
           'id': '3',
-          'startDate': '2026-03-05',
-          'endDate': '2026-03-10',
-        }); // 38 days
+          'startDate': '2026-02-26',
+          'endDate': '2026-03-03',
+        }); // 28 days
+        await db.insert('cycle_periods', {
+          'id': '4',
+          'startDate': '2026-03-26',
+          'endDate': '2026-03-31',
+        }); // 28 days
 
         final settings = {
           'user_gender': 'FEMALE',
           'module_cycle_enabled': 'true',
         };
 
-        // Historical cycles have high dispersion (25 vs 38 days -> 13 days spread)
-        final now = DateTime(2026, 3, 20);
+        final now = DateTime(2026, 3, 27);
         final output = await engine.calculate(
           CycleEngineInput(db: db, appSettings: settings, now: now),
         );
 
         expect(output.hasData, isTrue);
-        expect(output.nextPeriodWindowStart, isNotNull);
-        expect(output.nextPeriodWindowEnd, isNotNull);
-        final windowWidth = output.nextPeriodWindowEnd!
-            .difference(output.nextPeriodWindowStart!)
-            .inDays;
-        expect(windowWidth, lessThanOrEqualTo(7));
+        expect(output.forecast.length, 12);
+
+        // Verify sigma non-decreasing and confidence non-increasing
+        for (var i = 0; i < output.forecast.length - 1; i++) {
+          final curr = output.forecast[i];
+          final next = output.forecast[i + 1];
+          expect(
+            next.sigmaDays,
+            greaterThanOrEqualTo(curr.sigmaDays),
+            reason:
+                'sigmaDays at index ${next.index} should be >= index ${curr.index}',
+          );
+          expect(
+            next.confidence,
+            lessThanOrEqualTo(curr.confidence),
+            reason:
+                'confidence at index ${next.index} should be <= index ${curr.index}',
+          );
+        }
+
+        // Backward compatibility check
+        expect(
+          output.nextPeriodPrediction,
+          output.forecast.first.predictedStart,
+        );
+        expect(output.ovulationDay, output.forecast.first.ovulationDay);
+        expect(output.fertileWindowStart, output.forecast.first.fertileStart);
+        expect(output.fertileWindowEnd, output.forecast.first.fertileEnd);
+        expect(output.nextPeriodWindowStart, output.forecast.first.windowStart);
+        expect(output.nextPeriodWindowEnd, output.forecast.first.windowEnd);
+      },
+    );
+
+    test(
+      'F-13: fertilityVisible = false suppresses ovulation and fertile window in forecast',
+      () async {
+        await db.insert('cycle_periods', {
+          'id': '1',
+          'startDate': '2026-01-01',
+          'endDate': '2026-01-06',
+        });
+        final settings = {
+          'user_gender': 'FEMALE',
+          'module_cycle_enabled': 'true',
+          'cycle_fertility_visible': 'false',
+        };
+        final now = DateTime(2026, 1, 15);
+        final output = await engine.calculate(
+          CycleEngineInput(db: db, appSettings: settings, now: now),
+        );
+        expect(output.forecast.isNotEmpty, isTrue);
+        for (final cycle in output.forecast) {
+          expect(cycle.ovulationDay, isNull);
+          expect(cycle.fertileStart, isNull);
+          expect(cycle.fertileEnd, isNull);
+        }
+        expect(output.ovulationDay, isNull);
+        expect(output.fertileWindowStart, isNull);
+      },
+    );
+
+    test(
+      'F-16: Stale/overdue data produces at most 3 cycles with low confidence',
+      () async {
+        await db.insert('cycle_periods', {
+          'id': '1',
+          'startDate': '2026-01-01',
+          'endDate': '2026-01-06',
+        });
+        final settings = {
+          'user_gender': 'FEMALE',
+          'module_cycle_enabled': 'true',
+        };
+        // 80 days later -> needsUserAttention / dataStale
+        final now = DateTime(2026, 3, 22);
+        final output = await engine.calculate(
+          CycleEngineInput(db: db, appSettings: settings, now: now),
+        );
+        expect(output.needsUserAttention, isTrue);
+        expect(output.currentPhase, equals(CyclePhase.dataStale));
+        expect(output.forecast.length, 3);
+        for (final cycle in output.forecast) {
+          expect(cycle.confidenceLevel, PredictionConfidenceLevel.low);
+        }
       },
     );
 

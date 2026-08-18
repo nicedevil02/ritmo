@@ -1,7 +1,9 @@
+// ignore_for_file: prefer_initializing_formals
 // C-16..C-27: CycleEngine Domain Intelligence
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
@@ -9,6 +11,7 @@ import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
+import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -91,18 +94,18 @@ class CycleEngineOutput {
     required this.currentPhase,
     required this.dayOfCycle,
     required this.dayOfPeriod,
-    this.nextPeriodPrediction,
-    this.fertileWindowStart,
-    this.fertileWindowEnd,
-    this.ovulationDay,
+    DateTime? nextPeriodPrediction,
+    DateTime? fertileWindowStart,
+    DateTime? fertileWindowEnd,
+    DateTime? ovulationDay,
     required this.isIrregular,
     required this.stats,
     required this.dataMaturity,
     required this.hasData,
-    this.nextPeriodWindowStart,
-    this.nextPeriodWindowEnd,
-    this.pmsWindowStart,
-    this.pmsWindowEnd,
+    DateTime? nextPeriodWindowStart,
+    DateTime? nextPeriodWindowEnd,
+    DateTime? pmsWindowStart,
+    DateTime? pmsWindowEnd,
     this.regularityScore,
     required this.trendPoints,
     this.regularityLevel = RegularityLevel.insufficientData,
@@ -120,28 +123,25 @@ class CycleEngineOutput {
     this.cycleLengthSd,
     this.forecastAnchor,
     this.forecast = const [],
-    // ignore: prefer_initializing_formals
-  }) : _regularityLabel = regularityLabel,
-       // ignore: prefer_initializing_formals
+  }) : _nextPeriodPrediction = nextPeriodPrediction,
+       _fertileWindowStart = fertileWindowStart,
+       _fertileWindowEnd = fertileWindowEnd,
+       _ovulationDay = ovulationDay,
+       _nextPeriodWindowStart = nextPeriodWindowStart,
+       _nextPeriodWindowEnd = nextPeriodWindowEnd,
+       _pmsWindowStart = pmsWindowStart,
+       _pmsWindowEnd = pmsWindowEnd,
+       _regularityLabel = regularityLabel,
        _predictionDisclaimer = predictionDisclaimer;
 
   final CyclePhase currentPhase;
   final int dayOfCycle;
   final int dayOfPeriod;
-  final DateTime? nextPeriodPrediction;
-  final DateTime? fertileWindowStart;
-  final DateTime? fertileWindowEnd;
-  final DateTime? ovulationDay;
   final bool isIrregular;
   final CycleStats stats;
   final String dataMaturity; // 'LOW', 'MEDIUM', 'HIGH'
   final bool hasData;
 
-  // v2 Upgraded Fields (nullable as per C-25)
-  final DateTime? nextPeriodWindowStart;
-  final DateTime? nextPeriodWindowEnd;
-  final DateTime? pmsWindowStart;
-  final DateTime? pmsWindowEnd;
   final int? regularityScore;
   final List<CycleTrendPoint> trendPoints;
 
@@ -167,12 +167,64 @@ class CycleEngineOutput {
   final double? cycleLengthSd;
   final DateTime? forecastAnchor;
   final List<PredictedCycle> forecast;
+
+  // Backward-compatible single-cycle getters derived from forecast.first (T-2, F-17)
+  final DateTime? _nextPeriodPrediction;
+  final DateTime? _fertileWindowStart;
+  final DateTime? _fertileWindowEnd;
+  final DateTime? _ovulationDay;
+  final DateTime? _nextPeriodWindowStart;
+  final DateTime? _nextPeriodWindowEnd;
+  final DateTime? _pmsWindowStart;
+  final DateTime? _pmsWindowEnd;
+
+  DateTime? get nextPeriodPrediction =>
+      _nextPeriodPrediction ??
+      (forecast.isNotEmpty ? forecast.first.predictedStart : null);
+
+  DateTime? get fertileWindowStart =>
+      _fertileWindowStart ??
+      (forecast.isNotEmpty ? forecast.first.fertileStart : null);
+
+  DateTime? get fertileWindowEnd =>
+      _fertileWindowEnd ??
+      (forecast.isNotEmpty ? forecast.first.fertileEnd : null);
+
+  DateTime? get ovulationDay =>
+      _ovulationDay ??
+      (forecast.isNotEmpty ? forecast.first.ovulationDay : null);
+
+  DateTime? get nextPeriodWindowStart =>
+      _nextPeriodWindowStart ??
+      (forecast.isNotEmpty ? forecast.first.windowStart : null);
+
+  DateTime? get nextPeriodWindowEnd =>
+      _nextPeriodWindowEnd ??
+      (forecast.isNotEmpty ? forecast.first.windowEnd : null);
+
+  DateTime? get pmsWindowStart =>
+      _pmsWindowStart ?? (forecast.isNotEmpty ? forecast.first.pmsStart : null);
+
+  DateTime? get pmsWindowEnd =>
+      _pmsWindowEnd ?? (forecast.isNotEmpty ? forecast.first.pmsEnd : null);
 }
 
 class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
   static const int minPlausibleCycle = 21;
   static const int maxPlausibleCycle = 45;
   static const int maxPlausiblePeriodDays = 15;
+
+  // Horizon constraints (F-15)
+  static const int defaultHorizonCycles = 12;
+  static const int maxHorizonCycles = 24;
+
+  // Uncertainty & Confidence Model constants (F-10, F-11)
+  static const double _minSigmaDays = 0.5;
+  static const double _maxSigmaDays = 12.0;
+  static const double _fallbackSigmaDays = 3.5;
+  static const double _distanceDampingRate = 0.18;
+  static const double _highConfidenceThreshold = 0.66;
+  static const double _mediumConfidenceThreshold = 0.38;
 
   @override
   Future<CycleEngineOutput> calculate(CycleEngineInput input) async {
@@ -335,6 +387,11 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       completedCycles: completedCycles,
     );
 
+    final actualAnchorStart = CycleDateContract.parseDayKey(
+      periodRows.last['startDate']?.toString(),
+    );
+    final fertilityVisible = CycleSettings.isFertilityVisible(appSettings);
+
     // 7. Find current status based on target date `now`
     Map<String, dynamic>? currentPeriodRow;
     for (var i = periodRows.length - 1; i >= 0; i--) {
@@ -374,6 +431,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
         cycleLengths,
         isProjected: true,
         discardedOutliers: discardedOutliers,
+        anchorStart: actualAnchorStart ?? firstStart,
+        horizonCycles: input.horizonCycles,
+        fertilityVisible: fertilityVisible,
       );
     }
 
@@ -401,11 +461,14 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       cycleLengths,
       isProjected: false,
       discardedOutliers: discardedOutliers,
+      anchorStart: actualAnchorStart ?? currentPeriodStart,
+      horizonCycles: input.horizonCycles,
+      fertilityVisible: fertilityVisible,
     );
   }
 
   static CycleRegularity _computeRegularity(List<int> cycleLengths) {
-    if (cycleLengths.length < 3) {
+    if (cycleLengths.length < CycleSettings.minCyclesForReliableForecast) {
       return const CycleRegularity(
         score: null,
         level: RegularityLevel.insufficientData,
@@ -447,6 +510,140 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     );
   }
 
+  /// Pure multi-cycle forecast builder (F-08..F-17)
+  @visibleForTesting
+  static List<PredictedCycle> buildForecast({
+    required DateTime anchorStart, // آخرین شروع دورهٔ واقعی
+    required int cycleLength, // L
+    required int periodDays, // pDuration
+    required int lutealDays, // lutealDays clamped
+    required int pmsWindowDays, // pmsWindowDays
+    required double? sdDays, // null => قابل محاسبه نیست
+    required int completedCycles,
+    required int? regularityScore,
+    required String dataMaturity, // LOW / MEDIUM / HIGH
+    required int discardedOutliers,
+    required int horizonCycles,
+    required DateTime now,
+    required bool fertilityVisible,
+    bool isDelayedOrStale = false,
+  }) {
+    final cleanNow = CycleDateContract.cleanDate(now);
+    final cleanAnchor = CycleDateContract.cleanDate(anchorStart);
+    final daysSinceAnchor = CycleDateContract.daysBetween(
+      cleanAnchor,
+      cleanNow,
+    );
+
+    var firstK = (daysSinceAnchor / cycleLength).ceil();
+    if (firstK < 1) firstK = 1;
+
+    final effectiveHorizon = isDelayedOrStale
+        ? math.min(3, horizonCycles)
+        : horizonCycles;
+
+    // 1) Regularity factor (F-11)
+    final double regularityFactor = (regularityScore == null)
+        ? 0.35
+        : (regularityScore / 100.0);
+
+    // 2) Data maturity factor (F-11)
+    final double maturityFactor = switch (dataMaturity) {
+      'HIGH' => 1.0,
+      'MEDIUM' => 0.8,
+      _ => 0.55,
+    };
+
+    // 3) Noise penalty (F-11)
+    final double noisePenalty = (discardedOutliers == 0)
+        ? 1.0
+        : (1.0 - (discardedOutliers * 0.06)).clamp(0.6, 1.0);
+
+    final double baseConfidence =
+        (regularityFactor * maturityFactor * noisePenalty).clamp(0.0, 1.0);
+
+    final basis = completedCycles >= CycleSettings.minCyclesForReliableForecast
+        ? ForecastBasis.measured
+        : (completedCycles >= 1
+              ? ForecastBasis.partiallyMeasured
+              : ForecastBasis.defaultAssumption);
+
+    double sigmaFor(int k) {
+      final base = (sdDays == null || sdDays <= 0)
+          ? _fallbackSigmaDays
+          : sdDays;
+      var raw = base * math.sqrt(k);
+      if (isDelayedOrStale) {
+        raw *= 1.5;
+      }
+      return raw.clamp(_minSigmaDays, _maxSigmaDays);
+    }
+
+    final out = <PredictedCycle>[];
+    for (var i = 0; i < effectiveHorizon; i++) {
+      final k = firstK + i;
+      final start = cleanAnchor.add(Duration(days: k * cycleLength));
+      final end = start.add(Duration(days: periodDays - 1));
+      final sigma = sigmaFor(k);
+      final sigmaRounded = sigma.round();
+      final winStart = start.subtract(Duration(days: sigmaRounded));
+      final winEnd = start.add(Duration(days: sigmaRounded));
+
+      var confidence = (baseConfidence / (1.0 + _distanceDampingRate * (k - 1)))
+          .clamp(0.0, 1.0);
+      if (isDelayedOrStale) {
+        confidence = math.min(confidence, 0.35);
+      }
+
+      final PredictionConfidenceLevel confidenceLevel;
+      if (isDelayedOrStale || basis != ForecastBasis.measured) {
+        confidenceLevel = PredictionConfidenceLevel.low;
+      } else {
+        if (confidence >= _highConfidenceThreshold) {
+          confidenceLevel = PredictionConfidenceLevel.high;
+        } else if (confidence >= _mediumConfidenceThreshold) {
+          confidenceLevel = PredictionConfidenceLevel.medium;
+        } else {
+          confidenceLevel = PredictionConfidenceLevel.low;
+        }
+      }
+
+      DateTime? ovulation;
+      DateTime? fertileStart;
+      DateTime? fertileEnd;
+      if (fertilityVisible) {
+        ovulation = start.subtract(Duration(days: lutealDays));
+        fertileStart = ovulation.subtract(const Duration(days: 5));
+        fertileEnd = ovulation.add(const Duration(days: 1));
+      }
+
+      final pmsStart = start.subtract(Duration(days: pmsWindowDays));
+      final pmsEnd = start.subtract(const Duration(days: 1));
+
+      out.add(
+        PredictedCycle(
+          index: i + 1,
+          predictedStart: start,
+          predictedEnd: end,
+          windowStart: winStart,
+          windowEnd: winEnd,
+          sigmaDays: sigma,
+          periodDays: periodDays,
+          confidence: confidence,
+          confidenceLevel: confidenceLevel,
+          basis: basis,
+          ovulationDay: ovulation,
+          fertileStart: fertileStart,
+          fertileEnd: fertileEnd,
+          pmsStart: pmsStart,
+          pmsEnd: pmsEnd,
+        ),
+      );
+    }
+
+    return out;
+  }
+
   CycleEngineOutput _evaluateWithStart(
     DateTime startDate,
     DateTime now,
@@ -462,6 +659,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     List<int> cycleLengths, {
     bool isProjected = false,
     int discardedOutliers = 0,
+    DateTime? anchorStart,
+    int horizonCycles = defaultHorizonCycles,
+    bool fertilityVisible = true,
   }) {
     final cleanNow = CycleDateContract.cleanDate(now);
     final cleanStart = CycleDateContract.cleanDate(startDate);
@@ -531,77 +731,33 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     final hasPhaseConflict =
         isBleeding && currentDayInCycle >= (L - lutealDays - 1);
 
-    // Prediction Dates (C-17, C-25)
-    DateTime? nextPeriodPrediction;
-    DateTime? predictedOvulation;
-    DateTime? fertileStart;
-    DateTime? fertileEnd;
-    DateTime? nextPeriodWindowStart;
-    DateTime? nextPeriodWindowEnd;
-    DateTime? pmsWindowStart;
-    DateTime? pmsWindowEnd;
+    final effectiveAnchor = anchorStart ?? startDate;
 
-    if (!needsUserAttention) {
-      var cyclesElapsedForPrediction = (daysSinceStart / L).ceil();
-      if (cyclesElapsedForPrediction < 1) cyclesElapsedForPrediction = 1;
-      nextPeriodPrediction = cleanStart.add(
-        Duration(days: cyclesElapsedForPrediction * L),
-      );
-
-      predictedOvulation = nextPeriodPrediction.subtract(
-        Duration(days: lutealDays),
-      );
-      fertileStart = predictedOvulation.subtract(const Duration(days: 5));
-      fertileEnd = predictedOvulation.add(const Duration(days: 1));
-
-      // Upgraded v2 prediction windows with capped width (C-17)
-      if (cycleLengths.isNotEmpty) {
-        final minL = cycleLengths.reduce(math.min);
-        final maxL = cycleLengths.reduce(math.max);
-        final k = cyclesElapsedForPrediction;
-        final anchor = cleanStart.add(Duration(days: (k - 1) * L));
-        var winStart = anchor.add(Duration(days: minL));
-        var winEnd = anchor.add(Duration(days: maxL));
-
-        if (winEnd.difference(winStart).inDays > 7) {
-          winStart = nextPeriodPrediction.subtract(const Duration(days: 3));
-          winEnd = nextPeriodPrediction.add(const Duration(days: 3));
-        } else if (winEnd.difference(winStart).inDays < 2) {
-          winStart = nextPeriodPrediction.subtract(const Duration(days: 1));
-          winEnd = nextPeriodPrediction.add(const Duration(days: 1));
-        }
-
-        nextPeriodWindowStart = winStart;
-        nextPeriodWindowEnd = winEnd;
-      } else {
-        nextPeriodWindowStart = nextPeriodPrediction.subtract(
-          const Duration(days: 2),
-        );
-        nextPeriodWindowEnd = nextPeriodPrediction.add(const Duration(days: 2));
-      }
-
-      pmsWindowStart = nextPeriodPrediction.subtract(
-        Duration(days: pmsWindowDays),
-      );
-      pmsWindowEnd = nextPeriodPrediction.subtract(const Duration(days: 1));
-    }
+    final forecast = buildForecast(
+      anchorStart: effectiveAnchor,
+      cycleLength: L,
+      periodDays: pDuration,
+      lutealDays: lutealDays,
+      pmsWindowDays: pmsWindowDays,
+      sdDays: regularity.sdDays,
+      completedCycles: stats.completedCycles,
+      regularityScore: regularity.score,
+      dataMaturity: dataMaturity,
+      discardedOutliers: discardedOutliers,
+      horizonCycles: horizonCycles,
+      now: cleanNow,
+      fertilityVisible: fertilityVisible,
+      isDelayedOrStale: needsUserAttention,
+    );
 
     return CycleEngineOutput(
       currentPhase: phase,
       dayOfCycle: dayOfCycle,
       dayOfPeriod: dayOfPeriod,
-      nextPeriodPrediction: nextPeriodPrediction,
-      fertileWindowStart: fertileStart,
-      fertileWindowEnd: fertileEnd,
-      ovulationDay: predictedOvulation,
       isIrregular: regularity.isIrregular,
       stats: stats,
       dataMaturity: dataMaturity,
       hasData: true,
-      nextPeriodWindowStart: nextPeriodWindowStart,
-      nextPeriodWindowEnd: nextPeriodWindowEnd,
-      pmsWindowStart: pmsWindowStart,
-      pmsWindowEnd: pmsWindowEnd,
       regularityScore: regularity.score,
       trendPoints: trendPoints,
       regularityLevel: regularity.level,
@@ -615,8 +771,8 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       isProjected: isProjected,
       discardedOutliers: discardedOutliers,
       cycleLengthSd: regularity.sdDays,
-      forecastAnchor: startDate,
-      forecast: const [],
+      forecastAnchor: anchorStart ?? (isProjected ? null : startDate),
+      forecast: forecast,
     );
   }
 
@@ -635,6 +791,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     required int pmsWindowDays,
     required double sd,
     required List<int> cycleLengths,
+    DateTime? anchorStart,
+    int horizonCycles = defaultHorizonCycles,
+    bool fertilityVisible = true,
   }) {
     final regularity = _computeRegularity(cycleLengths);
     return _evaluateWithStart(
@@ -650,6 +809,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       trendPoints,
       pmsWindowDays,
       cycleLengths,
+      anchorStart: anchorStart,
+      horizonCycles: horizonCycles,
+      fertilityVisible: fertilityVisible,
     );
   }
 

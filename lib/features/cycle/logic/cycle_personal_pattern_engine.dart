@@ -2,12 +2,14 @@ import 'dart:convert';
 
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CyclePersonalPatternEngine {
   /// Minimum completed cycles required before releasing statistical forecasts
-  static const int minCompletedCycles = 3;
+  static const int minCompletedCycles =
+      CycleSettings.minCyclesForReliableForecast;
 
   /// Minimum occurrences of a symptom on a given cycle day
   static const int minSymptomOccurrences = 3;

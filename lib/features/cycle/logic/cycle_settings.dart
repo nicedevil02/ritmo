@@ -37,6 +37,9 @@ class CycleSettings {
 
   static const int defaultPmsWindowDays = 4;
 
+  // Forecast constraints (F-12)
+  static const int minCyclesForReliableForecast = 3;
+
   // Legacy fallback aliases
   static const List<String> _cycleLengthAliases = [
     'cycle_avg_length',
@@ -154,6 +157,13 @@ class CycleSettings {
       if (aliasVal == 'true') return true;
     }
     return true; // fail-secure default
+  }
+
+  /// Returns whether fertility and ovulation indicators should be visible.
+  static bool isFertilityVisible(Map<String, dynamic> settings) {
+    final raw = settings[keyFertilityVisible]?.toString().toLowerCase();
+    if (raw == 'false') return false;
+    return true; // default visible
   }
 
   /// Saves [days] as the canonical cycle length and synchronizes aliases.

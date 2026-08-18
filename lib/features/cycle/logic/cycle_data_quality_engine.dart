@@ -2,6 +2,7 @@
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -20,7 +21,8 @@ class CycleDataQualityEngine {
         (todayIso != null ? CycleDateContract.parseDayKey(todayIso) : null) ??
         CycleClock.now;
     final cleanNow = CycleDateContract.cleanDate(effectiveNow);
-    final hasEnoughCycles = periodRows.length >= 3;
+    final hasEnoughCycles =
+        periodRows.length >= CycleSettings.minCyclesForReliableForecast;
 
     // Defensive: callers pass rows in different orderings (the screen uses
     // startDate DESC). Find the truly latest period by startDate.

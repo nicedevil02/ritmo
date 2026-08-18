@@ -111,6 +111,7 @@ void main() {
         ),
       );
 
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
@@ -156,6 +157,7 @@ void main() {
         ),
       );
 
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
@@ -163,6 +165,7 @@ void main() {
       final copyBtn = find.byIcon(CupertinoIcons.doc_on_clipboard);
       expect(copyBtn, findsOneWidget);
       await tester.tap(copyBtn);
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 50)));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 

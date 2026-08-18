@@ -509,6 +509,15 @@ if (typeof window.__ritmo_resume === 'function') {
           _handleResendRequired();
           break;
 
+        case 'first_token':
+          final latency = readString('latencyMs') ?? '0';
+          RitmoLog.debug(
+            'ChatGptWebBridge',
+            'First token received in ${latency}ms (source: $source, reqId: $reqId)',
+          );
+          _pendingRequest?.stage = PendingRequestStage.streaming;
+          break;
+
         case 'chunk':
           final full = readString('fullText');
           final delta = readString('delta');

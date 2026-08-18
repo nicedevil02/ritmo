@@ -6,7 +6,7 @@ import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
-import 'package:ritmo/features/profile/presentation/crash_reports_screen.dart';
+import 'package:ritmo/features/settings/presentation/settings_inspector_screen.dart';
 import 'package:ritmo/features/settings/presentation/settings_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -37,13 +37,29 @@ void main() {
             CREATE TABLE app_settings (
               key TEXT PRIMARY KEY,
               value TEXT,
-              updatedAt INTEGER
+              updatedAt INTEGER,
+              updated_at TEXT
             )
           ''');
           await db.execute('''
             CREATE TABLE routines (
               id INTEGER PRIMARY KEY,
-              isArchived INTEGER
+              isArchived INTEGER,
+              is_archived INTEGER
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE tasks (
+              id INTEGER PRIMARY KEY,
+              isArchived INTEGER,
+              is_archived INTEGER
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE habits (
+              id INTEGER PRIMARY KEY,
+              isArchived INTEGER,
+              is_archived INTEGER
             )
           ''');
         },
@@ -87,8 +103,8 @@ void main() {
           await tester.pump(const Duration(milliseconds: 100));
         }
 
-        // No crash screen yet
-        expect(find.byType(CrashReportsScreen), findsNothing);
+        // No inspector screen yet
+        expect(find.byType(SettingsInspectorScreen), findsNothing);
 
         // Wait 2.5 seconds (exceeding 2s reset window)
         await tester.pump(const Duration(milliseconds: 2500));
@@ -99,8 +115,8 @@ void main() {
           await tester.pump(const Duration(milliseconds: 100));
         }
 
-        // Should still NOT open CrashReportsScreen because counter reset
-        expect(find.byType(CrashReportsScreen), findsNothing);
+        // Should still NOT open SettingsInspectorScreen because counter reset
+        expect(find.byType(SettingsInspectorScreen), findsNothing);
 
         // Tap 3 more times without pause to complete 7 taps (4 + 3 = 7)
         for (int i = 0; i < 3; i++) {
@@ -108,8 +124,8 @@ void main() {
           await tester.pump(const Duration(milliseconds: 100));
         }
 
-        // Now CrashReportsScreen is opened
-        expect(find.byType(CrashReportsScreen), findsOneWidget);
+        // Now SettingsInspectorScreen is opened in debug mode
+        expect(find.byType(SettingsInspectorScreen), findsOneWidget);
       } finally {
         await tester.binding.setSurfaceSize(null);
       }

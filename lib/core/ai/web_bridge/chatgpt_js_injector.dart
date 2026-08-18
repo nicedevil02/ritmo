@@ -214,7 +214,7 @@ $_bridgeScriptBody''';
   window.__ritmo_parseSSELine = parseSSELine;
 
   function readSSEStream(reader, reqId) {
-    var state = { accumulatedText: '' };
+    var state = { accumulatedText: '', firstTokenEmitted: false, startTime: Date.now() };
     var decoder = typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8') : null;
     var buffer = '';
 
@@ -237,6 +237,15 @@ $_bridgeScriptBody''';
           if (trimmed.length > 0) {
             var event = parseSSELine(trimmed, state, reqId);
             if (event) {
+              if (!state.firstTokenEmitted && event.type === 'chunk') {
+                state.firstTokenEmitted = true;
+                notifyFlutter('first_token', {
+                  length: (event.delta && event.delta.length) || 0,
+                  requestId: reqId,
+                  latencyMs: Date.now() - state.startTime,
+                  source: 'sse'
+                });
+              }
               notifyFlutter(event.type, event);
             }
           }
@@ -580,6 +589,14 @@ $_bridgeScriptBody''';
       if (!currentText || currentText === previousBaselineText) return;
 
       if (currentText !== lastText && currentText.length > 0) {
+        if (lastLength === 0) {
+          notifyFlutter('first_token', {
+            length: currentText.length,
+            requestId: reqId,
+            latencyMs: Date.now() - streamStartTime,
+            source: 'dom'
+          });
+        }
         var delta = '';
         if (currentText.length > lastLength && currentText.indexOf(lastText) === 0) {
           delta = currentText.substring(lastLength);

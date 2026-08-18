@@ -17,6 +17,77 @@ enum ChatGptBridgeStatus {
   error,
 }
 
+enum PendingRequestStage {
+  sending,
+  awaitingFirstToken,
+  streaming,
+}
+
+/// State of an in-flight prompt request used for resume and correlation.
+class PendingWebBridgeRequest {
+  final String requestId;
+  final String promptHash;
+  final String promptText;
+  final DateTime sentAt;
+  PendingRequestStage stage;
+  int receivedLength;
+  int resendAttempts;
+  final String? personaTitle;
+  final String? personaSystemPrompt;
+  final String? contextSummary;
+  final List<String>? recentHistory;
+
+  PendingWebBridgeRequest({
+    required this.requestId,
+    required this.promptHash,
+    required this.promptText,
+    required this.sentAt,
+    this.stage = PendingRequestStage.sending,
+    this.receivedLength = 0,
+    this.resendAttempts = 0,
+    this.personaTitle,
+    this.personaSystemPrompt,
+    this.contextSummary,
+    this.recentHistory,
+  });
+
+  /// Normalizes whitespace and returns up to the first 80 characters.
+  String get promptPrefix {
+    final normalized = promptText.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.length <= 80) return normalized;
+    return normalized.substring(0, 80);
+  }
+
+  Map<String, dynamic> toJson() => {
+        'requestId': requestId,
+        'promptHash': promptHash,
+        'promptPrefix': promptPrefix,
+        'stage': stage.name,
+        'receivedLength': receivedLength,
+        'resendAttempts': resendAttempts,
+        'sentAt': sentAt.toIso8601String(),
+      };
+
+  factory PendingWebBridgeRequest.fromJson(Map<String, dynamic> json) {
+    final stageStr = json['stage'] as String? ?? 'sending';
+    final stage = PendingRequestStage.values.firstWhere(
+      (e) => e.name == stageStr,
+      orElse: () => PendingRequestStage.sending,
+    );
+    return PendingWebBridgeRequest(
+      requestId: json['requestId'] as String? ?? '',
+      promptHash: json['promptHash'] as String? ?? '',
+      promptText: json['promptPrefix'] as String? ?? '',
+      sentAt: json['sentAt'] != null
+          ? DateTime.tryParse(json['sentAt'] as String) ?? DateTime.now()
+          : DateTime.now(),
+      stage: stage,
+      receivedLength: json['receivedLength'] as int? ?? 0,
+      resendAttempts: json['resendAttempts'] as int? ?? 0,
+    );
+  }
+}
+
 class ChatGptWebBridgeManager with WidgetsBindingObserver {
   static final ChatGptWebBridgeManager _instance = ChatGptWebBridgeManager._internal();
   static ChatGptWebBridgeManager get instance => _instance;
@@ -52,6 +123,14 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   int _reqCounter = 0;
   String? _currentRequestId;
   String? get currentRequestId => _currentRequestId;
+
+  PendingWebBridgeRequest? _pendingRequest;
+  PendingWebBridgeRequest? get pendingRequest => _pendingRequest;
+
+  @visibleForTesting
+  void setTestPendingRequest(PendingWebBridgeRequest? req) {
+    _pendingRequest = req;
+  }
 
   @visibleForTesting
   void setTestRequestId(String? reqId) {
@@ -442,6 +521,9 @@ if (typeof window.__ritmo_resume === 'function') {
         controller.add(cleanDelta);
       }
     }
+
+    _pendingRequest?.stage = PendingRequestStage.streaming;
+    _pendingRequest?.receivedLength = _emittedText.length;
   }
 
   /// Flushes whatever the page ended up showing, then closes the stream.
@@ -468,6 +550,7 @@ if (typeof window.__ritmo_resume === 'function') {
     _emittedText = '';
     _navigationReloadCount = 0;
     _currentRequestId = null;
+    _pendingRequest = null;
     controller?.close();
     _resetInactivityTimer();
   }
@@ -481,6 +564,7 @@ if (typeof window.__ritmo_resume === 'function') {
     _emittedText = '';
     _navigationReloadCount = 0;
     _currentRequestId = null;
+    _pendingRequest = null;
 
     _setStatus(ChatGptBridgeStatus.ready);
     if (controller != null && !controller.isClosed) {
@@ -499,6 +583,7 @@ if (typeof window.__ritmo_resume === 'function') {
     _emittedText = '';
     _navigationReloadCount = 0;
     _currentRequestId = null;
+    _pendingRequest = null;
     _setStatus(ChatGptBridgeStatus.ready);
     controller?.close();
     _resetInactivityTimer();
@@ -552,6 +637,17 @@ if (typeof window.__ritmo_resume === 'function') {
 
     final reqId = _generateRequestId();
     _currentRequestId = reqId;
+    _pendingRequest = PendingWebBridgeRequest(
+      requestId: reqId,
+      promptHash: prompt.hashCode.toRadixString(16),
+      promptText: prompt,
+      sentAt: DateTime.now(),
+      stage: PendingRequestStage.sending,
+      personaTitle: personaTitle,
+      personaSystemPrompt: personaSystemPrompt,
+      contextSummary: contextSummary,
+      recentHistory: recentHistory,
+    );
 
     final streamController = StreamController<String>();
     _currentStreamController = streamController;
@@ -612,6 +708,7 @@ if (typeof window.__ritmo_resume === 'function') {
     _emittedText = '';
     _navigationReloadCount = 0;
     _currentRequestId = null;
+    _pendingRequest = null;
     controller?.close();
 
     _bootCompleter = null;

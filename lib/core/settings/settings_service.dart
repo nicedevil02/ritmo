@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models.dart';
@@ -19,7 +21,7 @@ class SettingsService {
 
   /// Coalescing window for the heavy "reload the day" refresh signal.
   static const Duration agendaSignalDebounce = Duration(milliseconds: 350);
-  static bool _agendaSignalScheduled = false;
+  Timer? _agendaDebounceTimer;
 
   bool get isInitialized => _initialized;
   Object? get initError => _initError;
@@ -242,7 +244,9 @@ class SettingsService {
       // module toggles, alarm rescheduling - multiplied into a reload storm
       // that could exhaust the Dart heap. `revision` still fires immediately
       // for settings UI; the heavy refresh is coalesced per burst.
-      _scheduleAgendaRefreshSignal();
+      if (desc.affectsAgenda) {
+        _scheduleAgendaRefreshSignal();
+      }
 
       if (desc.group == SettingsGroup.notifications) {
         try {
@@ -265,13 +269,18 @@ class SettingsService {
   }
 
   /// Emits at most one `notifyRoutineChanged()` per [agendaSignalDebounce]
-  /// window, no matter how many settings were written in that window.
+  /// window, coalescing repeated writes into a single refresh.
   void _scheduleAgendaRefreshSignal() {
-    if (_agendaSignalScheduled) return;
-    _agendaSignalScheduled = true;
-    Future<void>.delayed(agendaSignalDebounce, () {
-      _agendaSignalScheduled = false;
+    _agendaDebounceTimer?.cancel();
+    _agendaDebounceTimer = Timer(agendaSignalDebounce, () {
+      _agendaDebounceTimer = null;
       RitmoEvents.notifyRoutineChanged();
     });
+  }
+
+  @visibleForTesting
+  void cancelPendingSignals() {
+    _agendaDebounceTimer?.cancel();
+    _agendaDebounceTimer = null;
   }
 }

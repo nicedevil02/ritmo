@@ -8,7 +8,12 @@ import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class AiWriteHistorySheet extends StatefulWidget {
-  const AiWriteHistorySheet({super.key});
+  const AiWriteHistorySheet({
+    super.key,
+    this.initialRecords,
+  });
+
+  final List<AiSettingHistoryRecord>? initialRecords;
 
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet<void>(
@@ -30,7 +35,12 @@ class _AiWriteHistorySheetState extends State<AiWriteHistorySheet> {
   @override
   void initState() {
     super.initState();
-    _loadRecords();
+    if (widget.initialRecords != null) {
+      _records = widget.initialRecords!;
+      _loading = false;
+    } else {
+      _loadRecords();
+    }
   }
 
   Future<void> _loadRecords() async {
@@ -130,7 +140,7 @@ class _AiWriteHistorySheetState extends State<AiWriteHistorySheet> {
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: _records.length,
-                  separatorBuilder: (_, __) => Divider(color: colors.border, height: 1),
+                  separatorBuilder: (context, index) => Divider(color: colors.border, height: 1),
                   itemBuilder: (context, index) {
                     final item = _records[index];
 

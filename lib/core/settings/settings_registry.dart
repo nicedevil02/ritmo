@@ -888,7 +888,7 @@ class SettingsRegistry {
     ),
     SettingDescriptor(
       key: 'ai_forbidden_keys',
-      type: SettingType.string,
+      type: SettingType.text,
       scope: SettingScope.db,
       defaultValue: '',
       labelFa: 'کلیدهای ممنوعه برای تغییر توسط دستیار',

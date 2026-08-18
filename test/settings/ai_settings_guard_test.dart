@@ -62,7 +62,6 @@ void main() {
     });
 
     test('AiSettingsGuard respects permissions and forbidden list', () async {
-      // Find an aiWritable key (e.g. notif_master_enabled)
       final aiWritableDesc = SettingsRegistry.all.firstWhere(
         (d) => d.aiWritable,
         orElse: () => SettingsRegistry.all.first,
@@ -108,12 +107,14 @@ void main() {
     });
 
     testWidgets('AiWriteHistorySheet renders history items and supports rollback', (tester) async {
-      await AiSettingsGuard.instance.recordAiChange(
-        key: 'notif_quiet_enabled',
-        oldValue: false,
-        newValue: true,
-        reason: 'بهینه‌سازی زمان سکوت شبانه',
-      );
+      await tester.runAsync(() async {
+        await AiSettingsGuard.instance.recordAiChange(
+          key: 'notif_quiet_enabled',
+          oldValue: false,
+          newValue: true,
+          reason: 'بهینه‌سازی زمان سکوت شبانه',
+        );
+      });
 
       await tester.pumpWidget(
         MaterialApp(
@@ -127,7 +128,11 @@ void main() {
         ),
       );
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.runAsync(() async {
+        await Future.delayed(const Duration(milliseconds: 150));
+      });
+      await tester.pump();
 
       expect(find.text('تاریخچه تغییرات دستیار هوشمند'), findsOneWidget);
       expect(find.text('بهینه‌سازی زمان سکوت شبانه'), findsOneWidget);

@@ -130,7 +130,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
           },
           onPageFinished: (url) async {
             RitmoLog.debug('ChatGptWebBridge', 'Page loading finished: $url');
-            await controller.runJavaScript(ChatGptJsInjector.setupBridgeScript);
+            await handlePageFinished(url, controller);
           },
           onWebResourceError: (error) {
             RitmoLog.error('ChatGptWebBridge', 'Resource Error (${error.errorCode}): ${error.description}');
@@ -152,6 +152,46 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
         bootCompleter.complete(false);
       }
       return false;
+    }
+  }
+
+  int _navigationReloadCount = 0;
+  @visibleForTesting
+  int get navigationReloadCount => _navigationReloadCount;
+
+  bool get hasPendingRequest =>
+      _currentStreamController != null && !_currentStreamController!.isClosed;
+
+  /// Invoked when a WebView page finishes loading. Re-injects the bridge script,
+  /// and if a generation is pending, attempts to re-attach the watcher or abort if looped.
+  @visibleForTesting
+  Future<void> handlePageFinished(String url, WebViewController controller) async {
+    await controller.runJavaScript(ChatGptJsInjector.setupBridgeScript);
+
+    if (hasPendingRequest || _status == ChatGptBridgeStatus.generating) {
+      _navigationReloadCount++;
+      RitmoLog.debug('ChatGptWebBridge', 'Navigation finished with pending request (count: $_navigationReloadCount)');
+      if (_navigationReloadCount > 3) {
+        RitmoLog.error('ChatGptWebBridge', 'Navigation reload loop detected (>3 times). Aborting stream.');
+        _failGeneration('صفحه مکرراً بارگذاری مجدد شد و امکان ادامه پاسخ وجود ندارد.');
+        return;
+      }
+
+      await _attemptResumePendingRequest(controller);
+    }
+  }
+
+  Future<void> _attemptResumePendingRequest(WebViewController controller) async {
+    RitmoLog.debug('ChatGptWebBridge', 'Attempting re-attachment / resume after navigation...');
+    await Future.delayed(const Duration(milliseconds: 300));
+    try {
+      await controller.runJavaScript('''
+if (typeof window.__ritmo_resume === 'function') {
+  window.__ritmo_resume({});
+}
+''');
+    } catch (e, st) {
+      RitmoLog.error('ChatGptWebBridge', 'Error calling __ritmo_resume: $e', e, st);
     }
   }
 
@@ -340,6 +380,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _setStatus(ChatGptBridgeStatus.ready);
     _currentStreamController = null;
     _emittedText = '';
+    _navigationReloadCount = 0;
     controller?.close();
     _resetInactivityTimer();
   }
@@ -351,6 +392,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     final controller = _currentStreamController;
     _currentStreamController = null;
     _emittedText = '';
+    _navigationReloadCount = 0;
 
     _setStatus(ChatGptBridgeStatus.ready);
     if (controller != null && !controller.isClosed) {
@@ -367,6 +409,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     final controller = _currentStreamController;
     _currentStreamController = null;
     _emittedText = '';
+    _navigationReloadCount = 0;
     _setStatus(ChatGptBridgeStatus.ready);
     controller?.close();
     _resetInactivityTimer();
@@ -381,6 +424,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     List<String>? recentHistory,
   }) async* {
     _resetInactivityTimer();
+    _navigationReloadCount = 0;
 
     final booted = await ensureBooted();
     if (!booted && _status == ChatGptBridgeStatus.cloudflareChallenge) {
@@ -471,6 +515,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     final controller = _currentStreamController;
     _currentStreamController = null;
     _emittedText = '';
+    _navigationReloadCount = 0;
     controller?.close();
 
     _bootCompleter = null;

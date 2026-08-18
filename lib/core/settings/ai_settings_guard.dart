@@ -80,19 +80,19 @@ class AiSettingsGuard {
 
   Future<bool> recordAndApplyChange({
     required String key,
-    required Object? newValue,
+    required Object newValue,
     required String reasonFa,
   }) async {
     if (!canAiModify(key)) return false;
 
     final oldValue = SettingsService.instance.get<Object?>(key);
-    final ok = await SettingsService.instance.set(
+    final result = await SettingsService.instance.setChecked(
       key,
       newValue,
       origin: SettingsWriteOrigin.ai,
     );
 
-    if (ok) {
+    if (result is SettingWriteOk) {
       await recordAiChange(
         key: key,
         oldValue: oldValue,
@@ -154,8 +154,9 @@ class AiSettingsGuard {
       if (rows.isEmpty) return false;
 
       final record = AiSettingHistoryRecord.fromMap(rows.first);
-      if (record.oldValue != null) {
-        await SettingsService.instance.set(record.key, record.oldValue);
+      final oldVal = record.oldValue;
+      if (oldVal != null) {
+        await SettingsService.instance.set(record.key, oldVal);
       } else {
         final desc = SettingsRegistry.find(record.key);
         if (desc != null) {

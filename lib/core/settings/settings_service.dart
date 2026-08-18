@@ -12,6 +12,8 @@ import 'package:sqflite/sqflite.dart';
 
 class SettingsService {
   SettingsService._();
+  @visibleForTesting
+  SettingsService.test();
   static final SettingsService instance = SettingsService._();
 
   final Map<String, Object> _cache = {};
@@ -168,6 +170,16 @@ class SettingsService {
       rethrow;
     }
   }
+
+  String? getString(String key) {
+    if (!_cache.containsKey(key)) {
+      final desc = SettingsRegistry.find(key);
+      return desc?.defaultValue.toString();
+    }
+    return get<String>(key);
+  }
+
+  Future<bool> setString(String key, String value) => set(key, value);
 
   Object? _validateAndNormalize(SettingDescriptor desc, Object rawValue) {
     if (desc.type == SettingType.integer) {

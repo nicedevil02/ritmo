@@ -62,10 +62,12 @@ class AgentToolCallParser {
       caseSensitive: false);
   static final RegExp _actionsRe = RegExp(r'<actions>[\s\S]*?<\/actions>', caseSensitive: false);
   static final RegExp _memOpsRe = RegExp(r'<memory_ops>[\s\S]*?<\/memory_ops>', caseSensitive: false);
-  static final RegExp _danglingTagRe =
-      RegExp(r'<(actions|memory_ops|memory|tool_call|function|tool)[^>]*>[\s\S]*$', caseSensitive: false);
-  static final RegExp _partialTagRe =
-      RegExp(r'<\/?(action|tool|memory|actions|tool_call|memory_ops|function)[^>]*$', caseSensitive: false);
+  static final RegExp _danglingTagRe = RegExp(
+      r'<(actions|memory_ops|memory|tool_call|function|tool)[^>]*>[\s\S]*$|\[(actions|memory_ops|memory|TOOL_CALL|TOOL)\][\s\S]*$',
+      caseSensitive: false);
+  static final RegExp _partialTagRe = RegExp(
+      r'<\/?(action|tool|memory|actions|tool_call|memory_ops|function)[^>]*$|\[\/?(action|tool|memory|actions|TOOL_CALL|TOOL)[^\]]*$',
+      caseSensitive: false);
   static final RegExp _fenceOpenRe = RegExp(r'^\s*```[a-zA-Z0-9_-]*\s*');
   static final RegExp _fenceCloseRe = RegExp(r'\s*```\s*$');
 
@@ -123,7 +125,20 @@ class AgentToolCallParser {
         lastClose >= 0 ? raw.substring(lastClose + _closeTag.length).trim() : '';
 
     final lastOpen = raw.lastIndexOf(_openTag);
-    final hasOpenTag = lastOpen >= 0 && lastOpen > lastClose;
+    final hasDanglingTag = _danglingTagRe.hasMatch(raw) || _partialTagRe.hasMatch(raw);
+
+    // بررسی بلوک کد مارک‌داون باز (تعداد فرد ```)
+    final fenceMatches = RegExp(r'```').allMatches(raw).toList();
+    var hasOpenFenceTool = false;
+    if (fenceMatches.length % 2 != 0) {
+      final lastFencePos = fenceMatches.last.start;
+      final fenceTail = raw.substring(lastFencePos);
+      if (RegExp(r'^```(?:json|tool)?\s*\{?', caseSensitive: false).hasMatch(fenceTail)) {
+        hasOpenFenceTool = true;
+      }
+    }
+
+    final hasOpenTag = hasDanglingTag || hasOpenFenceTool || (lastOpen >= 0 && lastOpen > lastClose);
 
     // ۴. حالت لبه: مدل بدون تگ، تنها یک JSON با کلید tool فرستاده است
     if (calls.isEmpty && !hasOpenTag) {
@@ -178,6 +193,17 @@ class AgentToolCallParser {
     text = text.replaceAll(_memOpsRe, '');
     text = text.replaceAll(_danglingTagRe, '');
     text = text.replaceAll(_partialTagRe, '');
+
+    // اگر بلوک کد ابزار نیمه‌کاره باز مانده، تا ابتدای آن را پاک کن
+    final fenceMatches = RegExp(r'```').allMatches(text).toList();
+    if (fenceMatches.length % 2 != 0) {
+      final lastFencePos = fenceMatches.last.start;
+      final fenceTail = text.substring(lastFencePos);
+      if (RegExp(r'^```(?:json|tool)?\s*\{?', caseSensitive: false).hasMatch(fenceTail)) {
+        text = text.substring(0, lastFencePos);
+      }
+    }
+
     text = text.replaceAll(RegExp(r'[ \t]{2,}'), ' ');
     while (true) {
       final before = text;

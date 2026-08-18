@@ -9,6 +9,7 @@ import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/ai/chat/chat_repository.dart';
 import 'package:ritmo/core/ai/memory/assistant_memory_binding.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/markdown_parser.dart';

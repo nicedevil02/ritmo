@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/ai/chat/chat_repository.dart';
@@ -139,7 +140,9 @@ class ConversationContextBuilder {
         final value = row['value']! as String;
         userProfile[key] = value;
       }
-    } catch (_) {}
+    } catch (e) {
+      RitmoLog.warning('ConversationContextBuilder', 'Could not query user profile settings: $e');
+    }
 
     // 4) Retrieve relevant memories from AiMemoryService
     final retrievedMemories = await AiMemoryService.instance.retrieve(

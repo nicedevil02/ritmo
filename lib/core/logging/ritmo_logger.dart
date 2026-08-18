@@ -18,6 +18,7 @@ abstract final class RitmoLog {
     RitmoLogger.warning('[$scope] $message', error: error, stack: st);
   }
 
+  @Deprecated('Use RitmoLog.warning instead')
   static void warn(String scope, String message, [Object? error, StackTrace? st]) {
     RitmoLogger.warning('[$scope] $message', error: error, stack: st);
   }

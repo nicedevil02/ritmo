@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 
@@ -53,7 +54,9 @@ class ChatActionParser {
           final replyVal = decoded['reply'].toString().trim();
           if (replyVal.isNotEmpty) return replyVal;
         }
-      } catch (_) {}
+      } catch (e) {
+        RitmoLog.debug('ChatActionParser', 'Could not parse clean JSON reply: $e');
+      }
     }
 
     // 4. Attempt regex extraction for streaming / unclosed / partial JSON: "reply": "..."
@@ -133,7 +136,9 @@ class ChatActionParser {
           }
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      RitmoLog.debug('ChatActionParser', 'Could not parse actions from JSON: $e');
+    }
 
     // Fallback: Legacy <actions> tag if no JSON actions found
     if (actions.isEmpty) {
@@ -150,7 +155,9 @@ class ChatActionParser {
               }
             }
           }
-        } catch (_) {}
+        } catch (e) {
+          RitmoLog.debug('ChatActionParser', 'Could not parse fallback actions tag: $e');
+        }
       }
     }
 

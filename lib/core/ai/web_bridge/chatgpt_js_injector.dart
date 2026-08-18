@@ -3,7 +3,7 @@ import 'dart:convert';
 /// Utilities and JavaScript scripts for injecting into ChatGPT Web (chatgpt.com)
 class ChatGptJsInjector {
   /// Source of truth version for the JavaScript bridge script.
-  static const int bridgeVersion = 7;
+  static const int bridgeVersion = 8;
 
   /// Wraps user query with Ritmo's Persona, Context (RAG/Goals/Routines) and System Directives
   static String formatPromptWithSystemDirective({
@@ -433,7 +433,9 @@ $_bridgeScriptBody''';
           return true;
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[Ritmo] isSidebarOpen check failed: ' + e);
+    }
     return false;
   }
 

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/ai/brief/briefs/adherence_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/courses_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/cycle_brief.dart';
@@ -147,7 +148,9 @@ class PersonaContextProvider {
           durationMinutes = int.tryParse(v) ?? 450;
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      RitmoLog.debug('PersonaContextProvider', 'Could not parse sleep targets: $e');
+    }
     return SleepTarget(bedtime: bedtime, wake: wake, durationMinutes: durationMinutes);
   }
 
@@ -156,7 +159,9 @@ class PersonaContextProvider {
     for (final row in rows) {
       try {
         logs.add(SleepLog.fromMap(Map<String, dynamic>.from(row as Map)));
-      } catch (_) {}
+      } catch (e) {
+        RitmoLog.debug('PersonaContextProvider', 'Could not parse sleep log: $e');
+      }
     }
     return logs;
   }
@@ -418,7 +423,9 @@ class PersonaContextProvider {
           whereArgs: [r['id'], todayStr],
         );
         taken += completions.length as int;
-      } catch (_) {}
+      } catch (e) {
+        RitmoLog.debug('PersonaContextProvider', 'Could not query routine completions: $e');
+      }
     }
     final pct = totalDoses > 0 ? ((taken / totalDoses) * 100).clamp(0, 100).toDouble() : 0.0;
     return AdherenceBrief(

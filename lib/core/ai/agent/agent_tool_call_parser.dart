@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
 
@@ -446,7 +447,9 @@ class AgentToolCallParser {
               )
             ];
           }
-        } catch (_) {}
+        } catch (e) {
+          RitmoLog.debug('AgentToolCallParser', 'XML body JSON parse fallback failed: $e');
+        }
       }
       final xmlParams = _extractXmlTags(cleanBody);
       return [AgentToolCall(toolName: name, parameters: xmlParams)];

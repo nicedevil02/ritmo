@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
@@ -20,7 +21,9 @@ class ChatRepository {
         await db.execute(
           "ALTER TABLE chat_sessions ADD COLUMN chat_type TEXT DEFAULT 'assistant';",
         );
-      } catch (_) {}
+      } catch (e) {
+        RitmoLog.debug('ChatRepository', 'chat_type column might already exist: $e');
+      }
       _migrated = true;
     }
     return db;

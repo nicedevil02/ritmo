@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 /// سیاست و سطح حساسیت اجرای ابزار
 enum ToolPolicy {
@@ -135,7 +136,9 @@ class AgentToolCall {
     if (rawParams is String && rawParams.trim().startsWith('{')) {
       try {
         rawParams = jsonDecode(rawParams);
-      } catch (_) {}
+      } catch (e) {
+        RitmoLog.warning('AgentTool', 'Could not parse rawParams JSON: $e');
+      }
     }
 
     final params = (rawParams is Map)

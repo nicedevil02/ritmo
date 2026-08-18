@@ -497,7 +497,7 @@ if (typeof window.__ritmo_resume === 'function') {
 
         case 'auth_required':
           _isAuthenticated = false;
-          RitmoLog.warn(
+          RitmoLog.warning(
             'ChatGptWebBridge',
             'Auth required detected on page: path=${readString('currentPath')}',
           );
@@ -994,12 +994,16 @@ if (typeof window.__ritmo_resume === 'function') {
     try {
       // 1. Remove JS channel to avoid callback delivery
       await controllerToDispose.removeJavaScriptChannel('RitmoChatBridge');
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.warning('ChatGptWebBridge', 'Could not remove channel during dispose: $e', e, st);
+    }
 
     try {
       // 2. Load blank page to abort in-flight resource loads in native Chromium immediately
       await controllerToDispose.loadRequest(Uri.parse('about:blank'));
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.warning('ChatGptWebBridge', 'Could not load blank page during dispose: $e', e, st);
+    }
   }
 
   /// Reloads the current WebView page if available.

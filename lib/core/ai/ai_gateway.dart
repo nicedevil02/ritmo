@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -729,7 +730,9 @@ class AIGateway {
         stopwatch.stop();
         try {
           client.close();
-        } catch (_) {}
+        } catch (closeErr) {
+          RitmoLog.debug('AIGateway', 'Client close on exception: $closeErr');
+        }
         debugPrint('💥 [AI_GATEWAY] Exception on attempt ${i + 1}/${chain.length}: $e');
         errorTag = 'Exception: $e';
         if (!isLastConfig) {

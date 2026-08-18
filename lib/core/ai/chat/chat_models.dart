@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/features/assistant/models/assistant_models.dart';
@@ -71,7 +72,9 @@ class ChatMessage {   // in-memory only — به DB نمیرود
         acts = (jsonDecode(raw) as List)
           .map((e) => ChatAction.fromJson((e as Map).cast<String, dynamic>()))
           .toList();
-      } catch (_) {}
+      } catch (e) {
+        RitmoLog.warning('ChatMessage', 'Could not decode actions json: $e');
+      }
     }
     return ChatMessage(
       id: m['id'] as String,

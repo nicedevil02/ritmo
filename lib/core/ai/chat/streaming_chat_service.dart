@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/ai/ai_connection_models.dart';
 import 'package:ritmo/core/ai/ai_connection_repository.dart';
 import 'package:ritmo/core/ai/ai_context_builder.dart';
@@ -178,7 +178,7 @@ class StreamingChatService {
     // Fallback: فقط وقتی ایجنت خطا داد و هیچ متنی تولید نشد و ارائه‌دهنده پل وب نیست، مسیر مستقیم گیت‌وی.
     // (برای ChatGPT Web، پل وب مستقیماً صدا زده شده و تکرار آن باعث ارسال پیام تکراری به مرورگر می‌شد)
     if (hasError && accumulated.isEmpty && !isChatGptWeb) {
-      debugPrint('[Agent] Falling back to plain gateway stream. Reason: $errorCode');
+      RitmoLog.warning('StreamingChatService', 'Falling back to plain gateway stream. Reason: $errorCode');
       hasError = false;
       errorCode = '';
       try {
@@ -235,8 +235,8 @@ class StreamingChatService {
             await AiMemoryService.instance.applyOperations(ops);
           }
         }
-      } catch (e) {
-        debugPrint('[MEMORY] Error processing assistant memory_ops JSON: $e');
+      } catch (e, st) {
+        RitmoLog.error('StreamingChatService', 'Error processing assistant memory_ops JSON: $e', e, st);
       }
     }
 

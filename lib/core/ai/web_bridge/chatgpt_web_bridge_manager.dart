@@ -943,6 +943,28 @@ if (typeof window.__ritmo_resume === 'function') {
     RitmoLog.debug('ChatGptWebBridge', 'WebView reference released.');
   }
 
+  /// Reloads the current WebView page if available.
+  Future<void> reloadPage() async {
+    try {
+      await _controller?.reload();
+      RitmoLog.debug('ChatGptWebBridge', 'Page reload requested.');
+    } catch (e, st) {
+      RitmoLog.error('ChatGptWebBridge', 'Error reloading page: $e', e, st);
+    }
+  }
+
+  /// Clears session cookies and cache from the WebView.
+  Future<void> clearSessionCookies() async {
+    try {
+      final cookieManager = WebViewCookieManager();
+      await cookieManager.clearCookies();
+      _isAuthenticated = false;
+      RitmoLog.debug('ChatGptWebBridge', 'Session cookies cleared.');
+    } catch (e, st) {
+      RitmoLog.error('ChatGptWebBridge', 'Error clearing session cookies: $e', e, st);
+    }
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {

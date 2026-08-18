@@ -21,6 +21,29 @@ class SettingField extends StatelessWidget {
   final bool highlighted;
   final String? customSubtitle;
 
+  static Future<bool> executeWrite(
+    BuildContext context,
+    String key,
+    Object value,
+  ) async {
+    final result = await SettingsService.instance.setChecked(key, value);
+    if (result is SettingWriteOk) {
+      RitmoHaptics.confirm();
+      return true;
+    } else {
+      RitmoHaptics.error();
+      if (context.mounted) {
+        final reason = switch (result) {
+          SettingWriteRejected(:final reasonFa) => reasonFa,
+          SettingWriteFailed(:final reasonFa) => reasonFa,
+          _ => 'خطا در ذخیره‌سازی تنظیمات',
+        };
+        RitmoToast.show(context, reason);
+      }
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final desc = SettingsRegistry.find(settingKey);
@@ -91,21 +114,13 @@ class SettingField extends StatelessWidget {
         activeTrackColor: colors.primary,
         onChanged: isEnabled
             ? (newVal) async {
-                RitmoHaptics.selection();
-                final ok = await SettingsService.instance.set(desc.key, newVal);
-                if (!ok && context.mounted) {
-                  RitmoToast.show(context, 'خطا در ذخیرهٔ تنظیمات');
-                }
+                await executeWrite(context, desc.key, newVal);
               }
             : null,
       ),
       onTap: isEnabled
           ? () async {
-              RitmoHaptics.selection();
-              final ok = await SettingsService.instance.set(desc.key, !value);
-              if (!ok && context.mounted) {
-                RitmoToast.show(context, 'خطا در ذخیرهٔ تنظیمات');
-              }
+              await executeWrite(context, desc.key, !value);
             }
           : null,
     );
@@ -182,12 +197,8 @@ class SettingField extends StatelessWidget {
                 ),
               );
 
-              if (selected != null && selected != currentVal) {
-                RitmoHaptics.confirm();
-                final ok = await SettingsService.instance.set(desc.key, selected);
-                if (!ok && context.mounted) {
-                  RitmoToast.show(context, 'خطا در ذخیرهٔ تنظیمات');
-                }
+              if (selected != null && selected != currentVal && context.mounted) {
+                await executeWrite(context, desc.key, selected);
               }
             }
           : null,
@@ -221,8 +232,7 @@ class SettingField extends StatelessWidget {
             color: value > min ? colors.primary : colors.textTertiary,
             onPressed: isEnabled && value > min
                 ? () async {
-                    RitmoHaptics.selection();
-                    await SettingsService.instance.set(desc.key, value - 1);
+                    await executeWrite(context, desc.key, value - 1);
                   }
                 : null,
           ),
@@ -242,8 +252,7 @@ class SettingField extends StatelessWidget {
             color: value < max ? colors.primary : colors.textTertiary,
             onPressed: isEnabled && value < max
                 ? () async {
-                    RitmoHaptics.selection();
-                    await SettingsService.instance.set(desc.key, value + 1);
+                    await executeWrite(context, desc.key, value + 1);
                   }
                 : null,
           ),
@@ -318,12 +327,8 @@ class SettingField extends StatelessWidget {
                 ),
               );
 
-              if (updatedText != null && updatedText != value) {
-                RitmoHaptics.confirm();
-                final ok = await SettingsService.instance.set(desc.key, updatedText);
-                if (!ok && context.mounted) {
-                  RitmoToast.show(context, 'خطا در ذخیرهٔ تنظیمات');
-                }
+              if (updatedText != null && updatedText != value && context.mounted) {
+                await executeWrite(context, desc.key, updatedText);
               }
             }
           : null,
@@ -414,12 +419,8 @@ class SettingField extends StatelessWidget {
                 ),
               );
 
-              if (picked != null && picked != value) {
-                RitmoHaptics.confirm();
-                final ok = await SettingsService.instance.set(desc.key, picked);
-                if (!ok && context.mounted) {
-                  RitmoToast.show(context, 'خطا در ذخیرهٔ تنظیمات');
-                }
+              if (picked != null && picked != value && context.mounted) {
+                await executeWrite(context, desc.key, picked);
               }
             }
           : null,

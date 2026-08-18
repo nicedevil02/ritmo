@@ -6,9 +6,30 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/snapshot_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
+
+enum SettingsWriteOrigin { user, system, ai }
+
+sealed class SettingWriteResult {
+  const SettingWriteResult();
+}
+
+class SettingWriteOk extends SettingWriteResult {
+  const SettingWriteOk();
+}
+
+class SettingWriteRejected extends SettingWriteResult {
+  const SettingWriteRejected(this.reasonFa);
+  final String reasonFa;
+}
+
+class SettingWriteFailed extends SettingWriteResult {
+  const SettingWriteFailed(this.reasonFa);
+  final String reasonFa;
+}
 
 class SettingsService {
   SettingsService._();
@@ -266,27 +287,45 @@ class SettingsService {
     return rawValue;
   }
 
-  Future<bool> set(String key, Object value) async {
+  Future<SettingWriteResult> setChecked(
+    String key,
+    Object value, {
+    SettingsWriteOrigin origin = SettingsWriteOrigin.user,
+  }) async {
     if (!_initialized) {
       final ok = await retryInit();
       if (!ok) {
         RitmoLog.warning('Settings', 'عدم امکان ذخیره‌سازی کلید $key به دلیل عدم راه‌اندازی موفق سرویس تنظیمات');
-        return false;
+        return const SettingWriteFailed('عدم امکان راه‌اندازی سرویس تنظیمات');
       }
     }
 
     final desc = SettingsRegistry.find(key);
     if (desc == null) {
       RitmoLog.warning('Settings', 'رد ذخیره‌سازی برای کلید نامشخص: $key');
-      return false;
+      return SettingWriteRejected('تنظیم نامشخص: $key');
+    }
+
+    if (origin == SettingsWriteOrigin.ai && !desc.aiWritable) {
+      RitmoLog.warning('Settings', 'AI مجاز به تغییر تنظیم غیرقابل‌دسترس $key نیست');
+      return const SettingWriteRejected('این تنظیم فقط توسط خود شما قابل تغییر است.');
     }
 
     final normalized = _validateAndNormalize(desc, value);
-    if (normalized == null) return false;
+    if (normalized == null) {
+      if (desc.type == SettingType.integer && (desc.min != null || desc.max != null)) {
+        final min = desc.min;
+        final max = desc.max;
+        final minStr = min != null ? toPersianDigits(min) : '۰';
+        final maxStr = max != null ? toPersianDigits(max) : 'نامحدود';
+        return SettingWriteRejected('مقدار باید بین $minStr تا $maxStr باشد.');
+      }
+      return const SettingWriteRejected('مقدار وارد شده برای این تنظیم معتبر نیست.');
+    }
 
     final currentVal = _cache[key];
     if (currentVal == normalized) {
-      return true;
+      return const SettingWriteOk();
     }
 
     try {
@@ -336,11 +375,16 @@ class SettingsService {
         }
       }
 
-      return true;
+      return const SettingWriteOk();
     } catch (e, st) {
       RitmoLog.error('Settings', 'خطا در ذخیره‌سازی کلید $key', e, st);
-      return false;
+      return const SettingWriteFailed('خطا در ثبت تغییرات در پایگاه داده');
     }
+  }
+
+  Future<bool> set(String key, Object value) async {
+    final result = await setChecked(key, value);
+    return result is SettingWriteOk;
   }
 
   Future<bool> setMany(Map<String, Object> values) async {

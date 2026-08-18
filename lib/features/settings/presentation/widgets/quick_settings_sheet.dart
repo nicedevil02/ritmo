@@ -94,7 +94,7 @@ class QuickSettingsSheet extends StatelessWidget {
                       title: 'ساعات سکوت',
                       isActive: quiet,
                       icon: quiet ? CupertinoIcons.moon_fill : CupertinoIcons.moon,
-                      activeColor: const Color(0xFF6366F1),
+                      activeColor: colors.primary,
                       onTap: () async {
                         RitmoHaptics.selection();
                         await SettingsService.instance.set('notif_quiet_enabled', !quiet);
@@ -105,7 +105,7 @@ class QuickSettingsSheet extends StatelessWidget {
                       title: 'اعلان دائمی',
                       isActive: persistent,
                       icon: persistent ? CupertinoIcons.bell_fill : CupertinoIcons.bell,
-                      activeColor: const Color(0xFF10B981),
+                      activeColor: colors.success,
                       onTap: () async {
                         RitmoHaptics.selection();
                         await SettingsService.instance.set('persistent_status_notification_enabled', !persistent);
@@ -116,7 +116,7 @@ class QuickSettingsSheet extends StatelessWidget {
                       title: isDark ? 'حالت تیره' : 'حالت روشن',
                       isActive: isDark,
                       icon: isDark ? CupertinoIcons.moon_stars_fill : CupertinoIcons.sun_max_fill,
-                      activeColor: const Color(0xFFF59E0B),
+                      activeColor: colors.warning,
                       onTap: () async {
                         RitmoHaptics.selection();
                         await SettingsService.instance.set('theme_mode', isDark ? 'light' : 'dark');
@@ -127,7 +127,7 @@ class QuickSettingsSheet extends StatelessWidget {
                       title: 'سیاه OLED',
                       isActive: oled,
                       icon: CupertinoIcons.circle_filled,
-                      activeColor: const Color(0xFF18181B),
+                      activeColor: colors.textPrimary,
                       onTap: () async {
                         RitmoHaptics.selection();
                         await SettingsService.instance.set('theme_true_black', !oled);
@@ -138,7 +138,7 @@ class QuickSettingsSheet extends StatelessWidget {
                       title: 'قفل اثرانگشت',
                       isActive: biometric,
                       icon: CupertinoIcons.lock_shield_fill,
-                      activeColor: const Color(0xFFEC4899),
+                      activeColor: colors.accent,
                       onTap: () async {
                         RitmoHaptics.selection();
                         await SettingsService.instance.set('app_biometric_enabled', !biometric);
@@ -149,7 +149,7 @@ class QuickSettingsSheet extends StatelessWidget {
                       title: 'بازخورد لرزشی',
                       isActive: haptic,
                       icon: CupertinoIcons.waveform_path,
-                      activeColor: const Color(0xFF06B6D4),
+                      activeColor: colors.secondary,
                       onTap: () async {
                         RitmoHaptics.selection();
                         await SettingsService.instance.set('haptic_feedback_enabled', !haptic);

@@ -152,7 +152,7 @@ class SettingExplainerSheet extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: colors.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),

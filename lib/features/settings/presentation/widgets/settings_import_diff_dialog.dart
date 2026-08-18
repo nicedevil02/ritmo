@@ -157,7 +157,7 @@ class _SettingsImportDiffDialogState extends State<SettingsImportDiffDialog> {
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: colors.onPrimary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),

@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -93,18 +92,18 @@ class _SettingsDegradedBannerState extends State<SettingsDegradedBanner> {
                   borderRadius: BorderRadius.circular(10),
                   onPressed: _isRetrying ? null : _handleRetry,
                   child: _isRetrying
-                      ? const CupertinoActivityIndicator(color: Colors.white)
-                      : const Row(
+                      ? CupertinoActivityIndicator(color: colors.onPrimary)
+                      : Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(CupertinoIcons.arrow_clockwise, size: 16, color: Colors.white),
-                            SizedBox(width: 6),
+                            Icon(CupertinoIcons.arrow_clockwise, size: 16, color: colors.onPrimary),
+                            const SizedBox(width: 6),
                             Text(
                               'تلاش مجدد',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: colors.onPrimary,
                               ),
                             ),
                           ],

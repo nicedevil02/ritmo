@@ -68,7 +68,7 @@ class SettingsHealthCard extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: borderColor,
-                      foregroundColor: Colors.white,
+                      foregroundColor: colors.onPrimary,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,

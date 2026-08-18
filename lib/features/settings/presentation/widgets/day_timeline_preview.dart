@@ -133,15 +133,15 @@ class _TimelineBarPainter extends CustomPainter {
       const Radius.circular(8),
     );
 
-    // Base background (daytime gradient)
+    // Base background (daytime gradient from theme tokens)
     final bgPaint = Paint()
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         colors: [
-          Color(0xFF1E293B),
-          Color(0xFF3B82F6),
-          Color(0xFFF59E0B),
-          Color(0xFF3B82F6),
-          Color(0xFF1E293B),
+          colors.card,
+          colors.primary.withValues(alpha: 0.6),
+          colors.warning,
+          colors.primary.withValues(alpha: 0.6),
+          colors.card,
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
@@ -150,7 +150,7 @@ class _TimelineBarPainter extends CustomPainter {
 
     // Quiet hours overlay
     if (quietEnabled) {
-      final quietPaint = Paint()..color = const Color(0xFF0F172A).withValues(alpha: 0.75);
+      final quietPaint = Paint()..color = colors.background.withValues(alpha: 0.85);
 
       if (quietStartMin > quietEndMin) {
         // Overnight quiet (e.g. 23:00 to 07:00)
@@ -165,9 +165,9 @@ class _TimelineBarPainter extends CustomPainter {
       }
     }
 
-    // Planning nudge marker (vertical gold line)
+    // Planning nudge marker (vertical accent line)
     final markerPaint = Paint()
-      ..color = const Color(0xFFFFD700)
+      ..color = colors.accent
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 

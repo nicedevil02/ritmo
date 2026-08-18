@@ -111,16 +111,16 @@ class SettingsTile extends StatelessWidget {
                                 key: const ValueKey('setting_restart_needed_chip'),
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                                  color: colors.warning.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+                                  border: Border.all(color: colors.warning.withValues(alpha: 0.4)),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'نیاز به راه‌اندازی مجدد',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFFF59E0B),
+                                    color: colors.warning,
                                   ),
                                 ),
                               ),

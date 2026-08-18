@@ -61,27 +61,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildPremiumStatusCard(BuildContext context) {
+    final colors = context.colors;
     final isPremium = PremiumService.instance.isPremium;
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isPremium
-              ? [const Color(0xff1E1B4B), const Color(0xff312E81)]
-              : [const Color(0xff1F2937), const Color(0xff111827)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: colors.card,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isPremium
-              ? const Color(0xff818CF8).withValues(alpha: 0.3)
-              : Colors.amber.withValues(alpha: 0.3),
+          color: (isPremium ? colors.primary : colors.warning).withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: (isPremium ? const Color(0xff6366F1) : Colors.amber).withValues(alpha: 0.1),
+            color: (isPremium ? colors.primary : colors.warning).withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -93,12 +86,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: (isPremium ? const Color(0xff818CF8) : Colors.amber).withValues(alpha: 0.15),
+              color: (isPremium ? colors.primary : colors.warning).withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
               isPremium ? Icons.diamond_rounded : Icons.star_rounded,
-              color: isPremium ? const Color(0xffA5B4FC) : Colors.amber,
+              color: isPremium ? colors.primary : colors.warning,
               size: 26,
             ),
           ),
@@ -109,10 +102,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   isPremium ? 'اشتراک پرمیوم ریتمو پلاس 💎' : 'ریتمو پایه (نسخه رایگان) ⚡',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -122,7 +115,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       : 'سقف ۴ ماژول، ۷ روتین و ۳ هدف همزمان',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
@@ -133,8 +126,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               PremiumUpgradeSheet.show(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: isPremium ? const Color(0xff6366F1) : Colors.amber,
-              foregroundColor: isPremium ? Colors.white : Colors.black,
+              backgroundColor: isPremium ? colors.primary : colors.warning,
+              foregroundColor: isPremium ? colors.onPrimary : colors.background,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,

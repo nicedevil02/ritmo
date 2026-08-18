@@ -581,12 +581,12 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                          color: colors.medicalRed.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text(
+                        child: Text(
                           'عبور از سکوت',
-                          style: TextStyle(fontSize: 10, color: Color(0xFFEF4444), fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 10, color: colors.medicalRed, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],

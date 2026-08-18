@@ -19,6 +19,7 @@ import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
 import 'package:ritmo/features/cycle/logic/cycle_data_quality_engine.dart';
 import 'package:ritmo/features/cycle/logic/cycle_load_balancer.dart';
 import 'package:ritmo/features/cycle/logic/cycle_personal_pattern_engine.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart';
@@ -300,17 +301,18 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     await _loadData();
   }
 
-  void _openLogTodaySheet() {
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-    final todayLog = _dayLogs.cast<Map<String, dynamic>?>().firstWhere(
-      (l) => l?['logDate'] == todayStr || l?['dateIso'] == todayStr,
+  void _openLogTodaySheet([DateTime? targetDate]) {
+    final effectiveDate = targetDate ?? DateTime.now();
+    final dateStr = effectiveDate.toIso8601String().substring(0, 10);
+    final dayLog = _dayLogs.cast<Map<String, dynamic>?>().firstWhere(
+      (l) => l?['logDate'] == dateStr || l?['dateIso'] == dateStr,
       orElse: () => null,
     );
 
     CycleLogTodaySheet.show(
       context: context,
-      todayStr: todayStr,
-      todayLog: todayLog,
+      todayStr: dateStr,
+      todayLog: dayLog,
       activePhaseColor: _getActivePhaseColor(context),
       onSaved: _loadData,
     );
@@ -368,7 +370,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   Future<void> _closeForgottenPeriod(Map<String, dynamic> period) async {
     final db = await DatabaseHelper.instance.database;
     final start = DateTime.parse(period['startDate'] as String);
-    final pDur = int.tryParse(_settings['cycle_avg_period'] ?? '6') ?? 6;
+    final pDur = CycleSettings.getPeriodDuration(_settings);
     final end = start.add(Duration(days: pDur - 1));
     final endStr = end.toIso8601String().substring(0, 10);
 
@@ -588,6 +590,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               engineOutput: _engineOutput,
                               settings: _settings,
                               activePhaseColor: _getActivePhaseColor(context),
+                              onDayTapped: _openLogTodaySheet,
                             ),
                             const SizedBox(height: 16),
                             CycleHistoryList(

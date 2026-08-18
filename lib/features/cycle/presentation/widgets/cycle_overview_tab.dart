@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_orb_card.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_workout_card.dart';
@@ -72,7 +73,7 @@ class CycleOverviewTab extends StatelessWidget {
         if (cleanEnd != null) {
           if (!cleanDate.isAfter(cleanEnd)) return true;
         } else {
-          final pDur = int.tryParse(settings['cycle_avg_period'] ?? '6') ?? 6;
+          final pDur = CycleSettings.getPeriodDuration(settings);
           if (cleanDate.difference(start).inDays < pDur) return true;
         }
       }
@@ -97,7 +98,7 @@ class CycleOverviewTab extends StatelessWidget {
             return cleanDate.difference(start).inDays + 1;
           }
         } else {
-          final pDur = int.tryParse(settings['cycle_avg_period'] ?? '6') ?? 6;
+          final pDur = CycleSettings.getPeriodDuration(settings);
           if (cleanDate.difference(start).inDays < pDur) {
             return cleanDate.difference(start).inDays + 1;
           }
@@ -107,56 +108,15 @@ class CycleOverviewTab extends StatelessWidget {
     return (engineOutput?.dayOfPeriod ?? 0) > 0 ? engineOutput!.dayOfPeriod : 1;
   }
 
-  bool _checkIsOvulationDay(DateTime date) {
-    if (engineOutput == null || !engineOutput!.hasData) return false;
-    final ovDay = engineOutput!.ovulationDay;
-    if (ovDay == null) return false;
-    final cleanDate = DateTime(date.year, date.month, date.day);
-    final ovulation = DateTime(ovDay.year, ovDay.month, ovDay.day);
-    return cleanDate.isAtSameMomentAs(ovulation);
-  }
-
-  bool _checkIsFertileDay(DateTime date) {
-    if (engineOutput == null || !engineOutput!.hasData) return false;
-    final fStart = engineOutput!.fertileWindowStart;
-    final fEnd = engineOutput!.fertileWindowEnd;
-    if (fStart == null || fEnd == null) return false;
-    final cleanDate = DateTime(date.year, date.month, date.day);
-    final start = DateTime(fStart.year, fStart.month, fStart.day);
-    final end = DateTime(fEnd.year, fEnd.month, fEnd.day);
-    return !cleanDate.isBefore(start) && !cleanDate.isAfter(end);
-  }
-
-  bool _checkIsPmsDay(DateTime date) {
-    if (engineOutput == null || !engineOutput!.hasData) return false;
-    final pStart = engineOutput!.pmsWindowStart;
-    final pEnd = engineOutput!.pmsWindowEnd;
-    if (pStart == null || pEnd == null) return false;
-    final cleanDate = DateTime(date.year, date.month, date.day);
-    final start = DateTime(pStart.year, pStart.month, pStart.day);
-    final end = DateTime(pEnd.year, pEnd.month, pEnd.day);
-    return !cleanDate.isBefore(start) && !cleanDate.isAfter(end);
-  }
-
-  CyclePhase _getCurrentDayPhase() {
-    if (engineOutput == null) return CyclePhase.noData;
-    final today = DateTime.now();
-    if (_checkIsPeriodDay(today)) return CyclePhase.menstrual;
-    if (_checkIsOvulationDay(today) || _checkIsFertileDay(today)) {
-      return CyclePhase.ovulation;
-    }
-    if (_checkIsPmsDay(today)) return CyclePhase.luteal;
-    return CyclePhase.follicular;
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final today = DateTime.now();
     final isTodayPeriod = _checkIsPeriodDay(today);
     final activePeriodDay = _calculateActivePeriodDay(today);
-    final phase = _getCurrentDayPhase();
+    final phase = engineOutput?.currentPhase ?? CyclePhase.menstrual;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -171,7 +131,8 @@ class CycleOverviewTab extends StatelessWidget {
           activePeriodDay: activePeriodDay,
           dayOfCycle: engineOutput?.dayOfCycle ?? 1,
           totalCycleLength: engineOutput?.stats.avgCycleLength ?? 28.0,
-          avgPeriodDuration: engineOutput?.stats.avgPeriodDuration ?? 7.0,
+          avgPeriodDuration: engineOutput?.stats.avgPeriodDuration ??
+              CycleSettings.getPeriodDuration(settings).toDouble(),
         ),
         const SizedBox(height: 16),
         _buildNextPeriodPredictionCard(context, colors, isDark),
@@ -254,7 +215,7 @@ class CycleOverviewTab extends StatelessWidget {
                     ),
                     onPressed: () => onCloseForgottenPeriod(forgottenPeriod!),
                     child: Text(
-                      'ثبت پایان (${PersianDigits.toFa(settings['cycle_avg_period'] ?? '6')} روزه)',
+                      'ثبت پایان (${PersianDigits.toFa(CycleSettings.getPeriodDuration(settings).toString())} روزه)',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,

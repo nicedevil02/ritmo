@@ -12,6 +12,35 @@ class CycleBurdenCard extends StatelessWidget {
   final BodyBurdenScore burden;
   final CycleAdaptiveAdvice advice;
 
+  static String _translateRecommendation(String code) {
+    switch (code) {
+      case 'reduce_heavy_workload':
+        return 'کاهش حجم کارهای سنگین و فشرده';
+      case 'split_focus_sessions':
+        return 'تقسیم جلسات تمرکز به بخش‌های کوتاه‌تر';
+      case 'plan_more_frequent_breaks':
+        return 'برنامه‌ریزی برای استراحت‌های مکرر و کوتاه';
+      case 'prioritize_comfort_hydration':
+        return 'اولویت دادن به راحتی و نوشیدن آب کافی';
+      case 'maintain_balanced_rhythm':
+        return 'حفظ ریتم کاری متعادل و پایدار';
+      case 'take_extra_five_min_break':
+        return 'اختصاص ۵ دقیقه استراحت بیشتر در هر ساعت';
+      case 'do_deep_work_early':
+        return 'انجام کارهای نیازمند تمرکز عمیق در ساعات اولیه روز';
+      case 'gentle_menstrual_rhythm':
+        return 'رعایت ریتم آرام متناسب با دوران قاعدگی';
+      case 'avoid_unnecessary_pressure':
+        return 'پرهیز از فشارهای غیرضروری جسمی و فکری';
+      case 'optimal_physical_rhythm':
+        return 'ریتم بدنی عالی و پرانرژی';
+      case 'ideal_for_demanding_tasks':
+        return 'بازهٔ مناسب برای انجام فعالیت‌های پرچالش';
+      default:
+        return code;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -73,7 +102,9 @@ class CycleBurdenCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          ...(advice.recommendationsFa ?? advice.recommendationCodes).map(
+          ...(advice.recommendationsFa ??
+                  advice.recommendationCodes.map(_translateRecommendation))
+              .map(
             (rec) => Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Row(

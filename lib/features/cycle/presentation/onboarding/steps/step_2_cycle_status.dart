@@ -333,7 +333,23 @@ class Step2CycleStatus extends StatelessWidget {
     );
 
     if (picked != null) {
-      onDataChanged(data.copyWith(startDate: picked.toDateTime()));
+      final pickedDate = picked.toDateTime();
+      final cleanPicked = DateTime(pickedDate.year, pickedDate.month, pickedDate.day);
+      final cleanToday = DateTime(today.year, today.month, today.day);
+      final daysDiff = cleanToday.difference(cleanPicked).inDays;
+      final autoStatus = daysDiff < data.periodDuration
+          ? CyclePeriodStatusChoice.currentlyInPeriod
+          : CyclePeriodStatusChoice.endedWithKnownStart;
+
+      onDataChanged(
+        data.copyWith(
+          startDate: pickedDate,
+          periodStatus: data.periodStatus == CyclePeriodStatusChoice.dontKnow ||
+                  data.periodStatus == CyclePeriodStatusChoice.currentlyPregnant
+              ? data.periodStatus
+              : autoStatus,
+        ),
+      );
     }
   }
 

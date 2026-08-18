@@ -44,7 +44,7 @@ void main() {
             ),
           ),
         );
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 300));
         await tester.pump();
       });
 

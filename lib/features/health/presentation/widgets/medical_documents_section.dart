@@ -83,6 +83,7 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
         setState(() {
           _documents = docs;
           _docImagesMap = imagesMap;
+          _isLoading = false;
         });
       }
     } catch (e) {

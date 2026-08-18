@@ -153,7 +153,26 @@ class SettingsService {
 
   Future<void> _migrateAndPruneOrphanKeys(Database db, Map<String, String> dbMap) async {
     final knownKeys = SettingsRegistry.all.map((d) => d.key).toSet();
-    final orphanKeys = dbMap.keys.where((k) => !knownKeys.contains(k)).toList();
+    final orphanKeys = dbMap.keys.where((k) {
+      if (knownKeys.contains(k)) return false;
+      // Do not prune active module, cycle, or dynamic domain configuration keys
+      if (k.startsWith('cycle_') ||
+          k.startsWith('user_cycle_') ||
+          k.startsWith('user_period_') ||
+          k.startsWith('period_') ||
+          k.startsWith('pregnancy_') ||
+          k.startsWith('module_') ||
+          k.startsWith('worship_') ||
+          k.startsWith('sleep_') ||
+          k.startsWith('nutrition_') ||
+          k.startsWith('energy_') ||
+          k.startsWith('sports_') ||
+          k.startsWith('medicine_') ||
+          k.startsWith('ai_')) {
+        return false;
+      }
+      return true;
+    }).toList();
     if (orphanKeys.isNotEmpty) {
       RitmoLog.info('Settings', 'پاک‌سازی ${orphanKeys.length} کلید یتیم از جدول تنظیمات: $orphanKeys');
       final placeholders = List.filled(orphanKeys.length, '?').join(',');

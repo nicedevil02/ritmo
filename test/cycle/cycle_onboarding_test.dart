@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_onboarding_controller.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -45,9 +46,11 @@ void main() {
     });
 
     test(
-      'saveOnboarding with endedWithKnownStart calculates correct closed endDate',
+      'saveOnboarding with past endedWithKnownStart (20 days ago, 6 duration) calculates correct closed endDate',
       () async {
-        final startDate = DateTime(2026, 8, 1);
+        final now = DateTime.now();
+        final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 20));
+        final expectedEnd = startDate.add(const Duration(days: 5));
         final data = CycleOnboardingData(
           periodStatus: CyclePeriodStatusChoice.endedWithKnownStart,
           cycleLength: 28,
@@ -73,8 +76,51 @@ void main() {
 
         final periods = await db.query('cycle_periods');
         expect(periods.length, equals(1));
-        expect(periods.first['startDate'], equals('2026-08-01'));
-        expect(periods.first['endDate'], equals('2026-08-06'));
+        expect(periods.first['startDate'], equals(CycleDateContract.toDayKey(startDate)));
+        expect(periods.first['endDate'], equals(CycleDateContract.toDayKey(expectedEnd)));
+      },
+    );
+
+    test(
+      'saveOnboarding with ongoing start date (3 days ago, 6 duration) keeps period OPEN (endDate == null)',
+      () async {
+        final now = DateTime.now();
+        final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 2)); // Day 3 of bleeding
+        final data = CycleOnboardingData(
+          periodStatus: CyclePeriodStatusChoice.endedWithKnownStart,
+          cycleLength: 28,
+          periodDuration: 6,
+          startDate: startDate,
+          worshipConsent: true,
+        );
+
+        await CycleOnboardingController.instance.saveOnboarding(data);
+
+        final periods = await db.query('cycle_periods');
+        expect(periods.length, equals(1));
+        expect(periods.first['startDate'], equals(CycleDateContract.toDayKey(startDate)));
+        expect(periods.first['endDate'], isNull); // Must NOT be prematurely clamped to today
+      },
+    );
+
+    test(
+      'saveOnboarding with currentlyInPeriod keeps period OPEN (endDate == null)',
+      () async {
+        final now = DateTime.now();
+        final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 1));
+        final data = CycleOnboardingData(
+          periodStatus: CyclePeriodStatusChoice.currentlyInPeriod,
+          cycleLength: 28,
+          periodDuration: 6,
+          startDate: startDate,
+        );
+
+        await CycleOnboardingController.instance.saveOnboarding(data);
+
+        final periods = await db.query('cycle_periods');
+        expect(periods.length, equals(1));
+        expect(periods.first['startDate'], equals(CycleDateContract.toDayKey(startDate)));
+        expect(periods.first['endDate'], isNull);
       },
     );
 

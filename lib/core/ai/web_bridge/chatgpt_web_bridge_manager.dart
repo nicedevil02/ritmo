@@ -332,8 +332,8 @@ if (typeof window.__ritmo_resume === 'function') {
   void handleWebResourceError(WebResourceError error) {
     RitmoLog.error('ChatGptWebBridge', 'Resource Error (code=${error.errorCode}, isMainFrame=${error.isForMainFrame}): ${error.description}');
 
-    // Only close in-flight stream if the error affects the main frame
-    final isMain = error.isForMainFrame ?? true;
+    // Only close in-flight stream if the error is confirmed to affect the main frame
+    final isMain = error.isForMainFrame ?? false;
     if (!isMain) {
       RitmoLog.debug('ChatGptWebBridge', 'Sub-resource error ignored for stream closure.');
       return;
@@ -501,7 +501,7 @@ if (typeof window.__ritmo_resume === 'function') {
             'ChatGptWebBridge',
             'Auth required detected on page: path=${readString('currentPath')}',
           );
-          if (_status == ChatGptBridgeStatus.generating) {
+          if (_status == ChatGptBridgeStatus.generating && _emittedText.isEmpty && !_hasActiveSseStream) {
             _failGeneration(WebBridgeException.authRequired());
           }
           break;
@@ -578,6 +578,19 @@ if (typeof window.__ritmo_resume === 'function') {
             'ChatGptWebBridge',
             'HTTP error received from JS bridge: status=$statusCode, reqId=$reqId',
           );
+          // FIX: If DOM streaming is already active (emittedText has content or SSE is live),
+          // only abort for critical auth/rate-limit errors. Transient errors during an active
+          // DOM stream are benign — the 'done' event from the DOM watcher will finalize cleanly.
+          final isCriticalError = statusCode == 429 || statusCode == 401 || statusCode == 403 ||
+              (statusCode >= 500 && statusCode <= 599);
+          final isDomStreamingActive = _emittedText.isNotEmpty || _hasActiveSseStream;
+          if (!isCriticalError && isDomStreamingActive) {
+            RitmoLog.debug(
+              'ChatGptWebBridge',
+              'Suppressing non-critical http_error $statusCode — DOM stream has $_emittedText chars already emitted.',
+            );
+            break;
+          }
           if (statusCode == 429) {
             _failGeneration(WebBridgeException.rateLimited(statusCode: statusCode));
           } else if (statusCode == 401 || statusCode == 403) {
@@ -824,6 +837,15 @@ if (typeof window.__ritmo_resume === 'function') {
     _navigationReloadCount = 0;
     _lastChunkSource = null;
     _hasActiveSseStream = false;
+
+    // FIX: In-flight guard — if we are already generating, don't overwrite the active stream.
+    // This prevents the duplicate-message race when AgentLoopRunner + StreamingChatService
+    // both call sendPrompt for the same user turn (e.g. fallback path triggering on chatgpt_web).
+    if (_status == ChatGptBridgeStatus.generating && _currentStreamController != null && !_currentStreamController!.isClosed) {
+      RitmoLog.debug('ChatGptWebBridgeManager', 'sendPrompt BLOCKED: already generating (reqId: $_currentRequestId). Refusing duplicate call.');
+      yield* _currentStreamController!.stream;
+      return;
+    }
 
     final booted = await ensureBooted();
     if (!booted && _status == ChatGptBridgeStatus.cloudflareChallenge) {

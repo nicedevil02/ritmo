@@ -212,6 +212,7 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
   }
 
   void _cancelStreaming() {
+    ChatGptWebBridgeManager.instance.cancelCurrentStream();
     _sportsSubscription?.cancel();
     _sportsSubscription = null;
     setState(() {

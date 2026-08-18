@@ -212,7 +212,13 @@ class CycleOnboardingController {
     final cleanStartStr = CycleDateContract.toDayKey(cleanStart);
     final today = CycleDateContract.cleanDate(DateTime.now());
 
-    if (data.periodStatus == CyclePeriodStatusChoice.currentlyInPeriod) {
+    final expectedEnd = cleanStart.add(Duration(days: data.periodDuration - 1));
+    final isPeriodActive = CycleDateContract.isSameOrAfter(expectedEnd, today);
+
+    if (data.periodStatus == CyclePeriodStatusChoice.currentlyInPeriod ||
+        (data.periodStatus == CyclePeriodStatusChoice.endedWithKnownStart &&
+            isPeriodActive)) {
+      // Active / ongoing period: do not prematurely clamp to today, keep period open (endDate = null)
       batch.insert('cycle_periods', {
         'id': 'period_onboarding_seed',
         'startDate': cleanStartStr,
@@ -225,12 +231,8 @@ class CycleOnboardingController {
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     } else if (data.periodStatus ==
         CyclePeriodStatusChoice.endedWithKnownStart) {
-      var calcEndDate = cleanStart.add(Duration(days: data.periodDuration - 1));
-      if (CycleDateContract.isSameOrAfter(calcEndDate, today) &&
-          !CycleDateContract.isSameDay(calcEndDate, today)) {
-        calcEndDate = today;
-      }
-      final cleanEndStr = CycleDateContract.toDayKey(calcEndDate);
+      // Fully completed past period: save exact closed end date
+      final cleanEndStr = CycleDateContract.toDayKey(expectedEnd);
 
       batch.insert('cycle_periods', {
         'id': 'period_onboarding_seed',

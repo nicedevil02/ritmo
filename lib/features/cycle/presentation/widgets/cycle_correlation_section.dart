@@ -58,6 +58,38 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
     return result;
   }
 
+  String _translateMetric(String metric) {
+    switch (metric.toLowerCase()) {
+      case 'energy':
+        return 'سطح انرژی روزانه';
+      case 'sleep':
+        return 'کیفیت و الگوی خواب';
+      case 'routines':
+        return 'پایبندی به روتین‌ها و عادات';
+      default:
+        return metric;
+    }
+  }
+
+  String _translateInsight(String insight) {
+    switch (insight.toLowerCase()) {
+      case 'insufficient_data':
+        return 'تعداد روزهای ثبت‌شده برای محاسبهٔ همبستگی کافی نیست (حداقل ۱۴ روز).';
+      case 'no_variance':
+        return 'تغییرات آماری ثبت‌شده برای سنجش همبستگی یکنواخت است.';
+      case 'not_significant':
+        return 'ارتباط آماری معناداری بین شدت علائم چرخه و این شاخص مشاهده نشد.';
+      case 'negative_correlation':
+        return 'با افزایش شدت علائم چرخه، این شاخص کاهش می‌یابد.';
+      case 'positive_correlation':
+        return 'نوسانات این شاخص همسو با تغییرات فازهای چرخه است.';
+      case 'neutral':
+        return 'این شاخص در طول روزهای چرخه نسبتاً پایدار و بدون نوسان بوده است.';
+      default:
+        return insight;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -134,7 +166,7 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          corr.metric,
+                          _translateMetric(corr.metric),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -192,7 +224,7 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                         ),
                       ),
                     Text(
-                      corr.insight,
+                      _translateInsight(corr.insight),
                       style: TextStyle(
                         fontSize: 13,
                         color: isDark ? Colors.white70 : colors.textSecondary,

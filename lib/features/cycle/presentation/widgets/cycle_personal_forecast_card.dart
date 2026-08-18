@@ -7,6 +7,33 @@ class CyclePersonalForecastCard extends StatelessWidget {
 
   final List<SymptomForecast> forecasts;
 
+  static String _translateSymptom(String key) {
+    switch (key.toLowerCase()) {
+      case 'cramps':
+        return 'دل‌درد و انقباض';
+      case 'headache':
+        return 'سردرد';
+      case 'bloating':
+        return 'نفخ شکم';
+      case 'fatigue':
+        return 'خستگی بدنی';
+      case 'backache':
+        return 'کمردرد';
+      case 'mood_swings':
+        return 'نوسانات خُلق';
+      case 'nausea':
+        return 'حالت تهوع';
+      case 'tender_breasts':
+        return 'حساسیت سینه‌ها';
+      case 'insomnia':
+        return 'بی‌خوابی';
+      case 'acne':
+        return 'جوش پوستی';
+      default:
+        return key;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (forecasts.isEmpty) return const SizedBox.shrink();
@@ -49,7 +76,8 @@ class CyclePersonalForecastCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      f.insightFa ?? f.symptomKey,
+                      f.insightFa ??
+                          'احتمال بروز ${_translateSymptom(f.symptomKey)} در این بازه',
                       style: TextStyle(
                         fontSize: 12,
                         color: colors.textSecondary,

@@ -71,7 +71,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   List<NextAction> _nextActions = [];
   bool _isLoadingBriefing = false;
 
-  bool get _isStreaming => _sub != null;
+  bool get _isStreaming => _sub != null || _isAgentWorking;
 
   DayPlanDraft? _pendingDayPlanDraft;
   List<String> _currentQuickReplies = [];
@@ -1045,7 +1045,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
       setState(() {
         _isAgentWorking = false;
       });
-      _onError(e.message.isEmpty ? 'خطایی در ارتباط با دستیار رخ داد.' : e.message);
+      final errText = e.code.isNotEmpty ? e.code : (e.message.isNotEmpty ? e.message : 'خطایی در ارتباط با دستیار رخ داد.');
+      _onError(errText);
     } else if (e is ChatCancelled) {
       setState(() {
         _isAgentWorking = false;
@@ -1099,7 +1100,7 @@ $friendlySummary
   }
 
   Future<void> _cancelStream() async {
-    if (_sub == null) return;
+    if (_sub == null && !_isAgentWorking) return;
     
     final subToCancel = _sub;
     final streamingIdToCancel = _streamingId;
@@ -1107,7 +1108,12 @@ $friendlySummary
     setState(() {
       _sub = null;
       _streamingId = null;
+      _isAgentWorking = false;
+      _isLoading = false;
     });
+
+    // 1. Immediately cancel the web bridge generation and stop the ChatGPT DOM in the WebView
+    ChatGptWebBridgeManager.instance.cancelCurrentStream();
 
     try {
       await subToCancel?.cancel();
@@ -1144,12 +1150,17 @@ $friendlySummary
   }
 
   void _cancelStreamSilent() {
-    if (_sub == null) return;
+    if (_sub == null && !_isAgentWorking) return;
     final subToCancel = _sub;
     final targetId = _streamingId;
 
     _sub = null;
     _streamingId = null;
+    _isAgentWorking = false;
+    _isLoading = false;
+
+    // Immediately cancel the web bridge generation
+    ChatGptWebBridgeManager.instance.cancelCurrentStream();
 
     subToCancel?.cancel();
     

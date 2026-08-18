@@ -110,12 +110,13 @@ $_bridgeScriptBody''';
     window.fetch = function() {
       var args = arguments;
       var url = (args[0] && typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) ? args[0].url : '';
+      
+      // FIX: Only intercept actual conversation endpoints (NOT /lat/r telemetry pings).
+      // Previously /backend-api/lat/r was included, causing spurious http_errors on 204 pings.
       var isConvo = typeof url === 'string' && (
         url.indexOf('/backend-api/conversation') !== -1 ||
-        url.indexOf('/backend-anon/conversation') !== -1 ||
-        url.indexOf('/backend-api/lat/r') !== -1 ||
-        url.indexOf('/backend-anon/lat/r') !== -1
-      );
+        url.indexOf('/backend-anon/conversation') !== -1
+      ) && url.indexOf('/lat/r') === -1;
 
       if (isConvo) {
         var activeReqId = window.__ritmo_active_req_id || '';
@@ -132,13 +133,20 @@ $_bridgeScriptBody''';
             if (response) {
               if (response.status !== 200) {
                 console.warn('[Ritmo] Conversation HTTP error: ' + response.status + ' ' + response.statusText);
-                notifyFlutter('http_error', {
-                  statusCode: response.status,
-                  statusText: response.statusText,
-                  url: url,
-                  requestId: activeReqId,
-                  source: 'fetch'
-                });
+                // FIX: Only emit http_error when DOM is NOT actively streaming tokens.
+                // This prevents a rate-limit or redirect (e.g. 307) from aborting an active DOM stream.
+                var isActivelyStreaming = lastLength > 0 || !!querySafe(RITMO_SELECTORS.stopButton);
+                if (!isActivelyStreaming) {
+                  notifyFlutter('http_error', {
+                    statusCode: response.status,
+                    statusText: response.statusText,
+                    url: url,
+                    requestId: activeReqId,
+                    source: 'fetch'
+                  });
+                } else {
+                  console.log('[Ritmo] Suppressed http_error ' + response.status + ' - DOM stream is active (lastLength=' + lastLength + ').');
+                }
               } else if (response.body && typeof response.body.tee === 'function') {
                 try {
                   var branches = response.body.tee();
@@ -265,11 +273,11 @@ $_bridgeScriptBody''';
   var RITMO_SELECTORS = {
     composer: '#prompt-textarea, textarea, div[contenteditable="true"], .ProseMirror',
     sendButton: 'button[data-testid="send-button"], button[data-testid="fruitjuice-send-button"], button[aria-label="Send prompt"], button[aria-label="ارسال پیام"], form button[type="submit"]',
-    stopButton: 'button[data-testid="stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button',
-    assistantMessage: '[data-message-author-role="assistant"]',
-    unseenAssistantMessage: '[data-message-author-role="assistant"]:not([data-ritmo-seen="true"])',
+    stopButton: 'button[data-testid="stop-button"], button[data-testid="fruitjuice-stop-button"], button[aria-label*="Stop" i], button[aria-label*="توقف"], button[data-testid*="stop" i], button.stop-button',
+    assistantMessage: '[data-message-author-role="assistant"], [data-testid*="assistant"], div.agent-turn, [class*="agent-turn"]',
+    unseenAssistantMessage: '[data-message-author-role="assistant"]:not([data-ritmo-seen="true"]), [data-testid*="assistant"]:not([data-ritmo-seen="true"]), div.agent-turn:not([data-ritmo-seen="true"]), [class*="agent-turn"]:not([data-ritmo-seen="true"])',
     userMessage: '[data-message-author-role="user"], [data-testid*="user"], div.font-user-message',
-    markdownBodies: 'div.markdown, div.prose, [class*="markdown"], [class*="prose"]',
+    markdownBodies: 'div.markdown, div.prose, [class*="markdown"], [class*="prose"], div.whitespace-pre-wrap',
     unseenMarkdownBodies: 'div.markdown:not([data-ritmo-seen="true"]), div.prose:not([data-ritmo-seen="true"]), [class*="markdown"]:not([data-ritmo-seen="true"]), [class*="prose"]:not([data-ritmo-seen="true"])',
     conversationTurns: 'article, [data-testid*="conversation-turn-"]',
     unseenConversationTurns: 'article:not([data-ritmo-seen="true"]), [data-testid*="conversation-turn-"]:not([data-ritmo-seen="true"])',
@@ -757,12 +765,14 @@ $_bridgeScriptBody''';
         }
 
         var sendCheckAttempts = 0;
+        var sendClicked = false; // FIX: guard against duplicate Enter fallback after successful click
         var sendInterval = setInterval(function() {
           sendCheckAttempts++;
           var sendBtn = findSendButton();
 
           if (sendBtn && !sendBtn.disabled) {
             clearInterval(sendInterval);
+            sendClicked = true;
             sendBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
             sendBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
             sendBtn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
@@ -772,18 +782,22 @@ $_bridgeScriptBody''';
             window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
           } else if (sendCheckAttempts >= 8) {
             clearInterval(sendInterval);
-            editor.focus();
-            var enterDown = new KeyboardEvent('keydown', {
-              bubbles: true,
-              cancelable: true,
-              key: 'Enter',
-              code: 'Enter',
-              keyCode: 13,
-              which: 13
-            });
-            editor.dispatchEvent(enterDown);
-            console.log('[Ritmo] Fallback Enter key dispatched');
-            window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
+            // FIX: Only dispatch Enter key if we NEVER successfully clicked the send button.
+            // Previously this fired even after a successful click, causing duplicate sends.
+            if (!sendClicked) {
+              editor.focus();
+              var enterDown = new KeyboardEvent('keydown', {
+                bubbles: true,
+                cancelable: true,
+                key: 'Enter',
+                code: 'Enter',
+                keyCode: 13,
+                which: 13
+              });
+              editor.dispatchEvent(enterDown);
+              console.log('[Ritmo] Fallback Enter key dispatched (no send button found after 8 attempts)');
+              window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
+            }
           }
         }, 250);
       }
@@ -804,38 +818,18 @@ $_bridgeScriptBody''';
 
       console.log('[Ritmo] __ritmo_resume invoked for reqId: ' + reqId + ' (stage: ' + stage + ', received: ' + receivedLength + ')');
 
-      var stopButton = querySafe(RITMO_SELECTORS.stopButton);
-      var isStreamingClass = querySafe(RITMO_SELECTORS.streamingIndicator);
-      var isCurrentlyGenerating = !!stopButton || !!isStreamingClass;
-
       var currentText = findLatestAssistantText();
 
-      if (isCurrentlyGenerating) {
-        notifyFlutter('resumed', { stage: 'streaming', requestId: reqId, source: 'dom' });
-        window.__ritmo_startStreamingWatcher('', reqId);
+      if (currentText && currentText.length > 0 && currentText.length >= receivedLength) {
+        notifyFlutter('resumed', { stage: 'done', requestId: reqId, source: 'dom' });
+        notifyFlutter('done', { fullText: currentText, requestId: reqId, source: 'dom' });
         return;
       }
 
-      if (currentText && currentText.length > 0) {
-        if (currentText.length >= receivedLength) {
-          notifyFlutter('resumed', { stage: 'done', requestId: reqId, source: 'dom' });
-          notifyFlutter('done', { fullText: currentText, requestId: reqId, source: 'dom' });
-          return;
-        } else {
-          notifyFlutter('resumed', { stage: 'streaming', requestId: reqId, source: 'dom' });
-          window.__ritmo_startStreamingWatcher('', reqId);
-          return;
-        }
-      }
-
-      if (stage === 'awaitingFirstToken' && isCurrentlyGenerating) {
-        notifyFlutter('resumed', { stage: 'awaitingFirstToken', requestId: reqId, source: 'dom' });
-        window.__ritmo_startStreamingWatcher('', reqId);
-        return;
-      }
-
-      console.warn('[Ritmo] No generated response found in DOM after navigation; requesting resend.');
-      notifyFlutter('resend_required', { requestId: reqId, source: 'dom' });
+      // Note: resend_required is deprecated and removed to prevent duplicate sends after navigation
+      // Seamlessly resume watching the DOM for live streaming tokens without duplicate resending
+      notifyFlutter('resumed', { stage: 'streaming', requestId: reqId, source: 'dom' });
+      window.__ritmo_startStreamingWatcher('', reqId);
     } catch (e) {
       console.error('[Ritmo] Error in __ritmo_resume: ' + e);
       notifyFlutter('error', { message: 'خطا در بازیابی پاسخ پس از جابجایی صفحه: ' + e.toString(), requestId: payload && payload.requestId, source: 'dom' });
@@ -877,15 +871,16 @@ $_bridgeScriptBody''';
   // --- 9. Page Auth State Detection ---
   function checkAuthState() {
     try {
-      var hasLogin = !!querySafe(RITMO_SELECTORS.loginButton);
+      var isExplicitLoginPage = (window.location.pathname || '').indexOf('/auth/login') !== -1 || (window.location.pathname || '').indexOf('/login') === 0;
+      var hasLoginModal = !!querySafe('#login-modal, [data-testid="login-modal"]');
       var hasComposer = !!querySafe(RITMO_SELECTORS.composer);
-      var hasProfile = !!querySafe(RITMO_SELECTORS.userProfile);
+      var hasLoginBtn = !!querySafe(RITMO_SELECTORS.loginButton);
 
-      var isAuth = hasProfile || (hasComposer && !hasLogin);
+      var isAuth = !isExplicitLoginPage && !hasLoginModal;
 
-      if (hasLogin && !hasComposer) {
+      if ((isExplicitLoginPage || hasLoginModal) && !hasComposer) {
         notifyFlutter('auth_required', {
-          hasLoginButton: true,
+          hasLoginButton: hasLoginBtn,
           currentPath: window.location.pathname || '',
           source: 'lifecycle'
         });
@@ -893,7 +888,7 @@ $_bridgeScriptBody''';
       return isAuth;
     } catch (e) {
       console.warn('[Ritmo] checkAuthState error:', e);
-      return false;
+      return true;
     }
   }
   window.__ritmo_checkAuthState = checkAuthState;

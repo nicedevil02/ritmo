@@ -175,8 +175,9 @@ class StreamingChatService {
       errorCode = e.toString();
     }
 
-    // Fallback: فقط وقتی ایجنت خطا داد و هیچ متنی تولید نشد، مسیر مستقیم گیت‌وی.
-    if (hasError && accumulated.isEmpty) {
+    // Fallback: فقط وقتی ایجنت خطا داد و هیچ متنی تولید نشد و ارائه‌دهنده پل وب نیست، مسیر مستقیم گیت‌وی.
+    // (برای ChatGPT Web، پل وب مستقیماً صدا زده شده و تکرار آن باعث ارسال پیام تکراری به مرورگر می‌شد)
+    if (hasError && accumulated.isEmpty && !isChatGptWeb) {
       debugPrint('[Agent] Falling back to plain gateway stream. Reason: $errorCode');
       hasError = false;
       errorCode = '';

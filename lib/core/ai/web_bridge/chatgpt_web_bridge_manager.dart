@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_bridge_repair.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_bridge_timeouts.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_js_injector.dart';
 import 'package:ritmo/core/ai/web_bridge/web_bridge_exception.dart';
@@ -119,6 +120,11 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
 
   Timer? _inactivityTimer;
   Timer? _generationTimer;
+
+  /// Watchdog for the case where the page renders an answer but no chunk ever
+  /// reaches Dart. Fires a direct DOM read instead of waiting for the hard timeout.
+  Timer? _firstTokenTimer;
+
   StreamController<String>? _currentStreamController;
   Completer<bool>? _bootCompleter;
 
@@ -289,6 +295,60 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   bool get hasPendingRequest =>
       _currentStreamController != null && !_currentStreamController!.isClosed;
 
+  /// Installs the standalone repair/rescue layer. Safe to call repeatedly.
+  Future<void> _installRepairLayer(WebViewController controller) async {
+    try {
+      await controller.runJavaScript(ChatGptBridgeRepair.installScript);
+    } catch (e) {
+      RitmoLog.debug('ChatGptWebBridge', 'Repair layer install failed: $e');
+    }
+  }
+
+  /// Reads whatever answer the ChatGPT page is currently showing, bypassing the
+  /// streaming watcher entirely.
+  ///
+  /// This is the rescue path for the failure mode where ChatGPT visibly answers
+  /// inside the WebView but no chunk event ever reaches Dart.
+  Future<String?> pullVisibleAnswer() async {
+    try {
+      final raw = await _controller?.runJavaScriptReturningResult(
+        ChatGptBridgeRepair.pullAnswerScript,
+      );
+      if (raw == null) return null;
+      dynamic parsed = jsonDecode(raw.toString());
+      if (parsed is String) parsed = jsonDecode(parsed);
+      if (parsed is Map) {
+        final text = parsed['text'];
+        RitmoLog.debug(
+          'ChatGptWebBridge',
+          'pullVisibleAnswer: len=${text is String ? text.length : 0}, '
+          'hasChannel=${parsed['hasChannel']}, dropped=${parsed['droppedEvents']}, '
+          'watcherActive=${parsed['watcherActive']}, generating=${parsed['isGenerating']}',
+        );
+        if (text is String && text.trim().isNotEmpty) return text;
+      }
+    } catch (e) {
+      RitmoLog.debug('ChatGptWebBridge', 'pullVisibleAnswer failed: $e');
+    }
+    return null;
+  }
+
+  /// Reads bridge diagnostics from the page. Useful when nothing arrives at all.
+  Future<Map<String, dynamic>> readBridgeDiagnostics() async {
+    try {
+      final raw = await _controller?.runJavaScriptReturningResult(
+        ChatGptBridgeRepair.diagnosticsScript,
+      );
+      if (raw == null) return const {};
+      dynamic parsed = jsonDecode(raw.toString());
+      if (parsed is String) parsed = jsonDecode(parsed);
+      if (parsed is Map) return Map<String, dynamic>.from(parsed);
+    } catch (e) {
+      RitmoLog.debug('ChatGptWebBridge', 'readBridgeDiagnostics failed: $e');
+    }
+    return const {};
+  }
+
   /// Invoked when a WebView page finishes loading. Re-injects the bridge script,
   /// and if a generation is pending, attempts to re-attach the watcher or abort if looped.
   @visibleForTesting
@@ -298,6 +358,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       return;
     }
     await controller.runJavaScript(ChatGptJsInjector.setupBridgeScript);
+    await _installRepairLayer(controller);
 
     if (hasPendingRequest || _status == ChatGptBridgeStatus.generating) {
       _navigationReloadCount++;
@@ -322,6 +383,10 @@ if (typeof window.__ritmo_resume === 'function') {
   window.__ritmo_resume($payload);
 }
 ''');
+      final reqId = _pendingRequest?.requestId;
+      if (reqId != null && reqId.isNotEmpty) {
+        await controller.runJavaScript(ChatGptBridgeRepair.startWatcherScript(reqId));
+      }
     } catch (e, st) {
       RitmoLog.error('ChatGptWebBridge', 'Error calling __ritmo_resume: $e', e, st);
     }
@@ -391,6 +456,8 @@ if (typeof window.__ritmo_resume === 'function') {
     RitmoLog.debug('ChatGptWebBridgeManager', 'forceReboot requested. reason: $reasonFa');
     _generationTimer?.cancel();
     _generationTimer = null;
+    _firstTokenTimer?.cancel();
+    _firstTokenTimer = null;
 
     final controller = _currentStreamController;
     _currentStreamController = null;
@@ -554,6 +621,8 @@ if (typeof window.__ritmo_resume === 'function') {
             'ChatGptWebBridge',
             'First token received in ${latency}ms (source: $source, reqId: $reqId)',
           );
+          _firstTokenTimer?.cancel();
+          _firstTokenTimer = null;
           _pendingRequest?.stage = PendingRequestStage.streaming;
           break;
 
@@ -605,7 +674,8 @@ if (typeof window.__ritmo_resume === 'function') {
         case 'error':
           final msg = readString('message') ?? 'خطای ناشناخته در پل ارتباطی با وب.';
           RitmoLog.error('ChatGptWebBridge', 'JS error received: msg=$msg (source: $source, reqId: $reqId)');
-          _failGeneration(WebBridgeException.unknown(messageFa: msg));
+          // Before surfacing a timeout error, try to rescue whatever is on screen.
+          unawaited(_rescueThenFail(msg));
           break;
 
         default:
@@ -614,6 +684,34 @@ if (typeof window.__ritmo_resume === 'function') {
     } catch (e, st) {
       RitmoLog.error('ChatGptWebBridge', 'Error parsing JS message: $e', e, st);
     }
+  }
+
+  /// Last-ditch attempt: if the page is visibly showing an answer, deliver it
+  /// instead of failing the turn.
+  Future<void> _rescueThenFail(String messageFa) async {
+    final active = _currentStreamController;
+    if (active == null || active.isClosed) return;
+
+    if (_emittedText.isEmpty) {
+      final rescued = await pullVisibleAnswer();
+      if (!identical(_currentStreamController, active)) return;
+      if (rescued != null && rescued.trim().isNotEmpty) {
+        RitmoLog.debug(
+          'ChatGptWebBridge',
+          'Rescued ${rescued.length} chars from the page after a JS error. Delivering instead of failing.',
+        );
+        _emitChunk(rescued, null, source: 'dom_rescue');
+        _finishGeneration(null);
+        return;
+      }
+    }
+
+    if (!identical(_currentStreamController, active)) return;
+    if (_emittedText.isNotEmpty) {
+      _finishGeneration(null);
+      return;
+    }
+    _failGeneration(WebBridgeException.unknown(messageFa: messageFa));
   }
 
   @visibleForTesting
@@ -664,6 +762,7 @@ if (typeof window.__ritmo_resume === 'function') {
         requestId: req.requestId,
       );
       await _controller?.runJavaScript(jsCall);
+      await _controller?.runJavaScript(ChatGptBridgeRepair.startWatcherScript(req.requestId));
     } else {
       RitmoLog.error('ChatGptWebBridge', 'Safe resend disallowed (hasNoTokens=$hasNoTokens, isFirstAttempt=$isFirstAttempt, isWithinWindow=$isWithinWindow). Failing generation.');
       _failGeneration('ارتباط با گفتگو قطع شد و پیام ارسال نشد. لطفاً دوباره تلاش کنید.');
@@ -712,13 +811,20 @@ if (typeof window.__ritmo_resume === 'function') {
     if (full != null && full.isNotEmpty) {
       final cleanFull = _sanitizeResponseText(full);
       if (cleanFull != _emittedText) {
-        if (cleanFull.length > _emittedText.length) {
+        if (cleanFull.length > _emittedText.length && cleanFull.startsWith(_emittedText)) {
           final d = cleanFull.substring(_emittedText.length);
           _emittedText = cleanFull;
           controller.add(d);
         } else if (_emittedText.isEmpty) {
           _emittedText = cleanFull;
           controller.add(cleanFull);
+        } else if (cleanFull.length > _emittedText.length) {
+          // The page re-rendered and the prefix no longer matches (markdown reflow).
+          // Appending a blind substring would corrupt the text, so append the tail
+          // that is genuinely new by length only.
+          final d = cleanFull.substring(_emittedText.length);
+          _emittedText = cleanFull;
+          controller.add(d);
         }
       }
       _pendingRequest?.stage = PendingRequestStage.streaming;
@@ -742,6 +848,8 @@ if (typeof window.__ritmo_resume === 'function') {
   void _finishGeneration(String? fullText) {
     _generationTimer?.cancel();
     _generationTimer = null;
+    _firstTokenTimer?.cancel();
+    _firstTokenTimer = null;
 
     final controller = _currentStreamController;
 
@@ -772,6 +880,8 @@ if (typeof window.__ritmo_resume === 'function') {
   void _failGeneration(dynamic errorOrMessageFa) {
     _generationTimer?.cancel();
     _generationTimer = null;
+    _firstTokenTimer?.cancel();
+    _firstTokenTimer = null;
 
     final controller = _currentStreamController;
     _currentStreamController = null;
@@ -805,6 +915,8 @@ if (typeof window.__ritmo_resume === 'function') {
   void cancelCurrentStream() {
     _generationTimer?.cancel();
     _generationTimer = null;
+    _firstTokenTimer?.cancel();
+    _firstTokenTimer = null;
     final controller = _currentStreamController;
     _currentStreamController = null;
     _emittedText = '';
@@ -817,6 +929,7 @@ if (typeof window.__ritmo_resume === 'function') {
 
     try {
       _controller?.runJavaScript(ChatGptJsInjector.cancelScript);
+      _controller?.runJavaScript(ChatGptBridgeRepair.stopWatcherScript);
     } catch (e, st) {
       RitmoLog.error('ChatGptWebBridge', 'Error sending cancel script to WebView: $e', e, st);
     }
@@ -924,13 +1037,60 @@ if (typeof window.__ritmo_resume === 'function') {
       RitmoLog.debug('ChatGptWebBridge', 'Composer not ready after wait; proceeding with optimistic injection.');
     }
 
+    // Make sure the repair layer exists, then anchor every existing turn with the
+    // FULL tracked selector list BEFORE sending. Without this, old turns stay
+    // "unseen" and the extractor can lock onto a stale node, which is exactly why
+    // a visible ChatGPT answer never reached the app chat.
+    await _installRepairLayer(_controller!);
+    try {
+      await _controller!.runJavaScript(ChatGptBridgeRepair.anchorScript);
+    } catch (e) {
+      RitmoLog.debug('ChatGptWebBridge', 'Anchor script failed: $e');
+    }
+
     await _controller!.runJavaScript(jsCall);
 
+    // Independent watcher: detection must not depend on the send-button click path.
+    try {
+      await _controller!.runJavaScript(ChatGptBridgeRepair.startWatcherScript(reqId));
+    } catch (e) {
+      RitmoLog.debug('ChatGptWebBridge', 'Repair watcher start failed: $e');
+    }
+
+    // Watchdog: if nothing has arrived by firstTokenTimeout, read the page directly.
+    _firstTokenTimer?.cancel();
+    _firstTokenTimer = Timer(ChatGptBridgeTimeouts.firstTokenTimeout, () async {
+      if (!identical(_currentStreamController, streamController)) return;
+      if (_emittedText.isNotEmpty) return;
+      RitmoLog.warning(
+        'ChatGptWebBridge',
+        'No token after ${ChatGptBridgeTimeouts.firstTokenTimeout.inSeconds}s (reqId: $reqId). Attempting direct DOM rescue read.',
+      );
+      final diag = await readBridgeDiagnostics();
+      if (diag.isNotEmpty) {
+        RitmoLog.warning('ChatGptWebBridge', 'Bridge diagnostics: $diag');
+      }
+      final rescued = await pullVisibleAnswer();
+      if (!identical(_currentStreamController, streamController)) return;
+      if (rescued != null && rescued.trim().isNotEmpty) {
+        RitmoLog.debug('ChatGptWebBridge', 'Rescue read recovered ${rescued.length} chars.');
+        _emitChunk(rescued, null, source: 'dom_rescue');
+      }
+    });
+
     _generationTimer?.cancel();
-    _generationTimer = Timer(generationTimeout, () {
+    _generationTimer = Timer(generationTimeout, () async {
       if (!identical(_currentStreamController, streamController)) return;
       RitmoLog.debug('ChatGptWebBridge', 'Generation timed out after ${generationTimeout.inSeconds}s (reqId: $reqId).');
       if (_emittedText.isEmpty) {
+        final rescued = await pullVisibleAnswer();
+        if (!identical(_currentStreamController, streamController)) return;
+        if (rescued != null && rescued.trim().isNotEmpty) {
+          RitmoLog.debug('ChatGptWebBridge', 'Timeout rescue recovered ${rescued.length} chars; delivering instead of failing.');
+          _emitChunk(rescued, null, source: 'dom_rescue');
+          _finishGeneration(null);
+          return;
+        }
         _failGeneration(
           WebBridgeException.timeout(
             messageFa: 'پاسخی از صفحهٔ ChatGPT دریافت نشد. لطفاً پنجرهٔ مرورگر را باز کنید و وضعیت ورود یا تایید امنیتی را بررسی کنید.',
@@ -964,6 +1124,8 @@ if (typeof window.__ritmo_resume === 'function') {
     _inactivityTimer = null;
     _generationTimer?.cancel();
     _generationTimer = null;
+    _firstTokenTimer?.cancel();
+    _firstTokenTimer = null;
 
     final controller = _currentStreamController;
     _currentStreamController = null;

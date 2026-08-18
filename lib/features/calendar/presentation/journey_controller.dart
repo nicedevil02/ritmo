@@ -680,22 +680,61 @@ class JourneyController extends ChangeNotifier {
 
 enum CalendarEditScope { thisDayOnly, allFutureDays }
 
-class _MoveItemCommand implements UndoableCommand {
+abstract class _CalendarCommand implements UndoableCommand {
+  _CalendarCommand({
+    required this.item,
+    required this.onRefresh,
+  });
+
+  final AgendaItem item;
+  final Future<void> Function() onRefresh;
+
+  /// Subclasses specify whether they modify multiple days (e.g. allFutureDays).
+  bool get affectsMultipleDays => false;
+
+  /// Pure command business logic forward.
+  Future<void> applyForward();
+
+  /// Pure command business logic backward (undo).
+  Future<void> applyBackward();
+
+  @override
+  Future<void> execute() async {
+    await applyForward();
+    _invalidateCache();
+    await onRefresh();
+  }
+
+  @override
+  Future<void> undo() async {
+    await applyBackward();
+    _invalidateCache();
+    await onRefresh();
+  }
+
+  void _invalidateCache() {
+    if (affectsMultipleDays) {
+      DayAgendaService.instance.invalidateAll();
+    } else {
+      DayAgendaService.instance.invalidateDate(item.dateStr);
+    }
+  }
+}
+
+class _MoveItemCommand extends _CalendarCommand {
   _MoveItemCommand({
     required this.actionHandler,
-    required this.item,
+    required super.item,
     required this.oldTimeOfDay,
     required this.newTimeOfDay,
-    required this.onRefresh,
+    required super.onRefresh,
     this.scope = CalendarEditScope.thisDayOnly,
     OccurrenceOverrideRepository? overrideRepo,
   }) : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository();
 
   final AgendaActionHandler actionHandler;
-  final AgendaItem item;
   final String oldTimeOfDay;
   final String newTimeOfDay;
-  final Future<void> Function() onRefresh;
   final CalendarEditScope scope;
   final OccurrenceOverrideRepository _overrideRepo;
 
@@ -704,10 +743,13 @@ class _MoveItemCommand implements UndoableCommand {
   bool _hasCapturedBefore = false;
 
   @override
+  bool get affectsMultipleDays => scope == CalendarEditScope.allFutureDays;
+
+  @override
   String get description => 'جابه‌جایی رویداد';
 
   @override
-  Future<void> execute() async {
+  Future<void> applyForward() async {
     if (!_hasCapturedBefore) {
       if (scope == CalendarEditScope.thisDayOnly) {
         _beforeSnapshot = await _overrideRepo.readOne(
@@ -754,12 +796,10 @@ class _MoveItemCommand implements UndoableCommand {
         newTimeOfDay: newTimeOfDay,
       );
     }
-    DayAgendaService.instance.invalidateDate(item.dateStr);
-    await onRefresh();
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> applyBackward() async {
     if (scope == CalendarEditScope.thisDayOnly) {
       final before = _beforeSnapshot;
       if (before == null) {
@@ -776,27 +816,23 @@ class _MoveItemCommand implements UndoableCommand {
         await _overrideRepo.restoreAll(_futureSnapshot);
       }
     }
-    DayAgendaService.instance.invalidateDate(item.dateStr);
-    await onRefresh();
   }
 }
 
-class _ResizeItemCommand implements UndoableCommand {
+class _ResizeItemCommand extends _CalendarCommand {
   _ResizeItemCommand({
     required this.actionHandler,
-    required this.item,
+    required super.item,
     required this.oldDuration,
     required this.newDuration,
-    required this.onRefresh,
+    required super.onRefresh,
     this.scope = CalendarEditScope.thisDayOnly,
     OccurrenceOverrideRepository? overrideRepo,
   }) : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository();
 
   final AgendaActionHandler actionHandler;
-  final AgendaItem item;
   final int oldDuration;
   final int newDuration;
-  final Future<void> Function() onRefresh;
   final CalendarEditScope scope;
   final OccurrenceOverrideRepository _overrideRepo;
 
@@ -805,10 +841,13 @@ class _ResizeItemCommand implements UndoableCommand {
   bool _hasCapturedBefore = false;
 
   @override
+  bool get affectsMultipleDays => scope == CalendarEditScope.allFutureDays;
+
+  @override
   String get description => 'تغییر مدت زمان رویداد';
 
   @override
-  Future<void> execute() async {
+  Future<void> applyForward() async {
     if (!_hasCapturedBefore) {
       if (scope == CalendarEditScope.thisDayOnly) {
         _beforeSnapshot = await _overrideRepo.readOne(
@@ -855,12 +894,10 @@ class _ResizeItemCommand implements UndoableCommand {
         newDurationMinutes: newDuration,
       );
     }
-    DayAgendaService.instance.invalidateDate(item.dateStr);
-    await onRefresh();
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> applyBackward() async {
     if (scope == CalendarEditScope.thisDayOnly) {
       final before = _beforeSnapshot;
       if (before == null) {
@@ -877,79 +914,69 @@ class _ResizeItemCommand implements UndoableCommand {
         await _overrideRepo.restoreAll(_futureSnapshot);
       }
     }
-    DayAgendaService.instance.invalidateDate(item.dateStr);
-    await onRefresh();
   }
 }
 
-class _ScheduleItemCommand implements UndoableCommand {
+class _ScheduleItemCommand extends _CalendarCommand {
   _ScheduleItemCommand({
     required this.actionHandler,
-    required this.item,
+    required super.item,
     required this.newTimeOfDay,
     required this.newDurationMinutes,
-    required this.onRefresh,
+    required super.onRefresh,
   });
 
   final AgendaActionHandler actionHandler;
-  final AgendaItem item;
   final String newTimeOfDay;
   final int newDurationMinutes;
-  final Future<void> Function() onRefresh;
 
   @override
   String get description => 'زمان‌بندی رویداد';
 
   @override
-  Future<void> execute() async {
+  Future<void> applyForward() async {
     await actionHandler.updateAgendaItemTimeAndDuration(
       item: item,
       newTimeOfDay: newTimeOfDay,
       newDurationMinutes: newDurationMinutes,
     );
-    await onRefresh();
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> applyBackward() async {
     await actionHandler.clearAgendaItemTime(item: item);
-    await onRefresh();
   }
 }
 
-class _UnscheduleItemCommand implements UndoableCommand {
+class _UnscheduleItemCommand extends _CalendarCommand {
   _UnscheduleItemCommand({
     required this.actionHandler,
-    required this.item,
+    required super.item,
     required this.oldTimeOfDay,
     required this.oldDurationMinutes,
-    required this.onRefresh,
+    required super.onRefresh,
   });
 
   final AgendaActionHandler actionHandler;
-  final AgendaItem item;
   final String? oldTimeOfDay;
   final int? oldDurationMinutes;
-  final Future<void> Function() onRefresh;
 
   @override
   String get description => 'لغو زمان‌بندی رویداد';
 
   @override
-  Future<void> execute() async {
+  Future<void> applyForward() async {
     await actionHandler.clearAgendaItemTime(item: item);
-    await onRefresh();
   }
 
   @override
-  Future<void> undo() async {
+  Future<void> applyBackward() async {
     if (oldTimeOfDay != null) {
       await actionHandler.updateAgendaItemTimeAndDuration(
         item: item,
         newTimeOfDay: oldTimeOfDay,
         newDurationMinutes: oldDurationMinutes,
       );
-      await onRefresh();
     }
   }
 }

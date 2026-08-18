@@ -14,8 +14,8 @@
 | CAL-10 | snapshot خواندن override برای بازگردانی درست | B | DONE | ff2dce3 | افزودن readAllFuture و restoreAll به مخزن override برای بازگردانی دقیق |
 | CAL-11 | بازگردانی مبتنی بر snapshot در MoveItemCommand و ResizeItemCommand | B | DONE | 79fc50c | بازگردانی snapshot-based در Move/Resize برای جلوگیری از پاک شدن overrideهای پیشین |
 | CAL-12 | allFutureDays: snapshot و transaction برای removeAllFuture | B | DONE | c13a57d | پشتیبان‌گیری snapshot و بازگردانی کلیه overrideهای آینده در صورت undo با سقف زمانی امن |
-| CAL-13 | حذف کلید برهنهٔ sourceId در نگاشت override | B | DONE | pending | حذف کلید برهنه و fallback، استفاده از formatKey با پیشوند sourceType و تفکیک دامنه‌ها |
-| CAL-14 | پایهٔ مشترک دستورات تقویم: بی‌اعتبارسازی کش اجباری | B | TODO | - | - |
+| CAL-13 | حذف کلید برهنهٔ sourceId در نگاشت override | B | DONE | 666b960 | حذف کلید برهنه و fallback، استفاده از formatKey با پیشوند sourceType و تفکیک دامنه‌ها |
+| CAL-14 | پایهٔ مشترک دستورات تقویم: بی‌اعتبارسازی کش اجباری | B | DONE | pending | ایجاد _CalendarCommand با الگوی Template Method و بی‌اعتبارسازی اجباری تک‌روزه و چندروزه کش |
 | CAL-15 | skipItem برای دامنه‌های غیرروتین | B | TODO | - | - |
 | CAL-16 | postponeItem برای همه دامنه‌ها | B | TODO | - | - |
 | CAL-17 | توکن نسل بارگذاری برای جلوگیری از نوشتن بی‌ترتیب | C | TODO | - | - |

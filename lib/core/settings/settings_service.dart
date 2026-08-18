@@ -171,8 +171,10 @@ class SettingsService {
           RitmoLog.warning('Settings', 'رد ذخیره‌سازی برای کلید $key: مقدار در فهرست مجاز نیست');
           return false;
         }
+        value = match;
+      } else {
+        value = strVal;
       }
-      value = strVal;
     } else if (desc.type == SettingType.boolean) {
 
       if (value is! bool) {

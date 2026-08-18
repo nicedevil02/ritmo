@@ -638,6 +638,44 @@ class JourneyController extends ChangeNotifier {
     _previewDurationMinutes = durationMinutes;
     notifyListeners();
   }
+
+  @visibleForTesting
+  static UndoableCommand createMoveItemCommand({
+    required AgendaActionHandler actionHandler,
+    required AgendaItem item,
+    required String oldTimeOfDay,
+    required String newTimeOfDay,
+    required Future<void> Function() onRefresh,
+    CalendarEditScope scope = CalendarEditScope.thisDayOnly,
+    OccurrenceOverrideRepository? overrideRepo,
+  }) => _MoveItemCommand(
+    actionHandler: actionHandler,
+    item: item,
+    oldTimeOfDay: oldTimeOfDay,
+    newTimeOfDay: newTimeOfDay,
+    onRefresh: onRefresh,
+    scope: scope,
+    overrideRepo: overrideRepo,
+  );
+
+  @visibleForTesting
+  static UndoableCommand createResizeItemCommand({
+    required AgendaActionHandler actionHandler,
+    required AgendaItem item,
+    required int oldDuration,
+    required int newDuration,
+    required Future<void> Function() onRefresh,
+    CalendarEditScope scope = CalendarEditScope.thisDayOnly,
+    OccurrenceOverrideRepository? overrideRepo,
+  }) => _ResizeItemCommand(
+    actionHandler: actionHandler,
+    item: item,
+    oldDuration: oldDuration,
+    newDuration: newDuration,
+    onRefresh: onRefresh,
+    scope: scope,
+    overrideRepo: overrideRepo,
+  );
 }
 
 enum CalendarEditScope { thisDayOnly, allFutureDays }
@@ -661,11 +699,23 @@ class _MoveItemCommand implements UndoableCommand {
   final CalendarEditScope scope;
   final OccurrenceOverrideRepository _overrideRepo;
 
+  OccurrenceOverride? _beforeSnapshot;
+  bool _hasCapturedBefore = false;
+
   @override
   String get description => 'جابه‌جایی رویداد';
 
   @override
   Future<void> execute() async {
+    if (!_hasCapturedBefore && scope == CalendarEditScope.thisDayOnly) {
+      _beforeSnapshot = await _overrideRepo.readOne(
+        item.domain.name,
+        item.sourceId,
+        item.dateStr,
+      );
+      _hasCapturedBefore = true;
+    }
+
     final nowIso = DateTime.now().toIso8601String();
     if (scope == CalendarEditScope.thisDayOnly) {
       final override = OccurrenceOverride(
@@ -692,7 +742,12 @@ class _MoveItemCommand implements UndoableCommand {
   @override
   Future<void> undo() async {
     if (scope == CalendarEditScope.thisDayOnly) {
-      await _overrideRepo.remove(item.domain.name, item.sourceId, item.dateStr);
+      final before = _beforeSnapshot;
+      if (before == null) {
+        await _overrideRepo.remove(item.domain.name, item.sourceId, item.dateStr);
+      } else {
+        await _overrideRepo.restoreAll([before]);
+      }
     } else {
       await actionHandler.updateAgendaItemTimeAndDuration(
         item: item,
@@ -723,11 +778,23 @@ class _ResizeItemCommand implements UndoableCommand {
   final CalendarEditScope scope;
   final OccurrenceOverrideRepository _overrideRepo;
 
+  OccurrenceOverride? _beforeSnapshot;
+  bool _hasCapturedBefore = false;
+
   @override
   String get description => 'تغییر مدت زمان رویداد';
 
   @override
   Future<void> execute() async {
+    if (!_hasCapturedBefore && scope == CalendarEditScope.thisDayOnly) {
+      _beforeSnapshot = await _overrideRepo.readOne(
+        item.domain.name,
+        item.sourceId,
+        item.dateStr,
+      );
+      _hasCapturedBefore = true;
+    }
+
     final nowIso = DateTime.now().toIso8601String();
     if (scope == CalendarEditScope.thisDayOnly) {
       final override = OccurrenceOverride(
@@ -754,7 +821,12 @@ class _ResizeItemCommand implements UndoableCommand {
   @override
   Future<void> undo() async {
     if (scope == CalendarEditScope.thisDayOnly) {
-      await _overrideRepo.remove(item.domain.name, item.sourceId, item.dateStr);
+      final before = _beforeSnapshot;
+      if (before == null) {
+        await _overrideRepo.remove(item.domain.name, item.sourceId, item.dateStr);
+      } else {
+        await _overrideRepo.restoreAll([before]);
+      }
     } else {
       await actionHandler.updateAgendaItemTimeAndDuration(
         item: item,

@@ -25,6 +25,12 @@ enum SettingsGroup {
   calendar,
 }
 
+abstract final class AppLockTimeout {
+  static const int immediate = 0;
+  static const int never = -1;
+  static const List<int> presets = [immediate, 60, 300, 900, never];
+}
+
 enum SettingVisibility {
   /// در فهرست گروه و جست‌وجو دیده می‌شود.
   normal,

@@ -1,3 +1,4 @@
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_validation.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
@@ -9,8 +10,9 @@ class CourseScheduler {
   }
 
   /// Saturday is the start of Farsi week
+  @Deprecated('Use ShamsiWeek.saturdayOf instead')
   static DateTime getSaturdayOfWeek(DateTime dt) {
-    return CourseDate.startOfFarsiWeek(dt);
+    return ShamsiWeek.saturdayOf(dt);
   }
 
   /// Calculates weekly occupancy map (SaturdayOfWeek -> count) for sessions already scheduled/completed.

@@ -5,13 +5,12 @@ import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
-import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 /// K19 — Agenda Scale Bucketing (pure function, no DateTime.now() inside)
 ///
 /// هفتهٔ شمسی: شنبه (Saturday) تا جمعه (Friday)
-/// از CourseScheduler.getSaturdayOfWeek برای محاسبهٔ مرز هفته استفاده می‌کنیم.
+/// از ShamsiWeek.saturdayOf برای محاسبهٔ مرز هفته استفاده می‌کنیم.
 enum AgendaBucket { overdue, today, tomorrow, thisWeek, nextWeek, later }
 
 /// Represents an entry in a compressed agenda view (either a single item or a recurring series group).
@@ -84,7 +83,7 @@ Map<AgendaBucket, List<AgendaItem>> bucketRange(
   final tomorrow = DateKey.addDays(today, 1);
 
   // Shamsi-week boundaries
-  final thisSat = CourseScheduler.getSaturdayOfWeek(today);
+  final thisSat = ShamsiWeek.saturdayOf(today);
   final thisFri = DateKey.addDays(thisSat, 6);
   final nextSat = DateKey.addDays(thisFri, 1);
   final nextFri = DateKey.addDays(nextSat, 6);
@@ -156,7 +155,7 @@ int calculateDaysInBucket(
     case AgendaBucket.thisWeek:
       final today = DateKey.dayOf(now);
       final tomorrow = DateKey.addDays(today, 1);
-      final thisSat = CourseScheduler.getSaturdayOfWeek(today);
+      final thisSat = ShamsiWeek.saturdayOf(today);
       final thisFri = DateKey.addDays(thisSat, 6);
       final thisWeekStart = DateKey.addDays(tomorrow, 1);
       // سطل خالی است (مثلاً امروز پنج‌شنبه یا جمعه است و این سطل در تقویم امروز وجود ندارد)

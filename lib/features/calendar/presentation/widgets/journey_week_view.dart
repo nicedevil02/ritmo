@@ -6,7 +6,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
 import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
-import 'package:ritmo/features/courses/logic/course_scheduler.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class JourneyWeekView extends StatelessWidget {
@@ -34,7 +34,7 @@ class JourneyWeekView extends StatelessWidget {
     final colors = context.colors;
     final now = DateTime.now();
 
-    final sat = CourseScheduler.getSaturdayOfWeek(selectedDate);
+    final sat = ShamsiWeek.saturdayOf(selectedDate);
     final weekDays = List.generate(7, (i) => sat.add(Duration(days: i)));
 
     final nowMinutes = (now.hour * 60) + now.minute;

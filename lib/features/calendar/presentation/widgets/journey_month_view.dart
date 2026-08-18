@@ -5,7 +5,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/calendar/data/occasions_calendar_source.dart';
 import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
-import 'package:ritmo/features/courses/logic/course_scheduler.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class JourneyMonthView extends StatefulWidget {
@@ -61,7 +61,7 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
     final firstOfMonthDate = jalaliFirst.toDateTime();
     final lastOfMonthDate = Jalali(jalaliSelected.year, jalaliSelected.month, monthLength).toDateTime();
 
-    final firstGridDay = CourseScheduler.getSaturdayOfWeek(firstOfMonthDate);
+    final firstGridDay = ShamsiWeek.saturdayOf(firstOfMonthDate);
     final totalDays = lastOfMonthDate.difference(firstGridDay).inDays + 1;
     final gridDayCount = (totalDays / 7).ceil() * 7;
 

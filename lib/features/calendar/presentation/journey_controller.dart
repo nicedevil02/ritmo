@@ -13,7 +13,7 @@ import 'package:ritmo/core/domain/commands/command_stack.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
-import 'package:ritmo/features/courses/logic/course_scheduler.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/core/domain/agenda/occurrence_override_repository.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
@@ -792,7 +792,7 @@ class JourneyController extends ChangeNotifier {
       case JourneyScale.day:
         return (start: dateOnly, end: dateOnly);
       case JourneyScale.week:
-        final sat = CourseScheduler.getSaturdayOfWeek(dateOnly);
+        final sat = ShamsiWeek.saturdayOf(dateOnly);
         final fri = DateKey.addDays(sat, 6);
         return (start: sat, end: fri);
       case JourneyScale.month:

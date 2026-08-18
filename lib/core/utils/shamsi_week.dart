@@ -1,4 +1,7 @@
-/// Single source of truth for Shamsi weekday names and plurals.
+import 'package:ritmo/core/utils/date_key.dart';
+import 'package:shamsi_date/shamsi_date.dart';
+
+/// Single source of truth for Shamsi weekday names, plurals, and week boundaries.
 abstract final class ShamsiWeek {
   static const weekdayNames = [
     'شنبه',
@@ -27,4 +30,14 @@ abstract final class ShamsiWeek {
   /// Returns Persian weekday plural for Jalali weekday (1=Saturday .. 7=Friday).
   static String pluralOf(int jalaliWeekDay) =>
       weekdayPlurals[(jalaliWeekDay - 1).clamp(0, 6)];
+
+  /// Returns the Saturday (start) of the Jalali week containing [date] (local midnight).
+  static DateTime saturdayOf(DateTime date) {
+    final d = DateKey.dayOf(date);
+    final j = Jalali.fromDateTime(d);
+    return DateKey.addDays(d, -(j.weekDay - 1)); // Jalali weekDay: 1=Saturday .. 7=Friday
+  }
+
+  /// Returns the Friday (end) of the Jalali week containing [date] (local midnight).
+  static DateTime fridayOf(DateTime date) => DateKey.addDays(saturdayOf(date), 6);
 }

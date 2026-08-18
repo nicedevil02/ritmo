@@ -36,7 +36,7 @@ import 'package:ritmo/features/calendar/presentation/widgets/journey_year_view.d
 import 'package:ritmo/features/calendar/presentation/widgets/now_pill.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_split_day_view.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_untimed_section.dart';
-import 'package:ritmo/features/courses/logic/course_scheduler.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/features/registry/logic/registry_service.dart';
 import 'package:ritmo/features/registry/presentation/all_plans_screen.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
@@ -309,7 +309,7 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
         final jalali = Jalali.fromDateTime(date);
         return 'روز ${jalali.formatter.wN}';
       case JourneyScale.week:
-        final sat = CourseScheduler.getSaturdayOfWeek(date);
+        final sat = ShamsiWeek.saturdayOf(date);
         final fri = DateKey.addDays(sat, 6);
         final satJalali = Jalali.fromDateTime(sat);
         final friJalali = Jalali.fromDateTime(fri);

@@ -27,6 +27,9 @@ import 'package:shamsi_date/shamsi_date.dart';
 enum JourneyScale { agenda, day, week, month, year }
 
 class JourneyController extends ChangeNotifier {
+  static const int agendaWindowDaysBack = 14;
+  static const int agendaWindowDaysForward = 45;
+
   JourneyController({
     DayAgendaService? agendaService,
     DayAgendaSnapshotBuilder? snapshotBuilder,
@@ -472,8 +475,8 @@ class JourneyController extends ChangeNotifier {
   /// Must start with if (_isDisposed) return; — guaranteed by spec (067.md §K21).
   Future<void> loadAgendaRange({
     DateTime? anchorDate,
-    int daysBack = 14,
-    int daysForward = 45,
+    int daysBack = agendaWindowDaysBack,
+    int daysForward = agendaWindowDaysForward,
   }) async {
     if (_isDisposed) return;
     final gen = ++_loadGeneration;
@@ -564,13 +567,18 @@ class JourneyController extends ChangeNotifier {
     super.dispose();
   }
 
+  @visibleForTesting
+  static ({DateTime start, DateTime end}) calculateDateRangeForScale(JourneyScale scale, DateTime date) =>
+      _calculateDateRangeForScale(scale, date);
+
   static ({DateTime start, DateTime end}) _calculateDateRangeForScale(JourneyScale scale, DateTime date) {
     final dateOnly = DateKey.dayOf(date);
     final j = Jalali.fromDateTime(dateOnly);
     switch (scale) {
       case JourneyScale.agenda:
-        // Agenda loads a 60-day forward window from selected date
-        return (start: dateOnly, end: DateKey.addDays(dateOnly, 59));
+        // مقیاس اجندا بازهٔ خودش را دارد (loadAgendaRange) و هرگز به اینجا نمی‌رسد.
+        /// معوقه فقط تا agendaWindowDaysBack روز عقب دیده می‌شود. CAL-38 سقف را برمی‌دارد.
+        throw StateError('agenda scale must use loadAgendaRange');
       case JourneyScale.day:
         return (start: dateOnly, end: dateOnly);
       case JourneyScale.week:

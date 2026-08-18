@@ -18,8 +18,8 @@
 | CAL-14 | پایهٔ مشترک دستورات تقویم: بی‌اعتبارسازی کش اجباری | B | DONE | e793518 | ایجاد _CalendarCommand با الگوی Template Method و بی‌اعتبارسازی اجباری تک‌روزه و چندروزه کش |
 | CAL-15 | skipItem برای دامنه‌های غیرروتین | B | DONE | e0f16d9 | ایجاد _SkipItemCommand با override وضعیت SKIPPED و اتصال کامل به CommandStack با قابلیت undo |
 | CAL-16 | postponeItem برای همه دامنه‌ها | B | DONE | a0e9baf | تعویق تسک‌ها بر مبنای max(today, dueDate) و تعویق آیتم‌های تکراری با override دوطرفه و پشتیبانی undo |
-| CAL-17 | توکن نسل بارگذاری برای جلوگیری از نوشتن بی‌ترتیب | C | DONE | pending | افزودن _loadGeneration و محافظت در برابر race condition بارگذاری‌های ناهمگام |
-| CAL-18 | حذف شاخهٔ مردهٔ agenda و یک تعریف واحد برای پنجرهٔ اجندا | C | TODO | - | - |
+| CAL-17 | توکن نسل بارگذاری برای جلوگیری از نوشتن بی‌ترتیب | C | DONE | 0d24e3b | افزودن _loadGeneration و محافظت در برابر race condition بارگذاری‌های ناهمگام |
+| CAL-18 | حذف شاخهٔ مردهٔ agenda و یک تعریف واحد برای پنجرهٔ اجندا | C | DONE | pending | حذف شاخهٔ مردهٔ agenda از محاسبهٔ بازه، پرتاب StateError، و تعریف ثابت‌های پنجرهٔ اجندا |
 | CAL-19 | پنجرهٔ بارگذاری صریح و عبور isBackgroundRefresh | C | TODO | - | - |
 | CAL-20 | تعویض مقیاس: دادهٔ مقیاس قبلی پاک شود | C | TODO | - | - |
 | CAL-21 | یک fallback واحد برای snapshot تهی | C | TODO | - | - |

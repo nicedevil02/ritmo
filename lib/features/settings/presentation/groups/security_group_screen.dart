@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
+import 'package:ritmo/core/security/pin_hasher.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
@@ -99,8 +100,8 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
                 return;
               }
               Navigator.pop(ctx);
-              await SecureKeyStore.setKey(keyName, pin);
-              await SettingsService.instance.set(keyName, pin);
+              final hashed = PinHasher.hashPin(pin);
+              await SettingsService.instance.set(keyName, hashed);
               await _loadState();
               if (mounted) {
                 RitmoToast.show(context, 'رمز با موفقیت ذخیره شد.');
@@ -131,7 +132,6 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await SecureKeyStore.setKey(keyName, '');
               await SettingsService.instance.set(keyName, '');
               await _loadState();
               if (mounted) {

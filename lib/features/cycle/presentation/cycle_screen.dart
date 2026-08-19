@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
-import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -18,6 +17,7 @@ import 'package:ritmo/features/cycle/logic/cycle_confirmation_service.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_load_balancer.dart';
+import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_reminder_scheduler.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/logic/cycle_state_provider.dart';
@@ -142,7 +142,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
     try {
       final db = await DatabaseHelper.instance.database;
-      _periods = await db.query('cycle_periods', orderBy: 'startDate DESC');
+      final periodModels =
+          await CyclePeriodRepository.instance.getAllPeriods(db);
+      _periods = periodModels.map((p) => p.toMap()).toList();
 
       _forgottenPeriod = null;
       for (final p in _periods) {
@@ -285,80 +287,89 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     );
   }
 
+  bool _isTogglingPeriod = false;
+
   Future<void> _togglePeriodToday() async {
-    if (_engineOutput == null) return;
-    final db = await DatabaseHelper.instance.database;
-    final todayStr = CycleDateContract.toDayKey(CycleClock.now);
-    final nowMs = CycleClock.nowMillisecondsSinceEpoch;
+    if (_isTogglingPeriod) return;
+    setState(() => _isTogglingPeriod = true);
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final open = await CyclePeriodRepository.instance.getOpenPeriod(db);
+      final today = CycleDateContract.cleanDate(CycleClock.now);
 
-    final hasActivePeriod = _periods.any((p) {
-      final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
-      return p['endDate'] == null &&
-          start != null &&
-          CycleDateContract.daysBetween(start, CycleClock.now) <
-              CycleSettings.forgottenOpenPeriodDays;
-    });
-
-    if (!hasActivePeriod) {
-      if (_forgottenPeriod != null) {
-        if (mounted) {
-          unawaited(
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('خطا در ثبت دوره جدید'),
-                content: const Text(
-                  'شما یک دورهٔ باز قدیمی (فراموش‌شده) دارید. لطفاً ابتدا تکلیف آن را مشخص کنید.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('متوجه شدم'),
-                  ),
-                ],
-              ),
-            ),
-          );
+      if (open != null) {
+        final elapsed = open.elapsedDaysAt(today);
+        if (elapsed < 2) {
+          final ok = await _confirmShortPeriod(elapsed);
+          if (!ok) return;
         }
-        return;
+        await CyclePeriodRepository.instance.endPeriod(
+          db: db,
+          id: open.id,
+          endDate: today,
+        );
+      } else {
+        await CyclePeriodRepository.instance.startPeriod(
+          db: db,
+          startDate: today,
+        );
       }
 
-      await db.insert('cycle_periods', {
-        'id': 'period_$nowMs',
-        'startDate': todayStr,
-        'endDate': null,
-        'flowIntensity': 'MEDIUM',
-        'isPredicted': 0,
-        'createdAt': nowMs,
-        'updatedAt': nowMs,
-      });
-
-      if (_settings['cycle_consent_worship'] == 'true') {
-        await DatabaseHelper.instance.addFastingDebtIfNeeded(db, todayStr);
+      await _syncConfirmations();
+      await _syncFastingDebt();
+      await _loadData();
+    } catch (e, st) {
+      RitmoLog.error('CycleScreen', 'togglePeriodToday failed: $e', e, st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ثبت انجام نشد. دوباره تلاش کنید.'),
+          ),
+        );
       }
-    } else {
-      final active = _periods.firstWhere((p) {
-        final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
-        return p['endDate'] == null &&
-            start != null &&
-            CycleDateContract.daysBetween(start, CycleClock.now) <
-                CycleSettings.forgottenOpenPeriodDays;
-      });
-      await db.update(
-        'cycle_periods',
-        {'endDate': todayStr, 'updatedAt': nowMs},
-        where: 'id = ?',
-        whereArgs: [active['id']],
-      );
+    } finally {
+      if (mounted) setState(() => _isTogglingPeriod = false);
     }
+  }
 
-    RitmoEventBus().fire(
-      RitmoEvent(
-        type: hasActivePeriod ? 'CycleEnded' : 'CycleStarted',
-        payload: {'date': todayStr},
+  Future<bool> _confirmShortPeriod(int days) async {
+    final res = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('تأیید ثبت'),
+        content: Text(
+          'این دوره فقط $days روز بوده است. آیا از ثبت پایان اطمینان دارید؟',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('انصراف'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('بله، ثبت کن'),
+          ),
+        ],
       ),
     );
-    await _loadData();
+    return res ?? false;
+  }
+
+  Future<void> _syncConfirmations() async {
+    final db = await DatabaseHelper.instance.database;
+    await CycleConfirmationService.instance.onActualCycleStarted(
+      dbExecutor: db,
+      startDate: CycleClock.now,
+    );
+    await CycleConfirmationService.instance.pruneOldRequests(dbExecutor: db);
+  }
+
+  Future<void> _syncFastingDebt() async {
+    final db = await DatabaseHelper.instance.database;
+    await DatabaseHelper.instance.addFastingDebtIfNeeded(
+      db,
+      CycleDateContract.toDayKey(CycleClock.now),
+    );
   }
 
   void _openLogTodaySheet([DateTime? targetDate]) {
@@ -378,43 +389,72 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     );
   }
 
-  void _openAddEditPeriodSheet([Map<String, dynamic>? period]) {
+  void _openAddEditPeriodSheet({
+    String? existingId,
+    DateTime? initialStartDate,
+    DateTime? initialEndDate,
+    Map<String, dynamic>? period,
+  }) {
+    final targetExistingId =
+        existingId ?? (period != null ? period['id']?.toString() : null);
+    final targetStart = initialStartDate ??
+        (period != null
+            ? CycleDateContract.parseDayKey(period['startDate']?.toString())
+            : null);
+    final targetEnd = initialEndDate ??
+        (period != null
+            ? CycleDateContract.parseDayKey(period['endDate']?.toString())
+            : null);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => AddEditPeriodSheet(
-        period: period,
+        period: period ??
+            () {
+              final m = <String, dynamic>{};
+              if (targetExistingId != null) m['id'] = targetExistingId;
+              if (targetStart != null) {
+                m['startDate'] = CycleDateContract.toDayKey(targetStart);
+              }
+              if (targetEnd != null) {
+                m['endDate'] = CycleDateContract.toDayKey(targetEnd);
+              }
+              return m.isEmpty ? null : m;
+            }(),
         onValidate: (start, end) {
-          if (end != null && end.isBefore(start)) {
-            return 'تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.';
-          }
-          return null;
+          return CyclePeriodRepository.validatePeriodRange(
+            existing: _periods.map((p) => CyclePeriod.fromMap(p)).toList(),
+            editingId: targetExistingId,
+            startDate: start,
+            endDate: end,
+          );
         },
         onSave: (start, end) async {
           final db = await DatabaseHelper.instance.database;
-          final startStr = CycleDateContract.toDayKey(start);
-          final endStr = end != null ? CycleDateContract.toDayKey(end) : null;
-          final nowMs = CycleClock.nowMillisecondsSinceEpoch;
-
-          if (period != null) {
-            await db.update(
-              'cycle_periods',
-              {'startDate': startStr, 'endDate': endStr, 'updatedAt': nowMs},
-              where: 'id = ?',
-              whereArgs: [period['id']],
+          if (targetExistingId != null && targetExistingId.isNotEmpty) {
+            await CyclePeriodRepository.instance.updatePeriod(
+              db: db,
+              id: targetExistingId,
+              startDate: start,
+              endDate: end,
             );
           } else {
-            await db.insert('cycle_periods', {
-              'id': 'period_$nowMs',
-              'startDate': startStr,
-              'endDate': endStr,
-              'flowIntensity': 'MEDIUM',
-              'isPredicted': 0,
-              'createdAt': nowMs,
-              'updatedAt': nowMs,
-            });
+            final newId = await CyclePeriodRepository.instance.startPeriod(
+              db: db,
+              startDate: start,
+            );
+            if (end != null) {
+              await CyclePeriodRepository.instance.endPeriod(
+                db: db,
+                id: newId,
+                endDate: end,
+              );
+            }
           }
+          await _syncConfirmations();
+          await _syncFastingDebt();
           await _loadData();
         },
       ),
@@ -423,11 +463,15 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
   Future<void> _deletePeriod(String id) async {
     final db = await DatabaseHelper.instance.database;
-    await db.delete('cycle_periods', where: 'id = ?', whereArgs: [id]);
+    await CyclePeriodRepository.instance.deletePeriod(db: db, id: id);
+    await _syncConfirmations();
+    await _syncFastingDebt();
     await _loadData();
   }
 
   Future<void> _closeForgottenPeriod(Map<String, dynamic> period) async {
+    final id = period['id']?.toString();
+    if (id == null || id.isEmpty) return;
     final db = await DatabaseHelper.instance.database;
     final start = CycleDateContract.parseDayKey(
       period['startDate']?.toString(),
@@ -435,14 +479,15 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     if (start == null) return;
     final pDur = CycleSettings.getPeriodDuration(_settings);
     final end = start.add(Duration(days: pDur - 1));
-    final endStr = CycleDateContract.toDayKey(end);
 
-    await db.update(
-      'cycle_periods',
-      {'endDate': endStr, 'updatedAt': CycleClock.nowMillisecondsSinceEpoch},
-      where: 'id = ?',
-      whereArgs: [period['id']],
+    await CyclePeriodRepository.instance.updatePeriod(
+      db: db,
+      id: id,
+      startDate: start,
+      endDate: end,
     );
+    await _syncConfirmations();
+    await _syncFastingDebt();
     await _loadData();
   }
 
@@ -647,7 +692,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               onTogglePeriodToday: _togglePeriodToday,
                               onOpenDailyLog: _openLogTodaySheet,
                               onCloseForgottenPeriod: _closeForgottenPeriod,
-                              onEditPeriod: _openAddEditPeriodSheet,
+                              onEditPeriod: (p) =>
+                                  _openAddEditPeriodSheet(period: p),
                               pendingConfirmation: _pendingConfirmation,
                               onOpenConfirmation:
                                   _pendingConfirmation != null
@@ -692,12 +738,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                           engineOutput: _engineOutput,
                                           symptomForecasts: _personalForecasts,
                                           onRecordPeriodFromDate: (d) =>
-                                              _openAddEditPeriodSheet({
-                                                'startDate':
-                                                    CycleDateContract.toDayKey(
-                                                      d,
-                                                    ),
-                                              }),
+                                              _openAddEditPeriodSheet(
+                                                initialStartDate: d,
+                                              ),
                                         ),
                                   );
                                 } else {
@@ -709,7 +752,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             CycleHistoryList(
                               periods: _periods,
                               onAddNewPeriod: () => _openAddEditPeriodSheet(),
-                              onEditPeriod: _openAddEditPeriodSheet,
+                              onEditPeriod: (p) =>
+                                  _openAddEditPeriodSheet(period: p),
                               onDeletePeriod: _deletePeriod,
                             ),
                           ] else if (_activeTab == 1) ...[

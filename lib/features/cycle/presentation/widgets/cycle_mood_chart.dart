@@ -4,6 +4,8 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 
 class CycleMoodChartSection extends StatefulWidget {
   const CycleMoodChartSection({super.key, required this.averageCycleLength});
@@ -31,12 +33,9 @@ class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
       final db = await DatabaseHelper.instance.database;
 
       // 1. Get recent cycle periods to map dates to cycle days
-      final periods = await db.query(
-        'cycle_periods',
-        where: 'isPredicted = 0',
-        orderBy: 'startDate DESC',
-        limit: 6,
-      );
+      final allPeriods =
+          await CyclePeriodRepository.instance.getAllPeriods(db);
+      final periods = allPeriods.take(6).toList();
 
       if (periods.isEmpty) {
         if (mounted) setState(() => _loading = false);
@@ -44,7 +43,7 @@ class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
       }
 
       // 2. Fetch day logs that have mood or symptoms
-      final logs = await db.query('cycle_day_logs', orderBy: 'dateIso DESC');
+      final logs = await db.query('cycle_day_logs', orderBy: 'logDate DESC');
       _logs = logs;
 
       // 3. Map logs to cycle day (Day 1 to CycleLength)
@@ -53,18 +52,16 @@ class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
       final Map<int, int> energyBuckets = {};
 
       for (final log in logs) {
-        final dateIso = log['dateIso'] as String?;
+        final dateIso =
+            (log['logDate'] ?? log['dateIso']) as String?;
         if (dateIso == null) continue;
-        final logDate = DateTime.tryParse(dateIso);
+        final logDate = CycleDateContract.parseDayKey(dateIso);
         if (logDate == null) continue;
 
         // Find which period this log belongs to
         DateTime? matchingPeriodStart;
         for (final p in periods) {
-          final startStr = p['startDate'] as String?;
-          if (startStr == null) continue;
-          final pStart = DateTime.tryParse(startStr);
-          if (pStart == null) continue;
+          final pStart = p.startDate;
 
           // A period governs up to widget.averageCycleLength days forward
           final diff = logDate.difference(pStart).inDays;

@@ -262,10 +262,14 @@ class CycleConfirmationService {
   }
 
   /// پاک‌کردن تاریخچهٔ قدیمی
-  Future<void> pruneOldRequests([DatabaseExecutor? dbExecutor]) async {
+  Future<void> pruneOldRequests({
+    DatabaseExecutor? dbExecutor,
+    DateTime? now,
+  }) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
-      final cutoffDate = CycleClock.now.subtract(const Duration(days: 90));
+      final effectiveNow = now ?? CycleClock.now;
+      final cutoffDate = effectiveNow.subtract(const Duration(days: 90));
       final cutoffKey = CycleDateContract.toDayKey(cutoffDate);
       await db.delete(
         'cycle_confirmations',

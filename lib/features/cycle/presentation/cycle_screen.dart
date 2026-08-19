@@ -3,13 +3,11 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
-import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
 import 'package:ritmo/core/ux/ritmo_empty_state.dart';
@@ -44,6 +42,7 @@ import 'package:ritmo/features/cycle/presentation/widgets/cycle_personal_forecas
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_prediction_confidence_card.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_prediction_detail_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_pregnancy_mode.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_segmented_tabs.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_settings_panel.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_sos_section.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_trends_section.dart';
@@ -603,7 +602,13 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           vertical: 12,
                         ),
                         children: [
-                          _buildSegmentedTabs(colors),
+                          CycleSegmentedTabs(
+                            activeTab: _activeTab,
+                            onTabChanged:
+                                (index) => setState(() => _activeTab = index),
+                            settings: _settings,
+                            activeThemeColor: _getActivePhaseColor(context),
+                          ),
                           const SizedBox(height: 16),
                           if (_activeTab == 0) ...[
                             if (_predictionConfidence != null &&
@@ -742,80 +747,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSegmentedTabs(RitmoColors colors) {
-    final showWorship = ModuleGate.instance.isEnabledFrom(
-      _settings,
-      'module_religion_enabled',
-    );
-    final activeThemeColor = _getActivePhaseColor(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    Widget buildTabButton(int index, String label, IconData icon) {
-      final isActive = _activeTab == index;
-      return Expanded(
-        child: GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            setState(() => _activeTab = index);
-          },
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? activeThemeColor.withValues(alpha: 0.12)
-                  : (isDark
-                        ? Colors.white.withValues(alpha: 0.02)
-                        : Colors.black.withValues(alpha: 0.02)),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isActive
-                    ? activeThemeColor
-                    : (isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : colors.border),
-                width: 1.2,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 13,
-                  color: isActive
-                      ? activeThemeColor
-                      : (isDark ? Colors.white54 : colors.textSecondary),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    color: isActive
-                        ? activeThemeColor
-                        : (isDark ? Colors.white70 : colors.textSecondary),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Row(
-      children: [
-        buildTabButton(0, 'داشبورد', CupertinoIcons.today),
-        buildTabButton(1, 'روندها', CupertinoIcons.chart_bar_alt_fill),
-        buildTabButton(2, 'همبستگی‌ها', CupertinoIcons.sparkles),
-        if (showWorship)
-          buildTabButton(3, 'روزه قضا', CupertinoIcons.bookmark_fill),
-      ],
     );
   }
 }

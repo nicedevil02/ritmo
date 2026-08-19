@@ -129,28 +129,28 @@ class HormonalIntelligenceEngine {
       reminders.add(
         PrivateReminder(
           level: 'T-7',
-          message: 'بررسی الگوی چرخه و آمادگی هفته آینده',
+          message: 'بررسی وضعیت برنامه و زمان‌بندی هفته آینده',
           date: nextPeriod.subtract(const Duration(days: 7)),
         ),
       );
       reminders.add(
         PrivateReminder(
           level: 'T-3',
-          message: 'تخمین شروع پنجره تغییرات هورمونی و مراقبت',
+          message: 'یادآوری بررسی و تنظیم برنامه روزهای پیش‌رو',
           date: nextPeriod.subtract(const Duration(days: 3)),
         ),
       );
       reminders.add(
         PrivateReminder(
           level: 'T-1',
-          message: 'آمادگی برای آغاز چرخه جدید و استراحت کافی',
+          message: 'بررسی آمادگی و استراحت کافی برای فردا',
           date: nextPeriod.subtract(const Duration(days: 1)),
         ),
       );
       reminders.add(
         PrivateReminder(
           level: 'T0',
-          message: 'آغاز پیش‌بینی‌شده چرخه زیستی',
+          message: 'بررسی و ثبت وضعیت برنامه امروز',
           date: nextPeriod,
         ),
       );

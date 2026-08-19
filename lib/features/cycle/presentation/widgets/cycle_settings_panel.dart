@@ -405,6 +405,34 @@ class CycleSettingsPanel extends StatelessWidget {
               6,
             ),
           ),
+          Divider(height: 16, color: colors.border),
+          _buildParameterRow(
+            context,
+            title: 'فاصلهٔ روزهای یادآوری تا موعد',
+            value:
+                '${PersianDigits.toFa(settings['cycle_reminder_lead_days'] ?? '2')} روز قبل',
+            onTap: () => onEditBaselineParameter(
+              'cycle_reminder_lead_days',
+              'روزهای پیش از موعد',
+              1,
+              5,
+              2,
+            ),
+          ),
+          Divider(height: 16, color: colors.border),
+          _buildParameterRow(
+            context,
+            title: 'ساعت ارسال اعلان و یادآوری',
+            value:
+                'ساعت ${PersianDigits.toFa(settings['cycle_reminder_hour'] ?? '9')}:۰۰',
+            onTap: () => onEditBaselineParameter(
+              'cycle_reminder_hour',
+              'ساعت اعلان (۰ تا ۲۳)',
+              0,
+              23,
+              9,
+            ),
+          ),
         ],
       ),
     );

@@ -30,7 +30,7 @@ class ConflictChecker {
           ? CalendarDefaults.fallbackDurationMinutes
           : durationMinutes;
 
-      final detector = const AgendaConflictDetector();
+      const detector = AgendaConflictDetector();
       final conflicts = detector.checkCandidate(
         existing: items,
         startMinutes: startMinutes,

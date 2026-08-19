@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:ritmo/features/cycle/logic/cycle_privacy_text.dart';
 
 enum InboxCategory {
   REMINDER,
@@ -158,5 +159,32 @@ class InboxItem {
       case InboxCategory.REVIEW:
         return 'بازخورد';
     }
+  }
+
+  bool get isCycleRelated =>
+      sourceSystem == 'cycle' ||
+      linkEntityId?.startsWith('cycle') == true ||
+      linkModule == 'cycle' ||
+      payload['sourceSystem'] == 'cycle' ||
+      payload['channel'] == 'privateChannel';
+
+  String displayTitle({
+    required bool isCycleAuthenticated,
+    bool maskEnabled = true,
+  }) {
+    if (isCycleRelated && maskEnabled && !isCycleAuthenticated) {
+      return CyclePrivacyText.inboxMaskedTitle;
+    }
+    return title;
+  }
+
+  String displayBody({
+    required bool isCycleAuthenticated,
+    bool maskEnabled = true,
+  }) {
+    if (isCycleRelated && maskEnabled && !isCycleAuthenticated) {
+      return CyclePrivacyText.inboxMaskedBody;
+    }
+    return body ?? '';
   }
 }

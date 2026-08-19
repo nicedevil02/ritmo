@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
 import 'package:ritmo/core/services/central_inbox_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
+import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/inbox/logic/inbox_navigator.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -17,6 +20,8 @@ class InboxScreen extends StatefulWidget {
 class _InboxScreenState extends State<InboxScreen> {
   List<InboxItem> _items = [];
   bool _isLoading = true;
+  bool _isCycleAuthenticated = false;
+  bool _isInboxMaskEnabled = true;
 
   @override
   void initState() {
@@ -29,8 +34,23 @@ class _InboxScreenState extends State<InboxScreen> {
       _isLoading = true;
     });
     final items = await CentralInboxService.getItems();
+    bool isMaskEnabled = true;
+    bool isLockActive = false;
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final settingsList = await db.query('app_settings');
+      final settingsMap = {
+        for (final s in settingsList)
+          s['key'].toString(): s['value']?.toString() ?? '',
+      };
+      isMaskEnabled = CycleSettings.isInboxMaskEnabled(settingsMap);
+      isLockActive = await CycleLockService.instance.isLockEnabled(db);
+    } catch (_) {}
+
     setState(() {
       _items = items;
+      _isCycleAuthenticated = !isLockActive;
+      _isInboxMaskEnabled = isMaskEnabled;
       _isLoading = false;
     });
   }
@@ -257,17 +277,27 @@ class _InboxScreenState extends State<InboxScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        item.title,
+                        item.displayTitle(
+                          isCycleAuthenticated: _isCycleAuthenticated,
+                          maskEnabled: _isInboxMaskEnabled,
+                        ),
                         style: TextStyle(
                           fontSize: 12.5,
-                          fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+                          fontWeight:
+                              isUnread ? FontWeight.bold : FontWeight.normal,
                           color: colors.textPrimary,
-                          ),
+                        ),
                       ),
-                      if (item.body != null && item.body!.isNotEmpty) ...[
+                      if (item.displayBody(
+                            isCycleAuthenticated: _isCycleAuthenticated,
+                            maskEnabled: _isInboxMaskEnabled,
+                          ).isNotEmpty) ...[
                         const SizedBox(height: 3),
                         Text(
-                          item.body!,
+                          item.displayBody(
+                            isCycleAuthenticated: _isCycleAuthenticated,
+                            maskEnabled: _isInboxMaskEnabled,
+                          ),
                           style: TextStyle(
                             fontSize: 10,
                             color: colors.textSecondary,

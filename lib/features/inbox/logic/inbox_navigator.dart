@@ -7,6 +7,7 @@ import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/services/central_inbox_service.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/assistant/presentation/assistant_screen.dart';
+import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
 import 'package:ritmo/features/today/presentation/insights_screen.dart';
 import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet.dart';
 import 'package:ritmo/features/today/presentation/widgets/morning_checkin_sheet.dart';
@@ -17,6 +18,14 @@ class InboxNavigator {
     await CentralInboxService.markRead(item.id);
 
     if (!context.mounted) return;
+
+    if (item.isCycleRelated || item.linkModule == 'cycle') {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const CycleScreen()),
+      );
+      return;
+    }
 
     // 2. Resolve destination module/action
     switch (item.linkModule) {

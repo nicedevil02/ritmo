@@ -124,7 +124,7 @@ object RitmoNotificationChannels {
             "اعلان‌های خصوصی",
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = "یادآوری چرخه سلامت، یادداشت‌های خصوصی و موارد محرمانه"
+            description = "یادآوری‌های خصوصی و موارد محرمانه"
             enableVibration(true)
             setSound(notifUri, notifAttrs)
             lockscreenVisibility = Notification.VISIBILITY_PRIVATE

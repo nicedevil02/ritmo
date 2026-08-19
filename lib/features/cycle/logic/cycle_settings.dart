@@ -21,6 +21,13 @@ class CycleSettings {
   static const String keyConsentSleep = 'cycle_consent_sleep';
   static const String keyFertilityVisible = 'cycle_fertility_visible';
   static const String keyPmsWindowDays = 'cycle_pms_window_days';
+  static const String keyReminderLeadDays = 'cycle_reminder_lead_days';
+  static const String keyReminderHour = 'cycle_reminder_hour';
+  static const String keyConfirmStartEnabled = 'cycle_confirm_start_enabled';
+  static const String keyConfirmEndEnabled = 'cycle_confirm_end_enabled';
+  static const String keyInboxMaskEnabled = 'cycle_inbox_mask_enabled';
+  static const String keyConfirmSnoozeUntil = 'cycle_confirm_snooze_until';
+  static const String keyBiometricEnabled = 'cycle_biometric_enabled';
 
   // Authoritative defaults
   static const int defaultCycleLength = 28;
@@ -36,6 +43,13 @@ class CycleSettings {
   static const int maxLutealPhase = 16;
 
   static const int defaultPmsWindowDays = 4;
+
+  /// آستانهٔ واحد «دورهٔ باز فراموش‌شده».
+  /// قبلاً همین مفهوم در سه فایل با سه عملگر متفاوت (>=12، >12، <12) پیاده شده بود.
+  static const int forgottenOpenPeriodDays = 12;
+
+  /// مهلت اضافه پیش از پرسیدن «هنوز ادامه دارد؟»
+  static const int prolongedBleedingGraceDays = 2;
 
   // Forecast constraints (F-12)
   static const int minCyclesForReliableForecast = 3;
@@ -164,6 +178,66 @@ class CycleSettings {
     final raw = settings[keyFertilityVisible]?.toString().toLowerCase();
     if (raw == 'false') return false;
     return true; // default visible
+  }
+
+  /// Parses lead days from comma-separated string, clamped to [1, 14], sorted descending.
+  static List<int> getReminderLeadDays(Map<String, dynamic> settings) {
+    final raw = settings[keyReminderLeadDays]?.toString();
+    if (raw != null && raw.trim().isNotEmpty) {
+      final parts = raw.split(',');
+      final result = <int>{};
+      for (final p in parts) {
+        final v = int.tryParse(p.trim());
+        if (v != null && v >= 1 && v <= 14) {
+          result.add(v);
+        }
+      }
+      if (result.isNotEmpty) {
+        final list = result.toList()..sort((a, b) => b.compareTo(a));
+        return list;
+      }
+    }
+    return const [3, 1];
+  }
+
+  /// Gets reminder hour clamped to [6, 22], default 10.
+  static int getReminderHour(Map<String, dynamic> settings) {
+    final raw = settings[keyReminderHour]?.toString();
+    if (raw != null) {
+      final v = int.tryParse(raw);
+      if (v != null) {
+        return v.clamp(6, 22);
+      }
+    }
+    return 10;
+  }
+
+  /// Returns whether start confirmation is enabled, default true.
+  static bool isConfirmStartEnabled(Map<String, dynamic> settings) {
+    final raw = settings[keyConfirmStartEnabled]?.toString().toLowerCase();
+    if (raw == 'false') return false;
+    return true;
+  }
+
+  /// Returns whether end confirmation is enabled, default true.
+  static bool isConfirmEndEnabled(Map<String, dynamic> settings) {
+    final raw = settings[keyConfirmEndEnabled]?.toString().toLowerCase();
+    if (raw == 'false') return false;
+    return true;
+  }
+
+  /// Returns whether inbox masking is enabled, default true.
+  static bool isInboxMaskEnabled(Map<String, dynamic> settings) {
+    final raw = settings[keyInboxMaskEnabled]?.toString().toLowerCase();
+    if (raw == 'false') return false;
+    return true;
+  }
+
+  /// Returns whether biometric authentication is enabled for cycle, default false.
+  static bool isBiometricEnabled(Map<String, dynamic> settings) {
+    final raw = settings[keyBiometricEnabled]?.toString().toLowerCase();
+    if (raw == 'true') return true;
+    return false;
   }
 
   /// Saves [days] as the canonical cycle length and synchronizes aliases.

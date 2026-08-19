@@ -51,6 +51,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v109_movement
 import 'package:ritmo/core/database/migration/migrations/migration_v110_movement_readiness_preferences_pr_tables.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v111_medication_identity_backfill.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v112_medication_profiles.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v113_cycle_confirmations.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -165,6 +166,7 @@ class MigrationRunner {
     MigrationV110MovementReadinessPreferencesPrTables(), // Movement Readiness, Preferences & Personal Records (Gate 5)
     MigrationV111MedicationIdentityBackfill(), // Medication Identity backfill (Phase 0)
     MigrationV112MedicationProfiles(), // Medication Profiles (Phase 1)
+    MigrationV113CycleConfirmations(), // Cycle Confirmations and settings (Lifecycle & Privacy)
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

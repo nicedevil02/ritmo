@@ -497,5 +497,25 @@ class SystemTables {
         updated_at INTEGER NOT NULL
       );
     ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS cycle_confirmations (
+        id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL,
+        targetDate TEXT NOT NULL,
+        answer TEXT,
+        answeredAt INTEGER,
+        askCount INTEGER NOT NULL DEFAULT 0,
+        lastAskedAt INTEGER,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_cycle_confirm_kind_date ON cycle_confirmations(kind, targetDate);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_cycle_confirm_answer ON cycle_confirmations(answer);',
+    );
   }
 }
